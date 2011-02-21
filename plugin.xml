@@ -1,0 +1,68 @@
+<plugin name='icescrum-core' version='1.2' grailsVersion='1.3.7 &gt; *'>
+  <author>iceScrum</author>
+  <authorEmail>contact@icescrum.org</authorEmail>
+  <title>iceScrum core plugin (include domain / services / taglib)</title>
+  <description>
+    iceScrum core plugin (include domain / services / taglib)
+</description>
+  <documentation>http://www.icescrum.org/plugin/icescrum-core</documentation>
+  <resources>
+    <resource>BuildConfig</resource>
+    <resource>UrlMappings</resource>
+    <resource>org.icescrum.core.domain.Actor</resource>
+    <resource>org.icescrum.core.domain.BacklogElement</resource>
+    <resource>org.icescrum.core.domain.Cliche</resource>
+    <resource>org.icescrum.core.domain.Domain</resource>
+    <resource>org.icescrum.core.domain.Feature</resource>
+    <resource>org.icescrum.core.domain.Impediment</resource>
+    <resource>org.icescrum.core.domain.Product</resource>
+    <resource>org.icescrum.core.domain.Release</resource>
+    <resource>org.icescrum.core.domain.Sprint</resource>
+    <resource>org.icescrum.core.domain.Story</resource>
+    <resource>org.icescrum.core.domain.Task</resource>
+    <resource>org.icescrum.core.domain.Team</resource>
+    <resource>org.icescrum.core.domain.TimeBox</resource>
+    <resource>org.icescrum.core.domain.User</resource>
+    <resource>org.icescrum.core.domain.preferences.ProductPreferences</resource>
+    <resource>org.icescrum.core.domain.preferences.TeamPreferences</resource>
+    <resource>org.icescrum.core.domain.preferences.UserPreferences</resource>
+    <resource>org.icescrum.core.domain.security.Authority</resource>
+    <resource>org.icescrum.core.domain.security.UserAuthority</resource>
+    <resource>org.icescrum.core.domain.TaskMigration</resource>
+    <resource>org.icescrum.core.domain.preferences.ProductPreferencesMigration</resource>
+    <resource>org.icescrum.core.domain.preferences.UserPreferencesMigration</resource>
+    <resource>org.icescrum.core.services.ActorService</resource>
+    <resource>org.icescrum.core.services.BootStrapService</resource>
+    <resource>org.icescrum.core.services.ClicheService</resource>
+    <resource>org.icescrum.core.services.DropImportService</resource>
+    <resource>org.icescrum.core.services.FeatureService</resource>
+    <resource>org.icescrum.core.services.ImpedimentService</resource>
+    <resource>org.icescrum.core.services.NotificationEmailService</resource>
+    <resource>org.icescrum.core.services.ProductBacklogService</resource>
+    <resource>org.icescrum.core.services.ProductService</resource>
+    <resource>org.icescrum.core.services.ReleaseService</resource>
+    <resource>org.icescrum.core.services.SecurityService</resource>
+    <resource>org.icescrum.core.services.SprintService</resource>
+    <resource>org.icescrum.core.services.TaskService</resource>
+    <resource>org.icescrum.core.services.TeamService</resource>
+    <resource>org.icescrum.core.services.UserService</resource>
+    <resource>org.icescrum.core.taglib.CommentTagLib</resource>
+    <resource>org.icescrum.core.taglib.EventlineTagLib</resource>
+    <resource>org.icescrum.core.taglib.FormTagLib</resource>
+    <resource>org.icescrum.core.taglib.KanbanTagLib</resource>
+    <resource>org.icescrum.core.taglib.MarkItUpTagLib</resource>
+    <resource>org.icescrum.core.taglib.MenuTagLib</resource>
+    <resource>org.icescrum.core.taglib.NoticeTagLib</resource>
+    <resource>org.icescrum.core.taglib.PanelTagLib</resource>
+    <resource>org.icescrum.core.taglib.ScrumTagLib</resource>
+    <resource>org.icescrum.core.taglib.TableTagLib</resource>
+    <resource>org.icescrum.core.taglib.ThemeTagLib</resource>
+    <resource>org.icescrum.core.taglib.TimelineTagLib</resource>
+    <resource>org.icescrum.core.taglib.TooltipTagLib</resource>
+    <resource>org.icescrum.core.taglib.WindowTagLib</resource>
+    <resource>NL2BRCodec</resource>
+    <resource>org.icescrum.core.support.MenuBarSupport</resource>
+  </resources>
+  <dependencies />
+  <behavior />
+</plugin>
