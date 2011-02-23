@@ -27,7 +27,7 @@ import org.codehaus.groovy.grails.commons.GrailsClassUtils
 class IcescrumCoreGrailsPlugin {
     def groupId = 'org.icescrum'
     // the plugin version
-    def version = "1.2"
+    def version = "1.2.1"
     // the version or versions of Grails the plugin is designed for
     def grailsVersion = "1.3.7 > *"
     // the other plugins this plugin depends on

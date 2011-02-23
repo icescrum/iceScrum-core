@@ -56,6 +56,7 @@ grails.project.dependency.resolution = {
 
     plugins {
       compile 'org.icescrum:fluxiable:0.3'
+      compile ':burning-image:0.5.0'
       compile 'org.icescrum:icescrum-attachmentable:0.2'
       compile 'spring:spring-security-core:1.1'
       compile 'spring:spring-security-acl:1.1'
