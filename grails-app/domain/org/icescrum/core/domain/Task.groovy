@@ -171,6 +171,9 @@ class Task extends BacklogElement implements Serializable {
         return false
     } else if (!name.equals(other.name))
       return false
+    if (id != other.id){
+        return false;
+    }
     return true
   }
 }
