@@ -26,6 +26,8 @@ package org.icescrum.core.domain
 
 import org.icescrum.core.services.SecurityService
 import org.icescrum.core.domain.preferences.TeamPreferences
+import org.icescrum.core.event.IceScrumTeamEvent
+import org.icescrum.core.event.IceScrumEvent
 
 class Team {
 
@@ -155,5 +157,18 @@ class Team {
 
   int hashCode() {
     return name.hashCode();
+  }
+
+  def springSecurityService
+  def beforeDelete(){
+      withNewSession{
+          publishEvent(new IceScrumTeamEvent(this,this.class,User.get(springSecurityService.principal?.id),IceScrumEvent.EVENT_BEFORE_DELETE))
+      }
+  }
+
+  def afterDelete(){
+      withNewSession{
+          publishEvent(new IceScrumTeamEvent(this,this.class,User.get(springSecurityService.principal?.id),IceScrumEvent.EVENT_AFTER_DELETE))
+      }
   }
 }

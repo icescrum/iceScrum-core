@@ -24,6 +24,9 @@
 
 package org.icescrum.core.domain
 
+import org.icescrum.core.event.IceScrumReleaseEvent
+import org.icescrum.core.event.IceScrumEvent
+
 class Release extends TimeBox implements Cloneable {
 
   static final long serialVersionUID = -8505932836642777504L
@@ -107,5 +110,18 @@ class Release extends TimeBox implements Cloneable {
       return sprints.asList().last().endDate
     else
       return startDate
+  }
+
+  def springSecurityService
+  def beforeDelete(){
+      withNewSession{
+          publishEvent(new IceScrumReleaseEvent(this,this.class,User.get(springSecurityService.principal?.id),IceScrumEvent.EVENT_BEFORE_DELETE))
+      }
+  }
+
+  def afterDelete(){
+      withNewSession{
+          publishEvent(new IceScrumReleaseEvent(this,this.class,User.get(springSecurityService.principal?.id),IceScrumEvent.EVENT_AFTER_DELETE))
+      }
   }
 }

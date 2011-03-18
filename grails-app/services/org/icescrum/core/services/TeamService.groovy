@@ -119,7 +119,6 @@ class TeamService {
       team.delete()
 
       securityService.unsecureDomain team
-      publishEvent(new IceScrumTeamEvent(team,this.class,User.get(springSecurityService.principal?.id),IceScrumEvent.EVENT_DELETED))
     }
 
   }

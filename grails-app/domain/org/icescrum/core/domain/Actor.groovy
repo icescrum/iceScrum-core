@@ -25,6 +25,9 @@
 
 package org.icescrum.core.domain
 
+import org.icescrum.core.event.IceScrumActorEvent
+import org.icescrum.core.event.IceScrumEvent
+
 class Actor extends BacklogElement implements Serializable, Comparable<Actor> {
 
   static final long serialVersionUID = 2762136778121132424L
@@ -119,6 +122,19 @@ class Actor extends BacklogElement implements Serializable, Comparable<Actor> {
 
   int compareTo(Actor cr) {
     return name.compareTo(cr.name)
+  }
+
+  def springSecurityService
+  def beforeDelete(){
+      withNewSession{
+          publishEvent(new IceScrumActorEvent(this,this.class,User.get(springSecurityService.principal?.id),IceScrumEvent.EVENT_BEFORE_DELETE))
+      }
+  }
+
+  def afterDelete(){
+      withNewSession{
+          publishEvent(new IceScrumActorEvent(this,this.class,User.get(springSecurityService.principal?.id),IceScrumEvent.EVENT_AFTER_DELETE))
+      }
   }
   
 }

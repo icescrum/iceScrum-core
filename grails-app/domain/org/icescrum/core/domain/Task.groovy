@@ -26,6 +26,9 @@
 
 package org.icescrum.core.domain
 
+import org.icescrum.core.event.IceScrumTaskEvent
+import org.icescrum.core.event.IceScrumEvent
+
 class Task extends BacklogElement implements Serializable {
 
   static final long serialVersionUID = -7399441592678920364L
@@ -175,5 +178,18 @@ class Task extends BacklogElement implements Serializable {
         return false;
     }
     return true
+  }
+
+  def springSecurityService
+  def beforeDelete(){
+      withNewSession{
+          publishEvent(new IceScrumTaskEvent(this,this.class,User.get(springSecurityService.principal?.id),IceScrumEvent.EVENT_BEFORE_DELETE))
+      }
+  }
+
+  def afterDelete(){
+      withNewSession{
+          publishEvent(new IceScrumTaskEvent(this,this.class,User.get(springSecurityService.principal?.id),IceScrumEvent.EVENT_AFTER_DELETE))
+      }
   }
 }

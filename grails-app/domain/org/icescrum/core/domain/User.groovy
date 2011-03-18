@@ -32,6 +32,8 @@ import org.icescrum.plugins.attachmentable.interfaces.Attachmentable
 import org.icescrum.core.domain.preferences.UserPreferences
 import org.icescrum.core.domain.security.Authority
 import org.icescrum.core.domain.security.UserAuthority
+import org.icescrum.core.event.IceScrumUserEvent
+import org.icescrum.core.event.IceScrumEvent
 
 class User implements Serializable, Attachmentable {
   static final long serialVersionUID = 813639032272976126L
@@ -120,5 +122,18 @@ class User implements Serializable, Attachmentable {
 
   int hashCode() {
     return username.hashCode()
+  }
+
+  def springSecurityService
+  def beforeDelete(){
+      withNewSession{
+          publishEvent(new IceScrumUserEvent(this,this.class,User.get(springSecurityService.principal?.id),IceScrumEvent.EVENT_BEFORE_DELETE))
+      }
+  }
+
+  def afterDelete(){
+      withNewSession{
+          publishEvent(new IceScrumUserEvent(this,this.class,User.get(springSecurityService.principal?.id),IceScrumEvent.EVENT_AFTER_DELETE))
+      }
   }
 }

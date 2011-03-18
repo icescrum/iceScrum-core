@@ -87,7 +87,6 @@ class FeatureService {
         it.save()
       }
     }
-    publishEvent(new IceScrumFeatureEvent(_feature,this.class,User.get(springSecurityService.principal?.id),IceScrumEvent.EVENT_DELETED))
   }
 
   void updateFeature(Feature _feature, Product p) {

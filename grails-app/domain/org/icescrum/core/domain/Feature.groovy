@@ -26,6 +26,9 @@
 
 package org.icescrum.core.domain
 
+import org.icescrum.core.event.IceScrumFeatureEvent
+import org.icescrum.core.event.IceScrumEvent
+
 class Feature extends BacklogElement implements Serializable {
   static final long serialVersionUID = 7072515028109185168L
 
@@ -101,6 +104,19 @@ class Feature extends BacklogElement implements Serializable {
     } else if (!backlog.equals(other.backlog))
       return false
     return true
+  }
+
+  def springSecurityService
+  def beforeDelete(){
+      withNewSession{
+          publishEvent(new IceScrumFeatureEvent(this,this.class,User.get(springSecurityService.principal?.id),IceScrumEvent.EVENT_BEFORE_DELETE))
+      }
+  }
+
+  def afterDelete(){
+      withNewSession{
+          publishEvent(new IceScrumFeatureEvent(this,this.class,User.get(springSecurityService.principal?.id),IceScrumEvent.EVENT_AFTER_DELETE))
+      }
   }
 
 }

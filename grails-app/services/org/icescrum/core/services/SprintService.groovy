@@ -174,9 +174,7 @@ class SprintService {
 
     nextSprints.each {
       release.removeFromSprints(it)
-      publishEvent(new IceScrumSprintEvent(it,this.class,User.get(springSecurityService.principal?.id),IceScrumEvent.EVENT_DELETED))
     }
-    publishEvent(new IceScrumSprintEvent(sprint,this.class,User.get(springSecurityService.principal?.id),IceScrumEvent.EVENT_DELETED))
   }
 
 

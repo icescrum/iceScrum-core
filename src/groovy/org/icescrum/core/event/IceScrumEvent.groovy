@@ -29,7 +29,8 @@ class IceScrumEvent extends ApplicationEvent {
 
   static final String EVENT_CREATED = 'Created'
   static final String EVENT_UPDATED = 'Updated'
-  static final String EVENT_DELETED = 'Deleted'
+  static final String EVENT_BEFORE_DELETE = 'beforeDelete'
+  static final String EVENT_AFTER_DELETE = 'Deleted'
 
   static final EVENT_CUD = [EVENT_CREATED,EVENT_UPDATED]
 

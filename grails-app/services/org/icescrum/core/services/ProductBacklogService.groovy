@@ -95,7 +95,6 @@ class ProductBacklogService {
     if (history){
       def u = User.get(springSecurityService.principal?.id)
       p.addActivity(u, Activity.CODE_DELETE, _item.name)
-      publishEvent(new IceScrumStoryEvent(_item,this.class,u,IceScrumStoryEvent.EVENT_DELETED))
     }
     if (_item.state != Story.STATE_SUGGESTED)
         resetRank(p, _item.rank)

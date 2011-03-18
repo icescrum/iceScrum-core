@@ -274,7 +274,6 @@ class TaskService {
      sprint.removeFromTasks(task)
      task.delete()
      clicheService.createOrUpdateDailyTasksCliche(sprint)
-     publishEvent(new IceScrumTaskEvent(task,this.class,user,IceScrumTaskEvent.EVENT_DELETED))
     }
   }
 

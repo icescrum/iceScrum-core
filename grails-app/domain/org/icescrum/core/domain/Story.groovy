@@ -29,6 +29,7 @@ package org.icescrum.core.domain
 import org.icescrum.core.event.IceScrumStoryEvent
 import org.grails.comments.Comment
 import org.icescrum.plugins.attachmentable.domain.Attachment
+import org.icescrum.core.event.IceScrumEvent
 
 class Story extends BacklogElement implements Cloneable {
 
@@ -425,5 +426,18 @@ class Story extends BacklogElement implements Cloneable {
 
   def onAddAttachment = { Attachment a ->
     publishEvent new IceScrumStoryEvent(this, a, this.class, a.poster, IceScrumStoryEvent.EVENT_FILE_ATTACHED_ADDED)
+  }
+
+  def springSecurityService
+  def beforeDelete(){
+      withNewSession{
+          publishEvent(new IceScrumStoryEvent(this,this.class,User.get(springSecurityService.principal?.id),IceScrumEvent.EVENT_BEFORE_DELETE))
+      }
+  }
+
+  def afterDelete(){
+      withNewSession{
+          publishEvent(new IceScrumStoryEvent(this,this.class,User.get(springSecurityService.principal?.id),IceScrumEvent.EVENT_AFTER_DELETE))
+      }
   }
 }

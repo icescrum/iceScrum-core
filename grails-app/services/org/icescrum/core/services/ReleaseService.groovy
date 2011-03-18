@@ -295,12 +295,9 @@ class ReleaseService {
     productBacklogService.dissociatedAllStories(re.sprints)
     p.removeFromReleases(re)
 
-    publishEvent(new IceScrumReleaseEvent(re,this.class,User.get(springSecurityService.principal?.id),IceScrumEvent.EVENT_DELETED))
-
     nextReleases.each {
       productBacklogService.dissociatedAllStories(it.sprints)
       p.removeFromReleases(it)
-      publishEvent(new IceScrumReleaseEvent(it,this.class,User.get(springSecurityService.principal?.id),IceScrumEvent.EVENT_DELETED))
     }
     p.endDate = p.releases?.min {it.orderNumber}?.endDate ?: null
   }

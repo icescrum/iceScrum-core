@@ -28,6 +28,8 @@
 package org.icescrum.core.domain
 import org.icescrum.core.domain.preferences.ProductPreferences
 import org.icescrum.core.services.SecurityService
+import org.icescrum.core.event.IceScrumEvent
+import org.icescrum.core.event.IceScrumProductEvent
 
 class Product extends TimeBox {
 
@@ -164,6 +166,19 @@ class Product extends TimeBox {
          owner[0]
       }else{
          null
+      }
+  }
+
+  def springSecurityService
+  def beforeDelete(){
+      withNewSession{
+          publishEvent(new IceScrumProductEvent(this,this.class,User.get(springSecurityService.principal?.id),IceScrumEvent.EVENT_BEFORE_DELETE))
+      }
+  }
+
+  def afterDelete(){
+      withNewSession{
+          publishEvent(new IceScrumProductEvent(this,this.class,User.get(springSecurityService.principal?.id),IceScrumEvent.EVENT_AFTER_DELETE))
       }
   }
 }

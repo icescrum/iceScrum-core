@@ -97,7 +97,6 @@ class UserService {
   boolean deleteUser(User _user) {
     try {
       _user.delete()
-      publishEvent(new IceScrumUserEvent(_user,this.class,_user,IceScrumEvent.EVENT_DELETED))
       return true
     } catch (Exception e) {
       return false

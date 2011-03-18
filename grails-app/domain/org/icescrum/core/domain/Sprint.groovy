@@ -26,6 +26,9 @@
 
 package org.icescrum.core.domain
 
+import org.icescrum.core.event.IceScrumSprintEvent
+import org.icescrum.core.event.IceScrumEvent
+
 class Sprint extends TimeBox implements Serializable {
   static final long serialVersionUID = -7022481404086376233L
 
@@ -215,4 +218,16 @@ class Sprint extends TimeBox implements Serializable {
     return tasks?.findAll{ it.type == Task.TYPE_URGENT }
   }
 
+  def springSecurityService
+  def beforeDelete(){
+      withNewSession{
+          publishEvent(new IceScrumSprintEvent(this,this.class,User.get(springSecurityService.principal?.id),IceScrumEvent.EVENT_BEFORE_DELETE))
+      }
+  }
+
+  def afterDelete(){
+      withNewSession{
+          publishEvent(new IceScrumSprintEvent(this,this.class,User.get(springSecurityService.principal?.id),IceScrumEvent.EVENT_AFTER_DELETE))
+      }
+  }
 }

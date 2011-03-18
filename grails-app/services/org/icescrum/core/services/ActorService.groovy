@@ -49,7 +49,6 @@ class ActorService {
 
   void deleteActor(Actor act) {
     act.delete()
-    publishEvent(new IceScrumActorEvent(act,this.class,User.get(springSecurityService.principal?.id),IceScrumEvent.EVENT_DELETED))
   }
 
   void updateActor(Actor act) {
