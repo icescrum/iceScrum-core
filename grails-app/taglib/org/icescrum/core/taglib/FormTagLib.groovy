@@ -26,15 +26,16 @@
 package org.icescrum.core.taglib
 
 import org.springframework.web.servlet.support.RequestContextUtils as RCU
+
 import grails.converters.JSON
 import grails.util.BuildSettingsHolder
-import org.codehaus.groovy.grails.commons.GrailsClassUtils
-import org.icescrum.components.UtilsWebComponents
 import org.codehaus.groovy.grails.commons.DomainClassArtefactHandler
-import org.springframework.context.MessageSourceResolvable
+import org.codehaus.groovy.grails.commons.GrailsClassUtils
 import org.codehaus.groovy.grails.web.util.StreamCharBuffer
-import org.springframework.beans.SimpleTypeConverter
+import org.icescrum.components.UtilsWebComponents
 import org.icescrum.core.support.ApplicationSupport
+import org.springframework.beans.SimpleTypeConverter
+import org.springframework.context.MessageSourceResolvable
 
 class FormTagLib {
 
@@ -333,7 +334,7 @@ class FormTagLib {
     ]
 
     def jqTyped = '{'+param.findAll {k, v -> v != null}.collect {k, v -> " $k:$v"}.join(',')+'}'
-    def jqCode = "\$('#${attrs.elementId}').${attrs.type}(${jqTyped});"
+    def jqCode = "\$('${attrs.elementId}').${attrs.type}(${jqTyped});"
     out << jqCode
   }
 
@@ -358,7 +359,7 @@ class FormTagLib {
 
     def jqCode = ''
     if (typedAttrs){
-      typedAttrs.elementId = attrs.id
+      typedAttrs.elementId = "#${attrs.id}"
       jqCode = is.typed(typedAttrs)
     }
     jqCode += "\$('#${attrs.id}-field').input();"
