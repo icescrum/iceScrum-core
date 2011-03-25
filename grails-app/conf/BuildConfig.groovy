@@ -67,7 +67,7 @@ grails.project.dependency.resolution = {
       compile ':spring-events:1.1'
       compile ':springcache:1.3.1'
       compile ':mail:1.0-SNAPSHOT'
-      compile ':jasper:1.2'
+      compile ':jasper:1.2.1'
       compile ':maven-publisher:0.7.5'
     }
 }
@@ -77,6 +77,6 @@ grails.project.dependency.distribution = {
         authentication username: "", password: ""
     }
     remoteRepository(id: "pluginsRelease", url: "http://repo.icescrum.org/artifactory/plugins-release-local/") {
-        authentication username: "", password: ""
+        authentication username: "admin", password: "sfo1985"
     }
 }
