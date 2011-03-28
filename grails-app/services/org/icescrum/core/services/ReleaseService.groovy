@@ -243,7 +243,7 @@ class ReleaseService {
   void activeRelease(Release _rel, Product pb) {
     def relActivated = false
     def lastRelClose = 0
-    pb.releases.eachWithIndex { r, i ->
+    pb.releases.sort{a,b -> a.orderNumber <=> b.orderNumber}.eachWithIndex { r, i ->
       if (r.state == Release.STATE_INPROGRESS)
         relActivated = true
       else if (r.state == Release.STATE_DONE)
