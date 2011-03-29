@@ -90,7 +90,7 @@ class Story extends BacklogElement implements Cloneable {
   static mapping = {
     cache true
     table 'icescrum2_story'
-    tasks cascade: 'all', cache: true
+    tasks cascade: 'all'
   }
 
   static constraints = {
