@@ -276,6 +276,14 @@ class ProductBacklogService {
           }
         }
       }
+
+      def tasks = pbi.tasks.asList()
+      if (deleteTasks){
+        for(task in tasks){
+            taskService.deleteTask(task,u,pbi.backlog)
+        }
+      }
+
       pbi.state = Story.STATE_ESTIMATED
       if(!pbi.save())
         throw new RuntimeException()
