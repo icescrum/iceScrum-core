@@ -182,6 +182,31 @@ class FormTagLib {
     out << is.select(attrs)
   }
 
+  def localeTimeZone = { attrs ->
+      def thelist = TimeZone.getAvailableIDs().sort().findAll{it.matches("^(Africa|America|Asia|Atlantic|Australia|Europe|Indian|Pacific)/.*")}
+      attrs.from = thelist
+      attrs.value = (attrs.value ? attrs.value : TimeZone.getDefault())
+      def date = new Date()
+      attrs.optionValue = {
+        TimeZone tz = TimeZone.getTimeZone(it);
+        def offset = tz.rawOffset
+        def offsetSign = offset<0?'-':'+'
+        Integer hour = Math.abs(offset / (60 * 60 * 1000));
+        Integer min = Math.abs(offset / (60 * 1000)) % 60;
+        def c = Calendar.getInstance()
+        c.set(Calendar.HOUR_OF_DAY,hour)
+        c.set(Calendar.MINUTE,min)
+        return "UTC$offsetSign${String.format('%tR', c)}, $tz.ID"
+      }
+      def id = attrs.name.replace('.', '\\\\.')
+      out << select(attrs)
+      attrs.style = UtilsWebComponents.wrap(attr: (attrs.styleSelect), doubleQuote: true)
+      attrs.remove('styleSelect')
+      def opts = attrs.findAll {k, v -> v != null}.collect {k, v -> " $k:$v" }.join(',')
+      def jqCode = " \$('#${id}').selectmenu({$opts});"
+      out << jq.jquery(null, {jqCode})
+  }
+
   def select = { attrs ->
 
     if (!UtilsWebComponents.rendered(attrs)) {

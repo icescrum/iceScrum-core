@@ -32,6 +32,8 @@ class UserPreferences {
     String language = "en"
     String activity
     String filterTask = "allTasks"
+    String timezone = TimeZone.getDefault()
+
     boolean hideDoneState = false
 
     Map menu = ["project":"1", "sandbox":"2","productBacklog":"3","timeline":"4","releasePlan":"5","sprintBacklog":"6"]
