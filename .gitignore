@@ -1,6 +1,7 @@
 *.iml
+target/
 
-ompiled source #
+# Compiled source #
 ###################
 *.com
 *.class
