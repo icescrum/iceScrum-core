@@ -27,6 +27,9 @@ class UserPreferencesMigration {
                   sql('UPDATE icescrum2_user_preferences set hide_done_state = false WHERE hide_done_state is NULL')
                   addNotNullConstraint(tableName:"icescrum2_user_preferences",columnName:'hide_done_state',columnDataType:'BOOLEAN')
               }
+            changeSet(id:'user_preferences_constraint_timezone', author:'vbarrier') {
+                  addNotNullConstraint(tableName:"icescrum2_user_preferences",columnName:'timezone',columnDataType:'varchar(255)',defaultNullValue:'UTC')
+              }
 		}
 	}
 
