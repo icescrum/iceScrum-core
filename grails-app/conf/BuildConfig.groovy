@@ -68,7 +68,7 @@ grails.project.dependency.resolution = {
       compile ':springcache:1.3.1'
       compile ':mail:1.0-SNAPSHOT'
       compile ':jasper:1.2.1'
-      compile ':maven-publisher:0.7.5'
+      compile ':maven-publisher:0.8.1'
     }
 }
 
