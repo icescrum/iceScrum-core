@@ -102,7 +102,7 @@ class KanbanTagLib {
               accept: UtilsWebComponents.wrap(attrs.droppable.accept)
       ]
       opts = droppableOptions.findAll {k, v -> v}.collect {k, v -> " $k:$v"}.join(',')
-      jqCode += " \$('.kanban > ${attrs.droppable.selector ?: 'div'}').droppable({$opts});"
+      jqCode += " \$('${attrs.droppable.selector}').droppable({$opts});"
 
     }
     out << jq.jquery(null, jqCode);
