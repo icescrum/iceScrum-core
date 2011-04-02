@@ -67,9 +67,9 @@ class KanbanTagLib {
     out << "<tbody>"
     pageScope.kanbanRows.eachWithIndex { row, indexRow ->
       if (indexRow == (maxRows - 1))
-        out << '<tr class="table-line line-last kanban-row-' + indexRow + '">'
+        out << '<tr class="table-line line-last kanban-row-' + indexRow + ' '+ (row.attrs?.'class'?row.attrs?.'class':'') +' "> '
       else
-        out << '<tr class="table-line kanban-row-' + indexRow + '">'
+        out << '<tr class="table-line kanban-row-' + indexRow + ' '+ (row.attrs?.'class'?row.attrs?.'class':'') + ' "> '
       row.columns.eachWithIndex { col, indexCol ->
         if (indexCol == 0)
           out << '<td id="'+ col.elementId +'" class="first kanban-cell kanban-row-'+indexRow+' kanban-col-'+indexCol+' '+ col.'class' +'"><div class="kanban-label">' + is.nbps(null, col?.body(row.attrs)) + '</div></td>'
@@ -93,6 +93,18 @@ class KanbanTagLib {
     // end
     out << '</table>'
 
+    // Droppable options
+    if (attrs.droppable != null && UtilsWebComponents.rendered(attrs.droppable)) {
+      def droppableOptions = [
+              drop: attrs.droppable.drop ? "function(event, ui) {${attrs.droppable.drop}}" : null,
+              hoverClass: UtilsWebComponents.wrap(attrs.droppable.hoverClass),
+              activeClass: UtilsWebComponents.wrap(attrs.droppable.activeClass),
+              accept: UtilsWebComponents.wrap(attrs.droppable.accept)
+      ]
+      opts = droppableOptions.findAll {k, v -> v}.collect {k, v -> " $k:$v"}.join(',')
+      jqCode += " \$('.kanban > ${attrs.droppable.selector ?: 'div'}').droppable({$opts});"
+
+    }
     out << jq.jquery(null, jqCode);
   }
 
