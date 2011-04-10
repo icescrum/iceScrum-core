@@ -32,7 +32,7 @@ class UserPreferences {
     String language = "en"
     String activity
     String filterTask = "allTasks"
-    String timezone = TimeZone.getDefault()
+    String timezone = TimeZone.default.ID
 
     boolean hideDoneState = false
 
