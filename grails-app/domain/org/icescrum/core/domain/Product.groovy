@@ -135,6 +135,15 @@ class Product extends TimeBox {
             "ORDER BY a.activity.dateCreated DESC", [p: currentProductInstance.id], [max: 15])
   }
 
+  static allProductsByUser(long userid, params) {
+    executeQuery("SELECT DISTINCT p " +
+            "FROM org.icescrum.core.domain.Product as p INNER JOIN p.teams as t " +
+            "WHERE t.id in" +
+            "(SELECT DISTINCT t2.id FROM org.icescrum.core.domain.Team as t2 " +
+            "INNER JOIN t2.members as m " +
+            "WHERE m.id = :uid)", [uid: userid], params ?: [:])
+  }
+
   def aclUtilService
   def getProductOwners() {
     //Only used when product is being imported

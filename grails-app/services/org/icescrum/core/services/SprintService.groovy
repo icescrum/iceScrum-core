@@ -383,18 +383,20 @@ class SprintService {
     clicheService.createOrUpdateDailyTasksCliche(sprint)
 
     sprint.cliches?.sort{a,b -> a.datePrise <=> b.datePrise}?.eachWithIndex {cliche,index ->
-        def xmlRoot = new XmlSlurper().parseText(cliche.data)
-        if (xmlRoot) {
-          lastDaycliche = cliche.datePrise
-          def currentRemaining = xmlRoot."${Cliche.REMAINING_HOURS}".toInteger()
-          if (maxHours < currentRemaining){
-            maxHours = currentRemaining
-          }
-          if ((ServicesUtils.isDateWeekend(lastDaycliche) && !sprint.parentRelease.parentProduct.preferences.hideWeekend) || !ServicesUtils.isDateWeekend(lastDaycliche))
-            values << [
-                  remainingHours: currentRemaining,
-                  label: "${g.formatDate(date:lastDaycliche,formatName:'is.date.format.short')}"
-            ]
+        if (cliche.datePrise <= sprint.closeDate){
+            def xmlRoot = new XmlSlurper().parseText(cliche.data)
+            if (xmlRoot) {
+              lastDaycliche = cliche.datePrise
+              def currentRemaining = xmlRoot."${Cliche.REMAINING_HOURS}".toInteger()
+              if (maxHours < currentRemaining){
+                maxHours = currentRemaining
+              }
+              if ((ServicesUtils.isDateWeekend(lastDaycliche) && !sprint.parentRelease.parentProduct.preferences.hideWeekend) || !ServicesUtils.isDateWeekend(lastDaycliche))
+                values << [
+                      remainingHours: currentRemaining,
+                      label: "${g.formatDate(date:lastDaycliche,formatName:'is.date.format.short')}"
+                ]
+            }
         }
     }
     if (Sprint.STATE_INPROGRESS == sprint.state){
@@ -421,15 +423,17 @@ class SprintService {
     clicheService.createOrUpdateDailyTasksCliche(sprint)
 
     sprint.cliches?.sort{a,b -> a.datePrise <=> b.datePrise}?.eachWithIndex { cliche,index ->
-        def xmlRoot = new XmlSlurper().parseText(cliche.data)
-        if (xmlRoot) {
-          lastDaycliche = cliche.datePrise
-          if ((ServicesUtils.isDateWeekend(lastDaycliche) && !sprint.parentRelease.parentProduct.preferences.hideWeekend) || !ServicesUtils.isDateWeekend(lastDaycliche))
-            values << [
-                    tasksDone: xmlRoot."${Cliche.TASKS_DONE}".toInteger(),
-                    tasks: xmlRoot."${Cliche.TOTAL_TASKS}".toInteger(),
-                    label: "${g.formatDate(date:lastDaycliche,formatName:'is.date.format.short')}"
-            ]
+        if (cliche.datePrise <= sprint.closeDate){
+            def xmlRoot = new XmlSlurper().parseText(cliche.data)
+            if (xmlRoot) {
+              lastDaycliche = cliche.datePrise
+              if ((ServicesUtils.isDateWeekend(lastDaycliche) && !sprint.parentRelease.parentProduct.preferences.hideWeekend) || !ServicesUtils.isDateWeekend(lastDaycliche))
+                values << [
+                        tasksDone: xmlRoot."${Cliche.TASKS_DONE}".toInteger(),
+                        tasks: xmlRoot."${Cliche.TOTAL_TASKS}".toInteger(),
+                        label: "${g.formatDate(date:lastDaycliche,formatName:'is.date.format.short')}"
+                ]
+            }
         }
     }
 
@@ -454,15 +458,17 @@ class SprintService {
     clicheService.createOrUpdateDailyTasksCliche(sprint)
 
     sprint.cliches?.sort{a,b -> a.datePrise <=> b.datePrise}?.eachWithIndex { cliche,index ->
-        def xmlRoot = new XmlSlurper().parseText(cliche.data)
-        if (xmlRoot) {
-          lastDaycliche = cliche.datePrise
-          if ((ServicesUtils.isDateWeekend(lastDaycliche) && !sprint.parentRelease.parentProduct.preferences.hideWeekend) || !ServicesUtils.isDateWeekend(lastDaycliche))
-            values << [
-                    storiesDone: xmlRoot."${Cliche.STORIES_DONE}".toInteger(),
-                    stories: xmlRoot."${Cliche.TOTAL_STORIES}".toInteger(),
-                    label: "${g.formatDate(date:lastDaycliche,formatName:'is.date.format.short')}"
-            ]
+        if (cliche.datePrise <= sprint.closeDate){
+            def xmlRoot = new XmlSlurper().parseText(cliche.data)
+            if (xmlRoot) {
+              lastDaycliche = cliche.datePrise
+              if ((ServicesUtils.isDateWeekend(lastDaycliche) && !sprint.parentRelease.parentProduct.preferences.hideWeekend) || !ServicesUtils.isDateWeekend(lastDaycliche))
+                values << [
+                        storiesDone: xmlRoot."${Cliche.STORIES_DONE}".toInteger(),
+                        stories: xmlRoot."${Cliche.TOTAL_STORIES}".toInteger(),
+                        label: "${g.formatDate(date:lastDaycliche,formatName:'is.date.format.short')}"
+                ]
+            }
         }
     }
 
