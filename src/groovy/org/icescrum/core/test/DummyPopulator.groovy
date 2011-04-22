@@ -181,7 +181,7 @@ class DummyPopulator {
 
         for (pbi in sp.stories) {
           i.times {
-            pbi.addToTasks(new Task(type:null,estimation:3,name:"task ${it} story : ${pbi.id}",creator:ua,responsible:ua,parentStory:pbi,backlog:sp,creationDate:new Date()))
+            pbi.addToTasks(new Task(rank:it+1,type:null,estimation:3,name:"task ${it} story : ${pbi.id}",creator:ua,responsible:ua,parentStory:pbi,backlog:sp,creationDate:new Date()))
           }
         }
 

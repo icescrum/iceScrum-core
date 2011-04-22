@@ -391,6 +391,21 @@ class ProductBacklogService {
       throw new RuntimeException()
   }
 
+   void resetRank(Story story) {
+    def stories = null
+    if (story.state == Story.STATE_ACCEPTED || story.state == Story.STATE_ESTIMATED)
+        stories = Story.findAllAcceptedOrEstimated(story.backlog.id).list(order: 'asc', sort: 'rank')
+    else if (story.state == Story.STATE_PLANNED || story.state == Story.STATE_INPROGRESS || story.state == Story.STATE_DONE){
+        stories = story.parentSprint?.stories
+    }
+    stories.each { pbi ->
+      if (pbi.rank > story.rank) {
+        pbi.rank--
+        pbi.save()
+      }
+    }
+  }
+
   @PreAuthorize('productOwner(#p) or scrumMaster(#p)')
   boolean changeRank(Story movedItem, int rank) {
     if (movedItem.rank != rank) {
@@ -421,21 +436,6 @@ class ProductBacklogService {
       return movedItem.save()
     } else {
       return false
-    }
-  }
-
-  void resetRank(Story story) {
-    def stories = null
-    if (story.state == Story.STATE_ACCEPTED || story.state == Story.STATE_ESTIMATED)
-        stories = Story.findAllAcceptedOrEstimated(story.backlog.id).list(order: 'asc', sort: 'rank')
-    else if (story.state == Story.STATE_PLANNED || story.state == Story.STATE_INPROGRESS || story.state == Story.STATE_DONE){
-        stories = story.parentSprint?.stories
-    }
-    stories.each { pbi ->
-      if (pbi.rank > story.rank) {
-        pbi.rank--
-        pbi.save()
-      }
     }
   }
 

@@ -271,6 +271,7 @@ class TaskService {
         task.parentStory.addActivity(user, 'taskDelete', task.name)
         task.parentStory.removeFromTasks(task)
       }
+     resetRank(task)
      sprint.removeFromTasks(task)
      task.delete()
      clicheService.createOrUpdateDailyTasksCliche(sprint)
@@ -316,40 +317,6 @@ class TaskService {
     }
     clicheService.createOrUpdateDailyTasksCliche(task.backlog)
     publishEvent(new IceScrumTaskEvent(task,this.class,user,IceScrumTaskEvent.EVENT_CREATED))
-  }
-
-
-  /**
-   * Delete a collection of tasks
-   * @param tasks
-   * @param _pbi
-   * @param user
-   * @param pb
-   * @return
-   */
-  boolean deleteTasks(Collection<Task> tasks, Story _pbi, User user, Product pb) {
-    tasks.each {
-      deleteTask(it, user, pb)
-    }
-    return true
-  }
-
-  /**
-   * Delete a map of tasks
-   * @param pbiTotasks
-   * @param user
-   * @param pb
-   * @return
-   */
-  boolean deleteTasks(Map pbiTotasks, User user, Product pb) {
-    def pbiMap
-    pbiTotasks.keySet().each { pbi ->
-      pbiMap = (Map) pbiTotasks.get(pbi)
-      pbiMap.each { task ->
-        deleteTask((Task)task, user, pb)
-      }
-    }
-    return true
   }
 
   /**
@@ -399,26 +366,35 @@ class TaskService {
     return true
   }
 
-  /**
-   * When a unfinished story is removed from a sprint,
-   * if it has finished tasks, those are moved to the sprint's pseudo-story
-   * @param pbis
-   * @param storyThisSprint
-   */
-  void moveFinishTasks(List pbis, Story storyThisSprint) {
-    pbis.each { Story story ->
-      // When the unfinished story is removed
-      if (!storyThisSprint.equals(story) && story.state.equals(Story.STATE_INPROGRESS)) {
-        for (int i = 0; i < story.tasks.size(); i++) {
-          def task = story.tasks.toList()[i]
-          // if finished tasks are found, they are moved to the storyThisSprint pbi
-          if (task.state.equals(Task.STATE_DONE)) {
-            storyThisSprint.addToTasks(task)
-            task.save()
-            story.tasks.remove(task)
-            i--
-          }
-        }
+  void setRank(Task task, int rank) {
+    def container
+    if (task.parentStory){
+      container = task.parentStory
+    }else{
+      container = task.backlog
+    }
+    container.tasks.findAll{it.type == task.type && it.state == task.state}?.each { t ->
+      if (t.rank >= rank) {
+        t.rank++
+        t.save()
+      }
+    }
+    task.rank = rank
+    if(!task.save())
+      throw new RuntimeException()
+  }
+
+   void resetRank(Task task) {
+    def container
+    if (task.parentStory){
+     container = task.parentStory
+    }else{
+     container = task.backlog
+    }
+    container.tasks.findAll{it.type == task.type && it.state == task.state}.each { t ->
+      if (t.rank > task.rank) {
+        t.rank--
+        t.save()
       }
     }
   }
@@ -427,7 +403,6 @@ class TaskService {
     def container
     if (movedItem.parentStory){
       container = movedItem.parentStory
-
     }else{
       container = movedItem.backlog
     }
