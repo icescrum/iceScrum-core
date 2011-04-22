@@ -149,7 +149,8 @@ class ProductBacklogService {
       story.effort = null
       story.estimatedDate = null
     } else {
-      story.state = Story.STATE_ESTIMATED
+      if (story.state == Story.STATE_ACCEPTED)
+        story.state = Story.STATE_ESTIMATED
       story.effort = estimation.toInteger()
       story.estimatedDate = new Date()
     }
