@@ -17,10 +17,10 @@
  *
  * Authors:
  *
- * Vincent Barrier (vincent.barrier@icescrum.com)
+ * Vincent Barrier (vbarrier@kagilum.com)
  * Damien Vitrac (damien@oocube.com)
  * Manuarii Stein (manuarii.stein@icescrum.com)
- * Stephane Maldini (vincent.barrier@icescrum.com)
+ * Stephane Maldini (vbarrier@kagilum.com)
  */
 
 package org.icescrum.core.taglib

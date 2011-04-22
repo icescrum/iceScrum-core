@@ -17,7 +17,7 @@
 *
 * Authors:
 *
-* Vincent Barrier (vincent.barrier@icescrum.com)
+* Vincent Barrier (vbarrier@kagilum.com)
 */
 import org.icescrum.components.UiControllerArtefactHandler
 import org.springframework.context.ApplicationContext

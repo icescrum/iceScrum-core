@@ -19,7 +19,7 @@ package org.icescrum.core.utils
  *
  * Authors:
  *
- * Vincent Barrier (vincent.barrier@icescrum.com)
+ * Vincent Barrier (vbarrier@kagilum.com)
  */
 
 class ServicesUtils {
