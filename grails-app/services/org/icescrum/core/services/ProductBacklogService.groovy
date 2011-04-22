@@ -97,7 +97,7 @@ class ProductBacklogService {
       p.addActivity(u, Activity.CODE_DELETE, _item.name)
     }
     if (_item.state != Story.STATE_SUGGESTED)
-        resetRank(p, _item.rank)
+        resetRank(_item)
   }
 
   @PreAuthorize('productOwner() or scrumMaster()')
@@ -193,9 +193,10 @@ class ProductBacklogService {
 
     // If the story was already in a sprint, it is dissociated beforehand
     if (story.parentSprint != null) {
-      resetRank(story.parentSprint, story.rank)
       //Shift to next Sprint (no delete tasks)
       dissociateStory(story.parentSprint, story, false)
+    }else{
+        resetRank(story)
     }
 
     def user = User.get(springSecurityService.principal?.id)
@@ -221,11 +222,9 @@ class ProductBacklogService {
       story.plannedDate = new Date()
     }
 
-    // Shift the other story rank
-    resetRank(story.backlog, story.rank)
-
+    sprint.addToStories(story)
     // Change the story rank in the sprint (placed at the end)
-    story.rank = (sprint.stories.findAll {it.state != Story.STATE_DONE}?.size() ?: 0) + 1
+    setRank(story,(sprint.stories.findAll {it.state != Story.STATE_DONE}?.size() ?: 1))
 
     story.tasks.findAll {it.state == Task.STATE_WAIT}.each{
       it.backlog = sprint
@@ -233,8 +232,6 @@ class ProductBacklogService {
 
     if(!story.save())
       throw new RuntimeException()
-
-    sprint.addToStories(story)
 
     // Calculate the velocity of the sprint
     if (sprint.state == Sprint.STATE_WAIT)
@@ -255,6 +252,7 @@ class ProductBacklogService {
    */
   void dissociateStory(Sprint _sprint, Story pbi, Boolean deleteTasks = true) {
     if (pbi.state != Story.STATE_DONE) {
+      resetRank(pbi)
       _sprint.removeFromStories(pbi)
       pbi.parentSprint = null
 
@@ -288,6 +286,7 @@ class ProductBacklogService {
       pbi.state = Story.STATE_ESTIMATED
       if(!pbi.save())
         throw new RuntimeException()
+
       setRank(pbi, 1)
 
       publishEvent(new IceScrumStoryEvent(pbi,this.class,User.get(springSecurityService.principal?.id),IceScrumStoryEvent.EVENT_UNPLANNED))
@@ -375,7 +374,13 @@ class ProductBacklogService {
   }
 
   void setRank(Story story, int rank) {
-    story?.backlog?.stories?.findAll {it.state == Story.STATE_ACCEPTED || it.state == Story.STATE_ESTIMATED}?.each { pbi ->
+    def stories = null
+      if (story.state == Story.STATE_ACCEPTED || story.state == Story.STATE_ESTIMATED)
+        stories = Story.findAllAcceptedOrEstimated(story.backlog.id).list(order: 'asc', sort: 'rank')
+      else if (story.state == Story.STATE_PLANNED || story.state == Story.STATE_INPROGRESS || story.state == Story.STATE_DONE){
+        stories = story.parentSprint?.stories
+      }
+    stories?.each { pbi ->
       if (pbi.rank >= rank) {
         pbi.rank++
         pbi.save()
@@ -387,28 +392,25 @@ class ProductBacklogService {
   }
 
   @PreAuthorize('productOwner(#p) or scrumMaster(#p)')
-  boolean changeRank(Product product, Story movedItem, int rank) {
-
-    //For re-init corrupted rank
-    if (movedItem.rank <= 0){
-      def stories = product.stories.findAll{it.state == Story.STATE_ACCEPTED || it.state == Story.STATE_ESTIMATED}.sort({ a, b -> a.rank <=> b.rank } as Comparator)
-      stories.eachWithIndex {it,index ->
-        it.rank = index + 1
-        it.save()
-      }
-    }
-
-
+  boolean changeRank(Story movedItem, int rank) {
     if (movedItem.rank != rank) {
+
+      def stories = null
+      if (movedItem.state == Story.STATE_ACCEPTED || movedItem.state == Story.STATE_ESTIMATED)
+        stories = Story.findAllAcceptedOrEstimated(movedItem.backlog.id).list(order: 'asc', sort: 'rank')
+      else if (movedItem.state == Story.STATE_PLANNED || movedItem.state == Story.STATE_INPROGRESS || movedItem.state == Story.STATE_DONE){
+        stories = movedItem.parentSprint.stories
+      }
+
       if (movedItem.rank > rank) {
-        Story.findAllAcceptedOrEstimated(product.id).list(order: 'asc', sort: 'rank').each {it ->
+        stories.each {it ->
           if (it.rank >= rank && it.rank <= movedItem.rank && it != movedItem) {
             it.rank = it.rank + 1
             it.save()
           }
         }
       } else {
-        Story.findAllAcceptedOrEstimated(product.id).list(order: 'asc', sort: 'rank').each {it ->
+        stories.each {it ->
           if (it.rank <= rank && it.rank >= movedItem.rank && it != movedItem) {
             it.rank = it.rank - 1
             it.save()
@@ -422,18 +424,15 @@ class ProductBacklogService {
     }
   }
 
-  void resetRank(Product product, int newPbiRank) {
-    product.stories.findAll {it.state == Story.STATE_ACCEPTED || it.state == Story.STATE_ESTIMATED}.each { pbi ->
-      if (pbi.rank > newPbiRank) {
-        pbi.rank--
-        pbi.save()
-      }
+  void resetRank(Story story) {
+    def stories = null
+    if (story.state == Story.STATE_ACCEPTED || story.state == Story.STATE_ESTIMATED)
+        stories = Story.findAllAcceptedOrEstimated(story.backlog.id).list(order: 'asc', sort: 'rank')
+    else if (story.state == Story.STATE_PLANNED || story.state == Story.STATE_INPROGRESS || story.state == Story.STATE_DONE){
+        stories = story.parentSprint?.stories
     }
-  }
-
-  void resetRank(Sprint sprint, int newPbiRank) {
-    sprint.stories.each { pbi ->
-      if (pbi.rank > newPbiRank) {
+    stories.each { pbi ->
+      if (pbi.rank > story.rank) {
         pbi.rank--
         pbi.save()
       }
@@ -546,7 +545,7 @@ class ProductBacklogService {
       story.parentSprint.velocity += story.effort
 
       //Move story to last rank in sprint
-      changeRank((Product)story.backlog, story, story.parentSprint.stories.size() + 1)
+      changeRank(story, story.parentSprint.stories.size())
 
       if (story.save()){
         def u = User.get(springSecurityService.principal?.id)
@@ -587,7 +586,7 @@ class ProductBacklogService {
       story.parentSprint.velocity -= story.effort
 
       //Move story to last rank of in progress stories in sprint
-      changeRank((Product)story.backlog, story, story.parentSprint.stories.findAll{it.state == Story.STATE_INPROGRESS}.size() + 1)
+      changeRank(story, story.parentSprint.stories.findAll{it.state == Story.STATE_INPROGRESS}.size() + 1)
 
       if (story.save()){
         def u = User.get(springSecurityService.principal?.id)

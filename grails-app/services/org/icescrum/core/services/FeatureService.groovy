@@ -129,17 +129,17 @@ class FeatureService {
     return itemsDone / items
   }
 
-  boolean changeRank(Product product, Feature movedItem, int rank) {
+  boolean changeRank(Feature movedItem, int rank) {
       if (movedItem.rank != rank){
         if(movedItem.rank > rank){
-            product.features.sort().each{it ->
+            movedItem.backlog.features.sort().each{it ->
             if(it.rank >= rank && it.rank <= movedItem.rank && it != movedItem){
               it.rank = it.rank + 1
               it.save()
             }
           }
         }else{
-          product.features.sort().each{it ->
+          movedItem.backlog.features.sort().each{it ->
             if(it.rank <= rank && it.rank >= movedItem.rank && it != movedItem){
               it.rank = it.rank - 1
               it.save()

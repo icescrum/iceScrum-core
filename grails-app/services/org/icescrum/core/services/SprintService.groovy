@@ -334,33 +334,6 @@ class SprintService {
     clicheService.createOrUpdateDailyTasksCliche(sprint)
   }
 
-  boolean changeRank(Sprint sprint, Story movedItem, int rank) {
-    if (movedItem.rank != rank) {
-      if (movedItem.rank > rank) {
-        sprint.stories.each {it ->
-          if (it.rank >= rank && it.rank <= movedItem.rank && it != movedItem) {
-            it.rank = it.rank + 1
-            it.save()
-          }
-        }
-      } else {
-        sprint.stories.each {it ->
-          if (it.rank <= rank && it.rank >= movedItem.rank && it != movedItem) {
-            it.rank = it.rank - 1
-            it.save()
-          }
-        }
-      }
-      movedItem.rank = rank
-      if (movedItem.save())
-        return true
-      else
-        return false
-    } else {
-      return false
-    }
-  }
-
   void updateDoneDefinition(Sprint sprint) {
     if(!sprint.save()){
       throw new RuntimeException()
