@@ -430,7 +430,6 @@ class FormTagLib {
               image: '\''+grailsApplication.config.grails.serverURL+'/'+is.currentThemeImage()+'buttons/choose-'+RCU.getLocale(request)+'.png\'',
               size:attrs.size?:null,
               multi:attrs.multi?:null,
-              maxFiles:attrs.maxFiles?:null,
               onUploadComplete:attrs.onUploadComplete?'function(fileID){'+attrs.onUploadComplete+'}':null,
               onSelect:attrs.onSelect?'function(input,form){'+attrs.onSelect+'}':null,
               progress:progress?:null,
