@@ -66,7 +66,7 @@ class FeatureService {
 
     //We put the real rank if we need
     if(rankProvided)
-      changeRank(p,feature,rankProvided)
+      changeRank(feature,rankProvided)
 
     publishEvent(new IceScrumFeatureEvent(feature,this.class,User.get(springSecurityService.principal?.id),IceScrumEvent.EVENT_CREATED))
   }
