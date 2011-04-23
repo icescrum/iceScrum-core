@@ -356,7 +356,8 @@ class SprintService {
     clicheService.createOrUpdateDailyTasksCliche(sprint)
 
     sprint.cliches?.sort{a,b -> a.datePrise <=> b.datePrise}?.eachWithIndex {cliche,index ->
-        if (cliche.datePrise <= sprint.closeDate){
+        def date = (sprint.state == Sprint.STATE_DONE) ? sprint.closeDate : sprint.endDate
+        if (cliche.datePrise <= date){
             def xmlRoot = new XmlSlurper().parseText(cliche.data)
             if (xmlRoot) {
               lastDaycliche = cliche.datePrise
@@ -396,7 +397,8 @@ class SprintService {
     clicheService.createOrUpdateDailyTasksCliche(sprint)
 
     sprint.cliches?.sort{a,b -> a.datePrise <=> b.datePrise}?.eachWithIndex { cliche,index ->
-        if (cliche.datePrise <= sprint.closeDate){
+        def date = (sprint.state == Sprint.STATE_DONE) ? sprint.closeDate : sprint.endDate
+        if (cliche.datePrise <= date){
             def xmlRoot = new XmlSlurper().parseText(cliche.data)
             if (xmlRoot) {
               lastDaycliche = cliche.datePrise
@@ -431,7 +433,8 @@ class SprintService {
     clicheService.createOrUpdateDailyTasksCliche(sprint)
 
     sprint.cliches?.sort{a,b -> a.datePrise <=> b.datePrise}?.eachWithIndex { cliche,index ->
-        if (cliche.datePrise <= sprint.closeDate){
+        def date = (sprint.state == Sprint.STATE_DONE) ? sprint.closeDate : sprint.endDate
+        if (cliche.datePrise <= date){
             def xmlRoot = new XmlSlurper().parseText(cliche.data)
             if (xmlRoot) {
               lastDaycliche = cliche.datePrise
