@@ -586,7 +586,7 @@ class ProductBacklogService {
       story.parentSprint.velocity -= story.effort
 
       //Move story to last rank of in progress stories in sprint
-      changeRank(story, story.parentSprint.stories.findAll{it.state == Story.STATE_INPROGRESS}.size() + 1)
+      changeRank(story, story.parentSprint.stories.findAll{it.state == Story.STATE_INPROGRESS}.size())
 
       if (story.save()){
         def u = User.get(springSecurityService.principal?.id)
