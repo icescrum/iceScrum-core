@@ -89,15 +89,15 @@ class ProductBacklogService {
   void deleteStory(Story _item, Product p,boolean history = true) {
     _item.removeAllAttachments()
     _item.removeLinkByFollow(_item.id)
-    _item.delete()
+    if (_item.state != Story.STATE_SUGGESTED)
+        resetRank(_item)
     p.removeFromStories(_item)
+    _item.delete()
     p.save()
     if (history){
       def u = User.get(springSecurityService.principal?.id)
       p.addActivity(u, Activity.CODE_DELETE, _item.name)
     }
-    if (_item.state != Story.STATE_SUGGESTED)
-        resetRank(_item)
   }
 
   @PreAuthorize('productOwner() or scrumMaster()')
@@ -230,7 +230,7 @@ class ProductBacklogService {
       it.backlog = sprint
     }
 
-    if(!story.save())
+    if(!story.save(flush:true))
       throw new RuntimeException()
 
     // Calculate the velocity of the sprint
@@ -284,10 +284,10 @@ class ProductBacklogService {
       }
 
       pbi.state = Story.STATE_ESTIMATED
-      if(!pbi.save())
+      setRank(pbi, 1)
+      if(!pbi.save(flush:true))
         throw new RuntimeException()
 
-      setRank(pbi, 1)
 
       publishEvent(new IceScrumStoryEvent(pbi,this.class,User.get(springSecurityService.principal?.id),IceScrumStoryEvent.EVENT_UNPLANNED))
     } else {
@@ -450,7 +450,7 @@ class ProductBacklogService {
         pbi.effort = 1
         pbi.state = Story.STATE_ESTIMATED
       }
-      if (pbi.save()){
+      if (pbi.save(flush:true)){
         def u = User.get(springSecurityService.principal?.id)
         pbi.addActivity(u, 'acceptAs', pbi.name)
         publishEvent(new IceScrumStoryEvent(pbi,this.class,u,IceScrumStoryEvent.EVENT_ACCEPTED))
