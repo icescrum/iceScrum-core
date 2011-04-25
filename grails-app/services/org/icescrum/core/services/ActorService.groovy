@@ -44,6 +44,7 @@ class ActorService {
 
     if (!act.save())
       throw new RuntimeException()
+    p.addToActors(act)
     publishEvent(new IceScrumActorEvent(act,this.class,User.get(springSecurityService.principal?.id),IceScrumEvent.EVENT_CREATED))
   }
 

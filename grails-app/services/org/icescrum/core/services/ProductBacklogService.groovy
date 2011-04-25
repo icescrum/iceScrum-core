@@ -78,6 +78,7 @@ class ProductBacklogService {
     }
 
     if (story.save()) {
+      p.addToStories(story)
       story.addFollower(u)
       story.addActivity(u, Activity.CODE_SAVE, story.name)
       publishEvent(new IceScrumStoryEvent(story,this.class,u,IceScrumStoryEvent.EVENT_CREATED))
