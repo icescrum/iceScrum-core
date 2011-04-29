@@ -257,12 +257,13 @@ class ProductBacklogService {
       _sprint.removeFromStories(pbi)
       pbi.parentSprint = null
 
+      def u = User.get(springSecurityService.principal?.id)
+
       if (_sprint.state == Sprint.STATE_WAIT)
         _sprint.capacity = _sprint.stories?.sum { it.effort } ?: 0
 
       if (_sprint.state == Sprint.STATE_INPROGRESS){
         def tasks = pbi.tasks.asList()
-        def u = User.get(springSecurityService.principal?.id)
         for(task in tasks){
           if (task.state == Task.STATE_DONE){
             taskService.storyTaskToSprintTask(task,Task.TYPE_URGENT,u)
@@ -728,8 +729,8 @@ class ProductBacklogService {
           def t = taskService.unMarshallTask(it,p)
           if (sp){
             t.backlog = sp
+              s.addToTasks(t)
           }
-          s.addToTasks(t)
         }
 
         if (p){
