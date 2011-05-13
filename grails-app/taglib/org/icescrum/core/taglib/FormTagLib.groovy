@@ -943,9 +943,7 @@ class FormTagLib {
       ]
       out << is.input(argsInput, "")
       // out << "<input type=\"text\" id=\"datepicker-${attrs.id}\" name=\"${attrs.name}\" class=\"datePicker\" value=\"\"/>"
-
       jqCode += "\$('#datepicker-${attrs.id}').attr('readonly', true);"
-      args.dateFormat = UtilsWebComponents.wrap(message(code:'is.date.jquery'))
     } else {
       out << "<input type=\"text\" id=\"datepicker-${attrs.id}\" name=\"${attrs.name}\" class=\"datePicker\" />"
     }

@@ -279,8 +279,8 @@ class TaskService {
   }
 
   void cloneTask(Task task, User user, Product product, def clonedState = Task.STATE_WAIT){
-    if (task.state != Task.STATE_DONE){
-      throw new IllegalStateException('is.task.error.cloned.state.not.done')
+    if (task.backlog.state == Sprint.STATE_DONE){
+      throw new IllegalStateException('is.task.error.cloned.state.done')
     }
 
     def clonedTask = new Task(
