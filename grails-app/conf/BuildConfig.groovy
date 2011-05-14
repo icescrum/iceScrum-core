@@ -71,12 +71,3 @@ grails.project.dependency.resolution = {
       compile ':maven-publisher:0.8.1'
     }
 }
-
-grails.project.dependency.distribution = {
-    remoteRepository(id: "pluginsSnapshot", url: "http://repo.icescrum.org/artifactory/plugins-snapshot-local/") {
-        authentication username: "", password: ""
-    }
-    remoteRepository(id: "pluginsRelease", url: "http://repo.icescrum.org/artifactory/plugins-release-local/") {
-        authentication username: "admin", password: ""
-    }
-}
