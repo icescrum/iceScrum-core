@@ -527,7 +527,7 @@ class WindowTagLib {
 
     out << is.panelButton(
             [
-                    id: 'menu-report',
+                    id: 'menu-report'+"${attrs.id?:''}",
                     alt: attrs.text,
                     icon: 'print',
                     text: attrs.text
