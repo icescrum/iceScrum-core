@@ -16,6 +16,6 @@
  * along with iceScrum.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-class NL2BRCodec{
-static encode = { string -> string.trim().replaceAll("\n","<br>")}
+class NL2BRCodec {
+    static encode = { string -> string.trim().replaceAll("\n", "<br>")}
 }

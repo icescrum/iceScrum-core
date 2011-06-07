@@ -36,20 +36,20 @@ class UserPreferences {
 
     boolean hideDoneState = false
 
-    Map menu = ["project":"1", "sandbox":"2","productBacklog":"3","timeline":"4","releasePlan":"5","sprintBacklog":"6"]
-    Map menuHidden = ["actor":"1","feature":"2"]
+    Map menu = ["project": "1", "sandbox": "2", "backlog": "3", "timeline": "4", "releasePlan": "5", "sprintPlan": "6"]
+    Map menuHidden = ["actor": "1", "feature": "2"]
 
     static constraints = {
-      activity nullable:true
+        activity nullable: true
     }
 
 
     static belongsTo = [
-            user:User
+            user: User
     ]
 
     static mapping = {
-      cache true
-      table 'icescrum2_user_preferences'
+        cache true
+        table 'icescrum2_user_preferences'
     }
 }

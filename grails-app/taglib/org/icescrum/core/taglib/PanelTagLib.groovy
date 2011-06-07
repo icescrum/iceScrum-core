@@ -25,174 +25,174 @@ package org.icescrum.core.taglib
 import org.icescrum.components.UtilsWebComponents
 
 class PanelTagLib {
-  static namespace = 'is'
+    static namespace = 'is'
 
-  def panel = {attrs, body ->
+    def panel = {attrs, body ->
 
-    def id = attrs.id ?: "panel" + new Date().time
-    out << "<div class=\"panel-box\" id=\"${id}\">"
-    out << body()
-    out << "</div>"
+        def id = attrs.id ?: "panel" + new Date().time
+        out << "<div class=\"panel-box ${attrs.class ?: ''}\" id=\"${id}\">"
+        out << body()
+        out << "</div>"
 
-    def jqCode = "\$('#${id}').hover(function(){\$(this).addClass('panel-box-active');}, function(){\$(this).removeClass('panel-box-active');});"
-    out << jq.jquery(null, {jqCode})
-  }
-
-  def panelTitle = {attrs, body ->
-    out << "<h3 class=\"panel-box-title\" ${attrs.id ? 'id= \"'+attrs.id+'\"' : ''}>"
-    out << body()
-    out << "</h3>"
-  }
-
-  def panelLine = {attrs, body ->
-    assert pageScope.panelContext
-    if (UtilsWebComponents.rendered(attrs)) {
-      def line = { isLast ->
-        "<tr class=\"panel-line ${isLast ? "panel-line-last" : ""}\">"+
-        "<td class=\"line-left\">" + attrs.remove("legend") + "</td>"+
-        "<td class=\"line-right\">" + body() + "</td>"+
-        "</tr>"
-      }
-      pageScope.panelContext.lines << line
+        def jqCode = "\$('#${id}').hover(function(){\$(this).addClass('panel-box-active');}, function(){\$(this).removeClass('panel-box-active');});"
+        out << jq.jquery(null, {jqCode})
     }
-  }
 
-  def panelContext = {attrs, body ->
-    pageScope.panelContext = [lines:[]]
-    out << "<table cellspacing=\"0\" cellpadding=\"0\" border=\"0\" style=\"width:100%\">"
-    out << body()
-    pageScope.panelContext.lines.eachWithIndex { line, index ->
-      out << line(index == pageScope.panelContext.lines.size()-1)
+    def panelTitle = {attrs, body ->
+        out << "<h3 class=\"panel-box-title\" ${attrs.id ? 'id= \"' + attrs.id + '\"' : ''}>"
+        out << body()
+        out << "</h3>"
     }
-    out << "</table>"
-  }
 
-  def panelTabButton = {attrs, body ->
-    def id = attrs.remove("id") ?: ""
-    out << "<div id=\"${id}\" class=\"panel-tab-button clearfix\">"
-    out << body()
-    out << "</div>"
-  }
+    def panelLine = {attrs, body ->
+        assert pageScope.panelContext
+        if (UtilsWebComponents.rendered(attrs)) {
+            def line = { isLast ->
+                "<tr class=\"panel-line ${isLast ? "panel-line-last" : ""}\" ${attrs.id ? 'id="' + attrs.remove('id') + '"' : ''}>" +
+                        "<td class=\"line-left\">" + attrs.remove("legend") + "</td>" +
+                        "<td class=\"line-right\">" + body() + "</td>" +
+                        "</tr>"
+            }
+            pageScope.panelContext.lines << line
+        }
+    }
 
-  def panelTab = {attrs, body ->
-    def c = attrs.remove("selected") ? "tab-selected" : ""
-    def id = attrs.remove("id") ?: ""
+    def panelContext = {attrs, body ->
+        pageScope.panelContext = [lines: []]
+        out << "<table cellspacing=\"0\" cellpadding=\"0\" border=\"0\" style=\"width:100%\">"
+        out << body()
+        pageScope.panelContext.lines.eachWithIndex { line, index ->
+            out << line(index == pageScope.panelContext.lines.size() - 1)
+        }
+        out << "</table>"
+    }
 
-    out << "<div id=\"${id}\" class=\"panel-tab-content ${c}\">"
-    out << body()
-    out << "</div>"
-  }
+    def panelTabButton = {attrs, body ->
+        def id = attrs.remove("id") ?: ""
+        out << "<div id=\"${id}\" class=\"panel-tab-button clearfix\">"
+        out << body()
+        out << "</div>"
+    }
 
-  def wizard = {attrs, body ->
-    assert attrs.next
-    assert attrs.previous
-    assert attrs.cancel
-    assert attrs.id
-    assert attrs.controller
-    assert attrs.action
+    def panelTab = {attrs, body ->
+        def c = attrs.remove("selected") ? "tab-selected" : ""
+        def id = attrs.remove("id") ?: ""
 
-    out << "<form action='' id='${attrs.id}' method='post' class='box-form box-form-250 box-form-200-legend'>"
-    out << body()
-    out << "</form>"
+        out << "<div id=\"${id}\" class=\"panel-tab-content ${c}\">"
+        out << body()
+        out << "</div>"
+    }
 
-    def submitFunction = g.remoteFunction(
-            action: attrs.action,
-            controller: attrs.controller,
-            remote: true,
-            onSuccess: attrs.onSuccess,
-            before: attrs.before,
-            update: attrs.update,
-            params: "jQuery('#${attrs.id}').serialize()"
-    )
-    def jqCode = """\$('#${attrs.id}').isWizard({
+    def wizard = {attrs, body ->
+        assert attrs.next
+        assert attrs.previous
+        assert attrs.cancel
+        assert attrs.id
+        assert attrs.controller
+        assert attrs.action
+
+        out << "<form action='' id='${attrs.id}' method='post' class='box-form box-form-250 box-form-200-legend'>"
+        out << body()
+        out << "</form>"
+
+        def submitFunction = g.remoteFunction(
+                action: attrs.action,
+                controller: attrs.controller,
+                remote: true,
+                onSuccess: attrs.onSuccess,
+                before: attrs.before,
+                update: attrs.update,
+                params: "jQuery('#${attrs.id}').serialize()"
+        )
+        def jqCode = """\$('#${attrs.id}').isWizard({
                                     submitButton:'${message(code: attrs.submit)}',
                                     nextButton:'${message(code: attrs.next)}',
                                     previousButton:'${message(code: attrs.previous)}',
                                     cancelButton:'${message(code: attrs.cancel)}',
                                     submitFunction:function(){${submitFunction}}});"""
-    out << jq.jquery(null, jqCode)
-  }
+        out << jq.jquery(null, jqCode)
+    }
 
-  def tabs = { attrs,body ->
-     pageScope.tab = []
-     body()
+    def tabs = { attrs, body ->
+        pageScope.tab = []
+        body()
 
-     out << "<div id='${attrs.elementId}'>"
-     out << "<ul>"
-     pageScope.tab.each { t ->
-        out << "<li><a href='#${t.elementId}'>${t.title}</a></li>"
-     }
-     out << "</ul>"
-     pageScope.tab.each { t ->
-        out << "<div id='${t.elementId}' class='${t."class"?:''}'>${t.content}</div>"
-     }
-     out << "</div>"
-     out << jq.jquery(null,"\$('#${attrs.elementId}').tabs();")
-  }
+        out << "<div id='${attrs.elementId}'>"
+        out << "<ul>"
+        pageScope.tab.each { t ->
+            out << "<li><a href='#${t.elementId}'>${t.title}</a></li>"
+        }
+        out << "</ul>"
+        pageScope.tab.each { t ->
+            out << "<div id='${t.elementId}' class='${t."class" ?: ''}'>${t.content}</div>"
+        }
+        out << "</div>"
+        out << jq.jquery(null, "\$('#${attrs.elementId}').tabs();")
+    }
 
-  def tab = { attrs,body ->
-    if (pageScope.tab == null) return
-    def param = [
-      elementId:attrs.elementId,
-      title:message(code:attrs.title),
-      content:body()?:null,
-      "class":attrs."class"
-    ]
-    pageScope.tab << param
-  }
+    def tab = { attrs, body ->
+        if (pageScope.tab == null) return
+        def param = [
+                elementId: attrs.elementId,
+                title: message(code: attrs.title),
+                content: body() ?: null,
+                "class": attrs."class"
+        ]
+        pageScope.tab << param
+    }
 
-  /**
-   *
-   */
-  def panelButton = { attrs, body ->
+    /**
+     *
+     */
+    def panelButton = { attrs, body ->
 
-    assert attrs.id
+        assert attrs.id
 
-    if (UtilsWebComponents.rendered(attrs)) {
-      out << jq.jquery(null, {"\$('#${attrs.id}-list').dropmenu();"})
-      def paramsIcon = [
-              class: 'button-n dropmenu-button',
-              disabled: 'true',
-              dropmenu: 'true'
-      ]
+        if (UtilsWebComponents.rendered(attrs)) {
+            out << jq.jquery(null, {"\$('#${attrs.id}-list').dropmenu();"})
+            def paramsIcon = [
+                    class: 'button-n dropmenu-button',
+                    disabled: 'true',
+                    dropmenu: 'true'
+            ]
 
-      if (attrs.icon)
-        paramsIcon.icon = attrs.icon
+            if (attrs.icon)
+                paramsIcon.icon = attrs.icon
 
-      out << "<li class=\"navigation-item\" id=\"${attrs.id}-navigation-item\">"
-      out << "<div class=\"dropmenu\" id=\"${attrs.id}-list\">"
+            out << "<li class=\"navigation-item\" id=\"${attrs.id}-navigation-item\">"
+            out << "<div class=\"dropmenu\" id=\"${attrs.id}-list\">"
 
-      def str = attrs.text
+            def str = attrs.text
 
-      out << is.buttonNavigation(paramsIcon, str)
+            out << is.buttonNavigation(paramsIcon, str)
 
-      attrs."class" ?: ""
+            attrs."class" ?: ""
 
-      out << """<div class="dropmenu-content ui-corner-all ${attrs."class"}">
+            out << """<div class="dropmenu-content ui-corner-all ${attrs."class"}">
           ${body()}
         </div>"""
 
-      out << "</div>"
-      out << '</li>'
+            out << "</div>"
+            out << '</li>'
+        }
     }
-  }
 
-  def panelSearch = {attrs, body ->
-    assert attrs.id
+    def panelSearch = {attrs, body ->
+        assert attrs.id
 
-    out << "<li class=\"navigation-search search\" id=\"" + attrs.id + "\">"
-    out << "<a class=\"search-button\"></a>"
-    out << "<div class=\"search-content ui-corner-all\">"
-    out << "<div class=\"input-content\">"
-    out << body()
-    out << "</div>"
-    out << "</div>"
-    out << '</li>'
+        out << "<li class=\"navigation-search search\" id=\"" + attrs.id + "\">"
+        out << "<a class=\"search-button\"></a>"
+        out << "<div class=\"search-content ui-corner-all\">"
+        out << "<div class=\"input-content\">"
+        out << body()
+        out << "</div>"
+        out << "</div>"
+        out << '</li>'
 
-    out << jq.jquery(null, {"\$('#${attrs.id}').searchmenu({hover:\"search-hover\", content:\"search-content\", top:27, left:130, noWindows:true})"})
-  }
+        out << jq.jquery(null, {"\$('#${attrs.id}').searchmenu({hover:\"search-hover\", content:\"search-content\", top:27, left:130, noWindows:true})"})
+    }
 
-  def chartView = { attrs, body ->
-    out << "<div class=\"view-chart\">${body()}</div>"
-  }
+    def chartView = { attrs, body ->
+        out << "<div class=\"view-chart\">${body()}</div>"
+    }
 }

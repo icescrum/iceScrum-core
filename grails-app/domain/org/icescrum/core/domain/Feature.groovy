@@ -30,93 +30,94 @@ import org.icescrum.core.event.IceScrumFeatureEvent
 import org.icescrum.core.event.IceScrumEvent
 
 class Feature extends BacklogElement implements Serializable {
-  static final long serialVersionUID = 7072515028109185168L
+    static final long serialVersionUID = 7072515028109185168L
 
-  static final int TYPE_FUNCTIONAL = 0
-  static final int TYPE_ARCHITECTURAL = 1
+    static final int TYPE_FUNCTIONAL = 0
+    static final int TYPE_ARCHITECTURAL = 1
 
-  String color = "blue"
-  
-  Integer value = null
-  int type = Feature.TYPE_FUNCTIONAL
-  int rank
+    String color = "blue"
 
-  static transients = ['countFinishedStories']
+    Integer value = null
+    int type = Feature.TYPE_FUNCTIONAL
+    int rank
 
-  static belongsTo = [
-          parentDomain: Domain
-  ]
-  
-  static hasMany = [stories: Story]
+    static transients = ['countFinishedStories']
 
-  static mappedBy = [stories: "feature"]
+    static belongsTo = [
+            parentDomain: Domain
+    ]
 
-  static mapping = {
-    cache true
-    table 'icescrum2_feature'
-    stories cascade: "refresh", sort: 'rank', 'name':'asc', cache: true
-    sort "id"    
-  }
+    static hasMany = [stories: Story]
 
-  static constraints = {
-    parentDomain(nullable:true)
-    value(nullable:true)
-  }
+    static mappedBy = [stories: "feature"]
 
-  static namedQueries = {
+    static mapping = {
+        cache true
+        table 'icescrum2_feature'
+        stories cascade: "refresh", sort: 'rank', 'name': 'asc', cache: true
+        sort "id"
+    }
 
-    findInAll{p, term ->
-      backlog {
-          eq 'id', p
-        }
-        or {
-          ilike 'name', term
-          ilike 'description', term
-          ilike 'notes', term
+    static constraints = {
+        parentDomain(nullable: true)
+        value(nullable: true)
+    }
+
+    static namedQueries = {
+
+        findInAll {p, term ->
+            backlog {
+                eq 'id', p
+            }
+            or {
+                ilike 'name', term
+                ilike 'description', term
+                ilike 'notes', term
+            }
         }
     }
-  }
 
-  int hashCode() {
-    final int prime = 31
-    int result = 1
-    result = prime * result + ((!name) ? 0 : name.hashCode())
-    result = prime * result + ((!backlog) ? 0 : backlog.hashCode())
-    return result
-  }
+    int hashCode() {
+        final int prime = 31
+        int result = 1
+        result = prime * result + ((!name) ? 0 : name.hashCode())
+        result = prime * result + ((!backlog) ? 0 : backlog.hashCode())
+        return result
+    }
 
-  boolean equals(Object obj) {
-    if (this.is(obj))
-      return true
-    if (obj == null)
-      return false
-    if (getClass() != obj.getClass())
-      return false
-    final Feature other = (Feature) obj
-    if (name == null) {
-      if (other.name != null)
-        return false
-    }else if (!name.equals(other.name))
-      return false
-    if (backlog == null) {
-      if (other.backlog != null)
-        return false
-    } else if (!backlog.equals(other.backlog))
-      return false
-    return true
-  }
+    boolean equals(Object obj) {
+        if (this.is(obj))
+            return true
+        if (obj == null)
+            return false
+        if (getClass() != obj.getClass())
+            return false
+        final Feature other = (Feature) obj
+        if (name == null) {
+            if (other.name != null)
+                return false
+        } else if (!name.equals(other.name))
+            return false
+        if (backlog == null) {
+            if (other.backlog != null)
+                return false
+        } else if (!backlog.equals(other.backlog))
+            return false
+        return true
+    }
 
-  def springSecurityService
-  def beforeDelete(){
-      withNewSession{
-          publishEvent(new IceScrumFeatureEvent(this,this.class,User.get(springSecurityService.principal?.id),IceScrumEvent.EVENT_BEFORE_DELETE))
-      }
-  }
+    def springSecurityService
 
-  def afterDelete(){
-      withNewSession{
-          publishEvent(new IceScrumFeatureEvent(this,this.class,User.get(springSecurityService.principal?.id),IceScrumEvent.EVENT_AFTER_DELETE))
-      }
-  }
+    def beforeDelete() {
+        withNewSession {
+            publishEvent(new IceScrumFeatureEvent(this, this.class, User.get(springSecurityService.principal?.id), IceScrumEvent.EVENT_BEFORE_DELETE))
+        }
+    }
+
+    def afterDelete() {
+        withNewSession {
+            publishEvent(new IceScrumFeatureEvent(this, this.class, User.get(springSecurityService.principal?.id), IceScrumEvent.EVENT_AFTER_DELETE))
+        }
+    }
 
 }

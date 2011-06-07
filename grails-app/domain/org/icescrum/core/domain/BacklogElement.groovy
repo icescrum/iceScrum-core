@@ -32,43 +32,43 @@ import org.grails.followable.Followable
 
 abstract class BacklogElement implements Fluxiable, Attachmentable, Commentable, Followable {
 
-  static final long serialVersionUID = -6800252500987149051L
+    static final long serialVersionUID = -6800252500987149051L
 
-  String description
-  String notes
-  String name
-  Date dateCreated
-  Date lastUpdated
-  Date creationDate = new Date()
-  int idFromImport
+    String description
+    String notes
+    String name
+    Date dateCreated
+    Date lastUpdated
+    Date creationDate = new Date()
+    int idFromImport
 
-  static transients = ['idFromImport']
+    static transients = ['idFromImport']
 
-  TimeBox backlog
+    TimeBox backlog
 
-  static belongsTo = [backlog: TimeBox]
+    static belongsTo = [backlog: TimeBox]
 
 
-  static constraints = {
-    description(maxSize: 3000, nullable:true)
-    notes (maxSize: 5000, nullable:true)
-    name(blank:false,unique:'backlog',maxSize:100)
-  }
-
-  static mapping = {
-    cache true
-    table 'icescrum2_backlogelement'
-    description length: 3000
-    notes length: 5000
-    backlog index:'be_name_index'
-    name index:'be_name_index'
-    tablePerHierarchy false
-    backlog lazy : true
-  }
-
-  def beforeDelete = {
-    withNewSession{
-      this.removeAllAttachments()
+    static constraints = {
+        description(maxSize: 3000, nullable: true)
+        notes(maxSize: 5000, nullable: true)
+        name(blank: false, unique: 'backlog', maxSize: 100)
     }
-  }
+
+    static mapping = {
+        cache true
+        table 'icescrum2_backlogelement'
+        description length: 3000
+        notes length: 5000
+        backlog index: 'be_name_index'
+        name index: 'be_name_index'
+        tablePerHierarchy false
+        backlog lazy: true
+    }
+
+    def beforeDelete = {
+        withNewSession {
+            this.removeAllAttachments()
+        }
+    }
 }

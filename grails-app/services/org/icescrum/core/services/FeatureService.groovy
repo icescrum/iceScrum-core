@@ -38,157 +38,166 @@ import org.icescrum.core.event.IceScrumFeatureEvent
 
 class FeatureService {
 
-   FeatureService() {
-      GroovyDynamicMethodsInterceptor i = new GroovyDynamicMethodsInterceptor(this)
-      i.addDynamicMethodInvocation(new BindDynamicMethod())
-   }
-
-  static transactional = true
-  def productService
-  def springSecurityService
-
-  void saveFeature(Feature feature, Product p) {
-
-    feature.name = feature.name.trim()
-
-    def rankProvided = null
-    if (feature.rank != null)
-      rankProvided = feature.rank
-
-    //We force last rank (if another rank has benn provide we will update it below    
-    feature.rank = p.features?.size() + 1
-
-    feature.backlog = p
-    if (!feature.save()){
-      throw new RuntimeException()
+    FeatureService() {
+        GroovyDynamicMethodsInterceptor i = new GroovyDynamicMethodsInterceptor(this)
+        i.addDynamicMethodInvocation(new BindDynamicMethod())
     }
-    p.addToFeatures(feature).save()
 
-    //We put the real rank if we need
-    if(rankProvided)
-      changeRank(feature,rankProvided)
+    static transactional = true
+    def productService
+    def springSecurityService
 
-    publishEvent(new IceScrumFeatureEvent(feature,this.class,User.get(springSecurityService.principal?.id),IceScrumEvent.EVENT_CREATED))
-  }
+    void save(Feature feature, Product p) {
 
-  void deleteFeature(Feature _feature, Product p) {
+        feature.name = feature.name.trim()
 
-    def stillHasPbi = p.stories.any {it.feature?.id == _feature.id}
-    if(stillHasPbi)
-      throw new RuntimeException()
+        def rankProvided = null
+        if (feature.rank != 0)
+            rankProvided = feature.rank
 
-    def oldRank = _feature.rank
-    p.removeFromFeatures(_feature)
+        //We force last rank (if another rank has benn provide we will update it below
+        feature.rank = Feature.countByBacklog(p) + 1
 
-    //update rank on all features after that one
-    p.features.each { it ->
-      if (it.rank > oldRank) {
-        it.rank = it.rank - 1
-        it.save()
-      }
-    }
-  }
+        feature.backlog = p
 
-  void updateFeature(Feature _feature, Product p) {
-    _feature.name = _feature.name.trim()
-
-    if (!_feature.save(flush:true)){
-      throw new RuntimeException()
-    }
-    publishEvent(new IceScrumFeatureEvent(_feature,this.class,User.get(springSecurityService.principal?.id),IceScrumEvent.EVENT_UPDATED))
-  }
-
-  void copyFeatureToProductBacklog(long featureID, long userID){
-    def feature = Feature.get(featureID)
-    def story = new Story(
-            name:feature.name,
-            description:feature.description,
-            suggestedDate:new Date(),
-            acceptedDate:new Date(),
-            state:Story.STATE_ACCEPTED,
-            feature:feature,
-            creator:User.get(userID),
-            rank:Story.findAllAcceptedOrEstimated(feature.backlog.id).list().size() + 1,
-            backlog:feature.backlog
-    )
-    if(!story.save()){
-      throw new RuntimeException(story.errors.toString())
-    }
-    publishEvent(new IceScrumFeatureEvent(feature,story,this.class,User.get(springSecurityService.principal?.id),IceScrumFeatureEvent.EVENT_COPIED_AS_STORY))
-  }
-
-  double calculateFeatureCompletion(Feature _feature, Product _p, Release _r = null) {
-    def stories = Story.filterByFeature(_p, _feature, _r).list()
-
-    if (stories.size() == 0)
-      return 0d
-
-    double items = stories.size()
-    double itemsDone = stories.findAll{it.state == Story.STATE_DONE}.size()
-
-    return itemsDone / items
-  }
-
-  boolean changeRank(Feature movedItem, int rank) {
-      if (movedItem.rank != rank){
-        if(movedItem.rank > rank){
-            movedItem.backlog.features?.sort()?.each{it ->
-            if(it.rank >= rank && it.rank <= movedItem.rank && it != movedItem){
-              it.rank = it.rank + 1
-              it.save()
-            }
-          }
-        }else{
-          movedItem.backlog.features?.sort()?.each{it ->
-            if(it.rank <= rank && it.rank >= movedItem.rank && it != movedItem){
-              it.rank = it.rank - 1
-              it.save()
-            }
-          }
+        if (!feature.save()) {
+            throw new RuntimeException()
         }
-        movedItem.rank = rank
-        return movedItem.save()
-      }else{
-        return false
-      }
-  }
+        p.addToFeatures(feature).save()
 
-  def productParkingLotValues(Product product){
-      def values = []
-      product.features?.each{ it ->
-        def value = 100d * calculateFeatureCompletion(it, product)
-        values << [label:it.name, value:value]
-      }
-      return values
-  }
-
-  def releaseParkingLotValues(Release release){
-      def values = []
-      release.parentProduct.features?.each{ it ->
-        def value = 100d * calculateFeatureCompletion(it, release.parentProduct, release)
-        values << [label:it.name, value:value]
-      }
-      return values
-  }
-
-  @Transactional(readOnly = true)
-  def unMarshallFeature(NodeChild feat){
-    try{
-       def f = new Feature(
-          name: feat.name.text(),
-          description: feat.description.text(),
-          notes: feat.notes.text(),
-          color: feat.color.text(),
-          creationDate: new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(feat.creationDate.text()),
-          value: feat.value.text().toInteger(),
-          type : feat.type.text().toInteger(),
-          rank: feat.rank.text()?.toInteger()?:null,
-          idFromImport:feat.@id.text().toInteger()
-       )
-      return f
-    }catch (Exception e){
-      if (log.debugEnabled) e.printStackTrace()
-      throw new RuntimeException(e)
+        //We put the real rank if we need
+        if (rankProvided)
+            rank(feature, rankProvided)
+        broadcast(function: 'add', message: feature)
+        publishEvent(new IceScrumFeatureEvent(feature, this.class, (User) springSecurityService.currentUser, IceScrumEvent.EVENT_CREATED))
     }
-  }
+
+    void delete(Feature _feature) {
+
+        def p = _feature.backlog
+        def stillHasPbi = p.stories.any {it.feature?.id == _feature.id}
+        if (stillHasPbi)
+            throw new RuntimeException()
+
+        def oldRank = _feature.rank
+        def id = _feature.id
+
+        p.removeFromFeatures(_feature)
+
+        //update rank on all features after that one
+        p.features.each { it ->
+            if (it.rank > oldRank) {
+                it.rank = it.rank - 1
+                it.save()
+            }
+        }
+        broadcast(function: 'delete', message: [class: _feature.class, id: id])
+    }
+
+    void update(Feature _feature) {
+        _feature.name = _feature.name.trim()
+
+        if (!_feature.save(flush: true)) {
+            throw new RuntimeException()
+        }
+        broadcast(function: 'update', message: _feature)
+        publishEvent(new IceScrumFeatureEvent(_feature, this.class, (User) springSecurityService.currentUser, IceScrumEvent.EVENT_UPDATED))
+    }
+
+    def copyToBacklog(long featureID, long userID) {
+        def feature = Feature.get(featureID)
+        def story = new Story(
+                name: feature.name,
+                description: feature.description,
+                suggestedDate: new Date(),
+                acceptedDate: new Date(),
+                state: Story.STATE_ACCEPTED,
+                feature: feature,
+                creator: User.get(userID),
+                rank: (Story.countAllAcceptedOrEstimated(feature.backlog.id)?.list()[0] ?: 0) + 1,
+                backlog: feature.backlog
+        )
+        if (!story.save()) {
+            throw new RuntimeException(story.errors.toString())
+        }
+        broadcast(function: 'add', message: story)
+        publishEvent(new IceScrumFeatureEvent(feature, story, this.class, (User) springSecurityService.currentUser, IceScrumFeatureEvent.EVENT_COPIED_AS_STORY))
+        return story
+    }
+
+    double calculateCompletion(Feature _feature, Release _r = null) {
+        def stories = Story.filterByFeature(_feature.backlog, _feature, _r).list()
+
+        if (stories.size() == 0)
+            return 0d
+
+        double items = stories.size()
+        double itemsDone = stories.findAll {it.state == Story.STATE_DONE}.size()
+
+        return itemsDone / items
+    }
+
+    boolean rank(Feature movedItem, int rank) {
+        if (movedItem.rank != rank) {
+            if (movedItem.rank > rank) {
+                movedItem.backlog.features?.sort()?.each {it ->
+                    if (it.rank >= rank && it.rank <= movedItem.rank && it != movedItem) {
+                        it.rank = it.rank + 1
+                        it.save()
+                    }
+                }
+            } else {
+                movedItem.backlog.features?.sort()?.each {it ->
+                    if (it.rank <= rank && it.rank >= movedItem.rank && it != movedItem) {
+                        it.rank = it.rank - 1
+                        it.save()
+                    }
+                }
+            }
+            movedItem.rank = rank
+            broadcast(function: 'update', message: movedItem)
+            return movedItem.save() ? true : false
+        } else {
+            return false
+        }
+    }
+
+    def productParkingLotValues(Product product) {
+        def values = []
+        product.features?.each { it ->
+            def value = 100d * calculateCompletion(it)
+            values << [label: it.name, value: value]
+        }
+        return values
+    }
+
+    def releaseParkingLotValues(Release release) {
+        def values = []
+        release.parentProduct.features?.each { it ->
+            def value = 100d * calculateCompletion(it, release)
+            values << [label: it.name, value: value]
+        }
+        return values
+    }
+
+    @Transactional(readOnly = true)
+    def unMarshall(NodeChild feat) {
+        try {
+            def f = new Feature(
+                    name: feat."${'name'}".text(),
+                    description: feat.description.text(),
+                    notes: feat.notes.text(),
+                    color: feat.color.text(),
+                    creationDate: new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(feat.creationDate.text()),
+                    value: feat.value.text().toInteger(),
+                    type: feat.type.text().toInteger(),
+                    rank: feat.rank.text()?.toInteger(),
+                    idFromImport: feat.@id.text().toInteger()
+            )
+            return f
+        } catch (Exception e) {
+            if (log.debugEnabled) e.printStackTrace()
+            throw new RuntimeException(e)
+        }
+    }
 }

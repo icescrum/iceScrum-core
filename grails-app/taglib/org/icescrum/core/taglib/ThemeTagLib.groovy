@@ -24,29 +24,29 @@ package org.icescrum.core.taglib
 
 class ThemeTagLib {
 
-  static namespace = 'is'
-  def grailsApplication
+    static namespace = 'is'
+    def grailsApplication
 
-  def currentTheme = { attrs, body ->
-    def name = grailsApplication.config.icescrum.theme
-    out << name
-    name
-  }
+    def currentTheme = { attrs, body ->
+        def name = grailsApplication.config.icescrum.theme
+        out << name
+        name
+    }
 
-  def currentThemeImage = { attrs, body ->
-    def name = is.currentTheme(attrs, body)
+    def currentThemeImage = { attrs, body ->
+        def name = is.currentTheme(attrs, body)
 
-    def value = "themes/" + name + "/images/"
-    out << value
-    value
-  }
+        def value = "themes/" + name + "/images/"
+        out << value
+        value
+    }
 
-  def currentThemeCss = { attrs, body ->
-    def name = is.currentTheme(attrs, body)
-    def value = "themes/" + name + "/css/"
-    out << value
-    value
-  }
+    def currentThemeCss = { attrs, body ->
+        def name = is.currentTheme(attrs, body)
+        def value = "themes/" + name + "/css/"
+        out << value
+        value
+    }
 
-  
+
 }

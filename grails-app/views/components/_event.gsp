@@ -1,4 +1,4 @@
-<div class="event-container event-container-%{--
+%{--
   - Copyright (c) 2010 iceScrum Technologies.
   -
   - This file is part of iceScrum.
@@ -15,10 +15,12 @@
   - You should have received a copy of the GNU Lesser General Public License
   - along with iceScrum.  If not, see <http://www.gnu.org/licenses/>.
   --}%
+<div class="event-container" elemid="${elemid}">
+    <div elemid="${elemid}" class="event-header ${headerClass}" ${headerAttrs}>
+        ${header}
+    </div>
 
-${orderNumber % 2 ? "old" : "event"}" id="event-id-${id}-${orderNumber}">
-  <div class="event-header ${headerClass}"${headerAttrs}>${header}</div>
-  <div class="event-content-list ${contentClass}"${contentAttrs}>
-    ${content}
-  </div>
+    <div class="event-content-list ${contentClass}" ${contentAttrs}>
+        ${content}
+    </div>
 </div>

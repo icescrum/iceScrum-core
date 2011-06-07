@@ -31,11 +31,11 @@ class TeamPreferences {
     boolean allowRoleChange = false
 
     static belongsTo = [
-            team:Team
+            team: Team
     ]
 
     static mapping = {
-      cache true
-      table 'icescrum2_team_preferences'
+        cache true
+        table 'icescrum2_team_preferences'
     }
 }

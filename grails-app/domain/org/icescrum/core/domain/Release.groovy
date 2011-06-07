@@ -29,99 +29,100 @@ import org.icescrum.core.event.IceScrumEvent
 
 class Release extends TimeBox implements Cloneable {
 
-  static final long serialVersionUID = -8505932836642777504L
+    static final long serialVersionUID = -8505932836642777504L
 
-  static final int STATE_WAIT = 1
-  static final int STATE_INPROGRESS = 2
-  static final int STATE_DONE = 3
+    static final int STATE_WAIT = 1
+    static final int STATE_INPROGRESS = 2
+    static final int STATE_DONE = 3
 
-  int state = Release.STATE_WAIT
-  Double releaseVelocity = 0d
-  String vision = ""
-  String name = "R"
-  SortedSet<Sprint> sprints
+    int state = Release.STATE_WAIT
+    Double releaseVelocity = 0d
+    String vision = ""
+    String name = "R"
+    SortedSet<Sprint> sprints
 
-  static belongsTo = [parentProduct: Product]
+    static belongsTo = [parentProduct: Product]
 
-  static hasMany = [sprints: Sprint]
+    static hasMany = [sprints: Sprint]
 
-  static mappedBy = [sprints: 'parentRelease']
+    static mappedBy = [sprints: 'parentRelease']
 
-  static transients = ['firstDate']
+    static transients = ['firstDate']
 
-  static mapping = {
-    cache true
-    table 'icescrum2_release'
-    vision type:'text'
-    sprints cascade: 'all-delete-orphan', sort: 'id', cache: true
-    name index:'rel_name_index'
-  }
-
-  static constraints = {
-    vision nullable: true
-    name(blank: false,unique:'parentProduct')
-  }
-
-  static namedQueries = {
-    findCurrentOrNextRelease {p ->
-      parentProduct{
-        eq 'id',p
-      }
-      or {
-        eq 'state', Release.STATE_INPROGRESS
-        eq 'state', Release.STATE_WAIT
-      }
-      order("orderNumber", "asc")
-      maxResults(1)
+    static mapping = {
+        cache true
+        table 'icescrum2_release'
+        vision type: 'text'
+        sprints cascade: 'all-delete-orphan', sort: 'id', cache: true
+        name index: 'rel_name_index'
     }
-  }
 
-  int hashCode() {
-    final int prime = 31
-    int result = 1
-    result = prime * result + ((!name) ? 0 : name.hashCode())
-    result = prime * result + ((!parentProduct) ? 0 : parentProduct.hashCode())
-    return result
-  }
+    static constraints = {
+        vision nullable: true
+        name(blank: false, unique: 'parentProduct')
+    }
 
-  boolean equals(Object obj) {
-    if (this.is(obj))
-      return true
-    if (obj == null)
-      return false
-    if (getClass() != obj.getClass())
-      return false
-    final Release other = (Release) obj
-    if (name == null) {
-      if (other.name != null)
-        return false
-    } else if (name != other.name)
-      return false
-    if (parentProduct == null) {
-      if (other.parentProduct != null)
-        return false
-    } else if (!parentProduct.equals(other.parentProduct))
-      return false
-    return true
-  }
+    static namedQueries = {
+        findCurrentOrNextRelease {p ->
+            parentProduct {
+                eq 'id', p
+            }
+            or {
+                eq 'state', Release.STATE_INPROGRESS
+                eq 'state', Release.STATE_WAIT
+            }
+            order("orderNumber", "asc")
+            maxResults(1)
+        }
+    }
 
-  Date getFirstDate() {
-    if (sprints?.size() > 0)
-      return sprints.asList().last().endDate
-    else
-      return startDate
-  }
+    int hashCode() {
+        final int prime = 31
+        int result = 1
+        result = prime * result + ((!name) ? 0 : name.hashCode())
+        result = prime * result + ((!parentProduct) ? 0 : parentProduct.hashCode())
+        return result
+    }
 
-  def springSecurityService
-  def beforeDelete(){
-      withNewSession{
-          publishEvent(new IceScrumReleaseEvent(this,this.class,User.get(springSecurityService.principal?.id),IceScrumEvent.EVENT_BEFORE_DELETE))
-      }
-  }
+    boolean equals(Object obj) {
+        if (this.is(obj))
+            return true
+        if (obj == null)
+            return false
+        if (getClass() != obj.getClass())
+            return false
+        final Release other = (Release) obj
+        if (name == null) {
+            if (other.name != null)
+                return false
+        } else if (name != other.name)
+            return false
+        if (parentProduct == null) {
+            if (other.parentProduct != null)
+                return false
+        } else if (!parentProduct.equals(other.parentProduct))
+            return false
+        return true
+    }
 
-  def afterDelete(){
-      withNewSession{
-          publishEvent(new IceScrumReleaseEvent(this,this.class,User.get(springSecurityService.principal?.id),IceScrumEvent.EVENT_AFTER_DELETE))
-      }
-  }
+    Date getFirstDate() {
+        if (sprints?.size() > 0)
+            return sprints.asList().last().endDate
+        else
+            return startDate
+    }
+
+    def springSecurityService
+
+    def beforeDelete() {
+        withNewSession {
+            publishEvent(new IceScrumReleaseEvent(this, this.class, User.get(springSecurityService.principal?.id), IceScrumEvent.EVENT_BEFORE_DELETE))
+        }
+    }
+
+    def afterDelete() {
+        withNewSession {
+            publishEvent(new IceScrumReleaseEvent(this, this.class, User.get(springSecurityService.principal?.id), IceScrumEvent.EVENT_AFTER_DELETE))
+        }
+    }
 }

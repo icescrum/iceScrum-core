@@ -35,48 +35,55 @@ import org.icescrum.core.event.IceScrumActorEvent
 
 class ActorService {
 
-  static transactional = true
-  def springSecurityService
+    static transactional = true
+    def springSecurityService
 
-  void addActor(Actor act, Product p) {
-    act.name = act.name?.trim()
-    act.backlog = p
+    void save(Actor act, Product p) {
+        act.name = act.name?.trim()
+        act.backlog = p
 
-    if (!act.save())
-      throw new RuntimeException()
-    p.addToActors(act)
-    publishEvent(new IceScrumActorEvent(act,this.class,User.get(springSecurityService.principal?.id),IceScrumEvent.EVENT_CREATED))
-  }
-
-  void deleteActor(Actor act) {
-    act.delete()
-  }
-
-  void updateActor(Actor act) {
-    act.name = act.name?.trim()
-    if (!act.save(flush:true))
-      throw new RuntimeException()
-    publishEvent(new IceScrumActorEvent(act,this.class,User.get(springSecurityService.principal?.id),IceScrumEvent.EVENT_UPDATED))
-  }
-
-  @Transactional(readOnly = true)
-  def unMarshallActor(NodeChild actor){
-    try{
-       def a = new Actor(
-            name:actor.name.text(),
-            description:actor.description.text(),
-            notes:actor.notes.text(),
-            creationDate:new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(actor.creationDate.text()),
-            instances:(actor.instances.text().isNumber())?actor.instances.text().toInteger():0,
-            useFrequency:(actor.useFrequency.text().isNumber())?actor.useFrequency.text().toInteger():2,
-            expertnessLevel:(actor.expertnessLevel.text().isNumber())?actor.expertnessLevel.text().toInteger():1,
-            satisfactionCriteria:actor.satisfactionCriteria.text(),
-            idFromImport:actor.@id.text().toInteger()
-       )
-      return a
-    }catch (Exception e){
-      if (log.debugEnabled) e.printStackTrace()
-      throw new RuntimeException(e)
+        if (!act.save(flush: true))
+            throw new RuntimeException()
+        p.addToActors(act)
+        broadcast(function: 'add', message: act)
+        publishEvent(new IceScrumActorEvent(act, this.class, (User) springSecurityService.currentUser, IceScrumEvent.EVENT_CREATED))
     }
-  }
+
+    void delete(Actor act) {
+        def id = act.id
+        def stillHasPbi = act.backlog.stories.any {it.actor?.id == act.id}
+        if (stillHasPbi)
+            throw new RuntimeException()
+        act.delete()
+        broadcast(function: 'delete', message: [class: act.class, id: id])
+    }
+
+    void update(Actor act) {
+        act.name = act.name?.trim()
+        if (!act.save(flush: true))
+            throw new RuntimeException()
+        broadcast(function: 'update', message: act)
+        publishEvent(new IceScrumActorEvent(act, this.class, (User) springSecurityService.currentUser, IceScrumEvent.EVENT_UPDATED))
+    }
+
+    @Transactional(readOnly = true)
+    def unMarshall(NodeChild actor) {
+        try {
+            def a = new Actor(
+                    name: actor."${'name'}".text(),
+                    description: actor.description.text(),
+                    notes: actor.notes.text(),
+                    creationDate: new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(actor.creationDate.text()),
+                    instances: (actor.instances.text().isNumber()) ? actor.instances.text().toInteger() : 0,
+                    useFrequency: (actor.useFrequency.text().isNumber()) ? actor.useFrequency.text().toInteger() : 2,
+                    expertnessLevel: (actor.expertnessLevel.text().isNumber()) ? actor.expertnessLevel.text().toInteger() : 1,
+                    satisfactionCriteria: actor.satisfactionCriteria.text(),
+                    idFromImport: actor.@id.text().toInteger()
+            )
+            return a
+        } catch (Exception e) {
+            if (log.debugEnabled) e.printStackTrace()
+            throw new RuntimeException(e)
+        }
+    }
 }

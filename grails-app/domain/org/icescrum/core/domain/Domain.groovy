@@ -23,22 +23,22 @@
 
 package org.icescrum.core.domain
 
-class Domain extends BacklogElement{
+class Domain extends BacklogElement {
 
-  static final long serialVersionUID = 3311568364163793572L
+    static final long serialVersionUID = 3311568364163793572L
 
-  String textColor = " "
-  String color = "#FFFFFF"
-  Boolean publish = true
+    String textColor = " "
+    String color = "#FFFFFF"
+    Boolean publish = true
 
-  static hasMany = [features: Feature]
+    static hasMany = [features: Feature]
 
-  static mappedBy = [features: "parentDomain"]
+    static mappedBy = [features: "parentDomain"]
 
-  static constraints = {
-  }
+    static constraints = {
+    }
 
-  static mapping = {
-    table 'icescrum2_domain'
-  }
+    static mapping = {
+        table 'icescrum2_domain'
+    }
 }

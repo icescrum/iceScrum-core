@@ -26,6 +26,7 @@
 
 
 package org.icescrum.core.domain
+
 import org.icescrum.core.domain.preferences.ProductPreferences
 import org.icescrum.core.services.SecurityService
 import org.icescrum.core.event.IceScrumEvent
@@ -33,161 +34,163 @@ import org.icescrum.core.event.IceScrumProductEvent
 
 class Product extends TimeBox {
 
-  static final long serialVersionUID = -8854429090297032383L
+    static final long serialVersionUID = -8854429090297032383L
 
-  int planningPokerGameType = PlanningPokerGame.FIBO_SUITE
-  String name = ""
-  ProductPreferences preferences
-  String pkey
+    int planningPokerGameType = PlanningPokerGame.FIBO_SUITE
+    String name = ""
+    ProductPreferences preferences
+    String pkey
 
-  static hasMany = [
-          actors: Actor,
-          features: Feature,
-          stories: Story,
-          releases: Release,
-          impediments: Impediment,
-          domains: Domain,
-          teams: Team
-  ]
+    static hasMany = [
+            actors: Actor,
+            features: Feature,
+            stories: Story,
+            releases: Release,
+            impediments: Impediment,
+            domains: Domain,
+            teams: Team
+    ]
 
-  static mappedBy = [
-          features: "backlog",
-          actors: "backlog",
-          stories: "backlog",
-          releases: "parentProduct",
-          impediments: "backlog",
-          domains: "backlog"
-  ]
+    static mappedBy = [
+            features: "backlog",
+            actors: "backlog",
+            stories: "backlog",
+            releases: "parentProduct",
+            impediments: "backlog",
+            domains: "backlog"
+    ]
 
-  static transients = [
-          'allUsers',
-          'productOwners',
-          'erasableByUser'
-  ]
+    static transients = [
+            'allUsers',
+            'productOwners',
+            'erasableByUser'
+    ]
 
-  def erasableByUser = false
-  def productOwners = null
+    def erasableByUser = false
+    def productOwners = null
 
-  static mapping = {
-    table 'icescrum2_product'
-    actors cascade: 'all-delete-orphan', batchSize: 10, cache: true
-    features cascade: 'all-delete-orphan', sort:'rank', batchSize: 10, cache: true
-    stories cascade:'all-delete-orphan', sort: 'rank', 'label':'asc', batchSize: 25, cache: true
-    domains cascade: 'all-delete-orphan', batchSize: 10, cache: true
-    releases cascade: 'all-delete-orphan', batchSize: 10, sort: 'id', cache: true
-    impediments cascade: 'all-delete-orphan', batchSize: 10, cache: true
-    pkey( index:'p_key_index')
-    name(index: 'p_name_index')
-    preferences lazy: true
-  }
-
-  static constraints = {
-    name(blank: false, maxSize:200, unique:true)
-    pkey(blank:false, maxSize:10, matches:/[A-Z][A-Z0-9]*/, unique:true)
-  }
-
-  @Override
-  int hashCode() {
-    final int prime = 31
-    int result = 1
-    result = prime * result + ((!name) ? 0 : name.hashCode())
-    return result
-  }
-
-  @Override
-  boolean equals(obj) {
-    if (this.is(obj))
-      return true
-    if (obj == null)
-      return false
-    if (getClass() != obj.getClass())
-      return false
-    final Product other = (Product) obj
-    if (name == null) {
-      if (other.name != null)
-        return false
-    } else if (!name.equals(other.name))
-      return false
-    return true
-  }
-
-  int compareTo(Product obj) {
-    return name.compareTo(obj.name);
-  }
-
-  def getAllUsers(){
-    def users = []
-    this.teams?.each{
-      if(it.members)
-        users.addAll(it.members)
+    static mapping = {
+        table 'icescrum2_product'
+        actors cascade: 'all-delete-orphan', batchSize: 10, cache: true
+        features cascade: 'all-delete-orphan', sort: 'rank', batchSize: 10, cache: true
+        stories cascade: 'all-delete-orphan', sort: 'rank', 'label': 'asc', batchSize: 25, cache: true
+        domains cascade: 'all-delete-orphan', batchSize: 10, cache: true
+        releases cascade: 'all-delete-orphan', batchSize: 10, sort: 'id', cache: true
+        impediments cascade: 'all-delete-orphan', batchSize: 10, cache: true
+        pkey(index: 'p_key_index')
+        name(index: 'p_name_index')
+        preferences lazy: true
     }
-    if (this.productOwners)
-      users.addAll(this.productOwners)
-    return users.asList().unique()
-  }
 
-  static recentActivity(Product currentProductInstance) {
-    executeQuery("SELECT DISTINCT a.activity " +
-            "FROM grails.plugin.fluxiable.ActivityLink as a, org.icescrum.core.domain.Product as p " +
-            "WHERE a.type='product' " +
-            "and p.id=a.activityRef " +
-            "and p.id=:p " +
-            "ORDER BY a.activity.dateCreated DESC", [p: currentProductInstance.id], [max: 15])
-  }
-
-  static allProductsByUser(long userid, params) {
-    executeQuery("SELECT DISTINCT p " +
-            "FROM org.icescrum.core.domain.Product as p INNER JOIN p.teams as t " +
-            "WHERE t.id in" +
-            "(SELECT DISTINCT t2.id FROM org.icescrum.core.domain.Team as t2 " +
-            "INNER JOIN t2.members as m " +
-            "WHERE m.id = :uid)", [uid: userid], params ?: [:])
-  }
-
-  def aclUtilService
-  def getProductOwners() {
-    //Only used when product is being imported
-    if (this.productOwners) {
-      this.productOwners
+    static constraints = {
+        name(blank: false, maxSize: 200, unique: true)
+        pkey(blank: false, maxSize: 10, matches: /[A-Z][A-Z0-9]*/, unique: true)
     }
-    else if(this.id) {
-      def acl = aclUtilService.readAcl(this.getClass(), this.id)
-      def productOwnersList = User.withCriteria {
-        or {
-          acl.entries.findAll {it.permission in SecurityService.productOwnerPermissions}*.sid.each {sid ->
-            eq('username', sid.principal)
-          }
+
+    @Override
+    int hashCode() {
+        final int prime = 31
+        int result = 1
+        result = prime * result + ((!name) ? 0 : name.hashCode())
+        return result
+    }
+
+    @Override
+    boolean equals(obj) {
+        if (this.is(obj))
+            return true
+        if (obj == null)
+            return false
+        if (getClass() != obj.getClass())
+            return false
+        final Product other = (Product) obj
+        if (name == null) {
+            if (other.name != null)
+                return false
+        } else if (!name.equals(other.name))
+            return false
+        return true
+    }
+
+    int compareTo(Product obj) {
+        return name.compareTo(obj.name);
+    }
+
+    def getAllUsers() {
+        def users = []
+        this.teams?.each {
+            if (it.members)
+                users.addAll(it.members)
         }
-      }
-      productOwnersList
-    }else{
-      null
+        if (this.productOwners)
+            users.addAll(this.productOwners)
+        return users.asList().unique()
     }
-  }
 
-  def getOwner() {
-      if (this.id){
-         def acl = aclUtilService.readAcl(this.getClass(), this.id)
-         def owner = User.withCriteria{
-             eq('username', acl.owner.principal)
-             maxResults(1)
-         }
-         owner[0]
-      }else{
-         null
-      }
-  }
+    static recentActivity(Product currentProductInstance) {
+        executeQuery("SELECT DISTINCT a.activity " +
+                "FROM grails.plugin.fluxiable.ActivityLink as a, org.icescrum.core.domain.Product as p " +
+                "WHERE a.type='product' " +
+                "and p.id=a.activityRef " +
+                "and p.id=:p " +
+                "ORDER BY a.activity.dateCreated DESC", [p: currentProductInstance.id], [max: 15])
+    }
 
-  def springSecurityService
-  def beforeDelete(){
-      withNewSession{
-          publishEvent(new IceScrumProductEvent(this,this.class,User.get(springSecurityService.principal?.id),IceScrumEvent.EVENT_BEFORE_DELETE))
-      }
-  }
+    static allProductsByUser(long userid, params) {
+        executeQuery("SELECT DISTINCT p " +
+                "FROM org.icescrum.core.domain.Product as p INNER JOIN p.teams as t " +
+                "WHERE t.id in" +
+                "(SELECT DISTINCT t2.id FROM org.icescrum.core.domain.Team as t2 " +
+                "INNER JOIN t2.members as m " +
+                "WHERE m.id = :uid)", [uid: userid], params ?: [:])
+    }
 
-  def afterDelete(){
-      withNewSession{
-          publishEvent(new IceScrumProductEvent(this,this.class,User.get(springSecurityService.principal?.id),IceScrumEvent.EVENT_AFTER_DELETE))
-      }
-  }
+    def aclUtilService
+
+    def getProductOwners() {
+        //Only used when product is being imported
+        if (this.productOwners) {
+            this.productOwners
+        }
+        else if (this.id) {
+            def acl = aclUtilService.readAcl(this.getClass(), this.id)
+            def productOwnersList = User.withCriteria {
+                or {
+                    acl.entries.findAll {it.permission in SecurityService.productOwnerPermissions}*.sid.each {sid ->
+                        eq('username', sid.principal)
+                    }
+                }
+            }
+            productOwnersList
+        } else {
+            null
+        }
+    }
+
+    def getOwner() {
+        if (this.id) {
+            def acl = aclUtilService.readAcl(this.getClass(), this.id)
+            def owner = User.withCriteria {
+                eq('username', acl.owner.principal)
+                maxResults(1)
+            }
+            owner[0]
+        } else {
+            null
+        }
+    }
+
+    def springSecurityService
+
+    def beforeDelete() {
+        withNewSession {
+            publishEvent(new IceScrumProductEvent(this, this.class, User.get(springSecurityService.principal?.id), IceScrumEvent.EVENT_BEFORE_DELETE))
+        }
+    }
+
+    def afterDelete() {
+        withNewSession {
+            publishEvent(new IceScrumProductEvent(this, this.class, User.get(springSecurityService.principal?.id), IceScrumEvent.EVENT_AFTER_DELETE))
+        }
+    }
 }

@@ -25,85 +25,85 @@ import org.icescrum.core.services.UserService
 
 class UserServiceTests extends GrailsUnitTestCase {
 
-  protected void setUp() {
-    super.setUp()
-    mockDomain(User)
-    mockDomain(Product)
-  }
+    protected void setUp() {
+        super.setUp()
+        mockDomain(User)
+        mockDomain(Product)
+    }
 
-  void testCheckAdmin() {
-    def userService = new UserService()
+    void testCheckAdmin() {
+        def userService = new UserService()
 
-    userService.grailsApplication = [config: [
-            icescrum2: [
-                    admin: [login: "sa", pwd: "sa"]
-            ]
-    ]]
+        userService.grailsApplication = [config: [
+                icescrum2: [
+                        admin: [login: "sa", pwd: "sa"]
+                ]
+        ]]
 
-    def u = userService.checkAdmin("sa", "sa")
+        def u = userService.checkAdmin("sa", "sa")
 
-    assertTrue "Authentication failed, not admin", u?.admin
+        assertTrue "Authentication failed, not admin", u?.admin
 
-  }
+    }
 
-  void testSaveUser() {
-    def userService = new UserService()
-    def springSecurityService = [
-            encodePassword:{return "encoded"}
-    ]
-    userService.springSecurityService = springSecurityService
+    void testSaveUser() {
+        def userService = new UserService()
+        def springSecurityService = [
+                encodePassword: {return "encoded"}
+        ]
+        userService.springSecurityService = springSecurityService
 
-    def _user = new User(
-            firstName: "Chuck",
-            lastName: "Norris",
-            username: "chuck",
-            password: "norris",
-            email: "chuck@norris.net"
-    )
+        def _user = new User(
+                firstName: "Chuck",
+                lastName: "Norris",
+                username: "chuck",
+                password: "norris",
+                email: "chuck@norris.net"
+        )
 
-    userService.grailsApplication = [config: [
-            icescrum2: [
-                    admin: [login: "sa", pwd: "sa"],
-                    users_limit: 1
-            ]
-    ]]
+        userService.grailsApplication = [config: [
+                icescrum2: [
+                        admin: [login: "sa", pwd: "sa"],
+                        users_limit: 1
+                ]
+        ]]
 
-    userService.saveUser(_user)
+        userService.save(_user)
 
-    assertTrue "Authentication failed, not admin", _user.id == 1
-    assertTrue "Password not correctly encrypted", _user.password == springSecurityService.encodePassword("norris")
+        assertTrue "Authentication failed, not admin", _user.id == 1
+        assertTrue "Password not correctly encrypted", _user.password == springSecurityService.encodePassword("norris")
 
 
-    def _user2 = new User()
-    assertTrue "Max users number unreached", UserService.MAX_USERS == userService.saveUser(_user2)
+        def _user2 = new User()
+        assertTrue "Max users number unreached", UserService.MAX_USERS == userService.save(_user2)
 
-    userService.grailsApplication.config.icescrum2.users_limit = 2
-    assertTrue "Validating fail on User", UserService.NOT_LOGIN == userService.saveUser(_user2)
+        userService.grailsApplication.config.icescrum2.users_limit = 2
+        assertTrue "Validating fail on User", UserService.NOT_LOGIN == userService.save(_user2)
 
-  }
+    }
 
-  void testUpdateUser(){
-    mockDomain User
-    mockForConstraintsTests User
-    def springSecurityService = [
-            encodePassword:{return "encoded"}
-    ]
+    void testUpdateUser() {
+        mockDomain User
+        mockForConstraintsTests User
+        def springSecurityService = [
+                encodePassword: {return "encoded"}
+        ]
 
-    def _user = new User(
-            firstName: "Chuck",
-            lastName: "Norris",
-            username: "chuck",
-            password: "norris",
-            email: "chuck@norris.net"
-    ).save()
+        def _user = new User(
+                firstName: "Chuck",
+                lastName: "Norris",
+                username: "chuck",
+                password: "norris",
+                email: "chuck@norris.net"
+        ).save()
 
-    def userService = new UserService()
-    userService.springSecurityService = springSecurityService
-    
-    assertTrue "Updating fail", UserService.SAVE_EFFECTUATED == userService.updateUser(_user)
-    assertTrue "Password altered", _user.password == "norris"
-    assertTrue "Updating without password fail", UserService.SAVE_EFFECTUATED == userService.updateUser(_user)
-    assertTrue "Updating with password fail", UserService.SAVE_EFFECTUATED == userService.updateUser(_user,"norris2")
-    assertTrue "Password updated", _user.password == springSecurityService.encodePassword("norris2")
-  }
+        def userService = new UserService()
+        userService.springSecurityService = springSecurityService
+
+        assertTrue "Updating fail", UserService.SAVE_EFFECTUATED == userService.update(_user)
+        assertTrue "Password altered", _user.password == "norris"
+        assertTrue "Updating without password fail", UserService.SAVE_EFFECTUATED == userService.update(_user)
+        assertTrue "Updating with password fail", UserService.SAVE_EFFECTUATED == userService.update(_user, "norris2")
+        assertTrue "Password updated", _user.password == springSecurityService.encodePassword("norris2")
+    }
 }

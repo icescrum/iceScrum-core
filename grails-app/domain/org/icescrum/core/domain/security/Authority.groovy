@@ -28,24 +28,24 @@ import org.icescrum.core.domain.Product
 import org.icescrum.core.domain.Team
 
 class Authority {
-  static final String ROLE_ADMIN = 'ROLE_ADMIN'
-  static final String ROLE_USER = 'ROLE_USER'
-  static final String ROLE_PERMISSION = 'ROLE_RUN_AS_PERMISSIONS_MANAGER'
+    static final String ROLE_ADMIN = 'ROLE_ADMIN'
+    static final String ROLE_USER = 'ROLE_USER'
+    static final String ROLE_PERMISSION = 'ROLE_RUN_AS_PERMISSIONS_MANAGER'
 
-  String authority
-  static mapping = {
-    cache true
-  }
+    String authority
+    static mapping = {
+        cache true
+    }
 
-  static constraints = {
-    authority blank: false, unique: true
-  }
+    static constraints = {
+        authority blank: false, unique: true
+    }
 
-  static String getAuthorityString(String authority, Team team) {
-    "${authority}_T$team.id"
-  }
+    static String getAuthorityString(String authority, Team team) {
+        "${authority}_T$team.id"
+    }
 
-  static String getAuthorityString(String authority, Product product) {
-    "${authority}_P$product.id"
-  }
+    static String getAuthorityString(String authority, Product product) {
+        "${authority}_P$product.id"
+    }
 }

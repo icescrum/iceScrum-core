@@ -26,76 +26,84 @@ package org.icescrum.core.taglib
 import org.icescrum.components.UtilsWebComponents
 
 class EventlineTagLib {
-  static namespace = 'is'
+    static namespace = 'is'
 
-  def eventline = { attrs, body ->
-    pageScope.eventLine = [
-            id:attrs.id
-    ]
-    pageScope.events = []
-    body()
-    def params = [
-            events:pageScope.events.collect { v ->
-              render(template:'/components/event',plugin:'icescrum-core', model:[
-                      id:attrs.id,
-                      orderNumber:v.orderNumber,
-                      header:v.header.content,
-                      headerClass:v.header."class",
-                      headerAttrs:v.headerAttrs,
-                      content:v.content,
-                      contentAttrs:v.contentAttrs
-              ])
-            }.join(''),
-            subEvents:pageScope.events.collect { v ->
-              "<div class=\"event-sub\" ondblclick=\"\$('.event-line-limiter').eventline('eventFocus', ${v.orderNumber-1})\">${v.title}</div>"
-            }.join('')
-    ]
-    out << g.render(template:'/components/eventline',plugin:'icescrum-core', model:params)
-    def jsParams = [
-            rootContainer:UtilsWebComponents.wrap(attrs.container),
-            eventFocus:attrs.eventFocus
-    ]
-    def opts = jsParams.findAll {k, v -> v}.collect{k, v-> " $k:$v"}.join(',')
-    def jqCode = "\$('.event-line-limiter').eventline({${opts}});"
-    out << jq.jquery(null, jqCode)
-  }
+    def eventline = { attrs, body ->
+        pageScope.events = []
+        body()
+        def titles = []
+        pageScope.events.collect {v -> titles << [title: v.title, elemid: v.elemid]}
 
-  def event = { attrs, body ->
-    pageScope.event = [
-            header:[],
-            content:'',
-            title:attrs.title,
-            contentAttrs:'',
-            orderNumber:pageScope.events?.size()+1 ?: 1
-    ]
-    body()
+        def events = ''
+        pageScope.events.eachWithIndex { v, index ->
+            events += render(template: '/components/event', plugin: 'icescrum-core', model: [
+                    id: attrs.id,
+                    header: v.header.content,
+                    headerClass: v.header."class",
+                    headerAttrs: v.headerAttrs,
+                    content: v.content,
+                    elemid: v.elemid,
+                    contentClass: index % 2 ? 'event-content-list-odd' : '',
+                    contentAttrs: v.contentAttrs
+            ])
+        }
 
-    pageScope.events << pageScope.event
-  }
-
-  def eventHeader = { attrs, body ->
-    pageScope.event.header = [
-            class:attrs."class",
-            content:body()
-    ]
-    pageScope.event.headerAttrs = attrs.findAll {k, v -> v}.collect{k, v -> "$k=\"$v\""}.join(' ')
-  }
-
-  def eventContent = { attrs, body ->
-    def jqCode = ''
-    pageScope.event.content = body()
-    if(attrs.droppable != null && UtilsWebComponents.rendered(attrs.droppable)){
-      def droppableOptions = [
-              drop:attrs.droppable.drop ? "function(event, ui) {${attrs.droppable.drop}}" : null,
-              hoverClass:UtilsWebComponents.wrap(attrs.droppable.hoverClass),
-              activeClass:UtilsWebComponents.wrap(attrs.droppable.activeClass),
-              accept:UtilsWebComponents.wrap(attrs.droppable.accept)
-      ]
-      def opts = droppableOptions.findAll {k, v -> v}.collect{k, v -> " $k:$v"}.join(',')
-      attrs.remove('droppable')
-      jqCode += "\$('#event-id-${pageScope.eventLine.id}-${pageScope.event.orderNumber} > .event-content-list').droppable({$opts});"
+        def params = [
+                events: events,
+                elemid: attrs.elemid,
+                titles: titles
+        ]
+        if (!attrs.onlyEvents) {
+            def test = g.render(template: '/components/eventline', plugin: 'icescrum-core', model: params)
+            out << g.render(template: '/components/eventline', plugin: 'icescrum-core', model: params)
+            def jsParams = [
+                    focus: attrs.focus
+            ]
+            def opts = jsParams.findAll {k, v -> v}.collect {k, v -> " $k:$v"}.join(',')
+            out << jq.jquery(null, "jQuery('${attrs.container}').eventline({${opts}});")
+        } else {
+            params.events.each {
+                out << it
+            }
+        }
     }
-    pageScope.event.content += jqCode ? jq.jquery(null, jqCode) : ''
-    pageScope.event.contentAttrs = attrs.findAll {k, v -> v}.collect{k, v -> "$k=\"$v\""}.join(' ')
-  }
+
+    def event = { attrs, body ->
+        pageScope.event = [
+                header: [],
+                content: '',
+                title: attrs.title,
+                contentAttrs: '',
+                elemid: attrs.elemid
+        ]
+        body()
+
+        pageScope.events << pageScope.event
+    }
+
+    def eventHeader = { attrs, body ->
+        pageScope.event.header = [
+                class: attrs."class",
+                content: body()
+        ]
+        pageScope.event.headerAttrs = attrs.findAll {k, v -> v}.collect {k, v -> "$k=\"$v\""}.join(' ')
+    }
+
+    def eventContent = { attrs, body ->
+        def jqCode = ''
+        pageScope.event.content = body()
+        if (attrs.droppable != null && UtilsWebComponents.rendered(attrs.droppable)) {
+            def droppableOptions = [
+                    drop: attrs.droppable.drop ? "function(event, ui) {${attrs.droppable.drop}}" : null,
+                    hoverClass: UtilsWebComponents.wrap(attrs.droppable.hoverClass),
+                    activeClass: UtilsWebComponents.wrap(attrs.droppable.activeClass),
+                    accept: UtilsWebComponents.wrap(attrs.droppable.accept)
+            ]
+            def opts = droppableOptions.findAll {k, v -> v}.collect {k, v -> " $k:$v"}.join(',')
+            jqCode += "\$('.event-container[elemid=${pageScope.event.elemid}] > .event-content-list').liveDroppable({$opts});"
+        }
+        attrs.remove('droppable')
+        pageScope.event.content += jqCode ? jq.jquery(null, jqCode) : ''
+        pageScope.event.contentAttrs = attrs.findAll {k, v -> v}.collect {k, v -> "$k=\"$v\""}.join(' ')
+    }
 }

@@ -16,7 +16,7 @@
  * along with iceScrum.  If not, see <http://www.gnu.org/licenses/>.
  *
  * Authors:
- *
+ * Vincent Barrier (vbarrier@kagilum.com)
  * Stéphane Maldini (stephane.maldini@icescrum.com)
  */
 
@@ -29,35 +29,34 @@ import org.icescrum.core.domain.security.Authority
 import org.icescrum.core.domain.security.UserAuthority
 
 class AuthorityManager {
-  static public createAppAuthorities = {ctx ->
+    static public createAppAuthorities = {ctx ->
 
-    def springSecurityService = ctx.springSecurityService
+        def springSecurityService = ctx.springSecurityService
 
-      def adminRole = new Authority(authority: Authority.ROLE_ADMIN).save()
-      def permissionRole = new Authority(authority: Authority.ROLE_PERMISSION).save()
+        def adminRole = new Authority(authority: Authority.ROLE_ADMIN).save()
+        def permissionRole = new Authority(authority: Authority.ROLE_PERMISSION).save()
 
-      def admin = new User(username: 'admin',
-              email: 'admin@icescrum.com',
-              enabled: true,
-              firstName: "--",
-              lastName: "Admin",
-              password: springSecurityService.encodePassword('adminadmin!'),
-              preferences: new UserPreferences(language: "en")
-      ).save()
+        def admin = new User(username: 'admin',
+                email: 'admin@icescrum.com',
+                enabled: true,
+                firstName: "--",
+                lastName: "Admin",
+                password: springSecurityService.encodePassword('adminadmin!'),
+                preferences: new UserPreferences(language: "en")
+        ).save()
 
-      UserAuthority.create admin, adminRole, false
-      UserAuthority.create admin, permissionRole, true
-    //permissionFactory.registerPublicPermissions(ScrumOSPermissions)
-  }
+        UserAuthority.create admin, adminRole, false
+        UserAuthority.create admin, permissionRole, true
+    }
 
-  static public initSecurity = {
+    static public initSecurity = {
 
-    def ctx = ApplicationHolder.application.mainContext
-    def securityService = ctx.securityService
-    ctx.webExpressionHandler?.securityService = securityService
-    ctx.expressionHandler?.securityService = securityService
+        def ctx = ApplicationHolder.application.mainContext
+        def securityService = ctx.securityService
+        ctx.webExpressionHandler?.securityService = securityService
+        ctx.expressionHandler?.securityService = securityService
 
-    if (Authority.count() == 0)
-      AuthorityManager.createAppAuthorities(ctx)
-  }
+        if (Authority.count() == 0)
+            AuthorityManager.createAppAuthorities(ctx)
+    }
 }

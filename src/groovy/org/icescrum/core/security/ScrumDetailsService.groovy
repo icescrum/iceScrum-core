@@ -17,6 +17,7 @@
  *
  * Authors:
  *
+ * Vincent Barrier (vbarrier@kagilum.com)
  * Stéphane Maldini (stephane.maldini@icescrum.com)
  */
 
@@ -25,37 +26,42 @@ package org.icescrum.core.security;
 
 
 import org.codehaus.groovy.grails.plugins.springsecurity.GormUserDetailsService
-import org.icescrum.core.domain.security.Authority
-import org.springframework.security.core.authority.GrantedAuthorityImpl
+
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.security.core.userdetails.UsernameNotFoundException
 import org.springframework.security.core.GrantedAuthority
-import org.springframework.transaction.support.TransactionCallback
-import org.springframework.transaction.support.TransactionTemplate
-import org.springframework.transaction.TransactionStatus
+
+import org.codehaus.groovy.grails.plugins.springsecurity.SpringSecurityUtils
+import org.springframework.security.core.authority.GrantedAuthorityImpl
+import org.icescrum.core.domain.security.Authority
 
 class ScrumDetailsService extends GormUserDetailsService {
 
 
-  UserDetails loadUserByUsername(String username, boolean loadRoles) throws UsernameNotFoundException {
-		def callback = { TransactionStatus status ->
-			loadUserFromSession(username, sessionFactory.currentSession, loadRoles)
-		}
-		new TransactionTemplate(transactionManager).execute(callback as TransactionCallback)
-	}
+    UserDetails loadUserByUsername(String username, boolean loadRoles) throws UsernameNotFoundException {
+        def conf = SpringSecurityUtils.securityConfig
+        Class<?> User = grailsApplication.getDomainClass(conf.userLookup.userDomainClassName).clazz
 
-	/**
-	 * {@inheritDoc}
-	 */
-	UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-		loadUserByUsername username, true
-	}
+        User.withTransaction { status ->
+            def user = User.findWhere((conf.userLookup.usernamePropertyName): username)
+            if (!user) {
+                log.warn "User not found: $username"
+                throw new UsernameNotFoundException('User not found', username)
+            }
+            Collection<GrantedAuthority> authorities = loadAuthorities(user, username, loadRoles)
+            authorities.add(new GrantedAuthorityImpl(Authority.ROLE_USER))
+            return new ScrumUserDetails(user.username, user.password, user.enabled,
+                    !user.accountExpired, !user.passwordExpired,
+                    !user.accountLocked, authorities ?: NO_ROLES, user.id,
+                    user.firstName + " " + user.lastName)
+        }
+    }
 
-	protected UserDetails loadUserFromSession(String username, session, boolean loadRoles) {
-		def user = loadUser(username, session)
-		Collection<GrantedAuthority> authorities = loadAuthorities(user, username, loadRoles)
-        authorities.add(new GrantedAuthorityImpl(Authority.ROLE_USER))
-		createUserDetails user, authorities
-	}
+    /**
+     * {@inheritDoc}
+     */
+    UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        loadUserByUsername username, true
+    }
 
 }

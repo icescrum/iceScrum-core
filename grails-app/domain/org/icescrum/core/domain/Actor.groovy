@@ -30,111 +30,112 @@ import org.icescrum.core.event.IceScrumEvent
 
 class Actor extends BacklogElement implements Serializable, Comparable<Actor> {
 
-  static final long serialVersionUID = 2762136778121132424L
+    static final long serialVersionUID = 2762136778121132424L
 
-  static final int NUMBER_INSTANCES_INTERVAL_1 = 0
-  static final int NUMBER_INSTANCES_INTERVAL_2 = 1
-  static final int NUMBER_INSTANCES_INTERVAL_3 = 2
-  static final int NUMBER_INSTANCES_INTERVAL_4 = 3
-  static final int NUMBER_INSTANCES_INTERVAL_5 = 4
+    static final int NUMBER_INSTANCES_INTERVAL_1 = 0
+    static final int NUMBER_INSTANCES_INTERVAL_2 = 1
+    static final int NUMBER_INSTANCES_INTERVAL_3 = 2
+    static final int NUMBER_INSTANCES_INTERVAL_4 = 3
+    static final int NUMBER_INSTANCES_INTERVAL_5 = 4
 
-  static final int EXPERTNESS_LEVEL_LOW = 0
-  static final int EXPERTNESS_LEVEL_MEDIUM = 1
-  static final int EXPERTNESS_LEVEL_HIGH = 2
+    static final int EXPERTNESS_LEVEL_LOW = 0
+    static final int EXPERTNESS_LEVEL_MEDIUM = 1
+    static final int EXPERTNESS_LEVEL_HIGH = 2
 
-  static final int USE_FREQUENCY_HOUR = 0
-  static final int USE_FREQUENCY_DAY = 1
-  static final int USE_FREQUENCY_WEEK = 2
-  static final int USE_FREQUENCY_MONTH = 3
-  static final int USE_FREQUENCY_TRIMESTER = 4
+    static final int USE_FREQUENCY_HOUR = 0
+    static final int USE_FREQUENCY_DAY = 1
+    static final int USE_FREQUENCY_WEEK = 2
+    static final int USE_FREQUENCY_MONTH = 3
+    static final int USE_FREQUENCY_TRIMESTER = 4
 
-  String satisfactionCriteria = ""
+    String satisfactionCriteria = ""
 
-  int instances = Actor.NUMBER_INSTANCES_INTERVAL_1
-  int expertnessLevel = Actor.EXPERTNESS_LEVEL_MEDIUM
-  int useFrequency = Actor.USE_FREQUENCY_WEEK
+    int instances = Actor.NUMBER_INSTANCES_INTERVAL_1
+    int expertnessLevel = Actor.EXPERTNESS_LEVEL_MEDIUM
+    int useFrequency = Actor.USE_FREQUENCY_WEEK
 
 
-  static hasMany = [stories: Story]
+    static hasMany = [stories: Story]
 
-  static mappedBy = [stories: "actor"]
+    static mappedBy = [stories: "actor"]
 
-  static mapping = {
-    cache true
-    table 'icescrum2_actor'
-    stories cascade: "refresh, evict", cache: true
-  }
-
-  static constraints = {
-    satisfactionCriteria(nullable:true)
-  }
-
-  static namedQueries = {
-    findActorByProductAndTerm { pid, term ->
-      backlog {
-          eq 'id', pid
-      }
-      or {
-        ilike 'name', term
-        ilike 'description', term
-        ilike 'notes', term
-      }
+    static mapping = {
+        cache true
+        table 'icescrum2_actor'
+        stories cascade: "refresh, evict", cache: true
     }
-  }
 
-  @Override
-  boolean equals(Object obj) {
-    if (this.is(obj))
-      return true
-    if (obj == null)
-      return false
-    if (getClass() != obj.getClass())
-      return false
-    final Actor other = (Actor) obj
-    if (backlog == null) {
-      if (other.backlog != null)
-        return false
-    } else if (!backlog.equals(other.backlog))
-      return false
-    if (name != other.name)
-      return false
-    if (instances != other.instances)
-      return false
-    if (description != other.description)
-      return false
-    if (satisfactionCriteria != other.satisfactionCriteria)
-      return false
-    if (expertnessLevel != other.expertnessLevel)
-      return false
-    if (useFrequency != other.useFrequency)
-      return false
-    return true
-  }
+    static constraints = {
+        satisfactionCriteria(nullable: true)
+    }
 
-  @Override
-  int hashCode() {
-    final int prime = 31
-    int result = 1
-    result = prime * result + ((backlog == null) ? 0 : backlog.hashCode())
-    result = prime * result + name.hashCode()
-    return result
-  }
+    static namedQueries = {
+        findActorByProductAndTerm { pid, term ->
+            backlog {
+                eq 'id', pid
+            }
+            or {
+                ilike 'name', term
+                ilike 'description', term
+                ilike 'notes', term
+            }
+        }
+    }
 
-  int compareTo(Actor cr) {
-    return name.compareTo(cr.name)
-  }
+    @Override
+    boolean equals(Object obj) {
+        if (this.is(obj))
+            return true
+        if (obj == null)
+            return false
+        if (getClass() != obj.getClass())
+            return false
+        final Actor other = (Actor) obj
+        if (backlog == null) {
+            if (other.backlog != null)
+                return false
+        } else if (!backlog.equals(other.backlog))
+            return false
+        if (name != other.name)
+            return false
+        if (instances != other.instances)
+            return false
+        if (description != other.description)
+            return false
+        if (satisfactionCriteria != other.satisfactionCriteria)
+            return false
+        if (expertnessLevel != other.expertnessLevel)
+            return false
+        if (useFrequency != other.useFrequency)
+            return false
+        return true
+    }
 
-  def springSecurityService
-  def beforeDelete(){
-      withNewSession{
-          publishEvent(new IceScrumActorEvent(this,this.class,User.get(springSecurityService.principal?.id),IceScrumEvent.EVENT_BEFORE_DELETE))
-      }
-  }
+    @Override
+    int hashCode() {
+        final int prime = 31
+        int result = 1
+        result = prime * result + ((backlog == null) ? 0 : backlog.hashCode())
+        result = prime * result + name.hashCode()
+        return result
+    }
 
-  def afterDelete(){
-      withNewSession{
-          publishEvent(new IceScrumActorEvent(this,this.class,User.get(springSecurityService.principal?.id),IceScrumEvent.EVENT_AFTER_DELETE))
-      }
-  }
-  
+    int compareTo(Actor cr) {
+        return name.compareTo(cr.name)
+    }
+
+    def springSecurityService
+
+    def beforeDelete() {
+        withNewSession {
+            publishEvent(new IceScrumActorEvent(this, this.class, User.get(springSecurityService.principal?.id), IceScrumEvent.EVENT_BEFORE_DELETE))
+        }
+    }
+
+    def afterDelete() {
+        withNewSession {
+            publishEvent(new IceScrumActorEvent(this, this.class, User.get(springSecurityService.principal?.id), IceScrumEvent.EVENT_AFTER_DELETE))
+        }
+    }
+
 }

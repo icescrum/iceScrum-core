@@ -23,69 +23,69 @@
 package org.icescrum.core.taglib
 
 class TimelineTagLib {
-  static namespace = 'is'
+    static namespace = 'is'
 
 
-  def timeline = { attrs, body ->
-    
-    pageScope.timelineRoot = [
-        band:[],
-        height:attrs.height?:"100%",
-        id:attrs.id,
-        name:attrs.name,
-        onScroll:attrs.onScroll?:null,
-        container:attrs.container
-    ]
-    body()
+    def timeline = { attrs, body ->
 
-    def jqCode = ""
+        pageScope.timelineRoot = [
+                band: [],
+                height: attrs.height ?: "100%",
+                id: attrs.id,
+                name: attrs.name,
+                onScroll: attrs.onScroll ?: null,
+                container: attrs.container
+        ]
+        body()
 
-    pageScope.timelineRoot.band.eachWithIndex{ it, index ->
-       jqCode += "var eventSource${index} = new Timeline.DefaultEventSource();"
-        if (it.themeOptions != null){
-           jqCode += "var theme${index} = Timeline.ClassicTheme.create();"
-           it.themeOptions.split(",").each{
-            jqCode += "theme${index}.${it};"
-           }
+        def jqCode = ""
+
+        pageScope.timelineRoot.band.eachWithIndex { it, index ->
+            jqCode += "var eventSource${index} = new Timeline.DefaultEventSource();"
+            if (it.themeOptions != null) {
+                jqCode += "var theme${index} = Timeline.ClassicTheme.create();"
+                it.themeOptions.split(",").each {
+                    jqCode += "theme${index}.${it};"
+                }
+            }
         }
-    }
 
-    jqCode += "var bandInfos = ["
+        jqCode += "var bandInfos = ["
 
-    def bands = []
-    def options = []
+        def bands = []
+        def options = []
 
-    pageScope.timelineRoot.band.eachWithIndex{ it, index ->
+        pageScope.timelineRoot.band.eachWithIndex { it, index ->
 
-      def jsCode = "Timeline.createBandInfo({"
-      jsCode += "eventSource:eventSource${index},"
+            def jsCode = "Timeline.createBandInfo({"
+            jsCode += "eventSource:eventSource${index},"
 
-      if (it.themeOptions != null){
-        jsCode += "theme:theme${index},"
-        it.remove('themeOptions')
-      }
+            if (it.themeOptions != null) {
+                jsCode += "theme:theme${index},"
+                it.remove('themeOptions')
+            }
 
-      if (it.options != null){
-        it.options.index = index
-        options << it.options
-      }
-      it.remove('options')
+            if (it.options != null) {
+                it.options.index = index
+                options << it.options
+            }
+            it.remove('options')
 
-      jsCode += it.findAll{k, v -> (v != null)}.collect{k, v -> " $k:$v"}.join(',')
-      jsCode += "})"
-      bands << jsCode
-    }
-    jqCode += bands.join(",")
-    jqCode += "];"
+            jsCode += it.findAll {k, v -> (v != null)}.collect {k, v -> " $k:$v"}.join(',')
+            jsCode += "})"
+            bands << jsCode
+        }
+        jqCode += bands.join(",")
+        jqCode += "];"
 
-    options.each{ it ->
-        if(it.syncWith != null)
-          jqCode += "bandInfos[${it.index}].syncWith = ${it.syncWith};"
-        if(it.highlight != null)
-          jqCode += "bandInfos[${it.index}].highlight = ${it.highlight};"
+        options.each { it ->
+            if (it.syncWith != null)
+                jqCode += "bandInfos[${it.index}].syncWith = ${it.syncWith};"
+            if (it.highlight != null)
+                jqCode += "bandInfos[${it.index}].highlight = ${it.highlight};"
 
-        if (it.showToday){
-          jqCode += """var dateS = new Date();
+            if (it.showToday) {
+                jqCode += """var dateS = new Date();
                       dateS.setHours(0,0,0,0);
 
                       var dateE = new Date();
@@ -98,17 +98,17 @@ class TimelineTagLib {
                           color: "#FFC080",
                           opacity:    50
                       })];"""
+            }
         }
-    }
 
-    def visible
-    if (!attrs.startVisibleDate){
-      visible = "${attrs.name}.getBand(0).setCenterVisibleDate(new Date());"
-    }else{
-      visible = "${attrs.name}.getBand(0).setMinVisibleDate(${attrs.startVisibleDate});"
-    }
+        def visible
+        if (!attrs.startVisibleDate) {
+            visible = "${attrs.name}.getBand(0).setCenterVisibleDate(new Date());"
+        } else {
+            visible = "${attrs.name}.getBand(0).setMinVisibleDate(${attrs.startVisibleDate});"
+        }
 
-    jqCode += """
+        jqCode += """
               ${attrs.name} = Timeline.create(document.getElementById('${attrs.id}'), bandInfos);
               ${visible}
               var resizeTimerID = null;
@@ -128,52 +128,58 @@ class TimelineTagLib {
 
               """
 
-    pageScope.timelineRoot.band.eachWithIndex{ it, index ->
-      jqCode += "${pageScope.timelineRoot.name}.loadJSON(${it.url},function(json, url){ eventSource${index}.loadJSON(json, url); });"
-    }
+        jqCode += "Timeline.refresh = function(){"
+        pageScope.timelineRoot.band.eachWithIndex { it, index ->
+            jqCode += """${pageScope.timelineRoot.name}.loadJSON(${it.url},function(json, url){
+                        eventSource${index}.clear();
+                        eventSource${index}.loadJSON(json, url);
+                    });
+                   """
+        }
+        jqCode += """}; Timeline.refresh();"""
 
-    if (attrs.onScroll){
-      jqCode += """var topBand = ${attrs.name}.getBand(0);
+        if (attrs.onScroll) {
+            jqCode += """var topBand = ${attrs.name}.getBand(0);
                     topBand.addOnScrollListener(function(band) {
                        ${attrs.onScroll}
-                    });""" 
+                    });"""
+        }
+
+        out << jq.jquery(null, jqCode)
+        out << "<div id='${pageScope.timelineRoot.id}' style='height:${attrs.height}'></div>"
     }
 
-    out << jq.jquery(null, jqCode)
-    out << "<div id='${pageScope.timelineRoot.id}' style='height:${attrs.height}'></div>"
-  }
+    def timelineBand = { attrs, body ->
+        pageScope.timelineBand = [
+                width: "\"${attrs.height}\"",
+                intervalPixels: attrs.intervalPixels,
+                intervalUnit: "Timeline.DateTime.${attrs.intervalUnit}",
+                themeOptions: attrs.themeOptions ?: null,
+                eventPainter: attrs.eventPainter ?: null,
+                overview: attrs.overview ?: false,
+                url: '\'' + createLink(attrs) + '\''
+        ]
 
-  def timelineBand = { attrs, body ->
-    pageScope.timelineBand = [
-            width:"\"${attrs.height}\"",
-            intervalPixels:attrs.intervalPixels,
-            intervalUnit:"Timeline.DateTime.${attrs.intervalUnit}",
-            themeOptions:attrs.themeOptions?:null,
-            eventPainter:attrs.eventPainter?:null,
-            overview:attrs.overview?:false,
-            url:'\''+createLink(attrs)+'\''
-    ]
+        body()
+        pageScope.timelineRoot.band << pageScope.timelineBand
+    }
 
-    body()
-    pageScope.timelineRoot.band << pageScope.timelineBand
-  }
+    def customBubble = { attrs, body ->
+        def params = [
+                enable: attrs.enable ?: false,
+                container: attrs.container ?: "document.body",
+                theme: attrs.theme ?: "icescrum"
+        ]
+        pageScope.timelineRoot.customBubble = params.findAll {k, v -> v}
+    }
 
-  def customBubble = { attrs, body ->
-    def params = [
-            enable : attrs.enable?:false,
-            container: attrs.container?:"document.body",
-            theme: attrs.theme?:"icescrum"
-    ]
-    pageScope.timelineRoot.customBubble = params.findAll{k, v -> v}
-  }
-
-  def bandOptions = { attrs, body ->
-    if(!pageScope.timelineBand) return
-    def params = [
-            syncWith:attrs.syncWith?:null,
-            highlight:attrs.highlight?:null,
-            showToday:attrs.showToday?:null
-    ]
-    pageScope.timelineBand.options = params.findAll{k, v -> v}
-  }
+    def bandOptions = { attrs, body ->
+        if (!pageScope.timelineBand) return
+        def params = [
+                syncWith: attrs.syncWith ?: null,
+                highlight: attrs.highlight ?: null,
+                showToday: attrs.showToday ?: null
+        ]
+        pageScope.timelineBand.options = params.findAll {k, v -> v}
+    }
 }

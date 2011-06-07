@@ -28,48 +28,48 @@ import grails.plugin.fluxiable.Fluxiable
 
 class TimeBox implements Comparable<TimeBox>, Fluxiable {
 
-  Date startDate
-  Date endDate
-  String goal
-  int orderNumber = 0
-  String description
+    Date startDate
+    Date endDate
+    String goal
+    int orderNumber = 0
+    String description
 
-  static hasMany = [
-          cliches: Cliche
-  ]
+    static hasMany = [
+            cliches: Cliche
+    ]
 
-  static mappedBy = [
-          cliches: "parentTimeBox"
-  ]
+    static mappedBy = [
+            cliches: "parentTimeBox"
+    ]
 
-  static constraints = {
-    startDate (nullable: false)
-    endDate (nullable: true)
-    goal (nullable:true)
-    description (nullable:true)
-  }
+    static constraints = {
+        startDate(nullable: false)
+        endDate(nullable: true)
+        goal(nullable: true)
+        description(nullable: true)
+    }
 
-  static transients = ['numberOfDays']
+    static transients = ['numberOfDays']
 
-  static mapping = {
-    cache true
-    table 'icescrum2_timebox'
-    goal type: 'text'
-    description type: 'text'
-    tablePerHierarchy false
-    cliches cascade: 'all-delete-orphan', sort: 'datePrise', order:'asc', cache: true
-    sort:'orderNumber'
-  }
+    static mapping = {
+        cache true
+        table 'icescrum2_timebox'
+        goal type: 'text'
+        description type: 'text'
+        tablePerHierarchy false
+        cliches cascade: 'all-delete-orphan', sort: 'datePrise', order: 'asc', cache: true
+        sort: 'orderNumber'
+    }
 
-  Integer getNumberOfDays() {
-    def days = 0
-    if (startDate != null && endDate != null)
-      days = ((endDate.time - startDate.time) / (24 * 60 * 60 * 1000)).toInteger()
+    Integer getNumberOfDays() {
+        def days = 0
+        if (startDate != null && endDate != null)
+            days = ((endDate.time - startDate.time) / (24 * 60 * 60 * 1000)).toInteger()
 
-    return days
-  }
+        return days
+    }
 
-  int compareTo(TimeBox o){
-    return orderNumber <=> o?.orderNumber
-  }
+    int compareTo(TimeBox o) {
+        return orderNumber <=> o?.orderNumber
+    }
 }

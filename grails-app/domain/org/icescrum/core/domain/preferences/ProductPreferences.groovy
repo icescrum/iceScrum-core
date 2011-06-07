@@ -57,15 +57,15 @@ class ProductPreferences {
     String sprintRetrospectiveHour = "16:00"
 
     static constraints = {
-      url(nullable:true,url:true)
+        url(nullable: true, url: true)
     }
 
     static belongsTo = [
-            product:Product
+            product: Product
     ]
 
     static mapping = {
-      cache true
-      table 'icescrum2_product_preferences'
+        cache true
+        table 'icescrum2_product_preferences'
     }
 }

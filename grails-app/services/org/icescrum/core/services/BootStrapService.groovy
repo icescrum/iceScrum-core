@@ -16,7 +16,7 @@
  * along with iceScrum.  If not, see <http://www.gnu.org/licenses/>.
  *
  * Authors:
- *
+ * Vincent Barrier (vbarrier@kagilum.com)
  * Stéphane Maldini (stephane.maldini@icescrum.com)
  */
 
@@ -27,15 +27,20 @@ import grails.util.Environment
 import org.icescrum.core.security.AuthorityManager
 import org.icescrum.core.support.ApplicationSupport
 import org.icescrum.core.test.DummyPopulator
+import org.codehaus.groovy.grails.commons.ApplicationHolder
 
 class BootStrapService {
 
-  void start() {
+    void start() {
 
-    AuthorityManager.initSecurity()
-    ApplicationSupport.generateFolders()
+        AuthorityManager.initSecurity()
+        ApplicationSupport.generateFolders()
 
-    if (Environment.current == Environment.DEVELOPMENT)
-      DummyPopulator.dummyze()
-  }
+        def config = ApplicationHolder.application.config
+        config.grails.attachmentable.baseDir = config.icescrum.baseDir.toString()
+        config.grails.mail.default.from = config.icescrum.alerts.default.from
+
+        if (Environment.current == Environment.DEVELOPMENT)
+            DummyPopulator.dummyze()
+    }
 }

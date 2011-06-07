@@ -31,144 +31,146 @@ import org.icescrum.core.event.IceScrumEvent
 
 class Team {
 
-  String name
-  int velocity = 0
-  String description
+    String name
+    int velocity = 0
+    String description
 
-  Date dateCreated
-  Date lastUpdated
+    Date dateCreated
+    Date lastUpdated
 
-  TeamPreferences preferences
+    TeamPreferences preferences
 
-  static hasMany = [
-          products: Product,
-          members: User
-  ]
+    static hasMany = [
+            products: Product,
+            members: User
+    ]
 
-  static transients = [
-          'idFromImport',
-          'scrumMasters'
-  ]
+    static transients = [
+            'idFromImport',
+            'scrumMasters'
+    ]
 
-  def scrumMasters = null
-  int idFromImport
+    def scrumMasters = null
+    int idFromImport
 
-  static belongsTo = [Product]
+    static belongsTo = [Product]
 
-  static constraints = {
-    description(nullable: true, maxSize: 1000)
-    name(blank: false, unique: true)
-  }
-
-  static mapping = {
-    cache true
-    preferences lazy: true
-    table 'icescrum2_team'
-    products cache: true
-    members lazy:false, cache:true
-  }
-
-  static members(Team team, params) {
-    executeQuery('select distinct t.members as m from org.icescrum.core.domain.Team as t where t.id=:id', [id: team.id], params ?: [:])
-  }
-
-  static products(Team team, params) {
-    executeQuery('select distinct t.products as p from org.icescrum.core.domain.Team as t where t.id=:id', [id: team.id], params ?: [:])
-  }
-
-  static exceptMember(Long id, String term, params) {
-    executeQuery(
-            "SELECT DISTINCT t " +
-                    "FROM org.icescrum.core.domain.Team as t " +
-                    "WHERE t.id not in " +
-                    "(SELECT DISTINCT t2.id FROM org.icescrum.core.domain.Team as t2 " +
-                    "INNER JOIN t2.members as m " +
-                    "WHERE m.id = :u) AND lower(t.name) like :term " +
-                    "AND t.preferences.allowNewMembers = :allow ", [allow:true, term: "%$term%", u: id], params ?: [:])
-  }
-
-  static countExceptMember(Long id, params) {
-    executeQuery(
-            "SELECT DISTINCT count(t) " +
-                    "FROM org.icescrum.core.domain.Team as t " +
-                    "WHERE t.id not in " +
-                    "(SELECT DISTINCT t2.id FROM org.icescrum.core.domain.Team as t2 " +
-                    "INNER JOIN t2.members as m " +
-                    "WHERE m.id = :u) AND t.preferences.allowNewMembers = :allow", [allow: true, u: id], params ?: [:])
-  }
-
-  static findExceptProduct(Long id, term, params) {
-    executeQuery(
-            "SELECT DISTINCT t " +
-                    "FROM org.icescrum.core.domain.Team as t " +
-                    "WHERE lower(t.name) like lower(:term) and t.id not in " +
-                    "(SELECT DISTINCT t2.id FROM org.icescrum.core.domain.Team as t2 " +
-                    "INNER JOIN t2.products as p " +
-                    "WHERE p.id = :p) ", [p: id,term: "%$term%"], params ?: [:])
-  }
-
-  static namedQueries = {
-
-    productTeam {p, u ->
-      products {
-        idEq(p)
-      }
-      members {
-        idEq(u)
-      }
+    static constraints = {
+        description(nullable: true, maxSize: 1000)
+        name(blank: false, unique: true)
     }
 
-
-    teamLike {term ->
-      ilike("name", "%$term%")
+    static mapping = {
+        cache true
+        preferences lazy: true
+        table 'icescrum2_team'
+        products cache: true
+        members lazy: false, cache: true
     }
 
-  }
+    static members(Team team, params) {
+        executeQuery('select distinct t.members as m from org.icescrum.core.domain.Team as t where t.id=:id', [id: team.id], params ?: [:])
+    }
 
-  def aclUtilService
-  def getScrumMasters(){
-    if (this.scrumMasters){
-      this.scrumMasters
-    }else if(this.id) {
-      def acl = aclUtilService.readAcl(this.getClass(), this.id)
-      def scrumMastersList = User.withCriteria {
-        or{
-          acl.entries.findAll{it.permission in SecurityService.scrumMasterPermissions}*.sid.each{sid ->
-            eq('username', sid.principal)
-          }
+    static products(Team team, params) {
+        executeQuery('select distinct t.products as p from org.icescrum.core.domain.Team as t where t.id=:id', [id: team.id], params ?: [:])
+    }
+
+    static exceptMember(Long id, String term, params) {
+        executeQuery(
+                "SELECT DISTINCT t " +
+                        "FROM org.icescrum.core.domain.Team as t " +
+                        "WHERE t.id not in " +
+                        "(SELECT DISTINCT t2.id FROM org.icescrum.core.domain.Team as t2 " +
+                        "INNER JOIN t2.members as m " +
+                        "WHERE m.id = :u) AND lower(t.name) like :term " +
+                        "AND t.preferences.allowNewMembers = :allow ", [allow: true, term: "%$term%", u: id], params ?: [:])
+    }
+
+    static countExceptMember(Long id, params) {
+        executeQuery(
+                "SELECT DISTINCT count(t) " +
+                        "FROM org.icescrum.core.domain.Team as t " +
+                        "WHERE t.id not in " +
+                        "(SELECT DISTINCT t2.id FROM org.icescrum.core.domain.Team as t2 " +
+                        "INNER JOIN t2.members as m " +
+                        "WHERE m.id = :u) AND t.preferences.allowNewMembers = :allow", [allow: true, u: id], params ?: [:])
+    }
+
+    static findExceptProduct(Long id, term, params) {
+        executeQuery(
+                "SELECT DISTINCT t " +
+                        "FROM org.icescrum.core.domain.Team as t " +
+                        "WHERE lower(t.name) like lower(:term) and t.id not in " +
+                        "(SELECT DISTINCT t2.id FROM org.icescrum.core.domain.Team as t2 " +
+                        "INNER JOIN t2.products as p " +
+                        "WHERE p.id = :p) ", [p: id, term: "%$term%"], params ?: [:])
+    }
+
+    static namedQueries = {
+
+        productTeam {p, u ->
+            products {
+                idEq(p)
+            }
+            members {
+                idEq(u)
+            }
         }
-      }
-      scrumMastersList
-    }else{
-      null
+
+
+        teamLike {term ->
+            ilike("name", "%$term%")
+        }
+
     }
-  }
 
-  boolean equals(o) {
-    if (this.is(o)) return true;
-    if (getClass() != o.class) return false;
+    def aclUtilService
 
-    Team team = (Team) o;
+    def getScrumMasters() {
+        if (this.scrumMasters) {
+            this.scrumMasters
+        } else if (this.id) {
+            def acl = aclUtilService.readAcl(this.getClass(), this.id)
+            def scrumMastersList = User.withCriteria {
+                or {
+                    acl.entries.findAll {it.permission in SecurityService.scrumMasterPermissions}*.sid.each {sid ->
+                        eq('username', sid.principal)
+                    }
+                }
+            }
+            scrumMastersList
+        } else {
+            null
+        }
+    }
 
-    if (name != team.name) return false;
+    boolean equals(o) {
+        if (this.is(o)) return true;
+        if (getClass() != o.class) return false;
 
-    return true;
-  }
+        Team team = (Team) o;
 
-  int hashCode() {
-    return name.hashCode();
-  }
+        if (name != team.name) return false;
 
-  def springSecurityService
-  def beforeDelete(){
-      withNewSession{
-          publishEvent(new IceScrumTeamEvent(this,this.class,User.get(springSecurityService.principal?.id),IceScrumEvent.EVENT_BEFORE_DELETE))
-      }
-  }
+        return true;
+    }
 
-  def afterDelete(){
-      withNewSession{
-          publishEvent(new IceScrumTeamEvent(this,this.class,User.get(springSecurityService.principal?.id),IceScrumEvent.EVENT_AFTER_DELETE))
-      }
-  }
+    int hashCode() {
+        return name.hashCode();
+    }
+
+    def springSecurityService
+
+    def beforeDelete() {
+        withNewSession {
+            publishEvent(new IceScrumTeamEvent(this, this.class, User.get(springSecurityService.principal?.id), IceScrumEvent.EVENT_BEFORE_DELETE))
+        }
+    }
+
+    def afterDelete() {
+        withNewSession {
+            publishEvent(new IceScrumTeamEvent(this, this.class, User.get(springSecurityService.principal?.id), IceScrumEvent.EVENT_AFTER_DELETE))
+        }
+    }
 }

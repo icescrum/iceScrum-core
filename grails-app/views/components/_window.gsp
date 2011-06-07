@@ -17,99 +17,90 @@
   --}%
 
 %{-- tabindex to active shortcuts on div --}%
-<div id="${type}-id-${id}" class="box-${type}${sortable?'-sortable':''} box" tabindex="0">
+<div id="${type}-id-${id}" class="box-${type}${sortable ? '-sortable' : ''} box" tabindex="0">
 
-  %{-- Headbar --}%
-  <g:if test="${titleBarActions?.maximizeable}">
+%{-- Headbar --}%
+<g:if test="${titleBarActions?.maximizeable}">
     <div id="${type}-title-bar-${id}" class="box-title resizable">
-  </g:if>
-  <g:elseif test="${titleBarActions?.windowable}">
+</g:if>
+<g:elseif test="${titleBarActions?.windowable}">
     <div id="${type}-title-bar-${id}" class="box-title resizable">
-  </g:elseif>
-  <g:else>
+</g:elseif>
+<g:else>
     <div id="${type}-title-bar-${id}" class="box-title">
-  </g:else>
+</g:else>
 
-    <span class="start"></span><p class="content">${title}</p><span class="end"></span>
+<span class="start"></span>
 
-    %{-- Title bar content options --}%
-    <g:if test="${hasTitleBarContent}">
+<p class="content">${title}</p><span class="end"></span>
+
+%{-- Title bar content options --}%
+<g:if test="${hasTitleBarContent}">
     <ul id="${type}-title-bar-content-${id}" class="box-title-content">
-      ${titleBarContent}
+        ${titleBarContent}
     </ul>
-    </g:if>
+</g:if>
 
-    %{-- Title bar naivgation actions --}%
-    <ul id="${type}-button-${id}" class="box-title-buttons">
-      <g:if test="${help}">
+%{-- Title bar naivgation actions --}%
+<ul id="${type}-button-${id}" class="box-title-buttons">
+    <g:if test="${help}">
         <is:helpButton id="${type}-help-${id}" text="${message(code:'?')}">
-          ${message(code: help)}
+            ${message(code: help)}
         </is:helpButton>
-      </g:if>
-      <g:if test="${titleBarActions?.widgetable}">
+    </g:if>
+    <g:if test="${titleBarActions?.widgetable}">
         <li>
-            <span class="${type}-minimize minimize" alt="Minimize" ></span>
+            <span class="${type}-minimize minimize" alt="Minimize"></span>
         </li>
-      </g:if>
-      <g:if test="${titleBarActions?.maximizeable}">
+    </g:if>
+    <g:if test="${titleBarActions?.maximizeable}">
         <li>
-            <span class="${type}-maxicon maxicon" alt="Expand" ></span>
+            <span class="${type}-maxicon maxicon" alt="Expand"></span>
         </li>
-      </g:if>
-      <g:if test="${titleBarActions?.windowable}">
+    </g:if>
+    <g:if test="${titleBarActions?.windowable}">
         <li>
-            <span class="${type}-maxicon minimize" alt="Expand" ></span>
+            <span class="${type}-maxicon minimize" alt="Expand"></span>
         </li>
-      </g:if>
-      <g:if test="${titleBarActions?.closeable}">
-      <li>
-          <span class="${type}-close close" alt="Close" ></span>
-      </li>
-      </g:if>
-    </ul>
+    </g:if>
+    <g:if test="${titleBarActions?.closeable}">
+        <li>
+            <span class="${type}-close close" alt="Close"></span>
+        </li>
+    </g:if>
+</ul>
 
-  </div>
+</div>
 
-  %{-- Toolbar --}%
-  <g:if test="${hasToolbar}">
+%{-- Toolbar --}%
+<g:if test="${hasToolbar}">
     <is:toolbar type="${type}">
-      ${toolbar}
+        ${toolbar}
     </is:toolbar>
-  </g:if>
+</g:if>
 
-  %{-- Content --}%
-  <div id="${type}-content-${id}" class="box-content ${type}-content ${hasStatusbar ? type+'-content-statusbar' : ''} ${!hasToolbar ? type+'-content-without-toolbar' : ''}">
+%{-- Content --}%
+<div id="${type}-content-${id}"
+     class="box-content ${type}-content ${hasStatusbar ? type + '-content-statusbar' : ''} ${!hasToolbar ? type + '-content-without-toolbar' : ''}">
     ${windowContent}
-  </div>
+</div>
 
-  %{-- Status bar --}%
-  <g:if test="${hasStatusbar}">
+%{-- Status bar --}%
+<g:if test="${hasStatusbar}">
     <div id="${type}-status-bar-${id}" class="status-bar nav clearfix">
-      ${statusBar}
+        ${statusBar}
     </div>
-  </g:if>
+</g:if>
 
 
 </div>
-<g:if test="${type == 'window'}">
-  <jq:jquery>
-    $("#${type}-id-${id}").isWindow({
-            maximizeable:${titleBarActions?.maximizeable},
-            widgetable:${titleBarActions?.widgetable},
-            closeable:${titleBarActions?.closeable}
-          }
-    );
-    document.title = 'iceScrum - ${title.encodeAsJavaScript()} - '+ ($.icescrum.o.currentProductName ? $.icescrum.o.currentProductName : ($.icescrum.o.currentTeamName ? $.icescrum.o.currentTeamName : ''));
-    $("#${type}-id-${id}").focus();
-  </jq:jquery>
-</g:if>
-<g:if test="${type == 'widget'}">
-  <jq:jquery>
-    jQuery("#${type}-id-${id}").isWidget({
-            windowable:${titleBarActions?.windowable},
-            closeable:${titleBarActions?.closeable},
-            height:${height}
-        }
-    );
-  </jq:jquery>
-</g:if>
+<jq:jquery>
+    <g:if test="${type == 'window'}">
+        $("#${type}-id-${id}").isWindow({maximizeable:${titleBarActions?.maximizeable},widgetable:${titleBarActions?.widgetable},closeable:${titleBarActions?.closeable}});
+        document.title = 'iceScrum - ${title.encodeAsJavaScript()} - '+ ($.icescrum.o.currentProductName ? $.icescrum.o.currentProductName : ($.icescrum.o.currentTeamName ? $.icescrum.o.currentTeamName : ''));
+        $("#${type}-id-${id}").focus();
+    </g:if>
+    <g:if test="${type == 'widget'}">
+        jQuery("#${type}-id-${id}").isWidget({ windowable:${titleBarActions?.windowable},closeable:${titleBarActions?.closeable}, height:${height}});
+    </g:if>
+</jq:jquery>

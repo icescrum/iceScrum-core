@@ -33,71 +33,71 @@ import org.icescrum.core.domain.preferences.UserPreferences
 class MenuBarSupport {
 
     def webInvocationPrivilegeEvaluator
-  def springSecurityService
+    def springSecurityService
 
-  static private commonVerification(url){
-    def menuBarSupport = ApplicationHolder.application.mainContext.menuBarSupport
-    url = url.toString() - SRH.request.contextPath
-    menuBarSupport.permissionDynamicBar(url)
-  }
+    static private commonVerification(url) {
+        def menuBarSupport = ApplicationHolder.application.mainContext.menuBarSupport
+        url = url.toString() - SRH.request.contextPath
+        menuBarSupport.permissionDynamicBar(url)
+    }
 
-  static private commonUserPreferences(id){
-    UserPreferences up = null
-    if (GrailsUser.isAssignableFrom(SCH.context.authentication?.principal?.getClass()))
-      up = User.get(SCH.context.authentication.principal?.id)?.preferences
-      def pos = up?.menu?.getAt(id)
-      if (pos)
-        return [visible:true,pos:pos]
-      else
-        pos = up?.menuHidden?.getAt(id)
-      if (pos)
-        return [visible:false,pos:pos]
-      else
-        return null
-  }
+    static private commonUserPreferences(id) {
+        UserPreferences up = null
+        if (GrailsUser.isAssignableFrom(SCH.context.authentication?.principal?.getClass()))
+            up = User.get(SCH.context.authentication.principal?.id)?.preferences
+        def pos = up?.menu?.getAt(id)
+        if (pos)
+            return [visible: true, pos: pos]
+        else
+            pos = up?.menuHidden?.getAt(id)
+        if (pos)
+            return [visible: false, pos: pos]
+        else
+            return null
+    }
 
-  static productDynamicBar = {title, id, defaultVisibility, defaultPosition ->
+    static productDynamicBar = {String title, id, defaultVisibility, defaultPosition ->
 
-    [title: title, show: {
-      if (!params?.product) return false
-      if (!defaultPosition) return false
-      if (!commonVerification(createLink(controller: id, params:[product: params.product]))) return false
-        commonUserPreferences(id) ?: [visible:defaultVisibility,pos:defaultPosition]
-    }]
-  }
+        [title: title, show: {
+            if (!params?.product) return false
+            if (!defaultPosition) return false
+            if (!commonVerification(createLink(controller: id, params: [product: params.product]))) return false
+            commonUserPreferences(id) ?: [visible: defaultVisibility, pos: defaultPosition]
+        }]
+    }
 
-  static teamDynamicBar = {title, id, defaultVisibility, defaultPosition ->
+    static teamDynamicBar = {title, id, defaultVisibility, defaultPosition ->
 
-    [title: title, show: {
-      if (!params?.team) return false
-      if (!defaultPosition) return false
-      if (!commonVerification(createLink(controller: id, params: [team: params.team]))) return false
-        commonUserPreferences(id) ?: [visible:defaultVisibility,pos:defaultPosition]
-    }]
-  }
+        [title: title, show: {
+            if (!params?.team) return false
+            if (!defaultPosition) return false
+            if (!commonVerification(createLink(controller: id, params: [team: params.team]))) return false
+            commonUserPreferences(id) ?: [visible: defaultVisibility, pos: defaultPosition]
+        }]
+    }
 
-  static teamOrProductDynamicBar = {title, id, defaultVisibility, defaultPosition ->
+    static teamOrProductDynamicBar = {title, id, defaultVisibility, defaultPosition ->
 
-    [title: title, show: {
-      if (!params?.team && !params?.product) return false
-      if (!defaultPosition) return false
-      if (!commonVerification(createLink(controller: id, params: params))) return false
-              commonUserPreferences(id) ?: [visible:defaultVisibility,pos:defaultPosition]
-    }]
-  }
+        [title: title, show: {
+            if (!params?.team && !params?.product) return false
+            if (!defaultPosition) return false
+            if (!commonVerification(createLink(controller: id, params: params))) return false
+            commonUserPreferences(id) ?: [visible: defaultVisibility, pos: defaultPosition]
+        }]
+    }
 
-  static noTeamOrProductDynamicBar = {title, id, defaultVisibility, defaultPosition ->
+    static noTeamOrProductDynamicBar = {title, id, defaultVisibility, defaultPosition ->
 
-    [title: title, show: {
-      if (params?.team || params?.product) return false
-      if (!defaultPosition) return false
-      if (!commonVerification(createLink(controller: id, params: params))) return false
-              commonUserPreferences(id) ?: [visible:defaultVisibility,pos:defaultPosition]
-    }]
-  }
+        [title: title, show: {
+            if (params?.team || params?.product) return false
+            if (!defaultPosition) return false
+            if (!commonVerification(createLink(controller: id, params: params))) return false
+            commonUserPreferences(id) ?: [visible: defaultVisibility, pos: defaultPosition]
+        }]
+    }
 
-  static final METHOD = 'GET'
-  def permissionDynamicBar = {url ->
-    webInvocationPrivilegeEvaluator.isAllowed(SRH.request.contextPath, url, METHOD, SCH.context?.authentication)
-  }
+    static final METHOD = 'GET'
+    def permissionDynamicBar = {url ->
+        webInvocationPrivilegeEvaluator.isAllowed(SRH.request.contextPath, url, METHOD, SCH.context?.authentication)
+    }
 }

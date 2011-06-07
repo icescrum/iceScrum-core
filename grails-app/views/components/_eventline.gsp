@@ -1,5 +1,5 @@
 %{--
-  - Copyright (c) 2010 iceScrum Technologies.
+  - Copyright (c) 2011 Kagilum.
   -
   - This file is part of iceScrum.
   -
@@ -17,18 +17,12 @@
   --}%
 
 %{-- Main Wrapper --}%
-<div class="event-line-limiter">
-  %{-- Events titles --}%
-  <div class="event-line-scroll">
-    <div class="event-line-highlight"></div>
-    <div class="event-line-sub">
-      ${subEvents}
-    </div>
-  </div>
-
-  %{-- The events container --}%
-  <div class="event-line-content">
-    %{-- The events lists --}%
+<div class="event-overflow" elemid="${elemid}">
     ${events}
-  </div>
+</div>
+
+<div class="event-select">
+    <g:each in="${titles}" var="t">
+        <span class="event-select-item" elemid="${t.elemid}">${t.title}</span>
+    </g:each>
 </div>

@@ -23,38 +23,38 @@
 package org.icescrum.core.taglib
 
 class MarkItUpTagLib {
-  static namespace='markitup'
+    static namespace = 'markitup'
 
-  def editor = { attrs, body ->
+    def editor = { attrs, body ->
 
-    def content = attrs.value
-    if (!attrs.value){
-      content = body()
+        def content = attrs.value
+        if (!attrs.value) {
+            content = body()
+        }
+        content = content.trim()
+
+        def txtParams = [
+                id: attrs.id,
+                name: attrs.name,
+                value: content,
+                style: "${attrs.height ? 'height:' + attrs.height + 'px;' : 'height:100px;'}"
+        ]
+
+        out << textArea(txtParams)
+
+        def settings = "textileSettings"
+        if (attrs.preview) {
+            settings = "textileSettingsPreview"
+        }
+
+        def jqCode = "\$('textarea#${txtParams.id}').markItUp(${settings});"
+
+        if (attrs.fillWidth) {
+            jqCode += "jQuery('#${attrs.id}-field').width(jQuery('#${attrs.id}-field').parent().width() - ${attrs.margin ?: 0});"
+        } else if (attrs.width) {
+            jqCode += "jQuery('#${attrs.id}-field').width(${attrs.width});"
+        }
+
+        out << jq.jquery(null, jqCode)
     }
-    content = content.trim()
-
-    def txtParams = [
-            id: attrs.id,
-            name: attrs.name,
-            value: content,
-            style: "${attrs.height?'height:'+attrs.height+'px;':'height:100px;'}"
-    ]
-
-    out << textArea(txtParams)
-
-    def settings = "textileSettings"
-    if (attrs.preview){
-      settings = "textileSettingsPreview"
-    }
-
-    def jqCode = "\$('textarea#${txtParams.id}').markItUp(${settings});"
-
-    if (attrs.fillWidth){
-      jqCode += "jQuery('#${attrs.id}-field').width(jQuery('#${attrs.id}-field').parent().width() - ${attrs.margin?:0});"
-    }else if(attrs.width){
-      jqCode += "jQuery('#${attrs.id}-field').width(${attrs.width});"
-    }
-
-    out << jq.jquery(null, jqCode)
-  }
 }

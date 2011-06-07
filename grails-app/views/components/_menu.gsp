@@ -1,4 +1,4 @@
-<div class="dropmenu %{--
+%{--
   - Copyright (c) 2010 iceScrum Technologies.
   -
   - This file is part of iceScrum.
@@ -15,13 +15,13 @@
   - You should have received a copy of the GNU Lesser General Public License
   - along with iceScrum.  If not, see <http://www.gnu.org/licenses/>.
   --}%
+<div class="dropmenu ${classdrop}" id="dropmenu-${id}">
+    <span class="dropmenu-arrow">!</span>
 
-${classdrop}" id="dropmenu-${id}">
-  <span class="dropmenu-arrow">!</span>
-  <div class="dropmenu-content ui-corner-all">
-      <ul class="small">${menuItems}</ul>
-  </div>
+    <div class="dropmenu-content ui-corner-all">
+        <ul class="small">${menuItems}</ul>
+    </div>
 </div>
 <jq:jquery>
-  $("#dropmenu-${id}").dropmenu({top: ${top}, yoffset: ${yoffset}, noWindows:${noWindows}});
+    $("#dropmenu-${id}").dropmenu({top: ${top}, yoffset: ${yoffset}, noWindows:${noWindows}});
 </jq:jquery>

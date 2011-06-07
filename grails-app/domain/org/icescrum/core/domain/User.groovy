@@ -36,104 +36,105 @@ import org.icescrum.core.event.IceScrumUserEvent
 import org.icescrum.core.event.IceScrumEvent
 
 class User implements Serializable, Attachmentable {
-  static final long serialVersionUID = 813639032272976126L
+    static final long serialVersionUID = 813639032272976126L
 
-  String lastName = "Doe"
-  String firstName = "John"
-  String username = ""
-  String password = ""
-  String email
-  Date dateCreated
-  Date lastUpdated
-  UserPreferences preferences
+    String lastName = "Doe"
+    String firstName = "John"
+    String username = ""
+    String password = ""
+    String email
+    Date dateCreated
+    Date lastUpdated
+    UserPreferences preferences
 
-  boolean enabled = true
-  boolean accountExpired
-  boolean accountLocked
-  boolean passwordExpired
-
-
-  static hasMany = [
-          teams: Team
-  ]
-
-  static belongsTo = [Team]
-
-  static transients = [
-          'idFromImport'
-  ]
-  int idFromImport
+    boolean enabled = true
+    boolean accountExpired
+    boolean accountLocked
+    boolean passwordExpired
 
 
-  static mapping = {
-    cache true
-    table 'icescrum2_user'
-    password column: '`password`'
-    username index:'username_index'
-    preferences lazy: true
-    teams cache: true
-  }
+    static hasMany = [
+            teams: Team
+    ]
 
-  static constraints = {
-    username(blank: false, unique: true)
-    password(blank: false)
-    lastName(blank: false)
-    firstName(blank: false)
-    email(blank: false, email: true)
-  }
+    static belongsTo = [Team]
 
-  static findExceptTeam(Long id, term, params) {
-    executeQuery(
-            "SELECT DISTINCT u " +
-                    "FROM org.icescrum.core.domain.User as u " +
-                    "WHERE u.id != :uid and (lower(u.username) like lower(:term) or lower(u.firstName) like lower(:term) " +
-                    "or lower(u.lastName) like lower(:term)) and u.id not in " +
-                    "(SELECT DISTINCT u2.id FROM org.icescrum.core.domain.User as u2 " +
-                    "INNER JOIN u2.teams as t " +
-                    "WHERE t.id = :t) ", [uid: SCH.context.authentication.principal?.id, t:id,term: "%$term%"], params ?: [:])
-  }
+    static transients = [
+            'idFromImport'
+    ]
+    int idFromImport
 
-  static namedQueries = {
 
-    findUsersLike{term ->
-      ne('id',SCH.context.authentication.principal?.id)
-      or{
-        ilike("username","%$term%")
-        ilike("lastName","%$term%")
-        ilike("firstName","%$term%")
-        maxResults(8)
-        order("username","asc")
-      }
+    static mapping = {
+        cache true
+        table 'icescrum2_user'
+        password column: '`password`'
+        username index: 'username_index'
+        preferences lazy: true
+        teams cache: true
     }
-  }
+
+    static constraints = {
+        username(blank: false, unique: true)
+        password(blank: false)
+        lastName(blank: false)
+        firstName(blank: false)
+        email(blank: false, email: true)
+    }
+
+    static findExceptTeam(Long id, term, params) {
+        executeQuery(
+                "SELECT DISTINCT u " +
+                        "FROM org.icescrum.core.domain.User as u " +
+                        "WHERE u.id != :uid and (lower(u.username) like lower(:term) or lower(u.firstName) like lower(:term) " +
+                        "or lower(u.lastName) like lower(:term)) and u.id not in " +
+                        "(SELECT DISTINCT u2.id FROM org.icescrum.core.domain.User as u2 " +
+                        "INNER JOIN u2.teams as t " +
+                        "WHERE t.id = :t) ", [uid: SCH.context.authentication.principal?.id, t: id, term: "%$term%"], params ?: [:])
+    }
+
+    static namedQueries = {
+
+        findUsersLike {term ->
+            ne('id', SCH.context.authentication.principal?.id)
+            or {
+                ilike("username", "%$term%")
+                ilike("lastName", "%$term%")
+                ilike("firstName", "%$term%")
+                maxResults(8)
+                order("username", "asc")
+            }
+        }
+    }
 
 
-  Set<Authority> getAuthorities() {
-    UserAuthority.findAllByUser(this).collect { it.authority } as Set
-  }
+    Set<Authority> getAuthorities() {
+        UserAuthority.findAllByUser(this).collect { it.authority } as Set
+    }
 
-  boolean equals(o) {
-    if (this.is(o)) return true
-    if (!o || getClass() != o.class) return false
-    User user = (User) o
-    if (!username.equals(user.username)) return false
-    return true
-  }
+    boolean equals(o) {
+        if (this.is(o)) return true
+        if (!o || getClass() != o.class) return false
+        User user = (User) o
+        if (!username.equals(user.username)) return false
+        return true
+    }
 
-  int hashCode() {
-    return username.hashCode()
-  }
+    int hashCode() {
+        return username.hashCode()
+    }
 
-  def springSecurityService
-  def beforeDelete(){
-      withNewSession{
-          publishEvent(new IceScrumUserEvent(this,this.class,User.get(springSecurityService.principal?.id),IceScrumEvent.EVENT_BEFORE_DELETE))
-      }
-  }
+    def springSecurityService
 
-  def afterDelete(){
-      withNewSession{
-          publishEvent(new IceScrumUserEvent(this,this.class,User.get(springSecurityService.principal?.id),IceScrumEvent.EVENT_AFTER_DELETE))
-      }
-  }
+    def beforeDelete() {
+        withNewSession {
+            publishEvent(new IceScrumUserEvent(this, this.class, User.get(springSecurityService.principal?.id), IceScrumEvent.EVENT_BEFORE_DELETE))
+        }
+    }
+
+    def afterDelete() {
+        withNewSession {
+            publishEvent(new IceScrumUserEvent(this, this.class, User.get(springSecurityService.principal?.id), IceScrumEvent.EVENT_AFTER_DELETE))
+        }
+    }
 }
