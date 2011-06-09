@@ -1,6 +1,6 @@
 /*
  *
- * This file is part of iceScrum.
+ * Copyright (c) 2011 Kagilum SAS
  *
  * iceScrum is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -22,12 +22,32 @@ package org.icescrum.core.domain
 
 class BacklogElementMigration {
 
+    static runAfter = [ UserMigration ]
+
     static migration = {
             // List of changesets
-            changeSet(id:'remove_id_from_import_column', author:'vbarrier') {
-                dropColumn(tableName:"icescrum2_story", columnName:"id_from_import")
-                dropColumn(tableName:"icescrum2_task", columnName:"id_from_import")
+            changeSet(id:'remove_id_from_import_column_feature', author:'vbarrier') {
+                preConditions(onFail:"MARK_RAN"){
+                    columnExists(tableName:"icescrum2_feature", columnName:"id_from_import")
+                }
                 dropColumn(tableName:"icescrum2_feature", columnName:"id_from_import")
+            }
+            changeSet(id:'remove_id_from_import_column_task', author:'vbarrier') {
+                preConditions(onFail:"MARK_RAN"){
+                    columnExists(tableName:"icescrum2_task", columnName:"id_from_import")
+                }
+                dropColumn(tableName:"icescrum2_task", columnName:"id_from_import")
+            }
+            changeSet(id:'remove_id_from_import_column_story', author:'vbarrier') {
+                preConditions(onFail:"MARK_RAN"){
+                    columnExists(tableName:"icescrum2_story", columnName:"id_from_import")
+                }
+                dropColumn(tableName:"icescrum2_story", columnName:"id_from_import")
+            }
+            changeSet(id:'remove_id_from_import_column_impediment', author:'vbarrier') {
+                preConditions(onFail:"MARK_RAN"){
+                    columnExists(tableName:"icescrum2_impediment", columnName:"id_from_import")
+                }
                 dropColumn(tableName:"icescrum2_impediment", columnName:"id_from_import")
             }
     }

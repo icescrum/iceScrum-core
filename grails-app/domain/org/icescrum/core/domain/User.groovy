@@ -68,7 +68,7 @@ class User implements Serializable, Attachmentable {
     static mapping = {
         cache true
         table 'icescrum2_user'
-        password column: '`password`'
+        password column: 'passwd'
         username index: 'username_index'
         preferences lazy: true
         teams cache: true
