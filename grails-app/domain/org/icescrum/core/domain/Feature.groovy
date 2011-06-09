@@ -75,6 +75,15 @@ class Feature extends BacklogElement implements Serializable {
                 ilike 'notes', term
             }
         }
+
+        getInProduct {p, id ->
+            backlog {
+                eq 'id', p
+            }
+            and {
+                eq 'id', id
+            }
+        }
     }
 
     int hashCode() {

@@ -80,6 +80,15 @@ class Actor extends BacklogElement implements Serializable, Comparable<Actor> {
                 ilike 'notes', term
             }
         }
+
+        getInProduct {p, id ->
+            backlog {
+                eq 'id', p
+            }
+            and {
+                eq 'id', id
+            }
+        }
     }
 
     @Override

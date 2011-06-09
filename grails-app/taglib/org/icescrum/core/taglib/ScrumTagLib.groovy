@@ -92,6 +92,7 @@ class ScrumTagLib {
     def postitIcon = {attrs, body ->
         def color = attrs.color ?: "yellow"
         out << "<span ${attrs.name ? 'title="' + attrs.name + '"' : ''} class=\"postit-icon postit-icon-${color}\">${body()}</span>"
+        println "<span ${attrs.name ? 'title="' + attrs.name + '"' : ''} class=\"postit-icon postit-icon-${color}\">${body()}</span>"
     }
 
     /**

@@ -147,6 +147,19 @@ class Task extends BacklogElement implements Serializable {
             }
             eq 'type', Task.TYPE_RECURRENT
         }
+
+        getInProduct {p, id ->
+            backlog {
+                parentRelease {
+                    parentProduct {
+                        eq 'id', p
+                    }
+                }
+            }
+            and {
+                eq 'id', id
+            }
+        }
     }
 
     @Override

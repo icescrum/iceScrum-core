@@ -133,6 +133,23 @@ class Story extends BacklogElement implements Cloneable {
             }
         }
 
+        findInStories{p, term ->
+            backlog {
+                eq 'id', p
+            }
+            or {
+                ilike 'name', term
+                ilike 'textAs', term
+                ilike 'textICan', term
+                ilike 'textTo', term
+                ilike 'description', term
+                ilike 'notes', term
+                feature {
+                    ilike 'name', term
+                }
+            }
+        }
+
         findInStoriesAcceptedEstimated {p, term ->
             backlog {
                 eq 'id', p
@@ -372,6 +389,15 @@ class Story extends BacklogElement implements Cloneable {
                 }
                 isNull 'parentSprint'
                 isNull 'effort'
+            }
+        }
+
+        getInProduct {p, id ->
+            backlog {
+                eq 'id', p
+            }
+            and {
+                eq 'id', id
             }
         }
     }

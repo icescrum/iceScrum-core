@@ -74,6 +74,15 @@ class Release extends TimeBox implements Cloneable {
             order("orderNumber", "asc")
             maxResults(1)
         }
+
+        getInProduct {p, id ->
+            parentProduct {
+                eq 'id', p
+            }
+            and {
+                eq 'id', id
+            }
+        }
     }
 
     int hashCode() {

@@ -48,7 +48,6 @@ abstract class BacklogElement implements Fluxiable, Attachmentable, Commentable,
 
     static belongsTo = [backlog: TimeBox]
 
-
     static constraints = {
         description(maxSize: 3000, nullable: true)
         notes(maxSize: 5000, nullable: true)

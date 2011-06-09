@@ -31,6 +31,7 @@ import org.icescrum.core.services.SecurityService
 import org.icescrum.core.utils.IceScrumDomainClassMarshaller
 import org.atmosphere.util.ExcludeSessionBroadcaster
 import org.icescrum.ConfigurationHolder
+import grails.converters.XML
 
 class IcescrumCoreGrailsPlugin {
     def groupId = 'org.icescrum'
@@ -107,8 +108,13 @@ class IcescrumCoreGrailsPlugin {
             }
         }
         SecurityService securityService = ctx.getBean('securityService')
-        application.controllerClasses.each { addBroadcastMethods(it, securityService) }
-        application.serviceClasses.each { addBroadcastMethods(it, securityService) }
+        application.controllerClasses.each {
+            addBroadcastMethods(it, securityService)
+            addErrorMethod(it)
+        }
+        application.serviceClasses.each {
+            addBroadcastMethods(it, securityService)
+        }
     }
 
     def doWithApplicationContext = { applicationContext ->
@@ -127,6 +133,7 @@ class IcescrumCoreGrailsPlugin {
         if (application.isControllerClass(event.source)) {
             SecurityService securityService = event.ctx.getBean('securityService')
             addBroadcastMethods(event.source, securityService)
+            addErrorMethod(event.source)
         }
     }
 
@@ -285,6 +292,39 @@ class IcescrumCoreGrailsPlugin {
                     } else {
                         broadcaster?.broadcast((message as JSON).toString())
                     }
+                }
+            }
+        }
+    }
+
+    private addErrorMethod(source) {
+        source.metaClass.returnError = { attrs ->
+            if (attrs.exception){
+                if (attrs.object && attrs.exception instanceof RuntimeException){
+                    withFormat {
+                        html { render(status: 400, contentType: 'application/json', text: [notice: [text: renderErrors(bean: attrs.object)]] as JSON) }
+                        json { render(status: 500, text: is.renderErrors(bean: attrs.object, as:'json')) }
+                        xml  { render(status: 500, text: is.renderErrors(bean: attrs.object, as:'xml')) }
+                    }
+                }else if(attrs.text){
+                    withFormat {
+                        html { render(status: 400, contentType: 'application/json', text: [notice: [text:attrs.text?:'error']] as JSON) }
+                        json { render(status: 500, text: [error: attrs.text?:'error'] as JSON) }
+                        xml  { render(status: 500, text: [error: attrs.text?:'error'] as XML) }
+                    }
+                }else{
+                    withFormat {
+                        html { render(status: 400, contentType: 'application/json', text: [notice: [text: message(code: attrs.exception.getMessage())]] as JSON) }
+                        json { render(status: 500, text: [error: message(code: attrs.exception.getMessage())] as JSON) }
+                        xml {  render(status: 500, text: [error: message(code: attrs.exception.getMessage())] as XML) }
+                    }
+                }
+                if (log.debugEnabled) attrs.exception.printStackTrace()
+            }else{
+                withFormat {
+                    html { render(status: 400, contentType: 'application/json', text: [notice: [text:attrs.text?:'error']] as JSON) }
+                    json { render(status: 500, text: [error: attrs.text?:'error'] as JSON) }
+                    xml  { render(status: 500, text: [error: attrs.text?:'error'] as XML) }
                 }
             }
         }

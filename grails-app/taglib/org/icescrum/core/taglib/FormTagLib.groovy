@@ -888,6 +888,7 @@ class FormTagLib {
         def jqCode = """ jQuery('${attrs.on}').liveEditable('${createLink(action: attrs.action, controller: attrs.controller, params: attrs.params)}',{
                         type:'${attrs.type}',
                         select: ${attrs.highlight ?: false},
+                        name: '${attrs.name?:'value'}',
                         data : function(value, settings) {${attrs.before ?: ''} ${data}},
                         onsubmit:function(settings, original){ if (${finder} == original.revert) {original.reset(); ${attrs.cancel ?: ''} return false;}},
                         submitdata : function(value, settings) {return {'id':${attrs.findId}}},

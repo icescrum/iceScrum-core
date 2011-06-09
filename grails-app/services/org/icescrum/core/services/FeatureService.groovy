@@ -104,8 +104,7 @@ class FeatureService {
         publishEvent(new IceScrumFeatureEvent(_feature, this.class, (User) springSecurityService.currentUser, IceScrumEvent.EVENT_UPDATED))
     }
 
-    def copyToBacklog(long featureID, long userID) {
-        def feature = Feature.get(featureID)
+    def copyToBacklog(feature) {
         def story = new Story(
                 name: feature.name,
                 description: feature.description,
@@ -113,7 +112,7 @@ class FeatureService {
                 acceptedDate: new Date(),
                 state: Story.STATE_ACCEPTED,
                 feature: feature,
-                creator: User.get(userID),
+                creator: (User)springSecurityService.currentUser,
                 rank: (Story.countAllAcceptedOrEstimated(feature.backlog.id)?.list()[0] ?: 0) + 1,
                 backlog: feature.backlog
         )

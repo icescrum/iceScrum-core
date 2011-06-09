@@ -56,6 +56,14 @@ class Sprint extends TimeBox implements Serializable {
     ]
 
     static namedQueries = {
+        getInProduct {p, id ->
+            parentRelease {
+                parentProduct {
+                    eq 'id', p
+                }
+            }
+            eq 'id', id
+        }
 
         findCurrentSprint {p ->
             parentRelease {
