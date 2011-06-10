@@ -38,7 +38,7 @@ class UserMigration {
             changeSet(id:'rename_password_column_hsql', author:'vbarrier') {
                 preConditions(onFail:"MARK_RAN"){
                     dbms(type:'hsqldb')
-                    columnExists(tableName:"icescrum2_user", columnName:'"password"')
+                    sqlCheck("select count(-1) from icescrum2_user WHERE 'password' != ''",expectedResult:'-1')
                 }
                 dropColumn(tableName:"icescrum2_user", columnName:"passwd")
                 renameColumn(tableName:"icescrum2_user", oldColumnName:'"password"', newColumnName:"passwd", columnDataType:'varchar(255)')
