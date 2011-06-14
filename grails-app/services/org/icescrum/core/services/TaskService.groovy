@@ -167,6 +167,9 @@ class TaskService {
      * @param user
      */
     void update(Task task, User user, boolean force = false) {
+        if (task.state == Task.STATE_DONE && task.doneDate) {
+            throw new IllegalStateException('is.task.error.done')
+        }
         checkEstimation(task)
         def p = (Product) ((Sprint) task.backlog).parentRelease.parentProduct
         // TODO add check : if SM or PO, always allow
@@ -228,6 +231,9 @@ class TaskService {
      */
     boolean assign(Collection<Task> tasks, User user) {
         tasks.each {
+            if (it.state == Task.STATE_DONE){
+                throw new IllegalStateException('is.task.error.done')
+            }
             it.responsible = user
             update(it, user)
         }
@@ -246,7 +252,7 @@ class TaskService {
             if (it.responsible.id != user.id)
                 throw new IllegalStateException('is.task.error.unassign.not.responsible')
             if (it.state == Task.STATE_DONE)
-                throw new IllegalStateException('is.task.error.unassign.done')
+                throw new IllegalStateException('is.task.error.done')
             it.responsible = null
             it.state = Task.STATE_WAIT
             update(it, user, true)

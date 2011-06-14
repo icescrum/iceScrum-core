@@ -92,6 +92,10 @@ class StoryService {
     void delete(Collection<Story> stories, history = true) {
         bufferBroadcast()
         stories.each { _item ->
+
+            if (_item.state >= Story.STATE_PLANNED)
+               throw new IllegalStateException()
+
             if (!(_item.creator.id == springSecurityService.currentUser.id) && !securityService.productOwner(_item.backlog.id, springSecurityService.authentication)) {
                 throw new IllegalAccessException()
             }

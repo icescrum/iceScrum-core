@@ -894,8 +894,10 @@ class FormTagLib {
                         submitdata : function(value, settings) {return {'id':${attrs.findId}}},
                         callback:function(value, settings) { ${attrs.callback ?: ''} return value;},
                         onreset:function(settings, original){ ${attrs.cancel ?: ''}},
+                        ajaxoptions:${attrs.ajaxoptions?:null},
                         onblur:'${attrs.onExit}'
                     });"""
+
         if (attrs.wrap) {
             out << jq.jquery(null, jqCode)
         } else {

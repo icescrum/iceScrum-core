@@ -148,16 +148,25 @@ class Task extends BacklogElement implements Serializable {
             eq 'type', Task.TYPE_RECURRENT
         }
 
-        getInProduct {p, id ->
+        getUserTasks { s, u ->
             backlog {
-                parentRelease {
-                    parentProduct {
-                        eq 'id', p
-                    }
-                }
+                eq 'id', s
             }
-            and {
-                eq 'id', id
+            responsible {
+                    eq 'id', u
+            }
+        }
+
+        getFreeTasks { s ->
+            backlog {
+                eq 'id', s
+            }
+            isNull('responsible')
+        }
+
+        getAllTasksInSprint { s ->
+            backlog {
+                eq 'id', s
             }
         }
     }
