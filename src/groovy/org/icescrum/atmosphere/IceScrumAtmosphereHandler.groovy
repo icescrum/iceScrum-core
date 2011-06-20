@@ -46,6 +46,10 @@ class IceScrumAtmosphereHandler implements AtmosphereHandler<HttpServletRequest,
             event.resume()
             return
         }
+
+        //workaround session must exist
+        def session = event.request.session
+
         event.response.setContentType("text/plain;charset=ISO-8859-1");
         event.response.addHeader("Cache-Control", "private");
         event.response.addHeader("Pragma", "no-cache");
