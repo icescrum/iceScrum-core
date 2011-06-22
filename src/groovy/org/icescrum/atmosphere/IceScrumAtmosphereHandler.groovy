@@ -47,9 +47,6 @@ class IceScrumAtmosphereHandler implements AtmosphereHandler<HttpServletRequest,
             return
         }
 
-        //workaround session must exist
-        def session = event.request.session
-
         event.response.setContentType("text/plain;charset=ISO-8859-1");
         event.response.addHeader("Cache-Control", "private");
         event.response.addHeader("Pragma", "no-cache");
@@ -117,7 +114,7 @@ class IceScrumAtmosphereHandler implements AtmosphereHandler<HttpServletRequest,
     void destroy() {}
 
     private def getUserFromAtmosphereResource(def request) {
-        def httpSession = request.session;
+        def httpSession = request.getSession(false)
         def user = null
         if (httpSession != null) {
             def context = (SecurityContext) httpSession.getAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY);
