@@ -628,7 +628,7 @@ class FormTagLib {
     }
 
     def fieldFile = {attrs, body ->
-        if (!ApplicationSupport.booleanValue(grailsApplication.config.icescrum.attachements.enable)) {
+        if (!ApplicationSupport.booleanValue(grailsApplication.config.icescrum.attachments.enable)) {
             return
         }
         attrs."class" = attrs."class" ? attrs."class" + ' field-input clearfix' : 'field-input clearfix'
