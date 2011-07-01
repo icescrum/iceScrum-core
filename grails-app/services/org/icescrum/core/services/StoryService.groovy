@@ -655,7 +655,7 @@ class StoryService {
             publishEvent(new IceScrumStoryEvent(story, this.class, u, IceScrumStoryEvent.EVENT_DONE))
 
             // Set all tasks to done (and pbi's estimation to 0)
-            story.tasks?.each { t ->
+            story.tasks?.findAll{ it.state != Task.STATE_DONE }?.each { t ->
                 t.estimation = 0
                 taskService.update(t, u)
             }
