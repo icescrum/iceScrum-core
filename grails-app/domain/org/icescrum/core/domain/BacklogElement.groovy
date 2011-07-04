@@ -74,4 +74,8 @@ abstract class BacklogElement implements Fluxiable, Attachmentable, Commentable,
     def getIdFromImport(){
         return idFromImport
     }
+
+    def setIdFromImport(id){
+        idFromImport = id
+    }
 }
