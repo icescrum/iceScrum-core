@@ -36,7 +36,7 @@ import grails.converters.XML
 class IcescrumCoreGrailsPlugin {
     def groupId = 'org.icescrum'
     // the plugin version
-    def version = "1.4.2.9"
+    def version = "1.4.2.10"
     // the version or versions of Grails the plugin is designed for
     def grailsVersion = "1.3.7 > *"
     // the other plugins this plugin depends on
@@ -287,10 +287,14 @@ class IcescrumCoreGrailsPlugin {
                 if (request.bufferBroadcast?."${it}" != null) {
                     request.bufferBroadcast."${it}" << message
                 } else {
-                    if (attrs.excludeCaller) {
-                        broadcaster?.broadcast((message as JSON).toString(), request.session)
-                    } else {
-                        broadcaster?.broadcast((message as JSON).toString())
+                    try {
+                        if (attrs.excludeCaller) {
+                            broadcaster?.broadcast((message as JSON).toString(), request.session)
+                        } else {
+                            broadcaster?.broadcast((message as JSON).toString())
+                        }
+                    }catch(IllegalStateException e){
+                        log.error("Error when broadcasting, message: ${e.getMessage()}", e)
                     }
                 }
             }

@@ -75,7 +75,7 @@ class TaskService {
         task.backlog = sprint
         task.rank = Task.countByParentStoryAndType(task.parentStory, task.type) + 1
 
-        if (!task.save()) {
+        if (!task.save(flush:true)) {
             throw new RuntimeException()
         }
         clicheService.createOrUpdateDailyTasksCliche((Sprint) task.backlog)
@@ -167,59 +167,56 @@ class TaskService {
      * @param user
      */
     void update(Task task, User user, boolean force = false) {
-        if (task.state == Task.STATE_DONE && task.doneDate) {
-            throw new IllegalStateException('is.task.error.done')
-        }
-        checkEstimation(task)
-        def p = (Product) ((Sprint) task.backlog).parentRelease.parentProduct
-        // TODO add check : if SM or PO, always allow
-        if (force || (task.responsible && task.responsible.id.equals(user.id)) || task.creator.id.equals(user.id) || securityService.productOwner(p, springSecurityService.authentication) || securityService.scrumMaster(null, springSecurityService.authentication)) {
-            if (task.estimation == 0) {
-                task.state = Task.STATE_DONE
-                task.doneDate = new Date()
-            } else if (task.state == Task.STATE_DONE) {
-                task.estimation = 0
-                task.blocked = false
-                task.doneDate = new Date()
-            }
-
-            if (task.state >= Task.STATE_BUSY && !task.inProgressDate) {
-                task.inProgressDate = new Date()
-                if (!task.isDirty('blocked'))
+        if (!(task.state == Task.STATE_DONE && task.doneDate)) {
+            checkEstimation(task)
+            def p = (Product) ((Sprint) task.backlog).parentRelease.parentProduct
+            // TODO add check : if SM or PO, always allow
+            if (force || (task.responsible && task.responsible.id.equals(user.id)) || task.creator.id.equals(user.id) || securityService.productOwner(p, springSecurityService.authentication) || securityService.scrumMaster(null, springSecurityService.authentication)) {
+                if (task.estimation == 0 && task.state != Task.STATE_DONE) {
+                    task.state = Task.STATE_DONE
+                    task.doneDate = new Date()
+                    task.addActivity(user, 'taskFinish', task.name)
+                    publishEvent(new IceScrumTaskEvent(task, this.class, user, IceScrumTaskEvent.EVENT_STATE_DONE))
+                } else if (task.state == Task.STATE_DONE) {
+                    task.estimation = 0
                     task.blocked = false
-                else {
-                    if (task.blocked) {
-                        publishEvent(new IceScrumTaskEvent(task, this.class, user, IceScrumTaskEvent.EVENT_STATE_BLOCKED))
+                    task.doneDate = new Date()
+                }
+
+                if (task.state >= Task.STATE_BUSY && !task.inProgressDate) {
+                    task.inProgressDate = new Date()
+                    if (!task.isDirty('blocked'))
+                        task.blocked = false
+                    else {
+                        if (task.blocked) {
+                            publishEvent(new IceScrumTaskEvent(task, this.class, user, IceScrumTaskEvent.EVENT_STATE_BLOCKED))
+                        }
+                    }
+                }
+
+                if (task.state < Task.STATE_BUSY && task.inProgressDate)
+                    task.inProgressDate = null
+
+                if (!task.type && p.preferences.autoDoneStory && task.state == Task.STATE_DONE) {
+                    ApplicationContext ctx = (ApplicationContext) ApplicationHolder.getApplication().getMainContext();
+                    StoryService service = (StoryService) ctx.getBean("storyService");
+
+                    Story s = Story.get(task.parentStory.id)
+                    if (!s.tasks.any { it.state != Task.STATE_DONE } && s.state != Story.STATE_DONE) {
+                        service.done(s)
                     }
                 }
             }
-
-            if (task.state < Task.STATE_BUSY && task.inProgressDate)
-                task.inProgressDate = null
-
-            if (!task.save(flush: true)) {
-                throw new RuntimeException()
-            }
-
-            if (!task.type && p.preferences.autoDoneStory && task.state == Task.STATE_DONE) {
-                ApplicationContext ctx = (ApplicationContext) ApplicationHolder.getApplication().getMainContext();
-                StoryService service = (StoryService) ctx.getBean("storyService");
-
-                Story s = Story.get(task.parentStory.id)
-                if (!s.tasks.any { it.state != Task.STATE_DONE } && s.state != Story.STATE_DONE) {
-                    service.done(s)
-                }
-            }
-
-            clicheService.createOrUpdateDailyTasksCliche((Sprint) task.backlog)
-            if (task.state == Task.STATE_DONE) {
-                task.addActivity(user, 'taskFinish', task.name)
-                publishEvent(new IceScrumTaskEvent(task, this.class, user, IceScrumTaskEvent.EVENT_STATE_DONE))
-            } else {
-                publishEvent(new IceScrumTaskEvent(task, this.class, user, IceScrumTaskEvent.EVENT_UPDATED))
-            }
-            broadcast(function: 'update', message: task)
         }
+        if (!task.save(flush: true)) {
+            throw new RuntimeException()
+        }
+
+        clicheService.createOrUpdateDailyTasksCliche((Sprint) task.backlog)
+        if (task.state != Task.STATE_DONE) {
+            publishEvent(new IceScrumTaskEvent(task, this.class, user, IceScrumTaskEvent.EVENT_UPDATED))
+        }
+        broadcast(function: 'update', message: task)
     }
 
     /**
