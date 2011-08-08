@@ -141,7 +141,12 @@ class Actor extends BacklogElement implements Serializable, Comparable<Actor> {
         }
     }
 
+    def afterUpdate() {
+        flushCache(cache:'actorCache-'+this.id, cacheResolver:'backlogElementCacheResolver')
+    }
+
     def afterDelete() {
+        removeCache(cache:'actorCache-'+this.id, cacheResolver:'backlogElementCacheResolver')
         withNewSession {
             publishEvent(new IceScrumActorEvent(this, this.class, User.get(springSecurityService.principal?.id), IceScrumEvent.EVENT_AFTER_DELETE))
         }

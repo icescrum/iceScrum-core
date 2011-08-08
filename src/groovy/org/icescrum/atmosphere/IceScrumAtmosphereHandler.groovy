@@ -26,15 +26,10 @@ import javax.servlet.http.HttpServletResponse
 import org.apache.commons.logging.LogFactory
 import org.icescrum.core.domain.Product
 import org.icescrum.core.domain.Team
-import org.icescrum.core.domain.User
 import org.springframework.security.core.context.SecurityContext
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository
 import org.atmosphere.cpr.*
 import org.atmosphere.util.ExcludeSessionBroadcaster
-import javax.servlet.http.HttpSession
-import org.codehaus.groovy.grails.plugins.springsecurity.SpringSecurityUtils
-import org.apache.http.HttpRequest
-import org.springframework.http.HttpMethod
 
 class IceScrumAtmosphereHandler implements AtmosphereHandler<HttpServletRequest, HttpServletResponse> {
 

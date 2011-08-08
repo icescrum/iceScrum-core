@@ -74,13 +74,13 @@
             if($(".navigation-content .menubar").index(ui.item) == -1 || ui.sender != undefined){
               return;
             }else{
-              ${is.changeRank(selector: ".navigation-content .menubar", controller: "user", action: "changeMenuOrder")}
+              ${is.changeRank(selector: ".navigation-content .menubar", controller: "user", action: "changeMenuOrder", params:[product:params?.product?:null])}
             }
           },
         receive:function(event,ui){
             ui.item.addClass('draggable-to-desktop');
             ui.item.removeAttr('hidden');
-            ${is.changeRank(selector: ".navigation-content .menubar", controller: "user", action: "changeMenuOrder")}
+            ${is.changeRank(selector: ".navigation-content .menubar", controller: "user", action: "changeMenuOrder", params:[product:params?.product?:null])}
             if ($('#menubar-list-content > ul .menubar').size() > 0){
             $('#menubar-list-button').css('visibility','visible');
             }else{
@@ -98,7 +98,7 @@
           item.removeClass('draggable-to-desktop');
           item.show();
           item.attr('hidden','true');
-          ${is.changeRank(selector: "#menubar-list-content > ul .menubar", controller: "user", action: "changeMenuOrder", ui:"item", params:[hidden:true])}
+          ${is.changeRank(selector: "#menubar-list-content > ul .menubar", controller: "user", action: "changeMenuOrder", ui:"item", params:[hidden:true,product:params?.product?:null])}
         },
       hoverClass:'menubar-list-button-hover'
     }).disableSelection();
@@ -117,7 +117,7 @@
           if($("#menubar-list-content > ul .menubar").index(ui.item) == -1 || ui.sender != undefined){
             return;
           }else{
-            ${is.changeRank(selector: "#menubar-list-content > ul .menubar", controller: "user", action: "changeMenuOrder", params:[hidden:true])}
+            ${is.changeRank(selector: "#menubar-list-content > ul .menubar", controller: "user", action: "changeMenuOrder", params:[hidden:true,product:params?.product?:null])}
           }
           event.stopPropagation();
         }

@@ -123,10 +123,21 @@ class Feature extends BacklogElement implements Serializable {
         }
     }
 
-    def afterDelete() {
-        withNewSession {
-            publishEvent(new IceScrumFeatureEvent(this, this.class, User.get(springSecurityService.principal?.id), IceScrumEvent.EVENT_AFTER_DELETE))
+    def afterUpdate() {
+        flushCache(cache:'featureCache-'+this.id, cacheResolver:'backlogElementCacheResolver')
+    }
+
+    def beforeUpdate() {
+        if (this.isDirty('color') || this.isDirty('name')){
+            this.stories.each{
+                flushCache(cache:'storyCache-'+this.id, cacheResolver:'backlogElementCacheResolver')
+            }
         }
+    }
+
+    def afterDelete() {
+    removeCache(cache:'featureCache-'+this.id, cacheResolver:'backlogElementCacheResolver')
+        publishEvent(new IceScrumFeatureEvent(this, this.class, User.get(springSecurityService.principal?.id), IceScrumEvent.EVENT_AFTER_DELETE))
     }
 
 }

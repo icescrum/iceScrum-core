@@ -18,12 +18,15 @@
 <div class="widget-bar">
   <g:if test="${product != null}">
     <div class="box-simple box-simple-last ui-corner-all" id="project-details">
-      <g:render template="/grails-app/views/project/dialogs/details" model="[user:user,currentProduct:product]"/>
-    </div>
-  </g:if>
-  <g:if test="${team != null}">
-    <div class="box-simple box-simple-last ui-corner-all" id="team-details">
-      <g:render template="/grails-app/views/team/dialogs/details" model="[user:user, currentTeam:team]"/>
+        <ul>
+          <li>${message(code: "is.ui.details.product.name")}
+            <strong>${product.name.encodeAsHTML()}</strong>
+          </li>
+          <li>${message(code:"is.ui.details.role.name")} <a href="javascript:;" onclick="jQuery('#edit-members a').click();"><strong> <is:displayRole /> </strong></a></li>
+          <g:if test="${user}">
+            <li><is:avatar user="${user}"/></li>
+          </g:if>
+        </ul>
     </div>
   </g:if>
   <div id="widget-list">

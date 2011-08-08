@@ -152,6 +152,7 @@ class StoryService {
             throw new RuntimeException()
 
         User u = (User) springSecurityService.currentUser
+
         story.addActivity(u, Activity.CODE_UPDATE, story.name)
         broadcast(function: 'update', message: story)
         publishEvent(new IceScrumStoryEvent(story, this.class, u, IceScrumStoryEvent.EVENT_UPDATED))
@@ -183,12 +184,11 @@ class StoryService {
         User u = (User) springSecurityService.currentUser
         story.addActivity(u, Activity.CODE_UPDATE, story.name)
 
+        broadcast(function: 'estimate', message: story)
         if (oldState != story.state && story.state == Story.STATE_ESTIMATED)
             publishEvent(new IceScrumStoryEvent(story, this.class, u, IceScrumStoryEvent.EVENT_ESTIMATED))
         else if (oldState != story.state && story.state == Story.STATE_ACCEPTED)
             publishEvent(new IceScrumStoryEvent(story, this.class, u, IceScrumStoryEvent.EVENT_ACCEPTED))
-
-        broadcast(function: 'estimate', message: story)
     }
 
     @PreAuthorize('productOwner(#p) or scrumMaster(#p)')
@@ -239,7 +239,6 @@ class StoryService {
                     story.addToTasks(emptyTask).save()
                     emptyTask.save()
                 }
-
             clicheService.createOrUpdateDailyTasksCliche(sprint)
         } else {
             story.state = Story.STATE_PLANNED
@@ -322,9 +321,10 @@ class StoryService {
         setRank(story, 1)
         if (!story.save(flush: true))
             throw new RuntimeException()
-        publishEvent(new IceScrumStoryEvent(story, this.class, (User) springSecurityService.currentUser, IceScrumStoryEvent.EVENT_UNPLANNED))
+
         broadcast(function: 'update', message: sprint)
         broadcast(function: 'unPlan', message: story)
+        publishEvent(new IceScrumStoryEvent(story, this.class, (User) springSecurityService.currentUser, IceScrumStoryEvent.EVENT_UNPLANNED))
     }
 
     /**
@@ -420,7 +420,6 @@ class StoryService {
         story.rank = rank
         if (!story.save())
             throw new RuntimeException()
-
     }
 
     void resetRank(Story story) {
@@ -471,6 +470,7 @@ class StoryService {
             }
         }
         movedItem.rank = rank
+
         broadcast(function: 'update', message: movedItem)
         return movedItem.save() ? true : false
     }
@@ -502,9 +502,10 @@ class StoryService {
 
             User u = (User) springSecurityService.currentUser
             storiesA << pbi
+
             pbi.addActivity(u, 'acceptAs', pbi.name)
-            publishEvent(new IceScrumStoryEvent(pbi, this.class, u, IceScrumStoryEvent.EVENT_ACCEPTED))
             broadcast(function: 'accept', message: pbi)
+            publishEvent(new IceScrumStoryEvent(pbi, this.class, u, IceScrumStoryEvent.EVENT_ACCEPTED))
         }
         resumeBufferedBroadcast()
         return storiesA
@@ -545,6 +546,7 @@ class StoryService {
             }
             this.delete(pbi, false)
             features << feature
+
             feature.addActivity(user, 'acceptAs', feature.name)
             publishEvent(new IceScrumStoryEvent(feature, this.class, user, IceScrumStoryEvent.EVENT_ACCEPTED_AS_FEATURE))
         }
@@ -599,8 +601,8 @@ class StoryService {
             }
             tasks << task
             this.delete(pbi, false)
-            publishEvent(new IceScrumStoryEvent(task, this.class, (User) springSecurityService.currentUser, IceScrumStoryEvent.EVENT_ACCEPTED_AS_TASK))
 
+            publishEvent(new IceScrumStoryEvent(task, this.class, (User) springSecurityService.currentUser, IceScrumStoryEvent.EVENT_ACCEPTED_AS_TASK))
         }
         resumeBufferedBroadcast()
         return tasks
@@ -650,6 +652,7 @@ class StoryService {
                 throw new RuntimeException()
 
             User u = (User) springSecurityService.currentUser
+
             broadcast(function: 'done', message: story)
             story.addActivity(u, 'done', story.name)
             publishEvent(new IceScrumStoryEvent(story, this.class, u, IceScrumStoryEvent.EVENT_DONE))
@@ -695,6 +698,7 @@ class StoryService {
                 throw new RuntimeException()
 
             User u = (User) springSecurityService.currentUser
+
             story.addActivity(u, 'unDone', story.name)
             broadcast(function: 'unDone', message: story)
             publishEvent(new IceScrumStoryEvent(story, this.class, u, IceScrumStoryEvent.EVENT_UNDONE))
@@ -705,18 +709,21 @@ class StoryService {
     }
 
     void associateFeature(Feature feature, Story story) {
-        story.feature = feature
-        if (!story.save())
+        feature.addToStories(story)
+        if (!feature.save(flush:true))
             throw new RuntimeException()
+
         broadcast(function: 'associated', message: story)
         User u = (User) springSecurityService.currentUser
         publishEvent(new IceScrumStoryEvent(story, this.class, u, IceScrumStoryEvent.EVENT_FEATURE_ASSOCIATED))
     }
 
     void dissociateFeature(Story story) {
-        story.feature = null
-        if (!story.save())
+        def feature = story.feature
+        feature.removeFromStories(story)
+        if (!feature.save(flush:true))
             throw new RuntimeException()
+
         broadcast(function: 'dissociated', message: story)
         User u = (User) springSecurityService.currentUser
         publishEvent(new IceScrumStoryEvent(story, this.class, u, IceScrumStoryEvent.EVENT_FEATURE_DISSOCIATED))

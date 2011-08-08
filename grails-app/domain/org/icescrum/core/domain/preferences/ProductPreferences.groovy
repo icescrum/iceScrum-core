@@ -30,8 +30,6 @@ import org.icescrum.core.domain.Product
 class ProductPreferences {
 
     //Project
-    boolean newTeams = false
-    boolean lockPo = true
     boolean hidden = false
     boolean hideWeekend = false
     String url

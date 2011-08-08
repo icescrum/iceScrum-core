@@ -24,13 +24,10 @@
 
 package org.icescrum.core.services
 
-import grails.plugin.springcache.key.CacheKeyBuilder
 import groovy.util.slurpersupport.NodeChild
 import java.text.SimpleDateFormat
 import org.codehaus.groovy.grails.commons.ApplicationHolder
 import org.icescrum.core.domain.preferences.ProductPreferences
-import org.springframework.security.access.AccessDeniedException
-import org.springframework.security.access.annotation.Secured
 import org.springframework.security.access.prepost.PostFilter
 
 import org.springframework.transaction.annotation.Transactional
@@ -46,6 +43,7 @@ import org.icescrum.core.support.XMLConverterSupport
 import org.icescrum.core.domain.Story
 import org.icescrum.core.event.IceScrumEvent
 import org.icescrum.core.event.IceScrumProductEvent
+import org.springframework.security.access.prepost.PreAuthorize
 
 /**
  * ProductService is a transactional class, that manage operations about
@@ -56,30 +54,24 @@ class ProductService {
     def springcacheService
     def springSecurityService
     def securityService
-
     def teamService
     def actorService
     def g = new org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib()
 
     static transactional = true
 
-
-    @PostFilter("stakeHolder(filterObject) or inProduct(filterObject)")
-    List getProductList(params) {
-        return Product.list(params ?: [cache: true])
-    }
-
     @PostFilter("stakeHolder(filterObject) or inProduct(filterObject)")
     List getByTermProductList(term, params) {
         return Product.findAllByNameIlike('%' + term + '%', params)
     }
 
-    @PostFilter("inProduct(filterObject) and !hasRole('ROLE_ADMIN')")
+    @PostFilter("(stakeHolder(filterObject,true) or inProduct(filterObject) or owner(filterObject)) and !hasRole('ROLE_ADMIN')")
     List getByMemberProductList() {
         return Product.list(cache: true)
     }
 
-    void save(Product _product, User u) {
+    @PreAuthorize('isAuthenticated()')
+    void save(Product _product, productOwners, stakeHolders) {
         if (!_product.endDate == null)
             throw new IllegalStateException("is.product.error.no.endDate")
         if (_product.startDate > _product.endDate)
@@ -94,10 +86,23 @@ class ProductService {
         if (!_product.save(flush: true))
             throw new RuntimeException()
         securityService.secureDomain(_product)
-        securityService.createProductOwnerPermissions(u, _product)
-        publishEvent(new IceScrumProductEvent(_product, this.class, u, IceScrumEvent.EVENT_CREATED))
+
+        if (productOwners){
+            for(productOwner in User.getAll(productOwners*.toLong())){
+                if (productOwner)
+                    securityService.createProductOwnerPermissions(productOwner, _product)
+            }
+        }
+        if (stakeHolders){
+            for(stakeHolder in User.getAll(stakeHolders*.toLong())){
+                if (stakeHolder)
+                    securityService.createStakeHolderPermissions(stakeHolder, _product)
+            }
+        }
+        publishEvent(new IceScrumProductEvent(_product, this.class, (User)springSecurityService.currentUser, IceScrumEvent.EVENT_CREATED))
     }
 
+    @PreAuthorize('isAuthenticated()')
     void saveImport(Product _product, String name) {
         if (!_product.endDate == null)
             throw new IllegalStateException("is.product.error.no.endDate")
@@ -133,6 +138,12 @@ class ProductService {
             }
             securityService.secureDomain(_product)
 
+            _product.teams.each{
+               it.scrumMasters?.each{ u ->
+                   securityService.createAdministrationPermissionsForProduct(u,_product)
+               }
+            }
+
             if (productOwners) {
                 productOwners?.eachWithIndex {it, index ->
                     securityService.createProductOwnerPermissions(it, _product)
@@ -143,12 +154,14 @@ class ProductService {
                 securityService.createProductOwnerPermissions(u, _product)
                 securityService.changeOwner(u, _product)
             }
+
             publishEvent(new IceScrumProductEvent(_product, this.class, (User) springSecurityService.currentUser, IceScrumEvent.EVENT_CREATED))
         } catch (Exception e) {
             throw new RuntimeException(e)
         }
     }
 
+    @PreAuthorize('owner(#_product)')
     void addTeamsToProduct(Product _product, teamIds) {
         if (!_product)
             throw new IllegalStateException('Product must not be null')
@@ -159,8 +172,12 @@ class ProductService {
 
         log.debug teamIds
         for (team in Team.getAll(teamIds*.toLong())) {
-            if (team)
+            if (team){
                 _product.addToTeams(team)
+                team.scrumMasters?.each{
+                    securityService.createAdministrationPermissionsForProduct(it, _product)
+                }
+            }
             publishEvent(new IceScrumProductEvent(_product, team, this.class, (User) springSecurityService.currentUser, IceScrumProductEvent.EVENT_TEAM_ADDED))
         }
 
@@ -172,7 +189,7 @@ class ProductService {
 
     }
 
-
+    @PreAuthorize('owner(#_product)')
     void update(Product _product) {
         if (!_product.name?.trim()) {
             throw new IllegalStateException("is.product.error.no.name")
@@ -180,18 +197,28 @@ class ProductService {
         if (!_product.planningPokerGameType in [0, 1]) {
             throw new IllegalStateException("is.product.error.no.estimationSuite")
         }
+
+        def refresh = _product.isDirty('preferences')
+
         if (!_product.save(flush: true)) {
             throw new RuntimeException()
         }
-        removeInCache(SecurityService.CACHE_STAKEHOLDER, _product.id)
+
+        if (_product.preferences.isDirty('hidden') && _product.preferences.hidden)
+            springcacheService.getOrCreateCache(SecurityService.CACHE_STAKEHOLDER)?.flush()
+
+        if (refresh)
+            broadcast(function: 'update', message: [class:_product.class, id:_product.id, refresh:true])
+        else
+            broadcast(function: 'update', message: _product)
         publishEvent(new IceScrumProductEvent(_product, this.class, (User) springSecurityService.currentUser, IceScrumEvent.EVENT_UPDATED))
     }
-
 
     Release getLastRelease(Product p) {
         return p.releases?.max {s1, s2 -> s1.orderNumber <=> s2.orderNumber}
     }
 
+    @PreAuthorize('stakeHolder(#product) or inProduct(#product)')
     def cumulativeFlowValues(Product product) {
         def values = []
         product.releases?.sort {a, b -> a.orderNumber <=> b.orderNumber}?.each {
@@ -213,6 +240,7 @@ class ProductService {
         return values
     }
 
+    @PreAuthorize('stakeHolder(#product) or inProduct(#product)')
     def productBurnupValues(Product product) {
         def values = []
         product.releases?.sort {a, b -> a.orderNumber <=> b.orderNumber}?.each {
@@ -236,6 +264,7 @@ class ProductService {
         return values
     }
 
+    @PreAuthorize('stakeHolder(#product) or inProduct(#product)')
     def productBurndownValues(Product product) {
         def values = []
         product.releases?.sort {a, b -> a.orderNumber <=> b.orderNumber}?.each {
@@ -254,6 +283,7 @@ class ProductService {
         return values
     }
 
+    @PreAuthorize('stakeHolder(#product) or inProduct(#product)')
     def productVelocityValues(Product product) {
         def values = []
         product.releases?.sort {a, b -> a.orderNumber <=> b.orderNumber}?.each {
@@ -272,6 +302,7 @@ class ProductService {
         return values
     }
 
+    @PreAuthorize('stakeHolder() or inProduct()')
     def productVelocityCapacityValues(Product product) {
         def values = []
         def capacity = 0, label = ""
@@ -297,30 +328,7 @@ class ProductService {
         return values
     }
 
-    @Secured(['ROLE_USER', 'RUN_AS_PERMISSIONS_MANAGER'])
-    void beProductOwner(Product p) {
-        if (p.preferences.lockPo)
-            throw new AccessDeniedException('')
-
-        def u = User.get(springSecurityService.principal.id)
-        securityService.createProductOwnerPermissions u, p
-    }
-
-    @Secured(['ROLE_USER', 'RUN_AS_PERMISSIONS_MANAGER'])
-    void dontBeProductOwner(Product p) {
-        if (p.preferences.lockPo)
-            throw new AccessDeniedException('')
-
-        def u = User.get(springSecurityService.principal.id)
-        securityService.deleteProductOwnerPermissions u, p
-    }
-
-    private removeInCache(String cacheName, _key) {
-        def cache = springcacheService.getOrCreateCache(cacheName)
-        def key = new CacheKeyBuilder().append(_key).toCacheKey()
-        cache.remove(key)
-    }
-
+    @PreAuthorize('isAuthenticated()')
     @Transactional(readOnly = true)
     Product unMarshall(NodeChild product, ProgressSupport progress = null) {
         try {
@@ -335,10 +343,8 @@ class ProductService {
                     hidden: product.preferences.hidden.text().toBoolean(),
                     assignOnBeginTask: product.preferences.assignOnBeginTask.text().toBoolean(),
                     assignOnCreateTask: product.preferences.assignOnCreateTask.text().toBoolean(),
-                    lockPo: product.preferences.lockPo.text().toBoolean(),
                     autoCreateTaskOnEmptyStory: product.preferences.autoCreateTaskOnEmptyStory.text().toBoolean(),
                     autoDoneStory: product.preferences.autoDoneStory.text().toBoolean(),
-                    newTeams: product.preferences.newTeams.text().toBoolean(),
                     url: product.preferences.url?.text() ?: null,
                     noEstimation: product.preferences.noEstimation.text().toBoolean(),
                     limitUrgentTasks: product.preferences.limitUrgentTasks.text().toInteger(),
@@ -416,6 +422,7 @@ class ProductService {
         }
     }
 
+    @PreAuthorize('isAuthenticated()')
     @Transactional(readOnly = true)
     def parseXML(File x, ProgressSupport progress = null) {
         def prod = new XmlSlurper().parse(x)
@@ -440,6 +447,7 @@ class ProductService {
         return p
     }
 
+    @PreAuthorize('isAuthenticated()')
     @Transactional(readOnly = true)
     def validate(Product p, ProgressSupport progress = null) {
         try {
@@ -461,8 +469,35 @@ class ProductService {
         }
     }
 
+    @PreAuthorize('owner(#p)')
     def delete(Product p) {
+        def id = p.id
         p.delete(flush: true)
         securityService.unsecureDomain p
+        broadcast(function: 'delete', message: [class: p.class, id: id])
     }
+
+    @PreAuthorize('owner(#product) or scrumMaster()')
+    void addProductOwner(Product product, User productOwner) {
+        securityService.createProductOwnerPermissions productOwner, product
+    }
+
+    @PreAuthorize('owner(#product) or scrumMaster()')
+    void addStakeHolder(Product product, User stakeHolder) {
+        if (product.preferences.hidden)
+            securityService.createStakeHolderPermissions stakeHolder, product
+    }
+
+    @PreAuthorize('owner(#product) or scrumMaster()')
+    void removeProductOwner(Product product, User productOwner) {
+        securityService.deleteProductOwnerPermissions productOwner, product
+    }
+
+    @PreAuthorize('owner(#product) or scrumMaster()')
+    void removeStakeHolder(Product product, User stakeHolder) {
+        if (product.preferences.hidden)
+            securityService.deleteStakeHolderPermissions stakeHolder, product
+    }
+
+
 }

@@ -112,14 +112,39 @@ class FormTagLib {
         assert attrs.id
 
         def id = attrs.id
-        def source = createLink(controller: attrs.controller, action: attrs.action, params: params.product ? [product: params.product] : null)
+        def source = "'"+createLink(controller: attrs.controller, action: attrs.action, params: params.product ? [product: params.product] : null)+"'"
+
+        if (attrs.cache){
+                source = """
+                function( request, response ){
+                    var term = request.term;
+                    var cached;
+                    if ( term in autoCompleteCache ) {
+                        cached = autoCompleteCache[term].filter(function(object){
+                            return ${attrs.filter ?: 'true'};
+                        });
+                        response( cached );
+                        return;
+                    }
+                    autoCompleteLastXhr = \$.getJSON( ${source}, request, function( data, status, xhr ) {
+                        autoCompleteCache[ term ] = data;
+                        if ( xhr === autoCompleteLastXhr ) {
+                            cached = data.filter(function(object){
+                                return ${attrs.filter ?: 'true'};
+                            });
+                            response( cached );
+                        }
+                    });
+                }"""
+        }
 
         def autoParams = [
                 minLength: attrs.minLength ?: '2',
-                source: "'${source}'",
-                search: "function(event,ui){${attrs.onSearch};}",
-                select: "function(event,ui){${attrs.onSelect};}",
-                change: "function(event,ui){${attrs.onChange};}"
+                source: "${source}",
+                appendTo: "'${attrs.appendTo ?: 'body'}'",
+                search: attrs.onSearch ? "function(event,ui){${attrs.onSearch};}" : '',
+                select: attrs.onSelect ? "function(event,ui){${attrs.onSelect};}" : '',
+                change: attrs.onChange ? "function(event,ui){${attrs.onChange};}" : ''
         ]
 
         attrs.remove('source')
@@ -130,8 +155,10 @@ class FormTagLib {
         attrs.remove('controller')
         attrs.remove('action')
 
+        def renderItem = attrs.remove('renderItem')
+
         def autoCode = "\$('#${id}').autocomplete({"
-        autoCode += autoParams.findAll {k, v -> v}.collect {k, v ->
+        autoCode += autoParams.findAll {k, v -> v != ''}.collect {k, v ->
             " $k:$v"
         }.join(',')
         autoCode += "});"
@@ -140,6 +167,15 @@ class FormTagLib {
             attrs.remove('disabled')
         }
 
+        if (renderItem){
+           autoCode += """ \$('#${id}').data( "autocomplete"  )._renderItem = function( ul, item ) {
+			    return \$( '<li></li>' )
+				        .data( "item.autocomplete", item )
+				        .append( " ${renderItem} " )
+				        .appendTo( ul );
+            };
+            """
+        }
         out << jq.jquery(null, {autoCode})
         out << is.input(attrs, body())
     }
@@ -224,12 +260,12 @@ class FormTagLib {
         def jqCode = ''
 
         if (attrs.disabled == null || attrs.disabled == 'false' || attrs.disabled == false) {
-            def id = attrs.name.replace('.', '\\\\.')
-            jqCode += " \$('#${id}').selectmenu({$opts});"
+            jqCode += " \$('select[name=\"${attrs.name}\"]').selectmenu({$opts});"
             out << jq.jquery(null, {jqCode})
         } else {
             attrs.disabled = true
         }
+
 
         def messageSource = grailsAttributes.getApplicationContext().getBean("messageSource")
         def locale = RCU.getLocale(request)

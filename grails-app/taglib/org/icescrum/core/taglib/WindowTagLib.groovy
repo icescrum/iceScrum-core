@@ -43,24 +43,26 @@ class WindowTagLib {
         def type = attrs.type ?: 'window'
 
         // Check for content window
-        def windowContent = (attrs.init) ? include(controller: windowId, action: attrs.init, params: params) : body()
+        def includeParams = [:]
+        params.each{ if (!(it.key in ["controller", "action"])) { includeParams << it} }
+        def windowContent = (attrs.init) ? include(controller: windowId, action: attrs.init, params:includeParams) : body()
 
         // Check for toolbar existence
         def titleBarContent = ''
         if (attrs.hasTitleBarContent) {
             if (attrs.type == 'widget') {
-                titleBarContent = include(controller: windowId, action: 'titleBarContentWidget', params: params)
+                titleBarContent = include(controller: windowId, action: 'titleBarContentWidget', params: includeParams)
             } else {
-                titleBarContent = include(controller: windowId, action: 'titleBarContent', params: params)
+                titleBarContent = include(controller: windowId, action: 'titleBarContent', params: includeParams)
             }
         }
         // Check for toolbar existence
         def toolbarContent = ''
         if (attrs.hasToolbar) {
             if (attrs.type == 'widget') {
-                toolbarContent = include(controller: windowId, action: 'toolbarWidget', params: params)
+                toolbarContent = include(controller: windowId, action: 'toolbarWidget', params: includeParams)
             } else {
-                toolbarContent = include(controller: windowId, action: 'toolbar', params: params)
+                toolbarContent = include(controller: windowId, action: 'toolbar', params: includeParams)
             }
         }
 

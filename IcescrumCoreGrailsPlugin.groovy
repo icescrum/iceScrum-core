@@ -32,11 +32,12 @@ import org.icescrum.core.utils.IceScrumDomainClassMarshaller
 import org.atmosphere.util.ExcludeSessionBroadcaster
 import org.icescrum.ConfigurationHolder
 import grails.converters.XML
+import grails.plugin.springcache.SpringcacheService
 
 class IcescrumCoreGrailsPlugin {
     def groupId = 'org.icescrum'
     // the plugin version
-    def version = "1.4.2.10"
+    def version = "1.4.2.11"
     // the version or versions of Grails the plugin is designed for
     def grailsVersion = "1.3.7 > *"
     // the other plugins this plugin depends on
@@ -51,7 +52,7 @@ class IcescrumCoreGrailsPlugin {
 
     def observe = ['controllers']
 
-    def loadAfter = ['controllers', 'feeds']
+    def loadAfter = ['controllers', 'feeds', 'springcache']
 
     // TODO Fill in these fields
     def author = "iceScrum"
@@ -108,12 +109,19 @@ class IcescrumCoreGrailsPlugin {
             }
         }
         SecurityService securityService = ctx.getBean('securityService')
+        SpringcacheService springcacheService = ctx.getBean('springcacheService')
         application.controllerClasses.each {
+            addCacheFlushMethod(it, springcacheService, ctx)
             addBroadcastMethods(it, securityService)
             addErrorMethod(it)
         }
         application.serviceClasses.each {
+            addCacheFlushMethod(it, springcacheService, ctx)
             addBroadcastMethods(it, securityService)
+        }
+
+        application.domainClasses.each {
+            addCacheFlushMethod(it, springcacheService, ctx)
         }
     }
 
@@ -132,6 +140,8 @@ class IcescrumCoreGrailsPlugin {
         }
         if (application.isControllerClass(event.source)) {
             SecurityService securityService = event.ctx.getBean('securityService')
+            SpringcacheService springcacheService = event.ctx.getBean('springcacheService')
+            addCacheFlushMethod(event.source, springcacheService, event.ctx)
             addBroadcastMethods(event.source, securityService)
             addErrorMethod(event.source)
         }
@@ -187,6 +197,26 @@ class IcescrumCoreGrailsPlugin {
                     actionClosure
                 }
                 clazz.registerMapping(actionName)
+            }
+        }
+    }
+
+    private addCacheFlushMethod(source,SpringcacheService springcacheService, ctx) {
+        source.metaClass.flushCache = { Map args ->
+            def cacheResolver = ctx.getBean(args.cacheResolver ?: 'springcacheDefaultCacheResolver')
+            springcacheService.flush((cacheResolver).resolveCacheName(args.cache))
+        }
+
+        source.metaClass.removeCache = { Map args ->
+            def cacheResolver = ctx.getBean(args.cacheResolver ?: 'springcacheDefaultCacheResolver')
+            def cacheNamePatterns = (cacheResolver).resolveCacheName(args.cache)
+            if (cacheNamePatterns instanceof String) cacheNamePatterns = [cacheNamePatterns]
+            def caches = []
+            springcacheService.springcacheCacheManager?.cacheNames?.each { name ->
+                if (cacheNamePatterns.any { name ==~ it }){ caches << name }
+            }
+            caches?.each{
+                springcacheService.springcacheCacheManager.getCache(it)?.removeAll()
             }
         }
     }

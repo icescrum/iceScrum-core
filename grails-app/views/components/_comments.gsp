@@ -16,7 +16,7 @@
   - along with iceScrum.  If not, see <http://www.gnu.org/licenses/>.
   --}%
 
-<g:set var="poOrSm" value="${sec.access([expression:'productOwner() or scrumMaster()'], {true})}"/>
+<g:set var="poOrSm" value="${request.scrumMaster || request.productOwner}"/>
 <g:set var="comments" value="${commentable.comments}"/>
 
 <ul id="comments-list" class="list-comments">

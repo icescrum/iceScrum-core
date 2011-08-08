@@ -51,14 +51,14 @@ grails.project.dependency.resolution = {
 
     dependencies {
         // specify dependencies here under either 'build', 'compile', 'runtime', 'test' or 'provided' scopes eg.
-        runtime 'mysql:mysql-connector-java:5.1.5'
+        compile 'mysql:mysql-connector-java:5.1.17'
     }
 
     plugins {
         compile 'org.icescrum:fluxiable:0.3'
         compile ':burning-image:0.5.0'
         compile 'org.icescrum:icescrum-attachmentable:0.2'
-        compile 'spring:spring-security-core:1.1.3'
+        compile 'spring:spring-security-core:1.2'
         compile 'spring:spring-security-acl:1.1'
         compile ':commentable:0.7.5'
         compile ':followable:0.3'
@@ -69,5 +69,6 @@ grails.project.dependency.resolution = {
         compile ':mail:1.0-SNAPSHOT'
         compile ':jasper:1.2.1'
         compile ':maven-publisher:0.8.1'
+        compile ':rollback-on-exception:0.1'
     }
 }

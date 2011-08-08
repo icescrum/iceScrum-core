@@ -63,11 +63,14 @@ class Product extends TimeBox {
     static transients = [
             'allUsers',
             'productOwners',
-            'erasableByUser'
+            'erasableByUser',
+            'stakeHolders',
+            'owner'
     ]
 
     def erasableByUser = false
     def productOwners = null
+    def stakeHolders = null
 
     static mapping = {
         table 'icescrum2_product'
@@ -154,14 +157,28 @@ class Product extends TimeBox {
         }
         else if (this.id) {
             def acl = aclUtilService.readAcl(this.getClass(), this.id)
-            def productOwnersList = User.withCriteria {
-                or {
-                    acl.entries.findAll {it.permission in SecurityService.productOwnerPermissions}*.sid.each {sid ->
-                        eq('username', sid.principal)
-                    }
-                }
-            }
-            productOwnersList
+            def users = acl.entries.findAll {it.permission in SecurityService.productOwnerPermissions}*.sid*.principal;
+            if (users)
+                return User.findAll("from User as u where u.username in (:users)",[users:users], [cache: true])
+            else
+                return null
+        } else {
+            null
+        }
+    }
+
+    def getStakeHolders() {
+        //Only used when product is being imported
+        if (this.stakeHolders) {
+            this.stakeHolders
+        }
+        else if (this.id) {
+            def acl = aclUtilService.readAcl(this.getClass(), this.id)
+            def users = acl.entries.findAll {it.permission in SecurityService.stakeHolderPermissions}*.sid*.principal;
+            if (users)
+                return User.findAll("from User as u where u.username in (:users)",[users:users], [cache: true])
+            else
+                return null
         } else {
             null
         }
@@ -170,11 +187,7 @@ class Product extends TimeBox {
     def getOwner() {
         if (this.id) {
             def acl = aclUtilService.readAcl(this.getClass(), this.id)
-            def owner = User.withCriteria {
-                eq('username', acl.owner.principal)
-                maxResults(1)
-            }
-            owner[0]
+            return User.findByUsername(acl.owner.principal,[cache: true])
         } else {
             null
         }

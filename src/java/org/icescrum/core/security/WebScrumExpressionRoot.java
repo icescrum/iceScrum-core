@@ -103,15 +103,19 @@ public class WebScrumExpressionRoot extends WebSecurityExpressionRoot implements
     }
 
     public boolean stakeHolder() {
-        return securityService.stakeHolder(null, super.authentication);
+        return securityService.stakeHolder(null, super.authentication, false);
     }
 
     public boolean stakeHolder(long p) {
-        return securityService.stakeHolder(p, super.authentication);
+        return securityService.stakeHolder(p, super.authentication, false);
     }
 
     public boolean stakeHolder(Product p) {
-        return securityService.stakeHolder(p, super.authentication);
+        return securityService.stakeHolder(p, super.authentication, false);
+    }
+
+    public boolean stakeHolder(Product p, boolean onlyPrivate) {
+        return securityService.stakeHolder(p, super.authentication, onlyPrivate);
     }
 
     public boolean owner() {

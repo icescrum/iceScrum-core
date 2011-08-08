@@ -16,16 +16,16 @@
   - along with iceScrum.  If not, see <http://www.gnu.org/licenses/>.
   --}%
 
-<g:set var="access" value="${access ?: sec.access([expression:'productOwner() or scrumMaster()'], {true})}"/>
+<g:set var="poOrSm" value="${request.scrumMaster || request.productOwner}"/>
 <li id="comment${comment.id}${commentId ? '-'+commentId : ''}" class="comment">
   <div class="comment-avatar">
-    <is:avatar userid="${comment.poster.id}" class="ico"/>
+    <is:avatar user="${comment.poster}" class="ico"/>
   </div>
 
   <div class="comment-details">
     <is:scrumLink controller="user" action='profile' id="${comment.poster?.username}"><strong>${comment.poster?.firstName?.encodeAsHTML()} ${comment.poster?.lastName?.encodeAsHTML()}</strong></is:scrumLink>,
     <g:formatDate date="${comment.dateCreated}" formatName="is.date.format.short.time" timeZone="${user?.preferences?.timezone?:null}"/>
-    <g:if test="${moderation && (access || user?.id == comment.poster?.id)}">
+    <g:if test="${moderation && (poOrSm || user?.id == comment.poster?.id)}">
       (
       <is:link history="false"
               remote="true"
@@ -35,10 +35,10 @@
               update="comment${comment.id}"
               params="[commentable:backlogelement]"
               onSuccess="\$('#commentEditorContainer').hide();"
-              rendered="${(access || user?.id == comment.poster?.id) ? 'true' : 'false'}">
+              rendered="${(poOrSm || user?.id == comment.poster?.id) ? 'true' : 'false'}">
         ${message(code:'is.ui.backlogelement.comment.edit')}
       </is:link>
-      <g:if test="${access}">
+      <g:if test="${poOrSm}">
         -
         <is:link history="false"
                 remote="true"

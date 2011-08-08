@@ -40,7 +40,7 @@ class BootStrapService {
         config.grails.attachmentable.baseDir = config.icescrum.baseDir.toString()
         config.grails.mail.default.from = config.icescrum.alerts.default.from
 
-        if (Environment.current == Environment.DEVELOPMENT)
-            DummyPopulator.dummyze()
+        //if (Environment.current == Environment.DEVELOPMENT)
+            //DummyPopulator.dummyze()
     }
 }

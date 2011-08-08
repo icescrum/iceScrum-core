@@ -27,6 +27,7 @@ import org.icescrum.core.domain.Story
 import org.icescrum.core.domain.Release
 import org.icescrum.core.domain.Sprint
 import org.icescrum.core.domain.Task
+import org.icescrum.core.domain.security.Authority
 
 class BundleUtils {
 
@@ -99,6 +100,21 @@ class BundleUtils {
             (Task.STATE_WAIT): 'is.task.state.wait',
             (Task.STATE_BUSY): 'is.task.state.inprogress',
             (Task.STATE_DONE): 'is.task.state.done'
+    ]
+
+    static roles = [
+            (Authority.MEMBER): 'is.role.teamMember',
+            (Authority.SCRUMMASTER): 'is.role.scrumMaster',
+            (Authority.PRODUCTOWNER): 'is.role.productOwner',
+            (Authority.STAKEHOLER): 'is.role.stakeHolder',
+            (Authority.PO_AND_SM): 'is.role.poAndSm'
+    ]
+
+    static rolesPublic = [
+            (Authority.MEMBER): 'is.role.teamMember',
+            (Authority.SCRUMMASTER): 'is.role.scrumMaster',
+            (Authority.PRODUCTOWNER): 'is.role.productOwner',
+            (Authority.PO_AND_SM): 'is.role.poAndSm'
     ]
 
 }

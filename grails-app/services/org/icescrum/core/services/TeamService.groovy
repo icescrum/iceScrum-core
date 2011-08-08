@@ -30,9 +30,6 @@ import org.icescrum.core.domain.Team
 import org.icescrum.core.domain.User
 import org.icescrum.core.domain.preferences.TeamPreferences
 import org.icescrum.core.support.ProgressSupport
-import org.springframework.security.access.AccessDeniedException
-import org.springframework.security.access.annotation.Secured
-import org.springframework.security.access.prepost.PostFilter
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.transaction.annotation.Transactional
 import org.icescrum.core.event.IceScrumEvent
@@ -48,18 +45,7 @@ class TeamService {
     def springcacheService
     def g = new org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib()
 
-
-    @PreAuthorize("inTeam(#teamId)")
-    Team openTeam(Long teamId) {
-        Team.get(teamId)
-    }
-
-    @PostFilter("inTeam(filterObject) and !hasRole('ROLE_ADMIN')")
-    List getTeamList() {
-        return Team.list(cache: true)
-    }
-
-    void save(Team team, memberIds, userid) {
+    void save(Team team, List members, List scrumMasters) {
         if (!team)
             throw new RuntimeException('is.team.error.not.exist')
 
@@ -69,18 +55,23 @@ class TeamService {
 
         else {
             securityService.secureDomain(team)
-            def currentUser = User.get(userid)
-            if (memberIds) {
-                for (member in User.getAll(memberIds*.toLong())) {
-                    if (currentUser.id != member.id) {
-                        team.addToMembers(member)
-                        securityService.createTeamMemberPermissions member, team
+            if (members) {
+                for (member in User.getAll(members*.toLong())) {
+                    if (!scrumMasters.contains(member.id)) {
+                        if (member){
+                            addMember(team,member)
+                        }
                     }
                 }
             }
-            team.addToMembers(currentUser)
-            securityService.createScrumMasterPermissions currentUser, team
-            if (!team.save()) {
+            if (scrumMasters){
+                for(scrumMaster in User.getAll(scrumMasters*.toLong())){
+                    if (scrumMaster){
+                        addScrumMaster(team,scrumMaster)
+                    }
+                }
+            }
+            if (!team.save(flush:true)) {
                 throw new RuntimeException()
             }
             publishEvent(new IceScrumTeamEvent(team, this.class, (User) springSecurityService.currentUser, IceScrumEvent.EVENT_CREATED))
@@ -88,17 +79,7 @@ class TeamService {
 
     }
 
-    void update(Team _team) {
-        if (!_team.name?.trim()) {
-            throw new IllegalStateException("is.product.error.no.name")
-        }
-
-        if (!_team.save(flush: true)) {
-            throw new RuntimeException()
-        }
-        publishEvent(new IceScrumTeamEvent(_team, this.class, (User) springSecurityService.currentUser, IceScrumEvent.EVENT_UPDATED))
-    }
-
+    @PreAuthorize('owner(#team)')
     void delete(Team team) {
         if (!team)
             throw new IllegalStateException('Team must not be null')
@@ -132,16 +113,14 @@ class TeamService {
 
 
         for (team in Team.getAll(teamIds)) {
-            _user.removeFromTeams(team)
-            securityService.deleteTeamMemberPermissions _user, team
-            securityService.deleteScrumMasterPermissions _user, team
+            removeMemberOrScrumMaster(team,_user)
         }
 
         if (!_user.save())
             throw new IllegalStateException('_user not saved')
     }
 
-
+    @PreAuthorize('owner(#_product)')
     void removeTeamsFromProduct(Product _product, teamIds) {
         if (!_product)
             throw new IllegalStateException('Product must not be null')
@@ -164,6 +143,7 @@ class TeamService {
 
     }
 
+    @PreAuthorize('isAuthenticated()')
     void saveImport(Team team) {
         if (!team)
             throw new IllegalStateException('is.team.error.not.exist')
@@ -178,11 +158,11 @@ class TeamService {
         def u = (User) springSecurityService.currentUser
         for (member in team.members) {
             if (!(member in scrumMasters))
-                securityService.createTeamMemberPermissions member, team
+                addMember(team,member)
         }
         if (scrumMasters) {
             scrumMasters.eachWithIndex {it, index ->
-                securityService.createScrumMasterPermissions it, team
+                addScrumMaster(team,it)
             }
             securityService.changeOwner(team.scrumMasters.first(), team)
         } else {
@@ -192,42 +172,29 @@ class TeamService {
         publishEvent(new IceScrumTeamEvent(team, this.class, u, IceScrumEvent.EVENT_CREATED))
     }
 
-    @Secured(['ROLE_USER', 'RUN_AS_PERMISSIONS_MANAGER'])
-    void beScrumMaster(Team t) {
-        if (t.preferences.allowRoleChange)
-            throw new AccessDeniedException('')
-
-        def user = (User) springSecurityService.currentUser
-        securityService.createScrumMasterPermissions user, t
-        securityService.deleteTeamMemberPermissions user, t
-    }
-
-    @Secured(['ROLE_USER', 'RUN_AS_PERMISSIONS_MANAGER'])
-    void dontBeSecrumMaster(Team t) {
-        if (t.preferences.allowRoleChange)
-            throw new AccessDeniedException('')
-
-        def u = (User) springSecurityService.currentUser
-
-        securityService.deleteScrumMasterPermissions u, t
-        securityService.createTeamMemberPermissions u, t
-    }
-
-    @Secured(['ROLE_USER', 'RUN_AS_PERMISSIONS_MANAGER'])
+    @PreAuthorize('owner(#team) or scrumMaster(#team)')
     void addMember(Team team, User member) {
-        team.addToMembers(member).save()
+        if (!team.members*.id?.contains(member.id))
+            team.addToMembers(member).save()
         securityService.createTeamMemberPermissions member, team
-        springcacheService.getOrCreateCache(SecurityService.CACHE_OPENPRODUCTTEAM).flush()
-        springcacheService.getOrCreateCache(SecurityService.CACHE_PRODUCTTEAM).flush()
         publishEvent(new IceScrumTeamEvent(team, member, this.class, (User) springSecurityService.currentUser, IceScrumTeamEvent.EVENT_MEMBER_ADDED))
     }
 
-    @Secured(['ROLE_USER', 'RUN_AS_PERMISSIONS_MANAGER'])
-    void deleteMember(Team team, User member) {
+    @PreAuthorize('owner(#team) or scrumMaster(#team)')
+    void addScrumMaster(Team team, User member) {
+        if (!team.members*.id?.contains(member.id))
+            team.addToMembers(member).save()
+        securityService.createScrumMasterPermissions member, team
+        publishEvent(new IceScrumTeamEvent(team, member, this.class, (User) springSecurityService.currentUser, IceScrumTeamEvent.EVENT_MEMBER_ADDED))
+    }
+
+    @PreAuthorize('owner(#team) or scrumMaster(#team)')
+    void removeMemberOrScrumMaster(Team team, User member) {
         team.removeFromMembers(member).save()
-        securityService.deleteTeamMemberPermissions member, team
-        springcacheService.getOrCreateCache(SecurityService.CACHE_OPENPRODUCTTEAM).flush()
-        springcacheService.getOrCreateCache(SecurityService.CACHE_PRODUCTTEAM).flush()
+        if (team.scrumMasters*.id?.contains(member.id))
+            securityService.deleteScrumMasterPermissions member, team
+        else
+            securityService.deleteTeamMemberPermissions member, team
         publishEvent(new IceScrumTeamEvent(team, member, this.class, (User) springSecurityService.currentUser, IceScrumTeamEvent.EVENT_MEMBER_REMOVED))
     }
 
@@ -244,8 +211,7 @@ class TeamService {
             )
 
             t.preferences = new TeamPreferences(
-                    allowNewMembers: team.preferences.allowNewMembers.text()?.toBoolean() ?: true,
-                    allowRoleChange: team.preferences.allowRoleChange.text()?.toBoolean() ?: true
+                    allowNewMembers: team.preferences.allowNewMembers.text()?.toBoolean() ?: true
             )
 
             def userService = (UserService) ApplicationHolder.application.mainContext.getBean('userService');

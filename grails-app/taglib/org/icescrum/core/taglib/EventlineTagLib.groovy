@@ -24,9 +24,12 @@
 package org.icescrum.core.taglib
 
 import org.icescrum.components.UtilsWebComponents
+import org.codehaus.groovy.grails.commons.ApplicationHolder
+import grails.plugin.springcache.key.CacheKeyBuilder
 
 class EventlineTagLib {
     static namespace = 'is'
+    def springcacheService
 
     def eventline = { attrs, body ->
         pageScope.events = []
@@ -54,7 +57,6 @@ class EventlineTagLib {
                 titles: titles
         ]
         if (!attrs.onlyEvents) {
-            def test = g.render(template: '/components/eventline', plugin: 'icescrum-core', model: params)
             out << g.render(template: '/components/eventline', plugin: 'icescrum-core', model: params)
             def jsParams = [
                     focus: attrs.focus
@@ -63,21 +65,53 @@ class EventlineTagLib {
             out << jq.jquery(null, "jQuery('${attrs.container}').eventline({${opts}});")
         } else {
             params.events.each {
-                out << it
+                    out << it
             }
         }
     }
 
     def event = { attrs, body ->
         pageScope.event = [
-                header: [],
-                content: '',
-                title: attrs.title,
-                contentAttrs: '',
-                elemid: attrs.elemid
-        ]
-        body()
+                    header: [],
+                    content: '',
+                    title: attrs.title,
+                    contentAttrs: '',
+                    elemid: attrs.elemid
+            ]
+        if (attrs.cacheable && !attrs.cacheable?.disabled){
 
+            attrs.cacheable.role = attrs.cacheable.role ?: true
+            attrs.cacheable.locale = attrs.cacheable.locale ?: true
+            def cacheResolver = ApplicationHolder.application.mainContext[attrs.cacheable.cacheResolver ?: 'springcacheDefaultCacheResolver']
+            def role = ''
+
+            def key  = new CacheKeyBuilder()
+            key.append(attrs.key)
+
+            if (attrs.role){
+                if (request.admin) {
+                role = 'adm'
+                } else {
+                    if (request.scrumMaster)  {  role += 'scm'  }
+                    if (request.teamMember)   {  role += 'tm'  }
+                    if (request.productOwner) {  role += 'po'  }
+                    if (!role && request.stakeHolder) {  role += 'sh'  }
+                }
+                role = role ?: 'anonymous'
+                key.append(role)
+            }
+
+            if (attrs.locale)
+                key.append(RCU.getLocale(request).toString().substring(0, 2))
+
+            pageScope.event = springcacheService.doWithCache(cacheResolver.resolveCacheName(attrs.cacheable.cache), key.toCacheKey()){
+                println "Caching tag event "+attrs.cacheable.cache+" "+attrs.cacheable.key
+                body()
+                return pageScope.event
+            }
+        }else{
+            body()
+        }
         pageScope.events << pageScope.event
     }
 

@@ -498,7 +498,12 @@ class Story extends BacklogElement implements Cloneable {
         }
     }
 
+    def afterUpdate() {
+        flushCache(cache:'storyCache-'+this.id, cacheResolver:'backlogElementCacheResolver')
+    }
+
     def afterDelete() {
+        removeCache(cache:'storyCache-'+this.id, cacheResolver:'backlogElementCacheResolver')
         withNewSession {
             publishEvent(new IceScrumStoryEvent(this, this.class, User.get(springSecurityService.principal?.id), IceScrumEvent.EVENT_AFTER_DELETE))
         }

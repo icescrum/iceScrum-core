@@ -30,7 +30,14 @@ import org.icescrum.core.domain.Team
 class Authority {
     static final String ROLE_ADMIN = 'ROLE_ADMIN'
     static final String ROLE_USER = 'ROLE_USER'
+    static final String ROLE_VISITOR = 'ROLE_ANONYMOUS'
     static final String ROLE_PERMISSION = 'ROLE_RUN_AS_PERMISSIONS_MANAGER'
+
+    static final int MEMBER = 0
+    static final int SCRUMMASTER = 1
+    static final int PRODUCTOWNER = 2
+    static final int STAKEHOLER = 3
+    static final int PO_AND_SM = 4
 
     String authority
     static mapping = {

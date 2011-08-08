@@ -16,7 +16,7 @@
  * along with iceScrum.  If not, see <http://www.gnu.org/licenses/>.
  *
  * Authors:
- *
+ * Vincent Barrier (vbarrier@kagilum.com)
  * Stéphane Maldini (stephane.maldini@icescrum.com)
  */
 
@@ -43,6 +43,7 @@ import org.springframework.util.Assert
 import static org.springframework.security.acls.domain.BasePermission.*
 import org.springframework.security.acls.model.*
 import org.icescrum.core.event.IceScrumUserEvent
+import org.springframework.web.context.request.RequestContextHolder as RCH
 
 class SecurityService {
 
@@ -72,8 +73,9 @@ class SecurityService {
     static final CACHE_OPENPRODUCTTEAM = 'teamProductCache'
     static final CACHE_OWNER = 'ownerCache'
 
-    static final teamMemberPermissions = [BasePermission.READ]
     static final productOwnerPermissions = [BasePermission.WRITE]
+    static final stakeHolderPermissions = [BasePermission.READ]
+    static final teamMemberPermissions = [BasePermission.READ]
     static final scrumMasterPermissions = [BasePermission.WRITE]
 
     Acl secureDomain(o) {
@@ -105,10 +107,58 @@ class SecurityService {
         publishEvent(new IceScrumUserEvent(u, p, this.class, (User) springSecurityService.currentUser, IceScrumUserEvent.EVENT_IS_PRODUCTOWNER))
     }
 
+    void deleteProductOwnerPermissions(User u, Product p) {
+        aclUtilService.deletePermission p, u.username, WRITE
+        springcacheService.flush(SecurityService.CACHE_PRODUCTOWNER)
+        publishEvent(new IceScrumUserEvent(u, p, this.class, (User) springSecurityService.currentUser, IceScrumUserEvent.EVENT_NOT_PRODUCTOWNER))
+    }
+
+    void createTeamMemberPermissions(User u, Team t) {
+        aclUtilService.addPermission t, u.username, READ
+        springcacheService.flush(SecurityService.CACHE_TEAMMEMBER)
+        springcacheService.flush(SecurityService.CACHE_OPENPRODUCTTEAM)
+        springcacheService.flush(SecurityService.CACHE_PRODUCTTEAM)
+        publishEvent(new IceScrumUserEvent(u, t, this.class, (User) springSecurityService.currentUser, IceScrumUserEvent.EVENT_IS_MEMBER))
+    }
+
+    void deleteTeamMemberPermissions(User u, Team t) {
+        aclUtilService.deletePermission t, u.username, READ
+        springcacheService.flush(SecurityService.CACHE_TEAMMEMBER)
+        springcacheService.flush(SecurityService.CACHE_OPENPRODUCTTEAM)
+        springcacheService.flush(SecurityService.CACHE_PRODUCTTEAM)
+        publishEvent(new IceScrumUserEvent(u, t, this.class, (User) springSecurityService.currentUser, IceScrumUserEvent.EVENT_NOT_MEMBER))
+    }
+
+    void createAdministrationPermissionsForProduct(User u, Product p){
+        aclUtilService.addPermission GrailsHibernateUtil.unwrapIfProxy(p), u.username, ADMINISTRATION
+        springcacheService.flush(SecurityService.CACHE_SCRUMMASTER)
+        springcacheService.flush(SecurityService.CACHE_OPENPRODUCTTEAM)
+        springcacheService.flush(SecurityService.CACHE_PRODUCTTEAM)
+    }
+
     void createScrumMasterPermissions(User u, Team t) {
         aclUtilService.addPermission t, u.username, WRITE
+        aclUtilService.addPermission t, u.username, ADMINISTRATION
+        t.products?.each{
+            if (it.id)
+                createAdministrationPermissionsForProduct(u, (Product)GrailsHibernateUtil.unwrapIfProxy(it))
+        }
         springcacheService.flush(SecurityService.CACHE_SCRUMMASTER)
+        springcacheService.flush(SecurityService.CACHE_OPENPRODUCTTEAM)
+        springcacheService.flush(SecurityService.CACHE_PRODUCTTEAM)
         publishEvent(new IceScrumUserEvent(u, t, this.class, (User) springSecurityService.currentUser, IceScrumUserEvent.EVENT_IS_SCRUMMASTER))
+    }
+
+    void deleteScrumMasterPermissions(User u, Team t) {
+        aclUtilService.deletePermission t, u.username, WRITE
+        aclUtilService.deletePermission t, u.username, ADMINISTRATION
+        t.products?.each{
+            aclUtilService.deletePermission GrailsHibernateUtil.unwrapIfProxy(it), u.username, ADMINISTRATION
+        }
+        springcacheService.flush(SecurityService.CACHE_SCRUMMASTER)
+        springcacheService.flush(SecurityService.CACHE_OPENPRODUCTTEAM)
+        springcacheService.flush(SecurityService.CACHE_PRODUCTTEAM)
+        publishEvent(new IceScrumUserEvent(u, t, this.class, (User) springSecurityService.currentUser, IceScrumUserEvent.EVENT_NOT_SCRUMMASTER))
     }
 
     void createStakeHolderPermissions(User u, Product p) {
@@ -116,62 +166,29 @@ class SecurityService {
         springcacheService.flush(SecurityService.CACHE_STAKEHOLDER)
     }
 
-    void createTeamMemberPermissions(User u, Team t) {
-        aclUtilService.addPermission t, u.username, READ
-        springcacheService.flush(SecurityService.CACHE_TEAMMEMBER)
-        publishEvent(new IceScrumUserEvent(u, t, this.class, (User) springSecurityService.currentUser, IceScrumUserEvent.EVENT_IS_MEMBER))
-    }
-
-    void deleteProductOwnerPermissions(User u, Product p) {
-        aclUtilService.deletePermission p, u.username, WRITE
-        aclUtilService.deletePermission p, u.username, ADMINISTRATION
-        springcacheService.flush(SecurityService.CACHE_PRODUCTOWNER)
-        publishEvent(new IceScrumUserEvent(u, p, this.class, (User) springSecurityService.currentUser, IceScrumUserEvent.EVENT_NOT_PRODUCTOWNER))
-    }
-
-    void deleteScrumMasterPermissions(User u, Team t) {
-        aclUtilService.deletePermission t, u.username, WRITE
-        aclUtilService.deletePermission t, u.username, ADMINISTRATION
-        springcacheService.flush(SecurityService.CACHE_SCRUMMASTER)
-        publishEvent(new IceScrumUserEvent(u, t, this.class, (User) springSecurityService.currentUser, IceScrumUserEvent.EVENT_NOT_SCRUMMASTER))
-    }
-
     void deleteStakeHolderPermissions(User u, Product p) {
         aclUtilService.deletePermission p, u.username, READ
         springcacheService.flush(SecurityService.CACHE_STAKEHOLDER)
     }
 
-    void deleteTeamMemberPermissions(User u, Team t) {
-        aclUtilService.deletePermission t, u.username, READ
-        springcacheService.flush(SecurityService.CACHE_TEAMMEMBER)
-        publishEvent(new IceScrumUserEvent(u, t, this.class, (User) springSecurityService.currentUser, IceScrumUserEvent.EVENT_NOT_MEMBER))
-    }
-
     @SuppressWarnings("GroovyMissingReturnStatement")
     boolean inProduct(product, auth) {
-
         if (!springSecurityService.isLoggedIn())
             return false
 
         boolean authorized = productOwner(product, auth)
-
-
         if (!authorized) {
             def p
             if (!product)
                 product = parseCurrentRequestProduct()
             else if (product in Product) {
-                //p = GrailsHibernateUtil.unwrapIfProxy(product)
                 product = product.id
             }
-
             if (product) {
                 authorized = springcacheService.doWithCache(CACHE_PRODUCTTEAM, new CacheKeyBuilder().append(product).append(auth.principal.id).toCacheKey()) {
-
                     if (!p) p = Product.get(product)
-
-                    if (!p || !auth) return
-
+                    if (!p || !auth) return false
+                    //Check if he is ScrumMaster or Member
                     for (team in p.teams) {
                         if (inTeam(team, auth)) {
                             return true
@@ -181,14 +198,12 @@ class SecurityService {
             }
         }
 
-
         return authorized
     }
 
     boolean inTeam(team, auth) {
         if (!springSecurityService.isLoggedIn())
             return false
-
         teamMember(team, auth) || scrumMaster(team, auth)
     }
 
@@ -237,10 +252,8 @@ class SecurityService {
         if (team) {
             def res = springcacheService.doWithCache(CACHE_SCRUMMASTER, new CacheKeyBuilder().append(team).append(auth.principal.id).toCacheKey()) {
                 if (!t) t = Team.get(team)
-
                 if (!t || !auth) return false
-
-                return aclUtilService.hasPermission(auth, t, SecurityService.scrumMasterPermissions)
+                return aclUtilService.hasPermission(auth, GrailsHibernateUtil.unwrapIfProxy(t), SecurityService.scrumMasterPermissions)
             }
             return res
         }
@@ -249,8 +262,11 @@ class SecurityService {
     }
 
 
-    boolean stakeHolder(product, auth) {
+    boolean stakeHolder(product, auth, onlyPrivate) {
         def p
+
+        if (SpringSecurityUtils.ifAnyGranted(Authority.ROLE_ADMIN))
+            return true
 
         if (!product)
             product = parseCurrentRequestProduct()
@@ -259,13 +275,16 @@ class SecurityService {
             product = product.id
         }
 
+        def authkey = SpringSecurityUtils.ifAnyGranted(Authority.ROLE_VISITOR) ? auth.principal : auth.principal.id
+
         if (product) {
-            return springcacheService.doWithCache(CACHE_STAKEHOLDER, new CacheKeyBuilder().append(product).toCacheKey()) {
-                p = Product.get(product)
-
+            return springcacheService.doWithCache(CACHE_STAKEHOLDER, new CacheKeyBuilder().append(onlyPrivate).append(product).append(authkey).toCacheKey()) {
+                if (!p) p = Product.get(product)
                 if (!p || !auth) return false
-
-                return !p.preferences.hidden
+                if (p.preferences.hidden)
+                    return aclUtilService.hasPermission(auth, GrailsHibernateUtil.unwrapIfProxy(p), SecurityService.stakeHolderPermissions)
+                else
+                    return !onlyPrivate
             }
         }
         else
@@ -302,10 +321,8 @@ class SecurityService {
         if (product) {
             return springcacheService.doWithCache(CACHE_PRODUCTOWNER, new CacheKeyBuilder().append(product).append(auth.principal.id).toCacheKey()) {
                 if (!p) p = Product.get(product)
-
                 if (!p || !auth) return false
-
-                return aclUtilService.hasPermission(auth, p, SecurityService.productOwnerPermissions)
+                return aclUtilService.hasPermission(auth, GrailsHibernateUtil.unwrapIfProxy(p), SecurityService.productOwnerPermissions)
             }
         }
         else
@@ -341,10 +358,8 @@ class SecurityService {
         if (team) {
             return springcacheService.doWithCache(CACHE_TEAMMEMBER, new CacheKeyBuilder().append(team).append(auth.principal.id).toCacheKey()) {
                 if (!t) t = Team.get(team)
-
                 if (!t || !auth) return false
-
-                return aclUtilService.hasPermission(auth, t, SecurityService.teamMemberPermissions)
+                return aclUtilService.hasPermission(auth, GrailsHibernateUtil.unwrapIfProxy(t), SecurityService.teamMemberPermissions)
             }
         }
         else
@@ -447,7 +462,7 @@ class SecurityService {
 
     boolean isOwner(domain, auth, domainClass, d = null) {
         if (domain && domainClass) {
-            springcacheService.doWithCache(CACHE_OWNER, new CacheKeyBuilder().append(domain).append(domainClass.class.name).append(auth.principal.id).toCacheKey()) {
+            return springcacheService.doWithCache(CACHE_OWNER, new CacheKeyBuilder().append(domain).append(domainClass.class.name).append(auth.principal.id).toCacheKey()) {
                 if (!d) d = domainClass.get(domain)
 
                 if (!d || !auth) return false
@@ -458,6 +473,19 @@ class SecurityService {
         }
         else
             return false
+    }
+
+    def filterRequest(){
+        def request = RCH.requestAttributes.currentRequest
+        request.filtered     = request.filtered ?: true
+        request.scrumMaster  = request.scrumMaster ?: scrumMaster(null,springSecurityService.authentication)
+        request.productOwner = request.productOwner ?: productOwner(null,springSecurityService.authentication)
+        request.teamMember   = request.teamMember ?: teamMember(null,springSecurityService.authentication)
+        request.stakeHolder  = request.stakeHolder ?: stakeHolder(null,springSecurityService.authentication,false)
+        request.owner        = request.owner ?: owner(null,springSecurityService.authentication)
+        request.inProduct    = request.inProduct ?: request.scrumMaster ?: request.productOwner ?: request.teamMember ?: false
+        request.inTeam       = request.inTeam ?: request.scrumMaster ?: request.teamMember ?: false
+        request.admin        = request.admin ?: admin(springSecurityService.authentication) ?: false
     }
 
 }

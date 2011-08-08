@@ -82,6 +82,7 @@ class ReleaseService {
             throw new RuntimeException()
         product.addToReleases(release)
         product.endDate = release.endDate
+
         broadcast(function: 'add', message: release)
         publishEvent(new IceScrumReleaseEvent(release, this.class, (User) springSecurityService.currentUser, IceScrumEvent.EVENT_CREATED))
     }
@@ -182,6 +183,7 @@ class ReleaseService {
         release.startDate = startDate
         if (!release.save(flush: true))
             throw new RuntimeException()
+
         broadcast(function: 'update', message: release)
         publishEvent(new IceScrumReleaseEvent(release, this.class, (User) springSecurityService.currentUser, IceScrumEvent.EVENT_UPDATED))
     }
@@ -216,6 +218,7 @@ class ReleaseService {
         release.state = Release.STATE_INPROGRESS
         if (!release.save())
             throw new RuntimeException()
+
         broadcast(function: 'activate', message: release)
         publishEvent(new IceScrumReleaseEvent(release, this.class, (User) springSecurityService.currentUser, IceScrumReleaseEvent.EVENT_ACTIVATED))
     }
@@ -240,6 +243,7 @@ class ReleaseService {
 
         if (!release.save())
             throw new RuntimeException()
+
         broadcast(function: 'close', message: release)
         publishEvent(new IceScrumReleaseEvent(release, this.class, (User) springSecurityService.currentUser, IceScrumReleaseEvent.EVENT_CLOSED))
     }
@@ -254,7 +258,6 @@ class ReleaseService {
 
         storyService.unPlanAll(release.sprints)
         product.removeFromReleases(release)
-        broadcast(function: 'delete', message: [class: release.class, id: release.id])
 
         nextReleases.each {
             storyService.unPlanAll(it.sprints)
@@ -262,6 +265,8 @@ class ReleaseService {
             broadcast(function: 'delete', message: [class: it.class, id: it.id])
         }
         product.endDate = product.releases?.min {it.orderNumber}?.endDate ?: null
+
+        broadcast(function: 'delete', message: [class: release.class, id: release.id])
     }
 
 

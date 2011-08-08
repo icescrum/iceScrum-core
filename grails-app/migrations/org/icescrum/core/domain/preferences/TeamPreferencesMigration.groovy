@@ -1,5 +1,4 @@
 /*
- * Copyright (c) 2010 iceScrum Technologies.
  *
  * This file is part of iceScrum.
  *
@@ -17,24 +16,21 @@
  *
  * Authors:
  *
- * Stéphane Maldini (stephane.maldini@icescrum.com)
+ * Vincent Barrier (vbarrier@kagilum.com)
  */
-
 
 package org.icescrum.core.domain.preferences
 
-import org.icescrum.core.domain.Team
 
-class TeamPreferences {
 
-    boolean allowNewMembers = false
-
-    static belongsTo = [
-            team: Team
-    ]
-
-    static mapping = {
-        cache true
-        table 'icescrum2_team_preferences'
+class TeamPreferencesMigration {
+    static migration = {
+      changeSet(id:'team_preferences_drop_allow_role_change_column', author:'vbarrier') {
+        preConditions(onFail:"MARK_RAN"){
+            columnExists(tableName:"icescrum2_team_preferences", columnName:"allow_role_change")
+        }
+        dropColumn(tableName:"icescrum2_team_preferences", columnName:"allow_role_change")
+      }
     }
 }
+

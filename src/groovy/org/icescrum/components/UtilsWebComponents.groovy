@@ -134,7 +134,8 @@ public final class UtilsWebComponents {
     for (entry in params) {
       def value = entry.value
       def key = entry.key
-      allParams << "${key.encodeAsURL()}=${value.encodeAsURL()}".encodeAsJavaScript()
+      if (value)
+        allParams << "${key.encodeAsURL()}=${value.encodeAsURL()}".encodeAsJavaScript()
     }
     if (allParams.size() == 1) {
       return allParams[0]

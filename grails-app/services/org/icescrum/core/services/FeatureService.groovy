@@ -68,6 +68,7 @@ class FeatureService {
         //We put the real rank if we need
         if (rankProvided)
             rank(feature, rankProvided)
+
         broadcast(function: 'add', message: feature)
         publishEvent(new IceScrumFeatureEvent(feature, this.class, (User) springSecurityService.currentUser, IceScrumEvent.EVENT_CREATED))
     }
@@ -154,6 +155,7 @@ class FeatureService {
                 }
             }
             movedItem.rank = rank
+
             broadcast(function: 'update', message: movedItem)
             return movedItem.save() ? true : false
         } else {

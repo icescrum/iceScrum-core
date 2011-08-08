@@ -66,36 +66,6 @@ class MenuBarSupport {
         }]
     }
 
-    static teamDynamicBar = {title, id, defaultVisibility, defaultPosition ->
-
-        [title: title, show: {
-            if (!params?.team) return false
-            if (!defaultPosition) return false
-            if (!commonVerification(createLink(controller: id, params: [team: params.team]))) return false
-            commonUserPreferences(id) ?: [visible: defaultVisibility, pos: defaultPosition]
-        }]
-    }
-
-    static teamOrProductDynamicBar = {title, id, defaultVisibility, defaultPosition ->
-
-        [title: title, show: {
-            if (!params?.team && !params?.product) return false
-            if (!defaultPosition) return false
-            if (!commonVerification(createLink(controller: id, params: params))) return false
-            commonUserPreferences(id) ?: [visible: defaultVisibility, pos: defaultPosition]
-        }]
-    }
-
-    static noTeamOrProductDynamicBar = {title, id, defaultVisibility, defaultPosition ->
-
-        [title: title, show: {
-            if (params?.team || params?.product) return false
-            if (!defaultPosition) return false
-            if (!commonVerification(createLink(controller: id, params: params))) return false
-            commonUserPreferences(id) ?: [visible: defaultVisibility, pos: defaultPosition]
-        }]
-    }
-
     static final METHOD = 'GET'
     def permissionDynamicBar = {url ->
         webInvocationPrivilegeEvaluator.isAllowed(SRH.request.contextPath, url, METHOD, SCH.context?.authentication)

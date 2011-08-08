@@ -55,6 +55,7 @@ class ActorService {
         if (stillHasPbi)
             throw new RuntimeException()
         act.delete()
+
         broadcast(function: 'delete', message: [class: act.class, id: id])
     }
 
@@ -62,6 +63,7 @@ class ActorService {
         act.name = act.name?.trim()
         if (!act.save(flush: true))
             throw new RuntimeException()
+
         broadcast(function: 'update', message: act)
         publishEvent(new IceScrumActorEvent(act, this.class, (User) springSecurityService.currentUser, IceScrumEvent.EVENT_UPDATED))
     }

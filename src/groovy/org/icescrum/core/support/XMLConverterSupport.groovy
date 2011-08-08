@@ -83,8 +83,6 @@ class XMLConverterSupport {
       startDate(formatter.format(new SimpleDateFormat('yyyy-MM-dd').parse(content.productStartDate.text())))
       endDate(formatter.format(new Date()))
       preferences(){
-        newTeams(false)
-        lockPo(false)
         hidden(content.productIsHidden.text().toBoolean()?:false)
         noEstimation(false)
         autoDoneStory(content.productEnableAutoCloseStory.text().toBoolean()?:false)
@@ -103,8 +101,7 @@ class XMLConverterSupport {
           dateCreated(formatter.format(new SimpleDateFormat('yyyy-MM-dd').parse(content.productStartDate.text())))
           description()
           preferences(){
-            allowNewMembers(true)
-            allowRoleChange(content.productEnableRole.text().toBoolean()?:true)
+            allowNewMembers(false)
           }
           def foundSm = null
           scrumMasters(){

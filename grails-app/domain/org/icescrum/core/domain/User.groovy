@@ -34,6 +34,7 @@ import org.icescrum.core.domain.security.Authority
 import org.icescrum.core.domain.security.UserAuthority
 import org.icescrum.core.event.IceScrumUserEvent
 import org.icescrum.core.event.IceScrumEvent
+import org.codehaus.groovy.grails.orm.hibernate.cfg.GrailsHibernateUtil
 
 class User implements Serializable, Attachmentable {
     static final long serialVersionUID = 813639032272976126L
@@ -95,8 +96,10 @@ class User implements Serializable, Attachmentable {
 
     static namedQueries = {
 
-        findUsersLike {term ->
+        findUsersLike {term, excludeCurrentUser = true ->
+        if (excludeCurrentUser) {
             ne('id', SCH.context.authentication.principal?.id)
+        }
             or {
                 ilike("username", "%$term%")
                 ilike("lastName", "%$term%")
@@ -112,11 +115,22 @@ class User implements Serializable, Attachmentable {
         UserAuthority.findAllByUser(this).collect { it.authority } as Set
     }
 
-    boolean equals(o) {
-        if (this.is(o)) return true
-        if (!o || getClass() != o.class) return false
-        User user = (User) o
-        if (!username.equals(user.username)) return false
+    boolean equals(obj) {
+        if (this.is(obj))
+            return true
+        if (obj == null)
+            return false
+        User other = (User) obj
+        if (username == null) {
+            if (other.username != null)
+                return false
+        } else if (!username.equals(other.username))
+            return false
+        if (email == null) {
+            if (other.email != null)
+                return false
+        } else if (!email.equals(other.email))
+            return false
         return true
     }
 

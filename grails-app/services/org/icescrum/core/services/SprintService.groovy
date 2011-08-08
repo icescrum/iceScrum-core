@@ -82,6 +82,7 @@ class SprintService {
             throw new RuntimeException()
 
         release.addToSprints(sprint)
+
         publishEvent(new IceScrumSprintEvent(sprint, this.class, (User) springSecurityService.currentUser, IceScrumEvent.EVENT_CREATED))
         broadcast(function: 'add', message: sprint)
     }
@@ -149,6 +150,7 @@ class SprintService {
         // Finally save the sprint
         if (!sprint.save(flush: true))
             throw new RuntimeException()
+
         publishEvent(new IceScrumSprintEvent(sprint, this.class, (User) springSecurityService.currentUser, IceScrumEvent.EVENT_UPDATED))
         broadcast(function: 'update', message: sprint)
     }
@@ -177,6 +179,8 @@ class SprintService {
             deletedSprints << [class: it.class, id: it.id, startDate: sprint.startDate, orderNumber: sprint.orderNumber, parentRelease: [id: release.id, class: release.class]]
             release.removeFromSprints(it)
         }
+
+
         broadcast(function: 'delete', message: [class: sprint.class, sprints: deletedSprints])
         return deletedSprints
     }
@@ -228,6 +232,7 @@ class SprintService {
             sprints << newSprint
             publishEvent(new IceScrumSprintEvent(newSprint, this.class, (User) springSecurityService.currentUser, IceScrumEvent.EVENT_CREATED))
         }
+
         broadcast(function: 'add', message: [class: Sprint.class, sprints: sprints])
         return sprints
     }
@@ -274,6 +279,7 @@ class SprintService {
         bufferBroadcast()
         sprint.stories.each {
             it.inProgressDate = new Date()
+
             broadcast(function: 'inProgress', message: it)
             publishEvent(new IceScrumStoryEvent(it, this.class, (User) springSecurityService.currentUser, IceScrumStoryEvent.EVENT_INPROGRESS))
         }
@@ -333,8 +339,10 @@ class SprintService {
         if (!sprint.save(flush: true)) {
             throw new RuntimeException()
         }
-        publishEvent(new IceScrumSprintEvent(sprint, this.class, (User) springSecurityService.currentUser, IceScrumSprintEvent.EVENT_CLOSED))
+
         broadcast(function: 'close', message: sprint)
+        publishEvent(new IceScrumSprintEvent(sprint, this.class, (User) springSecurityService.currentUser, IceScrumSprintEvent.EVENT_CLOSED))
+
         // Create cliché
         clicheService.createSprintCliche(sprint, new Date(), Cliche.TYPE_CLOSE)
         clicheService.createOrUpdateDailyTasksCliche(sprint)

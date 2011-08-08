@@ -36,10 +36,13 @@ import org.icescrum.core.domain.Story
 import org.icescrum.core.domain.Sprint
 import org.icescrum.core.domain.Task
 import org.icescrum.core.domain.TimeBox
+import org.icescrum.cache.ProjectCacheResolver
 
 class ClicheService {
 
     static transactional = true
+
+    def springcacheService
 
     void save(Cliche b, TimeBox t) {
         t.addToCliches(b)
@@ -235,6 +238,7 @@ class ClicheService {
                 data: xmlBuilder.bind(clicheData).toString()
         )
         save(c, r)
+        springcacheService.flush(new ProjectCacheResolver().resolveCacheName('productChartCache'))
     }
 
     void createOrUpdateDailyTasksCliche(Sprint s) {
@@ -356,6 +360,7 @@ class ClicheService {
 
         Cliche c = new Cliche(type: Cliche.TYPE_DAILY, datePrise: d, data: xmlBuilder.bind(clicheData).toString())
         save(c, s)
+        springcacheService.flush(new ProjectCacheResolver().resolveCacheName('sprintChartCache'))
     }
 
     @Transactional(readOnly = true)

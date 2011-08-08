@@ -32,9 +32,24 @@ class ProductPreferencesMigration {
           addNotNullConstraint(tableName:"icescrum2_product_preferences",columnName:'sprint_retrospective_hour',columnDataType:'varchar(255)',defaultNullValue:'15:00')
           addNotNullConstraint(tableName:"icescrum2_product_preferences",columnName:'sprint_review_hour',columnDataType:'varchar(255)',defaultNullValue:'14:00')
       }
-        changeSet(id:'product_preferences_constraint_hideweekend_column', author:'vbarrier') {
+
+      changeSet(id:'product_preferences_constraint_hideweekend_column', author:'vbarrier') {
           sql('UPDATE icescrum2_product_preferences set hide_weekend = false WHERE hide_weekend is NULL')
           addNotNullConstraint(tableName:"icescrum2_product_preferences",columnName:'hide_weekend',columnDataType:'BOOLEAN')
+      }
+
+      changeSet(id:'product_preferences_drop_lock_po_column', author:'vbarrier') {
+        preConditions(onFail:"MARK_RAN"){
+            columnExists(tableName:"icescrum2_product_preferences", columnName:"lock_po")
+        }
+        dropColumn(tableName:"icescrum2_product_preferences", columnName:"lock_po")
+      }
+
+      changeSet(id:'product_preferences_drop_new_teams_column', author:'vbarrier') {
+        preConditions(onFail:"MARK_RAN"){
+            columnExists(tableName:"icescrum2_product_preferences", columnName:"new_teams")
+        }
+        dropColumn(tableName:"icescrum2_product_preferences", columnName:"new_teams")
       }
     }
 }

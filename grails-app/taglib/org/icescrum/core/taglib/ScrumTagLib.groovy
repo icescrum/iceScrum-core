@@ -25,9 +25,6 @@ package org.icescrum.core.taglib
 
 import org.icescrum.components.UtilsWebComponents
 import org.icescrum.core.domain.Product
-import grails.plugin.springcache.key.CacheKeyBuilder
-import grails.plugin.springcache.CacheKey
-import org.springframework.web.servlet.support.RequestContextUtils as RCU
 
 
 class ScrumTagLib {
@@ -36,17 +33,6 @@ class ScrumTagLib {
 
     static returnObjectForTags = ['storyTemplate']
     def springcacheService
-
-    private CacheKey toCacheKey(Map params) {
-        def builder = new CacheKeyBuilder()
-        builder << namespace
-        builder << RCU.getLocale(request).toString()
-        builder << is.displayRole()
-        params.sort { it.key }.each { entry ->
-            builder << entry
-        }
-        builder.toCacheKey()
-    }
 
     def postit = { attrs, body ->
         def params = attrs
@@ -62,17 +48,8 @@ class ScrumTagLib {
         params.content = body()
         params.type = attrs.type ? attrs.type : ""
         params.color = params.color ?: "yellow"
-
-        if (attrs.rect)
-            params.className = 'postit-rect';
-        else
-            params.className = 'postit'
-
-        if (attrs.sortable != null && UtilsWebComponents.rendered(attrs.sortable) && UtilsWebComponents.enabled(attrs.sortable)) {
-            params.sortable = true
-        } else {
-            params.sortable = false
-        }
+        params.className = (attrs.rect) ? 'postit-rect' : 'postit'
+        params.sortable = (attrs.sortable != null && UtilsWebComponents.rendered(attrs.sortable) && UtilsWebComponents.enabled(attrs.sortable))
 
         try {
             params.embeddedMenu = pageScope.menu
@@ -82,10 +59,7 @@ class ScrumTagLib {
         if (params.content.trim() == '') {
             params.content = '&nbsp;';
         }
-
-        out << springcacheService.doWithCache("postitsCache", toCacheKey(id: params.cacheKey, rect: params.rect, postitId: params.id)) {
-            return g.render(template: '/components/postit', plugin: 'icescrum-core', model: params)
-        }
+        out << g.render(template: '/components/postit', plugin: 'icescrum-core', model: params)
     }
 
     def postitIcon = {attrs, body ->

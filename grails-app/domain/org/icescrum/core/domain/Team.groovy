@@ -28,6 +28,7 @@ import org.icescrum.core.services.SecurityService
 import org.icescrum.core.domain.preferences.TeamPreferences
 import org.icescrum.core.event.IceScrumTeamEvent
 import org.icescrum.core.event.IceScrumEvent
+import org.springframework.security.acls.domain.BasePermission
 
 class Team {
 
@@ -47,7 +48,8 @@ class Team {
 
     static transients = [
             'idFromImport',
-            'scrumMasters'
+            'scrumMasters',
+            'owner'
     ]
 
     def scrumMasters = null
@@ -64,8 +66,6 @@ class Team {
         cache true
         preferences lazy: true
         table 'icescrum2_team'
-        products cache: true
-        members lazy: false, cache: true
     }
 
     static members(Team team, params) {
@@ -107,6 +107,51 @@ class Team {
                         "WHERE p.id = :p) ", [p: id, term: "%$term%"], params ?: [:])
     }
 
+    static findAllByOwner(String user, params) {
+        executeQuery("SELECT DISTINCT t "+
+                        "From org.icescrum.core.domain.Team as t, "+
+                        "org.codehaus.groovy.grails.plugins.springsecurity.acl.AclClass as ac, "+
+                        "org.codehaus.groovy.grails.plugins.springsecurity.acl.AclObjectIdentity as ai, "+
+                        "org.codehaus.groovy.grails.plugins.springsecurity.acl.AclSid as acl "+
+                        "where "+
+                        "ac.className = 'org.icescrum.core.domain.Team' "+
+                        "AND ai.aclClass = ac.id "+
+                        "AND ai.owner.sid = :sid "+
+                        "AND acl.id = ai.owner "+
+                        "AND t.id = ai.objectId", [sid: user], params ?: [:])
+    }
+
+    static countByOwner(String user, params) {
+        executeQuery("SELECT DISTINCT COUNT(t.id) "+
+                        "From org.icescrum.core.domain.Team as t, "+
+                        "org.codehaus.groovy.grails.plugins.springsecurity.acl.AclClass as ac, "+
+                        "org.codehaus.groovy.grails.plugins.springsecurity.acl.AclObjectIdentity as ai, "+
+                        "org.codehaus.groovy.grails.plugins.springsecurity.acl.AclSid as acl "+
+                        "where "+
+                        "ac.className = 'org.icescrum.core.domain.Team' "+
+                        "AND ai.aclClass = ac.id "+
+                        "AND ai.owner.sid = :sid "+
+                        "AND acl.id = ai.owner "+
+                        "AND t.id = ai.objectId", [sid: user], params ?: [:])
+    }
+
+    static findAllByRole(String user, List<BasePermission> permission, params) {
+        executeQuery("SELECT DISTINCT t "+
+                        "From org.icescrum.core.domain.Team as t, "+
+                        "org.codehaus.groovy.grails.plugins.springsecurity.acl.AclClass as ac, "+
+                        "org.codehaus.groovy.grails.plugins.springsecurity.acl.AclObjectIdentity as ai, "+
+                        "org.codehaus.groovy.grails.plugins.springsecurity.acl.AclSid as acl, "+
+                        "org.codehaus.groovy.grails.plugins.springsecurity.acl.AclEntry as ae "+
+                        "where "+
+                        "ac.className = 'org.icescrum.core.domain.Team' "+
+                        "AND ai.aclClass = ac.id "+
+                        "AND acl.sid = :sid "+
+                        "AND acl.id = ae.sid.id "+
+                        "AND ae.mask IN(:p) "+
+                        "AND ai.id = ae.aclObjectIdentity.id "+
+                        "AND t.id = ai.objectId", [sid: user, p:permission*.mask ], params ?: [:])
+    }
+
     static namedQueries = {
 
         productTeam {p, u ->
@@ -132,14 +177,20 @@ class Team {
             this.scrumMasters
         } else if (this.id) {
             def acl = aclUtilService.readAcl(this.getClass(), this.id)
-            def scrumMastersList = User.withCriteria {
-                or {
-                    acl.entries.findAll {it.permission in SecurityService.scrumMasterPermissions}*.sid.each {sid ->
-                        eq('username', sid.principal)
-                    }
-                }
-            }
-            scrumMastersList
+            def users = acl.entries.findAll{it.permission in SecurityService.scrumMasterPermissions}*.sid*.principal;
+            if (users)
+                return User.findAll("from User as u where u.username in (:users)",[users:users], [cache: true])
+            else
+                return null
+        } else {
+            null
+        }
+    }
+
+    def getOwner() {
+        if (this.id) {
+            def acl = aclUtilService.readAcl(this.getClass(), this.id)
+            return User.findByUsername(acl.owner.principal,[cache: true])
         } else {
             null
         }

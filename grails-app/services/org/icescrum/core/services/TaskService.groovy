@@ -79,13 +79,14 @@ class TaskService {
             throw new RuntimeException()
         }
         clicheService.createOrUpdateDailyTasksCliche((Sprint) task.backlog)
+
         task.addActivity(user, 'taskSave', task.name)
         publishEvent(new IceScrumTaskEvent(task, this.class, user, IceScrumTaskEvent.EVENT_CREATED))
         broadcast(function: 'add', message: task)
     }
 
     void saveStoryTask(Task task, Story story, User user) {
-        task.parentStory = story
+        story.addToTasks(task)
         def currentProduct = (Product) story.backlog
         if (currentProduct.preferences.assignOnCreateTask) {
             task.responsible = user
@@ -119,7 +120,9 @@ class TaskService {
      */
     void changeTaskStory(Task task, Story story, User user) {
         if (task.parentStory.id != story.id) {
-            task.parentStory = story
+            def oldStory = task.parentStory
+            oldStory.removeFromTasks(task)
+            story.addToTasks(task)
             update(task, user)
         }
     }
@@ -143,7 +146,7 @@ class TaskService {
      */
     void sprintTaskToStoryTask(Task task, Story story, User user) {
         task.type = null
-        task.parentStory = story
+        story.addToTasks(task)
         update(task, user)
     }
     /**
@@ -216,6 +219,7 @@ class TaskService {
         if (task.state != Task.STATE_DONE) {
             publishEvent(new IceScrumTaskEvent(task, this.class, user, IceScrumTaskEvent.EVENT_UPDATED))
         }
+
         broadcast(function: 'update', message: task)
     }
 

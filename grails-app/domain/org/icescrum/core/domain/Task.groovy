@@ -169,6 +169,37 @@ class Task extends BacklogElement implements Serializable {
                 eq 'id', s
             }
         }
+
+        getInProduct { p, id ->
+            backlog {
+                parentRelease {
+                    parentProduct {
+                        eq 'id', p
+                    }
+                }
+            }
+            eq 'id', id
+        }
+    }
+
+    static Task getInProduct(Long pid, Long id) {
+        executeQuery(
+                """SELECT DISTINCT t
+                   FROM org.icescrum.core.domain.Task as t, org.icescrum.core.domain.Sprint as s, org.icescrum.core.domain.Release as r
+                   WHERE t.backlog = s
+                   AND s.parentRelease = r
+                   AND r.parentProduct.id = :pid
+                   AND t.id = :id """, [pid: pid, id:id], [max:1])[0]
+    }
+
+    static List<Task> getAllInProduct(Long pid, List id) {
+        executeQuery(
+                """SELECT DISTINCT t
+                   FROM org.icescrum.core.domain.Task as t, org.icescrum.core.domain.Sprint as s, org.icescrum.core.domain.Release as r
+                   WHERE t.backlog = s
+                   AND s.parentRelease = r
+                   AND r.parentProduct.id = :pid
+                   AND t.id IN (:id) """, [pid: pid, id:id])
     }
 
     @Override
@@ -207,7 +238,12 @@ class Task extends BacklogElement implements Serializable {
         }
     }
 
+     def afterUpdate() {
+        flushCache(cache:'taskCache-'+this.id, cacheResolver:'backlogElementCacheResolver')
+    }
+
     def afterDelete() {
+        removeCache(cache:'taskCache-'+this.id, cacheResolver:'backlogElementCacheResolver')
         withNewSession {
             publishEvent(new IceScrumTaskEvent(this, this.class, User.get(springSecurityService.principal?.id), IceScrumEvent.EVENT_AFTER_DELETE))
         }

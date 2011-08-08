@@ -25,10 +25,12 @@
 package org.icescrum.core.taglib
 
 import org.icescrum.components.UtilsWebComponents
+import grails.plugin.springcache.key.CacheKeyBuilder
+import org.codehaus.groovy.grails.commons.ApplicationHolder
 
 class KanbanTagLib {
     static namespace = 'is'
-
+    def springcacheService
 
     def kanban = {attrs, body ->
         pageScope.kanbanHeaders = []
@@ -133,9 +135,12 @@ class KanbanTagLib {
      */
     def kanbanRows = { attrs, body ->
         attrs.'in'.eachWithIndex { row, indexRow ->
+
+
             def attrsCloned = attrs.clone()
             attrsCloned[attrs.var] = row
             pageScope.kanbanColumns = []
+
             body(attrsCloned)
             def columns = pageScope.kanbanColumns.clone()
             attrsCloned.remove('in')
@@ -144,7 +149,6 @@ class KanbanTagLib {
                     attrs: attrsCloned,
                     elemid: attrs.elemid ? row."${attrs.elemid}" : null
             ]
-
             pageScope.kanbanRows << options
         }
         if (attrs.emptyRendering && !attrs.'in') {
