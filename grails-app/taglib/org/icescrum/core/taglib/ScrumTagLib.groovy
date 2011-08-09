@@ -43,7 +43,7 @@ class ScrumTagLib {
         if (attrs.notruncate) {
             params.title = attrs.title
         } else {
-            params.title = is.truncated([size: 17, encodedHTML: false], attrs.title)
+            params.title = is.truncated([size: attrs.titleSize ?: 17, encodedHTML: false], attrs.title)
         }
         params.content = body()
         params.type = attrs.type ? attrs.type : ""

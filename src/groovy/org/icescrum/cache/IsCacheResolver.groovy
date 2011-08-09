@@ -13,7 +13,6 @@ class BacklogElementCacheResolver implements CacheResolver {
 
     String resolveCacheName(String baseName) {
         def params = RCH.currentRequestAttributes().params
-
         def backlogElementId = ''
         def cachePattern = ~/\w+-\d+/
         if (!cachePattern.matcher(baseName).matches()){
