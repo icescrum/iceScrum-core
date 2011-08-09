@@ -233,7 +233,7 @@ class SprintService {
             publishEvent(new IceScrumSprintEvent(newSprint, this.class, (User) springSecurityService.currentUser, IceScrumEvent.EVENT_CREATED))
         }
 
-        broadcast(function: 'add', message: [class: Sprint.class, sprints: sprints])
+        broadcast(function: 'add', message: [class: Sprint.class, sprints: sprints], channel:'product-'+release.parentProduct.id)
         return sprints
     }
 

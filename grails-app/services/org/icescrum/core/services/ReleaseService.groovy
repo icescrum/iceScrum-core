@@ -83,7 +83,7 @@ class ReleaseService {
         product.addToReleases(release)
         product.endDate = release.endDate
 
-        broadcast(function: 'add', message: release)
+        broadcast(function: 'add', message: release, channel:'product-'+product.id)
         publishEvent(new IceScrumReleaseEvent(release, this.class, (User) springSecurityService.currentUser, IceScrumEvent.EVENT_CREATED))
     }
 

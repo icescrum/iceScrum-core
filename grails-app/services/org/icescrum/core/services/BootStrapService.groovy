@@ -41,6 +41,6 @@ class BootStrapService {
         config.grails.mail.default.from = config.icescrum.alerts.default.from
 
         //if (Environment.current == Environment.DEVELOPMENT)
-            //DummyPopulator.dummyze()
+        //    DummyPopulator.dummyze()
     }
 }

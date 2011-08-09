@@ -231,13 +231,10 @@ class SecurityService {
         def parsedProduct
 
         if (!team) {
-            parsedTeam = parseCurrentRequestTeam()
             parsedProduct = parseCurrentRequestProduct()
-            if (!parsedTeam && parsedProduct) {
+            if (parsedProduct) {
                 t = openProductTeam(parsedProduct, springSecurityService.principal.id)
                 team = t?.id
-            } else {
-                team = parsedTeam
             }
         }
         else if (team in Team) {
@@ -341,13 +338,10 @@ class SecurityService {
         def parsedProduct
 
         if (!team) {
-            parsedTeam = parseCurrentRequestTeam()
             parsedProduct = parseCurrentRequestProduct()
-            if (!parsedTeam && parsedProduct) {
+            if (parsedProduct) {
                 t = openProductTeam(parsedProduct, springSecurityService.principal.id)
                 team = t?.id
-            } else {
-                team = parsedTeam
             }
         }
         else if (team in Team) {
@@ -385,23 +379,6 @@ class SecurityService {
 
         res
     }
-
-    Long parseCurrentRequestTeam() {
-        def res = SRH.request[TEAM_ATTR]
-        if (!res) {
-            def param = SRH.request.getParameter(TEAM_URL_ATTR)
-            if (!param) {
-                def mappingInfo = grailsUrlMappingsHolder.match(SRH.request.forwardURI.replaceFirst(SRH.request.contextPath, ''))
-                res = mappingInfo?.parameters?.getAt(TEAM_URL_ATTR)?.toLong()
-            } else {
-                res = param?.toLong()
-            }
-            SRH.request[TEAM_ATTR] = res
-        }
-
-        res
-    }
-
 
     MutableAcl createAcl(ObjectIdentity objectIdentity, parent = null) throws AlreadyExistsException {
         Assert.notNull objectIdentity, 'Object Identity required'
@@ -444,13 +421,8 @@ class SecurityService {
 
         if (!domain) {
             parsedDomain = parseCurrentRequestProduct()
-            if (!parsedDomain) {
-                domain = parseCurrentRequestTeam()
-                domainClass = grailsApplication.getDomainClass(Team.class.name).newInstance()
-            } else {
-                domain = parsedDomain
-                domainClass = grailsApplication.getDomainClass(Product.class.name).newInstance()
-            }
+            domain = parsedDomain
+            domainClass = grailsApplication.getDomainClass(Product.class.name).newInstance()
         } else {
             d = GrailsHibernateUtil.unwrapIfProxy(domain)
             domainClass = d
