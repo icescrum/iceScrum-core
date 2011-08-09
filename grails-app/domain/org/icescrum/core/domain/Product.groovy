@@ -41,6 +41,7 @@ class Product extends TimeBox {
     ProductPreferences preferences
     String pkey
 
+
     static hasMany = [
             actors: Actor,
             features: Feature,

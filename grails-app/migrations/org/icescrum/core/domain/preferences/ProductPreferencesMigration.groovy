@@ -51,6 +51,12 @@ class ProductPreferencesMigration {
         }
         dropColumn(tableName:"icescrum2_product_preferences", columnName:"new_teams")
       }
+
+      changeSet(id:'product_preferences_constraint_archived_column', author:'vbarrier') {
+          sql('UPDATE icescrum2_product_preferences set archived = false WHERE archived is NULL')
+          addNotNullConstraint(tableName:"icescrum2_product_preferences",columnName:'archived',columnDataType:'BOOLEAN')
+      }
+
     }
 }
 

@@ -31,6 +31,7 @@ class ProductPreferences {
 
     //Project
     boolean hidden = false
+    boolean archived = false
     boolean hideWeekend = false
     String url
 
