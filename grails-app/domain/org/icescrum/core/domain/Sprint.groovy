@@ -133,6 +133,7 @@ class Sprint extends TimeBox implements Serializable {
     }
 
     static mapping = {
+        cache true
         table 'icescrum2_sprint'
         retrospective type: 'text'
         doneDefinition type: 'text'
