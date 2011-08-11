@@ -64,13 +64,16 @@ class IceScrumAtmosphereHandler implements AtmosphereHandler<HttpServletRequest,
             broadcaster.broadcasterConfig.addFilter(new StreamFilter())
             broadcaster.addAtmosphereResource(event)
             if (log.isDebugEnabled()) {
-                log.debug("add user ${user ?: 'anonymous'} to broadcaster: ${channel}")
+                log.debug("add user ${user?.username ?: 'anonymous'} to broadcaster: ${channel}")
             }
-            displayConnectedUsers(broadcaster)
+        }
+
+        if (user){
+            addBroadcasterToFactory(event, (String)user.username)
         }
 
         if (log.isDebugEnabled()) {
-            log.debug("add user ${user ?: 'anonymous'} to app broadcaster")
+            log.debug("add user ${user?.username ?: 'anonymous'} to app broadcaster")
         }
     }
 
@@ -86,7 +89,7 @@ class IceScrumAtmosphereHandler implements AtmosphereHandler<HttpServletRequest,
         //Event cancelled
         if (event.cancelled) {
             if (log.isDebugEnabled()) {
-                log.debug("user ${user ?: 'anonymous'} disconnected")
+                log.debug("user ${user?.username ?: 'anonymous'} disconnected")
             }
             //Help atmosphere to clear old events
             BroadcasterFactory.default.lookupAll().each {
@@ -96,7 +99,7 @@ class IceScrumAtmosphereHandler implements AtmosphereHandler<HttpServletRequest,
         }
 
         if (log.isDebugEnabled()) {
-            log.debug("broadcast to user ${user ?: 'anonymous'}")
+            log.debug("broadcast to user ${user?.username ?: 'anonymous'}")
         }
 
         //Finally broadcast message to client
@@ -114,22 +117,25 @@ class IceScrumAtmosphereHandler implements AtmosphereHandler<HttpServletRequest,
         if (httpSession != null) {
             def context = (SecurityContext) httpSession.getAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY);
             if (context?.authentication?.isAuthenticated()) {
-                user = context.authentication.principal.fullName
+                user = [fullName:context.authentication.principal.fullName, id:context.authentication.principal.id, username:context.authentication.principal.username]
             }
         }
         user
     }
 
-    private void displayConnectedUsers(def broadcaster) {
-        def authenticated = []
-        def anonymous = 0
-        broadcaster.atmosphereResources*.request.each {
-            def user = getUserFromAtmosphereResource(it)
-            if (user) {
-                authenticated << user
-            } else {
-                anonymous++
-            }
+    private void addBroadcasterToFactory(AtmosphereResource resource, String broadcasterID){
+        Broadcaster singleBroadcaster= BroadcasterFactory.default.lookup(DefaultBroadcaster.class, broadcasterID);
+        if(singleBroadcaster != null){
+            singleBroadcaster.addAtmosphereResource(resource)
+            return
+        }
+        Broadcaster selfBroadcaster = new DefaultBroadcaster(broadcasterID);
+        selfBroadcaster.broadcasterConfig.addFilter(new StreamFilter())
+        selfBroadcaster.addAtmosphereResource(resource)
+
+        BroadcasterFactory.getDefault().add(selfBroadcaster, broadcasterID);
+        if (log.isDebugEnabled()) {
+            log.debug('new broadcaster for user')
         }
     }
 }

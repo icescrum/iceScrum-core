@@ -33,6 +33,7 @@ import org.atmosphere.util.ExcludeSessionBroadcaster
 import org.icescrum.ConfigurationHolder
 import grails.converters.XML
 import grails.plugin.springcache.SpringcacheService
+import org.atmosphere.cpr.DefaultBroadcaster
 
 class IcescrumCoreGrailsPlugin {
     def groupId = 'org.icescrum'
@@ -316,6 +317,26 @@ class IcescrumCoreGrailsPlugin {
                     }catch(IllegalStateException e){
                         log.error("Error when broadcasting, message: ${e.getMessage()}", e)
                     }
+                }
+            }
+        }
+
+        source.metaClass.broadcastToSingleUser = {attrs ->
+            assert attrs.function
+            assert attrs.message
+            assert attrs.user
+            if (!attrs.user)
+                return
+            if (attrs.user instanceof String) {
+                attrs.user = [attrs.user]
+            }
+            def message = [call: attrs.function, object: attrs.message]
+            attrs.user.each {
+                def broadcaster = BroadcasterFactory.default.lookup(DefaultBroadcaster.class, it)
+                try {
+                    broadcaster?.broadcast((message as JSON).toString())
+                }catch(IllegalStateException e){
+                    log.error("Error when broadcasting, message: ${e.getMessage()}", e)
                 }
             }
         }

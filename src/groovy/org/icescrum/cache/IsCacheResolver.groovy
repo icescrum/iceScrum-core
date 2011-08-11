@@ -7,11 +7,50 @@ import org.apache.commons.logging.LogFactory
 import grails.plugin.springcache.key.CacheKeyBuilder
 import grails.plugin.springcache.web.key.WebContentKeyGenerator
 import grails.plugin.springcache.web.ContentCacheParameters
+import net.sf.ehcache.Ehcache
+import grails.spring.BeanBuilder
+import org.springframework.cache.ehcache.EhCacheFactoryBean
+import org.springframework.context.ApplicationContextAware
+import org.springframework.context.ApplicationContext
+import net.sf.ehcache.CacheManager
+import org.springframework.context.support.ApplicationObjectSupport
 
-class BacklogElementCacheResolver implements CacheResolver {
-    private static final log = LogFactory.getLog(this)
+class IceScrumCacheResolver implements CacheResolver ,ApplicationContextAware {
+    def springSecurityService
+    def grailsApplication
+    CacheManager springcacheCacheManager
+    ApplicationContext applicationContext
 
-    String resolveCacheName(String baseName) {
+    static final log = LogFactory.getLog(this)
+
+    String resolveCacheName(String baseName){
+        return baseName
+    }
+
+    void autoCreateCache(_cacheName){
+        String cache = springcacheCacheManager.cacheNames.find { it == _cacheName }
+        if (!cache){
+            def defaultCacheName = _cacheName.split('-')
+            def beanBuilder = new BeanBuilder(applicationContext)
+            def isCacheConfig = null
+            grailsApplication.config.springcache.caches.each { name,configObject -> if (name == defaultCacheName[0]) isCacheConfig = configObject }
+            beanBuilder.beans {
+                "$_cacheName"(EhCacheFactoryBean) { bean ->
+                    bean.parent = ref("springcacheDefaultCache", true)
+                    cacheName = _cacheName
+                    isCacheConfig?.each {
+                        bean.setPropertyValue it.key, it.value
+                    }
+                }
+            }
+            beanBuilder.createApplicationContext()
+        }
+    }
+}
+
+class BacklogElementCacheResolver extends IceScrumCacheResolver {
+        @Override
+        String resolveCacheName(String baseName) {
         def params = RCH.currentRequestAttributes().params
         def backlogElementId = ''
         def cachePattern = ~/\w+-\d+/
@@ -19,41 +58,43 @@ class BacklogElementCacheResolver implements CacheResolver {
             backlogElementId = params.story?.id ?: params.task?.id ?: params.feature?.id ?: params.actor?.id ?: params.id ?: null
         }
         def cache = "${baseName}${backlogElementId ?'-'+backlogElementId:''}"
+        autoCreateCache(cache)
         if (log.debugEnabled) log.debug("cache: ${cache}")
         return cache
     }
 }
 
-class UserCacheResolver implements CacheResolver {
-    def springSecurityService
-    private static final log = LogFactory.getLog(this)
+class UserCacheResolver extends IceScrumCacheResolver {
+    @Override
     String resolveCacheName(String baseName) {
         def id = springSecurityService.principal?.id
         def cache = "${baseName}-user-${id ?: 'anoymous'}"
+        autoCreateCache(cache)
         if (log.debugEnabled) log.debug("cache: ${cache}")
         return cache
     }
 }
 
-class ProjectCacheResolver implements CacheResolver {
-    private static final log = LogFactory.getLog(this)
+class ProjectCacheResolver extends IceScrumCacheResolver {
+    @Override
     String resolveCacheName(String baseName) {
         def params = RCH.currentRequestAttributes().params
         def pid = params.product?.decodeProductKey() ?: params.id
         def cache = "${baseName}-project-${pid}"
+        autoCreateCache(cache)
         if (log.debugEnabled) log.debug("cache: ${cache}")
         return cache
     }
 }
 
-class UserProjectCacheResolver implements CacheResolver {
-    private static final log = LogFactory.getLog(this)
-    def springSecurityService
+class UserProjectCacheResolver extends IceScrumCacheResolver {
+    @Override
     String resolveCacheName(String baseName) {
         def params = RCH.currentRequestAttributes().params
         def pid = params.product?.decodeProductKey() ?: params.id
         def id = springSecurityService.isLoggedIn() ? springSecurityService.principal.id : 'anonymous'
         def cache = "${baseName}-project-${pid}-${id}"
+        autoCreateCache(cache)
         if (log.debugEnabled) log.debug("cache: ${cache}")
         return cache
     }

@@ -44,6 +44,7 @@ import org.icescrum.core.domain.Story
 import org.icescrum.core.event.IceScrumEvent
 import org.icescrum.core.event.IceScrumProductEvent
 import org.springframework.security.access.prepost.PreAuthorize
+import org.icescrum.core.domain.security.Authority
 
 /**
  * ProductService is a transactional class, that manage operations about
@@ -478,26 +479,75 @@ class ProductService {
     }
 
     @PreAuthorize('owner(#product) or scrumMaster()')
-    void addProductOwner(Product product, User productOwner) {
-        securityService.createProductOwnerPermissions productOwner, product
+    void removeRole(Product product, Team team, User user, int role, boolean broadcast = true){
+        switch (role){
+            case Authority.SCRUMMASTER:
+                teamService.removeMemberOrScrumMaster(team,user)
+                break
+            case Authority.MEMBER:
+                teamService.removeMemberOrScrumMaster(team,user)
+                break
+            case Authority.PRODUCTOWNER:
+                removeProductOwner(product,user)
+                break
+            case Authority.STAKEHOLER:
+                removeStakeHolder(product,user)
+                break
+            case Authority.PO_AND_SM:
+                teamService.removeMemberOrScrumMaster(team,user)
+                removeProductOwner(product,user)
+                break
+        }
+        if (broadcast)
+            broadcastToSingleUser(user:user.username, function:'removeRoleProduct', message:[class:'User',product:product])
     }
 
     @PreAuthorize('owner(#product) or scrumMaster()')
-    void addStakeHolder(Product product, User stakeHolder) {
+    void addRole(Product product, Team team, User user, int role, boolean broadcast = true){
+        switch (role){
+            case Authority.SCRUMMASTER:
+                teamService.addScrumMaster(team,user)
+                break
+            case Authority.MEMBER:
+                teamService.addMember(team,user)
+                break
+            case Authority.PRODUCTOWNER:
+                addProductOwner(product,user)
+                break
+            case Authority.STAKEHOLER:
+                addStakeHolder(product,user)
+                break
+            case Authority.PO_AND_SM:
+                teamService.addScrumMaster(team,user)
+                addProductOwner(product,user)
+                break
+        }
+        if(broadcast)
+            broadcastToSingleUser(user:user.username, function:'addRoleProduct', message:[class:'User',product:product])
+    }
+
+    void changeRole(Product product, Team team, User user, int role, boolean broadcast = true){
+        removeRole(product,team,user,role,false)
+        addRole(product,team,user,role,false)
+        if(broadcast)
+            broadcastToSingleUser(user:user.username, function:'updateRoleProduct', message:[class:'User',product:product])
+    }
+
+    private void addProductOwner(Product product, User productOwner) {
+        securityService.createProductOwnerPermissions productOwner, product
+    }
+
+    private void addStakeHolder(Product product, User stakeHolder) {
         if (product.preferences.hidden)
             securityService.createStakeHolderPermissions stakeHolder, product
     }
 
-    @PreAuthorize('owner(#product) or scrumMaster()')
-    void removeProductOwner(Product product, User productOwner) {
+    private void removeProductOwner(Product product, User productOwner) {
         securityService.deleteProductOwnerPermissions productOwner, product
     }
 
-    @PreAuthorize('owner(#product) or scrumMaster()')
-    void removeStakeHolder(Product product, User stakeHolder) {
+    private void removeStakeHolder(Product product, User stakeHolder) {
         if (product.preferences.hidden)
             securityService.deleteStakeHolderPermissions stakeHolder, product
     }
-
-
 }

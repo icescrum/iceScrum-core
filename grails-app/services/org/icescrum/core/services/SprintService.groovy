@@ -267,7 +267,7 @@ class SprintService {
         sprint.stories?.each { pbi ->
             pbi.state = Story.STATE_INPROGRESS
             if (autoCreateTaskOnEmptyStory && pbi.tasks?.size() == 0) {
-                def emptyTask = new Task(name: pbi.name, state: Task.STATE_WAIT, description: pbi.description, creator: (User) springSecurityService.currentUser, backlog: sprint)
+                def emptyTask = new Task(name: pbi.name, state: Task.STATE_WAIT, description: pbi.description, backlog: sprint)
                 taskService.saveStoryTask(emptyTask, pbi, (User) springSecurityService.currentUser)
             }
             pbi.save()
