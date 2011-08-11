@@ -315,7 +315,7 @@ class SprintService {
             else
                 0
         } ?: 0
-
+        bufferBroadcast()
         def nextSprint = Sprint.findByParentReleaseAndOrderNumber(sprint.parentRelease, sprint.orderNumber + 1)
         if (nextSprint) {
             //Move not finished urgent task to next sprint
@@ -326,6 +326,7 @@ class SprintService {
                 if (!it.save()) {
                     throw new RuntimeException()
                 }
+                broadcast(function: 'update', message: it)
             }
             storyService.plan(nextSprint, sprint.stories.findAll {it.state != Story.STATE_DONE})
         } else {
@@ -341,6 +342,7 @@ class SprintService {
         }
 
         broadcast(function: 'close', message: sprint)
+        resumeBufferedBroadcast()
         publishEvent(new IceScrumSprintEvent(sprint, this.class, (User) springSecurityService.currentUser, IceScrumSprintEvent.EVENT_CLOSED))
 
         // Create cliché

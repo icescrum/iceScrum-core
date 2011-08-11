@@ -52,7 +52,7 @@ class KanbanTagLib {
                 opts = selectableOptions.findAll {k, v -> v}.collect {k, v -> " $k:$v" }.join(',')
             }
 
-            out << '<table border="0" cellpadding="0" cellspacing="0" ' + (attrs.id ? "id=\"${attrs.id}\" " : '') + (attrs.elemid ? " elemid=\"${attrs.elemid}\" " : '') + 'class="table kanban">'
+            out << '<table border="0" cellpadding="0" cellspacing="0" ' + (attrs.id ? "id=\"${attrs.id}\" " : '') + (attrs.elemid ? " elemid=\"${attrs.elemid}\" " : '') + 'class="table kanban '+ (attrs.class ?:'') +'">'
             // Header
             out << "<thead>"
             out << '<tr class="table-legend">'

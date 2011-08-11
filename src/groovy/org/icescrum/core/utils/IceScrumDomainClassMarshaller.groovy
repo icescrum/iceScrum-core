@@ -188,7 +188,7 @@ public class IceScrumDomainClassMarshaller extends DomainClassMarshaller {
 
         def configName = GrailsNameUtils.getShortName(referencedDomainClass.getName()).toLowerCase()
         configJSON.shortObject?."${configName}"?.each {
-            if (refObj.properties."${it}") {
+            if (refObj.properties."${it}" != null) {
                 writer.key(it);
                 json.convertAnother(refObj.properties."${it}");
             }

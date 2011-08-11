@@ -282,7 +282,7 @@ class TaskService {
 
     def copy(Task task, User user, def clonedState = Task.STATE_WAIT) {
         if (task.backlog.state == Sprint.STATE_DONE) {
-            throw new IllegalStateException('is.task.error.cloned.state.done')
+            throw new IllegalStateException('is.task.error.copy.done')
         }
 
         def clonedTask = new Task(
@@ -329,6 +329,10 @@ class TaskService {
     void state(Task t, Integer state, User u) {
 
         def p = ((Sprint) t.backlog).parentRelease.parentProduct
+
+        if(((Sprint)t.backlog).state != Sprint.STATE_INPROGRESS && state >= Task.STATE_BUSY){
+            throw new IllegalStateException('is.sprint.error.state.not.inProgress')
+        }
 
         if (t.responsible == null && p.preferences.assignOnBeginTask && state >= Task.STATE_BUSY) {
             t.responsible = u
