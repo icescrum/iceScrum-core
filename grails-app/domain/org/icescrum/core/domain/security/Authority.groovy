@@ -36,7 +36,7 @@ class Authority {
     static final int MEMBER = 0
     static final int SCRUMMASTER = 1
     static final int PRODUCTOWNER = 2
-    static final int STAKEHOLER = 3
+    static final int STAKEHOLDER = 3
     static final int PO_AND_SM = 4
 
     String authority

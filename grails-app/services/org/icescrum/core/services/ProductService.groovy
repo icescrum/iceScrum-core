@@ -45,6 +45,7 @@ import org.icescrum.core.event.IceScrumEvent
 import org.icescrum.core.event.IceScrumProductEvent
 import org.springframework.security.access.prepost.PreAuthorize
 import org.icescrum.core.domain.security.Authority
+import grails.plugins.springsecurity.Secured
 
 /**
  * ProductService is a transactional class, that manage operations about
@@ -490,7 +491,7 @@ class ProductService {
             case Authority.PRODUCTOWNER:
                 removeProductOwner(product,user)
                 break
-            case Authority.STAKEHOLER:
+            case Authority.STAKEHOLDER:
                 removeStakeHolder(product,user)
                 break
             case Authority.PO_AND_SM:
@@ -502,7 +503,7 @@ class ProductService {
             broadcastToSingleUser(user:user.username, function:'removeRoleProduct', message:[class:'User',product:product])
     }
 
-    @PreAuthorize('owner(#product) or scrumMaster()')
+    @Secured(['owner(#product) or scrumMaster()', 'RUN_AS_PERMISSIONS_MANAGER'])
     void addRole(Product product, Team team, User user, int role, boolean broadcast = true){
         switch (role){
             case Authority.SCRUMMASTER:
@@ -514,7 +515,7 @@ class ProductService {
             case Authority.PRODUCTOWNER:
                 addProductOwner(product,user)
                 break
-            case Authority.STAKEHOLER:
+            case Authority.STAKEHOLDER:
                 addStakeHolder(product,user)
                 break
             case Authority.PO_AND_SM:
@@ -526,6 +527,7 @@ class ProductService {
             broadcastToSingleUser(user:user.username, function:'addRoleProduct', message:[class:'User',product:product])
     }
 
+    @Secured(['owner(#product) or scrumMaster()', 'RUN_AS_PERMISSIONS_MANAGER'])
     void changeRole(Product product, Team team, User user, int role, boolean broadcast = true){
         removeRole(product,team,user,role,false)
         addRole(product,team,user,role,false)

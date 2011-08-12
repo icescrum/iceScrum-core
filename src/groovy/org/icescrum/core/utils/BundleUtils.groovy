@@ -106,7 +106,7 @@ class BundleUtils {
             (Authority.MEMBER): 'is.role.teamMember',
             (Authority.SCRUMMASTER): 'is.role.scrumMaster',
             (Authority.PRODUCTOWNER): 'is.role.productOwner',
-            (Authority.STAKEHOLER): 'is.role.stakeHolder',
+            (Authority.STAKEHOLDER): 'is.role.stakeHolder',
             (Authority.PO_AND_SM): 'is.role.poAndSm'
     ]
 

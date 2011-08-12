@@ -38,7 +38,7 @@ import org.atmosphere.cpr.DefaultBroadcaster
 class IcescrumCoreGrailsPlugin {
     def groupId = 'org.icescrum'
     // the plugin version
-    def version = "1.4.2.17"
+    def version = "1.4.2.18"
     // the version or versions of Grails the plugin is designed for
     def grailsVersion = "1.3.7 > *"
     // the other plugins this plugin depends on
