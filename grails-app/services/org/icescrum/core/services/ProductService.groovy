@@ -190,7 +190,7 @@ class ProductService {
 
     }
 
-    @PreAuthorize('owner(#_product)')
+    @PreAuthorize('scrumMaster() or owner(#_product)')
     void update(Product _product) {
         if (!_product.name?.trim()) {
             throw new IllegalStateException("is.product.error.no.name")
