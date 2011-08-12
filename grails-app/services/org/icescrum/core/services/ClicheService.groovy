@@ -238,7 +238,7 @@ class ClicheService {
                 data: xmlBuilder.bind(clicheData).toString()
         )
         save(c, r)
-        springcacheService.flush(new ProjectCacheResolver().resolveCacheName('productChartCache'))
+        flushCache(cache:'productChartCache', cacheResolver:'projectCacheResolver')
     }
 
     void createOrUpdateDailyTasksCliche(Sprint s) {
@@ -360,7 +360,7 @@ class ClicheService {
 
         Cliche c = new Cliche(type: Cliche.TYPE_DAILY, datePrise: d, data: xmlBuilder.bind(clicheData).toString())
         save(c, s)
-        springcacheService.flush(new ProjectCacheResolver().resolveCacheName('sprintChartCache'))
+        flushCache(cache:'sprintChartCache', cacheResolver:'projectCacheResolver')
     }
 
     @Transactional(readOnly = true)
