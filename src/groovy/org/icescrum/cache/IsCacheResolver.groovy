@@ -28,12 +28,12 @@ class IceScrumCacheResolver implements CacheResolver ,ApplicationContextAware {
     }
 
     void autoCreateCache(_cacheName){
-        String cache = springcacheCacheManager.cacheNames.find { it == _cacheName }
+        String cache = springcacheCacheManager.cacheNames?.find { it == _cacheName }
         if (!cache){
             def defaultCacheName = _cacheName.split('-')
             def beanBuilder = new BeanBuilder(applicationContext)
             def isCacheConfig = null
-            grailsApplication.config.springcache.caches.each { name,configObject -> if (name == defaultCacheName[0]) isCacheConfig = configObject }
+            grailsApplication.config.springcache.caches?.each { name,configObject -> if (name == defaultCacheName[0]) isCacheConfig = configObject }
             beanBuilder.beans {
                 "$_cacheName"(EhCacheFactoryBean) { bean ->
                     bean.parent = ref("springcacheDefaultCache", true)
