@@ -65,6 +65,11 @@ class TaskService {
     }
 
     void save(Task task, TimeBox sprint, User user) {
+
+        if (!task.id && sprint.state == Sprint.STATE_DONE){
+            throw new IllegalStateException('is.task.error.not.saved')
+        }
+
         checkEstimation(task)
 
         // If the estimation is equals to zero, drop it

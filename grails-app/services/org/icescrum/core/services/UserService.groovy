@@ -192,8 +192,7 @@ class UserService {
                         filterTask: user.preferences.filterTask.text(),
                         menu: user.preferences.menu.text(),
                         menuHidden: user.preferences.menu.text(),
-                        hideDoneState: user.preferences.hideDoneState.text()?.toBoolean() ?: false,
-                        timezone: user.preferences.timezone.text() ?: grailsApplication.config.icescrum.timezone.default
+                        hideDoneState: user.preferences.hideDoneState.text()?.toBoolean() ?: false
                 )
             } else {
                 u.idFromImport = user.@id.text().toInteger()

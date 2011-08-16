@@ -34,6 +34,7 @@ class ProductPreferences {
     boolean archived = false
     boolean hideWeekend = false
     String url
+    String timezone = TimeZone.default.ID
 
     //Planification
     boolean noEstimation = false

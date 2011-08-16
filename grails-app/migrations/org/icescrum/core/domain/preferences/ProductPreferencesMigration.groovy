@@ -57,6 +57,10 @@ class ProductPreferencesMigration {
           addNotNullConstraint(tableName:"icescrum2_product_preferences",columnName:'archived',columnDataType:'BOOLEAN')
       }
 
+      changeSet(id:'product_preferences_constraint_timezone', author:'vbarrier') {
+          addNotNullConstraint(tableName:"icescrum2_product_preferences",columnName:'timezone',columnDataType:'varchar(255)',defaultNullValue:'UTC')
+      }
+
     }
 }
 

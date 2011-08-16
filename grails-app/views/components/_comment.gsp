@@ -24,7 +24,7 @@
 
   <div class="comment-details">
     <is:scrumLink controller="user" action='profile' id="${comment.poster?.username}"><strong>${comment.poster?.firstName?.encodeAsHTML()} ${comment.poster?.lastName?.encodeAsHTML()}</strong></is:scrumLink>,
-    <g:formatDate date="${comment.dateCreated}" formatName="is.date.format.short.time" timeZone="${user?.preferences?.timezone?:null}"/>
+    <g:formatDate date="${comment.dateCreated}" formatName="is.date.format.short.time" timeZone="${backlogelement.backlog.preferences.timezone}"/>
     <g:if test="${moderation && (poOrSm || user?.id == comment.poster?.id)}">
       (
       <is:link history="false"
@@ -33,7 +33,7 @@
               action="editCommentEditor"
               id="${comment.id}"
               update="comment${comment.id}"
-              params="[commentable:backlogelement]"
+              params="[commentable:backlogelement.id]"
               onSuccess="\$('#commentEditorContainer').hide();"
               rendered="${(poOrSm || user?.id == comment.poster?.id) ? 'true' : 'false'}">
         ${message(code:'is.ui.backlogelement.comment.edit')}
@@ -46,14 +46,14 @@
                 controller="backlogElement"
                 action="deleteComment"
                 id="${comment.id}"
-                params="[backlogelement:backlogelement]">
+                params="[backlogelement:backlogelement.id]">
           ${message(code:'is.ui.backlogelement.comment.delete')}
         </is:link>
       </g:if>
       )
     </g:if>
     <g:if test="${comment.lastUpdated && comment.lastUpdated.time >= (comment.dateCreated.time + 5000)}">
-      <em>${message(code:'is.ui.backlogelement.comment.last.update')} <g:formatDate date="${comment.lastUpdated}" formatName="is.date.format.short.time" timeZone="${user?.preferences?.timezone?:null}"/></em>
+      <em>${message(code:'is.ui.backlogelement.comment.last.update')} <g:formatDate date="${comment.lastUpdated}" formatName="is.date.format.short.time" timeZone="${backlogelement.backlog.preferences.timezone}"/></em>
     </g:if>
   </div>
 

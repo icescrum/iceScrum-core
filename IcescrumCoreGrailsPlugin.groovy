@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2010 iceScrum Technologies.
+* Copyright (c) 2010 iceScrum Technologies / 2011 Kagilum SAS
 *
 * This file is part of iceScrum.
 *
@@ -38,7 +38,7 @@ import org.atmosphere.cpr.DefaultBroadcaster
 class IcescrumCoreGrailsPlugin {
     def groupId = 'org.icescrum'
     // the plugin version
-    def version = "1.4.2.18"
+    def version = "1.4.2.19"
     // the version or versions of Grails the plugin is designed for
     def grailsVersion = "1.3.7 > *"
     // the other plugins this plugin depends on
@@ -348,28 +348,28 @@ class IcescrumCoreGrailsPlugin {
                 if (attrs.object && attrs.exception instanceof RuntimeException){
                     withFormat {
                         html { render(status: 400, contentType: 'application/json', text: [notice: [text: renderErrors(bean: attrs.object)]] as JSON) }
-                        json { render(status: 500, text: is.renderErrors(bean: attrs.object, as:'json')) }
-                        xml  { render(status: 500, text: is.renderErrors(bean: attrs.object, as:'xml')) }
+                        json { render(status: 500, contentType: 'application/json', text: is.renderErrors(bean: attrs.object, as:'json')) }
+                        xml  { render(status: 500, contentType: 'text/xml', text: is.renderErrors(bean: attrs.object, as:'xml')) }
                     }
                 }else if(attrs.text){
                     withFormat {
                         html { render(status: 400, contentType: 'application/json', text: [notice: [text:attrs.text?:'error']] as JSON) }
-                        json { render(status: 500, text: [error: attrs.text?:'error'] as JSON) }
-                        xml  { render(status: 500, text: [error: attrs.text?:'error'] as XML) }
+                        json { render(status: 500, contentType: 'application/json', text: [error: attrs.text?:'error'] as JSON) }
+                        xml  { render(status: 500, contentType: 'text/xml', text: [error: attrs.text?:'error'] as XML) }
                     }
                 }else{
                     withFormat {
                         html { render(status: 400, contentType: 'application/json', text: [notice: [text: message(code: attrs.exception.getMessage())]] as JSON) }
-                        json { render(status: 500, text: [error: message(code: attrs.exception.getMessage())] as JSON) }
-                        xml {  render(status: 500, text: [error: message(code: attrs.exception.getMessage())] as XML) }
+                        json { render(status: 500, contentType: 'application/json', text: [error: message(code: attrs.exception.getMessage())] as JSON) }
+                        xml {  render(status: 500, contentType: 'text/xml', text: [error: message(code: attrs.exception.getMessage())] as XML) }
                     }
                 }
                 if (log.debugEnabled) attrs.exception.printStackTrace()
             }else{
                 withFormat {
                     html { render(status: 400, contentType: 'application/json', text: [notice: [text:attrs.text?:'error']] as JSON) }
-                    json { render(status: 500, text: [error: attrs.text?:'error'] as JSON) }
-                    xml  { render(status: 500, text: [error: attrs.text?:'error'] as XML) }
+                    json { render(status: 500, contentType: 'application/json', text: [error: attrs.text?:'error'] as JSON) }
+                    xml  { render(status: 500, contentType: 'text/xml', text: [error: attrs.text?:'error'] as XML) }
                 }
             }
         }

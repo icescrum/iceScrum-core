@@ -58,6 +58,7 @@ class ProductService {
     def securityService
     def teamService
     def actorService
+    def grailsApplication
     def g = new org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib()
 
     static transactional = true
@@ -358,7 +359,8 @@ class ProductService {
                     sprintPlanningHour: product.preferences.sprintPlanningHour.text() ?: "9:00",
                     dailyMeetingHour: product.preferences.dailyMeetingHour.text() ?: "11:00",
                     sprintReviewHour: product.preferences.sprintReviewHour.text() ?: "14:00",
-                    sprintRetrospectiveHour: product.preferences.sprintRetrospectiveHour.text() ?: "16:00"
+                    sprintRetrospectiveHour: product.preferences.sprintRetrospectiveHour.text() ?: "16:00",
+                    timezone: product.preferences?.timezone?.text() ?: grailsApplication.config.icescrum.timezone.default
             )
 
             Product pExist = (Product) Product.findByPkey(p.pkey)
