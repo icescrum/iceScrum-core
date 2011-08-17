@@ -37,4 +37,8 @@ public interface ScrumExpressionRoot {
     public boolean inTeam(long t);
     public boolean inTeam();
 
+    public boolean archivedProduct(Product p);
+    public boolean archivedProduct();
+    public boolean archivedProduct(long p);
+
 }

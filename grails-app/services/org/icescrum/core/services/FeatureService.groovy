@@ -22,19 +22,15 @@
 
 package org.icescrum.core.services
 
-import org.icescrum.core.domain.Product
-import org.icescrum.core.domain.Release
-import org.icescrum.core.domain.Story
-import org.icescrum.core.domain.Feature
-import org.icescrum.core.domain.User
-import org.codehaus.groovy.grails.web.metaclass.BindDynamicMethod
-import org.codehaus.groovy.grails.commons.metaclass.GroovyDynamicMethodsInterceptor
-
 import groovy.util.slurpersupport.NodeChild
 import java.text.SimpleDateFormat
-import org.springframework.transaction.annotation.Transactional
+import org.codehaus.groovy.grails.commons.metaclass.GroovyDynamicMethodsInterceptor
+import org.codehaus.groovy.grails.web.metaclass.BindDynamicMethod
 import org.icescrum.core.event.IceScrumEvent
 import org.icescrum.core.event.IceScrumFeatureEvent
+import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.transaction.annotation.Transactional
+import org.icescrum.core.domain.*
 
 class FeatureService {
 
@@ -47,6 +43,7 @@ class FeatureService {
     def productService
     def springSecurityService
 
+    @PreAuthorize('productOwner(#p) and !archivedProduct(#p)')
     void save(Feature feature, Product p) {
 
         feature.name = feature.name.trim()
@@ -73,6 +70,7 @@ class FeatureService {
         publishEvent(new IceScrumFeatureEvent(feature, this.class, (User) springSecurityService.currentUser, IceScrumEvent.EVENT_CREATED))
     }
 
+    @PreAuthorize('productOwner() and !archivedProduct()')
     void delete(Feature _feature) {
 
         def p = _feature.backlog
@@ -83,6 +81,7 @@ class FeatureService {
         def oldRank = _feature.rank
         def id = _feature.id
 
+        removeCache(cache:'project_'+_feature.backlog.id+'_featureCache_'+_feature.id)
         p.removeFromFeatures(_feature)
 
         //update rank on all features after that one
@@ -95,6 +94,7 @@ class FeatureService {
         broadcast(function: 'delete', message: [class: _feature.class, id: id])
     }
 
+    @PreAuthorize('productOwner() and !archivedProduct()')
     void update(Feature _feature) {
         _feature.name = _feature.name.trim()
 
@@ -105,6 +105,7 @@ class FeatureService {
         publishEvent(new IceScrumFeatureEvent(_feature, this.class, (User) springSecurityService.currentUser, IceScrumEvent.EVENT_UPDATED))
     }
 
+    @PreAuthorize('productOwner() and !archivedProduct()')
     def copyToBacklog(feature) {
         def story = new Story(
                 name: feature.name,
@@ -137,6 +138,7 @@ class FeatureService {
         return itemsDone / items
     }
 
+    @PreAuthorize('productOwner() and !archivedProduct()')
     boolean rank(Feature movedItem, int rank) {
         if (movedItem.rank != rank) {
             if (movedItem.rank > rank) {

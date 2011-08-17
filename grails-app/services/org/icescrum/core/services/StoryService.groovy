@@ -25,20 +25,12 @@
 package org.icescrum.core.services
 
 import grails.plugin.fluxiable.Activity
-import org.springframework.security.access.prepost.PreAuthorize
-
 import groovy.util.slurpersupport.NodeChild
 import java.text.SimpleDateFormat
-import org.springframework.transaction.annotation.Transactional
-import org.icescrum.core.domain.Actor
-import org.icescrum.core.domain.Feature
-import org.icescrum.core.domain.Product
-import org.icescrum.core.domain.Release
-import org.icescrum.core.domain.Story
-import org.icescrum.core.domain.Sprint
-import org.icescrum.core.domain.Task
-import org.icescrum.core.domain.User
 import org.icescrum.core.event.IceScrumStoryEvent
+import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.transaction.annotation.Transactional
+import org.icescrum.core.domain.*
 
 class StoryService {
     def productService
@@ -52,6 +44,7 @@ class StoryService {
 
     static transactional = true
 
+    @PreAuthorize('!archivedProduct(#p)')
     void save(Story story, Product p, User u, Sprint s = null) {
 
         if (!story.effort)
@@ -89,6 +82,7 @@ class StoryService {
         }
     }
 
+    @PreAuthorize('!archivedProduct()')
     void delete(Collection<Story> stories, history = true) {
         bufferBroadcast()
         stories.each { _item ->
@@ -105,6 +99,7 @@ class StoryService {
                 resetRank(_item)
 
             def p = _item.backlog
+            removeCache(cache:'project_'+_item.backlog.id+'_storyCache_'+_item.id)
             p.removeFromStories(_item)
 
             def id = _item.id
@@ -119,11 +114,12 @@ class StoryService {
         resumeBufferedBroadcast()
     }
 
+    @PreAuthorize('!archivedProduct()')
     void delete(Story _item, boolean history = true) {
         delete([_item], history)
     }
 
-    @PreAuthorize('productOwner() or scrumMaster()')
+    @PreAuthorize('(productOwner() or scrumMaster()) and !archivedProduct()')
     void update(Story story, Sprint sp = null) {
         if (story.textAs != '' && story.actor?.name != story.textAs) {
             def actor = Actor.findByBacklogAndName(story.backlog, story.textAs)
@@ -163,7 +159,7 @@ class StoryService {
      * @param story
      * @param estimation
      */
-    @PreAuthorize('teamMember() or scrumMaster()')
+    @PreAuthorize('(teamMember() or scrumMaster()) and !archivedProduct()')
     void estimate(Story story, estimation) {
         def oldState = story.state
         if (story.state < Story.STATE_ACCEPTED || story.state == Story.STATE_DONE)
@@ -191,7 +187,7 @@ class StoryService {
             publishEvent(new IceScrumStoryEvent(story, this.class, u, IceScrumStoryEvent.EVENT_ACCEPTED))
     }
 
-    @PreAuthorize('productOwner(#p) or scrumMaster(#p)')
+    @PreAuthorize('(productOwner() or scrumMaster()) and !archivedProduct()')
     void plan(Sprint sprint, Collection<Story> stories) {
         stories.each {
             this.plan(sprint, it)
@@ -204,7 +200,7 @@ class StoryService {
      * @param story The story to associate
      * @param user The user performing the action
      */
-    @PreAuthorize('productOwner(#p) or scrumMaster(#p)')
+    @PreAuthorize('(productOwner() or scrumMaster()) and !archivedProduct()')
     void plan(Sprint sprint, Story story) {
         // It is possible to associate a story if it is at least in the "ESTIMATED" state and not in the "DONE" state
         // It is not possible to associate a story in a "DONE" sprint either
@@ -437,7 +433,7 @@ class StoryService {
         }
     }
 
-    @PreAuthorize('productOwner(#p) or scrumMaster(#p)')
+    @PreAuthorize('(productOwner() or scrumMaster())  and !archivedProduct()')
     boolean rank(Story movedItem, int rank) {
         if (movedItem.rank == rank) {
             return false
@@ -475,12 +471,12 @@ class StoryService {
         return movedItem.save() ? true : false
     }
 
-    @PreAuthorize('productOwner()')
+    @PreAuthorize('productOwner() and !archivedProduct()')
     def acceptToBacklog(Story story) {
         return acceptToBacklog([story])
     }
 
-    @PreAuthorize('productOwner()')
+    @PreAuthorize('productOwner() and !archivedProduct()')
     def acceptToBacklog(Collection<Story> stories) {
         def storiesA = []
         bufferBroadcast()
@@ -511,12 +507,12 @@ class StoryService {
         return storiesA
     }
 
-    @PreAuthorize('productOwner()')
+    @PreAuthorize('productOwner() and !archivedProduct()')
     def acceptToFeature(Story story) {
         return acceptToFeature([story])
     }
 
-    @PreAuthorize('productOwner()')
+    @PreAuthorize('productOwner() and !archivedProduct()')
     def acceptToFeature(Collection<Story> stories) {
         def features = []
         bufferBroadcast()
@@ -554,12 +550,12 @@ class StoryService {
         return features
     }
 
-    @PreAuthorize('productOwner()')
+    @PreAuthorize('productOwner() and !archivedProduct()')
     def acceptToUrgentTask(Story story) {
         return acceptToUrgentTask([story])
     }
 
-    @PreAuthorize('productOwner()')
+    @PreAuthorize('productOwner() and !archivedProduct()')
     def acceptToUrgentTask(Collection<Story> stories) {
         def tasks = []
         bufferBroadcast()
@@ -623,12 +619,12 @@ class StoryService {
     }
 
 
-    @PreAuthorize('inProduct()')
+    @PreAuthorize('inProduct() and !archivedProduct()')
     void done(Story story) {
         done([story])
     }
 
-    @PreAuthorize('productOwner()')
+    @PreAuthorize('productOwner() and !archivedProduct()')
     void done(Collection<Story> stories) {
         bufferBroadcast()
         stories.each { story ->
@@ -668,12 +664,12 @@ class StoryService {
         resumeBufferedBroadcast()
     }
 
-    @PreAuthorize('productOwner()')
+    @PreAuthorize('productOwner() and !archivedProduct()')
     void unDone(Story story) {
         unDone([story])
     }
 
-    @PreAuthorize('productOwner()')
+    @PreAuthorize('productOwner() and !archivedProduct()')
     void unDone(Collection<Story> stories) {
         bufferBroadcast()
         stories.each { story ->
@@ -729,12 +725,12 @@ class StoryService {
         publishEvent(new IceScrumStoryEvent(story, this.class, u, IceScrumStoryEvent.EVENT_FEATURE_DISSOCIATED))
     }
 
-    @PreAuthorize('inProduct()')
+    @PreAuthorize('inProduct() and !archivedProduct()')
     def copy(Story story) {
         copy([story])
     }
 
-    @PreAuthorize('inProduct()')
+    @PreAuthorize('inProduct() and !archivedProduct()')
     def copy(Collection<Story> stories) {
         def copiedStories = []
         bufferBroadcast()

@@ -23,20 +23,15 @@
 
 package org.icescrum.core.services
 
-import org.codehaus.groovy.grails.commons.ApplicationHolder
-import org.icescrum.core.domain.Cliche
-import org.icescrum.core.domain.Product
-import org.icescrum.core.domain.Release
-import org.icescrum.core.domain.Sprint
-import org.springframework.security.access.prepost.PreAuthorize
 import groovy.util.slurpersupport.NodeChild
 import java.text.SimpleDateFormat
-
-import org.icescrum.core.support.ProgressSupport
-import org.springframework.transaction.annotation.Transactional
+import org.codehaus.groovy.grails.commons.ApplicationHolder
 import org.icescrum.core.event.IceScrumEvent
 import org.icescrum.core.event.IceScrumReleaseEvent
-import org.icescrum.core.domain.User
+import org.icescrum.core.support.ProgressSupport
+import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.transaction.annotation.Transactional
+import org.icescrum.core.domain.*
 
 class ReleaseService {
     final static long DAY = 1000 * 60 * 60 * 24
@@ -50,7 +45,7 @@ class ReleaseService {
     def g = new org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib()
 
 
-    @PreAuthorize('productOwner(#product) or scrumMaster()')
+    @PreAuthorize('(productOwner(#product) or scrumMaster()) and !archivedProduct(#product)')
     void save(Release release, Product product) {
         release.parentProduct = product
 
@@ -87,7 +82,7 @@ class ReleaseService {
         publishEvent(new IceScrumReleaseEvent(release, this.class, (User) springSecurityService.currentUser, IceScrumEvent.EVENT_CREATED))
     }
 
-    @PreAuthorize('productOwner() or scrumMaster()')
+    @PreAuthorize('(productOwner() or scrumMaster()) and !archivedProduct()')
     void update(Release release, Date startDate = null, Date endDate = null) {
         def product = release.parentProduct
         if (!startDate) {
@@ -196,7 +191,7 @@ class ReleaseService {
         publishEvent(new IceScrumReleaseEvent(release, this.class, (User) springSecurityService.currentUser, IceScrumReleaseEvent.EVENT_UPDATED_VISION))
     }
 
-    @PreAuthorize('productOwner() or scrumMaster()')
+    @PreAuthorize('(productOwner() or scrumMaster()) and !archivedProduct()')
     void activate(Release release) {
         def relActivated = false
         def lastRelClose = 0
@@ -223,7 +218,7 @@ class ReleaseService {
         publishEvent(new IceScrumReleaseEvent(release, this.class, (User) springSecurityService.currentUser, IceScrumReleaseEvent.EVENT_ACTIVATED))
     }
 
-    @PreAuthorize('productOwner() or scrumMaster()')
+    @PreAuthorize('(productOwner() or scrumMaster()) and !archivedProduct()')
     void close(Release release) {
         def product = release.parentProduct
         if (release.sprints.size() == 0 || release.sprints.any { it.state != Sprint.STATE_DONE })
@@ -248,7 +243,7 @@ class ReleaseService {
         publishEvent(new IceScrumReleaseEvent(release, this.class, (User) springSecurityService.currentUser, IceScrumReleaseEvent.EVENT_CLOSED))
     }
 
-    @PreAuthorize('productOwner() or scrumMaster()')
+    @PreAuthorize('(productOwner() or scrumMaster()) and !archivedProduct()')
     void delete(Release release) {
         def product = release.parentProduct
         if (release.state == Release.STATE_INPROGRESS || release.state == Release.STATE_DONE)

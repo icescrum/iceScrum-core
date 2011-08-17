@@ -20,25 +20,25 @@
 * Vincent Barrier (vbarrier@kagilum.com)
 */
 
-import org.icescrum.components.UiControllerArtefactHandler
-import org.springframework.context.ApplicationContext
-import org.codehaus.groovy.grails.scaffolding.view.ScaffoldingViewResolver
-import org.codehaus.groovy.grails.commons.GrailsClassUtils
-import org.atmosphere.cpr.BroadcasterFactory
 import grails.converters.JSON
-import org.springframework.web.context.request.RequestContextHolder
-import org.icescrum.core.services.SecurityService
-import org.icescrum.core.utils.IceScrumDomainClassMarshaller
-import org.atmosphere.util.ExcludeSessionBroadcaster
-import org.icescrum.ConfigurationHolder
 import grails.converters.XML
 import grails.plugin.springcache.SpringcacheService
+import org.atmosphere.cpr.BroadcasterFactory
 import org.atmosphere.cpr.DefaultBroadcaster
+import org.atmosphere.util.ExcludeSessionBroadcaster
+import org.codehaus.groovy.grails.commons.GrailsClassUtils
+import org.codehaus.groovy.grails.scaffolding.view.ScaffoldingViewResolver
+import org.icescrum.ConfigurationHolder
+import org.icescrum.components.UiControllerArtefactHandler
+import org.icescrum.core.services.SecurityService
+import org.icescrum.core.utils.IceScrumDomainClassMarshaller
+import org.springframework.context.ApplicationContext
+import org.springframework.web.context.request.RequestContextHolder
 
 class IcescrumCoreGrailsPlugin {
     def groupId = 'org.icescrum'
     // the plugin version
-    def version = "1.4.2.19"
+    def version = "1.4.2.20"
     // the version or versions of Grails the plugin is designed for
     def grailsVersion = "1.3.7 > *"
     // the other plugins this plugin depends on

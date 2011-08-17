@@ -23,22 +23,15 @@
 
 package org.icescrum.core.services
 
-import org.springframework.security.access.prepost.PreAuthorize
 import groovy.util.slurpersupport.NodeChild
 import java.text.SimpleDateFormat
-import org.springframework.transaction.annotation.Transactional
-import org.icescrum.core.domain.Cliche
-import org.icescrum.core.domain.Product
-import org.icescrum.core.domain.Release
-import org.icescrum.core.domain.Sprint
-import org.icescrum.core.domain.Story
-import org.icescrum.core.domain.Task
-import org.icescrum.core.domain.User
-import org.icescrum.core.domain.TimeBox
-import org.icescrum.core.utils.ServicesUtils
-import org.icescrum.core.event.IceScrumSprintEvent
 import org.icescrum.core.event.IceScrumEvent
+import org.icescrum.core.event.IceScrumSprintEvent
 import org.icescrum.core.event.IceScrumStoryEvent
+import org.icescrum.core.utils.ServicesUtils
+import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.transaction.annotation.Transactional
+import org.icescrum.core.domain.*
 
 class SprintService {
 
@@ -54,7 +47,7 @@ class SprintService {
     def springSecurityService
     def g = new org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib()
 
-    @PreAuthorize('productOwner() or scrumMaster()')
+    @PreAuthorize('(productOwner() or scrumMaster()) and !archivedProduct()')
     void save(Sprint sprint, Release release) {
         if (release.state == Release.STATE_DONE)
             throw new IllegalStateException('is_workflow_sprint_release_done')

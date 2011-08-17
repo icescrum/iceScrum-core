@@ -24,20 +24,22 @@
 
 package org.icescrum.core.services
 
-import org.icescrum.core.domain.Actor
-import org.icescrum.core.domain.Product
 import groovy.util.slurpersupport.NodeChild
 import java.text.SimpleDateFormat
-import org.springframework.transaction.annotation.Transactional
-import org.icescrum.core.event.IceScrumEvent
+import org.icescrum.core.domain.Actor
+import org.icescrum.core.domain.Product
 import org.icescrum.core.domain.User
 import org.icescrum.core.event.IceScrumActorEvent
+import org.icescrum.core.event.IceScrumEvent
+import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.transaction.annotation.Transactional
 
 class ActorService {
 
     static transactional = true
     def springSecurityService
 
+    @PreAuthorize('productOwner() and !archivedProduct()')
     void save(Actor act, Product p) {
         act.name = act.name?.trim()
         act.backlog = p
@@ -49,16 +51,18 @@ class ActorService {
         publishEvent(new IceScrumActorEvent(act, this.class, (User) springSecurityService.currentUser, IceScrumEvent.EVENT_CREATED))
     }
 
+    @PreAuthorize('productOwner() and !archivedProduct()')
     void delete(Actor act) {
+        removeCache(cache:'project_'+act.backlog.id+'_featureCache_'+act.id)
         def id = act.id
         def stillHasPbi = act.backlog.stories.any {it.actor?.id == act.id}
         if (stillHasPbi)
             throw new RuntimeException()
         act.delete()
-
         broadcast(function: 'delete', message: [class: act.class, id: id])
     }
 
+    @PreAuthorize('productOwner() and !archivedProduct()')
     void update(Actor act) {
         act.name = act.name?.trim()
         if (!act.save(flush: true))

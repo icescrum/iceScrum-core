@@ -26,10 +26,10 @@
 
 package org.icescrum.core.domain
 
-import org.icescrum.core.event.IceScrumStoryEvent
 import org.grails.comments.Comment
-import org.icescrum.plugins.attachmentable.domain.Attachment
 import org.icescrum.core.event.IceScrumEvent
+import org.icescrum.core.event.IceScrumStoryEvent
+import org.icescrum.plugins.attachmentable.domain.Attachment
 
 class Story extends BacklogElement implements Cloneable {
 
@@ -499,11 +499,10 @@ class Story extends BacklogElement implements Cloneable {
     }
 
     def afterUpdate() {
-        flushCache(cache:'storyCache-'+this.id, cacheResolver:'backlogElementCacheResolver')
+        flushCache(cache:'project_'+this.backlog.id+'_storyCache_'+this.id)
     }
 
     def afterDelete() {
-        removeCache(cache:'storyCache-'+this.id, cacheResolver:'backlogElementCacheResolver')
         withNewSession {
             publishEvent(new IceScrumStoryEvent(this, this.class, User.get(springSecurityService.principal?.id), IceScrumEvent.EVENT_AFTER_DELETE))
         }

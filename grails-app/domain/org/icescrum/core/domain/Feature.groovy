@@ -26,8 +26,8 @@
 
 package org.icescrum.core.domain
 
-import org.icescrum.core.event.IceScrumFeatureEvent
 import org.icescrum.core.event.IceScrumEvent
+import org.icescrum.core.event.IceScrumFeatureEvent
 
 class Feature extends BacklogElement implements Serializable {
     static final long serialVersionUID = 7072515028109185168L
@@ -124,19 +124,18 @@ class Feature extends BacklogElement implements Serializable {
     }
 
     def afterUpdate() {
-        flushCache(cache:'featureCache-'+this.id, cacheResolver:'backlogElementCacheResolver')
+        flushCache(cache:'project_'+this.backlog.id+'_featureCache_'+this.id)
     }
 
     def beforeUpdate() {
         if (this.isDirty('color') || this.isDirty('name')){
             this.stories.each{
-                flushCache(cache:'storyCache-'+this.id, cacheResolver:'backlogElementCacheResolver')
+                flushCache(cache:'project_'+this.backlog.id+'_storyCache_'+this.id)
             }
         }
     }
 
     def afterDelete() {
-    removeCache(cache:'featureCache-'+this.id, cacheResolver:'backlogElementCacheResolver')
         publishEvent(new IceScrumFeatureEvent(this, this.class, User.get(springSecurityService.principal?.id), IceScrumEvent.EVENT_AFTER_DELETE))
     }
 

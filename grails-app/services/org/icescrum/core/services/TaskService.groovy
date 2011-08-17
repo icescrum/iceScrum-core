@@ -24,20 +24,14 @@
 
 package org.icescrum.core.services
 
-import org.icescrum.core.domain.Product
-import org.icescrum.core.domain.Story
-import org.icescrum.core.domain.Task
-import org.icescrum.core.domain.User
-import org.icescrum.core.domain.Sprint
-
-import org.icescrum.core.domain.TimeBox
-import org.codehaus.groovy.grails.commons.ApplicationHolder
-import org.springframework.context.ApplicationContext
 import groovy.util.slurpersupport.NodeChild
 import java.text.SimpleDateFormat
-
-import org.springframework.transaction.annotation.Transactional
+import org.codehaus.groovy.grails.commons.ApplicationHolder
 import org.icescrum.core.event.IceScrumTaskEvent
+import org.springframework.context.ApplicationContext
+import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.transaction.annotation.Transactional
+import org.icescrum.core.domain.*
 
 class TaskService {
 
@@ -64,6 +58,7 @@ class TaskService {
         return true
     }
 
+    @PreAuthorize('inProduct() and !archivedProduct()')
     void save(Task task, TimeBox sprint, User user) {
 
         if (!task.id && sprint.state == Sprint.STATE_DONE){
@@ -90,6 +85,7 @@ class TaskService {
         broadcast(function: 'add', message: task)
     }
 
+    @PreAuthorize('inProduct() and !archivedProduct()')
     void saveStoryTask(Task task, Story story, User user) {
         story.addToTasks(task)
         def currentProduct = (Product) story.backlog
@@ -99,6 +95,7 @@ class TaskService {
         save(task, story.parentSprint, user)
     }
 
+    @PreAuthorize('inProduct() and !archivedProduct()')
     void saveRecurrentTask(Task task, Sprint sprint, User user) {
         task.type = Task.TYPE_RECURRENT
         def currentProduct = (Product) sprint.parentRelease.parentProduct
@@ -108,6 +105,7 @@ class TaskService {
         save(task, sprint, user)
     }
 
+    @PreAuthorize('inProduct() and !archivedProduct()')
     void saveUrgentTask(Task task, Sprint sprint, User user) {
         task.type = Task.TYPE_URGENT
         def currentProduct = (Product) sprint.parentRelease.parentProduct
@@ -123,6 +121,7 @@ class TaskService {
      * @param user
      * @param story
      */
+    @PreAuthorize('inProduct() and !archivedProduct()')
     void changeTaskStory(Task task, Story story, User user) {
         if (task.parentStory.id != story.id) {
             def oldStory = task.parentStory
@@ -138,6 +137,7 @@ class TaskService {
      * @param user
      * @param type
      */
+    @PreAuthorize('inProduct() and !archivedProduct()')
     void changeType(Task task, int type, User user) {
         task.type = type
         update(task, user)
@@ -149,6 +149,7 @@ class TaskService {
      * @param story
      * @param user
      */
+    @PreAuthorize('inProduct() and !archivedProduct()')
     void sprintTaskToStoryTask(Task task, Story story, User user) {
         task.type = null
         story.addToTasks(task)
@@ -160,6 +161,7 @@ class TaskService {
      * @param type
      * @param user
      */
+    @PreAuthorize('inProduct() and !archivedProduct()')
     void storyTaskToSprintTask(Task task, int type, User user) {
         def story = task.parentStory
         story.removeFromTasks(task)
@@ -174,6 +176,7 @@ class TaskService {
      * @param task
      * @param user
      */
+    @PreAuthorize('inProduct() and !archivedProduct()')
     void update(Task task, User user, boolean force = false) {
         if (!(task.state == Task.STATE_DONE && task.doneDate)) {
             checkEstimation(task)
@@ -235,6 +238,7 @@ class TaskService {
      * @param p
      * @return
      */
+    @PreAuthorize('inProduct() and !archivedProduct()')
     boolean assign(Collection<Task> tasks, User user) {
         tasks.each {
             if (it.state == Task.STATE_DONE){
@@ -253,6 +257,7 @@ class TaskService {
      * @param p
      * @return
      */
+    @PreAuthorize('inProduct() and !archivedProduct()')
     boolean unassign(Collection<Task> tasks, User user) {
         tasks.each {
             if (it.responsible.id != user.id)
@@ -266,6 +271,7 @@ class TaskService {
         return true
     }
 
+    @PreAuthorize('inProduct() and !archivedProduct()')
     void delete(Task task, User user) {
         if (task.state == Task.STATE_DONE && !securityService.scrumMaster(null, springSecurityService.authentication)) {
             throw new IllegalStateException('is.task.error.delete.not.scrumMaster')
@@ -280,11 +286,13 @@ class TaskService {
             }
             resetRank(task)
             sprint.removeFromTasks(task)
+            removeCache(cache:'project_'+p.id+'_taskCache_'+task.id)
             broadcast(function: 'delete', message: [class: task.class, id: task.id])
             clicheService.createOrUpdateDailyTasksCliche((Sprint) sprint)
         }
     }
 
+    @PreAuthorize('inProduct() and !archivedProduct()')
     def copy(Task task, User user, def clonedState = Task.STATE_WAIT) {
         if (task.backlog.state == Sprint.STATE_DONE) {
             throw new IllegalStateException('is.task.error.copy.done')
@@ -331,6 +339,7 @@ class TaskService {
      * @param i
      * @return
      */
+    @PreAuthorize('inProduct() and !archivedProduct()')
     void state(Task t, Integer state, User u) {
 
         def p = ((Sprint) t.backlog).parentRelease.parentProduct
@@ -364,6 +373,7 @@ class TaskService {
         }
     }
 
+    @PreAuthorize('inProduct() and !archivedProduct()')
     void setRank(Task task, int rank) {
         def container = task.parentStory ?: task.backlog
         container.tasks.findAll {it.type == task.type && it.state == task.state}?.each { t ->
@@ -377,6 +387,7 @@ class TaskService {
             throw new RuntimeException()
     }
 
+    @PreAuthorize('inProduct() and !archivedProduct()')
     void resetRank(Task task) {
         def container = task.parentStory ?: task.backlog
         container.tasks.findAll {it.type == task.type && it.state == task.state}.each { t ->
@@ -387,6 +398,7 @@ class TaskService {
         }
     }
 
+    @PreAuthorize('inProduct() and !archivedProduct()')
     boolean rank(Task movedItem, int rank) {
         def container
         if (movedItem.parentStory) {

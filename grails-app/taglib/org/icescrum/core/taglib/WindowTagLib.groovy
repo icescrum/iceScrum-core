@@ -455,7 +455,7 @@ class WindowTagLib {
             remoteFunction(controller: attrs.controller ?: controllerName,
                     action: attrs.action ?: 'dropImport',
                     params: "'product=${params.product}&data='+dt.text()",
-                    onSuccess: "")
+                    onSuccess: attrs.success)
         }
         }
       });"""

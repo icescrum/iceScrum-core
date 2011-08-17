@@ -24,28 +24,20 @@
 
 package org.icescrum.core.services
 
+import grails.plugins.springsecurity.Secured
 import groovy.util.slurpersupport.NodeChild
 import java.text.SimpleDateFormat
 import org.codehaus.groovy.grails.commons.ApplicationHolder
 import org.icescrum.core.domain.preferences.ProductPreferences
-import org.springframework.security.access.prepost.PostFilter
-
-import org.springframework.transaction.annotation.Transactional
-
-import org.icescrum.core.domain.Cliche
-import org.icescrum.core.domain.Product
-import org.icescrum.core.domain.Release
-import org.icescrum.core.domain.Team
-import org.icescrum.core.domain.User
-
-import org.icescrum.core.support.ProgressSupport
-import org.icescrum.core.support.XMLConverterSupport
-import org.icescrum.core.domain.Story
+import org.icescrum.core.domain.security.Authority
 import org.icescrum.core.event.IceScrumEvent
 import org.icescrum.core.event.IceScrumProductEvent
+import org.icescrum.core.support.ProgressSupport
+import org.icescrum.core.support.XMLConverterSupport
+import org.springframework.security.access.prepost.PostFilter
 import org.springframework.security.access.prepost.PreAuthorize
-import org.icescrum.core.domain.security.Authority
-import grails.plugins.springsecurity.Secured
+import org.springframework.transaction.annotation.Transactional
+import org.icescrum.core.domain.*
 
 /**
  * ProductService is a transactional class, that manage operations about
@@ -164,7 +156,7 @@ class ProductService {
         }
     }
 
-    @PreAuthorize('owner(#_product)')
+    @PreAuthorize('owner(#_product) and !archivedProduct(#_product)')
     void addTeamsToProduct(Product _product, teamIds) {
         if (!_product)
             throw new IllegalStateException('Product must not be null')
@@ -192,7 +184,7 @@ class ProductService {
 
     }
 
-    @PreAuthorize('scrumMaster() or owner(#_product)')
+    @PreAuthorize('(scrumMaster() or owner(#_product)) and !archivedProduct(#_product)')
     void update(Product _product) {
         if (!_product.name?.trim()) {
             throw new IllegalStateException("is.product.error.no.name")
@@ -476,9 +468,32 @@ class ProductService {
     @PreAuthorize('owner(#p)')
     def delete(Product p) {
         def id = p.id
+        springcacheService.flush(~/project_${id}\w+/)
         p.delete(flush: true)
         securityService.unsecureDomain p
         broadcast(function: 'delete', message: [class: p.class, id: id])
+    }
+
+    @PreAuthorize('owner(#p) or scrumMaster()')
+    def archive(Product p) {
+        p.preferences.archived = true
+        if (!p.save(flush:true)){
+            throw new RuntimeException()
+        }
+        springcacheService.flush(~/project_${p.id}\w+/)
+        springcacheService.flush(SecurityService.CACHE_ARCHIVEDPRODUCT)
+        broadcast(function: 'archive', message: p)
+    }
+
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    def unArchive(Product p) {
+        p.preferences.archived = false
+        if (!p.save(flush:true)){
+            throw new RuntimeException()
+        }
+        springcacheService.flush(~/project_${p.id}\w+/)
+        springcacheService.flush(SecurityService.CACHE_ARCHIVEDPRODUCT)
+        broadcast(function: 'unarchive', message: p)
     }
 
     @PreAuthorize('owner(#product) or scrumMaster()')

@@ -168,4 +168,16 @@ public class MethodScrumExpressionRoot extends SecurityExpressionRoot implements
     public boolean owner(Object o) {
         return securityService.owner(o, super.authentication);
     }
+
+    public boolean archivedProduct(Product p) {
+        return securityService.archivedProduct(p);
+    }
+
+    public boolean archivedProduct() {
+        return securityService.archivedProduct(null);
+    }
+
+    public boolean archivedProduct(long p) {
+        return securityService.archivedProduct(p);
+    }
 }

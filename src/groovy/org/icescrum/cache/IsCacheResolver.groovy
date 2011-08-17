@@ -22,20 +22,19 @@
  */
 package org.icescrum.cache
 
-import grails.plugin.springcache.CacheResolver
 import org.springframework.web.context.request.RequestContextHolder as RCH
 import org.springframework.web.servlet.support.RequestContextUtils as RCU
-import org.apache.commons.logging.LogFactory
+
+import grails.plugin.springcache.CacheResolver
 import grails.plugin.springcache.key.CacheKeyBuilder
-import grails.plugin.springcache.web.key.WebContentKeyGenerator
 import grails.plugin.springcache.web.ContentCacheParameters
-import net.sf.ehcache.Ehcache
+import grails.plugin.springcache.web.key.WebContentKeyGenerator
 import grails.spring.BeanBuilder
-import org.springframework.cache.ehcache.EhCacheFactoryBean
-import org.springframework.context.ApplicationContextAware
-import org.springframework.context.ApplicationContext
 import net.sf.ehcache.CacheManager
-import org.springframework.context.support.ApplicationObjectSupport
+import org.apache.commons.logging.LogFactory
+import org.springframework.cache.ehcache.EhCacheFactoryBean
+import org.springframework.context.ApplicationContext
+import org.springframework.context.ApplicationContextAware
 
 class IceScrumCacheResolver implements CacheResolver ,ApplicationContextAware {
     def springSecurityService
@@ -52,7 +51,7 @@ class IceScrumCacheResolver implements CacheResolver ,ApplicationContextAware {
     void autoCreateCache(_cacheName){
         String cache = springcacheCacheManager.cacheNames?.find { it == _cacheName }
         if (!cache){
-            def defaultCacheName = _cacheName.split('-')
+            def defaultCacheName = _cacheName.split('_')
             def beanBuilder = new BeanBuilder(applicationContext)
             def isCacheConfig = null
             grailsApplication.config.springcache.caches?.each { name,configObject -> if (name == defaultCacheName[0]) isCacheConfig = configObject }
@@ -79,7 +78,8 @@ class BacklogElementCacheResolver extends IceScrumCacheResolver {
         if (!cachePattern.matcher(baseName).matches()){
             backlogElementId = params.story?.id ?: params.task?.id ?: params.feature?.id ?: params.actor?.id ?: params.id ?: null
         }
-        def cache = "${baseName}${backlogElementId ?'-'+backlogElementId:''}"
+        def pid = params.product?.decodeProductKey()
+        def cache = "project_${pid}_${baseName}${backlogElementId ?'_'+backlogElementId:''}"
         autoCreateCache(cache)
         if (log.debugEnabled) log.debug("cache: ${cache}")
         return cache
@@ -90,7 +90,7 @@ class UserCacheResolver extends IceScrumCacheResolver {
     @Override
     String resolveCacheName(String baseName) {
         def id = springSecurityService.principal?.id
-        def cache = "${baseName}-user-${id ?: 'anoymous'}"
+        def cache = "${baseName}_user_${id ?: 'anoymous'}"
         autoCreateCache(cache)
         if (log.debugEnabled) log.debug("cache: ${cache}")
         return cache
@@ -102,7 +102,7 @@ class ProjectCacheResolver extends IceScrumCacheResolver {
     String resolveCacheName(String baseName) {
         def params = RCH.currentRequestAttributes().params
         def pid = params.product?.decodeProductKey() ?: params.id
-        def cache = "${baseName}-project-${pid}"
+        def cache = "project_${pid}_${baseName}"
         autoCreateCache(cache)
         if (log.debugEnabled) log.debug("cache: ${cache}")
         return cache
@@ -115,7 +115,7 @@ class UserProjectCacheResolver extends IceScrumCacheResolver {
         def params = RCH.currentRequestAttributes().params
         def pid = params.product?.decodeProductKey() ?: params.id
         def id = springSecurityService.isLoggedIn() ? springSecurityService.principal.id : 'anonymous'
-        def cache = "${baseName}-project-${pid}-${id}"
+        def cache = "project_${pid}_${baseName}_${id}"
         autoCreateCache(cache)
         if (log.debugEnabled) log.debug("cache: ${cache}")
         return cache

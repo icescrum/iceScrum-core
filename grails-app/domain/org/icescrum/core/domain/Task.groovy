@@ -26,8 +26,8 @@
 
 package org.icescrum.core.domain
 
-import org.icescrum.core.event.IceScrumTaskEvent
 import org.icescrum.core.event.IceScrumEvent
+import org.icescrum.core.event.IceScrumTaskEvent
 
 class Task extends BacklogElement implements Serializable {
 
@@ -202,6 +202,15 @@ class Task extends BacklogElement implements Serializable {
                    AND t.id IN (:id) """, [pid: pid, id:id])
     }
 
+    static List<Task> getAllInProduct(Long pid) {
+        executeQuery(
+                """SELECT DISTINCT t
+                   FROM org.icescrum.core.domain.Task as t, org.icescrum.core.domain.Sprint as s, org.icescrum.core.domain.Release as r
+                   WHERE t.backlog = s
+                   AND s.parentRelease = r
+                   AND r.parentProduct.id = :pid """, [pid: pid])
+    }
+
     @Override
     int hashCode() {
         final int prime = 31
@@ -239,11 +248,10 @@ class Task extends BacklogElement implements Serializable {
     }
 
      def afterUpdate() {
-        flushCache(cache:'taskCache-'+this.id, cacheResolver:'backlogElementCacheResolver')
+        flushCache(cache:'project_'+this.backlog.parentRelease.parentProduct.id+'_taskCache_'+this.id)
     }
 
     def afterDelete() {
-        removeCache(cache:'taskCache-'+this.id, cacheResolver:'backlogElementCacheResolver')
         withNewSession {
             publishEvent(new IceScrumTaskEvent(this, this.class, User.get(springSecurityService.principal?.id), IceScrumEvent.EVENT_AFTER_DELETE))
         }
