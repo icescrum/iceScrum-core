@@ -35,6 +35,8 @@ class BootStrapService {
 
         AuthorityManager.initSecurity()
         ApplicationSupport.generateFolders()
+        ApplicationSupport.createUUID()
+        ApplicationSupport.checkNewVersion()
 
         def config = ApplicationHolder.application.config
         config.grails.attachmentable.baseDir = config.icescrum.baseDir.toString()

@@ -24,8 +24,17 @@
 package org.icescrum.core.support
 
 import org.codehaus.groovy.grails.commons.ApplicationHolder
+import groovyx.net.http.RESTClient
+import groovyx.net.http.Method
+import grails.util.Metadata
+import java.util.concurrent.TimeUnit
+import org.apache.commons.logging.LogFactory
+
 
 class ApplicationSupport {
+
+  private static final log = LogFactory.getLog(this)
+
   static public generateFolders = {
     def config = ApplicationHolder.application.config
     def dirPath = config.icescrum.baseDir.toString() + File.separator + "images" + File.separator + "users" + File.separator
@@ -49,7 +58,7 @@ class ApplicationSupport {
   }
 
   // See http://jira.codehaus.org/browse/GRAILS-6515
-  public static booleanValue(def value) {
+  static public booleanValue(def value) {
       if (value.class == java.lang.Boolean) {
           // because 'true.toBoolean() == false' !!!
           return value
@@ -61,6 +70,57 @@ class ApplicationSupport {
       else {
           return value.toBoolean()
       }
+  }
+
+  static public checkNewVersion = {
+    def config = ApplicationHolder.application.config
+    if (config.icescrum.check.enable){
+        def timer = new Timer()
+        def checker = {
+            def http = new RESTClient(config.icescrum.check.url)
+            http.client.params.setIntParameter( "http.connection.timeout", 5000 )
+            http.client.params.setIntParameter( "http.socket.timeout", 5000 )
+            try {
+                def vers = Metadata.current['app.version'].replace('#','.').replaceFirst('R','')
+                def resp = http.get(path:config.icescrum.check.path,
+                                    query:[id:config.icescrum.appID,version:vers],
+                                    headers:['User-Agent' : 'iceScrum-Agent/1.0','Referer' : config.grails.serverURL])
+                if(resp.success && resp.status == 200){
+                    if (resp.data.version?.text()){
+                        config.icescrum.check.available = [version:resp.data.version.text(), url:resp.data.url.text(), message:resp.data.message?.text()]
+                        if (log.debugEnabled) log.debug('Automatic check update - A new version is available : '+resp.data.version.text())
+                    }else{
+                        config.icescrum.check.available = false
+                        if (log.debugEnabled) log.debug('Automatic check update - iceScrum is up to date')
+                    }
+                }
+                println config.icescrum.check.available
+            }catch( ex ){
+                if (log.debugEnabled) log.debug('Automatic check update - error cancel timer')
+                timer.cancel()
+            }
+
+        } as TimerTask
+        def interval = 1000 * 60 * (config.icescrum.check.interval?:1440)
+        timer.scheduleAtFixedRate(checker, 60000, interval)
+    }
+  }
+
+  static public createUUID = {
+    def config = ApplicationHolder.application.config
+    def filePath = config.icescrum.baseDir.toString() + File.separator + "appID.txt"
+    def fileID = new File(filePath)
+
+    if(!fileID.exists() || !fileID.readLines()[0]){
+        !fileID.exists() ?: fileID.delete()
+        fileID.createNewFile()
+        config.icescrum.appID = UUID.randomUUID()
+        fileID <<  config.icescrum.appID
+        if (log.debugEnabled) log.debug('regenerate appID '+config.icescrum.appID)
+    }else{
+        config.icescrum.appID = fileID.readLines()[0]
+        if (log.debugEnabled) log.debug('retrieve appID '+config.icescrum.appID)
+    }
   }
 
 }
