@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010 iceScrum Technologies.
+ * Copyright (c) 2010 iceScrum Technologies / 2011 Kagilum SAS.
  *
  * This file is part of iceScrum.
  *
@@ -25,9 +25,7 @@ package org.icescrum.core.support
 
 import org.codehaus.groovy.grails.commons.ApplicationHolder
 import groovyx.net.http.RESTClient
-import groovyx.net.http.Method
 import grails.util.Metadata
-import java.util.concurrent.TimeUnit
 import org.apache.commons.logging.LogFactory
 
 
