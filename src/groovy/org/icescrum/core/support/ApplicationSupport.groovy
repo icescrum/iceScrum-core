@@ -74,33 +74,8 @@ class ApplicationSupport {
     def config = ApplicationHolder.application.config
     if (config.icescrum.check.enable){
         def timer = new Timer()
-        def checker = {
-            def http = new RESTClient(config.icescrum.check.url)
-            http.client.params.setIntParameter( "http.connection.timeout", 5000 )
-            http.client.params.setIntParameter( "http.socket.timeout", 5000 )
-            try {
-                def vers = Metadata.current['app.version'].replace('#','.').replaceFirst('R','')
-                def resp = http.get(path:config.icescrum.check.path,
-                                    query:[id:config.icescrum.appID,version:vers],
-                                    headers:['User-Agent' : 'iceScrum-Agent/1.0','Referer' : config.grails.serverURL])
-                if(resp.success && resp.status == 200){
-                    if (resp.data.version?.text()){
-                        config.icescrum.check.available = [version:resp.data.version.text(), url:resp.data.url.text(), message:resp.data.message?.text()]
-                        if (log.debugEnabled) log.debug('Automatic check update - A new version is available : '+resp.data.version.text())
-                    }else{
-                        config.icescrum.check.available = false
-                        if (log.debugEnabled) log.debug('Automatic check update - iceScrum is up to date')
-                    }
-                }
-                println config.icescrum.check.available
-            }catch( ex ){
-                if (log.debugEnabled) log.debug('Automatic check update - error cancel timer')
-                timer.cancel()
-            }
-
-        } as TimerTask
-        def interval = 1000 * 60 * (config.icescrum.check.interval?:1440)
-        timer.scheduleAtFixedRate(checker, 60000, interval)
+        def interval = CheckerTimerTask.computeInterval(config.icescrum.check.interval?:360)
+        timer.scheduleAtFixedRate(new CheckerTimerTask(timer,interval), 60000, interval)
     }
   }
 
@@ -120,5 +95,60 @@ class ApplicationSupport {
         if (log.debugEnabled) log.debug('retrieve appID '+config.icescrum.appID)
     }
   }
+
+}
+
+class CheckerTimerTask extends TimerTask {
+
+    private static final log = LogFactory.getLog(this)
+    private Timer timer
+    private int interval
+
+    CheckerTimerTask(Timer timer, int interval){
+        this.timer = timer
+        this.interval = interval
+    }
+
+    @Override
+    void run() {
+        def config = ApplicationHolder.application.config
+        def configInterval = computeInterval(config.icescrum.check.interval?:1440)
+        def http = new RESTClient(config.icescrum.check.url)
+        http.client.params.setIntParameter( "http.connection.timeout", config.icescrum.check.timeout?:5000 )
+        http.client.params.setIntParameter( "http.socket.timeout", config.icescrum.check.timeout?:5000 )
+        try {
+            def vers = Metadata.current['app.version'].replace('#','.').replaceFirst('R','')
+            def resp = http.get(path:config.icescrum.check.path,
+                                query:[id:config.icescrum.appID,version:vers],
+                                headers:['User-Agent' : 'iceScrum-Agent/1.0','Referer' : config.grails.serverURL])
+            if(resp.success && resp.status == 200){
+                if (resp.data.version?.text()){
+                    config.icescrum.check.available = [version:resp.data.version.text(), url:resp.data.url.text(), message:resp.data.message?.text()]
+                    if (log.debugEnabled) log.debug('Automatic check update - A new version is available : '+resp.data.version.text())
+                }else{
+                    config.icescrum.check.available = false
+                    if (log.debugEnabled) log.debug('Automatic check update - iceScrum is up to date')
+                }
+            }
+            if (interval != configInterval){
+                //Back to normal delay
+                this.cancel()
+                timer.scheduleAtFixedRate(new CheckerTimerTask(timer,configInterval),configInterval,configInterval)
+                if (log.debugEnabled) log.debug('Automatic check update - back to normal delay')
+            }
+        }catch( ex ){
+            if (interval == configInterval){
+                //Setup new timer with a long delay
+                if (log.debugEnabled) log.debug('Automatic check update error - new timer delay')
+                this.cancel()
+                def longInterval = configInterval >= 1440 ? configInterval*2 : computeInterval(1440)
+                timer.scheduleAtFixedRate(new CheckerTimerTask(timer,longInterval),longInterval,longInterval)
+            }
+        }
+    }
+
+    public static computeInterval(int interval){
+        return 1000 * 60 * interval
+    }
 
 }
