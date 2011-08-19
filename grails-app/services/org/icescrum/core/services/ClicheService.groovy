@@ -238,7 +238,7 @@ class ClicheService {
                 data: xmlBuilder.bind(clicheData).toString()
         )
         save(c, r)
-        flushCache(cache:'productChartCache', cacheResolver:'projectCacheResolver')
+        flushCache(cache:"project_${p.id}_productChartCache")
     }
 
     void createOrUpdateDailyTasksCliche(Sprint s) {
@@ -360,7 +360,7 @@ class ClicheService {
 
         Cliche c = new Cliche(type: Cliche.TYPE_DAILY, datePrise: d, data: xmlBuilder.bind(clicheData).toString())
         save(c, s)
-        flushCache(cache:'sprintChartCache', cacheResolver:'projectCacheResolver')
+        flushCache(cache:"project_${s.parentRelease.parentProduct.id}_sprintChartCache")
     }
 
     @Transactional(readOnly = true)

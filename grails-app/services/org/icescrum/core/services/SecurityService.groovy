@@ -23,7 +23,6 @@
 package org.icescrum.core.services
 
 import org.springframework.security.core.context.SecurityContextHolder as SCH
-import org.codehaus.groovy.grails.plugins.springsecurity.SecurityRequestHolder as SRH
 import org.springframework.web.context.request.RequestContextHolder as RCH
 
 import grails.plugin.springcache.key.CacheKeyBuilder
@@ -391,16 +390,17 @@ class SecurityService {
     }
 
     Long parseCurrentRequestProduct() {
-        def res = SRH.request[PRODUCT_ATTR]
+        def request = RCH.requestAttributes.currentRequest
+        def res = request[PRODUCT_ATTR]
         if (!res) {
-            def param = SRH.request.getParameter(PRODUCT_URL_ATTR)
+            def param = request.getParameter(PRODUCT_URL_ATTR)
             if (!param) {
-                def mappingInfo = grailsUrlMappingsHolder.match(SRH.request.forwardURI.replaceFirst(SRH.request.contextPath, ''))
+                def mappingInfo = grailsUrlMappingsHolder.match(request.forwardURI.replaceFirst(request.contextPath, ''))
                 res = mappingInfo?.parameters?.getAt(PRODUCT_URL_ATTR)?.decodeProductKey()?.toLong()
             } else {
                 res = param?.decodeProductKey()?.toLong()
             }
-            SRH.request[PRODUCT_ATTR] = res
+            request[PRODUCT_ATTR] = res
         }
 
         res
@@ -475,7 +475,9 @@ class SecurityService {
 
     def filterRequest(){
         def request = RCH.requestAttributes.currentRequest
-        request.filtered     = request.filtered ?: true
+
+        if (!request || (request && request.filtered))
+            return
         request.scrumMaster  = request.scrumMaster ?: scrumMaster(null,springSecurityService.authentication)
         request.productOwner = request.productOwner ?: productOwner(null,springSecurityService.authentication)
         request.teamMember   = request.teamMember ?: teamMember(null,springSecurityService.authentication)
@@ -484,7 +486,7 @@ class SecurityService {
         request.inProduct    = request.inProduct ?: request.scrumMaster ?: request.productOwner ?: request.teamMember ?: false
         request.inTeam       = request.inTeam ?: request.scrumMaster ?: request.teamMember ?: false
         request.admin        = request.admin ?: admin(springSecurityService.authentication) ?: false
-
+        request.filtered     = request.filtered ?: true
         if ((request.inProduct || request.stakeHolder) && archivedProduct(null)){
             request.scrumMaster     = false
             request.productOwner    = false

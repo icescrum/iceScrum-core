@@ -239,9 +239,14 @@ class Story extends BacklogElement implements Cloneable {
             order("suggestedDate", "asc")
         }
 
-        findNextSuggested { p, d ->
+        findNextSuggested { p, d, u = null ->
             backlog {
                 eq 'id', p
+            }
+            if (u){
+                creator {
+                    eq 'id', u
+                }
             }
             eq 'state', Story.STATE_SUGGESTED
             lt 'suggestedDate', d
