@@ -52,15 +52,13 @@ class ProductPreferencesMigration {
         dropColumn(tableName:"icescrum2_product_preferences", columnName:"new_teams")
       }
 
-      changeSet(id:'product_preferences_constraint_archived_column', author:'vbarrier') {
+      changeSet(id:'product_preferences_constraint_R3_R4_column', author:'vbarrier') {
+          sql('UPDATE icescrum2_product_preferences set archived = false WHERE webservices is NULL')
+          addNotNullConstraint(tableName:"icescrum2_product_preferences",columnName:'webservices',columnDataType:'BOOLEAN')
           sql('UPDATE icescrum2_product_preferences set archived = false WHERE archived is NULL')
           addNotNullConstraint(tableName:"icescrum2_product_preferences",columnName:'archived',columnDataType:'BOOLEAN')
-      }
-
-      changeSet(id:'product_preferences_constraint_timezone', author:'vbarrier') {
           addNotNullConstraint(tableName:"icescrum2_product_preferences",columnName:'timezone',columnDataType:'varchar(255)',defaultNullValue:'UTC')
       }
-
     }
 }
 

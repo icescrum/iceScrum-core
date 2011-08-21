@@ -33,6 +33,7 @@ class ProductPreferences {
     boolean hidden = false
     boolean archived = false
     boolean hideWeekend = false
+    boolean webservices = false
     String url
     String timezone = TimeZone.default.ID
 
