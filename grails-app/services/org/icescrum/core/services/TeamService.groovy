@@ -58,7 +58,7 @@ class TeamService {
             securityService.secureDomain(team)
             if (members) {
                 for (member in User.getAll(members*.toLong())) {
-                    if (!scrumMasters.contains(member.id)) {
+                    if (!scrumMasters?.contains(member.id)) {
                         if (member){
                             addMember(team,member)
                         }

@@ -120,6 +120,8 @@ class User implements Serializable, Attachmentable {
             return true
         if (obj == null)
             return false
+        if (getClass() != obj.getClass())
+            return false
         User other = (User) obj
         if (username == null) {
             if (other.username != null)

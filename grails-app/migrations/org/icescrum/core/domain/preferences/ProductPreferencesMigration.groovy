@@ -53,9 +53,9 @@ class ProductPreferencesMigration {
       }
 
       changeSet(id:'product_preferences_constraint_R3_R4_column', author:'vbarrier') {
-          sql('UPDATE icescrum2_product_preferences set archived = false WHERE webservices is NULL')
-          addNotNullConstraint(tableName:"icescrum2_product_preferences",columnName:'webservices',columnDataType:'BOOLEAN')
           sql('UPDATE icescrum2_product_preferences set archived = false WHERE archived is NULL')
+          addNotNullConstraint(tableName:"icescrum2_product_preferences",columnName:'webservices',columnDataType:'BOOLEAN')
+          sql('UPDATE icescrum2_product_preferences set webservices = false WHERE webservices is NULL')
           addNotNullConstraint(tableName:"icescrum2_product_preferences",columnName:'archived',columnDataType:'BOOLEAN')
           addNotNullConstraint(tableName:"icescrum2_product_preferences",columnName:'timezone',columnDataType:'varchar(255)',defaultNullValue:'UTC')
       }
