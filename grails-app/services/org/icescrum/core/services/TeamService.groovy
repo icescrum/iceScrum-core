@@ -173,7 +173,6 @@ class TeamService {
         publishEvent(new IceScrumTeamEvent(team, this.class, u, IceScrumEvent.EVENT_CREATED))
     }
 
-    @Secured(['owner(#team) or scrumMaster(#team)', 'RUN_AS_PERMISSIONS_MANAGER'])
     void addMember(Team team, User member) {
         if (!team.members*.id?.contains(member.id))
             team.addToMembers(member).save()
@@ -181,7 +180,6 @@ class TeamService {
         publishEvent(new IceScrumTeamEvent(team, member, this.class, (User) springSecurityService.currentUser, IceScrumTeamEvent.EVENT_MEMBER_ADDED))
     }
 
-    @Secured(['owner(#team) or scrumMaster(#team)', 'RUN_AS_PERMISSIONS_MANAGER'])
     void addScrumMaster(Team team, User member) {
         if (!team.members*.id?.contains(member.id))
             team.addToMembers(member).save()
@@ -189,7 +187,6 @@ class TeamService {
         publishEvent(new IceScrumTeamEvent(team, member, this.class, (User) springSecurityService.currentUser, IceScrumTeamEvent.EVENT_MEMBER_ADDED))
     }
 
-    @Secured(['owner(#team) or scrumMaster(#team)', 'RUN_AS_PERMISSIONS_MANAGER'])
     void removeMemberOrScrumMaster(Team team, User member) {
         team.removeFromMembers(member).save()
         if (team.scrumMasters*.id?.contains(member.id))

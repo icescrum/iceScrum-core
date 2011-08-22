@@ -86,7 +86,9 @@ class ApplicationSupport {
 
     if(!fileID.exists() || !fileID.readLines()[0]){
         !fileID.exists() ?: fileID.delete()
-        fileID.createNewFile()
+        if (!fileID.createNewFile()){
+            println "Error could not create file : ${filePath} please check directory & user permission"
+        }
         config.icescrum.appID = UUID.randomUUID()
         fileID <<  config.icescrum.appID
         if (log.debugEnabled) log.debug('regenerate appID '+config.icescrum.appID)
