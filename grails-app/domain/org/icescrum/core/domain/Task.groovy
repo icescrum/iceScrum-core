@@ -40,7 +40,7 @@ class Task extends BacklogElement implements Serializable {
     static final int TYPE_URGENT = 11
 
     Integer type
-    Integer estimation
+    Float estimation
     Integer rank = 0
     boolean blocked = false
 

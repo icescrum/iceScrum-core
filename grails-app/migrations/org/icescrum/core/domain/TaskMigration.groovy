@@ -24,10 +24,16 @@ class TaskMigration {
 
     static migration = {
             // List of changesets
-            changeSet(id:'task_constraint_block_column', author:'vbarrier') {
-                sql('UPDATE icescrum2_task set blocked = false WHERE blocked is NULL')
-                addNotNullConstraint(tableName:"icescrum2_task",columnName:'blocked',columnDataType:'BOOLEAN')
+        changeSet(id:'task_constraint_block_column', author:'vbarrier') {
+            sql('UPDATE icescrum2_task set blocked = false WHERE blocked is NULL')
+            addNotNullConstraint(tableName:"icescrum2_task",columnName:'blocked',columnDataType:'BOOLEAN')
+        }
+
+        changeSet(id:'task_estimation_integer_tofloat_column', author:'vbarrier') {
+            modifyColumn(tableName:'icescrum2_task'){
+                column(name:'estimation', type:'FLOAT')
             }
+        }
     }
 }
 

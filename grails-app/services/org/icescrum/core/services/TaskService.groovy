@@ -46,7 +46,7 @@ class TaskService {
         // Check if the estimation is numeric
         if (task.estimation) {
             try {
-                task.estimation = Integer.valueOf(task.estimation)
+                task.estimation = Float.valueOf(task.estimation)
             } catch (NumberFormatException e) {
                 throw new RuntimeException('is.task.error.estimation.number')
             }
@@ -445,7 +445,7 @@ class TaskService {
                     type: (task.type.text().isNumber()) ? task.type.text().toInteger() : null,
                     description: task.description.text().encodeAsHTML(),
                     notes: task.notes.text(),
-                    estimation: (task.estimation.text().isNumber()) ? task.estimation.text().toInteger() : null,
+                    estimation: (task.estimation.text().isNumber()) ? task.estimation.text().ToFloat() : null,
                     rank: task.rank.text().toInteger(),
                     name: task."${'name'}".text(),
                     doneDate: doneDate,
