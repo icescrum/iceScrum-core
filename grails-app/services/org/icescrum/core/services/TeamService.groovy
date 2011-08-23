@@ -105,6 +105,15 @@ class TeamService {
 
     }
 
+    @PreAuthorize('owner(#team)')
+    void update(Team team) {
+        if (!team)
+            throw new IllegalStateException('Team must not be null')
+        if (!team.save()) {
+            throw new RuntimeException('is.team.error.not.saved')
+        }
+    }
+
     void removeTeamsFromUser(User _user, teamIds) {
         if (!_user)
             throw new IllegalStateException('_user must not be null')

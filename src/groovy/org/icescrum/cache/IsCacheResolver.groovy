@@ -74,7 +74,7 @@ class BacklogElementCacheResolver extends IceScrumCacheResolver {
         String resolveCacheName(String baseName) {
         def params = RCH.currentRequestAttributes().params
         def backlogElementId = ''
-        def cachePattern = ~/\w+-\d+/
+        def cachePattern = ~/\w+\d+/
         if (!cachePattern.matcher(baseName).matches()){
             backlogElementId = params.story?.id ?: params.task?.id ?: params.feature?.id ?: params.actor?.id ?: params.id ?: null
         }

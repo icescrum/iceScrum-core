@@ -92,7 +92,7 @@ class SecurityService {
     }
 
     void unsecureDomain(o) {
-        aclUtilService.deleteAcl o
+        aclUtilService.deleteAcl GrailsHibernateUtil.unwrapIfProxy(o)
     }
 
     void changeOwner(User u, o) {

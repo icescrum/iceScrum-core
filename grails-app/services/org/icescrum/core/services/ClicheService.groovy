@@ -344,6 +344,8 @@ class ClicheService {
             lastCliche = s.cliches.asList().last()
         }
 
+        flushCache(cache:"project_${s.parentRelease.parentProduct.id}_sprintChartCache")
+
         if (lastCliche) {
             def days = d - lastCliche.datePrise
             if (days < 1) {
@@ -360,7 +362,6 @@ class ClicheService {
 
         Cliche c = new Cliche(type: Cliche.TYPE_DAILY, datePrise: d, data: xmlBuilder.bind(clicheData).toString())
         save(c, s)
-        flushCache(cache:"project_${s.parentRelease.parentProduct.id}_sprintChartCache")
     }
 
     @Transactional(readOnly = true)

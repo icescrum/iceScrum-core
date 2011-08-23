@@ -290,12 +290,7 @@ class IcescrumCoreGrailsPlugin {
                 return
             if (!attrs.channel) {
                 def id = securityService.parseCurrentRequestProduct()
-                attrs.channel = id ? 'product-' + id : null
-
-                if (!attrs.channel) {
-                    id = securityService.parseCurrentRequestTeam()
-                    attrs.channel = id ? 'team-' + id : '/push/app'
-                }
+                attrs.channel = id ? 'product-' + id : '/push/app'
             }
             if (attrs.channel instanceof String) {
                 attrs.channel = [attrs.channel]

@@ -32,7 +32,9 @@
 
 <span class="start"></span>
 
-<p class="content">${title}</p><span class="end"></span>
+<p class="content"><span class='title'>${title}</span><span class="details"></span></p>
+
+<span class="end"></span>
 
 %{-- Title bar content options --}%
 <g:if test="${hasTitleBarContent}">
