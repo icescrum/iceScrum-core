@@ -257,7 +257,7 @@ class ClicheService {
         int urgent = 0
         int story = 0
 
-        int remainingHours = 0
+        float remainingHours = 0
         s.tasks.each { task ->
 
             def use = true

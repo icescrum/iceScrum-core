@@ -371,7 +371,7 @@ class SprintService {
                 def xmlRoot = new XmlSlurper().parseText(cliche.data)
                 if (xmlRoot) {
                     lastDaycliche = cliche.datePrise
-                    def currentRemaining = xmlRoot."${Cliche.REMAINING_HOURS}".toInteger()
+                    def currentRemaining = xmlRoot."${Cliche.REMAINING_HOURS}".toFloat()
                     if (maxHours < currentRemaining) {
                         maxHours = currentRemaining
                     }
