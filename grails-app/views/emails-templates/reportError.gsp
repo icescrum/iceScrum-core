@@ -35,3 +35,4 @@ ${comment}<br/>
 ip : ${ip}<br/>
 date : ${date}<br/>
 version : ${version}<br/>
+appID : ${ip}<br/>

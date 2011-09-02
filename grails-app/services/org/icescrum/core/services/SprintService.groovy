@@ -499,8 +499,8 @@ class SprintService {
             tmp.inProgressDate = null
             tmp.doneDate = null
             taskService.save(tmp, sprint, it.creator)
-            sprint.addToTasks(it)
-            copiedTasks << it
+            sprint.addToTasks(tmp)
+            copiedTasks << tmp
         }
         if (!sprint.save()) {
             throw new RuntimeException()
