@@ -85,13 +85,13 @@ class ProductService {
         if (productOwners){
             for(productOwner in User.getAll(productOwners*.toLong())){
                 if (productOwner)
-                    securityService.createProductOwnerPermissions(productOwner, _product)
+                    addRole(_product, null, productOwner, Authority.PRODUCTOWNER)
             }
         }
         if (stakeHolders){
             for(stakeHolder in User.getAll(stakeHolders*.toLong())){
                 if (stakeHolder)
-                    securityService.createStakeHolderPermissions(stakeHolder, _product)
+                    addRole(_product, null, stakeHolder, Authority.STAKEHOLDER)
             }
         }
         publishEvent(new IceScrumProductEvent(_product, this.class, (User)springSecurityService.currentUser, IceScrumEvent.EVENT_CREATED))
@@ -171,6 +171,9 @@ class ProductService {
                 _product.addToTeams(team)
                 team.scrumMasters?.each{
                     securityService.createAdministrationPermissionsForProduct(it, _product)
+                }
+                team.members?.each{
+                    broadcastToSingleUser(user:it.username, function:'addRoleProduct', message:[class:'User',product:_product])
                 }
             }
             publishEvent(new IceScrumProductEvent(_product, team, this.class, (User) springSecurityService.currentUser, IceScrumProductEvent.EVENT_TEAM_ADDED))
