@@ -25,7 +25,7 @@ package org.icescrum.core.domain.preferences
 
 import org.icescrum.core.domain.Team
 
-class TeamPreferences {
+class TeamPreferences implements Serializable{
 
     boolean allowNewMembers = false
 

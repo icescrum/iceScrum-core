@@ -27,7 +27,7 @@ package org.icescrum.core.domain.preferences
 
 import org.icescrum.core.domain.Product
 
-class ProductPreferences {
+class ProductPreferences implements Serializable{
 
     //Project
     boolean hidden = false

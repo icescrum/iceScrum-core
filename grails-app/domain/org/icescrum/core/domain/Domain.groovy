@@ -23,7 +23,7 @@
 
 package org.icescrum.core.domain
 
-class Domain extends BacklogElement {
+class Domain extends BacklogElement implements Serializable{
 
     static final long serialVersionUID = 3311568364163793572L
 

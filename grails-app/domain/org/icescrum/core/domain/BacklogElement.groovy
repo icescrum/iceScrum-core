@@ -30,7 +30,7 @@ import org.icescrum.plugins.attachmentable.interfaces.Attachmentable
 import org.grails.comments.Commentable
 import org.grails.followable.Followable
 
-abstract class BacklogElement implements Fluxiable, Attachmentable, Commentable, Followable {
+abstract class BacklogElement implements Fluxiable, Attachmentable, Commentable, Followable, Serializable {
 
     static final long serialVersionUID = -6800252500987149051L
 

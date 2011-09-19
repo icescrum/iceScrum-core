@@ -10,7 +10,7 @@ class ConfigurationHolder {
         def slurper = new ConfigSlurper(GrailsUtil.environment)
         ConfigObject config = null
         try {
-            config = slurper.parse(classLoader.loadClass('IceScrumCoreConfig'))
+            config = slurper.parse(classLoader.loadClass('DefaultIceScrumCoreConfig'))
         }
         catch (e) {
         }

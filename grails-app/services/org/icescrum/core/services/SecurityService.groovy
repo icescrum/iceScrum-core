@@ -190,7 +190,8 @@ class SecurityService {
                 product = product.id
             }
             if (product) {
-                authorized = springcacheService.doWithCache('project_'+product+'_'+CACHE_PRODUCTTEAM, new CacheKeyBuilder().append(product).append(auth.principal.id).toCacheKey()) {
+                def cacheResolver = grailsApplication.mainContext.getBean('projectCacheResolver')
+                authorized = springcacheService.doWithCache(cacheResolver.resolveCacheName(product+'_'+CACHE_PRODUCTTEAM), new CacheKeyBuilder().append(product).append(auth.principal.id).toCacheKey()) {
                     if (!p) p = Product.get(product)
                     if (!p || !auth) return false
                     //Check if he is ScrumMaster or Member
@@ -218,7 +219,8 @@ class SecurityService {
                 product = product.id
             }
             if (product) {
-                return springcacheService.doWithCache(CACHE_ARCHIVEDPRODUCT, new CacheKeyBuilder().append(product).toCacheKey()) {
+                def cacheResolver = grailsApplication.mainContext.getBean('applicationCacheResolver')
+                return springcacheService.doWithCache(cacheResolver.resolveCacheName(CACHE_ARCHIVEDPRODUCT), new CacheKeyBuilder().append(product).toCacheKey()) {
                     if (!p) p = Product.get(product)
                     if (!p) return false
                     return p.preferences.archived
@@ -235,7 +237,8 @@ class SecurityService {
     }
 
     Team openProductTeam(Long productId, Long principalId) {
-        springcacheService.doWithCache('project_'+productId+'_'+CACHE_OPENPRODUCTTEAM, new CacheKeyBuilder().append(productId).append(principalId).toCacheKey()) {
+        def cacheResolver = grailsApplication.mainContext.getBean('projectCacheResolver')
+        springcacheService.doWithCache(cacheResolver.resolveCacheName(productId+'_'+CACHE_OPENPRODUCTTEAM), new CacheKeyBuilder().append(productId).append(principalId).toCacheKey()) {
             def team = Team.productTeam(productId, principalId).list(max: 1)
             if (team)
                 team[0]
@@ -273,7 +276,8 @@ class SecurityService {
 
     boolean isScrumMaster(team, auth, t = null) {
         if (team) {
-            def res = springcacheService.doWithCache('team_'+team+'_'+CACHE_SCRUMMASTER, new CacheKeyBuilder().append(team).append(auth.principal.id).toCacheKey()) {
+            def cacheResolver = grailsApplication.mainContext.getBean('teamCacheResolver')
+            def res = springcacheService.doWithCache(cacheResolver.resolveCacheName(team+'_'+CACHE_SCRUMMASTER), new CacheKeyBuilder().append(team).append(auth.principal.id).toCacheKey()) {
                 if (!t) t = Team.get(team)
                 if (!t || !auth) return false
                 return aclUtilService.hasPermission(auth, GrailsHibernateUtil.unwrapIfProxy(t), SecurityService.scrumMasterPermissions)
@@ -301,7 +305,8 @@ class SecurityService {
         def authkey = SpringSecurityUtils.ifAnyGranted(Authority.ROLE_VISITOR) ? auth.principal : auth.principal.id
 
         if (product) {
-            return springcacheService.doWithCache('project_'+product+'_'+CACHE_STAKEHOLDER, new CacheKeyBuilder().append(onlyPrivate).append(product).append(authkey).toCacheKey()) {
+            def cacheResolver = grailsApplication.mainContext.getBean('projectCacheResolver')
+            return springcacheService.doWithCache(cacheResolver.resolveCacheName(product+'_'+CACHE_STAKEHOLDER), new CacheKeyBuilder().append(onlyPrivate).append(product).append(authkey).toCacheKey()) {
                 if (!p) p = Product.get(product)
                 if (!p || !auth) return false
                 if (p.preferences.hidden)
@@ -342,7 +347,8 @@ class SecurityService {
 
     boolean isProductOwner(product, auth, p = null) {
         if (product) {
-            return springcacheService.doWithCache('project_'+product+'_'+CACHE_PRODUCTOWNER, new CacheKeyBuilder().append(product).append(auth.principal.id).toCacheKey()) {
+            def cacheResolver = grailsApplication.mainContext.getBean('projectCacheResolver')
+            return springcacheService.doWithCache(cacheResolver.resolveCacheName(product+'_'+CACHE_PRODUCTOWNER), new CacheKeyBuilder().append(product).append(auth.principal.id).toCacheKey()) {
                 if (!p) p = Product.get(product)
                 if (!p || !auth) return false
                 return aclUtilService.hasPermission(auth, GrailsHibernateUtil.unwrapIfProxy(p), SecurityService.productOwnerPermissions)
@@ -375,7 +381,8 @@ class SecurityService {
         }
 
         if (team) {
-            return springcacheService.doWithCache('team_'+team+'_'+CACHE_TEAMMEMBER, new CacheKeyBuilder().append(team).append(auth.principal.id).toCacheKey()) {
+            def cacheResolver = grailsApplication.mainContext.getBean('teamCacheResolver')
+            return springcacheService.doWithCache(cacheResolver.resolveCacheName(team+'_'+CACHE_TEAMMEMBER), new CacheKeyBuilder().append(team).append(auth.principal.id).toCacheKey()) {
                 if (!t) t = Team.get(team)
                 if (!t || !auth) return false
                 return aclUtilService.hasPermission(auth, GrailsHibernateUtil.unwrapIfProxy(t), SecurityService.teamMemberPermissions)
@@ -460,7 +467,8 @@ class SecurityService {
 
     boolean isOwner(domain, auth, domainClass, d = null) {
         if (domain && domainClass) {
-            return springcacheService.doWithCache(CACHE_OWNER, new CacheKeyBuilder().append(domain).append(domainClass.class.name).append(auth.principal.id).toCacheKey()) {
+            def cacheResolver = grailsApplication.mainContext.getBean('applicationCacheResolver')
+            return springcacheService.doWithCache(cacheResolver.resolveCacheName(CACHE_OWNER), new CacheKeyBuilder().append(domain).append(domainClass.class.name).append(auth.principal.id).toCacheKey()) {
                 if (!d) d = domainClass.get(domain)
 
                 if (!d || !auth) return false

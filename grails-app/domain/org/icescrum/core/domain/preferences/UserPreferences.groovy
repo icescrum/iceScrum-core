@@ -27,7 +27,7 @@ package org.icescrum.core.domain.preferences
 
 import org.icescrum.core.domain.User
 
-class UserPreferences {
+class UserPreferences implements Serializable{
 
     String language = "en"
     String activity

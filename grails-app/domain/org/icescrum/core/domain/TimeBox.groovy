@@ -26,7 +26,7 @@ package org.icescrum.core.domain
 
 import grails.plugin.fluxiable.Fluxiable
 
-class TimeBox implements Comparable<TimeBox>, Fluxiable {
+class TimeBox implements Comparable<TimeBox>, Fluxiable, Serializable {
 
     Date startDate
     Date endDate

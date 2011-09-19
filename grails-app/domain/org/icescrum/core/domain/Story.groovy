@@ -30,8 +30,10 @@ import org.grails.comments.Comment
 import org.icescrum.core.event.IceScrumEvent
 import org.icescrum.core.event.IceScrumStoryEvent
 import org.icescrum.plugins.attachmentable.domain.Attachment
+import org.springframework.security.core.context.SecurityContextHolder as SCH
 
-class Story extends BacklogElement implements Cloneable {
+
+class Story extends BacklogElement implements Cloneable, Serializable {
 
     static final long serialVersionUID = -6800252507987149001L
 
@@ -495,11 +497,9 @@ class Story extends BacklogElement implements Cloneable {
         publishEvent new IceScrumStoryEvent(this, a, this.class, a.poster, IceScrumStoryEvent.EVENT_FILE_ATTACHED_ADDED)
     }
 
-    def springSecurityService
-
     def beforeDelete() {
         withNewSession {
-            publishEvent(new IceScrumStoryEvent(this, this.class, User.get(springSecurityService.principal?.id), IceScrumEvent.EVENT_BEFORE_DELETE))
+            publishEvent(new IceScrumStoryEvent(this, this.class, User.get(SCH.context?.authentication?.principal?.id), IceScrumEvent.EVENT_BEFORE_DELETE))
         }
     }
 
@@ -509,7 +509,7 @@ class Story extends BacklogElement implements Cloneable {
 
     def afterDelete() {
         withNewSession {
-            publishEvent(new IceScrumStoryEvent(this, this.class, User.get(springSecurityService.principal?.id), IceScrumEvent.EVENT_AFTER_DELETE))
+            publishEvent(new IceScrumStoryEvent(this, this.class, User.get(SCH.context?.authentication?.principal?.id), IceScrumEvent.EVENT_AFTER_DELETE))
         }
     }
 }

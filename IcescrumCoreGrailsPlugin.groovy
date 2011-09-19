@@ -28,17 +28,28 @@ import org.atmosphere.cpr.DefaultBroadcaster
 import org.atmosphere.util.ExcludeSessionBroadcaster
 import org.codehaus.groovy.grails.commons.GrailsClassUtils
 import org.codehaus.groovy.grails.scaffolding.view.ScaffoldingViewResolver
-import org.icescrum.ConfigurationHolder
 import org.icescrum.components.UiControllerArtefactHandler
 import org.icescrum.core.services.SecurityService
 import org.icescrum.core.utils.IceScrumDomainClassMarshaller
 import org.springframework.context.ApplicationContext
 import org.springframework.web.context.request.RequestContextHolder
+import org.codehaus.groovy.grails.commons.GrailsApplication
+import grails.util.Environment
+import org.icescrum.cache.UserProjectCacheResolver
+import org.icescrum.cache.UserCacheResolver
+import org.icescrum.cache.BacklogElementCacheResolver
+import org.icescrum.cache.ProjectCacheResolver
+import org.springframework.cache.ehcache.EhCacheManagerFactoryBean
+import org.icescrum.cache.UserKeyGenerator
+import org.icescrum.cache.LocaleKeyGenerator
+import grails.plugin.springcache.web.key.WebContentKeyGenerator
+import org.icescrum.cache.RoleAndLocaleKeyGenerator
+import org.icescrum.cache.DefaultCacheCreator
 
 class IcescrumCoreGrailsPlugin {
     def groupId = 'org.icescrum'
     // the plugin version
-    def version = "1.4.5.4"
+    def version = "1.4.5.6"
     // the version or versions of Grails the plugin is designed for
     def grailsVersion = "1.3.7 > *"
     // the other plugins this plugin depends on
@@ -67,15 +78,15 @@ class IcescrumCoreGrailsPlugin {
     def documentation = "http://www.icescrum.org/plugin/icescrum-core"
 
     def doWithWebDescriptor = { xml ->
-        def config = ConfigurationHolder.config
-        if (config) {
+        mergeConfig(application)
+        if (application.config.icescrum.push.enable) {
             def servlets = xml.'servlet'
             servlets[servlets.size() - 1] + {
                 'servlet' {
                     'description'('AtmosphereServlet')
                     'servlet-name'('AtmosphereServlet')
                     'servlet-class'('org.atmosphere.cpr.AtmosphereServlet')
-                    config?.atmospherePlugin?.servlet?.initParams.each { initParam ->
+                    application.config.icescrum.push.servlet.initParams.each { initParam ->
                         'init-param' {
                             'param-name'(initParam.key)
                             'param-value'(initParam.value)
@@ -89,7 +100,7 @@ class IcescrumCoreGrailsPlugin {
             mappings[mappings.size() - 1] + {
                 'servlet-mapping' {
                     'servlet-name'('AtmosphereServlet')
-                    def urlPattern = config?.atmospherePlugin?.servlet?.urlPattern ?: '/atmosphere/*'
+                    def urlPattern = application.config.icescrum.push.servlet?.urlPattern ?: '/atmosphere/*'
                     'url-pattern'(urlPattern)
                 }
             }
@@ -97,7 +108,68 @@ class IcescrumCoreGrailsPlugin {
     }
 
     def doWithSpring = {
-        // TODO Implement runtime spring config (optional)
+        if (application.config.springcache.configLocation){
+            springcacheCacheManager(EhCacheManagerFactoryBean) {
+                shared = false
+                configLocation = application.config.springcache.configLocation
+            }
+        }
+
+        cacheCreator(DefaultCacheCreator){
+            springcacheCacheManager = ref('springcacheCacheManager')
+            grailsApplication = ref('grailsApplication')
+        }
+
+        projectCacheResolver(ProjectCacheResolver){
+            cacheCreator = ref('cacheCreator')
+        }
+
+        teamCacheResolver(ProjectCacheResolver){
+            cacheCreator = ref('cacheCreator')
+        }
+
+        applicationCacheResolver(ProjectCacheResolver){
+            cacheCreator = ref('cacheCreator')
+        }
+
+        backlogElementCacheResolver(BacklogElementCacheResolver){
+            cacheCreator = ref('cacheCreator')
+        }
+        userCacheResolver(UserCacheResolver){
+            cacheCreator = ref('cacheCreator')
+            springSecurityService = ref('springSecurityService')
+        }
+
+        userProjectCacheResolver(UserProjectCacheResolver){
+            cacheCreator = ref('cacheCreator')
+            springSecurityService = ref('springSecurityService')
+        }
+
+        userKeyGenerator(UserKeyGenerator) {
+            contentType = true
+            springSecurityService = ref('springSecurityService')
+        }
+        localeKeyGenerator(LocaleKeyGenerator) {
+            contentType = true
+        }
+        roleAndLocaleKeyGenerator(RoleAndLocaleKeyGenerator) {
+            contentType = true
+            securityService = ref('securityService')
+        }
+        springcacheDefaultKeyGenerator(WebContentKeyGenerator){
+            contentType = true
+        }
+    }
+
+    private void mergeConfig(GrailsApplication app) {
+      ConfigObject currentConfig = app.config.icescrum
+      ConfigSlurper slurper = new ConfigSlurper(Environment.getCurrent().getName());
+      ConfigObject secondaryConfig = slurper.parse(app.classLoader.loadClass("DefaultIceScrumCoreConfig"))
+
+      ConfigObject config = new ConfigObject();
+      config.putAll(secondaryConfig.icescrum.merge(currentConfig))
+
+      app.config.icescrum = config;
     }
 
     def doWithDynamicMethods = { ctx ->
@@ -143,14 +215,16 @@ class IcescrumCoreGrailsPlugin {
             SecurityService securityService = event.ctx.getBean('securityService')
             SpringcacheService springcacheService = event.ctx.getBean('springcacheService')
             addCacheFlushMethod(event.source, springcacheService, event.ctx)
-            addBroadcastMethods(event.source, securityService)
+
+            if (application.config.push?.enable)
+                addBroadcastMethods(event.source, securityService)
+
             addErrorMethod(event.source)
         }
     }
 
     def onConfigChange = { event ->
-        // TODO Implement code that is executed when the project configuration changes.
-        // The event is the same as for 'onChange'.
+        this.mergeConfig(application)
     }
 
     private addUIControllerMethods(clazz, ApplicationContext ctx, pluginName) {
@@ -225,6 +299,7 @@ class IcescrumCoreGrailsPlugin {
     private addBroadcastMethods(source, securityService) {
 
         source.metaClass.bufferBroadcast = { attrs ->
+
             attrs = attrs ?: [channel: '']
             def request = RequestContextHolder.requestAttributes?.request
             if (!request)
@@ -244,6 +319,7 @@ class IcescrumCoreGrailsPlugin {
         }
 
         source.metaClass.resumeBufferedBroadcast = { attrs ->
+
             attrs = attrs ?: [channel: '']
             def request = RequestContextHolder.requestAttributes?.request
             attrs.excludeCaller = attrs.excludeCaller ?: true
@@ -283,6 +359,7 @@ class IcescrumCoreGrailsPlugin {
         }
 
         source.metaClass.broadcast = {attrs ->
+
             assert attrs.function, attrs.message
             attrs.excludeCaller = attrs.excludeCaller ?: true
             def request = RequestContextHolder.requestAttributes?.request
@@ -317,6 +394,7 @@ class IcescrumCoreGrailsPlugin {
         }
 
         source.metaClass.broadcastToSingleUser = {attrs ->
+
             assert attrs.function
             assert attrs.message
             assert attrs.user

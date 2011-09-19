@@ -485,7 +485,8 @@ class ProductService {
             throw new RuntimeException()
         }
         springcacheService.flush(~/project_${p.id}\w+/)
-        springcacheService.flush(SecurityService.CACHE_ARCHIVEDPRODUCT)
+        def cacheResolver = grailsApplication.mainContext.getBean('applicationCacheResolver')
+        springcacheService.flush(cacheResolver.resolveCacheName(SecurityService.CACHE_ARCHIVEDPRODUCT))
         broadcast(function: 'archive', message: p)
     }
 
@@ -496,7 +497,8 @@ class ProductService {
             throw new RuntimeException()
         }
         springcacheService.flush(~/project_${p.id}\w+/)
-        springcacheService.flush(SecurityService.CACHE_ARCHIVEDPRODUCT)
+        def cacheResolver = grailsApplication.mainContext.getBean('applicationCacheResolver')
+        springcacheService.flush(cacheResolver.resolveCacheName(SecurityService.CACHE_ARCHIVEDPRODUCT))
         broadcast(function: 'unarchive', message: p)
     }
 

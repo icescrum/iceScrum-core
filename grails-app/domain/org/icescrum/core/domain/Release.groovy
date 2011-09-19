@@ -26,6 +26,8 @@ package org.icescrum.core.domain
 
 import org.icescrum.core.event.IceScrumReleaseEvent
 import org.icescrum.core.event.IceScrumEvent
+import org.springframework.security.core.context.SecurityContextHolder as SCH
+
 
 class Release extends TimeBox implements Cloneable {
 
@@ -121,17 +123,15 @@ class Release extends TimeBox implements Cloneable {
             return startDate
     }
 
-    def springSecurityService
-
     def beforeDelete() {
         withNewSession {
-            publishEvent(new IceScrumReleaseEvent(this, this.class, User.get(springSecurityService.principal?.id), IceScrumEvent.EVENT_BEFORE_DELETE))
+            publishEvent(new IceScrumReleaseEvent(this, this.class, User.get(SCH.context?.authentication?.principal?.id), IceScrumEvent.EVENT_BEFORE_DELETE))
         }
     }
 
     def afterDelete() {
         withNewSession {
-            publishEvent(new IceScrumReleaseEvent(this, this.class, User.get(springSecurityService.principal?.id), IceScrumEvent.EVENT_AFTER_DELETE))
+            publishEvent(new IceScrumReleaseEvent(this, this.class, User.get(SCH.context?.authentication?.principal?.id), IceScrumEvent.EVENT_AFTER_DELETE))
         }
     }
 }

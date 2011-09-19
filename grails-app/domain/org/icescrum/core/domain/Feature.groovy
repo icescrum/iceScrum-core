@@ -28,6 +28,7 @@ package org.icescrum.core.domain
 
 import org.icescrum.core.event.IceScrumEvent
 import org.icescrum.core.event.IceScrumFeatureEvent
+import org.springframework.security.core.context.SecurityContextHolder as SCH
 
 class Feature extends BacklogElement implements Serializable {
     static final long serialVersionUID = 7072515028109185168L
@@ -115,11 +116,9 @@ class Feature extends BacklogElement implements Serializable {
         return true
     }
 
-    def springSecurityService
-
     def beforeDelete() {
         withNewSession {
-            publishEvent(new IceScrumFeatureEvent(this, this.class, User.get(springSecurityService.principal?.id), IceScrumEvent.EVENT_BEFORE_DELETE))
+            publishEvent(new IceScrumFeatureEvent(this, this.class, User.get(SCH.context?.authentication?.principal?.id), IceScrumEvent.EVENT_BEFORE_DELETE))
         }
     }
 
@@ -136,7 +135,7 @@ class Feature extends BacklogElement implements Serializable {
     }
 
     def afterDelete() {
-        publishEvent(new IceScrumFeatureEvent(this, this.class, User.get(springSecurityService.principal?.id), IceScrumEvent.EVENT_AFTER_DELETE))
+        publishEvent(new IceScrumFeatureEvent(this, this.class, User.get(SCH.context?.authentication?.principal?.id), IceScrumEvent.EVENT_AFTER_DELETE))
     }
 
 }

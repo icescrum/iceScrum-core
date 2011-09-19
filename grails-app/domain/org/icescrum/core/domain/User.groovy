@@ -34,7 +34,6 @@ import org.icescrum.core.domain.security.Authority
 import org.icescrum.core.domain.security.UserAuthority
 import org.icescrum.core.event.IceScrumUserEvent
 import org.icescrum.core.event.IceScrumEvent
-import org.codehaus.groovy.grails.orm.hibernate.cfg.GrailsHibernateUtil
 
 class User implements Serializable, Attachmentable {
     static final long serialVersionUID = 813639032272976126L
@@ -140,17 +139,15 @@ class User implements Serializable, Attachmentable {
         return username.hashCode()
     }
 
-    def springSecurityService
-
     def beforeDelete() {
         withNewSession {
-            publishEvent(new IceScrumUserEvent(this, this.class, User.get(springSecurityService.principal?.id), IceScrumEvent.EVENT_BEFORE_DELETE))
+            publishEvent(new IceScrumUserEvent(this, this.class, User.get(SCH.context?.authentication?.principal?.id), IceScrumEvent.EVENT_BEFORE_DELETE))
         }
     }
 
     def afterDelete() {
         withNewSession {
-            publishEvent(new IceScrumUserEvent(this, this.class, User.get(springSecurityService.principal?.id), IceScrumEvent.EVENT_AFTER_DELETE))
+            publishEvent(new IceScrumUserEvent(this, this.class, User.get(SCH.context?.authentication?.principal?.id), IceScrumEvent.EVENT_AFTER_DELETE))
         }
     }
 }

@@ -36,36 +36,19 @@ import org.springframework.cache.ehcache.EhCacheFactoryBean
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 
-class IceScrumCacheResolver implements CacheResolver ,ApplicationContextAware {
-    def springSecurityService
-    def grailsApplication
-    CacheManager springcacheCacheManager
-    ApplicationContext applicationContext
-
+class IceScrumCacheResolver implements CacheResolver {
+    CacheCreator cacheCreator
     static final log = LogFactory.getLog(this)
 
     String resolveCacheName(String baseName){
         return baseName
     }
 
-    void autoCreateCache(_cacheName){
-        String cache = springcacheCacheManager.cacheNames?.find { it == _cacheName }
-        if (!cache){
-            def defaultCacheName = _cacheName.split('_')
-            def beanBuilder = new BeanBuilder(applicationContext)
-            def isCacheConfig = null
-            grailsApplication.config.springcache.caches?.each { name,configObject -> if (name == defaultCacheName[0]) isCacheConfig = configObject }
-            beanBuilder.beans {
-                "$_cacheName"(EhCacheFactoryBean) { bean ->
-                    bean.parent = ref("springcacheDefaultCache", true)
-                    cacheName = _cacheName
-                    isCacheConfig?.each {
-                        bean.setPropertyValue it.key, it.value
-                    }
-                }
-            }
-            beanBuilder.createApplicationContext()
-        }
+    boolean autoCreateCache(_cacheName){
+        if (_cacheName != null)
+            return cacheCreator.createCache(_cacheName)
+        else
+            return false
     }
 }
 
@@ -87,6 +70,7 @@ class BacklogElementCacheResolver extends IceScrumCacheResolver {
 }
 
 class UserCacheResolver extends IceScrumCacheResolver {
+    def springSecurityService
     @Override
     String resolveCacheName(String baseName) {
         def id = springSecurityService.principal?.id
@@ -100,9 +84,34 @@ class UserCacheResolver extends IceScrumCacheResolver {
 class ProjectCacheResolver extends IceScrumCacheResolver {
     @Override
     String resolveCacheName(String baseName) {
-        def params = RCH.currentRequestAttributes().params
-        def pid = params.product?.decodeProductKey() ?: params.id
-        def cache = "project_${pid}_${baseName}"
+        def cache
+        def cachePattern = ~/\d+\w+/
+        if (!cachePattern.matcher(baseName).matches()){
+            def params = RCH.currentRequestAttributes().params
+            def pid = params.product?.decodeProductKey() ?: params.id
+            cache = "project_${pid}_${baseName}"
+        }else{
+            cache = "project_${baseName}"
+        }
+        autoCreateCache(cache)
+        if (log.debugEnabled) log.debug("cache: ${cache}")
+        return cache
+    }
+}
+
+
+class TeamCacheResolver extends IceScrumCacheResolver {
+    @Override
+    String resolveCacheName(String baseName) {
+        def cache
+        def cachePattern = ~/\d+\w+/
+        if (!cachePattern.matcher(baseName).matches()){
+            def params = RCH.currentRequestAttributes().params
+            def tid = params.team?.decodeProductKey() ?: params.id
+            cache = "team_${tid}_${baseName}"
+        }else{
+            cache = "team_${baseName}"
+        }
         autoCreateCache(cache)
         if (log.debugEnabled) log.debug("cache: ${cache}")
         return cache
@@ -110,6 +119,7 @@ class ProjectCacheResolver extends IceScrumCacheResolver {
 }
 
 class UserProjectCacheResolver extends IceScrumCacheResolver {
+    def springSecurityService
     @Override
     String resolveCacheName(String baseName) {
         def params = RCH.currentRequestAttributes().params
@@ -166,6 +176,16 @@ public class UserKeyGenerator extends WebContentKeyGenerator {
         def request = RCH.requestAttributes.currentRequest
         builder << RCU.getLocale(request).toString().substring(0, 2)
         builder << id
+    }
+}
+
+class ApplicationCacheResolver extends IceScrumCacheResolver {
+    @Override
+    String resolveCacheName(String baseName) {
+        def cache = "applicationCache_${baseName}"
+        autoCreateCache(cache)
+        if (log.debugEnabled) log.debug("cache: ${cache}")
+        return cache
     }
 }
 

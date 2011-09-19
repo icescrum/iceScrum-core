@@ -31,8 +31,11 @@ import org.icescrum.core.domain.preferences.ProductPreferences
 import org.icescrum.core.services.SecurityService
 import org.icescrum.core.event.IceScrumEvent
 import org.icescrum.core.event.IceScrumProductEvent
+import org.springframework.security.core.context.SecurityContextHolder as SCH
+import org.codehaus.groovy.grails.commons.ApplicationHolder
+import org.grails.plugins.springsecurity.service.acl.AclUtilService
 
-class Product extends TimeBox {
+class Product extends TimeBox implements Serializable {
 
     static final long serialVersionUID = -8854429090297032383L
 
@@ -74,6 +77,7 @@ class Product extends TimeBox {
     def stakeHolders = null
 
     static mapping = {
+        cache true
         table 'icescrum2_product'
         actors cascade: 'all-delete-orphan', batchSize: 10, cache: true
         features cascade: 'all-delete-orphan', sort: 'rank', batchSize: 10, cache: true
@@ -149,9 +153,9 @@ class Product extends TimeBox {
                 "WHERE m.id = :uid)", [uid: userid], params ?: [:])
     }
 
-    def aclUtilService
 
     def getProductOwners() {
+        def aclUtilService = (AclUtilService) ApplicationHolder.application.mainContext.getBean('aclUtilService');
         //Only used when product is being imported
         if (this.productOwners) {
             this.productOwners
@@ -169,6 +173,7 @@ class Product extends TimeBox {
     }
 
     def getStakeHolders() {
+        def aclUtilService = (AclUtilService) ApplicationHolder.application.mainContext.getBean('aclUtilService');
         //Only used when product is being imported
         if (this.stakeHolders) {
             this.stakeHolders
@@ -186,6 +191,7 @@ class Product extends TimeBox {
     }
 
     def getOwner() {
+        def aclUtilService = (AclUtilService) ApplicationHolder.application.mainContext.getBean('aclUtilService');
         if (this.id) {
             def acl = aclUtilService.readAcl(this.getClass(), this.id)
             return User.findByUsername(acl.owner.principal,[cache: true])
@@ -194,17 +200,15 @@ class Product extends TimeBox {
         }
     }
 
-    def springSecurityService
-
     def beforeDelete() {
         withNewSession {
-            publishEvent(new IceScrumProductEvent(this, this.class, User.get(springSecurityService.principal?.id), IceScrumEvent.EVENT_BEFORE_DELETE))
+            publishEvent(new IceScrumProductEvent(this, this.class, User.get(SCH.context?.authentication?.principal?.id), IceScrumEvent.EVENT_BEFORE_DELETE))
         }
     }
 
     def afterDelete() {
         withNewSession {
-            publishEvent(new IceScrumProductEvent(this, this.class, User.get(springSecurityService.principal?.id), IceScrumEvent.EVENT_AFTER_DELETE))
+            publishEvent(new IceScrumProductEvent(this, this.class, User.get(SCH.context?.authentication?.principal?.id), IceScrumEvent.EVENT_AFTER_DELETE))
         }
     }
 }

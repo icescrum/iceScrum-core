@@ -28,6 +28,7 @@ package org.icescrum.core.domain
 
 import org.icescrum.core.event.IceScrumEvent
 import org.icescrum.core.event.IceScrumTaskEvent
+import org.springframework.security.core.context.SecurityContextHolder as SCH
 
 class Task extends BacklogElement implements Serializable {
 
@@ -239,11 +240,9 @@ class Task extends BacklogElement implements Serializable {
         return true
     }
 
-    def springSecurityService
-
     def beforeDelete() {
         withNewSession {
-            publishEvent(new IceScrumTaskEvent(this, this.class, User.get(springSecurityService.principal?.id), IceScrumEvent.EVENT_BEFORE_DELETE))
+            publishEvent(new IceScrumTaskEvent(this, this.class, User.get(SCH.context?.authentication?.principal?.id), IceScrumEvent.EVENT_BEFORE_DELETE))
         }
     }
 
@@ -253,7 +252,7 @@ class Task extends BacklogElement implements Serializable {
 
     def afterDelete() {
         withNewSession {
-            publishEvent(new IceScrumTaskEvent(this, this.class, User.get(springSecurityService.principal?.id), IceScrumEvent.EVENT_AFTER_DELETE))
+            publishEvent(new IceScrumTaskEvent(this, this.class, User.get(SCH.context?.authentication?.principal?.id), IceScrumEvent.EVENT_AFTER_DELETE))
         }
     }
 }

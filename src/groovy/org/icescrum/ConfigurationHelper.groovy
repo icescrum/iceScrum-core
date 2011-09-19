@@ -13,7 +13,7 @@ class ConfigurationHelper {
         def config = ConfigurationHolder.config
 
         // Generate the atmosphere.xml file in META-INF folder?
-        def atmosphereDotXmlClosure = config?.atmospherePlugin?.handlers?.atmosphereDotXml
+        def atmosphereDotXmlClosure = config.icescrum.push.handlers.atmosphereDotXml
         if (atmosphereDotXmlClosure) {
             def writer = new FileWriter("$basedir/web-app/META-INF/atmosphere.xml")
             def xh = new MarkupBuilder(writer)
@@ -25,11 +25,11 @@ class ConfigurationHelper {
         }
 
         // Write the atmosphere-decorators.xml file in WEB-INF
-        if (config?.atmospherePlugin?.servlet?.urlPattern) {
+        if (config?.icescrum?.push?.servlet?.urlPattern) {
             def decoratorsDotXml = """\
 <decorators>
     <excludes>
-        <pattern>${config.atmospherePlugin.servlet.urlPattern}</pattern>
+        <pattern>${config.icescrum.push.servlet.urlPattern}</pattern>
     </excludes>
 </decorators>"""
             new File("$basedir/web-app/WEB-INF/atmosphere-decorators.xml").write decoratorsDotXml

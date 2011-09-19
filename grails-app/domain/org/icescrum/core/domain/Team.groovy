@@ -29,8 +29,11 @@ import org.icescrum.core.domain.preferences.TeamPreferences
 import org.icescrum.core.event.IceScrumTeamEvent
 import org.icescrum.core.event.IceScrumEvent
 import org.springframework.security.acls.domain.BasePermission
+import org.springframework.security.core.context.SecurityContextHolder as SCH
+import org.codehaus.groovy.grails.commons.ApplicationHolder
+import org.grails.plugins.springsecurity.service.acl.AclUtilService
 
-class Team {
+class Team implements Serializable {
 
     String name
     int velocity = 0
@@ -170,9 +173,9 @@ class Team {
 
     }
 
-    def aclUtilService
 
     def getScrumMasters() {
+        def aclUtilService = (AclUtilService) ApplicationHolder.application.mainContext.getBean('aclUtilService');
         if (this.scrumMasters) {
             this.scrumMasters
         } else if (this.id) {
@@ -188,6 +191,7 @@ class Team {
     }
 
     def getOwner() {
+        def aclUtilService = (AclUtilService) ApplicationHolder.application.mainContext.getBean('aclUtilService');
         if (this.id) {
             def acl = aclUtilService.readAcl(this.getClass(), this.id)
             return User.findByUsername(acl.owner.principal,[cache: true])
@@ -211,17 +215,15 @@ class Team {
         return name.hashCode();
     }
 
-    def springSecurityService
-
     def beforeDelete() {
         withNewSession {
-            publishEvent(new IceScrumTeamEvent(this, this.class, User.get(springSecurityService.principal?.id), IceScrumEvent.EVENT_BEFORE_DELETE))
+            publishEvent(new IceScrumTeamEvent(this, this.class, User.get(SCH.context?.authentication?.principal?.id), IceScrumEvent.EVENT_BEFORE_DELETE))
         }
     }
 
     def afterDelete() {
         withNewSession {
-            publishEvent(new IceScrumTeamEvent(this, this.class, User.get(springSecurityService.principal?.id), IceScrumEvent.EVENT_AFTER_DELETE))
+            publishEvent(new IceScrumTeamEvent(this, this.class, User.get(SCH.context?.authentication?.principal?.id), IceScrumEvent.EVENT_AFTER_DELETE))
         }
     }
 }
