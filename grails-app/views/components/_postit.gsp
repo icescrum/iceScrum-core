@@ -67,7 +67,7 @@
                 <span class=" opacity-70 mini-value ${editableEstimation ? 'editable' : ''}">${miniValue}</span>
             </g:if>
         %{--State label--}%
-            <span class="text-state"><is:truncated size="16">${stateText}</is:truncated></span>
+            <span class="text-state"><is:truncated encodedHTML="true" size="16">${stateText}</is:truncated></span>
 
         %{--Embedded menu--}%
             <g:if test="${embeddedMenu}">
