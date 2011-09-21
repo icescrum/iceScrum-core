@@ -49,7 +49,7 @@ import org.icescrum.cache.DefaultCacheCreator
 class IcescrumCoreGrailsPlugin {
     def groupId = 'org.icescrum'
     // the plugin version
-    def version = "1.4.5.6"
+    def version = "1.4.5.7"
     // the version or versions of Grails the plugin is designed for
     def grailsVersion = "1.3.7 > *"
     // the other plugins this plugin depends on
