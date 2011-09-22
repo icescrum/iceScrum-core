@@ -49,7 +49,7 @@ import org.icescrum.cache.DefaultCacheCreator
 class IcescrumCoreGrailsPlugin {
     def groupId = 'org.icescrum'
     // the plugin version
-    def version = "1.4.5.7"
+    def version = "1.4.7.1"
     // the version or versions of Grails the plugin is designed for
     def grailsVersion = "1.3.7 > *"
     // the other plugins this plugin depends on
@@ -79,35 +79,34 @@ class IcescrumCoreGrailsPlugin {
 
     def doWithWebDescriptor = { xml ->
         mergeConfig(application)
-        if (application.config.icescrum.push.enable) {
-            def servlets = xml.'servlet'
-            servlets[servlets.size() - 1] + {
-                'servlet' {
-                    'description'('AtmosphereServlet')
-                    'servlet-name'('AtmosphereServlet')
-                    'servlet-class'('org.atmosphere.cpr.AtmosphereServlet')
-                    application.config.icescrum.push.servlet.initParams.each { initParam ->
-                        'init-param' {
-                            'param-name'(initParam.key)
-                            'param-value'(initParam.value)
-                        }
+        def servlets = xml.'servlet'
+        servlets[servlets.size() - 1] + {
+            'servlet' {
+                'description'('AtmosphereServlet')
+                'servlet-name'('AtmosphereServlet')
+                'servlet-class'('org.atmosphere.cpr.AtmosphereServlet')
+                application.config.icescrum.push.servlet.initParams.each { initParam ->
+                    'init-param' {
+                        'param-name'(initParam.key)
+                        'param-value'(initParam.value)
                     }
-                    'load-on-startup'('0')
                 }
+                'load-on-startup'('0')
             }
+        }
 
-            def mappings = xml.'servlet-mapping'
-            mappings[mappings.size() - 1] + {
-                'servlet-mapping' {
-                    'servlet-name'('AtmosphereServlet')
-                    def urlPattern = application.config.icescrum.push.servlet?.urlPattern ?: '/atmosphere/*'
-                    'url-pattern'(urlPattern)
-                }
+        def mappings = xml.'servlet-mapping'
+        mappings[mappings.size() - 1] + {
+            'servlet-mapping' {
+                'servlet-name'('AtmosphereServlet')
+                def urlPattern = application.config.icescrum.push.servlet?.urlPattern ?: '/atmosphere/*'
+                'url-pattern'(urlPattern)
             }
         }
     }
 
     def doWithSpring = {
+        mergeConfig(application)
         if (application.config.springcache.configLocation){
             springcacheCacheManager(EhCacheManagerFactoryBean) {
                 shared = false
@@ -165,32 +164,29 @@ class IcescrumCoreGrailsPlugin {
       ConfigObject currentConfig = app.config.icescrum
       ConfigSlurper slurper = new ConfigSlurper(Environment.getCurrent().getName());
       ConfigObject secondaryConfig = slurper.parse(app.classLoader.loadClass("DefaultIceScrumCoreConfig"))
-
       ConfigObject config = new ConfigObject();
       config.putAll(secondaryConfig.icescrum.merge(currentConfig))
-
       app.config.icescrum = config;
     }
 
     def doWithDynamicMethods = { ctx ->
         // Manually match the UIController classes
+        SecurityService securityService = ctx.getBean('securityService')
+        SpringcacheService springcacheService = ctx.getBean('springcacheService')
+
         application.controllerClasses.each {
             if (it.hasProperty(UiControllerArtefactHandler.PROPERTY)) {
                 application.addArtefact(UiControllerArtefactHandler.TYPE, it)
                 def plugin = it.hasProperty(UiControllerArtefactHandler.PLUGINNAME) ? it.getPropertyValue(UiControllerArtefactHandler.PLUGINNAME) : null
                 addUIControllerMethods(it, ctx, plugin)
             }
-        }
-        SecurityService securityService = ctx.getBean('securityService')
-        SpringcacheService springcacheService = ctx.getBean('springcacheService')
-        application.controllerClasses.each {
             addCacheFlushMethod(it, springcacheService, ctx)
-            addBroadcastMethods(it, securityService)
+            addBroadcastMethods(it, securityService, application)
             addErrorMethod(it)
         }
         application.serviceClasses.each {
             addCacheFlushMethod(it, springcacheService, ctx)
-            addBroadcastMethods(it, securityService)
+            addBroadcastMethods(it, securityService, application)
         }
 
         application.domainClasses.each {
@@ -215,10 +211,7 @@ class IcescrumCoreGrailsPlugin {
             SecurityService securityService = event.ctx.getBean('securityService')
             SpringcacheService springcacheService = event.ctx.getBean('springcacheService')
             addCacheFlushMethod(event.source, springcacheService, event.ctx)
-
-            if (application.config.push?.enable)
-                addBroadcastMethods(event.source, securityService)
-
+            addBroadcastMethods(event.source, securityService, application)
             addErrorMethod(event.source)
         }
     }
@@ -296,10 +289,11 @@ class IcescrumCoreGrailsPlugin {
         }
     }
 
-    private addBroadcastMethods(source, securityService) {
+    private addBroadcastMethods(source, securityService, application) {
 
         source.metaClass.bufferBroadcast = { attrs ->
-
+            if (!application.config.icescrum.push?.enable)
+                return
             attrs = attrs ?: [channel: '']
             def request = RequestContextHolder.requestAttributes?.request
             if (!request)
@@ -319,7 +313,8 @@ class IcescrumCoreGrailsPlugin {
         }
 
         source.metaClass.resumeBufferedBroadcast = { attrs ->
-
+            if (!application.config.icescrum.push?.enable)
+                return
             attrs = attrs ?: [channel: '']
             def request = RequestContextHolder.requestAttributes?.request
             attrs.excludeCaller = attrs.excludeCaller ?: true
@@ -359,7 +354,8 @@ class IcescrumCoreGrailsPlugin {
         }
 
         source.metaClass.broadcast = {attrs ->
-
+            if (!application.config.icescrum.push?.enable)
+                return
             assert attrs.function, attrs.message
             attrs.excludeCaller = attrs.excludeCaller ?: true
             def request = RequestContextHolder.requestAttributes?.request
@@ -394,7 +390,8 @@ class IcescrumCoreGrailsPlugin {
         }
 
         source.metaClass.broadcastToSingleUser = {attrs ->
-
+            if (!application.config.icescrum.push?.enable)
+                return
             assert attrs.function
             assert attrs.message
             assert attrs.user

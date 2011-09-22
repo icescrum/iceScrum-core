@@ -1,4 +1,4 @@
-<plugin name='icescrum-core' version='1.4.5.6' grailsVersion='1.3.7 &gt; *'>
+<plugin name='icescrum-core' version='1.4.7' grailsVersion='1.3.7 &gt; *'>
   <author>iceScrum</author>
   <authorEmail>contact@icescrum.org</authorEmail>
   <title>iceScrum core plugin (include domain / services / taglib)</title>
