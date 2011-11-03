@@ -571,7 +571,7 @@ class StoryService {
 
             def sprint = (Sprint) Sprint.findCurrentSprint(pbi.backlog.id).list()[0]
             if (!sprint)
-                throw new IllegalStateException('is.story.error.notacceptedAsUrgentTask')
+                throw new IllegalStateException('is.story.error.not.acceptedAsUrgentTask')
 
             task.validate()
             def i = 1
