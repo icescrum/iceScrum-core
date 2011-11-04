@@ -182,8 +182,9 @@ class TaskService {
             checkEstimation(task)
             def p = (Product) ((Sprint) task.backlog).parentRelease.parentProduct
             // TODO add check : if SM or PO, always allow
-            if (force || (task.responsible && task.responsible.id.equals(user.id)) || task.creator.id.equals(user.id) || securityService.productOwner(p, springSecurityService.authentication) || securityService.scrumMaster(null, springSecurityService.authentication)) {
+            if (force || (task.responsible && task.responsible.id.equals(user.id)) || task.creator.id.equals(user.id) || securityService.scrumMaster(null, springSecurityService.authentication)) {
                 if (task.estimation == 0 && task.state != Task.STATE_DONE) {
+                    task.responsible = task.responsible ? task.responsible : user;
                     task.state = Task.STATE_DONE
                     task.doneDate = new Date()
                     task.addActivity(user, 'taskFinish', task.name)
