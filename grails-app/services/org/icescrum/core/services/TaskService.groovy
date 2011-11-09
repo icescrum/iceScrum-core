@@ -184,7 +184,8 @@ class TaskService {
             // TODO add check : if SM or PO, always allow
             if (force || (task.responsible && task.responsible.id.equals(user.id)) || task.creator.id.equals(user.id) || securityService.scrumMaster(null, springSecurityService.authentication)) {
                 if (task.estimation == 0 && task.state != Task.STATE_DONE) {
-                    task.responsible = task.responsible ? task.responsible : user;
+                    if(p.preferences.assignOnBeginTask)
+                        task.responsible = task.responsible ? task.responsible : user;
                     task.state = Task.STATE_DONE
                     task.doneDate = new Date()
                     task.addActivity(user, 'taskFinish', task.name)
