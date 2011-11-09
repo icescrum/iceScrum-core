@@ -45,6 +45,8 @@ import org.icescrum.cache.LocaleKeyGenerator
 import grails.plugin.springcache.web.key.WebContentKeyGenerator
 import org.icescrum.cache.RoleAndLocaleKeyGenerator
 import org.icescrum.cache.DefaultCacheCreator
+import org.icescrum.cache.TeamCacheResolver
+import org.icescrum.cache.ApplicationCacheResolver
 
 class IcescrumCoreGrailsPlugin {
     def groupId = 'org.icescrum'
@@ -123,11 +125,11 @@ class IcescrumCoreGrailsPlugin {
             cacheCreator = ref('cacheCreator')
         }
 
-        teamCacheResolver(ProjectCacheResolver){
+        teamCacheResolver(TeamCacheResolver){
             cacheCreator = ref('cacheCreator')
         }
 
-        applicationCacheResolver(ProjectCacheResolver){
+        applicationCacheResolver(ApplicationCacheResolver){
             cacheCreator = ref('cacheCreator')
         }
 

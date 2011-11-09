@@ -112,16 +112,10 @@ class DummyPopulator {
             securityService.secureDomain(team)
 
 
-            def team2 = new Team(name: 'testProj Team2', preferences: new TeamPreferences()).addToProducts(p).addToMembers(ux)
-            team2.save()
-            securityService.secureDomain(team2)
-
-
             def team3 = new Team(name: 'empty Team3', preferences: new TeamPreferences()).addToMembers(ux)
             team3.save()
             securityService.secureDomain(team3)
 
-            securityService.createScrumMasterPermissions(ux, team2)
             securityService.createTeamMemberPermissions(ux, team3)
 
             securityService.createProductOwnerPermissions(ua, p)
@@ -130,8 +124,6 @@ class DummyPopulator {
 
             securityService.changeOwner(ua, p)
             securityService.changeOwner(ua, team)
-            securityService.changeOwner(ux, team2)
-
 
             def rel = new Release(startDate: new Date().parse('yyyy-M-d',
                     String.format('%tF', new Date())), endDate: new Date().parse('yyyy-M-d', String.format('%tF', new Date())) + 120,
