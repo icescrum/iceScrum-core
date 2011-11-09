@@ -503,25 +503,10 @@ class ProductService {
     }
 
     @PreAuthorize('owner(#product) or scrumMaster()')
-    void removeRole(Product product, Team team, User user, int role, boolean broadcast = true){
-        switch (role){
-            case Authority.SCRUMMASTER:
-                teamService.removeMemberOrScrumMaster(team,user)
-                break
-            case Authority.MEMBER:
-                teamService.removeMemberOrScrumMaster(team,user)
-                break
-            case Authority.PRODUCTOWNER:
-                removeProductOwner(product,user)
-                break
-            case Authority.STAKEHOLDER:
-                removeStakeHolder(product,user)
-                break
-            case Authority.PO_AND_SM:
-                teamService.removeMemberOrScrumMaster(team,user)
-                removeProductOwner(product,user)
-                break
-        }
+    void removeAllRoles(Product product, Team team, User user, boolean broadcast = true){
+        teamService.removeMemberOrScrumMaster(team,user)
+        removeProductOwner(product,user)
+        removeStakeHolder(product,user)
         if (broadcast)
             broadcastToSingleUser(user:user.username, function:'removeRoleProduct', message:[class:'User',product:product])
     }
@@ -552,7 +537,7 @@ class ProductService {
 
     @Secured(['owner(#product) or scrumMaster()', 'RUN_AS_PERMISSIONS_MANAGER'])
     void changeRole(Product product, Team team, User user, int role, boolean broadcast = true){
-        removeRole(product,team,user,role,false)
+        removeAllRoles(product,team,user,false)
         addRole(product,team,user,role,false)
         if(broadcast)
             broadcastToSingleUser(user:user.username, function:'updateRoleProduct', message:[class:'User',product:product])
