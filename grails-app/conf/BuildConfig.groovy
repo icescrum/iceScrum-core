@@ -42,6 +42,7 @@ grails.project.dependency.resolution = {
         // from public Maven repositories
         //mavenLocal()
         mavenCentral()
+        mavenRepo "https://oss.sonatype.org/content/repositories/snapshots/"
         mavenRepo "http://repo.icescrum.org/artifactory/plugins-release/"
         //mavenRepo "http://snapshots.repository.codehaus.org"
         //mavenRepo "http://repository.codehaus.org"
@@ -54,13 +55,28 @@ grails.project.dependency.resolution = {
         compile('org.codehaus.groovy.modules.http-builder:http-builder:0.5.0') {
             excludes "commons-logging", "xml-apis", "groovy"
         }
+        compile('org.atmosphere:atmosphere-runtime:0.8.0-RC4-SNAPSHOT'){
+            excludes 'slf4j-api'
+        }
+        compile('org.atmosphere:atmosphere-compat-tomcat:0.8.0-RC4-SNAPSHOT'){
+            excludes 'slf4j-api'
+        }
+        compile('org.atmosphere:atmosphere-compat-jbossweb:0.8.0-RC4-SNAPSHOT'){
+            excludes 'slf4j-api'
+        }
+        compile('org.atmosphere:atmosphere-compat-jetty:0.8.0-RC4-SNAPSHOT'){
+            excludes 'slf4j-api'
+        }
+        compile('org.atmosphere:atmosphere-compat-weblogic:0.8.0-RC4-SNAPSHOT'){
+            excludes 'slf4j-api'
+        }
     }
 
     plugins {
         compile 'org.icescrum:fluxiable:0.3'
         compile ':burning-image:0.5.0'
         compile 'org.icescrum:icescrum-attachmentable:0.2'
-        compile 'spring:spring-security-core:1.2.1'
+        compile 'spring:spring-security-core:1.2.4'
         compile 'spring:spring-security-acl:1.1'
         compile ':commentable:0.7.5'
         compile ':followable:0.3'

@@ -24,15 +24,17 @@ import org.springframework.cache.ehcache.EhCacheFactoryBean
 icescrum {
     push {
         enable = true
+        websocket = false
         servlet {
             // Servlet initialization parameters
-            initParams = ['org.atmosphere.useNative': 'true']
+            initParams = ['org.atmosphere.useNative': 'true','org.atmosphere.useWebSocket': icescrum.push.websocket]
             urlPattern = '/stream/*'
         }
         handlers {
             // This closure is used to generate the atmosphere.xml using a MarkupBuilder instance in META-INF folder
             atmosphereDotXml = {
-                'atmosphere-handler'('context-root': '/stream/app', 'class-name': 'org.icescrum.atmosphere.IceScrumAtmosphereHandler', 'broadcaster': 'org.atmosphere.util.ExcludeSessionBroadcaster')
+                'atmosphere-handler'('context-root': '/stream/app/*', 'class-name': 'org.icescrum.atmosphere.IceScrumAtmosphereHandler', 'broadcaster': 'org.atmosphere.util.ExcludeSessionBroadcaster')
+                'atmosphere-handler'('context-root': '/icescrum/stream/app/*', 'class-name': 'org.icescrum.atmosphere.IceScrumAtmosphereHandler', 'broadcaster': 'org.atmosphere.util.ExcludeSessionBroadcaster')
             }
         }
         redis {

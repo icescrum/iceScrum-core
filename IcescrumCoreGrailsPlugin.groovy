@@ -51,7 +51,7 @@ import org.icescrum.cache.ApplicationCacheResolver
 class IcescrumCoreGrailsPlugin {
     def groupId = 'org.icescrum'
     // the plugin version
-    def version = "1.4.7.1"
+    def version = "1.4.8"
     // the version or versions of Grails the plugin is designed for
     def grailsVersion = "1.3.7 > *"
     // the other plugins this plugin depends on
@@ -163,12 +163,13 @@ class IcescrumCoreGrailsPlugin {
     }
 
     private void mergeConfig(GrailsApplication app) {
+
       ConfigObject currentConfig = app.config.icescrum
       ConfigSlurper slurper = new ConfigSlurper(Environment.getCurrent().getName());
       ConfigObject secondaryConfig = slurper.parse(app.classLoader.loadClass("DefaultIceScrumCoreConfig"))
       ConfigObject config = new ConfigObject();
-      config.putAll(secondaryConfig.icescrum.merge(currentConfig))
-      app.config.icescrum = config;
+      config.putAll((ConfigObject)secondaryConfig.getProperty('icescrum').merge(currentConfig))
+      app.config.icescrum = config
     }
 
     def doWithDynamicMethods = { ctx ->

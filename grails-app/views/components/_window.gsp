@@ -99,7 +99,7 @@
 <jq:jquery>
     <g:if test="${type == 'window'}">
         $("#${type}-id-${id}").isWindow({maximizeable:${titleBarActions?.maximizeable},widgetable:${titleBarActions?.widgetable},closeable:${titleBarActions?.closeable}});
-        document.title = 'iceScrum - ${title.encodeAsJavaScript()} - '+ ($.icescrum.o.currentProductName ? $.icescrum.o.currentProductName : ($.icescrum.o.currentTeamName ? $.icescrum.o.currentTeamName : ''));
+        document.title = 'iceScrum - ${title.encodeAsJavaScript()}';
         $("#${type}-id-${id}").focus();
     </g:if>
     <g:if test="${type == 'widget'}">

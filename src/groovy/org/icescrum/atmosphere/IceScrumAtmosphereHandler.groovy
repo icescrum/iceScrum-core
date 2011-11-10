@@ -39,7 +39,6 @@ class IceScrumAtmosphereHandler implements AtmosphereHandler<HttpServletRequest,
     private static final log = LogFactory.getLog(this)
 
     void onRequest(AtmosphereResource<HttpServletRequest, HttpServletResponse> event) throws IOException {
-
         def conf = ApplicationHolder.application.config.icescrum.push
         if (!conf.enable || event.request.getMethod() == "POST") {
             event.resume()
@@ -50,7 +49,7 @@ class IceScrumAtmosphereHandler implements AtmosphereHandler<HttpServletRequest,
         event.response.addHeader("Cache-Control", "private");
         event.response.addHeader("Pragma", "no-cache");
         event.response.addHeader("Access-Control-Allow-Origin", "*");
-        event.suspend()
+        event.suspend(-1);
 
         def productID = event.request.getParameterValues("product") ? event.request.getParameterValues("product")[0] : null
         def teamID = event.request.getParameterValues("team") ? event.request.getParameterValues("team")[0] : null
@@ -63,10 +62,11 @@ class IceScrumAtmosphereHandler implements AtmosphereHandler<HttpServletRequest,
         } else if (teamID && teamID.isLong()) {
             channel = Team.load(teamID.toLong()) ? "team-${teamID}" : null
         }
+        channel = channel?.toString()
         if (channel) {
             def broadcaster = BroadcasterFactory.default.lookup(ExcludeSessionBroadcaster.class, channel)
             if(broadcaster == null){
-                broadcaster = new ExcludeSessionBroadcaster(channel)
+                broadcaster = new ExcludeSessionBroadcaster(channel, event.atmosphereConfig)
                 broadcaster.setBroadcasterLifeCyclePolicy(new Builder().policy(ATMOSPHERE_RESOURCE_POLICY.EMPTY_DESTROY).build())
                 broadcaster.broadcasterConfig.addFilter(new StreamFilter())
                 if (conf.redis?.enable)
@@ -141,7 +141,7 @@ class IceScrumAtmosphereHandler implements AtmosphereHandler<HttpServletRequest,
             singleBroadcaster.addAtmosphereResource(resource)
             return
         }
-        Broadcaster selfBroadcaster = new DefaultBroadcaster(broadcasterID);
+        Broadcaster selfBroadcaster = new DefaultBroadcaster(broadcasterID, resource.atmosphereConfig);
         selfBroadcaster.broadcasterConfig.addFilter(new StreamFilter())
         if (conf.redis?.enable)
             selfBroadcaster.broadcasterConfig.addFilter(new RedisFilter(selfBroadcaster, conf.redis.host))
