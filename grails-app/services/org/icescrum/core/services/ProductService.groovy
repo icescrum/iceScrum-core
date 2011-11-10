@@ -38,6 +38,8 @@ import org.springframework.security.access.prepost.PostFilter
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.transaction.annotation.Transactional
 import org.icescrum.core.domain.*
+import org.icescrum.core.support.ApplicationSupport
+import org.codehaus.groovy.grails.plugins.springsecurity.SpringSecurityUtils
 
 /**
  * ProductService is a transactional class, that manage operations about
@@ -188,7 +190,7 @@ class ProductService {
     }
 
     @PreAuthorize('(scrumMaster() or owner(#_product)) and !archivedProduct(#_product)')
-    void update(Product _product) {
+    void update(Product _product, boolean hasHiddenChanged) {
         if (!_product.name?.trim()) {
             throw new IllegalStateException("is.product.error.no.name")
         }
@@ -196,19 +198,26 @@ class ProductService {
             throw new IllegalStateException("is.product.error.no.estimationSuite")
         }
 
-        def refresh = _product.isDirty('preferences')
+        if (hasHiddenChanged && _product.preferences.hidden && !ApplicationSupport.booleanValue(grailsApplication.config.icescrum.project.private.enable)
+              && !SpringSecurityUtils.ifAnyGranted(Authority.ROLE_ADMIN)) {
+            _product.preferences.hidden = false
+        }
+
+        if (hasHiddenChanged && !_product.preferences.hidden) {
+            _product.stakeHolders?.each {
+                removeStakeHolder(_product,it)
+            }
+        }
+
+        if(hasHiddenChanged)
+            flushCache(cache:'project_'+_product.id+'_'+SecurityService.CACHE_STAKEHOLDER)
 
         if (!_product.save(flush: true)) {
             throw new RuntimeException()
         }
 
-        if (_product.preferences.isDirty('hidden') && _product.preferences.hidden)
-            springcacheService.getOrCreateCache(SecurityService.CACHE_STAKEHOLDER)?.flush()
+        broadcast(function: 'update', message: _product)
 
-        if (refresh)
-            broadcast(function: 'update', message: [class:_product.class, id:_product.id, refresh:true])
-        else
-            broadcast(function: 'update', message: _product)
         publishEvent(new IceScrumProductEvent(_product, this.class, (User) springSecurityService.currentUser, IceScrumEvent.EVENT_UPDATED))
     }
 
@@ -557,7 +566,6 @@ class ProductService {
     }
 
     private void removeStakeHolder(Product product, User stakeHolder) {
-        if (product.preferences.hidden)
-            securityService.deleteStakeHolderPermissions stakeHolder, product
+        securityService.deleteStakeHolderPermissions stakeHolder, product
     }
 }
