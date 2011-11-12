@@ -54,7 +54,7 @@ class Sprint extends TimeBox implements Serializable {
     ]
 
     static transients = [
-            'recurrentTasks', 'urgentTasks', 'hasNextSprint', 'parentReleaseId', 'activable', 'effectiveEndDate', 'effectiveStartDate'
+            'recurrentTasks', 'urgentTasks', 'hasNextSprint', 'parentReleaseId', 'activable', 'effectiveEndDate', 'effectiveStartDate', 'totalRemainingHours'
     ]
 
     static namedQueries = {
@@ -268,6 +268,15 @@ class Sprint extends TimeBox implements Serializable {
     //Get the right startDate from the sprint state
     Date getEffectiveStartDate(){
         return this.state == STATE_WAIT ? startDate : activationDate
+    }
+
+    Float getTotalRemainingHours(){
+        Float raf = 0
+        this.tasks*.estimation?.each{
+            if (it)
+                raf += it
+        }
+        raf
     }
 
     def beforeDelete() {

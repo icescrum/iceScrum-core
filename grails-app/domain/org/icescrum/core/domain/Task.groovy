@@ -54,7 +54,7 @@ class Task extends BacklogElement implements Serializable {
             responsible: User,
             creator: User,
             impediment: Impediment,
-            parentStory: Story
+            parentStory: Story,
     ]
 
     static hasMany = [participants: User]
@@ -246,8 +246,16 @@ class Task extends BacklogElement implements Serializable {
         }
     }
 
-     def afterUpdate() {
+    def afterUpdate() {
         flushCache(cache:'project_'+this.backlog.parentRelease.parentProduct.id+'_taskCache_'+this.id)
+    }
+
+    def setBacklog(Sprint backlog){
+        super.setBacklog(backlog)
+    }
+
+    Sprint getBacklog(){
+        return (Sprint)super.getBacklog()
     }
 
     def afterDelete() {
