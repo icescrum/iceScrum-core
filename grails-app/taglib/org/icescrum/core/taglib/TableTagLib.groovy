@@ -50,12 +50,7 @@ class TableTagLib {
             out << '<tr class="table-legend">'
             pageScope.rowHeaders.eachWithIndex { col, index ->
                 col."class" = col."class" ?: ""
-                if (index == 0)
-                    out << '<th ' + (col.width ? ' style=\'width:' + col.width + '\'' : '') + ' class="break-word ' + col."class" + ' first"><div class=\"table-cell\">' << is.nbps(null, col.name) << col.body() << '</div></th>'
-                else if (index == (maxCols - 1))
-                    out << '<th ' + (col.width ? ' style=\'width:' + col.width + '\'' : '') + ' class="break-word ' + col."class" + ' last"><div class=\"table-cell\">' << is.nbps(null, col.name) << '</div></th>'
-                else
-                    out << '<th ' + (col.width ? ' style=\'width:' + col.width + '\'' : '') + ' class="break-word ' + col."class" + '"><div class=\"table-cell\">' << is.nbps(null, col.name) << '</div></th>'
+                out << '<th ' + (col.width ? ' style=\'width:' + col.width + '\'' : '') + ' class="break-word ' + col."class" + '"><div class=\"table-cell\">' + is.nbps(null, col.name) + (attrs.sortableCols ?'<div class="sorter"></sorter>' :'') +'</div></th>'
             }
             out << '</tr>'
             out << "</thead>"
@@ -94,7 +89,7 @@ class TableTagLib {
             // end
             out << "<tbody>"
             out << '</table>'
-            jqCode += "\$('#${attrs.id}').table();"
+            jqCode += "jQuery('#${attrs.id}').table({sortable:${attrs.sortableCols?:false}});"
             out << jq.jquery(null, jqCode)
         }
     }
@@ -216,11 +211,7 @@ class TableTagLib {
                 row.attrs.rowClass.delegate = delegate
                 row.attrs.rowClass = row.attrs.rowClass(row.attrs."${row.attrs.var}")
             }
-
-            if (indexRow == (maxRows - 1))
-                out << '<tr class="table-line line-last ' + (row.attrs.rowClass ? row.attrs.rowClass : '') + ' ' + (groupid ? groupid : '') + '" elemid="' + row.elemid + '" version="' + version + '">'
-            else
-                out << '<tr class="table-line ' + (row.attrs.rowClass ? row.attrs.rowClass : '') + ' ' + (groupid ? groupid : '') + '"  elemid="' + row.elemid + '" version="' + version + '">'
+            out << '<tr class="table-line ' + (row.attrs.rowClass ? row.attrs.rowClass : '') + ' ' + (groupid ? groupid : '') + '"  elemid="' + row.elemid + '" version="' + version + '">'
             row.columns.eachWithIndex { col, indexCol ->
 
                 //gestion editable
@@ -230,12 +221,7 @@ class TableTagLib {
                 }
 
                 col."class" = col."class" ?: ""
-                if (indexCol == 0)
-                    out << '<td class="' + col."class" + ' break-word first"><div ' + is.editableCell(col.editable) + '>' + is.nbps(null, col?.body(row.attrs)) + '</div></td>'
-                else if (indexCol == (maxCols - 1))
-                    out << '<td class="' + col."class" + ' break-word last"><div ' + is.editableCell(col.editable) + '>' + is.nbps(null, col?.body(row.attrs)) + '</div></td>'
-                else
-                    out << '<td class="' + col."class" + ' break-word"><div ' + is.editableCell(col.editable) + '>' + is.nbps(null, col?.body(row.attrs)) + '</div></td>'
+                out << '<td class="' + col."class" + ' break-word"><div ' + is.editableCell(col.editable) + '>' + is.nbps(null, col?.body(row.attrs)) + '</div></td>'
             }
             out << '</tr>'
         }

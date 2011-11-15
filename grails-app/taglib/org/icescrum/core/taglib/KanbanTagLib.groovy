@@ -57,12 +57,7 @@ class KanbanTagLib {
             out << "<thead>"
             out << '<tr class="table-legend">'
             pageScope.kanbanHeaders.eachWithIndex { col, index ->
-                if (index == 0)
-                    out << '<th class="first kanban-col"><div class="table-cell">' << col.name << '</div></th>'
-                else if (index == (maxCols - 1))
-                    out << '<th class="last kanban-col"><div class="table-cell">' << col.name << '</div></th>'
-                else
-                    out << '<th class="kanban-col"><div class="table-cell">' << col.name << '</div></th>'
+                out << '<th class="kanban-col"><div class="table-cell">' << col.name << '</div></th>'
             }
             out << '</tr>'
             out << "</thead>"
@@ -80,12 +75,7 @@ class KanbanTagLib {
             if (row) {
                 out << '<tr class="table-line ' + (row.attrs?.'class' ? row.attrs?.'class' : '') + ' " ' + (row.attrs.type != null ? 'type="' + row.attrs.type + '"' : '') + ' ' + (row.elemid ? 'elemid="' + row.elemid + '"' : '') + '> '
                 row.columns.eachWithIndex { col, indexCol ->
-                    if (indexCol == 0)
-                        out << '<td class="kanban-col first kanban-cell ' + col.'class' + '" ' + (col.key != null ? 'type="' + col.key + '"' : '') + '"><div class="kanban-label">' + is.nbps(null, col?.body(row.attrs)) + '</div></td>'
-                    else if (indexCol == (maxCols - 1))
-                        out << '<td class="kanban-col last kanban-cell ' + col.'class' + '" ' + (col.key != null ? 'type="' + col.key + '"' : '') + '">' + is.nbps(null, col?.body(row.attrs)) + '</td>'
-                    else
-                        out << '<td class="kanban-col kanban-cell ' + col.'class' + '" ' + (col.key != null ? 'type="' + col.key + '"' : '') + '">' + is.nbps(null, col?.body(row.attrs)) + '</td>'
+                    out << '<td class="kanban-col kanban-cell ' + col.'class' + '" ' + (col.key != null ? 'type="' + col.key + '"' : '') + '">' + is.nbps(null, col?.body(row.attrs)) + '</td>'
                 }
                 out << '</tr>'
             }

@@ -82,10 +82,10 @@ grails.project.dependency.resolution = {
         compile ':followable:0.3'
         compile ':autobase:0.12.2'
         compile ':jdbc-pool:0.3'
-        compile ':spring-events:1.1'
+        compile ':spring-events:1.2'
         compile ':springcache:1.3.1'
         compile ':mail:1.0-SNAPSHOT'
-        compile ':jasper:1.2.1'
+        compile ':jasper:1.2.2'
         compile ':maven-publisher:0.8.1'
         compile ':rollback-on-exception:0.1'
     }

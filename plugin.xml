@@ -1,4 +1,4 @@
-<plugin name='icescrum-core' version='1.4.7.7' grailsVersion='1.3.7 &gt; *'>
+<plugin name='icescrum-core' version='1.4.8.1' grailsVersion='1.3.7 &gt; *'>
   <author>iceScrum</author>
   <authorEmail>contact@icescrum.org</authorEmail>
   <title>iceScrum core plugin (include domain / services / taglib)</title>
@@ -41,7 +41,6 @@
     <resource>org.icescrum.core.services.DropImportService</resource>
     <resource>org.icescrum.core.services.FeatureService</resource>
     <resource>org.icescrum.core.services.NotificationEmailService</resource>
-    <resource>org.icescrum.core.services.OnEventService</resource>
     <resource>org.icescrum.core.services.ProductService</resource>
     <resource>org.icescrum.core.services.ReleaseService</resource>
     <resource>org.icescrum.core.services.SecurityService</resource>
