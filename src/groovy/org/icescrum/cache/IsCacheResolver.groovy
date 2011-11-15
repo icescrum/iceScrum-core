@@ -87,7 +87,7 @@ class ProjectCacheResolver extends IceScrumCacheResolver {
         def cache
         def cachePattern = ~/\d+\w+/
         def params = RCH.currentRequestAttributes().params
-        if (!cachePattern.matcher(baseName).matches() && ( params && params.product instanceof String)){
+        if (!cachePattern.matcher(baseName).matches() && ( params && params.product != null)){
             cache = "project_${params.product?.decodeProductKey() ?: params.id}_${baseName}"
         }else{
             cache = "project_${baseName}"
