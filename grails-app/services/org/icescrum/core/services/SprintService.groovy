@@ -341,6 +341,12 @@ class SprintService {
         // Create cliché
         clicheService.createSprintCliche(sprint, new Date(), Cliche.TYPE_CLOSE)
         clicheService.createOrUpdateDailyTasksCliche(sprint)
+
+        def productId = sprint.parentRelease.parentProduct.id;
+        // Pour les tâches non finies, on ne flush que les taches urgentes et récurrentes car les autres seront flushées lorsqu'elles changeront de sprint
+        sprint.tasks?.findAll {it.state != Task.STATE_DONE && (it.type == Task.TYPE_URGENT || it.type == Task.TYPE_RECURRENT)}?.each {
+           flushCache(cache:'project_'+productId+'_taskCache_'+it.id);
+        }
     }
 
     void updateDoneDefinition(Sprint sprint) {
