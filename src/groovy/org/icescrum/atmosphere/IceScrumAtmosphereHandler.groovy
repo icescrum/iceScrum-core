@@ -66,7 +66,7 @@ class IceScrumAtmosphereHandler implements AtmosphereHandler<HttpServletRequest,
         if (channel) {
             def broadcaster = BroadcasterFactory.default.lookup(ExcludeSessionBroadcaster.class, channel)
             if(broadcaster == null){
-                broadcaster = new ExcludeSessionBroadcaster(channel, event.atmosphereConfig)
+                broadcaster = new ExcludeSessionBroadcaster(channel)
                 broadcaster.setBroadcasterLifeCyclePolicy(new Builder().policy(ATMOSPHERE_RESOURCE_POLICY.EMPTY_DESTROY).build())
                 broadcaster.broadcasterConfig.addFilter(new StreamFilter())
                 if (conf.redis?.enable)
@@ -141,7 +141,7 @@ class IceScrumAtmosphereHandler implements AtmosphereHandler<HttpServletRequest,
             singleBroadcaster.addAtmosphereResource(resource)
             return
         }
-        Broadcaster selfBroadcaster = new DefaultBroadcaster(broadcasterID, resource.atmosphereConfig);
+        Broadcaster selfBroadcaster = new DefaultBroadcaster(broadcasterID);
         selfBroadcaster.broadcasterConfig.addFilter(new StreamFilter())
         if (conf.redis?.enable)
             selfBroadcaster.broadcasterConfig.addFilter(new RedisFilter(selfBroadcaster, conf.redis.host))
