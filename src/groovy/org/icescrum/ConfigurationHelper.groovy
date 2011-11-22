@@ -11,7 +11,6 @@ class ConfigurationHelper {
 
     def buildConfiguration(basedir) {
         def config = ConfigurationHolder.config
-
         // Generate the atmosphere.xml file in META-INF folder?
         def atmosphereDotXmlClosure = config.icescrum.push.handlers.atmosphereDotXml
         if (atmosphereDotXmlClosure) {

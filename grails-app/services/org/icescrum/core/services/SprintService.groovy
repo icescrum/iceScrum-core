@@ -334,19 +334,20 @@ class SprintService {
             throw new RuntimeException()
         }
 
-        broadcast(function: 'close', message: sprint)
-        resumeBufferedBroadcast()
-        publishEvent(new IceScrumSprintEvent(sprint, this.class, (User) springSecurityService.currentUser, IceScrumSprintEvent.EVENT_CLOSED))
-
         // Create cliché
         clicheService.createSprintCliche(sprint, new Date(), Cliche.TYPE_CLOSE)
         clicheService.createOrUpdateDailyTasksCliche(sprint)
 
         def productId = sprint.parentRelease.parentProduct.id;
-        // Pour les tâches non finies, on ne flush que les taches urgentes et récurrentes car les autres seront flushées lorsqu'elles changeront de sprint
-        sprint.tasks?.findAll {it.state != Task.STATE_DONE && (it.type == Task.TYPE_URGENT || it.type == Task.TYPE_RECURRENT)}?.each {
+        //on ne flush que les taches urgentes et récurrentes car les autres seront flushées lorsqu'elles changeront de sprint
+        sprint = sprint.refresh()
+        sprint.tasks?.findAll {it.type == Task.TYPE_URGENT || it.type == Task.TYPE_RECURRENT}?.each {
            flushCache(cache:'project_'+productId+'_taskCache_'+it.id);
         }
+
+        broadcast(function: 'close', message: sprint)
+        resumeBufferedBroadcast()
+        publishEvent(new IceScrumSprintEvent(sprint, this.class, (User) springSecurityService.currentUser, IceScrumSprintEvent.EVENT_CLOSED))
     }
 
     void updateDoneDefinition(Sprint sprint) {

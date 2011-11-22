@@ -575,14 +575,10 @@ class StoryService {
 
             task.validate()
             def i = 1
-            while (task.hasErrors()) {
-                if (task.errors.getFieldError('name')) {
-                    i += 1
-                    task.name = task.name + '_' + i
-                    task.validate()
-                } else {
-                    throw new RuntimeException()
-                }
+            while (task.hasErrors() && task.errors.getFieldError('name')) {
+                i += 1
+                task.name = task.name + '_' + i
+                task.validate()
             }
 
             taskService.saveUrgentTask(task, sprint, pbi.creator)

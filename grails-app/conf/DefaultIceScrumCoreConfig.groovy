@@ -34,7 +34,6 @@ icescrum {
             // This closure is used to generate the atmosphere.xml using a MarkupBuilder instance in META-INF folder
             atmosphereDotXml = {
                 'atmosphere-handler'('context-root': '/stream/app/*', 'class-name': 'org.icescrum.atmosphere.IceScrumAtmosphereHandler', 'broadcaster': 'org.atmosphere.util.ExcludeSessionBroadcaster')
-                'atmosphere-handler'('context-root': '/icescrum/stream/app/*', 'class-name': 'org.icescrum.atmosphere.IceScrumAtmosphereHandler', 'broadcaster': 'org.atmosphere.util.ExcludeSessionBroadcaster')
             }
         }
         redis {
