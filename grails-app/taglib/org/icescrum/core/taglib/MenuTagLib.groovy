@@ -25,7 +25,6 @@
 package org.icescrum.core.taglib
 
 import org.icescrum.components.UtilsWebComponents
-import grails.plugin.springcache.annotations.Cacheable
 
 class MenuTagLib {
 

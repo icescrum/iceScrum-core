@@ -209,9 +209,6 @@ class ProductService {
             }
         }
 
-        if(hasHiddenChanged)
-            flushCache(cache:'project_'+_product.id+'_'+SecurityService.CACHE_STAKEHOLDER)
-
         if (!_product.save(flush: true)) {
             throw new RuntimeException()
         }
@@ -490,12 +487,10 @@ class ProductService {
     @PreAuthorize('owner(#p) or scrumMaster()')
     def archive(Product p) {
         p.preferences.archived = true
+        p.lastUpdated = new Date()
         if (!p.save(flush:true)){
             throw new RuntimeException()
         }
-        springcacheService.flush(~/project_${p.id}\w+/)
-        def cacheResolver = grailsApplication.mainContext.getBean('applicationCacheResolver')
-        springcacheService.flush(cacheResolver.resolveCacheName(SecurityService.CACHE_ARCHIVEDPRODUCT))
         broadcast(function: 'archive', message: p)
     }
 
@@ -505,9 +500,6 @@ class ProductService {
         if (!p.save(flush:true)){
             throw new RuntimeException()
         }
-        springcacheService.flush(~/project_${p.id}\w+/)
-        def cacheResolver = grailsApplication.mainContext.getBean('applicationCacheResolver')
-        springcacheService.flush(cacheResolver.resolveCacheName(SecurityService.CACHE_ARCHIVEDPRODUCT))
         broadcast(function: 'unarchive', message: p)
     }
 

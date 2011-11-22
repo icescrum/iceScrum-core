@@ -33,6 +33,8 @@ class TimeBox implements Comparable<TimeBox>, Fluxiable, Serializable {
     String goal
     int orderNumber = 0
     String description
+    Date dateCreated
+    Date lastUpdated
 
     static hasMany = [
             cliches: Cliche

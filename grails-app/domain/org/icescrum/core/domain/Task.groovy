@@ -101,6 +101,10 @@ class Task extends BacklogElement implements Serializable {
             }
             if (term) {
                 or {
+                    def termLong = term?.replaceAll('%','')
+                    if (termLong?.isLong()){
+                        eq 'id', termLong.toLong()
+                    }
                     ilike 'name', term
                     ilike 'description', term
                     ilike 'notes', term
@@ -128,9 +132,14 @@ class Task extends BacklogElement implements Serializable {
             }
             if (term) {
                 or {
-                    ilike 'name', term
-                    ilike 'description', term
-                    ilike 'notes', term
+                    def termLong = term?.replaceAll('%','')
+                    if (termLong?.isLong()){
+                        eq 'id', termLong.toLong()
+                    }else{
+                        ilike 'name', term
+                        ilike 'description', term
+                        ilike 'notes', term
+                    }
                 }
             }
             if (u) {
@@ -244,10 +253,6 @@ class Task extends BacklogElement implements Serializable {
         withNewSession {
             publishEvent(new IceScrumTaskEvent(this, this.class, User.get(SCH.context?.authentication?.principal?.id), IceScrumEvent.EVENT_BEFORE_DELETE))
         }
-    }
-
-    def afterUpdate() {
-        flushCache(cache:'project_'+this.backlog.parentRelease.parentProduct.id+'_taskCache_'+this.id)
     }
 
     def setBacklog(Sprint backlog){

@@ -76,9 +76,14 @@ class Actor extends BacklogElement implements Serializable, Comparable<Actor> {
                 eq 'id', pid
             }
             or {
-                ilike 'name', term
-                ilike 'description', term
-                ilike 'notes', term
+                def termLong = term?.replaceAll('%','')
+                if (termLong?.isLong()){
+                    eq 'id', termLong.toLong()
+                }else{
+                    ilike 'name', term
+                    ilike 'description', term
+                    ilike 'notes', term
+                }
             }
         }
 
@@ -135,14 +140,9 @@ class Actor extends BacklogElement implements Serializable, Comparable<Actor> {
     }
 
     def beforeDelete() {
-        removeCache(cache:'project_'+this.backlog.id+'_actorCache_'+this.id)
         withNewSession {
             publishEvent(new IceScrumActorEvent(this, this.class, User.get(SCH.context?.authentication?.principal?.id), IceScrumEvent.EVENT_BEFORE_DELETE))
         }
-    }
-
-    def afterUpdate() {
-        flushCache(cache:'project_'+this.backlog.id+'_actorCache_'+this.id)
     }
 
     def afterDelete() {

@@ -71,9 +71,14 @@ class Feature extends BacklogElement implements Serializable {
                 eq 'id', p
             }
             or {
-                ilike 'name', term
-                ilike 'description', term
-                ilike 'notes', term
+                def termLong = term?.replaceAll('%','')
+                if (termLong?.isLong()){
+                    eq 'id', termLong.toLong()
+                }else{
+                    ilike 'name', term
+                    ilike 'description', term
+                    ilike 'notes', term
+                }
             }
         }
 
@@ -119,18 +124,6 @@ class Feature extends BacklogElement implements Serializable {
     def beforeDelete() {
         withNewSession {
             publishEvent(new IceScrumFeatureEvent(this, this.class, User.get(SCH.context?.authentication?.principal?.id), IceScrumEvent.EVENT_BEFORE_DELETE))
-        }
-    }
-
-    def afterUpdate() {
-        flushCache(cache:'project_'+this.backlog.id+'_featureCache_'+this.id)
-    }
-
-    def beforeUpdate() {
-        if (this.isDirty('color') || this.isDirty('name')){
-            this.stories.each{
-                flushCache(cache:'project_'+this.backlog.id+'_storyCache_'+this.id)
-            }
         }
     }
 

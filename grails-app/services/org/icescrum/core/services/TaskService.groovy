@@ -288,7 +288,6 @@ class TaskService {
             }
             resetRank(task)
             sprint.removeFromTasks(task)
-            removeCache(cache:'project_'+p.id+'_taskCache_'+task.id)
             broadcast(function: 'delete', message: [class: task.class, id: task.id])
             clicheService.createOrUpdateDailyTasksCliche((Sprint) sprint)
         }

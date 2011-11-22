@@ -56,7 +56,7 @@ class StoryService {
         if (story.textAs != '') {
             def actor = Actor.findByBacklogAndName(p, story.textAs)
             if (actor) {
-                story.actor = actor
+                actor.addToStories(story)
             }
         }
 
@@ -87,6 +87,14 @@ class StoryService {
         bufferBroadcast()
         stories.each { _item ->
 
+            if (_item.actor){
+                _item.actor.removeFromStories(_item)
+            }
+
+            if (_item.feature){
+                _item.feature.removeFromStories(_item)
+            }
+
             if (_item.state >= Story.STATE_PLANNED)
                throw new IllegalStateException()
 
@@ -99,7 +107,6 @@ class StoryService {
                 resetRank(_item)
 
             def p = _item.backlog
-            removeCache(cache:'project_'+_item.backlog.id+'_storyCache_'+_item.id)
             p.removeFromStories(_item)
 
             def id = _item.id
@@ -124,12 +131,12 @@ class StoryService {
         if (story.textAs != '' && story.actor?.name != story.textAs) {
             def actor = Actor.findByBacklogAndName(story.backlog, story.textAs)
             if (actor) {
-                story.actor = actor
+                actor.addToStories(story)
             } else {
-                story.actor = null
+                actor.removeFromStories(story)
             }
         } else if (story.textAs == '' && story.actor) {
-            story.actor = null
+            story.actor.removeFromStories(story)
         }
 
         if (!sp && !story.parentSprint && (story.state == Story.STATE_ACCEPTED || story.state == Story.STATE_ESTIMATED)) {

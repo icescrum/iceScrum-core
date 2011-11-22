@@ -53,7 +53,6 @@ class ActorService {
 
     @PreAuthorize('productOwner() and !archivedProduct()')
     void delete(Actor act) {
-        removeCache(cache:'project_'+act.backlog.id+'_featureCache_'+act.id)
         def id = act.id
         def stillHasPbi = act.backlog.stories.any {it.actor?.id == act.id}
         if (stillHasPbi)

@@ -44,7 +44,6 @@ class Product extends TimeBox implements Serializable {
     ProductPreferences preferences
     String pkey
 
-
     static hasMany = [
             actors: Actor,
             features: Feature,

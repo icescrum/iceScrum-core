@@ -36,7 +36,6 @@ import org.icescrum.core.domain.Story
 import org.icescrum.core.domain.Sprint
 import org.icescrum.core.domain.Task
 import org.icescrum.core.domain.TimeBox
-import org.icescrum.cache.ProjectCacheResolver
 
 class ClicheService {
 
@@ -238,7 +237,6 @@ class ClicheService {
                 data: xmlBuilder.bind(clicheData).toString()
         )
         save(c, r)
-        flushCache(cache:"project_${p.id}_productChartCache")
     }
 
     void createOrUpdateDailyTasksCliche(Sprint s) {
@@ -344,13 +342,17 @@ class ClicheService {
             lastCliche = s.cliches.asList().last()
         }
 
-        flushCache(cache:"project_${s.parentRelease.parentProduct.id}_sprintChartCache")
-
         if (lastCliche) {
             def days = d - lastCliche.datePrise
+            def uniq = lastCliche.data.encodeAsMD5()
             if (days < 1) {
-                lastCliche.data = xmlBuilder.bind(clicheData).toString()
-                lastCliche.save()
+                def data = xmlBuilder.bind(clicheData).toString()
+                if (data.encodeAsMD5() != uniq){
+                    s.lastUpdated = new Date()
+                    s.save()
+                    lastCliche.data = data
+                    lastCliche.save()
+                }
                 return
             } else {
                 for (def i = 1; i < days; i++) {

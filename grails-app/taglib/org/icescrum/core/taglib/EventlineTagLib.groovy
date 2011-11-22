@@ -78,40 +78,7 @@ class EventlineTagLib {
                     contentAttrs: '',
                     elemid: attrs.elemid
             ]
-        if (attrs.cacheable && !attrs.cacheable?.disabled){
-
-            attrs.cacheable.role = attrs.cacheable.role ?: true
-            attrs.cacheable.locale = attrs.cacheable.locale ?: true
-            def cacheResolver = ApplicationHolder.application.mainContext[attrs.cacheable.cacheResolver ?: 'springcacheDefaultCacheResolver']
-            def role = ''
-
-            def key  = new CacheKeyBuilder()
-            key.append(attrs.key)
-
-            if (attrs.role){
-                if (request.admin) {
-                role = 'adm'
-                } else {
-                    if (request.scrumMaster)  {  role += 'scm'  }
-                    if (request.teamMember)   {  role += 'tm'  }
-                    if (request.productOwner) {  role += 'po'  }
-                    if (!role && request.stakeHolder) {  role += 'sh'  }
-                }
-                role = role ?: 'anonymous'
-                key.append(role)
-            }
-
-            if (attrs.locale)
-                key.append(RCU.getLocale(request).toString().substring(0, 2))
-
-            pageScope.event = springcacheService.doWithCache(cacheResolver.resolveCacheName(attrs.cacheable.cache), key.toCacheKey()){
-                println "Caching tag event "+attrs.cacheable.cache+" "+attrs.cacheable.key
-                body()
-                return pageScope.event
-            }
-        }else{
-            body()
-        }
+        body()
         pageScope.events << pageScope.event
     }
 

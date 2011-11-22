@@ -74,6 +74,7 @@ class UserService {
                     if (scale)
                         it.scaleAccurate(40, 40)
                 })
+                user.lastUpdated = new Date()
             }
         }
         catch (RuntimeException e) {
@@ -163,6 +164,7 @@ class UserService {
                 }
             }
         }
+        _u.lastUpdated = new Date()
         if (!_u.save()) {
             throw new RuntimeException()
         }

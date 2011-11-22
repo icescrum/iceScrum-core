@@ -81,7 +81,6 @@ class FeatureService {
         def oldRank = _feature.rank
         def id = _feature.id
 
-        removeCache(cache:'project_'+_feature.backlog.id+'_featureCache_'+_feature.id)
         p.removeFromFeatures(_feature)
 
         //update rank on all features after that one

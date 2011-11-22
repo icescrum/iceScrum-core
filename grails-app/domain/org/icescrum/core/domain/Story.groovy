@@ -120,14 +120,19 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                 eq 'id', p
             }
             or {
-                ilike 'name', term
-                ilike 'textAs', term
-                ilike 'textICan', term
-                ilike 'textTo', term
-                ilike 'description', term
-                ilike 'notes', term
-                feature {
+                def termLong = term?.replaceAll('%','')
+                if (termLong?.isLong()){
+                    eq 'id', termLong.toLong()
+                }else{
                     ilike 'name', term
+                    ilike 'textAs', term
+                    ilike 'textICan', term
+                    ilike 'textTo', term
+                    ilike 'description', term
+                    ilike 'notes', term
+                    feature {
+                        ilike 'name', term
+                    }
                 }
             }
             and {
@@ -140,14 +145,18 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                 eq 'id', p
             }
             or {
-                ilike 'name', term
-                ilike 'textAs', term
-                ilike 'textICan', term
-                ilike 'textTo', term
-                ilike 'description', term
-                ilike 'notes', term
-                feature {
+                if (term?.replaceAll('%','')?.isLong()){
+                    eq 'id', term.toLong()
+                }else{
                     ilike 'name', term
+                    ilike 'textAs', term
+                    ilike 'textICan', term
+                    ilike 'textTo', term
+                    ilike 'description', term
+                    ilike 'notes', term
+                    feature {
+                        ilike 'name', term
+                    }
                 }
             }
         }
@@ -157,14 +166,18 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                 eq 'id', p
             }
             or {
-                ilike 'name', term
-                ilike 'textAs', term
-                ilike 'textICan', term
-                ilike 'textTo', term
-                ilike 'description', term
-                ilike 'notes', term
-                feature {
+                if (term?.replaceAll('%','')?.isLong()){
+                    eq 'id', term.toLong()
+                }else{
                     ilike 'name', term
+                    ilike 'textAs', term
+                    ilike 'textICan', term
+                    ilike 'textTo', term
+                    ilike 'description', term
+                    ilike 'notes', term
+                    feature {
+                        ilike 'name', term
+                    }
                 }
             }
             and {
@@ -344,9 +357,14 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                 tasks {
                     if (term) {
                         or {
-                            ilike 'name', term
-                            ilike 'description', term
-                            ilike 'notes', term
+                            def termLong = term?.replaceAll('%','')
+                            if (termLong?.isLong()){
+                                eq 'id', termLong.toLong()
+                            }else{
+                                ilike 'name', term
+                                ilike 'description', term
+                                ilike 'notes', term
+                            }
                         }
                     }
                     if (u) {
@@ -501,10 +519,6 @@ class Story extends BacklogElement implements Cloneable, Serializable {
         withNewSession {
             publishEvent(new IceScrumStoryEvent(this, this.class, User.get(SCH.context?.authentication?.principal?.id), IceScrumEvent.EVENT_BEFORE_DELETE))
         }
-    }
-
-    def afterUpdate() {
-        flushCache(cache:'project_'+this.backlog.id+'_storyCache_'+this.id)
     }
 
     def afterDelete() {

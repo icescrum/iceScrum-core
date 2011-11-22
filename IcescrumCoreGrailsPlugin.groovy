@@ -22,7 +22,6 @@
 
 import grails.converters.JSON
 import grails.converters.XML
-import grails.plugin.springcache.SpringcacheService
 import org.atmosphere.cpr.BroadcasterFactory
 import org.atmosphere.cpr.DefaultBroadcaster
 import org.atmosphere.util.ExcludeSessionBroadcaster
@@ -35,23 +34,31 @@ import org.springframework.context.ApplicationContext
 import org.springframework.web.context.request.RequestContextHolder
 import org.codehaus.groovy.grails.commons.GrailsApplication
 import grails.util.Environment
-import org.icescrum.cache.UserProjectCacheResolver
-import org.icescrum.cache.UserCacheResolver
-import org.icescrum.cache.BacklogElementCacheResolver
-import org.icescrum.cache.ProjectCacheResolver
 import org.springframework.cache.ehcache.EhCacheManagerFactoryBean
-import org.icescrum.cache.UserKeyGenerator
-import org.icescrum.cache.LocaleKeyGenerator
 import grails.plugin.springcache.web.key.WebContentKeyGenerator
-import org.icescrum.cache.RoleAndLocaleKeyGenerator
-import org.icescrum.cache.DefaultCacheCreator
-import org.icescrum.cache.TeamCacheResolver
-import org.icescrum.cache.ApplicationCacheResolver
+import org.icescrum.cache.LocaleKeyGenerator
+import org.icescrum.cache.ISKeyGeneratorHelper
+import org.icescrum.cache.UserKeyGenerator
+import org.icescrum.cache.RoleKeyGenerator
+import org.icescrum.cache.ProjectUserKeyGenerator
+import org.icescrum.cache.StoryKeyGenerator
+import org.icescrum.cache.ActorKeyGenerator
+import org.icescrum.cache.FeatureKeyGenerator
+import org.icescrum.cache.TaskKeyGenerator
+import org.icescrum.cache.ReleasesKeyGenerator
+import org.icescrum.cache.ReleasesRoleKeyGenerator
+import org.icescrum.cache.FeaturesKeyGenerator
+import org.icescrum.cache.SprintKeyGenerator
+import org.icescrum.cache.TasksKeyGenerator
+import org.icescrum.cache.ActorsKeyGenerator
+import org.icescrum.cache.StoriesKeyGenerator
+import org.icescrum.cache.ProjectKeyGenerator
+import org.icescrum.cache.ReleaseKeyGenerator
 
 class IcescrumCoreGrailsPlugin {
     def groupId = 'org.icescrum'
     // the plugin version
-    def version = "1.4.8.7"
+    def version = "1.4.9"
     // the version or versions of Grails the plugin is designed for
     def grailsVersion = "1.3.7 > *"
     // the other plugins this plugin depends on
@@ -116,47 +123,97 @@ class IcescrumCoreGrailsPlugin {
             }
         }
 
-        cacheCreator(DefaultCacheCreator){
-            springcacheCacheManager = ref('springcacheCacheManager')
-            grailsApplication = ref('grailsApplication')
-        }
-
-        projectCacheResolver(ProjectCacheResolver){
-            cacheCreator = ref('cacheCreator')
-        }
-
-        teamCacheResolver(TeamCacheResolver){
-            cacheCreator = ref('cacheCreator')
-        }
-
-        applicationCacheResolver(ApplicationCacheResolver){
-            cacheCreator = ref('cacheCreator')
-        }
-
-        backlogElementCacheResolver(BacklogElementCacheResolver){
-            cacheCreator = ref('cacheCreator')
-        }
-        userCacheResolver(UserCacheResolver){
-            cacheCreator = ref('cacheCreator')
+        iSKeyGeneratorHelper(ISKeyGeneratorHelper){
             springSecurityService = ref('springSecurityService')
+            securityService = ref('securityService')
         }
 
-        userProjectCacheResolver(UserProjectCacheResolver){
-            cacheCreator = ref('cacheCreator')
-            springSecurityService = ref('springSecurityService')
+        localeKeyGenerator(LocaleKeyGenerator) {
+            iSKeyGeneratorHelper = ref('iSKeyGeneratorHelper')
+            contentType = true
         }
 
         userKeyGenerator(UserKeyGenerator) {
-            contentType = true
-            springSecurityService = ref('springSecurityService')
-        }
-        localeKeyGenerator(LocaleKeyGenerator) {
+            iSKeyGeneratorHelper = ref('iSKeyGeneratorHelper')
             contentType = true
         }
-        roleAndLocaleKeyGenerator(RoleAndLocaleKeyGenerator) {
+
+        roleKeyGenerator(RoleKeyGenerator) {
+            iSKeyGeneratorHelper = ref('iSKeyGeneratorHelper')
             contentType = true
-            securityService = ref('securityService')
         }
+
+        projectKeyGenerator(ProjectKeyGenerator){
+            iSKeyGeneratorHelper = ref('iSKeyGeneratorHelper')
+            contentType = true
+        }
+
+        projectUserKeyGenerator(ProjectUserKeyGenerator){
+            iSKeyGeneratorHelper = ref('iSKeyGeneratorHelper')
+            contentType = true
+        }
+
+        sprintKeyGenerator(SprintKeyGenerator){
+            iSKeyGeneratorHelper = ref('iSKeyGeneratorHelper')
+            contentType = true
+        }
+
+        releaseKeyGenerator(ReleaseKeyGenerator){
+            iSKeyGeneratorHelper = ref('iSKeyGeneratorHelper')
+            contentType = true
+        }
+
+        releasesKeyGenerator(ReleasesKeyGenerator){
+            iSKeyGeneratorHelper = ref('iSKeyGeneratorHelper')
+            contentType = true
+        }
+
+        releasesRoleKeyGenerator(ReleasesRoleKeyGenerator){
+            iSKeyGeneratorHelper = ref('iSKeyGeneratorHelper')
+            contentType = true
+        }
+
+        storyKeyGenerator(StoryKeyGenerator) {
+            iSKeyGeneratorHelper = ref('iSKeyGeneratorHelper')
+            contentType = true
+        }
+
+        storiesKeyGenerator(StoriesKeyGenerator) {
+            iSKeyGeneratorHelper = ref('iSKeyGeneratorHelper')
+            contentType = true
+        }
+
+
+        actorKeyGenerator(ActorKeyGenerator) {
+            iSKeyGeneratorHelper = ref('iSKeyGeneratorHelper')
+            contentType = true
+        }
+
+        actorsKeyGenerator(ActorsKeyGenerator) {
+            iSKeyGeneratorHelper = ref('iSKeyGeneratorHelper')
+            contentType = true
+        }
+
+        featureKeyGenerator(FeatureKeyGenerator) {
+            iSKeyGeneratorHelper = ref('iSKeyGeneratorHelper')
+            contentType = true
+        }
+
+        featuresKeyGenerator(FeaturesKeyGenerator) {
+            iSKeyGeneratorHelper = ref('iSKeyGeneratorHelper')
+            contentType = true
+        }
+
+        taskKeyGenerator(TaskKeyGenerator) {
+            iSKeyGeneratorHelper = ref('iSKeyGeneratorHelper')
+            contentType = true
+        }
+
+        tasksKeyGenerator(TasksKeyGenerator) {
+            iSKeyGeneratorHelper = ref('iSKeyGeneratorHelper')
+            contentType = true
+        }
+
         springcacheDefaultKeyGenerator(WebContentKeyGenerator){
             contentType = true
         }
@@ -175,7 +232,6 @@ class IcescrumCoreGrailsPlugin {
     def doWithDynamicMethods = { ctx ->
         // Manually match the UIController classes
         SecurityService securityService = ctx.getBean('securityService')
-        SpringcacheService springcacheService = ctx.getBean('springcacheService')
 
         application.controllerClasses.each {
             if (it.hasProperty(UiControllerArtefactHandler.PROPERTY)) {
@@ -183,17 +239,11 @@ class IcescrumCoreGrailsPlugin {
                 def plugin = it.hasProperty(UiControllerArtefactHandler.PLUGINNAME) ? it.getPropertyValue(UiControllerArtefactHandler.PLUGINNAME) : null
                 addUIControllerMethods(it, ctx, plugin)
             }
-            addCacheFlushMethod(it, springcacheService, ctx)
             addBroadcastMethods(it, securityService, application)
             addErrorMethod(it)
         }
         application.serviceClasses.each {
-            addCacheFlushMethod(it, springcacheService, ctx)
             addBroadcastMethods(it, securityService, application)
-        }
-
-        application.domainClasses.each {
-            addCacheFlushMethod(it, springcacheService, ctx)
         }
     }
 
@@ -212,8 +262,6 @@ class IcescrumCoreGrailsPlugin {
         }
         if (application.isControllerClass(event.source)) {
             SecurityService securityService = event.ctx.getBean('securityService')
-            SpringcacheService springcacheService = event.ctx.getBean('springcacheService')
-            addCacheFlushMethod(event.source, springcacheService, event.ctx)
             addBroadcastMethods(event.source, securityService, application)
             addErrorMethod(event.source)
         }
@@ -268,26 +316,6 @@ class IcescrumCoreGrailsPlugin {
                     actionClosure
                 }
                 clazz.registerMapping(actionName)
-            }
-        }
-    }
-
-    private addCacheFlushMethod(source,SpringcacheService springcacheService, ctx) {
-        source.metaClass.flushCache = { Map args ->
-            def cacheResolver = ctx.getBean(args.cacheResolver ?: 'springcacheDefaultCacheResolver')
-            springcacheService.flush((cacheResolver).resolveCacheName(args.cache))
-        }
-
-        source.metaClass.removeCache = { Map args ->
-            def cacheResolver = ctx.getBean(args.cacheResolver ?: 'springcacheDefaultCacheResolver')
-            def cacheNamePatterns = (cacheResolver).resolveCacheName(args.cache)
-            if (cacheNamePatterns instanceof String) cacheNamePatterns = [cacheNamePatterns]
-            def caches = []
-            springcacheService.springcacheCacheManager?.cacheNames?.each { name ->
-                if (cacheNamePatterns.any { name ==~ it }){ caches << name }
-            }
-            caches?.each{
-                springcacheService.springcacheCacheManager.getCache(it)?.removeAll()
             }
         }
     }

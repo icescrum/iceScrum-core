@@ -97,83 +97,71 @@ class SecurityService {
 
     void changeOwner(User u, o) {
         aclUtilService.changeOwner o, u.username
-        springcacheService.flush(SecurityService.CACHE_OWNER)
+        u.lastUpdated = new Date()
+        u.save()
         publishEvent(new IceScrumUserEvent(u, o, this.class, (User) springSecurityService.currentUser, IceScrumUserEvent.EVENT_IS_OWNER))
     }
 
     void createProductOwnerPermissions(User u, Product p) {
         aclUtilService.addPermission p, u.username, WRITE
-        springcacheService.flush('project_'+p.id+'_'+SecurityService.CACHE_PRODUCTOWNER)
+        u.lastUpdated = new Date()
+        u.save()
         publishEvent(new IceScrumUserEvent(u, p, this.class, (User) springSecurityService.currentUser, IceScrumUserEvent.EVENT_IS_PRODUCTOWNER))
     }
 
     void deleteProductOwnerPermissions(User u, Product p) {
         aclUtilService.deletePermission p, u.username, WRITE
-        springcacheService.flush('project_'+p.id+'_'+SecurityService.CACHE_PRODUCTOWNER)
+        u.lastUpdated = new Date()
+        u.save()
         publishEvent(new IceScrumUserEvent(u, p, this.class, (User) springSecurityService.currentUser, IceScrumUserEvent.EVENT_NOT_PRODUCTOWNER))
     }
 
     void createTeamMemberPermissions(User u, Team t) {
         aclUtilService.addPermission t, u.username, READ
-        springcacheService.flush('team_'+t.id+'_'+SecurityService.CACHE_TEAMMEMBER)
-        t.products?.each{
-            springcacheService.flush('project_'+it.id+'_'+SecurityService.CACHE_OPENPRODUCTTEAM)
-            springcacheService.flush('project_'+it.id+'_'+SecurityService.CACHE_PRODUCTTEAM)
-        }
+        u.lastUpdated = new Date()
+        u.save()
         publishEvent(new IceScrumUserEvent(u, t, this.class, (User) springSecurityService.currentUser, IceScrumUserEvent.EVENT_IS_MEMBER))
     }
 
     void deleteTeamMemberPermissions(User u, Team t) {
         aclUtilService.deletePermission t, u.username, READ
-        springcacheService.flush('team_'+t.id+'_'+SecurityService.CACHE_TEAMMEMBER)
-        t.products?.each{
-            springcacheService.flush('project_'+it.id+'_'+SecurityService.CACHE_OPENPRODUCTTEAM)
-            springcacheService.flush('project_'+it.id+'_'+SecurityService.CACHE_PRODUCTTEAM)
-        }
+        u.lastUpdated = new Date()
+        u.save()
         publishEvent(new IceScrumUserEvent(u, t, this.class, (User) springSecurityService.currentUser, IceScrumUserEvent.EVENT_NOT_MEMBER))
     }
 
     void createAdministrationPermissionsForProduct(User u, Product p){
         aclUtilService.addPermission GrailsHibernateUtil.unwrapIfProxy(p), u.username, ADMINISTRATION
-        springcacheService.flush('project_'+p.id+'_'+SecurityService.CACHE_SCRUMMASTER)
-        springcacheService.flush('project_'+p.id+'_'+SecurityService.CACHE_OPENPRODUCTTEAM)
-        springcacheService.flush('project_'+p.id+'_'+SecurityService.CACHE_PRODUCTTEAM)
+        u.lastUpdated = new Date()
+        u.save()
     }
 
     void createScrumMasterPermissions(User u, Team t) {
         aclUtilService.addPermission t, u.username, WRITE
         aclUtilService.addPermission t, u.username, ADMINISTRATION
-        t.products?.each{
-            if (it.id){
-                createAdministrationPermissionsForProduct(u, (Product)GrailsHibernateUtil.unwrapIfProxy(it))
-                springcacheService.flush('project_'+it.id+'_'+SecurityService.CACHE_OPENPRODUCTTEAM)
-                springcacheService.flush('project_'+it.id+'_'+SecurityService.CACHE_PRODUCTTEAM)
-            }
-        }
-        springcacheService.flush('team_'+t.id+'_'+SecurityService.CACHE_SCRUMMASTER)
+        u.lastUpdated = new Date()
+        u.save()
         publishEvent(new IceScrumUserEvent(u, t, this.class, (User) springSecurityService.currentUser, IceScrumUserEvent.EVENT_IS_SCRUMMASTER))
     }
 
     void deleteScrumMasterPermissions(User u, Team t) {
         aclUtilService.deletePermission t, u.username, WRITE
         aclUtilService.deletePermission t, u.username, ADMINISTRATION
-        t.products?.each{
-            aclUtilService.deletePermission GrailsHibernateUtil.unwrapIfProxy(it), u.username, ADMINISTRATION
-            springcacheService.flush('project_'+it.id+'_'+SecurityService.CACHE_OPENPRODUCTTEAM)
-            springcacheService.flush('project_'+it.id+'_'+SecurityService.CACHE_PRODUCTTEAM)
-        }
-        springcacheService.flush('team_'+t.id+'_'+SecurityService.CACHE_SCRUMMASTER)
+        u.lastUpdated = new Date()
+        u.save()
         publishEvent(new IceScrumUserEvent(u, t, this.class, (User) springSecurityService.currentUser, IceScrumUserEvent.EVENT_NOT_SCRUMMASTER))
     }
 
     void createStakeHolderPermissions(User u, Product p) {
         aclUtilService.addPermission p, u.username, READ
-        springcacheService.flush('project_'+p.id+'_'+SecurityService.CACHE_STAKEHOLDER)
+        u.lastUpdated = new Date()
+        u.save()
     }
 
     void deleteStakeHolderPermissions(User u, Product p) {
         aclUtilService.deletePermission p, u.username, READ
-        springcacheService.flush('project_'+p.id+'_'+SecurityService.CACHE_STAKEHOLDER)
+        u.lastUpdated = new Date()
+        u.save()
     }
 
     @SuppressWarnings("GroovyMissingReturnStatement")
@@ -190,8 +178,7 @@ class SecurityService {
                 product = product.id
             }
             if (product) {
-                def cacheResolver = grailsApplication.mainContext.getBean('projectCacheResolver')
-                authorized = springcacheService.doWithCache(cacheResolver.resolveCacheName(product+'_'+CACHE_PRODUCTTEAM), new CacheKeyBuilder().append(product).append(auth.principal.id).toCacheKey()) {
+                authorized = springcacheService.doWithCache(CACHE_PRODUCTTEAM, new CacheKeyBuilder().append(product).append(auth.principal.id).append(getUserLastUpdated(auth.principal.id)).toCacheKey()) {
                     if (!p) p = Product.get(product)
                     if (!p || !auth) return false
                     //Check if he is ScrumMaster or Member
@@ -219,8 +206,7 @@ class SecurityService {
                 product = product.id
             }
             if (product) {
-                def cacheResolver = grailsApplication.mainContext.getBean('applicationCacheResolver')
-                return springcacheService.doWithCache(cacheResolver.resolveCacheName(CACHE_ARCHIVEDPRODUCT), new CacheKeyBuilder().append(product).toCacheKey()) {
+                return springcacheService.doWithCache(CACHE_ARCHIVEDPRODUCT, new CacheKeyBuilder().append(product).append(getProductLastUpdated(product)).toCacheKey()) {
                     if (!p) p = Product.get(product)
                     if (!p) return false
                     return p.preferences.archived
@@ -237,8 +223,7 @@ class SecurityService {
     }
 
     Team openProductTeam(Long productId, Long principalId) {
-        def cacheResolver = grailsApplication.mainContext.getBean('projectCacheResolver')
-        springcacheService.doWithCache(cacheResolver.resolveCacheName(productId+'_'+CACHE_OPENPRODUCTTEAM), new CacheKeyBuilder().append(productId).append(principalId).toCacheKey()) {
+        springcacheService.doWithCache(CACHE_OPENPRODUCTTEAM, new CacheKeyBuilder().append(productId).append(principalId).append(getUserLastUpdated(principalId)).toCacheKey()) {
             def team = Team.productTeam(productId, principalId).list(max: 1)
             if (team)
                 team[0]
@@ -276,8 +261,7 @@ class SecurityService {
 
     boolean isScrumMaster(team, auth, t = null) {
         if (team) {
-            def cacheResolver = grailsApplication.mainContext.getBean('teamCacheResolver')
-            def res = springcacheService.doWithCache(cacheResolver.resolveCacheName(team+'_'+CACHE_SCRUMMASTER), new CacheKeyBuilder().append(team).append(auth.principal.id).toCacheKey()) {
+            def res = springcacheService.doWithCache(CACHE_SCRUMMASTER, new CacheKeyBuilder().append(team).append(auth.principal.id).append(getUserLastUpdated(auth.principal.id)).toCacheKey()) {
                 if (!t) t = Team.get(team)
                 if (!t || !auth) return false
                 return aclUtilService.hasPermission(auth, GrailsHibernateUtil.unwrapIfProxy(t), SecurityService.scrumMasterPermissions)
@@ -302,11 +286,10 @@ class SecurityService {
             product = product.id
         }
 
-        def authkey = SpringSecurityUtils.ifAnyGranted(Authority.ROLE_VISITOR) ? auth.principal : auth.principal.id
+        def authkey = SpringSecurityUtils.ifAnyGranted(Authority.ROLE_VISITOR) ? auth.principal : auth.principal.id + getUserLastUpdated(auth.principal.id).toString()
 
         if (product) {
-            def cacheResolver = grailsApplication.mainContext.getBean('projectCacheResolver')
-            return springcacheService.doWithCache(cacheResolver.resolveCacheName(product+'_'+CACHE_STAKEHOLDER), new CacheKeyBuilder().append(onlyPrivate).append(product).append(authkey).toCacheKey()) {
+            return springcacheService.doWithCache(CACHE_STAKEHOLDER, new CacheKeyBuilder().append(onlyPrivate).append(product).append(authkey).toCacheKey()) {
                 if (!p) p = Product.get(product)
                 if (!p || !auth) return false
                 if (p.preferences.hidden)
@@ -347,8 +330,7 @@ class SecurityService {
 
     boolean isProductOwner(product, auth, p = null) {
         if (product) {
-            def cacheResolver = grailsApplication.mainContext.getBean('projectCacheResolver')
-            return springcacheService.doWithCache(cacheResolver.resolveCacheName(product+'_'+CACHE_PRODUCTOWNER), new CacheKeyBuilder().append(product).append(auth.principal.id).toCacheKey()) {
+            return springcacheService.doWithCache(CACHE_PRODUCTOWNER, new CacheKeyBuilder().append(product).append(auth.principal.id).append(getUserLastUpdated(auth.principal.id)).toCacheKey()) {
                 if (!p) p = Product.get(product)
                 if (!p || !auth) return false
                 return aclUtilService.hasPermission(auth, GrailsHibernateUtil.unwrapIfProxy(p), SecurityService.productOwnerPermissions)
@@ -360,7 +342,7 @@ class SecurityService {
 
     boolean teamMember(team, auth) {
         if (!springSecurityService.isLoggedIn())
-            return
+            return false
 
         if (SpringSecurityUtils.ifAnyGranted(Authority.ROLE_ADMIN))
             return true
@@ -381,8 +363,7 @@ class SecurityService {
         }
 
         if (team) {
-            def cacheResolver = grailsApplication.mainContext.getBean('teamCacheResolver')
-            return springcacheService.doWithCache(cacheResolver.resolveCacheName(team+'_'+CACHE_TEAMMEMBER), new CacheKeyBuilder().append(team).append(auth.principal.id).toCacheKey()) {
+            return springcacheService.doWithCache(CACHE_TEAMMEMBER, new CacheKeyBuilder().append(team).append(auth.principal.id).append(getUserLastUpdated(auth.principal.id)).toCacheKey()) {
                 if (!t) t = Team.get(team)
                 if (!t || !auth) return false
                 return aclUtilService.hasPermission(auth, GrailsHibernateUtil.unwrapIfProxy(t), SecurityService.teamMemberPermissions)
@@ -467,8 +448,7 @@ class SecurityService {
 
     boolean isOwner(domain, auth, domainClass, d = null) {
         if (domain && domainClass) {
-            def cacheResolver = grailsApplication.mainContext.getBean('applicationCacheResolver')
-            return springcacheService.doWithCache(cacheResolver.resolveCacheName(CACHE_OWNER), new CacheKeyBuilder().append(domain).append(domainClass.class.name).append(auth.principal.id).toCacheKey()) {
+            return springcacheService.doWithCache(CACHE_OWNER, new CacheKeyBuilder().append(domain).append(domainClass.class.name).append(auth.principal.id).append(getUserLastUpdated(auth.principal.id)).toCacheKey()) {
                 if (!d) d = domainClass.get(domain)
 
                 if (!d || !auth) return false
@@ -503,6 +483,26 @@ class SecurityService {
             request.inProduct       = false
             request.owner           = false
             request.productArchived = true
+        }
+    }
+
+    def getUserLastUpdated(id){
+        User.createCriteria().get {
+          eq 'id', id
+            projections {
+               property 'lastUpdated'
+            }
+          cache true
+        }
+    }
+
+    def getProductLastUpdated(id){
+        Product.createCriteria().get {
+          eq 'id', id
+            projections {
+               property 'lastUpdated'
+            }
+          cache true
         }
     }
 
