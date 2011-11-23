@@ -336,6 +336,10 @@ class SprintService {
             throw new RuntimeException()
         }
 
+        sprint.tasks?.findAll {it.type == Task.TYPE_URGENT || it.type == Task.TYPE_RECURRENT}?.each {
+            it.lastUpdated = new Date()
+        }
+
         broadcast(function: 'close', message: sprint)
         resumeBufferedBroadcast()
         publishEvent(new IceScrumSprintEvent(sprint, this.class, (User) springSecurityService.currentUser, IceScrumSprintEvent.EVENT_CLOSED))
