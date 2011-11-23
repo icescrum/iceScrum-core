@@ -332,13 +332,15 @@ class SprintService {
         sprint.state = Sprint.STATE_DONE
         sprint.closeDate = new Date()
 
+        sprint.tasks?.findAll {it.type == Task.TYPE_URGENT || it.type == Task.TYPE_RECURRENT}?.each {
+            it.lastUpdated = new Date()
+        }
+
         if (!sprint.save(flush: true)) {
             throw new RuntimeException()
         }
 
-        sprint.tasks?.findAll {it.type == Task.TYPE_URGENT || it.type == Task.TYPE_RECURRENT}?.each {
-            it.lastUpdated = new Date()
-        }
+        sprint.refresh()
 
         broadcast(function: 'close', message: sprint)
         resumeBufferedBroadcast()
