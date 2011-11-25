@@ -197,14 +197,17 @@ class TableTagLib {
             nbRows++
 
             def version
-            if (!row.attrs.version)
+            if (!row.attrs.version){
                 row.attrs.version = 0
-            if (row?.attrs?."${row.attrs.var}"?.version == 0) {
-                version = 0
-            } else if (row?.attrs?."${row.attrs.var}"?.version == null) {
-                version = 0
-            } else {
-                version = row?.attrs?."${row.attrs.var}"?.version
+                if (row?.attrs?."${row.attrs.var}"?.version == 0) {
+                    version = 0
+                } else if (row?.attrs?."${row.attrs.var}"?.version == null) {
+                    version = 0
+                } else {
+                    version = row?.attrs?."${row.attrs.var}"?.version
+                }
+            }else{
+                version = row.attrs.version
             }
 
             if (row.attrs.rowClass in Closure) {

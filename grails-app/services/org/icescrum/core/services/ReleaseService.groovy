@@ -288,6 +288,8 @@ class ReleaseService {
                     state: release.state.text().toInteger(),
                     releaseVelocity: (release.releaseVelocity.text().isNumber()) ? release.releaseVelocity.text().toDouble() : 0,
                     name: release.name.text(),
+                    dateCreated: release.dateCreated.text() ? new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(release.dateCreated.text()) : new Date(),
+                    lastUpdated: release.lastUpdated.text() ? new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(release.lastUpdated.text()) : new Date(),
                     startDate: new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(release.startDate.text()),
                     endDate: new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(release.endDate.text()),
                     orderNumber: release.orderNumber.text().toInteger(),

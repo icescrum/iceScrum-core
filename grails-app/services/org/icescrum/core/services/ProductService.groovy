@@ -340,6 +340,8 @@ class ProductService {
                     name: product."${'name'}".text(),
                     pkey: product.pkey.text(),
                     description: product.description.text(),
+                    dateCreated: product.dateCreated.text() ? new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(product.dateCreated.text()) : new Date(),
+                    lastUpdated: product.lastUpdated.text() ? new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(product.lastUpdated.text()) : new Date(),
                     startDate: new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(product.startDate.text()),
                     endDate: new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(product.endDate.text())
             )

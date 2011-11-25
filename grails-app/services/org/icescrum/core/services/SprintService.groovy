@@ -543,6 +543,8 @@ class SprintService {
                     velocity: (sprint.velocity.text().isNumber()) ? sprint.velocity.text().toDouble() : 0d,
                     dailyWorkTime: (sprint.dailyWorkTime.text().isNumber()) ? sprint.dailyWorkTime.text().toDouble() : 8d,
                     capacity: (sprint.capacity.text().isNumber()) ? sprint.capacity.text().toDouble() : 0d,
+                    dateCreated: sprint.dateCreated.text() ? new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(sprint.dateCreated.text()) : new Date(),
+                    lastUpdated: sprint.lastUpdated.text() ? new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(sprint.lastUpdated.text()) : new Date(),
                     startDate: new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(sprint.startDate.text()),
                     endDate: new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(sprint.endDate.text()),
                     orderNumber: sprint.orderNumber.text().toInteger(),
