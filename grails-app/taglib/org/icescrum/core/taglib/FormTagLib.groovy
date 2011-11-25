@@ -577,7 +577,7 @@ class FormTagLib {
         def jqCode = ""
 
         if (!attrs.rich) {
-            jqCode += "\$('#${attrs.id}-field').input({className:\"${classes}\"});"
+            jqCode += "\$('#${attrs.id}-field').input({className:\"${classe}\"});"
         }
 
         if (attrs.focus) {
@@ -599,13 +599,7 @@ class FormTagLib {
                 out << markitup.editor(attrs.rich, {attrs.value})
             }
         } else {
-            out << "<span class=\"start\"></span>"
-            out << "<span class=\"content\">"
             out << textArea(attrs, body())
-            out << "</span>"
-
-
-            out << "<span class=\"end\"></span>"
         }
         out << "</span>"
         if (attrs.focus) {
