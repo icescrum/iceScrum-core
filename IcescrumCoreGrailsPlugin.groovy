@@ -54,6 +54,7 @@ import org.icescrum.cache.ActorsKeyGenerator
 import org.icescrum.cache.StoriesKeyGenerator
 import org.icescrum.cache.ProjectKeyGenerator
 import org.icescrum.cache.ReleaseKeyGenerator
+import org.icescrum.cache.TeamKeyGenerator
 
 class IcescrumCoreGrailsPlugin {
     def groupId = 'org.icescrum'
@@ -144,6 +145,11 @@ class IcescrumCoreGrailsPlugin {
         }
 
         projectKeyGenerator(ProjectKeyGenerator){
+            iSKeyGeneratorHelper = ref('iSKeyGeneratorHelper')
+            contentType = true
+        }
+
+        teamKeyGenerator(TeamKeyGenerator){
             iSKeyGeneratorHelper = ref('iSKeyGeneratorHelper')
             contentType = true
         }

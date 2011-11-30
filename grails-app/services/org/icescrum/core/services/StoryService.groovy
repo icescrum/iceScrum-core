@@ -132,8 +132,8 @@ class StoryService {
             def actor = Actor.findByBacklogAndName(story.backlog, story.textAs)
             if (actor) {
                 actor.addToStories(story)
-            } else {
-                actor.removeFromStories(story)
+            } else if(story.actor) {
+                story.actor.removeFromStories(story)
             }
         } else if (story.textAs == '' && story.actor) {
             story.actor.removeFromStories(story)
