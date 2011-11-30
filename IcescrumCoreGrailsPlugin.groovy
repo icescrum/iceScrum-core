@@ -368,21 +368,23 @@ class IcescrumCoreGrailsPlugin {
             }
             attrs.channel.each {
                 if (request.bufferBroadcast && request.bufferBroadcast."${it}") {
-                    def broadcaster = BroadcasterFactory.default.lookup(ExcludeSessionBroadcaster.class, it)
-                    def batch = []
-                    def messages = request.bufferBroadcast."${it}"
-                    int partitionCount = messages.size() / size
-                    partitionCount.times { partitionNumber ->
-                        def start = partitionNumber * size
-                        def end = start + size - 1
-                        batch << messages[start..end]
-                    }
-                    if (messages.size() % size) batch << messages[partitionCount * size..-1]
-                    batch.each {
-                        if (attrs.excludeCaller) {
-                            broadcaster?.broadcast((it as JSON).toString(), request.session)
-                        } else {
-                            broadcaster?.broadcast((it as JSON).toString())
+                    if(BroadcasterFactory.default){
+                        def broadcaster = BroadcasterFactory.default.lookup(ExcludeSessionBroadcaster.class, it)
+                        def batch = []
+                        def messages = request.bufferBroadcast."${it}"
+                        int partitionCount = messages.size() / size
+                        partitionCount.times { partitionNumber ->
+                            def start = partitionNumber * size
+                            def end = start + size - 1
+                            batch << messages[start..end]
+                        }
+                        if (messages.size() % size) batch << messages[partitionCount * size..-1]
+                        batch.each {
+                            if (attrs.excludeCaller) {
+                                broadcaster?.broadcast((it as JSON).toString(), request.session)
+                            } else {
+                                broadcaster?.broadcast((it as JSON).toString())
+                            }
                         }
                     }
                 }
@@ -409,18 +411,20 @@ class IcescrumCoreGrailsPlugin {
 
             def message = [call: attrs.function, object: attrs.message]
             attrs.channel.each {
-                def broadcaster = BroadcasterFactory.default.lookup(ExcludeSessionBroadcaster.class, it)
-                if (request.bufferBroadcast?."${it}" != null) {
-                    request.bufferBroadcast."${it}" << message
-                } else {
-                    try {
-                        if (attrs.excludeCaller) {
-                            broadcaster?.broadcast((message as JSON).toString(), request.session)
-                        } else {
-                            broadcaster?.broadcast((message as JSON).toString())
+                if(BroadcasterFactory.default){
+                    def broadcaster = BroadcasterFactory.default.lookup(ExcludeSessionBroadcaster.class, it)
+                    if (request.bufferBroadcast?."${it}" != null) {
+                        request.bufferBroadcast."${it}" << message
+                    } else {
+                        try {
+                            if (attrs.excludeCaller) {
+                                broadcaster?.broadcast((message as JSON).toString(), request.session)
+                            } else {
+                                broadcaster?.broadcast((message as JSON).toString())
+                            }
+                        }catch(IllegalStateException e){
+                            log.error("Error when broadcasting, message: ${e.getMessage()}", e)
                         }
-                    }catch(IllegalStateException e){
-                        log.error("Error when broadcasting, message: ${e.getMessage()}", e)
                     }
                 }
             }
@@ -439,12 +443,15 @@ class IcescrumCoreGrailsPlugin {
             }
             def message = [call: attrs.function, object: attrs.message]
             attrs.user.each {
-                def broadcaster = BroadcasterFactory.default.lookup(DefaultBroadcaster.class, it)
-                try {
-                    broadcaster?.broadcast((message as JSON).toString())
-                }catch(IllegalStateException e){
-                    log.error("Error when broadcasting, message: ${e.getMessage()}", e)
+                if(BroadcasterFactory.default){
+                    def broadcaster = BroadcasterFactory.default.lookup(DefaultBroadcaster.class, it)
+                    try {
+                        broadcaster?.broadcast((message as JSON).toString())
+                    }catch(IllegalStateException e){
+                        log.error("Error when broadcasting, message: ${e.getMessage()}", e)
+                    }
                 }
+
             }
         }
     }
