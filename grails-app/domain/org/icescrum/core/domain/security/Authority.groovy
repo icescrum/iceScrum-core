@@ -27,7 +27,7 @@ package org.icescrum.core.domain.security
 import org.icescrum.core.domain.Product
 import org.icescrum.core.domain.Team
 
-class Authority {
+class Authority implements Serializable {
     static final String ROLE_ADMIN = 'ROLE_ADMIN'
     static final String ROLE_USER = 'ROLE_USER'
     static final String ROLE_VISITOR = 'ROLE_ANONYMOUS'

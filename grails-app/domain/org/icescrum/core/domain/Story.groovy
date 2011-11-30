@@ -145,7 +145,8 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                 eq 'id', p
             }
             or {
-                if (term?.replaceAll('%','')?.isLong()){
+                def termLong = term?.replaceAll('%','')
+                if (termLong?.isLong()){
                     eq 'id', term.toLong()
                 }else{
                     ilike 'name', term
@@ -166,8 +167,9 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                 eq 'id', p
             }
             or {
-                if (term?.replaceAll('%','')?.isLong()){
-                    eq 'id', term.toLong()
+                def termLong = term?.replaceAll('%','')
+                if (termLong?.isLong()){
+                    eq 'id', termLong.toLong()
                 }else{
                     ilike 'name', term
                     ilike 'textAs', term

@@ -28,7 +28,7 @@ icescrum {
         servlet {
             // Servlet initialization parameters
             initParams = ['org.atmosphere.useNative': 'true','org.atmosphere.useWebSocket': icescrum.push.websocket]
-            urlPattern = '/stream/*'
+            urlPattern = '/stream/app'
         }
         handlers {
             // This closure is used to generate the atmosphere.xml using a MarkupBuilder instance in META-INF folder
