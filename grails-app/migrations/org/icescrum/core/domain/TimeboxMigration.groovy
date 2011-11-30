@@ -24,14 +24,20 @@ class TimeboxMigration {
 		static migration = {
             changeSet(id:'timebox_add_constraint_dateCreated', author:'vbarrier') {
                   preConditions(onFail:"MARK_RAN"){
-                      dbms(type:'hsqldb')
+                      or {
+                          dbms(type:'hsqldb')
+                          dbms(type:'postgresql')
+                      }
                   }
                   sql('UPDATE icescrum2_timebox set date_created = CURRENT_DATE WHERE date_created is NULL')
                   addNotNullConstraint(tableName:"icescrum2_timebox",columnName:'date_created',columnDataType:'DATETIME')
             }
             changeSet(id:'timebox_add_constraint_lastUpdated', author:'vbarrier') {
                   preConditions(onFail:"MARK_RAN"){
-                      dbms(type:'hsqldb')
+                      or {
+                          dbms(type:'hsqldb')
+                          dbms(type:'postgresql')
+                      }
                   }
                   sql('UPDATE icescrum2_timebox set last_updated = CURRENT_DATE WHERE last_updated is NULL')
                   addNotNullConstraint(tableName:"icescrum2_timebox",columnName:'last_updated',columnDataType:'DATETIME')
@@ -39,7 +45,10 @@ class TimeboxMigration {
             changeSet(id:'timebox_add_constraint_dateCreated_sql', author:'vbarrier') {
                   preConditions(onFail:"MARK_RAN"){
                       not{
-                        dbms(type:'hsqldb')
+                          or {
+                              dbms(type:'hsqldb')
+                              dbms(type:'postgresql')
+                          }
                       }
                   }
                   sql('UPDATE icescrum2_timebox set date_created = CURRENT_DATE() WHERE date_created is NULL')
@@ -48,7 +57,10 @@ class TimeboxMigration {
             changeSet(id:'timebox_add_constraint_lastUpdated_sql', author:'vbarrier') {
                   preConditions(onFail:"MARK_RAN"){
                       not{
-                        dbms(type:'hsqldb')
+                          or {
+                              dbms(type:'hsqldb')
+                              dbms(type:'postgresql')
+                          }
                       }
                   }
                   sql('UPDATE icescrum2_timebox set last_updated = CURRENT_DATE() WHERE last_updated is NULL')
