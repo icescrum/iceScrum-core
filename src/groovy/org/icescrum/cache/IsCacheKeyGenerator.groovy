@@ -39,6 +39,8 @@ import org.icescrum.core.domain.Task
 import org.icescrum.core.domain.Actor
 import org.icescrum.core.domain.Release
 import org.icescrum.core.domain.Sprint
+import org.icescrum.core.domain.User
+import org.icescrum.core.domain.Team
 
 public class LocaleKeyGenerator extends WebContentKeyGenerator {
     def iSKeyGeneratorHelper
@@ -179,6 +181,15 @@ public class ReleasesRoleKeyGenerator extends RoleKeyGenerator {
     }
 }
 
+public class TeamKeyGenerator extends LocaleKeyGenerator {
+    @Override
+    protected void generateKeyInternal(CacheKeyBuilder builder, ContentCacheParameters context) {
+        super.generateKeyInternal(builder, context)
+        builder << iSKeyGeneratorHelper.retrieveTeam(RCH.currentRequestAttributes().params)
+    }
+}
+
+
 public class ISKeyGeneratorHelper {
 
     def securityService
@@ -257,6 +268,22 @@ public class ISKeyGeneratorHelper {
             return [lastUpdated:u.lastUpdated,id:u.id]
         }else
             return 'anonymous'
+    }
+
+    public String retrieveUser(def params){
+        def u = User.get(params.id)
+        if (u)
+            return [lastUpdated:u.lastUpdated,id:u.id]
+        else
+            return 'anonymous'
+    }
+
+    public String retrieveTeam(def params){
+        def t = Team.get(params.id)
+        if (t)
+            return [lastUpdated:t.lastUpdated,id:t.id]
+        else
+            return null
     }
 
     public String retrieveLastUpdatedRelease(GrailsParameterMap params){
