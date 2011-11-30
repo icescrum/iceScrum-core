@@ -43,7 +43,7 @@ class AuthorityManager {
                 lastName: "Admin",
                 password: springSecurityService.encodePassword('adminadmin!'),
                 preferences: new UserPreferences(language: "en")
-        ).save()
+        ).save(flush:true)
 
         UserAuthority.create admin, adminRole, false
         UserAuthority.create admin, permissionRole, true
