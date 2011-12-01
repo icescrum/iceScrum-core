@@ -25,8 +25,21 @@ class TaskMigration {
     static migration = {
             // List of changesets
         changeSet(id:'task_constraint_block_column', author:'vbarrier') {
+            preConditions(onFail:"MARK_RAN"){
+                not{
+                  dbms(type:'mssql')
+                }
+            }
             sql('UPDATE icescrum2_task set blocked = false WHERE blocked is NULL')
             addNotNullConstraint(tableName:"icescrum2_task",columnName:'blocked',columnDataType:'BOOLEAN')
+        }
+
+        changeSet(id:'task_constraint_block_column_mssql', author:'vbarrier') {
+            preConditions(onFail:"MARK_RAN"){
+                dbms(type:'mssql')
+            }
+            sql('UPDATE icescrum2_task set blocked = 0 WHERE blocked is NULL')
+            addNotNullConstraint(tableName:"icescrum2_task",columnName:'blocked',columnDataType:'BIT')
         }
 
         changeSet(id:'task_estimation_integer_tofloat_column', author:'vbarrier') {

@@ -22,6 +22,7 @@ package org.icescrum.core.domain
 
 class TimeboxMigration {
 		static migration = {
+            // HSQL & PostgreSQL
             changeSet(id:'timebox_add_constraint_dateCreated', author:'vbarrier') {
                   preConditions(onFail:"MARK_RAN"){
                       or {
@@ -42,12 +43,33 @@ class TimeboxMigration {
                   sql('UPDATE icescrum2_timebox set last_updated = CURRENT_DATE WHERE last_updated is NULL')
                   addNotNullConstraint(tableName:"icescrum2_timebox",columnName:'last_updated',columnDataType:'DATETIME')
             }
+            // MSSQL
+            changeSet(id:'timebox_add_constraint_dateCreated_mssql', author:'vbarrier') {
+                  preConditions(onFail:"MARK_RAN"){
+                      or {
+                          dbms(type:'mssql')
+                      }
+                  }
+                  sql('UPDATE icescrum2_timebox set date_created = GETDATE() WHERE date_created is NULL')
+                  addNotNullConstraint(tableName:"icescrum2_timebox",columnName:'date_created',columnDataType:'DATETIME')
+            }
+            changeSet(id:'timebox_add_constraint_lastUpdated_mssql', author:'vbarrier') {
+                  preConditions(onFail:"MARK_RAN"){
+                      or {
+                          dbms(type:'mssql')
+                      }
+                  }
+                  sql('UPDATE icescrum2_timebox set last_updated = GETDATE() WHERE last_updated is NULL')
+                  addNotNullConstraint(tableName:"icescrum2_timebox",columnName:'last_updated',columnDataType:'DATETIME')
+            }
+            // OTHERS
             changeSet(id:'timebox_add_constraint_dateCreated_sql', author:'vbarrier') {
                   preConditions(onFail:"MARK_RAN"){
                       not{
                           or {
                               dbms(type:'hsqldb')
                               dbms(type:'postgresql')
+                              dbms(type:'mssql')
                           }
                       }
                   }
@@ -60,6 +82,7 @@ class TimeboxMigration {
                           or {
                               dbms(type:'hsqldb')
                               dbms(type:'postgresql')
+                              dbms(type:'mssql')
                           }
                       }
                   }

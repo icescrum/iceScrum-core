@@ -34,8 +34,21 @@ class ProductPreferencesMigration {
       }
 
       changeSet(id:'product_preferences_constraint_hideweekend_column', author:'vbarrier') {
+          preConditions(onFail:"MARK_RAN"){
+            not{
+              dbms(type:'mssql')
+            }
+          }
           sql('UPDATE icescrum2_product_preferences set hide_weekend = false WHERE hide_weekend is NULL')
           addNotNullConstraint(tableName:"icescrum2_product_preferences",columnName:'hide_weekend',columnDataType:'BOOLEAN')
+      }
+
+      changeSet(id:'product_preferences_constraint_hideweekend_column_mssql', author:'vbarrier') {
+          preConditions(onFail:"MARK_RAN"){
+            dbms(type:'mssql')
+          }
+          sql('UPDATE icescrum2_product_preferences set hide_weekend = 0 WHERE hide_weekend is NULL')
+          addNotNullConstraint(tableName:"icescrum2_product_preferences",columnName:'hide_weekend',columnDataType:'BIT')
       }
 
       changeSet(id:'product_preferences_drop_lock_po_column', author:'vbarrier') {
@@ -53,10 +66,26 @@ class ProductPreferencesMigration {
       }
 
       changeSet(id:'product_preferences_constraint_R3_R4_column', author:'vbarrier') {
+          preConditions(onFail:"MARK_RAN"){
+            not{
+              dbms(type:'mssql')
+            }
+          }
           sql('UPDATE icescrum2_product_preferences set archived = false WHERE archived is NULL')
           sql('UPDATE icescrum2_product_preferences set webservices = false WHERE webservices is NULL')
           addNotNullConstraint(tableName:"icescrum2_product_preferences",columnName:'webservices',columnDataType:'BOOLEAN')
           addNotNullConstraint(tableName:"icescrum2_product_preferences",columnName:'archived',columnDataType:'BOOLEAN')
+          addNotNullConstraint(tableName:"icescrum2_product_preferences",columnName:'timezone',columnDataType:'varchar(255)',defaultNullValue:'UTC')
+      }
+
+      changeSet(id:'product_preferences_constraint_R3_R4_column_mssql', author:'vbarrier') {
+          preConditions(onFail:"MARK_RAN"){
+            dbms(type:'mssql')
+          }
+          sql('UPDATE icescrum2_product_preferences set archived = 0 WHERE archived is NULL')
+          sql('UPDATE icescrum2_product_preferences set webservices = 0 WHERE webservices is NULL')
+          addNotNullConstraint(tableName:"icescrum2_product_preferences",columnName:'webservices',columnDataType:'BIT')
+          addNotNullConstraint(tableName:"icescrum2_product_preferences",columnName:'archived',columnDataType:'BIT')
           addNotNullConstraint(tableName:"icescrum2_product_preferences",columnName:'timezone',columnDataType:'varchar(255)',defaultNullValue:'UTC')
       }
     }
