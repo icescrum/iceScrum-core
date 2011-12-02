@@ -70,7 +70,7 @@ class User implements Serializable, Attachmentable {
         table 'icescrum2_user'
         password column: 'passwd'
         username index: 'username_index'
-        preferences lazy: true
+        preferences lazy: false
         teams cache: true
     }
 
