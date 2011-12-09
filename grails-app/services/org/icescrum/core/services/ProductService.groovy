@@ -40,6 +40,7 @@ import org.springframework.transaction.annotation.Transactional
 import org.icescrum.core.domain.*
 import org.icescrum.core.support.ApplicationSupport
 import org.codehaus.groovy.grails.plugins.springsecurity.SpringSecurityUtils
+import org.icescrum.core.taglib.ScrumTagLib
 
 /**
  * ProductService is a transactional class, that manage operations about
@@ -53,7 +54,6 @@ class ProductService {
     def teamService
     def actorService
     def grailsApplication
-    def g = new org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib()
 
     static transactional = true
 
@@ -335,6 +335,7 @@ class ProductService {
     @PreAuthorize('isAuthenticated()')
     @Transactional(readOnly = true)
     Product unMarshall(NodeChild product, ProgressSupport progress = null) {
+        def g = grailsApplication.mainContext.getBean('org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib')
         try {
             def p = new Product(
                     name: product."${'name'}".text(),
@@ -432,6 +433,7 @@ class ProductService {
     @PreAuthorize('isAuthenticated()')
     @Transactional(readOnly = true)
     def parseXML(File x, ProgressSupport progress = null) {
+        def g = grailsApplication.mainContext.getBean('org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib')
         def prod = new XmlSlurper().parse(x)
 
         progress?.updateProgress(0, g.message(code: 'is.parse', args: [g.message(code: 'is.product')]))
@@ -457,6 +459,7 @@ class ProductService {
     @PreAuthorize('isAuthenticated()')
     @Transactional(readOnly = true)
     def validate(Product p, ProgressSupport progress = null) {
+        def g = grailsApplication.mainContext.getBean('org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib')
         try {
             Product.withNewSession {
                 p.teams.eachWithIndex { team, index ->
@@ -479,7 +482,6 @@ class ProductService {
     @PreAuthorize('owner(#p)')
     def delete(Product p) {
         def id = p.id
-        springcacheService.flush(~/project_${id}\w+/)
         securityService.unsecureDomain p
         p.teams.each{ it.removeFromProducts(p) }
         p.delete(flush:true)
@@ -499,6 +501,7 @@ class ProductService {
     @PreAuthorize("hasRole('ROLE_ADMIN')")
     def unArchive(Product p) {
         p.preferences.archived = false
+        p.lastUpdated = new Date()
         if (!p.save(flush:true)){
             throw new RuntimeException()
         }
@@ -507,11 +510,27 @@ class ProductService {
 
     @PreAuthorize('owner(#product) or scrumMaster()')
     void removeAllRoles(Product product, Team team, User user, boolean broadcast = true){
-        teamService.removeMemberOrScrumMaster(team,user)
-        removeProductOwner(product,user)
-        removeStakeHolder(product,user)
-        if (broadcast)
-            broadcastToSingleUser(user:user.username, function:'removeRoleProduct', message:[class:'User',product:product])
+        if (team){
+            teamService.removeMemberOrScrumMaster(team,user)
+        }
+        if (product){
+            removeProductOwner(product,user)
+            removeStakeHolder(product,user)
+        }else{
+            team.products*.each{
+                removeProductOwner(it,user)
+                removeStakeHolder(it,user)
+            }
+        }
+        if (broadcast){
+            if (product){
+                broadcastToSingleUser(user:user.username, function:'removeRoleProduct', message:[class:'User',product:product])
+            }else{
+                team.products?.each{
+                    broadcastToSingleUser(user:user.username, function:'removeRoleProduct', message:[class:'User',product:it])
+                }
+            }
+        }
     }
 
     @Secured(['owner(#product) or scrumMaster()', 'RUN_AS_PERMISSIONS_MANAGER'])
@@ -524,26 +543,97 @@ class ProductService {
                 teamService.addMember(team,user)
                 break
             case Authority.PRODUCTOWNER:
-                addProductOwner(product,user)
+                if (product)
+                    addProductOwner(product,user)
+                else{
+                    team.products?.each{
+                        addProductOwner(it,user)
+                    }
+                }
                 break
             case Authority.STAKEHOLDER:
                 addStakeHolder(product,user)
                 break
             case Authority.PO_AND_SM:
                 teamService.addScrumMaster(team,user)
-                addProductOwner(product,user)
+                if (product)
+                    addProductOwner(product,user)
+                else{
+                    team.products?.each{
+                        addProductOwner(it,user)
+                    }
+                }
                 break
         }
-        if(broadcast)
-            broadcastToSingleUser(user:user.username, function:'addRoleProduct', message:[class:'User',product:product])
+        if(broadcast){
+            if (product){
+                broadcastToSingleUser(user:user.username, function:'addRoleProduct', message:[class:'User',product:product])
+            }else{
+                team?.products?.each{
+                    broadcastToSingleUser(user:user.username, function:'addRoleProduct', message:[class:'User',product:it])
+                }
+            }
+        }
     }
 
     @Secured(['owner(#product) or scrumMaster()', 'RUN_AS_PERMISSIONS_MANAGER'])
     void changeRole(Product product, Team team, User user, int role, boolean broadcast = true){
         removeAllRoles(product,team,user,false)
         addRole(product,team,user,role,false)
-        if(broadcast)
-            broadcastToSingleUser(user:user.username, function:'updateRoleProduct', message:[class:'User',product:product])
+        if(broadcast){
+            if (product){
+                broadcastToSingleUser(user:user.username, function:'updateRoleProduct', message:[class:'User',product:product])
+            }else{
+                team?.products?.each{
+                    broadcastToSingleUser(user:user.username, function:'updateRoleProduct', message:[class:'User',product:it])
+                }
+            }
+        }
+    }
+
+    List getAllMembersProduct(def product) {
+        def team = product.teams.asList().first()
+        def productOwners = product.productOwners
+        def scrumMasters = team.scrumMasters
+        def members = []
+        def is = grailsApplication.mainContext.getBean('org.icescrum.core.taglib.ScrumTagLib')
+
+        team.members?.each{
+            def role = Authority.MEMBER
+            if (scrumMasters*.id?.contains(it.id) && productOwners*.id?.contains(it.id)){
+                role = Authority.PO_AND_SM
+            }
+            else if(scrumMasters*.id?.contains(it.id)){
+                role = Authority.SCRUMMASTER
+            }
+            else if(productOwners*.id?.contains(it.id)){
+                role = Authority.PRODUCTOWNER
+            }
+            members.add([name: it.firstName+' '+it.lastName,
+                         activity:it.preferences.activity?:'&nbsp;',
+                         id: it.id,
+                         avatar:is.avatar(user:it,link:true),
+                         role: role])
+        }
+
+        productOwners?.each{
+            if(!members*.id?.contains(it.id)){
+                members.add([name: it.firstName+' '+it.lastName,
+                         activity:it.preferences.activity?:'&nbsp;',
+                         id: it.id,
+                         avatar:is.avatar(user:it,link:true),
+                         role: Authority.PRODUCTOWNER])
+            }
+        }
+
+        product.stakeHolders?.each{
+            members.add([name: it.firstName+' '+it.lastName,
+                         activity:it.preferences.activity?:'&nbsp;',
+                         id: it.id,
+                         avatar:is.avatar(user:it,link:true),
+                         role: Authority.STAKEHOLDER])
+        }
+        members.sort{ a,b -> a.role > b.role ? -1 : 1  }
     }
 
     private void addProductOwner(Product product, User productOwner) {

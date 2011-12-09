@@ -74,14 +74,13 @@ class UserService {
                     if (scale)
                         it.scaleAccurate(40, 40)
                 })
-                user.lastUpdated = new Date()
             }
         }
         catch (RuntimeException e) {
             if (log.debugEnabled) e.printStackTrace()
             throw new RuntimeException('is.convert.image.error')
         }
-
+        _user.lastUpdated = new Date()
         if (!_user.save(flush: true))
             throw new RuntimeException()
         publishEvent(new IceScrumUserEvent(_user, this.class, _user, IceScrumEvent.EVENT_UPDATED))
