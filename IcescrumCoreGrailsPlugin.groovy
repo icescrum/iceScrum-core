@@ -24,7 +24,6 @@ import grails.converters.JSON
 import grails.converters.XML
 import org.atmosphere.cpr.BroadcasterFactory
 import org.atmosphere.cpr.DefaultBroadcaster
-import org.atmosphere.util.ExcludeSessionBroadcaster
 import org.codehaus.groovy.grails.commons.GrailsClassUtils
 import org.codehaus.groovy.grails.scaffolding.view.ScaffoldingViewResolver
 import org.icescrum.components.UiControllerArtefactHandler
@@ -369,7 +368,8 @@ class IcescrumCoreGrailsPlugin {
             attrs.channel.each {
                 if (request.bufferBroadcast && request.bufferBroadcast."${it}") {
                     if(BroadcasterFactory.default){
-                        def broadcaster = BroadcasterFactory.default.lookup(ExcludeSessionBroadcaster.class, it)
+                        Class<? extends org.atmosphere.cpr.Broadcaster> bc = ((GrailsApplication) application).getClassLoader().loadClass(application.config.icescrum.push?.broadcaster?:'org.atmosphere.util.ExcludeSessionBroadcaster')
+                        def broadcaster = BroadcasterFactory.default.lookup(bc, it)
                         def batch = []
                         def messages = request.bufferBroadcast."${it}"
                         int partitionCount = messages.size() / size
@@ -412,7 +412,8 @@ class IcescrumCoreGrailsPlugin {
             def message = [call: attrs.function, object: attrs.message]
             attrs.channel.each {
                 if(BroadcasterFactory.default){
-                    def broadcaster = BroadcasterFactory.default.lookup(ExcludeSessionBroadcaster.class, it)
+                    Class<? extends org.atmosphere.cpr.Broadcaster> bc = ((GrailsApplication) application).getClassLoader().loadClass(application.config.icescrum.push?.broadcaster?:'org.atmosphere.util.ExcludeSessionBroadcaster')
+                    def broadcaster = BroadcasterFactory.default.lookup(bc, it)
                     if (request.bufferBroadcast?."${it}" != null) {
                         request.bufferBroadcast."${it}" << message
                     } else {
@@ -431,7 +432,8 @@ class IcescrumCoreGrailsPlugin {
         }
 
         source.metaClass.broadcastToSingleUser = {attrs ->
-            if (!application.config.icescrum.push?.enable)
+            ConfigObject conf = application.config.icescrum.push
+            if (!conf?.enable)
                 return
             assert attrs.function
             assert attrs.message

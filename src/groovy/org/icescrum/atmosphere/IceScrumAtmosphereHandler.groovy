@@ -29,7 +29,6 @@ import org.icescrum.core.domain.Team
 import org.springframework.security.core.context.SecurityContext
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository
 import org.atmosphere.cpr.*
-import org.atmosphere.util.ExcludeSessionBroadcaster
 import org.atmosphere.cpr.BroadcasterLifeCyclePolicy.ATMOSPHERE_RESOURCE_POLICY
 import org.atmosphere.cpr.BroadcasterLifeCyclePolicy.Builder
 import org.codehaus.groovy.grails.commons.ApplicationHolder
@@ -64,9 +63,10 @@ class IceScrumAtmosphereHandler implements AtmosphereHandler<HttpServletRequest,
         }
         channel = channel?.toString()
         if (channel) {
-            def broadcaster = BroadcasterFactory.default.lookup(ExcludeSessionBroadcaster.class, channel)
+            Class<? extends org.atmosphere.cpr.Broadcaster> bc = ApplicationHolder.application.getClassLoader().loadClass(conf?.broadcaster?:'org.atmosphere.util.ExcludeSessionBroadcaster')
+            def broadcaster = BroadcasterFactory.default.lookup(bc, channel)
             if(broadcaster == null){
-                broadcaster = new ExcludeSessionBroadcaster(channel, event.atmosphereConfig)
+                broadcaster = bc.newInstance(channel, event.atmosphereConfig)
                 broadcaster.setBroadcasterLifeCyclePolicy(new Builder().policy(ATMOSPHERE_RESOURCE_POLICY.EMPTY_DESTROY).build())
                 broadcaster.broadcasterConfig.addFilter(new StreamFilter())
                 if (conf.redis?.enable)
