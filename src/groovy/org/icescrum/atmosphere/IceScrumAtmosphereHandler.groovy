@@ -63,14 +63,12 @@ class IceScrumAtmosphereHandler implements AtmosphereHandler<HttpServletRequest,
         }
         channel = channel?.toString()
         if (channel) {
-            Class<? extends org.atmosphere.cpr.Broadcaster> bc = ApplicationHolder.application.getClassLoader().loadClass(conf?.broadcaster?:'org.atmosphere.util.ExcludeSessionBroadcaster')
+            Class<? extends org.atmosphere.cpr.Broadcaster> bc = (Class<? extends org.atmosphere.cpr.Broadcaster>) ApplicationHolder.application.getClassLoader().loadClass(conf?.broadcaster?:'org.atmosphere.util.ExcludeSessionBroadcaster')
             def broadcaster = BroadcasterFactory.default.lookup(bc, channel)
             if(broadcaster == null){
                 broadcaster = bc.newInstance(channel, event.atmosphereConfig)
                 broadcaster.setBroadcasterLifeCyclePolicy(new Builder().policy(ATMOSPHERE_RESOURCE_POLICY.EMPTY_DESTROY).build())
                 broadcaster.broadcasterConfig.addFilter(new StreamFilter())
-                if (conf.redis?.enable)
-                    broadcaster.broadcasterConfig.addFilter(new RedisFilter(broadcaster, conf.redis.host))
             }
             broadcaster.addAtmosphereResource(event)
             if (log.isDebugEnabled()) {
@@ -136,15 +134,14 @@ class IceScrumAtmosphereHandler implements AtmosphereHandler<HttpServletRequest,
 
     private void addBroadcasterToFactory(AtmosphereResource resource, String broadcasterID){
         def conf = ApplicationHolder.application.config.icescrum.push
-        Broadcaster singleBroadcaster= BroadcasterFactory.default.lookup(DefaultBroadcaster.class, broadcasterID);
+        Class<? extends org.atmosphere.cpr.Broadcaster> bc = (Class<? extends org.atmosphere.cpr.Broadcaster>) ApplicationHolder.application.getClassLoader().loadClass(conf?.userBroadcaster?:'org.atmosphere.cpr.DefaultBroadcaster')
+        Broadcaster singleBroadcaster= BroadcasterFactory.default.lookup(bc, broadcasterID);
         if(singleBroadcaster != null){
             singleBroadcaster.addAtmosphereResource(resource)
             return
         }
-        Broadcaster selfBroadcaster = new DefaultBroadcaster(broadcasterID, resource.atmosphereConfig);
+        Broadcaster selfBroadcaster = bc.newInstance(broadcasterID, resource.atmosphereConfig);
         selfBroadcaster.broadcasterConfig.addFilter(new StreamFilter())
-        if (conf.redis?.enable)
-            selfBroadcaster.broadcasterConfig.addFilter(new RedisFilter(selfBroadcaster, conf.redis.host))
         selfBroadcaster.setBroadcasterLifeCyclePolicy(new Builder().policy(ATMOSPHERE_RESOURCE_POLICY.EMPTY_DESTROY).build())
         selfBroadcaster.addAtmosphereResource(resource)
 

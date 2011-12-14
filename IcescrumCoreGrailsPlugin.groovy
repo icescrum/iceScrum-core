@@ -23,7 +23,6 @@
 import grails.converters.JSON
 import grails.converters.XML
 import org.atmosphere.cpr.BroadcasterFactory
-import org.atmosphere.cpr.DefaultBroadcaster
 import org.codehaus.groovy.grails.commons.GrailsClassUtils
 import org.codehaus.groovy.grails.scaffolding.view.ScaffoldingViewResolver
 import org.icescrum.components.UiControllerArtefactHandler
@@ -368,7 +367,7 @@ class IcescrumCoreGrailsPlugin {
             attrs.channel.each {
                 if (request.bufferBroadcast && request.bufferBroadcast."${it}") {
                     if(BroadcasterFactory.default){
-                        Class<? extends org.atmosphere.cpr.Broadcaster> bc = ((GrailsApplication) application).getClassLoader().loadClass(application.config.icescrum.push?.broadcaster?:'org.atmosphere.util.ExcludeSessionBroadcaster')
+                        Class<? extends org.atmosphere.cpr.Broadcaster> bc = (Class<? extends org.atmosphere.cpr.Broadcaster>)((GrailsApplication) application).getClassLoader().loadClass(application.config.icescrum.push?.broadcaster?:'org.atmosphere.util.ExcludeSessionBroadcaster')
                         def broadcaster = BroadcasterFactory.default.lookup(bc, it)
                         def batch = []
                         def messages = request.bufferBroadcast."${it}"
@@ -412,7 +411,7 @@ class IcescrumCoreGrailsPlugin {
             def message = [call: attrs.function, object: attrs.message]
             attrs.channel.each {
                 if(BroadcasterFactory.default){
-                    Class<? extends org.atmosphere.cpr.Broadcaster> bc = ((GrailsApplication) application).getClassLoader().loadClass(application.config.icescrum.push?.broadcaster?:'org.atmosphere.util.ExcludeSessionBroadcaster')
+                    Class<? extends org.atmosphere.cpr.Broadcaster> bc = (Class<? extends org.atmosphere.cpr.Broadcaster>)((GrailsApplication) application).getClassLoader().loadClass(application.config.icescrum.push?.broadcaster?:'org.atmosphere.util.ExcludeSessionBroadcaster')
                     def broadcaster = BroadcasterFactory.default.lookup(bc, it)
                     if (request.bufferBroadcast?."${it}" != null) {
                         request.bufferBroadcast."${it}" << message
@@ -446,7 +445,8 @@ class IcescrumCoreGrailsPlugin {
             def message = [call: attrs.function, object: attrs.message]
             attrs.user.each {
                 if(BroadcasterFactory.default){
-                    def broadcaster = BroadcasterFactory.default.lookup(DefaultBroadcaster.class, it)
+                    Class<? extends org.atmosphere.cpr.Broadcaster> bc = (Class<? extends org.atmosphere.cpr.Broadcaster>)((GrailsApplication) application).getClassLoader().loadClass(application.config.icescrum.push?.userBroadcaster?:'org.atmosphere.cpr.DefaultBroadcaster')
+                    def broadcaster = BroadcasterFactory.default.lookup(bc, it)
                     try {
                         broadcaster?.broadcast((message as JSON).toString())
                     }catch(IllegalStateException e){
