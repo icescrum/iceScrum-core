@@ -72,11 +72,15 @@ class FeatureService {
 
     @PreAuthorize('productOwner() and !archivedProduct()')
     void delete(Feature _feature) {
-
         def p = _feature.backlog
-        def stillHasPbi = p.stories.any {it.feature?.id == _feature.id}
-        if (stillHasPbi)
-            throw new RuntimeException()
+
+        bufferBroadcast()
+        _feature.stories?.each{
+            it.feature = null
+            it.save()
+            broadcast(function: 'dissociated', message: it)
+        }
+
 
         def oldRank = _feature.rank
         def id = _feature.id
@@ -91,6 +95,7 @@ class FeatureService {
             }
         }
         broadcast(function: 'delete', message: [class: _feature.class, id: id])
+        resumeBufferedBroadcast()
     }
 
     @PreAuthorize('productOwner() and !archivedProduct()')
