@@ -59,6 +59,8 @@ class Task extends BacklogElement implements Serializable {
 
     static hasMany = [participants: User]
 
+    static transients = ['sprint']
+
     static mapping = {
         cache true
         table 'icescrum2_task'
@@ -255,12 +257,8 @@ class Task extends BacklogElement implements Serializable {
         }
     }
 
-    def setBacklog(Sprint backlog){
-        super.setBacklog(backlog)
-    }
-
-    Sprint getBacklog(){
-        return (Sprint)super.getBacklog()
+    Sprint getSprint(){
+        return (Sprint)this.getBacklog()
     }
 
     def afterDelete() {
