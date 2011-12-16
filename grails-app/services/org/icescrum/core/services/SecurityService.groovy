@@ -475,6 +475,11 @@ class SecurityService {
         request.inTeam       = request.inTeam ?: request.scrumMaster ?: request.teamMember ?: false
         request.admin        = request.admin ?: admin(springSecurityService.authentication) ?: false
         request.filtered     = request.filtered ?: true
+
+        if (request.owner && !request.inProduct && !request.admin){
+            request.stakeholder = true
+        }
+
         if ((request.inProduct || request.stakeHolder) && archivedProduct(null)){
             request.scrumMaster     = false
             request.productOwner    = false
