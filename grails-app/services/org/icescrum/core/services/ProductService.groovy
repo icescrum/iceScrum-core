@@ -183,10 +183,6 @@ class ProductService {
 
         if (!_product.save())
             throw new IllegalStateException('Product not saved')
-
-        springcacheService.flush(SecurityService.CACHE_OPENPRODUCTTEAM)
-        springcacheService.flush(SecurityService.CACHE_PRODUCTTEAM)
-
     }
 
     @PreAuthorize('(scrumMaster() or owner(#_product)) and !archivedProduct(#_product)')
