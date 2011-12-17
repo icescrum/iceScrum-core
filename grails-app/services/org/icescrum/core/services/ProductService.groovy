@@ -479,7 +479,11 @@ class ProductService {
     def delete(Product p) {
         def id = p.id
         securityService.unsecureDomain p
-        p.teams.each{ it.removeFromProducts(p) }
+        p.teams.each{
+            it.removeFromProducts(p)
+            it.lastUpdated = new Date()
+            it.save()
+        }
         p.delete(flush:true)
         broadcast(function: 'delete', message: [class: p.class, id: id])
     }
