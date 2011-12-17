@@ -481,8 +481,6 @@ class ProductService {
         securityService.unsecureDomain p
         p.teams.each{
             it.removeFromProducts(p)
-            it.lastUpdated = new Date()
-            it.save()
         }
         p.delete(flush:true)
         broadcast(function: 'delete', message: [class: p.class, id: id])
