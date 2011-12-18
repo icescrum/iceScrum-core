@@ -34,6 +34,7 @@ import org.icescrum.core.event.IceScrumProductEvent
 import org.springframework.security.core.context.SecurityContextHolder as SCH
 import org.codehaus.groovy.grails.commons.ApplicationHolder
 import org.grails.plugins.springsecurity.service.acl.AclUtilService
+import org.springframework.security.acls.domain.BasePermission
 
 class Product extends TimeBox implements Serializable {
 
@@ -152,6 +153,22 @@ class Product extends TimeBox implements Serializable {
                 "WHERE m.id = :uid)", [uid: userid], params ?: [:])
     }
 
+    static findAllByRole(String user, List<BasePermission> permission, params) {
+        executeQuery("SELECT DISTINCT p "+
+                        "From org.icescrum.core.domain.Product as p, "+
+                        "org.codehaus.groovy.grails.plugins.springsecurity.acl.AclClass as ac, "+
+                        "org.codehaus.groovy.grails.plugins.springsecurity.acl.AclObjectIdentity as ai, "+
+                        "org.codehaus.groovy.grails.plugins.springsecurity.acl.AclSid as acl, "+
+                        "org.codehaus.groovy.grails.plugins.springsecurity.acl.AclEntry as ae "+
+                        "where "+
+                        "ac.className = 'org.icescrum.core.domain.Product' "+
+                        "AND ai.aclClass = ac.id "+
+                        "AND acl.sid = :sid "+
+                        "AND acl.id = ae.sid.id "+
+                        "AND ae.mask IN(:p) "+
+                        "AND ai.id = ae.aclObjectIdentity.id "+
+                        "AND p.id = ai.objectId", [sid: user, p:permission*.mask ], params ?: [:])
+    }
 
     def getProductOwners() {
         def aclUtilService = (AclUtilService) ApplicationHolder.application.mainContext.getBean('aclUtilService');

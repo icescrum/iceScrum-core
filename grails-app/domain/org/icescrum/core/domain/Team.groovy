@@ -155,6 +155,20 @@ class Team implements Serializable {
                         "AND t.id = ai.objectId", [sid: user, p:permission*.mask ], params ?: [:])
     }
 
+    static recentTeamsActivity(def uid) {
+        executeQuery("SELECT DISTINCT a.activity " +
+                "FROM grails.plugin.fluxiable.ActivityLink as a, org.icescrum.core.domain.Product as p2 " +
+                "WHERE a.type='product' " +
+                "and p2.id=a.activityRef " +
+                "and p2.id in (SELECT DISTINCT p.id " +
+                                "FROM org.icescrum.core.domain.Product as p INNER JOIN p.teams as t " +
+                                "WHERE t.id in" +
+                                        "(SELECT DISTINCT t2.id FROM org.icescrum.core.domain.Team as t2 " +
+                                        "INNER JOIN t2.members as m " +
+                                        "WHERE m.id = :uid))" +
+                "ORDER BY a.activity.dateCreated DESC", [uid:uid], [max: 15])
+    }
+
     static namedQueries = {
 
         productTeam {p, u ->
