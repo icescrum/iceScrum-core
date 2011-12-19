@@ -440,7 +440,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
     }
 
     static recentActivity(User user) {
-        executeQuery("SELECT DISTINCT a.activity " +
+        executeQuery("SELECT DISTINCT a.activity, s.backlog " +
                 "FROM grails.plugin.fluxiable.ActivityLink as a, org.icescrum.core.domain.Story as s " +
                 "WHERE a.type='story' " +
                 "and s.backlog.id in (SELECT DISTINCT p.id " +
@@ -451,7 +451,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                                                 "WHERE m.id = :uid)) " +
                 "and s.id=a.activityRef " +
                 "and not (a.activity.code like 'task%') " +
-                "ORDER BY a.activity.dateCreated DESC", [uid: user.id], [max: 15])
+                "ORDER BY a.activity.dateCreated DESC", [uid: user.id], [cache:true,max: 15])
     }
 
     static recentActivity(Team currentTeamInstance) {

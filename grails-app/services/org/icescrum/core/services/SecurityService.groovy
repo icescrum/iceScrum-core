@@ -292,6 +292,10 @@ class SecurityService {
             return springcacheService.doWithCache(CACHE_STAKEHOLDER, new CacheKeyBuilder().append(onlyPrivate).append(product).append(authkey).toCacheKey()) {
                 if (!p) p = Product.get(product)
                 if (!p || !auth) return false
+                //Owner always has an access to product... (even if not in team or PO)
+                if (springSecurityService.isLoggedIn()){
+                    if (p.owner?.id == auth.principal.id) return true
+                }
                 if (p.preferences.hidden)
                     return aclUtilService.hasPermission(auth, GrailsHibernateUtil.unwrapIfProxy(p), SecurityService.stakeHolderPermissions)
                 else

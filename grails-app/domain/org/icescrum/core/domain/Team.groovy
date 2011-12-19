@@ -156,7 +156,7 @@ class Team implements Serializable {
     }
 
     static recentTeamsActivity(def uid) {
-        executeQuery("SELECT DISTINCT a.activity " +
+        executeQuery("SELECT DISTINCT a.activity, p2 " +
                 "FROM grails.plugin.fluxiable.ActivityLink as a, org.icescrum.core.domain.Product as p2 " +
                 "WHERE a.type='product' " +
                 "and p2.id=a.activityRef " +
@@ -166,7 +166,7 @@ class Team implements Serializable {
                                         "(SELECT DISTINCT t2.id FROM org.icescrum.core.domain.Team as t2 " +
                                         "INNER JOIN t2.members as m " +
                                         "WHERE m.id = :uid))" +
-                "ORDER BY a.activity.dateCreated DESC", [uid:uid], [max: 15])
+                "ORDER BY a.activity.dateCreated DESC", [uid:uid], [cache:true,max: 15])
     }
 
     static namedQueries = {

@@ -98,7 +98,11 @@ class StoryService {
             if (_item.state >= Story.STATE_PLANNED)
                throw new IllegalStateException()
 
-            if (!(_item.creator.id == springSecurityService.currentUser.id) && !securityService.productOwner(_item.backlog.id, springSecurityService.authentication)) {
+            if (!springSecurityService.isLoggedIn()){
+                throw new IllegalAccessException()
+            }
+
+            if (!(_item.creator.id == springSecurityService.currentUser?.id) && !securityService.productOwner(_item.backlog.id, springSecurityService.authentication)) {
                 throw new IllegalAccessException()
             }
             _item.removeAllAttachments()
