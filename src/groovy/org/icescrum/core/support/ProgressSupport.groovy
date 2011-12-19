@@ -22,7 +22,7 @@
 
 package org.icescrum.core.support
 
-class ProgressSupport {
+class ProgressSupport implements Serializable{
   int value = 0
   String label = '%'
   Boolean error = false
