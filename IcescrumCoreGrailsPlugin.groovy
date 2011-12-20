@@ -418,7 +418,7 @@ class IcescrumCoreGrailsPlugin {
                     } else {
                         try {
                             if (attrs.excludeCaller) {
-                                broadcaster?.broadcast((message as JSON).toString(), request.session)
+                                broadcaster?.broadcast((message as JSON).toString(), request.getSession(false))
                             } else {
                                 broadcaster?.broadcast((message as JSON).toString())
                             }
