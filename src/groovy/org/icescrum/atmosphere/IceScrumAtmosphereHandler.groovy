@@ -52,7 +52,7 @@ class IceScrumAtmosphereHandler implements AtmosphereHandler<HttpServletRequest,
 
         def productID = event.request.getParameterValues("product") ? event.request.getParameterValues("product")[0] : null
         def teamID = event.request.getParameterValues("team") ? event.request.getParameterValues("team")[0] : null
-        def user = getUserFromAtmosphereResource(event.request)
+        def user = getUserFromAtmosphereResource(event.request, true)
 
         def channel = null
         if (productID && productID.isLong()) {
@@ -81,8 +81,11 @@ class IceScrumAtmosphereHandler implements AtmosphereHandler<HttpServletRequest,
 
     void onStateChange(AtmosphereResourceEvent<HttpServletRequest, HttpServletResponse> event) throws IOException {
 
-        def user = getUserFromAtmosphereResource(event.resource.request)
+        def user
 
+        if (log.isDebugEnabled()){
+            user = getUserFromAtmosphereResource(event.resource.request)
+        }
 
         //Event cancelled
         if (event.cancelled) {
@@ -120,8 +123,8 @@ class IceScrumAtmosphereHandler implements AtmosphereHandler<HttpServletRequest,
 
     }
 
-    private def getUserFromAtmosphereResource(def request) {
-        def httpSession = request.getSession(false)
+    private def getUserFromAtmosphereResource(def request, def createSession = false) {
+        def httpSession = request.getSession(createSession)
         def user = null
         if (httpSession != null) {
             def context = (SecurityContext) httpSession.getAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY);
