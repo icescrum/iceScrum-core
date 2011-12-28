@@ -159,6 +159,7 @@ class ScrumTagLib {
                     start: "function(event,ui){${attrs.sortable.start}}",
                     stop: "function(event,ui){${attrs.sortable.stop}}",
                     change: "function(event,ui){${attrs.sortable.change}}",
+                    containment: attrs.sortable.containment ? UtilsWebComponents.wrap(attr: attrs.sortable.containment, doubleQuote: true) : null,
                     update: "function(event,ui){${attrs.sortable.update}}",
                     receive: "function(event,ui){${attrs.sortable.receive}}",
                     cancel: UtilsWebComponents.wrap(attrs.sortable.cancel),
@@ -166,7 +167,7 @@ class ScrumTagLib {
                     disabled: attrs.sortable.disabled
             ]
 
-            def opts = sortableOptions.findAll {k, v -> v}.collect {k, v -> " $k:$v" }.join(',')
+            def opts = sortableOptions.findAll {k, v -> v != null}.collect {k, v -> " $k:$v" }.join(',')
             jqCode += " \$('#backlog-layout-${attrs.id}').sortable({$opts}); "
         }
 

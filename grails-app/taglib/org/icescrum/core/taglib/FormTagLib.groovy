@@ -1137,6 +1137,7 @@ class FormTagLib {
                 revert: UtilsWebComponents.wrap(attr: attrs.revert, doubleQuote: true),
                 items: UtilsWebComponents.wrap(attr: attrs.items, doubleQuote: true),
                 handle: UtilsWebComponents.wrap(attr: attrs.handle, doubleQuote: true),
+                containment: attrs.containment ? UtilsWebComponents.wrap(attr: attrs.containment, doubleQuote: true) : null,
                 start: "function(event,ui){${attrs.start}}",
                 stop: "function(event,ui){${attrs.stop}}",
                 update: "function(event,ui){${attrs.update}}",
@@ -1147,7 +1148,7 @@ class FormTagLib {
                 connectWith: UtilsWebComponents.wrap(attrs.connectWith),
                 disabled: attrs.disabled
         ]
-        def opts = sortableOptions.findAll {k, v -> v}.collect {k, v -> " $k:$v" }.join(',')
+        def opts = sortableOptions.findAll {k, v -> v != null}.collect {k, v ->" $k:$v" }.join(',')
 
         def jqCode
         if (attrs.live) {
