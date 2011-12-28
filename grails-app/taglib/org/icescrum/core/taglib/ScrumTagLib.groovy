@@ -38,6 +38,7 @@ class ScrumTagLib {
         def params = attrs
         try {
             pageScope.menu = ''
+            pageScope.tooltip = ''
         } catch (e) {}
 
         if (attrs.notruncate) {
@@ -53,6 +54,7 @@ class ScrumTagLib {
 
         try {
             params.embeddedMenu = pageScope.menu
+            params.tooltip = pageScope.tooltip
         } catch (e) {}
 
 
