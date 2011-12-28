@@ -380,7 +380,7 @@ class IcescrumCoreGrailsPlugin {
                         if (messages.size() % size) batch << messages[partitionCount * size..-1]
                         batch.each {
                             if (attrs.excludeCaller) {
-                                broadcaster?.broadcast((it as JSON).toString(), request.session)
+                                broadcaster?.broadcast((it as JSON).toString(), request.getSession(false))
                             } else {
                                 broadcaster?.broadcast((it as JSON).toString())
                             }
