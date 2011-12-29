@@ -51,24 +51,24 @@ class SprintService {
     @PreAuthorize('(productOwner() or scrumMaster()) and !archivedProduct()')
     void save(Sprint sprint, Release release) {
         if (release.state == Release.STATE_DONE)
-            throw new IllegalStateException('is_workflow_sprint_release_done')
+            throw new IllegalStateException('is.sprint.error.release.done')
 
         sprint.orderNumber = (release.sprints?.size() ?: 0) + 1
         def previousSprint = release.sprints?.find { it.orderNumber == sprint.orderNumber - 1}
 
         // Check sprint date integrity
         if (sprint.startDate > sprint.endDate)
-            throw new IllegalStateException('is_workflow_sprint_end_after_start')
+            throw new IllegalStateException('is.sprint.error.startDate.after.endDate')
         if (sprint.startDate == sprint.endDate)
-            throw new IllegalStateException('is_workflow_sprint_duration')
+            throw new IllegalStateException('is.sprint.error.startDate.equals.endDate')
 
         // Check date integrity regarding the release dates
         if (sprint.startDate < release.startDate || sprint.endDate > release.endDate)
-            throw new IllegalStateException('is_workflow_sprint_release_date_out_of_bound')
+            throw new IllegalStateException('is.sprint.error.out.of.release.bounds')
 
         // Check date integrity regarding the previous sprint date
         if (previousSprint && sprint.startDate <= previousSprint.endDate)
-            throw new IllegalStateException('is_workflow_sprint_previous_date_overlap')
+            throw new IllegalStateException('is.sprint.error.previous.overlap')
 
         sprint.parentRelease = release
 
@@ -94,29 +94,29 @@ class SprintService {
         if (checkIntegrity) {
             // A done sprint cannot be modified
             if (sprint.state == Sprint.STATE_DONE)
-                throw new IllegalStateException('is_workflow_sprint_update_done')
+                throw new IllegalStateException('is.sprint.error.update.done')
 
             // Check sprint date integrity
             if (startDate > endDate)
-                throw new IllegalStateException('is_workflow_sprint_end_after_start')
+                throw new IllegalStateException('is.sprint.error.startDate.after.endDate')
             if (startDate == endDate)
-                throw new IllegalStateException('is_workflow_sprint_duration')
+                throw new IllegalStateException('is.sprint.error.startDate.equals.endDate')
 
             // If the sprint is in INPROGRESS state, cannot change the startDate
             if (sprint.state == Sprint.STATE_INPROGRESS) {
                 if (sprint.startDate != startDate) {
-                    throw new IllegalStateException('is_workflow_sprint_inprogress_startdate')
+                    throw new IllegalStateException('is.sprint.error.update.startdate.inprogress')
                 }
             }
 
             // Check date integrity regarding the release dates
             if (startDate < sprint.parentRelease.startDate || endDate > sprint.parentRelease.endDate)
-                throw new IllegalStateException('is_workflow_sprint_release_date_out_of_bound')
+                throw new IllegalStateException('is.sprint.error.out.of.release.bounds')
         }
 
         // Check date integrity regarding the previous sprint date
         if (previousSprint && startDate <= previousSprint.endDate)
-            throw new IllegalStateException('is_workflow_sprint_previous_date_overlap')
+            throw new IllegalStateException('is.sprint.error.previous.overlap')
 
         // If the end date has changed and overlap the next sprint start date,
         // the sprints coming after are shifted
@@ -159,7 +159,7 @@ class SprintService {
     def delete(Sprint sprint) {
         // Cannot delete a INPROGRESS or DONE sprint
         if (sprint.state >= Sprint.STATE_INPROGRESS)
-            throw new IllegalStateException('is_workflow_sprint_delete')
+            throw new IllegalStateException('is.sprint.error.delete.inprogress')
 
         def release = sprint.parentRelease
         def nextSprints = release.sprints.findAll { it.orderNumber > sprint.orderNumber }
@@ -184,7 +184,7 @@ class SprintService {
 
     def generateSprints(Release release, Date startDate = null) {
         if (release.state == Release.STATE_DONE)
-            throw new IllegalStateException('is_workflow_sprint_release_done')
+            throw new IllegalStateException('is.sprint.error.release.done')
 
         int daysBySprint = release.parentProduct.preferences.estimatedSprintsDuration
         Date firstDate
@@ -244,7 +244,7 @@ class SprintService {
     void activate(Sprint sprint) {
         // Release of the sprint is not the activated release
         if (sprint.parentRelease.state != Release.STATE_INPROGRESS)
-            throw new IllegalStateException('is_workflow_sprint_activate_release_inactivated')
+            throw new IllegalStateException('is.sprint.error.activate.release.not.inprogress')
 
         // If there is a sprint opened before, throw an workflow error
         int lastSprintClosed = -1
@@ -254,11 +254,11 @@ class SprintService {
             it.state == Sprint.STATE_INPROGRESS
         }
         if (s)
-            throw new IllegalStateException('is_workflow_sprint_already_activated')
+            throw new IllegalStateException('is.sprint.error.activate.other.inprogress')
 
         // There is (in the release) sprints before 'sprint' which are not closed
         if (sprint.orderNumber != 1 && sprint.orderNumber > lastSprintClosed + 1)
-            throw new IllegalStateException('is_workflow_sprint_not_closed_before')
+            throw new IllegalStateException('is.sprint.error.activate.other.inprogress')
 
         def autoCreateTaskOnEmptyStory = sprint.parentRelease.parentProduct.preferences.autoCreateTaskOnEmptyStory
 
@@ -305,7 +305,7 @@ class SprintService {
     void close(Sprint sprint) {
         // The sprint must be in the state "INPROGRESS"
         if (sprint.state != Sprint.STATE_INPROGRESS)
-            throw new IllegalStateException('is_workflow_sprint_close_not_activated')
+            throw new IllegalStateException('is.sprint.error.close.not.inprogress')
 
         Double sum = (Double) sprint.stories?.sum { pbi ->
             if (pbi.state == Story.STATE_DONE)

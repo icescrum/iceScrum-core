@@ -53,17 +53,17 @@ class ReleaseService {
         if (release.endDate == null) {
             throw new IllegalStateException('is.release.error.no.endDate')
         } else if (release.startDate.after(release.endDate)) {
-            throw new IllegalStateException('is.release.error.startDate.before.endDate')
+            throw new IllegalStateException('is.release.error.update.startDate.before.endDate')
         } else if (release.startDate == null) {
             throw new IllegalStateException('is.release.error.no.startDate')
         } else if (release.startDate == release.endDate) {
-            throw new IllegalStateException('is.release.error.startDate.equals.endDate')
+            throw new IllegalStateException('is.release.error.update.startDate.equals.endDate')
         } else if (release.startDate.before(product.startDate)) {
-            throw new IllegalStateException('is.release.error.startDate.before.productStartDate')
+            throw new IllegalStateException('is.release.error.update.startDate.before.productStartDate')
         } else {
             Release _r = productService.getLastRelease(product)
             if (_r != null && _r.endDate.after(release.startDate)) {
-                throw new IllegalStateException('is.release.error.startDate.before.previous')
+                throw new IllegalStateException('is.release.error.update.startDate.before.previous')
             }
         }
         release.state = Release.STATE_WAIT
@@ -94,15 +94,15 @@ class ReleaseService {
         }
 
         if (release.state == Release.STATE_DONE)
-            throw new IllegalStateException('is.release.error.state.done')
+            throw new IllegalStateException('is.release.error.update.state.done')
 
         // Check sprint date integrity
         if (startDate > endDate)
-            throw new IllegalStateException('is.release.error.startDate.before.endDate')
+            throw new IllegalStateException('is.release.error.update.startDate.before.endDate')
         if (startDate == endDate)
-            throw new IllegalStateException('is.release.error.startDate.equals.endDate')
+            throw new IllegalStateException('is.release.error.update.startDate.equals.endDate')
         if (startDate.before(product.startDate)) {
-            throw new IllegalStateException('is.release.error.startDate.before.productStartDate')
+            throw new IllegalStateException('is.release.error.update.startDate.before.productStartDate')
         }
         int ind = product.releases.asList().indexOf(release)
 
@@ -110,7 +110,7 @@ class ReleaseService {
         if (ind > 0) {
             Release _previous = product.releases.asList()[ind - 1]
             if (_previous.endDate.after(startDate)) {
-                throw new IllegalStateException('is.release.error.startDate.before.previous')
+                throw new IllegalStateException('is.release.error.update.startDate.before.previous')
             }
         }
 
