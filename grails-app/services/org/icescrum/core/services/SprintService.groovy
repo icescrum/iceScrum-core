@@ -208,6 +208,9 @@ class SprintService {
         Date firstDateMidnight = ApplicationSupport.getMidnightTime(firstDate)
         int totalDays = (int) ((lastDateMidnight.time - firstDateMidnight.time) / day) + 1
         int nbSprints = Math.floor(totalDays / daysBySprint)
+        if(nbSprints == 0) {
+            throw new IllegalStateException('is.release.sprints.not.enough.time')
+        }
 
         def sprints = []
         for (int i = 0; i < nbSprints; i++) {
