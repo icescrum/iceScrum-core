@@ -49,7 +49,7 @@ class TeamMigration {
                 preConditions(onFail:"MARK_RAN"){
                     dbms(type:'mssql')
                 }
-                sql('UPDATE icescrum2_team set uid = SUBSTRING(sys.fn_sqlvarbasetostr(HASHBYTES(\'MD5\',name),3,32) WHERE uid is NULL')
+                sql('UPDATE icescrum2_team set uid = SUBSTRING(sys.fn_sqlvarbasetostr(HASHBYTES(\'MD5\',name)),3,32) WHERE uid is NULL')
                 addNotNullConstraint(tableName:"icescrum2_team",columnName:'uid',columnDataType:'varchar(max)')
             }
     }

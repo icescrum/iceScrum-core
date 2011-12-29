@@ -61,7 +61,7 @@ class UserMigration {
                 preConditions(onFail:"MARK_RAN"){
                     dbms(type:'mssql')
                 }
-                sql('UPDATE icescrum2_user set uid = SUBSTRING(sys.fn_sqlvarbasetostr(HASHBYTES(\'MD5\',CONCAT(username,\'\',email))),3,32) WHERE uid is NULL')
+                sql('UPDATE icescrum2_user set uid = SUBSTRING(sys.fn_sqlvarbasetostr(HASHBYTES(\'MD5\',username + email)),3,32) WHERE uid is NULL')
                 addNotNullConstraint(tableName:"icescrum2_user",columnName:'uid',columnDataType:'varchar(max)')
             }
 

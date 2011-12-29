@@ -46,18 +46,14 @@ class TimeboxMigration {
             // MSSQL
             changeSet(id:'timebox_add_constraint_dateCreated_mssql', author:'vbarrier') {
                   preConditions(onFail:"MARK_RAN"){
-                      or {
-                          dbms(type:'mssql')
-                      }
+                      dbms(type:'mssql')
                   }
                   sql('UPDATE icescrum2_timebox set date_created = GETDATE() WHERE date_created is NULL')
                   addNotNullConstraint(tableName:"icescrum2_timebox",columnName:'date_created',columnDataType:'DATETIME')
             }
             changeSet(id:'timebox_add_constraint_lastUpdated_mssql', author:'vbarrier') {
                   preConditions(onFail:"MARK_RAN"){
-                      or {
-                          dbms(type:'mssql')
-                      }
+                      dbms(type:'mssql')
                   }
                   sql('UPDATE icescrum2_timebox set last_updated = GETDATE() WHERE last_updated is NULL')
                   addNotNullConstraint(tableName:"icescrum2_timebox",columnName:'last_updated',columnDataType:'DATETIME')
