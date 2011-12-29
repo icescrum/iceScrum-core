@@ -26,9 +26,21 @@ class TeamMigration {
             changeSet(id:'add_uid_column_team', author:'vbarrier') {
                 preConditions(onFail:"MARK_RAN"){
                     not{
-                      dbms(type:'mssql')
+                      or {
+                        dbms(type:'mssql')
+                        dbms(type:'hsqldb')
+                      }
                     }
                 }
+                sql('UPDATE icescrum2_team set uid = MD5(name) WHERE uid is NULL')
+                addNotNullConstraint(tableName:"icescrum2_team",columnName:'uid',columnDataType:'varchar(255)')
+            }
+
+            changeSet(id:'add_uid_column_team_hsql', author:'vbarrier') {
+                preConditions(onFail:"MARK_RAN"){
+                    dbms(type:'hsqldb')
+                }
+                sql('CREATE ALIAS MD5 FOR "org.hsqldb.lib.MD5.encodeString"')
                 sql('UPDATE icescrum2_team set uid = MD5(name) WHERE uid is NULL')
                 addNotNullConstraint(tableName:"icescrum2_team",columnName:'uid',columnDataType:'varchar(255)')
             }
