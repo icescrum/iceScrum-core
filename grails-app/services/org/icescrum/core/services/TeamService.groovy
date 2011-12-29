@@ -36,6 +36,7 @@ import org.icescrum.core.event.IceScrumEvent
 import org.icescrum.core.event.IceScrumTeamEvent
 import org.icescrum.core.event.IceScrumProductEvent
 import grails.plugins.springsecurity.Secured
+import org.icescrum.core.support.ApplicationSupport
 
 class TeamService {
 
@@ -210,7 +211,7 @@ class TeamService {
                     name: team."${'name'}".text(),
                     velocity: (team.velocity.text().isNumber()) ? team.velocity.text().toInteger() : 0,
                     description: team.description.text(),
-                    idFromImport: team.@id.text().toInteger()
+                    uid: team.@uid.text() ?: (team."${'name'}".text()).encodeAsMD5()
             )
 
             t.preferences = new TeamPreferences(
@@ -224,10 +225,7 @@ class TeamService {
                     existingTeam = false
                 }
                 if (p) {
-                    def uu = (User) p.getAllUsers().find {
-                        def id = it.idFromImport ?: it.id
-                        id == u.idFromImport
-                    } ?: null
+                    def uu = (User) t.members.find { it.uid == u.uid } ?: null
                     uu ? t.addToMembers(uu) : t.addToMembers(u)
                 } else {
                     t.addToMembers(u)
@@ -236,7 +234,12 @@ class TeamService {
             }
             def scrumMastersList = []
             team.scrumMasters.scrumMaster.eachWithIndex {user, index ->
-                User u = (User) t?.members?.find {it.idFromImport == user.@id.text().toInteger()} ?: null
+                def u
+                if (!user.@uid?.isEmpty())
+                    u = ((User) t.members.find { it.uid == user.@uid.text() } ) ?: null
+                else{
+                    u = ApplicationSupport.findUserUIDOldXMl(user,null,t.members)
+                }
                 if (u)
                     scrumMastersList << u
                 progress?.updateProgress((team.members.user.size() * (index + 1) / 100).toInteger(), g.message(code: 'is.parse', args: [g.message(code: 'is.user')]))
@@ -249,12 +252,11 @@ class TeamService {
                     if (dbTeam.members.size() != t.members.size()) existingTeam = false
                     if (existingTeam) {
                         for (member in dbTeam.members) {
-                            def u = t.members.find {member.username == it.username && member.email == it.email}
+                            def u = t.members.find { member.uid == it.uid }
                             if (!u) {
                                 existingTeam = false
                                 break
                             }
-                            u.idFromImport = t.members.find {it.username == member.username}.idFromImport
                         }
                     }
                 } else {

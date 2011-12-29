@@ -32,6 +32,7 @@ import org.springframework.context.ApplicationContext
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.transaction.annotation.Transactional
 import org.icescrum.core.domain.*
+import org.icescrum.core.support.ApplicationSupport
 
 class TaskService {
 
@@ -59,7 +60,7 @@ class TaskService {
     }
 
     @PreAuthorize('inProduct() and !archivedProduct()')
-    void save(Task task, TimeBox sprint, User user) {
+    void save(Task task, Sprint sprint, User user) {
 
         if (!task.id && sprint.state == Sprint.STATE_DONE){
             throw new IllegalStateException('is.task.error.not.saved')
@@ -74,6 +75,7 @@ class TaskService {
         task.creator = user
         task.backlog = sprint
         task.rank = Task.countByParentStoryAndType(task.parentStory, task.type) + 1
+        task.uid = Task.findNextUId(task.backlog.parentRelease.parentProduct.id)
 
         if (!task.save(flush:true)) {
             throw new RuntimeException()
@@ -453,27 +455,30 @@ class TaskService {
                     inProgressDate: inProgressDate,
                     state: task.state.text().toInteger(),
                     creationDate: new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(task.creationDate.text()),
-                    blocked: task.blocked.text()?.toBoolean() ?: false
+                    blocked: task.blocked.text()?.toBoolean() ?: false,
+                    uid: task.@uid.text()?.isEmpty() ? task.@id.text().toInteger() : task.@uid.text().toInteger()
             )
 
-            if (task.creator?.@id != '' && p) {
-                def u = ((User) p.getAllUsers().find {
-                    def id = it.idFromImport ?: it.id
-                    id == task.creator.@id.text().toInteger()
+            if (p) {
+                def u
+                if (!task.creator?.@uid?.isEmpty())
+                    u = ((User) p.getAllUsers().find { it.uid == task.creator.@uid.text() } ) ?: null
+                else{
+                    u = ApplicationSupport.findUserUIDOldXMl(task,'creator',p.getAllUsers())
                 }
-                ) ?: null
                 if (u)
                     t.creator = u
                 else
                     t.creator = p.productOwners.first()
             }
 
-            if (task.responsible?.@id != '' && p) {
-                def u = ((User) p.getAllUsers().find {
-                    def id = it.idFromImport ?: it.id
-                    id == task.responsible.@id?.toInteger()
+            if ((!task.responsible?.@uid?.isEmpty() || !task.responsible?.@id?.isEmpty()) && p) {
+                def u
+                if (!task.responsible?.@uid?.isEmpty())
+                    u = ((User) p.getAllUsers().find { it.uid == task.responsible.@uid.text() } ) ?: null
+                else{
+                    u = ApplicationSupport.findUserUIDOldXMl(task,'responsible',p.getAllUsers())
                 }
-                ) ?: null
                 if (u)
                     t.responsible = u
                 else

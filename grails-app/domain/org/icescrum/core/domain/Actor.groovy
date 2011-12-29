@@ -126,6 +126,14 @@ class Actor extends BacklogElement implements Serializable, Comparable<Actor> {
         return true
     }
 
+    static int findNextUId(Long pid) {
+        1 + executeQuery(
+                """SELECT DISTINCT MAX(a.uid)
+                   FROM org.icescrum.core.domain.Actor as a, org.icescrum.core.domain.Product as p
+                   WHERE a.backlog = p
+                   AND p.id = :pid """, [pid: pid])[0]?:0
+    }
+
     @Override
     int hashCode() {
         final int prime = 31

@@ -54,8 +54,11 @@ class FeatureService {
 
         //We force last rank (if another rank has benn provide we will update it below
         feature.rank = Feature.countByBacklog(p) + 1
+        feature.uid = Feature.findNextUId(p.id)
+
 
         feature.backlog = p
+
 
         if (!feature.save()) {
             throw new RuntimeException()
@@ -199,7 +202,7 @@ class FeatureService {
                     value: feat.value.text().toInteger(),
                     type: feat.type.text().toInteger(),
                     rank: feat.rank.text()?.toInteger(),
-                    idFromImport: feat.@id.text().toInteger()
+                    uid: feat.@uid.text()?.isEmpty() ? feat.@id.text().toInteger() : feat.@uid.text().toInteger()
             )
             return f
         } catch (Exception e) {

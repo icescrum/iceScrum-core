@@ -42,6 +42,7 @@ class ActorService {
     @PreAuthorize('productOwner() and !archivedProduct()')
     void save(Actor act, Product p) {
         act.name = act.name?.trim()
+        act.uid = Actor.findNextUId(p.id)
         act.backlog = p
 
         if (!act.save(flush: true))
@@ -83,7 +84,7 @@ class ActorService {
                     useFrequency: (actor.useFrequency.text().isNumber()) ? actor.useFrequency.text().toInteger() : 2,
                     expertnessLevel: (actor.expertnessLevel.text().isNumber()) ? actor.expertnessLevel.text().toInteger() : 1,
                     satisfactionCriteria: actor.satisfactionCriteria.text(),
-                    idFromImport: actor.@id.text().toInteger()
+                    uid: actor.@uid.text()?.isEmpty() ? actor.@id.text().toInteger() : actor.@uid.text().toInteger()
             )
             return a
         } catch (Exception e) {

@@ -40,9 +40,7 @@ abstract class BacklogElement implements Fluxiable, Attachmentable, Commentable,
     Date dateCreated
     Date lastUpdated
     Date creationDate = new Date()
-    int idFromImport
-
-    static transients = ['idFromImport']
+    int uid
 
     TimeBox backlog
 
@@ -69,13 +67,5 @@ abstract class BacklogElement implements Fluxiable, Attachmentable, Commentable,
         withNewSession {
             this.removeAllAttachments()
         }
-    }
-
-    def getIdFromImport(){
-        return idFromImport
-    }
-
-    def setIdFromImport(id){
-        idFromImport = id
     }
 }

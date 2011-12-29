@@ -16,14 +16,13 @@
   - along with iceScrum.  If not, see <http://www.gnu.org/licenses/>.
   --}%
 
-<div class="${className} ${styleClass} postit-${type}" id="postit-${type}-${id}" elemId="${miniId}">
+<div class="${className} ${styleClass} postit-${type}" id="postit-${type}-${id}" elemId="${id}">
 
     <div class="postit-layout postit-${color}">
 
         <g:if test="${miniId}">
             <g:if test="${type == 'story'}">
-                <p class="postit-id"><is:scrumLink controller="backlogElement"
-                                                   id="${miniId}">${miniId}</is:scrumLink></p>
+                <p class="postit-id"><is:scrumLink controller="backlogElement" id="${id}">${miniId}</is:scrumLink></p>
             </g:if>
             <g:else>
                 <p class="postit-id">${miniId}</p>

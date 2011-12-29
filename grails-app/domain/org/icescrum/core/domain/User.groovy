@@ -46,6 +46,7 @@ class User implements Serializable, Attachmentable {
     Date dateCreated
     Date lastUpdated
     UserPreferences preferences
+    String uid
 
     boolean enabled = true
     boolean accountExpired
@@ -58,12 +59,6 @@ class User implements Serializable, Attachmentable {
     ]
 
     static belongsTo = [Team]
-
-    static transients = [
-            'idFromImport'
-    ]
-    int idFromImport
-
 
     static mapping = {
         cache true
@@ -137,6 +132,13 @@ class User implements Serializable, Attachmentable {
 
     int hashCode() {
         return username.hashCode()
+    }
+
+    def beforeValidate(){
+        //Create uid before first save object
+        if (!this.id && !this.uid){
+            this.uid = (this.username + this.email).encodeAsMD5()
+        }
     }
 
     def beforeDelete() {

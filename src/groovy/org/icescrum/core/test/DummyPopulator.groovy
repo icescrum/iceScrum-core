@@ -132,9 +132,9 @@ class DummyPopulator {
             sprintService.generateSprints(rel)
 
 
-            def feature = new Feature(name: 'La feature', value: 1, description: 'Une feature', backlog: p, rank: 1).save()
-            def feature2 = new Feature(name: 'La feature 2', value: 1, description: 'Une feature', backlog: p, rank: 2, color: 'pink').save()
-            def feature3 = new Feature(name: 'La feature 3', value: 1, description: 'Une feature', backlog: p, rank: 3, color: 'orange').save()
+            def feature = new Feature(uid: 1, name: 'La feature', value: 1, description: 'Une feature', backlog: p, rank: 1).save()
+            def feature2 = new Feature(uid: 2, name: 'La feature 2', value: 1, description: 'Une feature', backlog: p, rank: 2, color: 'pink').save()
+            def feature3 = new Feature(uid: 3, name: 'La feature 3', value: 1, description: 'Une feature', backlog: p, rank: 3, color: 'orange').save()
 
             p.addToFeatures(feature).addToFeatures(feature2).addToFeatures(feature3)
 
@@ -145,6 +145,7 @@ class DummyPopulator {
                         feature: _storyCount % 4 == 0 ? feature : _storyCount % 3 == 0 ? feature3 : feature2,
                         name: "A story $_storyCount",
                         effort: 5,
+                        uid: _storyCount + 1,
                         type: _storyCount % 6 == 0 ? Story.TYPE_TECHNICAL_STORY : _storyCount % 4 == 0 ? Story.TYPE_DEFECT : Story.TYPE_USER_STORY,
                         creationDate: new Date(),
                         suggestedDate: new Date(),
@@ -168,17 +169,21 @@ class DummyPopulator {
             storyService.autoPlan(rel, 20)
 
             int i = 0
+            int taskCount = 0
             for (sp in rel.sprints) {
                 sprintService.activate(sp)
 
                 for (pbi in sp.stories) {
                     i.times {
-                        pbi.addToTasks(new Task(rank: it + 1, type: null, estimation: 3, name: "task ${it} story : ${pbi.id}", creator: ua, responsible: ua, parentStory: pbi, backlog: sp, creationDate: new Date()))
+                        taskCount++
+                        pbi.addToTasks(new Task(uid:taskCount, rank: it + 1, type: null, estimation: 3, name: "task ${it} story : ${pbi.id}", creator: ua, responsible: ua, parentStory: pbi, backlog: sp, creationDate: new Date()))
                     }
                 }
-
-                sp.addToTasks(new Task(type: Task.TYPE_RECURRENT, estimation: 5, name: "task recurrent ${sp.id}", creator: ua, responsible: ua, parentStory: null, backlog: sp, creationDate: new Date()))
-                sp.addToTasks(new Task(type: Task.TYPE_URGENT, estimation: 4, name: "task urgent ${sp.id}", creator: ua, responsible: ua, parentStory: null, backlog: sp, creationDate: new Date()))
+                if (i == 0)
+                    taskCount++
+                sp.addToTasks(new Task(uid:taskCount, type: Task.TYPE_RECURRENT, estimation: 5, name: "task recurrent ${sp.id}", creator: ua, responsible: ua, parentStory: null, backlog: sp, creationDate: new Date()))
+                taskCount++
+                sp.addToTasks(new Task(uid:taskCount, type: Task.TYPE_URGENT, estimation: 4, name: "task urgent ${sp.id}", creator: ua, responsible: ua, parentStory: null, backlog: sp, creationDate: new Date()))
 
                 if (i > 5)
                     break

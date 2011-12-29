@@ -31,6 +31,8 @@ import org.icescrum.core.event.IceScrumStoryEvent
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.transaction.annotation.Transactional
 import org.icescrum.core.domain.*
+import org.codehaus.groovy.grails.orm.hibernate.cfg.GrailsHibernateUtil
+import org.icescrum.core.support.ApplicationSupport
 
 class StoryService {
     def productService
@@ -60,6 +62,7 @@ class StoryService {
             }
         }
 
+        story.uid = Story.findNextUId(p.id)
         story.state = Story.STATE_SUGGESTED
         story.suggestedDate = new Date()
 
@@ -821,36 +824,31 @@ class StoryService {
                     textICan: story.textICan.text(),
                     textTo: story.textTo.text(),
                     affectVersion: story.affectVersion.text(),
+                    uid: story.@uid.text()?.isEmpty() ? story.@id.text().toInteger() : story.@uid.text().toInteger(),
                     origin: story.origin.text()
             )
 
-            if (!story.feature?.@id?.isEmpty() && p) {
-                def f = p.features.find {
-                    def id = it.idFromImport ?: it.id
-                    id == story.feature.@id.text().toInteger()
-                } ?: null
+            if (!story.feature?.@uid?.isEmpty() && p) {
+                def f = p.features.find { it.uid == story.feature.@uid.text().toInteger() } ?: null
                 if (f) {
                     f.addToStories(s)
                 }
             }
 
-            if (!story.actor?.@id?.isEmpty() && p) {
-                def a = p.actors.find {
-                    def id = it.idFromImport ?: it.id
-                    id == story.actor.@id.text().toInteger()
-                } ?: null
+            if (!story.actor?.@uid?.isEmpty() && p) {
+                def a = p.actors.find { it.uid == story.actor.@uid.text().toInteger() } ?: null
                 if (a) {
                     a.addToStories(s)
                 }
             }
 
-            if (!story.creator?.@id?.isEmpty() && p) {
-                def u = null
-                if (story.creator.@id.text().isNumber())
-                    u = (User) p.getAllUsers().find {
-                        def id = it.idFromImport ?: it.id
-                        id == story.creator.@id.text().toInteger()
-                    } ?: null
+            if (p) {
+                def u
+                if (!story.creator?.@uid?.isEmpty())
+                    u = ((User) p.getAllUsers().find { it.uid == story.creator.@uid.text() } ) ?: null
+                else{
+                    u = ApplicationSupport.findUserUIDOldXMl(story,'creator',p.getAllUsers())
+                }
                 if (u)
                     s.creator = u
                 else
@@ -858,7 +856,8 @@ class StoryService {
             }
 
 
-            story.tasks.task.each {
+
+            story.tasks?.task?.each {
                 def t = taskService.unMarshall(it, p)
                 if (sp) {
                     t.backlog = sp

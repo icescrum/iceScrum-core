@@ -121,6 +121,14 @@ class Feature extends BacklogElement implements Serializable {
         return true
     }
 
+    static int findNextUId(Long pid) {
+        1 + executeQuery(
+                """SELECT DISTINCT MAX(f.uid)
+                   FROM org.icescrum.core.domain.Feature as f, org.icescrum.core.domain.Product as p
+                   WHERE f.backlog = p
+                   AND p.id = :pid """, [pid: pid])[0]?:0
+    }
+
     def beforeDelete() {
         withNewSession {
             publishEvent(new IceScrumFeatureEvent(this, this.class, User.get(SCH.context?.authentication?.principal?.id), IceScrumEvent.EVENT_BEFORE_DELETE))

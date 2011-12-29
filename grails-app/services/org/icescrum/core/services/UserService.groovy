@@ -172,7 +172,9 @@ class UserService {
     @Transactional(readOnly = true)
     def unMarshall(NodeChild user) {
         try {
-            def u = User.findByUsernameAndEmail(user.username.text(), user.email.text())
+            def u = null
+            if (user.@uid.text())
+                u = User.findByUid(user.@uid.text())
             if (!u) {
                 u = new User(
                         lastName: user.lastName.text(),
@@ -184,7 +186,7 @@ class UserService {
                         accountExpired: user.accountExpired.text().toBoolean() ?: false,
                         accountLocked: user.accountLocked.text().toBoolean() ?: false,
                         passwordExpired: user.passwordExpired.text().toBoolean() ?: false,
-                        idFromImport: user.@id.text().toInteger()
+                        uid: user.@uid.text() ?: (user.username.text() + user.email.text()).encodeAsMD5()
                 )
 
                 u.preferences = new UserPreferences(
@@ -195,8 +197,6 @@ class UserService {
                         menuHidden: user.preferences.menu.text(),
                         hideDoneState: user.preferences.hideDoneState.text()?.toBoolean() ?: false
                 )
-            } else {
-                u.idFromImport = user.@id.text().toInteger()
             }
             return u
         } catch (Exception e) {

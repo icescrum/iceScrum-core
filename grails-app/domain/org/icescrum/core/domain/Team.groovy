@@ -41,6 +41,7 @@ class Team implements Serializable {
 
     Date dateCreated
     Date lastUpdated
+    String uid
 
     TeamPreferences preferences
 
@@ -49,14 +50,9 @@ class Team implements Serializable {
             members: User
     ]
 
-    static transients = [
-            'idFromImport',
-            'scrumMasters',
-            'owner'
-    ]
+    static transients = ['scrumMasters','owner']
 
     def scrumMasters = null
-    int idFromImport
 
     static belongsTo = [Product]
 
@@ -238,6 +234,13 @@ class Team implements Serializable {
     def afterDelete() {
         withNewSession {
             publishEvent(new IceScrumTeamEvent(this, this.class, User.get(SCH.context?.authentication?.principal?.id), IceScrumEvent.EVENT_AFTER_DELETE))
+        }
+    }
+
+    def beforeValidate(){
+        //Create uid before first save object
+        if (!this.id && !this.uid){
+            this.uid = (this.name).encodeAsMD5()
         }
     }
 }

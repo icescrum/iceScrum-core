@@ -429,6 +429,14 @@ class Story extends BacklogElement implements Cloneable, Serializable {
         }
     }
 
+    static int findNextUId(Long pid) {
+        1 + executeQuery(
+                """SELECT DISTINCT MAX(s.uid)
+                   FROM org.icescrum.core.domain.Story as s, org.icescrum.core.domain.Product as p
+                   WHERE s.backlog = p
+                   AND p.id = :pid """, [pid: pid])[0]?:0
+    }
+
     static recentActivity(Product currentProductInstance) {
         executeQuery("SELECT DISTINCT a.activity " +
                 "FROM grails.plugin.fluxiable.ActivityLink as a, org.icescrum.core.domain.Story as s " +

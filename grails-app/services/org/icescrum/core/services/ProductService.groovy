@@ -100,7 +100,7 @@ class ProductService {
     }
 
     @PreAuthorize('isAuthenticated()')
-    void saveImport(Product _product, String name) {
+    void saveImport(Product _product, String name, String xmlPath) {
         if (!_product.endDate == null)
             throw new IllegalStateException("is.product.error.no.endDate")
         if (_product.startDate > _product.endDate)
@@ -153,6 +153,9 @@ class ProductService {
             }
 
             publishEvent(new IceScrumProductEvent(_product, this.class, (User) springSecurityService.currentUser, IceScrumEvent.EVENT_CREATED))
+            if (xmlPath)
+                publishEvent(new IceScrumProductEvent(_product, new File(xmlPath), this.class, (User) springSecurityService.currentUser, IceScrumProductEvent.EVENT_IMPORTED))
+
         } catch (Exception e) {
             throw new RuntimeException(e)
         }
@@ -376,7 +379,12 @@ class ProductService {
 
             def productOwnersList = []
             product.productOwners.user.eachWithIndex {productOwner, index ->
-                User u = (User) p?.getAllUsers()?.find {it.idFromImport == productOwner.@id.text().toInteger()} ?: null
+                def u
+                if (!productOwner.@uid?.isEmpty())
+                    u = ((User) p.getAllUsers().find { it.uid == productOwner.@uid.text() } ) ?: null
+                else{
+                    u = ApplicationSupport.findUserUIDOldXMl(productOwner,null,p.getAllUsers())
+                }
                 if (!u) {
                     u = User.findByUsernameAndEmail(productOwner.username.text(), productOwner.email.text())
                     if (!u) {

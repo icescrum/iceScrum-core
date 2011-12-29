@@ -27,6 +27,8 @@ import org.codehaus.groovy.grails.commons.ApplicationHolder
 import groovyx.net.http.RESTClient
 import grails.util.Metadata
 import org.apache.commons.logging.LogFactory
+import groovy.util.slurpersupport.NodeChild
+import org.icescrum.core.domain.User
 
 
 class ApplicationSupport {
@@ -97,7 +99,7 @@ class ApplicationSupport {
         if (log.debugEnabled) log.debug('retrieve appID '+config.icescrum.appID)
     }
   }
-
+    
   public static Date getMidnightTime(Date time){
     def midnightTime = Calendar.getInstance()
     midnightTime.setTime(time)
@@ -107,7 +109,18 @@ class ApplicationSupport {
     midnightTime.set(Calendar.MILLISECOND,0)
     return midnightTime.getTime()
   }
-
+    
+  static public findUserUIDOldXMl(NodeChild object, name, users){
+      def root = object.parent().parent().parent().parent().parent().parent().parent().parent().parent()
+      def uXml = root.'**'.find{ it.@id.text() == (name ? object."${name}".@id.text() : object.@id.text() )  && it.username.text()}
+      if (uXml){
+          def UXmlUID = (uXml.username?.text() + uXml.email?.text()).encodeAsMD5()
+          return ((User) users?.find { it.uid == UXmlUID } ) ?: null
+      }else{
+          return null
+      }
+  }
+  
 }
 
 class CheckerTimerTask extends TimerTask {
