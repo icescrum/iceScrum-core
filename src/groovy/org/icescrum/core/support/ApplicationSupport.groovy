@@ -57,7 +57,7 @@ class ApplicationSupport {
     config.icescrum.products.teams.dir = dirPath
   }
 
-  //  See http://jira.codehaus.org/browse/GRAILS-6515
+  // See http://jira.codehaus.org/browse/GRAILS-6515
   static public booleanValue(def value) {
       if (value.class == java.lang.Boolean) {
           // because 'true.toBoolean() == false' !!!
