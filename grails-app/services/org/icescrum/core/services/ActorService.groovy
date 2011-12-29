@@ -24,7 +24,6 @@
 
 package org.icescrum.core.services
 
-import groovy.util.slurpersupport.NodeChild
 import java.text.SimpleDateFormat
 import org.icescrum.core.domain.Actor
 import org.icescrum.core.domain.Product
@@ -73,7 +72,7 @@ class ActorService {
     }
 
     @Transactional(readOnly = true)
-    def unMarshall(NodeChild actor) {
+    def unMarshall(def actor) {
         try {
             def a = new Actor(
                     name: actor."${'name'}".text(),

@@ -25,7 +25,6 @@
 package org.icescrum.core.services
 
 import grails.plugins.springsecurity.Secured
-import groovy.util.slurpersupport.NodeChild
 import java.text.SimpleDateFormat
 import org.codehaus.groovy.grails.commons.ApplicationHolder
 import org.icescrum.core.domain.preferences.ProductPreferences
@@ -40,7 +39,6 @@ import org.springframework.transaction.annotation.Transactional
 import org.icescrum.core.domain.*
 import org.icescrum.core.support.ApplicationSupport
 import org.codehaus.groovy.grails.plugins.springsecurity.SpringSecurityUtils
-import org.icescrum.core.taglib.ScrumTagLib
 
 /**
  * ProductService is a transactional class, that manage operations about
@@ -333,7 +331,7 @@ class ProductService {
 
     @PreAuthorize('isAuthenticated()')
     @Transactional(readOnly = true)
-    Product unMarshall(NodeChild product, ProgressSupport progress = null) {
+    Product unMarshall(def product, ProgressSupport progress = null) {
         def g = grailsApplication.mainContext.getBean('org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib')
         try {
             def p = new Product(
@@ -450,7 +448,7 @@ class ProductService {
         progress?.updateProgress(5, g.message(code: 'is.parse', args: [g.message(code: 'is.product')]))
         def Product p
         try {
-            p = this.unMarshall((NodeChild) prod, progress)
+            p = this.unMarshall(prod.product, progress)
         } catch (RuntimeException e) {
             if (log.debugEnabled) e.printStackTrace()
             progress?.progressError(g.message(code: 'is.parse.error', args: [g.message(code: 'is.product')]))

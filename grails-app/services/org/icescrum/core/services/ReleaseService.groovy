@@ -23,7 +23,6 @@
 
 package org.icescrum.core.services
 
-import groovy.util.slurpersupport.NodeChild
 import java.text.SimpleDateFormat
 import org.codehaus.groovy.grails.commons.ApplicationHolder
 import org.icescrum.core.event.IceScrumEvent
@@ -282,7 +281,7 @@ class ReleaseService {
     }
 
     @Transactional(readOnly = true)
-    def unMarshall(NodeChild release, Product p = null, ProgressSupport progress) {
+    def unMarshall(def release, Product p = null, ProgressSupport progress) {
         try {
             def r = new Release(
                     state: release.state.text().toInteger(),

@@ -25,7 +25,6 @@
 package org.icescrum.core.services
 
 import groovy.xml.StreamingMarkupBuilder
-import groovy.util.slurpersupport.NodeChild
 import java.text.SimpleDateFormat
 import org.springframework.transaction.annotation.Transactional
 import org.icescrum.core.domain.Cliche
@@ -367,7 +366,7 @@ class ClicheService {
     }
 
     @Transactional(readOnly = true)
-    def unMarshall(NodeChild cliche) {
+    def unMarshall(def cliche) {
         def c = new Cliche(
                 type: cliche.type.text().toInteger(),
                 datePrise: new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(cliche.datePrise.text()),

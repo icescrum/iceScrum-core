@@ -22,7 +22,6 @@
 
 package org.icescrum.core.services
 
-import groovy.util.slurpersupport.NodeChild
 import java.text.SimpleDateFormat
 import org.codehaus.groovy.grails.commons.metaclass.GroovyDynamicMethodsInterceptor
 import org.codehaus.groovy.grails.web.metaclass.BindDynamicMethod
@@ -191,7 +190,7 @@ class FeatureService {
     }
 
     @Transactional(readOnly = true)
-    def unMarshall(NodeChild feat) {
+    def unMarshall(def feat) {
         try {
             def f = new Feature(
                     name: feat."${'name'}".text(),

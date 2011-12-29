@@ -70,7 +70,7 @@ class NotificationEmailService implements ApplicationListener<IceScrumStoryEvent
 
         def listTo = []
         def subjectArgs = [story.backlog.name, story.id]
-        def permalink = grailsApplication.config.grails.serverURL + '/p/' + story.backlog.pkey + '-' + story.id
+        def permalink = grailsApplication.config.grails.serverURL + '/p/' + story.backlog.pkey + '-' + story.uid
         def projectLink = grailsApplication.config.grails.serverURL + '/p/' + story.backlog.pkey + '#project'
 
         if (type == IceScrumEvent.EVENT_CREATED) {
@@ -104,7 +104,7 @@ class NotificationEmailService implements ApplicationListener<IceScrumStoryEvent
 
         def listTo = []
         def subjectArgs = [story.backlog.name, story.id]
-        def permalink = grailsApplication.config.grails.serverURL + '/p/' + story.backlog.pkey + '-' + story.id
+        def permalink = grailsApplication.config.grails.serverURL + '/p/' + story.backlog.pkey + '-' + story.uid
         def projectLink = grailsApplication.config.grails.serverURL + '/p/' + story.backlog.pkey + '#project'
 
         story.followers?.findAll {it.id != user.id}?.each { listTo << [email: it.email, locale: new Locale(it.preferences.language)] }
@@ -130,7 +130,7 @@ class NotificationEmailService implements ApplicationListener<IceScrumStoryEvent
 
         def listTo = []
         def subjectArgs = [story.backlog.name, story.id]
-        def permalink = grailsApplication.config.grails.serverURL + '/p/' + story.backlog.pkey + '-' + story.id
+        def permalink = grailsApplication.config.grails.serverURL + '/p/' + story.backlog.pkey + '-' + story.uid
         def projectLink = grailsApplication.config.grails.serverURL + '/p/' + story.backlog.pkey + '#project'
 
         if (type == IceScrumStoryEvent.EVENT_COMMENT_ADDED) {
@@ -159,14 +159,7 @@ class NotificationEmailService implements ApplicationListener<IceScrumStoryEvent
                         model: [by: user.firstName + " " + user.lastName, locale: locale, storyName: story.name, permalink: permalink, linkName: story.backlog.name, link: projectLink]
                 ])
             }
-        }/* else {
-      send([
-              to:comment.poster.email,
-              subject:getMessage('is.template.email.story.commentDeleted.subject',(Locale)locale,subjectArgs),
-              view:'/emails-templates/storyCommentDeleted',
-              model:[by:user.firstName+" "+user.lastName,locale:locale,storyName:story.name,permalink:permalink,linkName:story.backlog.name,link:projectLink]
-      ])
-    }*/
+        }
     }
 
     private void sendAlertAcceptedAs(BacklogElement element, User user, String type) {

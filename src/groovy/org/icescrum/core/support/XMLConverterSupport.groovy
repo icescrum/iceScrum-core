@@ -23,8 +23,6 @@
 
 package org.icescrum.core.support
 
-import groovy.util.slurpersupport.NodeChild
-import groovy.xml.StreamingMarkupBuilder
 import groovy.xml.MarkupBuilder
 import java.text.SimpleDateFormat
 import org.icescrum.core.domain.preferences.UserPreferences

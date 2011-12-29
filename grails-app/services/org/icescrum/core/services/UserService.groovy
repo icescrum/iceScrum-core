@@ -26,7 +26,6 @@ package org.icescrum.core.services
 
 import org.icescrum.core.domain.User
 import org.springframework.security.access.prepost.PreAuthorize
-import groovy.util.slurpersupport.NodeChild
 
 import org.icescrum.core.domain.preferences.UserPreferences
 
@@ -170,7 +169,7 @@ class UserService {
     }
 
     @Transactional(readOnly = true)
-    def unMarshall(NodeChild user) {
+    def unMarshall(def user) {
         try {
             def u = null
             if (user.@uid.text())

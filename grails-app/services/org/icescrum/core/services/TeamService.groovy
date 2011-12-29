@@ -23,7 +23,6 @@
 
 package org.icescrum.core.services
 
-import groovy.util.slurpersupport.NodeChild
 import org.codehaus.groovy.grails.commons.ApplicationHolder
 import org.icescrum.core.domain.Product
 import org.icescrum.core.domain.Team
@@ -204,7 +203,7 @@ class TeamService {
 
 
     @Transactional(readOnly = true)
-    def unMarshall(NodeChild team, Product p = null, ProgressSupport progress = null) {
+    def unMarshall(def team, Product p = null, ProgressSupport progress = null) {
         try {
             def existingTeam = true
             def t = new Team(

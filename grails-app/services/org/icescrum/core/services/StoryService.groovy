@@ -25,7 +25,6 @@
 package org.icescrum.core.services
 
 import grails.plugin.fluxiable.Activity
-import groovy.util.slurpersupport.NodeChild
 import java.text.SimpleDateFormat
 import org.icescrum.core.event.IceScrumStoryEvent
 import org.springframework.security.access.prepost.PreAuthorize
@@ -781,7 +780,7 @@ class StoryService {
     }
 
     @Transactional(readOnly = true)
-    def unMarshall(NodeChild story, Product p = null, Sprint sp = null) {
+    def unMarshall(def story, Product p = null, Sprint sp = null) {
         try {
             def acceptedDate = null
             if (story.acceptedDate?.text() && story.acceptedDate?.text() != "")

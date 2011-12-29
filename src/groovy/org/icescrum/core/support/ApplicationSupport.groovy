@@ -27,7 +27,6 @@ import org.codehaus.groovy.grails.commons.ApplicationHolder
 import groovyx.net.http.RESTClient
 import grails.util.Metadata
 import org.apache.commons.logging.LogFactory
-import groovy.util.slurpersupport.NodeChild
 import org.icescrum.core.domain.User
 
 
@@ -110,8 +109,9 @@ class ApplicationSupport {
     return midnightTime.getTime()
   }
     
-  static public findUserUIDOldXMl(NodeChild object, name, users){
-      def root = object.parent().parent().parent().parent().parent().parent().parent().parent().parent()
+  static public findUserUIDOldXMl(def object, name, users){
+      //be sure we are at root node
+      def root = object.parent().parent().parent().parent().parent().parent().parent().parent().parent().product
       def uXml = root.'**'.find{ it.@id.text() == (name ? object."${name}".@id.text() : object.@id.text() )  && it.username.text()}
       if (uXml){
           def UXmlUID = (uXml.username?.text() + uXml.email?.text()).encodeAsMD5()

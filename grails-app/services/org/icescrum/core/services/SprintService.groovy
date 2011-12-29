@@ -23,7 +23,6 @@
 
 package org.icescrum.core.services
 
-import groovy.util.slurpersupport.NodeChild
 import java.text.SimpleDateFormat
 import org.icescrum.core.event.IceScrumEvent
 import org.icescrum.core.event.IceScrumSprintEvent
@@ -520,7 +519,7 @@ class SprintService {
     }
 
     @Transactional(readOnly = true)
-    def unMarshall(NodeChild sprint, Product p = null) {
+    def unMarshall(def sprint, Product p = null) {
         try {
             def activationDate = null
             if (sprint.activationDate?.text() && sprint.activationDate?.text() != "")

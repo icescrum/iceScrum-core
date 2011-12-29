@@ -24,7 +24,6 @@
 
 package org.icescrum.core.services
 
-import groovy.util.slurpersupport.NodeChild
 import java.text.SimpleDateFormat
 import org.codehaus.groovy.grails.commons.ApplicationHolder
 import org.icescrum.core.event.IceScrumTaskEvent
@@ -434,7 +433,7 @@ class TaskService {
     }
 
     @Transactional(readOnly = true)
-    def unMarshall(NodeChild task, Product p = null) {
+    def unMarshall(def task, Product p = null) {
         try {
             def inProgressDate = null
             if (task.inProgressDate?.text() && task.inProgressDate?.text() != "")

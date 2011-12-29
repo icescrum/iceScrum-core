@@ -427,6 +427,15 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                 eq 'id', id
             }
         }
+
+        getInProductUid {p, id ->
+            backlog {
+                eq 'id', p
+            }
+            and {
+                eq 'uid', id
+            }
+        }
     }
 
     static int findNextUId(Long pid) {
