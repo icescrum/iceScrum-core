@@ -233,12 +233,12 @@ class Task extends BacklogElement implements Serializable {
     }
 
     static int findNextUId(Long pid) {
-        1 + executeQuery(
+        (executeQuery(
                 """SELECT DISTINCT MAX(t.uid)
                    FROM org.icescrum.core.domain.Task as t, org.icescrum.core.domain.Sprint as s, org.icescrum.core.domain.Release as r
                    WHERE t.backlog = s
                    AND s.parentRelease = r
-                   AND r.parentProduct.id = :pid """, [pid: pid])[0]?:0
+                   AND r.parentProduct.id = :pid """, [pid: pid])[0]?:0) + 1
     }
 
     @Override
