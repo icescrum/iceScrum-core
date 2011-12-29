@@ -43,6 +43,24 @@ class UserMigration {
                 dropColumn(tableName:"icescrum2_user", columnName:"passwd")
                 renameColumn(tableName:"icescrum2_user", oldColumnName:'"password"', newColumnName:"passwd", columnDataType:'varchar(255)')
             }
+
+            changeSet(id:'add_uid_column_user', author:'vbarrier') {
+                preConditions(onFail:"MARK_RAN"){
+                    not{
+                      dbms(type:'mssql')
+                    }
+                }
+                sql('UPDATE icescrum2_user set uid = MD5(CONCAT(username,\'\',email)) WHERE uid is NULL')
+                addNotNullConstraint(tableName:"icescrum2_task",columnName:'uid',columnDataType:'varchar(255)')
+            }
+
+            changeSet(id:'add_uid_column_user_mssql', author:'vbarrier') {
+                preConditions(onFail:"MARK_RAN"){
+                    dbms(type:'mssql')
+                }
+                sql('UPDATE icescrum2_user set uid = SUBSTRING(sys.fn_sqlvarbasetostr(HASHBYTES(\'MD5\',CONCAT(username,\'\',email))),3,32) WHERE uid is NULL')
+                addNotNullConstraint(tableName:"icescrum2_task",columnName:'uid',columnDataType:'varchar(max)')
+            }
     }
 }
 

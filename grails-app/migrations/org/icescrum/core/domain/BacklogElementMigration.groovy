@@ -50,6 +50,16 @@ class BacklogElementMigration {
                 }
                 dropColumn(tableName:"icescrum2_impediment", columnName:"id_from_import")
             }
+            changeSet(id:'add_uid_column_backlogelement', author:'vbarrier') {
+                sql('UPDATE icescrum2_task set uid = id WHERE uid is NULL')
+                addNotNullConstraint(tableName:"icescrum2_task",columnName:'uid',columnDataType:'BIGINT')
+                sql('UPDATE icescrum2_actor set uid = id WHERE uid is NULL')
+                addNotNullConstraint(tableName:"icescrum2_actor",columnName:'uid',columnDataType:'BIGINT')
+                sql('UPDATE icescrum2_feature set uid = id WHERE uid is NULL')
+                addNotNullConstraint(tableName:"icescrum2_feature",columnName:'uid',columnDataType:'BIGINT')
+                sql('UPDATE icescrum2_story set uid = id WHERE uid is NULL')
+                addNotNullConstraint(tableName:"icescrum2_story",columnName:'uid',columnDataType:'BIGINT')
+            }
     }
 }
 
