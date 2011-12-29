@@ -98,6 +98,16 @@ class ApplicationSupport {
     }
   }
 
+  public static Date getMidnightTime(Date time){
+    def midnightTime = Calendar.getInstance()
+    midnightTime.setTime(time)
+    midnightTime.set(Calendar.HOUR_OF_DAY, 0)
+    midnightTime.set(Calendar.MINUTE, 0)
+    midnightTime.set(Calendar.SECOND, 0)
+    midnightTime.set(Calendar.MILLISECOND,0)
+    return midnightTime.getTime()
+  }
+
 }
 
 class CheckerTimerTask extends TimerTask {

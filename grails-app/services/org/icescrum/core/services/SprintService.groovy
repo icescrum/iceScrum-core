@@ -32,6 +32,7 @@ import org.icescrum.core.utils.ServicesUtils
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.transaction.annotation.Transactional
 import org.icescrum.core.domain.*
+import org.icescrum.core.support.ApplicationSupport
 
 class SprintService {
 
@@ -203,11 +204,10 @@ class SprintService {
             firstDate.time += day
         }
 
-        // If the release has a end date, the number of of sprint depends
-        // of the total number of days available
-        int totalDays = (int) ((lastDate.time - firstDate.time) / day)
+        Date lastDateMidnight = ApplicationSupport.getMidnightTime(lastDate)
+        Date firstDateMidnight = ApplicationSupport.getMidnightTime(firstDate)
+        int totalDays = (int) ((lastDateMidnight.time - firstDateMidnight.time) / day) + 1
         int nbSprints = Math.floor(totalDays / daysBySprint)
-        nbSprints = Math.floor((totalDays - (nbSprints - 1)) / daysBySprint)
 
         def sprints = []
         for (int i = 0; i < nbSprints; i++) {
