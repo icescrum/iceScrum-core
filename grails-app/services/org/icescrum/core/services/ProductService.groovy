@@ -135,18 +135,24 @@ class ProductService {
 
             _product.teams.each{
                it.scrumMasters?.each{ u ->
+                   if (!u.isAttached()) it = it.merge()
                    securityService.createAdministrationPermissionsForProduct(u,_product)
                }
             }
 
             if (productOwners) {
                 productOwners?.eachWithIndex {it, index ->
+                    if (!it.isAttached()) it = it.merge()
                     securityService.createProductOwnerPermissions(it, _product)
                 }
-                securityService.changeOwner(productOwners.first(), _product)
+                def u = productOwners.first()
+                if (!u.isAttached()) u = u.merge()
+                securityService.changeOwner(u, _product)
             } else {
                 def u = User.get(springSecurityService.principal.id)
+                if (!u.isAttached()) u = u.merge()
                 securityService.createProductOwnerPermissions(u, _product)
+                if (!u.isAttached()) u = u.merge()
                 securityService.changeOwner(u, _product)
             }
 

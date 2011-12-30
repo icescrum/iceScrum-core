@@ -163,15 +163,18 @@ class TeamService {
 
         def u = (User) springSecurityService.currentUser
         for (member in team.members) {
+            if (!member.isAttached()) member = member.merge()
             if (!(member in scrumMasters))
                 addMember(team,member)
         }
         if (scrumMasters) {
             scrumMasters.eachWithIndex {it, index ->
+                if (!it.isAttached()) it = it.merge()
                 addScrumMaster(team,it)
             }
             securityService.changeOwner(team.scrumMasters.first(), team)
         } else {
+            if (!u.isAttached()) u = u.merge()
             securityService.createScrumMasterPermissions u, team
             securityService.changeOwner(u, team)
         }

@@ -35,6 +35,7 @@ import org.apache.commons.io.FilenameUtils
 import org.icescrum.core.utils.ImageConvert
 import org.icescrum.core.event.IceScrumEvent
 import org.icescrum.core.event.IceScrumUserEvent
+import org.icescrum.core.support.ApplicationSupport
 
 /**
  * The UserService class monitor the operations on the User domain requested by the web layer.
@@ -171,9 +172,12 @@ class UserService {
     @Transactional(readOnly = true)
     def unMarshall(def user) {
         try {
-            def u = null
+            def u
             if (user.@uid.text())
                 u = User.findByUid(user.@uid.text())
+            else{
+                u = ApplicationSupport.findUserUIDOldXMl(user,null,null)
+            }
             if (!u) {
                 u = new User(
                         lastName: user.lastName.text(),

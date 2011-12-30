@@ -117,7 +117,7 @@ class ApplicationSupport {
       def uXml = root.'**'.find{ it.@id.text() == (name ? object."${name}".@id.text() : object.@id.text() )  && it.username.text()}
       if (uXml){
           def UXmlUID = (uXml.username?.text() + uXml.email?.text()).encodeAsMD5()
-          return ((User) users?.find { it.uid == UXmlUID } ) ?: null
+          return users ? ((User) users?.find { it.uid == UXmlUID } ) : User.findByUid(UXmlUID) ?: null
       }else{
           return null
       }
