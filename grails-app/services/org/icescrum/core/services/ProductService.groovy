@@ -39,6 +39,7 @@ import org.springframework.transaction.annotation.Transactional
 import org.icescrum.core.domain.*
 import org.icescrum.core.support.ApplicationSupport
 import org.codehaus.groovy.grails.plugins.springsecurity.SpringSecurityUtils
+import org.codehaus.groovy.grails.orm.hibernate.cfg.GrailsHibernateUtil
 
 /**
  * ProductService is a transactional class, that manage operations about
@@ -111,6 +112,7 @@ class ProductService {
 
         if (_product.erasableByUser && _product.name == name) {
             def p = Product.findByName(_product.name)
+            p.teams.each{ it.removeFromProducts(p) }
             securityService.unsecureDomain(p)
             p.delete(flush: true)
         }
@@ -119,6 +121,11 @@ class ProductService {
             _product.teams.each { t ->
                 if (t.id == null)
                     teamService.saveImport(t)
+                else {
+                    def ts = Team.get(t.id)
+                    ts.removeFromProducts(_product)
+                    ts.addToProducts(_product)
+                }
             }
 
             def productOwners = _product.productOwners
@@ -135,24 +142,22 @@ class ProductService {
 
             _product.teams.each{
                it.scrumMasters?.each{ u ->
-                   if (!u.isAttached()) it = it.merge()
+                   u = User.get(u.id)
                    securityService.createAdministrationPermissionsForProduct(u,_product)
                }
             }
 
             if (productOwners) {
                 productOwners?.eachWithIndex {it, index ->
-                    if (!it.isAttached()) it = it.merge()
+                    it = User.get(it.id)
                     securityService.createProductOwnerPermissions(it, _product)
                 }
                 def u = productOwners.first()
-                if (!u.isAttached()) u = u.merge()
+                u = User.get(u.id)
                 securityService.changeOwner(u, _product)
             } else {
                 def u = User.get(springSecurityService.principal.id)
-                if (!u.isAttached()) u = u.merge()
                 securityService.createProductOwnerPermissions(u, _product)
-                if (!u.isAttached()) u = u.merge()
                 securityService.changeOwner(u, _product)
             }
 

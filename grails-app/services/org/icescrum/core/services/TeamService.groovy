@@ -265,6 +265,12 @@ class TeamService {
                     existingTeam = false
                 }
                 if (existingTeam) {
+                    //Remove "tmp" team because team already exist
+                    dbTeam.members?.each{ member ->
+                        member.removeFromTeams(t)
+                    }
+                    t.scrumMasters = null
+                    t.delete()
                     return dbTeam
                 } else {
                     return t
