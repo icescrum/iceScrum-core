@@ -111,7 +111,9 @@ class ApplicationSupport {
     
   static public findUserUIDOldXMl(def object, name, users){
       //be sure we are at root node
-      def root = object.parent().parent().parent().parent().parent().parent().parent().parent().parent().product
+      def root = object.parent().parent().parent().parent().parent().parent().parent().parent().parent()
+      //be compatible with xml without export tag
+      if (root.find{ it.name == 'export' }){ root = root.product }
       def uXml = root.'**'.find{ it.@id.text() == (name ? object."${name}".@id.text() : object.@id.text() )  && it.username.text()}
       if (uXml){
           def UXmlUID = (uXml.username?.text() + uXml.email?.text()).encodeAsMD5()

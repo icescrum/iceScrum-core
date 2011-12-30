@@ -24,7 +24,11 @@ class IceScrumProductEvent extends IceScrumEvent {
 
   IceScrumProductEvent(Product product, File xml, Class generatedBy, User doneBy, def type){
     super(product, generatedBy, doneBy, type)
-    this.xml = new XmlSlurper().parse(xml).product
+    this.xml = new XmlSlurper().parse(xml)
+    //be compatible with xml without export tag
+    if (this.xml.find{it.name == 'export'}){
+        this.xml = this.xml.product
+    }
   }
 
   IceScrumProductEvent(Product product, Team team, Class generatedBy, User doneBy, def type){

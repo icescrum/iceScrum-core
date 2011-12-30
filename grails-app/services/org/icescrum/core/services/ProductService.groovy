@@ -448,7 +448,12 @@ class ProductService {
         progress?.updateProgress(5, g.message(code: 'is.parse', args: [g.message(code: 'is.product')]))
         def Product p
         try {
-            p = this.unMarshall(prod.product, progress)
+            def product = prod
+
+            //be compatible with xml without export tag
+            if (prod.find{it.name == 'export'}){ product = prod.product }
+
+            p = this.unMarshall(product, progress)
         } catch (RuntimeException e) {
             if (log.debugEnabled) e.printStackTrace()
             progress?.progressError(g.message(code: 'is.parse.error', args: [g.message(code: 'is.product')]))
