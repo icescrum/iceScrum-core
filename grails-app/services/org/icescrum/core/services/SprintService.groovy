@@ -273,10 +273,12 @@ class SprintService {
         sprint.state = Sprint.STATE_INPROGRESS
         sprint.activationDate = new Date()
 
+        sprint.parentRelease.lastUpdated = new Date()
+        sprint.parentRelease.parentProduct.lastUpdated = new Date()
+
         bufferBroadcast()
         sprint.stories.each {
             it.inProgressDate = new Date()
-
             broadcast(function: 'inProgress', message: it)
             publishEvent(new IceScrumStoryEvent(it, this.class, (User) springSecurityService.currentUser, IceScrumStoryEvent.EVENT_INPROGRESS))
         }
@@ -333,6 +335,9 @@ class SprintService {
         sprint.velocity = sum
         sprint.state = Sprint.STATE_DONE
         sprint.closeDate = new Date()
+
+        sprint.parentRelease.lastUpdated = new Date()
+        sprint.parentRelease.parentProduct.lastUpdated = new Date()
 
         sprint.tasks?.findAll {it.type == Task.TYPE_URGENT || it.type == Task.TYPE_RECURRENT}?.each {
             it.lastUpdated = new Date()
