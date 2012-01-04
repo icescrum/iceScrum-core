@@ -50,10 +50,19 @@ class UserMigration {
                       or {
                         dbms(type:'mssql')
                         dbms(type:'hsqldb')
+                        dbms(type:'postgresql')
                       }
                     }
                 }
-                sql('UPDATE icescrum2_user set uid = MD5(username || \'\' || email)) WHERE uid is NULL')
+                sql('UPDATE icescrum2_user set uid = MD5(CONCAT(username,\'\',email)) WHERE uid is NULL')
+                addNotNullConstraint(tableName:"icescrum2_user",columnName:'uid',columnDataType:'varchar(255)')
+            }
+
+            changeSet(id:'add_uid_column_user_postgresql', author:'vbarrier') {
+                preConditions(onFail:"MARK_RAN"){
+                    dbms(type:'postgresql')
+                }
+                sql('UPDATE icescrum2_user set uid = MD5(username || email) WHERE uid is NULL')
                 addNotNullConstraint(tableName:"icescrum2_user",columnName:'uid',columnDataType:'varchar(255)')
             }
 
