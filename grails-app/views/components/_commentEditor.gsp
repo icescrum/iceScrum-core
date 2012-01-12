@@ -33,17 +33,16 @@
       <g:if test="${!mode || mode=='add'}">
         <is:button
                 id="submitForm" type="submitToRemote"
-                url="[controller:'backlogElement', action:'addComment', params:[product:params.product]]"
-                update="${update ?: 'activities-wrapper'}"
-                onSuccess="jQuery('#commentBody').text('');jQuery('#start-follow').hide();jQuery('#stop-follow').show();"
+                url="[controller:'backlogElement', action:'saveComment', params:[product:params.product]]"
+                onSuccess="jQuery('#commentEditorContainer').hide();jQuery('#commentBody').val('');jQuery('#start-follow').hide();jQuery('#stop-follow').show();jQuery.event.trigger('add_comment',data);"
                 value="${message(code:'is.ui.backlogelement.comment.post.button')}"
                 history="false"/>
       </g:if>
       <g:elseif test="${mode && mode=='edit'}">
         <is:button
                 id="submitCommentForm${comment?.id ?: ''}" type="submitToRemote"
-                url="[controller:'backlogElement', action:'editComment', params:[product:params.product]]"
-                update="${update ?: 'activities-wrapper'}"
+                url="[controller:'backlogElement', action:'updateComment', params:[product:params.product]]"
+                onSuccess="jQuery('#commentEditorWrapper${comment?.id ?: ''}').hide();jQuery('#comment${comment?.id ?: ''} .commentContent').show();jQuery.event.trigger('update_comment',data);"
                 value="${message(code:'is.ui.backlogelement.comment.edit.button')}"
                 history="false"/>
       </g:elseif>
