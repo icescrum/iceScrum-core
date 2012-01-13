@@ -78,7 +78,8 @@ class Story extends BacklogElement implements Cloneable, Serializable {
     ]
 
     static hasMany = [
-            tasks: Task
+            tasks: Task,
+            acceptanceTests: AcceptanceTest
     ]
 
     static mappedBy = [
@@ -93,6 +94,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
         cache true
         table 'icescrum2_story'
         tasks cascade: 'all'
+        acceptanceTests sort: 'id'
     }
 
     static constraints = {
