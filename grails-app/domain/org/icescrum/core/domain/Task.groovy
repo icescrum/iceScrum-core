@@ -276,7 +276,9 @@ class Task extends BacklogElement implements Serializable {
     }
 
     Sprint getSprint(){
-        return (Sprint)this.getBacklog()
+        if (this.getBacklog()?.id)
+            return (Sprint)this.getBacklog()
+        return null
     }
 
     def afterDelete() {
