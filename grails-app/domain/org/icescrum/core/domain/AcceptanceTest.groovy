@@ -22,6 +22,9 @@
  */
 package org.icescrum.core.domain
 
+import org.icescrum.core.event.IceScrumAcceptanceTestEvent
+import org.springframework.security.core.context.SecurityContextHolder as SCH
+
 class AcceptanceTest implements Serializable {
 
     String name
@@ -47,5 +50,17 @@ class AcceptanceTest implements Serializable {
                    FROM org.icescrum.core.domain.AcceptanceTest as t, org.icescrum.core.domain.Story as s
                    WHERE t.parentStory = s
                    AND s.backlog.id = :pid """, [pid: pid])[0]?:0) + 1
+    }
+
+    def beforeDelete() {
+        withNewSession {
+            publishEvent(new IceScrumAcceptanceTestEvent(this, this.class, User.get(SCH.context?.authentication?.principal?.id), IceScrumAcceptanceTestEvent.EVENT_BEFORE_DELETE))
+        }
+    }
+
+    def afterDelete() {
+        withNewSession {
+            publishEvent(new IceScrumAcceptanceTestEvent(this, this.class, User.get(SCH.context?.authentication?.principal?.id), IceScrumAcceptanceTestEvent.EVENT_AFTER_DELETE))
+        }
     }
 }

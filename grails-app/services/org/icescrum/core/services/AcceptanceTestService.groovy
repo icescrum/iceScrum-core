@@ -27,6 +27,7 @@ import org.springframework.security.access.prepost.PreAuthorize
 import org.icescrum.core.domain.Story
 import org.icescrum.core.domain.User
 import org.icescrum.core.domain.Product
+import org.icescrum.core.event.IceScrumAcceptanceTestEvent
 
 class AcceptanceTestService {
 
@@ -41,13 +42,15 @@ class AcceptanceTestService {
             throw new RuntimeException()
         }
         parentStory.addActivity(user, 'acceptanceTest', parentStory.name)
+        publishEvent(new IceScrumAcceptanceTestEvent(acceptanceTest, this.class, user, IceScrumAcceptanceTestEvent.EVENT_CREATED))
     }
 
     @PreAuthorize('inProduct() and !archivedProduct()')
-    void update(AcceptanceTest acceptanceTest) {
+    void update(AcceptanceTest acceptanceTest, User user) {
         if (!acceptanceTest.save(flush:true)) {
             throw new RuntimeException()
         }
+        publishEvent(new IceScrumAcceptanceTestEvent(acceptanceTest, this.class, user, IceScrumAcceptanceTestEvent.EVENT_UPDATED))
     }
 
     @PreAuthorize('inProduct() and !archivedProduct()')
