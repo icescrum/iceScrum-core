@@ -43,6 +43,7 @@ class AcceptanceTestService {
         }
         parentStory.addActivity(user, 'acceptanceTest', parentStory.name)
         publishEvent(new IceScrumAcceptanceTestEvent(acceptanceTest, this.class, user, IceScrumAcceptanceTestEvent.EVENT_CREATED))
+        broadcast(function: 'add', message: acceptanceTest)
     }
 
     @PreAuthorize('inProduct() and !archivedProduct()')
@@ -51,11 +52,13 @@ class AcceptanceTestService {
             throw new RuntimeException()
         }
         publishEvent(new IceScrumAcceptanceTestEvent(acceptanceTest, this.class, user, IceScrumAcceptanceTestEvent.EVENT_UPDATED))
+        broadcast(function: 'update', message: acceptanceTest)
     }
 
     @PreAuthorize('inProduct() and !archivedProduct()')
     void delete(AcceptanceTest acceptanceTest) {
         acceptanceTest.delete()
+        broadcast(function: 'remove', message: acceptanceTest)
     }
 
     def unMarshall(def acceptanceTest, Product product) {
