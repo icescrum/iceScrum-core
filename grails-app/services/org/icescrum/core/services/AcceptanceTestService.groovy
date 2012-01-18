@@ -58,7 +58,7 @@ class AcceptanceTestService {
     @PreAuthorize('inProduct() and !archivedProduct()')
     void delete(AcceptanceTest acceptanceTest) {
         acceptanceTest.delete()
-        broadcast(function: 'remove', message: acceptanceTest)
+        broadcast(function: 'delete', message: [class: acceptanceTest.class, id: acceptanceTest.id])
     }
 
     def unMarshall(def acceptanceTest, Product product) {

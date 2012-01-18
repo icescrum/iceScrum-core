@@ -36,32 +36,34 @@
             <span class="comment-dateCreated">${comment.dateCreated}</span>
         </g:else>
         <g:if test="${moderation && (access || user?.id == comment.poster?.id)}">
-          (
-          <is:link history="false"
-                  class="edit-comment"
-                  remote="true"
-                  controller="backlogElement"
-                  action="editCommentEditor"
-                  id="${comment.id}"
-                  update="commentEditorWrapper${comment.id}"
-                  params="[commentable:backlogelement.id]"
-                  onSuccess="jQuery('#commentEditorContainer').hide();jQuery('#comment${comment.id} .commentContent').hide();jQuery('#commentEditorWrapper${comment?.id ?: ''}').show();"
-                  rendered="${(access || user?.id == comment.poster?.id) ? 'true' : 'false'}">
-            ${message(code:'is.ui.backlogelement.comment.edit')}
-          </is:link>
-          <g:if test="${access}">
-            <is:link history="false"
-                    class="delete-comment"
-                    remote="true"
-                    controller="backlogElement"
-                    action="deleteComment"
-                    id="${comment.id}"
-                    onSuccess="jQuery.event.trigger('remove_comment',data)"
-                    params="[backlogelement:backlogelement.id]">
-            - ${message(code:'is.ui.backlogelement.comment.delete')}
-            </is:link>
-          </g:if>
-          )
+          <span class="menu-comment">
+              (
+              <is:link history="false"
+                      class="edit-comment"
+                      remote="true"
+                      controller="backlogElement"
+                      action="editCommentEditor"
+                      id="${comment.id}"
+                      update="commentEditorWrapper${comment.id}"
+                      params="[commentable:backlogelement.id]"
+                      onSuccess="jQuery('#commentEditorContainer').hide();jQuery('#comment${comment.id} .commentContent').hide();jQuery('#commentEditorWrapper${comment?.id ?: ''}').show();"
+                      rendered="${(access || user?.id == comment.poster?.id) ? 'true' : 'false'}">
+                ${message(code:'is.ui.backlogelement.comment.edit')}
+              </is:link>
+              <g:if test="${access}">
+                <is:link history="false"
+                        class="delete-comment"
+                        remote="true"
+                        controller="backlogElement"
+                        action="deleteComment"
+                        id="${comment.id}"
+                        onSuccess="jQuery.event.trigger('remove_comment',data)"
+                        params="[backlogelement:backlogelement.id]">
+                - ${message(code:'is.ui.backlogelement.comment.delete')}
+                </is:link>
+              </g:if>
+              )
+          </span>
         </g:if>
         <g:if test="${!template && comment.lastUpdated && comment.lastUpdated.time >= (comment.dateCreated.time + 5000)}">
           <em>${message(code:'is.ui.backlogelement.comment.last.update')}
