@@ -41,6 +41,7 @@ class StoryService {
     def featureService
     def attachmentableService
     def securityService
+    def acceptanceTestService
     def g = new org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib()
 
     static transactional = true
@@ -862,6 +863,11 @@ class StoryService {
                     t.backlog = sp
                     s.addToTasks(t)
                 }
+            }
+
+            story.acceptanceTests?.acceptanceTest?.each {
+                def at = acceptanceTestService.unMarshall(it, p)
+                s.addToAcceptanceTests(at)
             }
 
             if (p) {

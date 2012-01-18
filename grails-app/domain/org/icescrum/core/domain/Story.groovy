@@ -94,7 +94,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
         cache true
         table 'icescrum2_story'
         tasks cascade: 'all'
-        acceptanceTests sort: 'id'
+        acceptanceTests sort: 'uid'
     }
 
     static constraints = {

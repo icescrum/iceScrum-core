@@ -26,6 +26,7 @@ import org.icescrum.core.domain.AcceptanceTest
 import org.springframework.security.access.prepost.PreAuthorize
 import org.icescrum.core.domain.Story
 import org.icescrum.core.domain.User
+import org.icescrum.core.domain.Product
 
 class AcceptanceTestService {
 
@@ -53,4 +54,22 @@ class AcceptanceTestService {
         acceptanceTest.delete()
     }
 
+    def unMarshall(def acceptanceTest, Product product) {
+        try {
+            def at = new AcceptanceTest(
+                name: acceptanceTest."${'name'}".text(),
+                description: acceptanceTest."${'description'}".text(),
+                uid: acceptanceTest.@uid.text().toInteger()
+            )
+            if (product) {
+                def u = ((User) product.getAllUsers().find { it.uid == acceptanceTest.creator.@uid.text() } ) ?: null
+                at.creator = u ?:  product.productOwners.first()
+            }
+            return at
+
+        } catch (Exception e) {
+            if (log.debugEnabled) e.printStackTrace()
+            throw new RuntimeException(e)
+        }
+    }
 }
