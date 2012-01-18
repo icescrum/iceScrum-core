@@ -40,6 +40,7 @@ class AcceptanceTestService {
         if (!acceptanceTest.save(flush:true)) {
             throw new RuntimeException()
         }
+        parentStory.addActivity(user, 'acceptanceTest', parentStory.name)
     }
 
     @PreAuthorize('inProduct() and !archivedProduct()')
