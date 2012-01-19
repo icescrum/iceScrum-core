@@ -31,6 +31,7 @@ import org.icescrum.core.event.IceScrumEvent
 import org.icescrum.core.event.IceScrumStoryEvent
 import org.icescrum.plugins.attachmentable.domain.Attachment
 import org.springframework.security.core.context.SecurityContextHolder as SCH
+import grails.util.GrailsNameUtils
 
 
 class Story extends BacklogElement implements Cloneable, Serializable {
@@ -464,7 +465,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                 "WHERE a.type='story' " +
                 "and s.backlog.id in (SELECT DISTINCT p.id " +
                                         "FROM org.icescrum.core.domain.Product as p INNER JOIN p.teams as t " +
-                                        "WHERE t.id in" +
+                                        "WHERE t'.id in" +
                                                 "(SELECT DISTINCT t2.id FROM org.icescrum.core.domain.Team as t2 " +
                                                 "INNER JOIN t2.members as m " +
                                                 "WHERE m.id = :uid)) " +
@@ -488,6 +489,18 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                 "and a.activity.posterId in " +
                 "(SELECT DISTINCT u2.id FROM org.icescrum.core.domain.User as u2 INNER JOIN u2.teams as t WHERE t.id = :t)" +
                 "ORDER BY a.activity.dateCreated DESC", [t: currentTeamInstance.id], [max: 15])
+    }
+
+    static findLastUpdatedComment(long storyId) {
+        executeQuery("SELECT c.lastUpdated " +
+                "FROM org.grails.comments.Comment as c, org.grails.comments.CommentLink as cl, org.icescrum.core.domain.Story as s " +
+                "WHERE c = cl.comment " +
+                "AND cl.commentRef = s " +
+                "AND cl.type = :storyType " +
+                "AND s.id = :storyId " +
+                "ORDER BY c.lastUpdated DESC",
+                [storyId: storyId, storyType: GrailsNameUtils.getPropertyName(Story)],
+                [max: 1])[0]
     }
 
     int compareTo(Story o) {

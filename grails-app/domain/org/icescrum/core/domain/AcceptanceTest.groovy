@@ -44,6 +44,20 @@ class AcceptanceTest implements Serializable {
         name(blank: false)
     }
 
+    static namedQueries = {
+        findLastUpdated {storyId ->
+            parentStory {
+                eq 'id', storyId
+            }
+            projections {
+                property 'lastUpdated'
+            }
+            order("lastUpdated", "desc")
+            maxResults(1)
+            cache true
+        }
+    }
+
     static int findNextUId(Long pid) {
         (executeQuery(
                 """SELECT DISTINCT MAX(t.uid)

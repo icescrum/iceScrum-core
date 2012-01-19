@@ -192,6 +192,18 @@ class Task extends BacklogElement implements Serializable {
             }
             eq 'id', id
         }
+
+        findLastUpdated {storyId ->
+            parentStory {
+                eq 'id', storyId
+            }
+            projections {
+                property 'lastUpdated'
+            }
+            order("lastUpdated", "desc")
+            maxResults(1)
+            cache true
+        }
     }
 
     static Task getInProduct(Long pid, Long id) {
