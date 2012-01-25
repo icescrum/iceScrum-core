@@ -37,6 +37,7 @@ class AcceptanceTest implements Serializable {
     static belongsTo = [
         creator: User,
         parentStory: Story
+
     ]
 
     static constraints = {
@@ -76,5 +77,32 @@ class AcceptanceTest implements Serializable {
         withNewSession {
             publishEvent(new IceScrumAcceptanceTestEvent(this, this.class, User.get(SCH.context?.authentication?.principal?.id), IceScrumAcceptanceTestEvent.EVENT_AFTER_DELETE))
         }
+    }
+
+    @Override
+    boolean equals(o) {
+        if (this.is(o)) return true;
+        if (getClass() != o.class) return false;
+
+        AcceptanceTest that = (AcceptanceTest) o;
+
+        if (uid != that.uid) return false;
+        if (dateCreated != that.dateCreated) return false;
+        if (description != that.description) return false;
+        if (lastUpdated != that.lastUpdated) return false;
+        if (name != that.name) return false;
+
+        return true;
+    }
+
+    @Override
+    int hashCode() {
+        int result;
+        result = (name != null ? name.hashCode() : 0);
+        result = 31 * result + (description != null ? description.hashCode() : 0);
+        result = 31 * result + uid;
+        result = 31 * result + (dateCreated != null ? dateCreated.hashCode() : 0);
+        result = 31 * result + (lastUpdated != null ? lastUpdated.hashCode() : 0);
+        return result;
     }
 }
