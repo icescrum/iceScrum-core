@@ -217,12 +217,12 @@ class ProductService {
             }
         }
 
+        _product.lastUpdated = new Date()
         if (!_product.save(flush: true)) {
             throw new RuntimeException()
         }
 
         broadcast(function: 'update', message: _product)
-
         publishEvent(new IceScrumProductEvent(_product, this.class, (User) springSecurityService.currentUser, IceScrumEvent.EVENT_UPDATED))
     }
 
@@ -639,7 +639,7 @@ class ProductService {
         productOwners?.each{
             if(!members*.id?.contains(it.id)){
                 members.add([name: it.firstName+' '+it.lastName,
-                         activity:it.preferences.activity?:'&nbsp;',
+                activity:it.preferences.activity?:'&nbsp;',
                          id: it.id,
                          avatar:is.avatar(user:it,link:true),
                          role: Authority.PRODUCTOWNER])
@@ -661,8 +661,9 @@ class ProductService {
     }
 
     private void addStakeHolder(Product product, User stakeHolder) {
-        if (product.preferences.hidden)
+        if (product.preferences.hidden){
             securityService.createStakeHolderPermissions stakeHolder, product
+        }
     }
 
     private void removeProductOwner(Product product, User productOwner) {

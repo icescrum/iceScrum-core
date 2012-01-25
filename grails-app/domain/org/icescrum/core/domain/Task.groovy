@@ -182,17 +182,6 @@ class Task extends BacklogElement implements Serializable {
             }
         }
 
-        getInProduct { p, id ->
-            backlog {
-                parentRelease {
-                    parentProduct {
-                        eq 'id', p
-                    }
-                }
-            }
-            eq 'id', id
-        }
-
         findLastUpdated {storyId ->
             parentStory {
                 eq 'id', storyId

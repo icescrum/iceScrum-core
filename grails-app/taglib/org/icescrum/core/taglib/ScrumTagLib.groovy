@@ -61,6 +61,7 @@ class ScrumTagLib {
         if (params.content.trim() == '') {
             params.content = '&nbsp;';
         }
+
         out << g.render(template: '/components/postit', plugin: 'icescrum-core', model: params)
     }
 

@@ -274,7 +274,7 @@ class SecurityService {
 
 
     boolean stakeHolder(product, auth, onlyPrivate) {
-        def p
+        def p = null
 
         if (SpringSecurityUtils.ifAnyGranted(Authority.ROLE_ADMIN))
             return true
@@ -286,12 +286,13 @@ class SecurityService {
             product = product.id
         }
 
-        def authkey = SpringSecurityUtils.ifAnyGranted(Authority.ROLE_VISITOR) ? auth.principal : auth.principal.id + getUserLastUpdated(auth.principal.id).toString()
-
         if (product) {
-            return springcacheService.doWithCache(CACHE_STAKEHOLDER, new CacheKeyBuilder().append(onlyPrivate).append(product).append(authkey).toCacheKey()) {
-                if (!p) p = Product.get(product)
-                if (!p || !auth) return false
+
+            if (!p) p = Product.get(product)
+            if (!p || !auth) return false
+
+            def authkey = SpringSecurityUtils.ifAnyGranted(Authority.ROLE_VISITOR) ? auth.principal : auth.principal.id + getUserLastUpdated(auth.principal.id).toString()
+            return springcacheService.doWithCache(CACHE_STAKEHOLDER, new CacheKeyBuilder().append(onlyPrivate).append(product).append(p.lastUpdated).append(authkey).toCacheKey()) {
                 //Owner always has an access to product... (even if not in team or PO)
                 if (springSecurityService.isLoggedIn()){
                     if (p.owner?.id == auth.principal.id) return true
@@ -301,6 +302,7 @@ class SecurityService {
                 else
                     return !onlyPrivate
             }
+
         }
         else
             return false

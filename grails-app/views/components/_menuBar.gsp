@@ -20,13 +20,6 @@
 - Vincent Barrier (vbarrier@kagilum.com)
 - Damien vitrac (damien@oocube.com)
   --}%
-
-<g:if test="${menuElements}">
-  <li class="navigation-line text-only">
-    <span class="label"><g:message code="is.mainmenu"/></span>
-  </li>
-</g:if>
-
   <g:each in="${menuElements}" var="menuElement">
     <is:menuElement title="${menuElement.title}" draggable="true" id="${menuElement.id}" selected="${menuElement.selected}" widgetable="${menuElement.widgetable}"/>
     <is:shortcut key="ctrl+shift+${menuElement.position}" callback="\$(\$('#navigation .menubar')[${menuElement.position.toInteger() - 1}]).click();"/>
