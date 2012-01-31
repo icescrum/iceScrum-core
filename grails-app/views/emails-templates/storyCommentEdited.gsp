@@ -22,5 +22,5 @@
 <g:message
         locale="${locale}"
         code='is.template.email.story.commentEdited.text'
-        args="[storyName,permalink,by]"/>
+        args="[storyName,permalink,by, comment]"/>
 <g:message locale="${locale}" code='is.template.email.footer' args="[link,linkName]"/>
