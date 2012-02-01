@@ -179,12 +179,13 @@ class TaskService {
      */
     @PreAuthorize('inProduct() and !archivedProduct()')
     void update(Task task, User user, boolean force = false) {
+        def sprint = (Sprint) task.backlog
         if (!(task.state == Task.STATE_DONE && task.doneDate)) {
             checkEstimation(task)
-            def p = (Product) ((Sprint) task.backlog).parentRelease.parentProduct
+            def p = (Product) sprint.parentRelease.parentProduct
             // TODO add check : if SM or PO, always allow
             if (force || (task.responsible && task.responsible.id.equals(user.id)) || task.creator.id.equals(user.id) || securityService.scrumMaster(null, springSecurityService.authentication)) {
-                if (task.estimation == 0 && task.state != Task.STATE_DONE) {
+                if (task.estimation == 0 && task.state != Task.STATE_DONE && sprint.state == Sprint.STATE_INPROGRESS) {
                     if(p.preferences.assignOnBeginTask)
                         task.responsible = task.responsible ? task.responsible : user;
                     task.state = Task.STATE_DONE
@@ -226,7 +227,7 @@ class TaskService {
             throw new RuntimeException()
         }
 
-        clicheService.createOrUpdateDailyTasksCliche((Sprint) task.backlog)
+        clicheService.createOrUpdateDailyTasksCliche(sprint)
         if (task.state != Task.STATE_DONE) {
             publishEvent(new IceScrumTaskEvent(task, this.class, user, IceScrumTaskEvent.EVENT_UPDATED))
         }
