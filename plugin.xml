@@ -10,6 +10,7 @@
     <resource>BuildConfig</resource>
     <resource>DefaultIceScrumCoreConfig</resource>
     <resource>UrlMappings</resource>
+    <resource>org.icescrum.core.domain.AcceptanceTest</resource>
     <resource>org.icescrum.core.domain.Actor</resource>
     <resource>org.icescrum.core.domain.BacklogElement</resource>
     <resource>org.icescrum.core.domain.Cliche</resource>
@@ -32,12 +33,15 @@
     <resource>org.icescrum.core.domain.BacklogElementMigration</resource>
     <resource>org.icescrum.core.domain.ProductTeamsAndFluxiableMigration</resource>
     <resource>org.icescrum.core.domain.TaskMigration</resource>
+    <resource>org.icescrum.core.domain.TeamMigration</resource>
     <resource>org.icescrum.core.domain.TimeboxMigration</resource>
     <resource>org.icescrum.core.domain.UserMigration</resource>
     <resource>org.icescrum.core.domain.preferences.ProductPreferencesMigration</resource>
     <resource>org.icescrum.core.domain.preferences.TeamPreferencesMigration</resource>
     <resource>org.icescrum.core.domain.preferences.UserPreferencesMigration</resource>
+    <resource>org.icescrum.core.services.AcceptanceTestService</resource>
     <resource>org.icescrum.core.services.ActorService</resource>
+    <resource>org.icescrum.core.services.AddonsService</resource>
     <resource>org.icescrum.core.services.BootStrapService</resource>
     <resource>org.icescrum.core.services.ClicheService</resource>
     <resource>org.icescrum.core.services.DropImportService</resource>

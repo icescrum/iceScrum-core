@@ -43,9 +43,10 @@ class NotificationEmailService implements ApplicationListener<IceScrumStoryEvent
         if (log.debugEnabled) {
             log.debug "Receive event ${e.type}"
         }
+
         try {
-            if (e.type in IceScrumStoryEvent.EVENT_CUD) {
-                sendAlertCUD((Story) e.source, (User) e.doneBy, e.type)
+            if (e.type == IceScrumStoryEvent.EVENT_CUD) {
+                sendAlertCUD((Story) e.source, (User) e.doneBy, IceScrumStoryEvent.EVENT_CREATED)
 
             } else if (e.type in IceScrumStoryEvent.EVENT_STATE_LIST) {
                 sendAlertState((Story) e.source, (User) e.doneBy, e.type)
@@ -54,8 +55,8 @@ class NotificationEmailService implements ApplicationListener<IceScrumStoryEvent
                 sendAlertComment((Story) e.source, (User) e.doneBy, e.type, e.comment)
 
             } else if (e.type in IceScrumStoryEvent.EVENT_ACCEPTED_AS_LIST) {
-                sendAlertAcceptedAs((BacklogElement) e.source, (User) e.doneBy, e.type)
 
+                sendAlertAcceptedAs((BacklogElement) e.source, (User) e.doneBy, e.type)
             }
         } catch (Exception expt) {
             if (log.debugEnabled) expt.printStackTrace()
@@ -75,6 +76,7 @@ class NotificationEmailService implements ApplicationListener<IceScrumStoryEvent
         def projectLink = grailsApplication.config.grails.serverURL + '/p/' + story.backlog.pkey + '#project'
 
         if (type == IceScrumEvent.EVENT_CREATED) {
+
             story.backlog.productOwners.findAll {it.id != user.id}.each {
                 listTo << [email: it.email, locale: new Locale(it.preferences.language)]
             }
@@ -84,10 +86,13 @@ class NotificationEmailService implements ApplicationListener<IceScrumStoryEvent
         }
 
         def event = (IceScrumEvent.EVENT_CREATED == type) ? 'Created' : (IceScrumEvent.EVENT_UPDATED == type ? 'Updated' : 'Deleted')
+
         listTo?.unique()?.groupBy {it.locale}?.each { locale, group ->
+
             if (log.debugEnabled) {
                 log.debug "Send email, event:${type} to : ${group*.email.toArray()} with locale : ${locale}"
             }
+
             send([
                     bcc: group*.email.toArray(),
                     subject: getMessage('is.template.email.story.' + event.toLowerCase() + '.subject', (Locale) locale, subjectArgs),
