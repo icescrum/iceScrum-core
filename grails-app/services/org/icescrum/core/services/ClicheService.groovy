@@ -287,7 +287,7 @@ class ClicheService {
                         story++
                         break
                 }
-                remainingHours += task.estimation ?: 0
+                remainingHours += task.estimation.round(2) ?: 0
             }
         }
 
@@ -328,7 +328,7 @@ class ClicheService {
                 "${Cliche.TASKS_STORY}"(story)
 
                 //daily remainingHours
-                "${Cliche.REMAINING_HOURS}"(remainingHours)
+                "${Cliche.REMAINING_HOURS}"(remainingHours.toFloat().round(2))
 
             }
         }
