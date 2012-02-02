@@ -266,12 +266,12 @@ class StoryService {
             sprint.capacity = (Double) sprint.stories.sum { it.effort }
         sprint.save()
 
-        broadcast(function: 'plan', message: story)
-
         story.tasks.findAll {it.state == Task.STATE_WAIT}.each {
             it.backlog = sprint
             taskService.update(it, user)
         }
+
+        broadcast(function: 'plan', message: story)
 
         if (story.state == Story.STATE_INPROGRESS)
             publishEvent(new IceScrumStoryEvent(story, this.class, user, IceScrumStoryEvent.EVENT_INPROGRESS))

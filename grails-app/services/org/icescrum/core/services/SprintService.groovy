@@ -296,11 +296,11 @@ class SprintService {
             throw new RuntimeException()
         }
 
-        publishEvent(new IceScrumSprintEvent(sprint, this.class, (User) springSecurityService.currentUser, IceScrumSprintEvent.EVENT_ACTIVATED))
-        broadcast(function: 'activate', message: sprint)
-        // Create a cliché
         clicheService.createSprintCliche(sprint, new Date(), Cliche.TYPE_ACTIVATION)
         clicheService.createOrUpdateDailyTasksCliche(sprint)
+
+        publishEvent(new IceScrumSprintEvent(sprint, this.class, (User) springSecurityService.currentUser, IceScrumSprintEvent.EVENT_ACTIVATED))
+        broadcast(function: 'activate', message: sprint)
     }
 
     void close(Sprint sprint) {
@@ -349,13 +349,13 @@ class SprintService {
 
         sprint.refresh()
 
+        clicheService.createSprintCliche(sprint, new Date(), Cliche.TYPE_CLOSE)
+        clicheService.createOrUpdateDailyTasksCliche(sprint)
+
         broadcast(function: 'close', message: sprint)
         resumeBufferedBroadcast()
         publishEvent(new IceScrumSprintEvent(sprint, this.class, (User) springSecurityService.currentUser, IceScrumSprintEvent.EVENT_CLOSED))
 
-        // Create cliché
-        clicheService.createSprintCliche(sprint, new Date(), Cliche.TYPE_CLOSE)
-        clicheService.createOrUpdateDailyTasksCliche(sprint)
     }
 
     void updateDoneDefinition(Sprint sprint) {

@@ -290,8 +290,8 @@ class TaskService {
             }
             resetRank(task)
             sprint.removeFromTasks(task)
-            broadcast(function: 'delete', message: [class: task.class, id: task.id])
             clicheService.createOrUpdateDailyTasksCliche((Sprint) sprint)
+            broadcast(function: 'delete', message: [class: task.class, id: task.id])
         }
     }
 
