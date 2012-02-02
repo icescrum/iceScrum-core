@@ -22,5 +22,5 @@
 <g:message
         locale="${locale}"
         code='is.template.email.story.created.text'
-        args="[storyName,permalink]"/>
+        args="[storyName,permalink,storyBody]"/>
 <g:message locale="${locale}" code='is.template.email.footer' args="[link,linkName]"/>
