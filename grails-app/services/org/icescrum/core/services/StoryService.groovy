@@ -81,23 +81,24 @@ class StoryService {
             // add creater to following mode
             story.addFollower(u)
 
+            int i;
             // add PO
-            if(grailsApplication.config.icescrum.auto_follow_productowner){
-                for(int i=0; i < p.getProductOwners().size(); i++){
+            if((grailsApplication.config.icescrum.auto_follow_productowner) && (p.getProductOwners() != null)){
+                for(i=0; i < p.getProductOwners().size(); i++){
                     story.addFollower(p.getProductOwners().get(i))
                 }
             }
 
             // add SM
-            if(grailsApplication.config.icescrum.auto_follow_scrummaster){
-                for(int i=0; i < p.getScrumMasters().size(); i++){
+            if((grailsApplication.config.icescrum.auto_follow_scrummaster) && (p.getScrumMasters() != null)){
+                for(i=0; i < p.getScrumMasters().size(); i++){
                     story.addFollower(p.getScrumMasters().get(i))
                 }
             }
 
             // add ST
-            if(grailsApplication.config.icescrum.auto_follow_stakeholder){
-                for(int i=0; i < p.getStakeHolders().size(); i++){
+            if((grailsApplication.config.icescrum.auto_follow_stakeholder) && (p.getStakeHolders() != null)){
+                for(i=0; i < p.getStakeHolders().size(); i++){
                     story.addFollower(p.getStakeHolders().get(i))
                 }
             }
