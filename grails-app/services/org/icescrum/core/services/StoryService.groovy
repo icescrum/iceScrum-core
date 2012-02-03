@@ -80,13 +80,27 @@ class StoryService {
             
             // add creater to following mode
             story.addFollower(u)
-            
-            if(grailsApplication.config.icescrum.auto_follow)
-            // search for PO and SM to add them to
-            for(int i=0; i < p.getProductOwners().size(); i++){
-                story.addFollower(p.getProductOwners().get(i))
+
+            // add PO
+            if(grailsApplication.config.icescrum.auto_follow_productowner){
+                for(int i=0; i < p.getProductOwners().size(); i++){
+                    story.addFollower(p.getProductOwners().get(i))
+                }
             }
-            
+
+            // add SM
+            if(grailsApplication.config.icescrum.auto_follow_scrummaster){
+                for(int i=0; i < p.getScrumMasters().size(); i++){
+                    story.addFollower(p.getScrumMasters().get(i))
+                }
+            }
+
+            // add ST
+            if(grailsApplication.config.icescrum.auto_follow_stakeholder){
+                for(int i=0; i < p.getStakeHolders().size(); i++){
+                    story.addFollower(p.getStakeHolders().get(i))
+                }
+            }
             story.addActivity(u, Activity.CODE_SAVE, story.name)
             broadcast(function: 'add', message: story)
             publishEvent(new IceScrumStoryEvent(story, this.class, u, IceScrumStoryEvent.EVENT_CUD))
