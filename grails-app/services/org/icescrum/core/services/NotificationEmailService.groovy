@@ -45,7 +45,7 @@ class NotificationEmailService implements ApplicationListener<IceScrumStoryEvent
         }
 
         try {
-            if (e.type in IceScrumStoryEvent.EVENT_CUDx) {
+            if (e.type in IceScrumStoryEvent.EVENT_CUD) {
                 sendAlertCUD((Story) e.source, (User) e.doneBy, e.type)
 
             } else if (e.type in IceScrumStoryEvent.EVENT_STATE_LIST) {
