@@ -81,7 +81,7 @@ class StoryService {
             // add creater to following mode
             story.addFollower(u)
             
-            if(grailsApplication.config.icescrum.auto_follow==1)
+            if(grailsApplication.config.icescrum.auto_follow)
             // search for PO and SM to add them to
             for(int i=0; i < p.getProductOwners().size(); i++){
                 story.addFollower(p.getProductOwners().get(i))
