@@ -42,6 +42,7 @@ class StoryService {
     def attachmentableService
     def securityService
     def acceptanceTestService
+    def grailsApplication
     def g = new org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib()
 
     static transactional = true
@@ -76,7 +77,16 @@ class StoryService {
 
         if (story.save()) {
             p.addToStories(story)
+            
+            // add creater to following mode
             story.addFollower(u)
+            
+            if(grailsApplication.config.icescrum.auto_follow==1)
+            // search for PO and SM to add them to
+            for(int i=0; i < p.getProductOwners().size(); i++){
+                story.addFollower(p.getProductOwners().get(i))
+            }
+            
             story.addActivity(u, Activity.CODE_SAVE, story.name)
             broadcast(function: 'add', message: story)
             publishEvent(new IceScrumStoryEvent(story, this.class, u, IceScrumStoryEvent.EVENT_CUD))
