@@ -104,7 +104,7 @@ class StoryService {
             }
             story.addActivity(u, Activity.CODE_SAVE, story.name)
             broadcast(function: 'add', message: story)
-            publishEvent(new IceScrumStoryEvent(story, this.class, u, IceScrumStoryEvent.EVENT_CUD))
+            publishEvent(new IceScrumStoryEvent(story, this.class, u, IceScrumStoryEvent.EVENT_CREATED))
         } else {
             throw new RuntimeException()
         }
@@ -190,7 +190,7 @@ class StoryService {
 
         story.addActivity(u, Activity.CODE_UPDATE, story.name)
         broadcast(function: 'update', message: story)
-        publishEvent(new IceScrumStoryEvent(story, this.class, u, IceScrumStoryEvent.EVENT_CUD))
+        publishEvent(new IceScrumStoryEvent(story, this.class, u, IceScrumStoryEvent.EVENT_UPDATED))
     }
 
     /**
