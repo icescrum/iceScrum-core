@@ -17,6 +17,7 @@
  * Authors:
  *
  * Vincent Barrier (vbarrier@kagilum.com)
+ * Christian Heimke (c.heimke@bloopark.de)
  */
 package org.icescrum.core.services
 
@@ -42,6 +43,7 @@ class NotificationEmailService implements ApplicationListener<IceScrumStoryEvent
         if (log.debugEnabled) {
             log.debug "Receive event ${e.type}"
         }
+
         try {
             if (e.type in IceScrumStoryEvent.EVENT_CUD) {
                 sendAlertCUD((Story) e.source, (User) e.doneBy, e.type)
@@ -53,8 +55,8 @@ class NotificationEmailService implements ApplicationListener<IceScrumStoryEvent
                 sendAlertComment((Story) e.source, (User) e.doneBy, e.type, e.comment)
 
             } else if (e.type in IceScrumStoryEvent.EVENT_ACCEPTED_AS_LIST) {
-                sendAlertAcceptedAs((BacklogElement) e.source, (User) e.doneBy, e.type)
 
+                sendAlertAcceptedAs((BacklogElement) e.source, (User) e.doneBy, e.type)
             }
         } catch (Exception expt) {
             if (log.debugEnabled) expt.printStackTrace()
@@ -69,11 +71,12 @@ class NotificationEmailService implements ApplicationListener<IceScrumStoryEvent
         }
 
         def listTo = []
-        def subjectArgs = [story.backlog.name, story.id]
+        def subjectArgs = [story.backlog.name, story.id, user.firstName + " " + user.lastName]
         def permalink = grailsApplication.config.grails.serverURL + '/p/' + story.backlog.pkey + '-' + story.uid
         def projectLink = grailsApplication.config.grails.serverURL + '/p/' + story.backlog.pkey + '#project'
 
         if (type == IceScrumEvent.EVENT_CREATED) {
+
             story.backlog.productOwners.findAll {it.id != user.id}.each {
                 listTo << [email: it.email, locale: new Locale(it.preferences.language)]
             }
@@ -83,10 +86,13 @@ class NotificationEmailService implements ApplicationListener<IceScrumStoryEvent
         }
 
         def event = (IceScrumEvent.EVENT_CREATED == type) ? 'Created' : (IceScrumEvent.EVENT_UPDATED == type ? 'Updated' : 'Deleted')
+
         listTo?.unique()?.groupBy {it.locale}?.each { locale, group ->
+
             if (log.debugEnabled) {
                 log.debug "Send email, event:${type} to : ${group*.email.toArray()} with locale : ${locale}"
             }
+
             send([
                     bcc: group*.email.toArray(),
                     subject: getMessage('is.template.email.story.' + event.toLowerCase() + '.subject', (Locale) locale, subjectArgs),
@@ -103,7 +109,7 @@ class NotificationEmailService implements ApplicationListener<IceScrumStoryEvent
         }
 
         def listTo = []
-        def subjectArgs = [story.backlog.name, story.id]
+        def subjectArgs = [story.backlog.name, story.id, user.firstName + " " + user.lastName]
         def permalink = grailsApplication.config.grails.serverURL + '/p/' + story.backlog.pkey + '-' + story.uid
         def projectLink = grailsApplication.config.grails.serverURL + '/p/' + story.backlog.pkey + '#project'
 
@@ -129,7 +135,7 @@ class NotificationEmailService implements ApplicationListener<IceScrumStoryEvent
         }
 
         def listTo = []
-        def subjectArgs = [story.backlog.name, story.id]
+        def subjectArgs = [story.backlog.name, story.id, user.firstName + " " + user.lastName]
         def permalink = grailsApplication.config.grails.serverURL + '/p/' + story.backlog.pkey + '-' + story.uid
         def projectLink = grailsApplication.config.grails.serverURL + '/p/' + story.backlog.pkey + '#project'
 
@@ -143,7 +149,7 @@ class NotificationEmailService implements ApplicationListener<IceScrumStoryEvent
                         bcc: group*.email.toArray(),
                         subject: getMessage('is.template.email.story.commented.subject', (Locale) locale, subjectArgs),
                         view: '/emails-templates/storyCommented',
-                        model: [by: comment.poster.firstName + " " + comment.poster.lastName, locale: locale, storyName: story.name, permalink: permalink, linkName: story.backlog.name, link: projectLink]
+                        model: [by: comment.poster.firstName + " " + comment.poster.lastName, locale: locale, storyName: story.name, permalink: permalink, linkName: story.backlog.name, link: projectLink, comment: comment.body]
                 ])
             }
         } else if (type == IceScrumStoryEvent.EVENT_COMMENT_UPDATED) {
@@ -156,7 +162,7 @@ class NotificationEmailService implements ApplicationListener<IceScrumStoryEvent
                         bcc: group*.email.toArray(),
                         subject: getMessage('is.template.email.story.commentEdited.subject', (Locale) locale, subjectArgs),
                         view: '/emails-templates/storyCommentEdited',
-                        model: [by: user.firstName + " " + user.lastName, locale: locale, storyName: story.name, permalink: permalink, linkName: story.backlog.name, link: projectLink]
+                        model: [by: user.firstName + " " + user.lastName, locale: locale, storyName: story.name, permalink: permalink, linkName: story.backlog.name, link: projectLink, comment: comment.body]
                 ])
             }
         }
@@ -170,7 +176,7 @@ class NotificationEmailService implements ApplicationListener<IceScrumStoryEvent
 
         def listTo = []
         def product = element instanceof Feature ? element.backlog : element.backlog.parentRelease.parentProduct
-        def subjectArgs = [product.name, element.id]
+        def subjectArgs = [product.name, element.id, user.firstName + " " + user.lastName]
         def projectLink = grailsApplication.config.grails.serverURL + '/p/' + product.pkey + '#project'
         element.followers?.findAll {it.id != user.id}?.each { listTo << [email: it.email, locale: new Locale(it.preferences.language)] }
 
@@ -228,6 +234,6 @@ class NotificationEmailService implements ApplicationListener<IceScrumStoryEvent
     }
 
     String getMessage(String code, Locale locale, args = null, String defaultCode = null) {
-        return messageSource.getMessage(code, args ? args.toArray() : null, defaultCode ?: code, locale)
+        return grailsApplication.config.grails.mail.subject_prefix +  messageSource.getMessage(code, args ? args.toArray() : null, defaultCode ?: code, locale)
     }
 }

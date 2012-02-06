@@ -31,12 +31,31 @@ class PlanningPokerGame {
 
   static List<Integer> getInteger(int type, Integer max = 100) {
     def suite = []
+
     if (type == INTEGER_SUITE) {
       max.times{
         suite << it
       }
     } else if (type == FIBO_SUITE) {
-      suite << 0 << 1 << 2 << 3 << 5 << 8 << 13 << 21 << 34
+
+        int fibo_max = 144
+
+
+        int a = 0
+        int b = 1
+
+        while(1){
+            suite << a
+
+            a=a+b
+            b=a-b
+
+            if(a>fibo_max)
+                    break;
+            
+        }
+
+      //suite << 0 << 1 << 2 << 3 << 5 << 8 << 13 << 21 << 34 << 55 << 84 << 144
     }
     return suite
   }
@@ -57,6 +76,9 @@ class PlanningPokerGame {
       suite << new PlanningPokerCard(13)
       suite << new PlanningPokerCard(21)
       suite << new PlanningPokerCard(34)
+      suite << new PlanningPokerCard(55)
+      suite << new PlanningPokerCard(89)
+      suite << new PlanningPokerCard(144)
     }
 
     return suite

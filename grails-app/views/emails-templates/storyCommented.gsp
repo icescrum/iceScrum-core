@@ -17,10 +17,11 @@
 - Authors:
 -
 - Vincent Barrier (vbarrier@kagilum.com)
+- Christian Heimke (c.heimke@bloopark.de)
 --}%
 <%@ page contentType="text/html"%>
 <g:message
         locale="${locale}"
         code='is.template.email.story.commented.text'
-        args="[storyName,permalink,by]"/>
+        args="[storyName,permalink,by,comment]"/>
 <g:message locale="${locale}" code='is.template.email.footer' args="[link,linkName]"/>

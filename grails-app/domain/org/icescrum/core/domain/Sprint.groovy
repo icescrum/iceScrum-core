@@ -276,7 +276,7 @@ class Sprint extends TimeBox implements Serializable {
             if (it)
                 raf += it
         }
-        raf
+        raf.round(2)
     }
 
     def beforeDelete() {

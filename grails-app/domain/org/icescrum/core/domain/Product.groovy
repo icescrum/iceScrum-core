@@ -188,6 +188,24 @@ class Product extends TimeBox implements Serializable {
         }
     }
 
+    def getScrumMasters() {
+        def aclUtilService = (AclUtilService) ApplicationHolder.application.mainContext.getBean('aclUtilService');
+        //Only used when product is being imported
+        if (this.productOwners) {
+            this.productOwners
+        }
+        else if (this.id) {
+            def acl = aclUtilService.readAcl(this.getClass(), this.id)
+            def users = acl.entries.findAll {it.permission in SecurityService.scrumMasterPermissions}*.sid*.principal;
+            if (users)
+                return User.findAll("from User as u where u.username in (:users)",[users:users], [cache: true])
+            else
+                return null
+        } else {
+            null
+        }
+    }
+
     def getStakeHolders() {
         def aclUtilService = (AclUtilService) ApplicationHolder.application.mainContext.getBean('aclUtilService');
         //Only used when product is being imported
