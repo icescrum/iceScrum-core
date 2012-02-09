@@ -765,7 +765,9 @@ class FormTagLib {
         if (attrs.remove('nolegend'))
             attrs."class" += " panel-nolegend"
         out << "<div ${attrs.id ? 'id=\"' + attrs.id + '\"' : ''} class=\"${attrs."class"}\" ${attrs.description ? 'description=\"' + attrs.description + '\"' : ''}>"
-        out << "<h3 class=\"panel-title\">${attrs.title}</h3>"
+        if (attrs.title) {
+            out << "<h3 class=\"panel-title\">${attrs.title}</h3>"
+        }
         out << content
         out << "</div>"
     }
