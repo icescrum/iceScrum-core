@@ -29,15 +29,23 @@
             </g:else>
         </g:if>
 
-        <g:if test="${attachment}">
-            <span class="postit-attachment"
-                  title="${message(code: 'is.postit.attachment', args: [attachment, (attachment instanceof Integer && attachment > 1) ? 's' : ''])}"></span>
-        </g:if>
+        <div class="icon-container">
 
-        <g:if test="${comment}">
-            <span class="postit-comment"
-                  title="${message(code: 'is.postit.comment.count', args: [comment, (comment instanceof Integer && comment > 1) ? 's' : ''])}"></span>
-        </g:if>
+            <g:if test="${comment}">
+                <span class="postit-comment icon"
+                      title="${message(code: 'is.postit.comment.count', args: [comment, (comment instanceof Integer && comment > 1) ? 's' : ''])}"></span>
+            </g:if>
+
+            <g:if test="${attachment}">
+                <span class="postit-attachment icon"
+                      title="${message(code: 'is.postit.attachment', args: [attachment, (attachment instanceof Integer && attachment > 1) ? 's' : ''])}"></span>
+            </g:if>
+
+            <g:if test="${acceptanceTestCount}">
+                <span class="postit-acceptance-test icon"
+                      title="${message(code: 'is.postit.acceptanceTest.count', args: [acceptanceTestCount, (acceptanceTestCount instanceof Integer && acceptanceTestCount > 1) ? 's' : ''])}"></span>
+            </g:if>
+        </div>
 
     %{-- Title --}%
         <g:if test="${sortable}">
