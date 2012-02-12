@@ -55,13 +55,13 @@ grails.project.dependency.resolution = {
         compile('org.codehaus.groovy.modules.http-builder:http-builder:0.5.0') {
             excludes "commons-logging", "xml-apis", "groovy"
         }
-        compile('org.atmosphere:atmosphere-runtime:0.8.1'){
+        compile('org.atmosphere:atmosphere-runtime:0.8.5'){
             excludes 'slf4j-api'
         }
-        compile('org.atmosphere:atmosphere-compat-tomcat:0.8.1'){
+        compile('org.atmosphere:atmosphere-compat-tomcat:0.8.5'){
             excludes 'slf4j-api'
         }
-        compile('org.atmosphere:atmosphere-compat-jetty:0.8.1'){
+        compile('org.atmosphere:atmosphere-compat-jetty:0.8.5'){
             excludes 'slf4j-api'
         }
     }
@@ -70,16 +70,16 @@ grails.project.dependency.resolution = {
         compile 'org.icescrum:fluxiable:0.3.1'
         compile ':burning-image:0.5.0'
         compile 'org.icescrum:icescrum-attachmentable:0.2.2'
-        compile 'spring:spring-security-core:1.2.6'
+        compile 'spring:spring-security-core:1.2.7.2'
         compile 'spring:spring-security-acl:1.1'
         compile ':commentable:0.7.5'
         compile ':followable:0.3'
-        compile ':autobase:0.12.2'
+        compile ':autobase:1.0.0.0'
         compile ':jdbc-pool:0.3'
         compile ':spring-events:1.2'
         compile ':springcache:1.3.1'
-        compile ':mail:1.0-SNAPSHOT'
-        compile ':jasper:1.2.2'
+        compile ':mail:1.0'
+        compile ':jasper:1.5.2'
         compile ':maven-publisher:0.8.1'
         compile ':rollback-on-exception:0.1'
     }

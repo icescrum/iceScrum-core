@@ -37,7 +37,7 @@ class AcceptanceTestService {
     void save(AcceptanceTest acceptanceTest, Story parentStory, User user) {
         acceptanceTest.creator = user
         acceptanceTest.uid = AcceptanceTest.findNextUId(parentStory.backlog.id)
-        parentStory.addToAcceptanceTests(acceptanceTest)
+        acceptanceTest.parentStory = parentStory
         if (!acceptanceTest.save(flush:true)) {
             throw new RuntimeException()
         }

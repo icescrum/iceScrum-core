@@ -86,7 +86,7 @@ class KanbanTagLib {
         if (!attrs.onlyRows) {
             out << "</tbody>"
             if (opts)
-                jqCode += " \$('.kanban').selectable({${opts}}); "
+                jqCode += " jQuery('.kanban').selectable({${opts}}); "
             out << '</table>'
         }
 

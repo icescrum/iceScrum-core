@@ -833,10 +833,20 @@ class StoryService {
                 if (f) {
                     f.addToStories(s)
                 }
+            }else if(!story.feature?.@id?.isEmpty() && p){
+                def f = p.features.find { it.uid == story.feature.@id.text().toInteger() } ?: null
+                if (f) {
+                    f.addToStories(s)
+                }
             }
 
             if (!story.actor?.@uid?.isEmpty() && p) {
                 def a = p.actors.find { it.uid == story.actor.@uid.text().toInteger() } ?: null
+                if (a) {
+                    a.addToStories(s)
+                }
+            }else if(!story.actor?.@id?.isEmpty() && p){
+                def a = p.actors.find { it.uid == story.actor.@id.text().toInteger() } ?: null
                 if (a) {
                     a.addToStories(s)
                 }

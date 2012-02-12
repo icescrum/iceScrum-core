@@ -88,7 +88,7 @@ class TaskService {
 
     @PreAuthorize('inProduct() and !archivedProduct()')
     void saveStoryTask(Task task, Story story, User user) {
-        story.addToTasks(task)
+        task.parentStory = story
         def currentProduct = (Product) story.backlog
         if (currentProduct.preferences.assignOnCreateTask) {
             task.responsible = user
@@ -125,9 +125,7 @@ class TaskService {
     @PreAuthorize('inProduct() and !archivedProduct()')
     void changeTaskStory(Task task, Story story, User user) {
         if (task.parentStory.id != story.id) {
-            def oldStory = task.parentStory
-            oldStory.removeFromTasks(task)
-            story.addToTasks(task)
+            task.parentStory = story
             update(task, user)
         }
     }
@@ -153,8 +151,8 @@ class TaskService {
     @PreAuthorize('inProduct() and !archivedProduct()')
     void sprintTaskToStoryTask(Task task, Story story, User user) {
         task.type = null
-        story.addToTasks(task)
         update(task, user)
+        task.parentStory = story
     }
     /**
      * Transforms a Story Task into a Sprint Task
@@ -165,7 +163,6 @@ class TaskService {
     @PreAuthorize('inProduct() and !archivedProduct()')
     void storyTaskToSprintTask(Task task, int type, User user) {
         def story = task.parentStory
-        story.removeFromTasks(task)
         task.parentStory = null
         task.type = type
         update(task, user)
@@ -283,7 +280,7 @@ class TaskService {
         def p = ((Sprint) task.backlog).parentRelease.parentProduct
         if (task.responsible && task.responsible.id.equals(user.id) || task.creator.id.equals(user.id) || securityService.productOwner(p, springSecurityService.authentication) || securityService.scrumMaster(null, springSecurityService.authentication)) {
             task.removeAllAttachments()
-            def sprint = task.backlog
+            Sprint sprint = (Sprint)task.backlog
             if (task.parentStory) {
                 task.parentStory.addActivity(user, 'taskDelete', task.name)
                 task.parentStory.removeFromTasks(task)
@@ -313,8 +310,8 @@ class TaskService {
                 parentStory: task.parentStory ?: null,
                 type: task.type
         )
-        task.participants.each {
-            clonedTask.addToParticipants(it)
+        task.participants?.each {
+            clonedTask.participants << it
         }
 
         clonedTask.validate()

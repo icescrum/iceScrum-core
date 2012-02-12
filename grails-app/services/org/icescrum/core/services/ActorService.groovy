@@ -43,21 +43,20 @@ class ActorService {
         act.name = act.name?.trim()
         act.uid = Actor.findNextUId(p.id)
         act.backlog = p
-
         if (!act.save(flush: true))
             throw new RuntimeException()
-        p.addToActors(act)
         broadcast(function: 'add', message: act)
         publishEvent(new IceScrumActorEvent(act, this.class, (User) springSecurityService.currentUser, IceScrumEvent.EVENT_CREATED))
     }
 
     @PreAuthorize('productOwner() and !archivedProduct()')
     void delete(Actor act) {
+        Product p = (Product)act.backlog
         def id = act.id
-        def stillHasPbi = act.backlog.stories.any {it.actor?.id == act.id}
+        def stillHasPbi = p.stories.any {it.actor?.id == act.id}
         if (stillHasPbi)
             throw new RuntimeException()
-        act.delete()
+        p.removeFromActors(act)
         broadcast(function: 'delete', message: [class: act.class, id: id])
     }
 

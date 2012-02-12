@@ -92,7 +92,7 @@ class Product extends TimeBox implements Serializable {
 
     static constraints = {
         name(blank: false, maxSize: 200, unique: true)
-        pkey(blank: false, maxSize: 10, matches: /[A-Z][A-Z0-9]*/, unique: true)
+        pkey(blank: false, maxSize: 10, matches: /[A-Z0-9]*/, unique: true)
     }
 
     @Override

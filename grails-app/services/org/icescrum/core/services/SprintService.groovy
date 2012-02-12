@@ -74,8 +74,6 @@ class SprintService {
         if (!sprint.save())
             throw new RuntimeException()
 
-        release.addToSprints(sprint)
-
         publishEvent(new IceScrumSprintEvent(sprint, this.class, (User) springSecurityService.currentUser, IceScrumEvent.EVENT_CREATED))
         broadcast(function: 'add', message: sprint)
     }
@@ -219,17 +217,19 @@ class SprintService {
                     orderNumber: (++nbSprint),
                     goal: 'Generated Sprint',
                     startDate: (Date) firstDate.clone(),
-                    endDate: endDate,
-                    parentRelease: release
+                    endDate: endDate
             )
-            release.addToSprints(newSprint)
-            if (!release.save(flush: true))
+            newSprint.parentRelease = release
+
+            if (!newSprint.save())
                 throw new RuntimeException()
+
             firstDate.time = endDate.time + day
             sprints << newSprint
             publishEvent(new IceScrumSprintEvent(newSprint, this.class, (User) springSecurityService.currentUser, IceScrumEvent.EVENT_CREATED))
         }
-
+        //because we have added sprints
+        release.refresh()
         broadcast(function: 'add', message: [class: Sprint.class, sprints: sprints], channel:'product-'+release.parentProduct.id)
         return sprints
     }
@@ -514,11 +514,7 @@ class SprintService {
             tmp.inProgressDate = null
             tmp.doneDate = null
             taskService.save(tmp, sprint, it.creator)
-            sprint.addToTasks(tmp)
             copiedTasks << tmp
-        }
-        if (!sprint.save()) {
-            throw new RuntimeException()
         }
         return copiedTasks
     }

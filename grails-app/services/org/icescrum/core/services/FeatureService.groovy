@@ -62,7 +62,6 @@ class FeatureService {
         if (!feature.save()) {
             throw new RuntimeException()
         }
-        p.addToFeatures(feature).save()
 
         //We put the real rank if we need
         if (rankProvided)

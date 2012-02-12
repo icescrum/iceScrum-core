@@ -39,12 +39,7 @@ import org.springframework.transaction.annotation.Transactional
 import org.icescrum.core.domain.*
 import org.icescrum.core.support.ApplicationSupport
 import org.codehaus.groovy.grails.plugins.springsecurity.SpringSecurityUtils
-import org.codehaus.groovy.grails.orm.hibernate.cfg.GrailsHibernateUtil
 
-/**
- * ProductService is a transactional class, that manage operations about
- * ProducBacklog, requested by web pages (Product.jspx & Productform.jspx)
- */
 class ProductService {
 
     def springcacheService
@@ -528,7 +523,6 @@ class ProductService {
         broadcast(function: 'unarchive', message: p)
     }
 
-    @PreAuthorize('owner(#product) or scrumMaster()')
     void removeAllRoles(Product product, Team team, User user, boolean broadcast = true){
         if (team){
             teamService.removeMemberOrScrumMaster(team,user)
@@ -553,7 +547,6 @@ class ProductService {
         }
     }
 
-    @Secured(['owner(#product) or scrumMaster()', 'RUN_AS_PERMISSIONS_MANAGER'])
     void addRole(Product product, Team team, User user, int role, boolean broadcast = true){
         switch (role){
             case Authority.SCRUMMASTER:
@@ -596,7 +589,6 @@ class ProductService {
         }
     }
 
-    @Secured(['owner(#product) or scrumMaster()', 'RUN_AS_PERMISSIONS_MANAGER'])
     void changeRole(Product product, Team team, User user, int role, boolean broadcast = true){
         removeAllRoles(product,team,user,false)
         addRole(product,team,user,role,false)

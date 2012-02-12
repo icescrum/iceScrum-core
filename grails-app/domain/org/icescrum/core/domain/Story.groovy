@@ -455,7 +455,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                 "WHERE a.type='story' " +
                 "and s.backlog=:p " +
                 "and s.id=a.activityRef " +
-                "and not (a.activity.code like 'task%') " +
+                "and not (a.activity.code like 'task') " +
                 "ORDER BY a.activity.dateCreated DESC", [p: currentProductInstance], [max: 15])
     }
 
@@ -465,12 +465,12 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                 "WHERE a.type='story' " +
                 "and s.backlog.id in (SELECT DISTINCT p.id " +
                                         "FROM org.icescrum.core.domain.Product as p INNER JOIN p.teams as t " +
-                                        "WHERE t'.id in" +
+                                        "WHERE t.id in" +
                                                 "(SELECT DISTINCT t2.id FROM org.icescrum.core.domain.Team as t2 " +
                                                 "INNER JOIN t2.members as m " +
                                                 "WHERE m.id = :uid)) " +
                 "and s.id=a.activityRef " +
-                "and not (a.activity.code like 'task%') " +
+                "and not (a.activity.code like 'task') " +
                 "ORDER BY a.activity.dateCreated DESC", [uid: user.id], [cache:true,max: 15])
     }
 
@@ -481,7 +481,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                 "WHERE " +
                 "((a.type='story' " +
                 "and team.id=:t " +
-                "and not (a.activity.code like 'task%') " +
+                "and not (a.activity.code like 'task') " +
                 "and s.id=a.activityRef) " +
                 "OR (a.type='product' " +
                 "and p.id=a.activityRef " +

@@ -63,7 +63,7 @@ class IceScrumAtmosphereHandler implements AtmosphereHandler<HttpServletRequest,
         }
         channel = channel?.toString()
         if (channel) {
-            Class<? extends org.atmosphere.cpr.Broadcaster> bc = (Class<? extends org.atmosphere.cpr.Broadcaster>) ApplicationHolder.application.getClassLoader().loadClass(conf?.broadcaster?:'org.atmosphere.util.ExcludeSessionBroadcaster')
+            Class<? extends org.atmosphere.cpr.Broadcaster> bc = (Class<? extends org.atmosphere.cpr.Broadcaster>) ApplicationHolder.application.getClassLoader().loadClass(conf?.broadcaster?:'org.icescrum.atmosphere.ExcludeSessionBroadcaster')
             def broadcaster = BroadcasterFactory.default.lookup(bc, channel)
             if(broadcaster == null){
                 broadcaster = bc.newInstance(channel, event.atmosphereConfig)
