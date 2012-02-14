@@ -60,6 +60,13 @@ import org.icescrum.core.domain.Actor
 import org.icescrum.core.domain.Release
 import org.icescrum.core.domain.Task
 import org.icescrum.plugins.attachmentable.interfaces.AttachmentException
+import org.codehaus.groovy.grails.plugins.jasper.JasperReportDef
+import org.icescrum.core.domain.User
+import org.codehaus.groovy.grails.plugins.jasper.JasperExportFormat
+import org.springframework.web.servlet.support.RequestContextUtils as RCU
+import grails.plugins.springsecurity.SpringSecurityService
+import org.codehaus.groovy.grails.plugins.jasper.JasperService
+import org.icescrum.core.support.ProgressSupport
 
 class IcescrumCoreGrailsPlugin {
     def groupId = 'org.icescrum'
@@ -243,6 +250,8 @@ class IcescrumCoreGrailsPlugin {
     def doWithDynamicMethods = { ctx ->
         // Manually match the UIController classes
         SecurityService securityService = ctx.getBean('securityService')
+        SpringSecurityService springSecurityService = ctx.getBean('springSecurityService')
+        JasperService jasperService = ctx.getBean('jasperService')
 
         application.controllerClasses.each {
             if (it.hasProperty(UiControllerArtefactHandler.PROPERTY)) {
@@ -253,6 +262,7 @@ class IcescrumCoreGrailsPlugin {
             addBroadcastMethods(it, securityService, application)
             addErrorMethod(it)
             addWithObjectsMethods(it)
+            addJasperMethod(it, springSecurityService, jasperService)
         }
         application.serviceClasses.each {
             addBroadcastMethods(it, securityService, application)
@@ -275,8 +285,13 @@ class IcescrumCoreGrailsPlugin {
         if (application.isControllerClass(event.source)) {
             SecurityService securityService = event.ctx.getBean('securityService')
             addBroadcastMethods(event.source, securityService, application)
+
             addErrorMethod(event.source)
             addWithObjectsMethods(event.source)
+
+            SpringSecurityService springSecurityService = event.ctx.getBean('springSecurityService')
+            JasperService jasperService = event.ctx.getBean('jasperService')
+            addJasperMethod(event.source, springSecurityService, jasperService)
         }
     }
 
@@ -497,6 +512,37 @@ class IcescrumCoreGrailsPlugin {
                     xml  { render(status: 500, contentType: 'text/xml', text: [error: attrs.text?:'error'] as XML) }
                 }
             }
+        }
+    }
+
+    private void addJasperMethod(source, springSecurityService, jasperService){
+        try {
+            source.metaClass.outputJasperReport = { String reportName, String format, def data, String outputName = null, def parameters = null ->
+                outputName = (outputName ? outputName.replaceAll("[^a-zA-Z\\s]", "").replaceAll(" ", "") + '-' + reportName : reportName) + '-' + (g.formatDate(formatName: 'is.date.file'))
+                if (!session.progress){
+                     session.progress = new ProgressSupport()
+                }
+                session.progress.updateProgress(50, message(code: 'is.report.processing'))
+                if (parameters){
+                    parameters.SUBREPORT_DIR = "${servletContext.getRealPath('reports/subreports')}/"
+                }else{
+                    parameters = [SUBREPORT_DIR: "${servletContext.getRealPath('reports/subreports')}/"]
+                }
+                def reportDef = new JasperReportDef(name: reportName,
+                                                    reportData: data,
+                                                    locale: springSecurityService.isLoggedIn() ? new Locale(User.get(springSecurityService.principal?.id)?.preferences?.language) : RCU.getLocale(request),
+                                                    parameters: parameters,
+                                                    fileFormat: JasperExportFormat.determineFileFormat(format))
+
+                response.setHeader("Content-disposition", "attachment; filename=" + outputName + "." + reportDef.fileFormat.extension)
+                response.contentType = reportDef.fileFormat.mimeTyp
+                response.characterEncoding = "UTF-8"
+                response.outputStream << jasperService.generateReport(reportDef).toByteArray()
+                session.progress?.completeProgress(message(code: 'is.report.complete'))
+            }
+        } catch (Exception e) {
+            if (log.debugEnabled) e.printStackTrace()
+            session.progress.progressError(message(code: 'is.report.error'))
         }
     }
 
