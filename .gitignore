@@ -1,4 +1,5 @@
 *.iml
+*.project
 target/
 
 # Compiled source #
