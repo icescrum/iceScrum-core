@@ -55,13 +55,13 @@ grails.project.dependency.resolution = {
         compile('org.codehaus.groovy.modules.http-builder:http-builder:0.5.0') {
             excludes "commons-logging", "xml-apis", "groovy"
         }
-        compile('org.atmosphere:atmosphere-runtime:0.8.5'){
+        compile('org.atmosphere:atmosphere-runtime:0.8.1'){
             excludes 'slf4j-api'
         }
-        compile('org.atmosphere:atmosphere-compat-tomcat:0.8.5'){
+        compile('org.atmosphere:atmosphere-compat-tomcat:0.8.1'){
             excludes 'slf4j-api'
         }
-        compile('org.atmosphere:atmosphere-compat-jetty:0.8.5'){
+        compile('org.atmosphere:atmosphere-compat-jetty:0.8.1'){
             excludes 'slf4j-api'
         }
     }
