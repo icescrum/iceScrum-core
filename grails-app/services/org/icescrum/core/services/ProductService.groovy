@@ -418,7 +418,7 @@ class ProductService {
                 storyService.unMarshall(it, p)
                 progress?.updateProgress((product.stories.story.size() * (index + 1) / 100).toInteger(), g.message(code: 'is.parse', args: [g.message(code: 'is.story')]))
             }
-
+            // ensure rank for stories in backlog
             def stories = p.stories.findAll {it.state == Story.STATE_ACCEPTED || it.state == Story.STATE_ESTIMATED}.sort({ a, b -> a.rank <=> b.rank } as Comparator)
             stories.eachWithIndex {it, index ->
                 it.rank = index + 1
@@ -428,6 +428,23 @@ class ProductService {
             product.releases.release.eachWithIndex { it, index ->
                 releaseService.unMarshall(it, p, progress)
                 progress?.updateProgress((product.releases.release.size() * (index + 1) / 100).toInteger(), g.message(code: 'is.parse', args: [g.message(code: 'is.release')]))
+            }
+            println "toto"
+            // ensure rank for stories in each sprint
+            p.releases.each{Release release ->
+                release.sprints.each{Sprint sprint ->
+                    // first ranks for planned and in progress stories
+                    stories = sprint.stories.findAll { Story story -> story.state == Story.STATE_PLANNED || story.state == Story.STATE_INPROGRESS}.sort({ a, b -> a.rank <=> b.rank } as Comparator)
+                    stories.eachWithIndex {Story story, index ->
+                        story.rank = index + 1
+                    }
+                    // lask ranks for done stories
+                    def maxRank = stories.size()
+                    stories = sprint.stories.findAll { Story story -> story.state == Story.STATE_DONE}.sort({ a, b -> a.rank <=> b.rank } as Comparator)
+                    stories.each {Story story ->
+                        story.rank = ++maxRank
+                    }
+                }
             }
 
             return p
