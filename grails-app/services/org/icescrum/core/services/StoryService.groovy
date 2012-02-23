@@ -187,7 +187,10 @@ class StoryService {
                 story.state = Story.STATE_ESTIMATED
             story.effort = estimation.toInteger()
             story.estimatedDate = new Date()
-        }
+        } /*
+        if (story.parentSprint && story.parentSprint.state == Sprint.STATE_WAIT) {
+            story.parentSprint.capacity = (Double) story.parentSprint.stories.sum { it.effort }
+        }    */
         if (!story.save())
             throw new RuntimeException()
 
@@ -255,8 +258,9 @@ class StoryService {
             story.plannedDate = new Date()
         }
 
+        def rank = sprint.stories? sprint.stories.size() + 1 : 1
         sprint.addToStories(story)
-        setRank(story, 1)
+        setRank(story, rank)
 
         if (!story.save(flush: true))
             throw new RuntimeException()
