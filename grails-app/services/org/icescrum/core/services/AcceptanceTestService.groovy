@@ -38,6 +38,7 @@ class AcceptanceTestService {
         acceptanceTest.creator = user
         acceptanceTest.uid = AcceptanceTest.findNextUId(parentStory.backlog.id)
         acceptanceTest.parentStory = parentStory
+        parentStory.lastUpdated = new Date()
         if (!acceptanceTest.save(flush:true)) {
             throw new RuntimeException()
         }
