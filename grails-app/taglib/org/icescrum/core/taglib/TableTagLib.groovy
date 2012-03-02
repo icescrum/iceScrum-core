@@ -123,7 +123,8 @@ class TableTagLib {
             def options = [
                     columns: columns,
                     attrs: attrsCloned,
-                    elemid: attrs.elemid ? row."${attrs.elemid}" : null
+                    elemid: attrs.elemid ? row."${attrs.elemid}" : null,
+                    "data-rank": attrs."data-rank" ? row."${attrs."data-rank"}" : null
             ]
 
             pageScope.tableRows << options
@@ -139,7 +140,8 @@ class TableTagLib {
         def options = [
                 columns: pageScope.tableColumns,
                 attrs: attrs,
-                elemid: attrs.elemid ? attrs.elemid : null
+                elemid: attrs.elemid ? attrs.elemid : null,
+                "data-rank": attrs."data-rank" ?: null
         ]
         pageScope.tableRows << options
     }
@@ -214,7 +216,8 @@ class TableTagLib {
                 row.attrs.rowClass.delegate = delegate
                 row.attrs.rowClass = row.attrs.rowClass(row.attrs."${row.attrs.var}")
             }
-            out << '<tr class="table-line ' + (row.attrs.rowClass ? row.attrs.rowClass : '') + ' ' + (groupid ? groupid : '') + '"  elemid="' + row.elemid + '" version="' + version + '">'
+            def htmlRank = row.'data-rank' ? '" data-rank="' + row.'data-rank' : ''
+            out << '<tr class="table-line ' + (row.attrs.rowClass ? row.attrs.rowClass : '') + ' ' + (groupid ? groupid : '') + '" elemid="' + row.elemid + '" version="' + version + '"' + htmlRank + '">'
             row.columns.eachWithIndex { col, indexCol ->
 
                 //gestion editable
