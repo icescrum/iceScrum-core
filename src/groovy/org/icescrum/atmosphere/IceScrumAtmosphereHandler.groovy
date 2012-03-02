@@ -48,7 +48,7 @@ class IceScrumAtmosphereHandler implements AtmosphereHandler<HttpServletRequest,
         event.response.addHeader("Cache-Control", "private");
         event.response.addHeader("Pragma", "no-cache");
         event.response.addHeader("Access-Control-Allow-Origin", "*");
-        event.suspend(-1);
+        event.suspend(60000, true);
 
         def productID = event.request.getParameterValues("product") ? event.request.getParameterValues("product")[0] : null
         def teamID = event.request.getParameterValues("team") ? event.request.getParameterValues("team")[0] : null
@@ -105,8 +105,6 @@ class IceScrumAtmosphereHandler implements AtmosphereHandler<HttpServletRequest,
         if (!event.message) {
             return
         }
-
-
 
         if (log.isDebugEnabled()) {
             log.debug("broadcast to user ${user?.username ?: 'anonymous'}")

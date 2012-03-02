@@ -238,6 +238,10 @@ class StoryService {
 
         User user = (User) springSecurityService.currentUser
 
+        def rank = sprint.stories? sprint.stories.size() + 1 : 1
+        sprint.addToStories(story)
+        setRank(story, rank)
+
         // Change the story state
         if (sprint.state == Sprint.STATE_INPROGRESS) {
             story.state = Story.STATE_INPROGRESS
@@ -248,19 +252,15 @@ class StoryService {
             def autoCreateTaskOnEmptyStory = sprint.parentRelease.parentProduct.preferences.autoCreateTaskOnEmptyStory
             if (autoCreateTaskOnEmptyStory)
                 if (autoCreateTaskOnEmptyStory && !story.tasks) {
-                    def emptyTask = new Task(name: story.name, state: Task.STATE_WAIT, description: story.description, creator: user, backlog: sprint)
-                    story.addToTasks(emptyTask).save()
-                    emptyTask.save()
+                    def emptyTask = new Task(name: story.name, state: Task.STATE_WAIT, description: story.description)
+                    taskService.saveStoryTask(emptyTask, story, user)
+                    story.refresh()
                 }
             clicheService.createOrUpdateDailyTasksCliche(sprint)
         } else {
             story.state = Story.STATE_PLANNED
             story.plannedDate = new Date()
         }
-
-        def rank = sprint.stories? sprint.stories.size() + 1 : 1
-        sprint.addToStories(story)
-        setRank(story, rank)
 
         if (!story.save(flush: true))
             throw new RuntimeException()
