@@ -35,13 +35,12 @@ class MenuBarSupport {
     def webInvocationPrivilegeEvaluator
     def springSecurityService
 
-    static private commonVerification(url) {
-        def menuBarSupport = ApplicationHolder.application.mainContext.menuBarSupport
+    private commonVerification(url) {
         url = url.toString() - SRH.request.contextPath
-        menuBarSupport.permissionDynamicBar(url)
+        permissionDynamicBar(url)
     }
 
-    static private commonUserPreferences(id) {
+    private commonUserPreferences(id) {
         UserPreferences up = null
         if (GrailsUser.isAssignableFrom(SCH.context.authentication?.principal?.getClass()))
             up = User.get(SCH.context.authentication.principal?.id)?.preferences
@@ -56,18 +55,16 @@ class MenuBarSupport {
             return null
     }
 
-    static productDynamicBar = {String title, id, defaultVisibility, defaultPosition ->
-
-        [title: title, show: {
+    def productDynamicBar = {id, defaultVisibility, defaultPosition ->
+        return {
             if (!params?.product) return false
             if (!defaultPosition) return false
             if (!commonVerification(createLink(controller: id, params: [product: params.product]))) return false
             commonUserPreferences(id) ?: [visible: defaultVisibility, pos: defaultPosition]
-        }]
+        }
     }
 
-    static final METHOD = 'GET'
     def permissionDynamicBar = {url ->
-        webInvocationPrivilegeEvaluator.isAllowed(SRH.request.contextPath, url, METHOD, SCH.context?.authentication)
+        webInvocationPrivilegeEvaluator.isAllowed(SRH.request.contextPath, url, 'GET', SCH.context?.authentication)
     }
 }

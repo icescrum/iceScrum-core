@@ -27,11 +27,12 @@ package org.icescrum.core.taglib
 
 import org.codehaus.groovy.grails.plugins.jasper.JasperExportFormat
 import org.icescrum.components.UtilsWebComponents
+import org.icescrum.core.ui.UiDefinition
 
 class WindowTagLib {
     static namespace = 'is'
 
-    def grailsApplication
+    def uiDefinitionService
 
     /**
      * Generate a window
@@ -195,27 +196,25 @@ class WindowTagLib {
         def widgetsList = []
 
         //Default displayed widgets
-        grailsApplication.uIControllerClasses.each {controller ->
-            if (controller) {
-                def show = controller.getPropertyValue('widget')?.show
-                if (show in Closure) {
-                    show.delegate = delegate
-                    show = show()
-                }
-                if (show) {
-                    def widgetElement = [
-                            id: controller.getPropertyValue('id'),
-                            hasToolbar: controller.getPropertyValue('widget')?.toolbar ?: false,
-                            closeable: (controller.getPropertyValue('widget')?.closeable == null) ? true : controller.getPropertyValue('widget').closeable,
-                            height: controller.getPropertyValue('widget')?.height ?: false,
-                            windowable: controller.getPropertyValue('window') ? true : false,
-                            sortable: (controller.getPropertyValue('widget')?.sortable?.enable == null) ? true : controller.getPropertyValue('widget').sortable.enable,
-                            hasTitleBarContent: controller.getPropertyValue('widget')?.titleBarContent ?: false,
-                            title: message(code: controller.getPropertyValue('widget')?.title ?: ''),
-                            init: controller.getPropertyValue('widget')?.init ?: 'indexWidget'
-                    ]
-                    widgetsList.add(widgetElement)
-                }
+        uiDefinitionService.getDefinitions().each {String id, UiDefinition uiDefinition ->
+            def show = uiDefinition.widget?.show
+            if (show in Closure) {
+                show.delegate = delegate
+                show = show()
+            }
+            if (show) {
+                def widgetElement = [
+                        id: id,
+                        hasToolbar: uiDefinition.widget?.toolbar,
+                        closeable: uiDefinition.widget?.closeable,
+                        height: uiDefinition.widget?.height,
+                        windowable: uiDefinition.window ? true : false,
+                        sortable: uiDefinition.widget?.sortable,
+                        hasTitleBarContent: uiDefinition.widget?.titleBarContent,
+                        title: message(code: uiDefinition.widget?.title),
+                        init: uiDefinition.widget?.init
+                ]
+                widgetsList.add(widgetElement)
             }
         }
         //Widgets with sortable=false can be ordered si a position is set

@@ -25,10 +25,14 @@
 package org.icescrum.core.taglib
 
 import org.icescrum.components.UtilsWebComponents
+import org.icescrum.core.ui.UiDefinition
 
 class MenuTagLib {
 
     static namespace = 'is'
+    
+    def uiDefinitionService
+    def menuBarSupport
 
     /**
      * Generate iceScrum menu bar (only show up when a project is opened)
@@ -36,28 +40,30 @@ class MenuTagLib {
     def menuBar = { attrs, body ->
         def menuElements = []
         def menuElementsHiddden = []
-        grailsApplication.uIControllerClasses.each {controller ->
-            if (controller) {
-                def show = controller.getPropertyValue('menuBar')?.show
-                if (show in Closure) {
-                    show.delegate = delegate
-                    show = show()
-                }
-                if (show && show.visible) {
-                    menuElements << [title: controller.getPropertyValue('menuBar').title,
-                            id: controller.getPropertyValue('id'),
-                            selected: controller.getPropertyValue('id') == session.currentWindow,
-                            position: show.pos.toInteger() ?: 1,
-                            widgetable: controller.getPropertyValue('widget') ? true : false,
-                    ]
-                } else if (show) {
-                    menuElementsHiddden << [title: controller.getPropertyValue('menuBar').title,
-                            id: controller.getPropertyValue('id'),
-                            selected: controller.getPropertyValue('id') == session.currentWindow,
-                            position: show.pos ?: 1,
-                            widgetable: controller.getPropertyValue('widget') ? true : false,
-                    ]
-                }
+        uiDefinitionService.getDefinitions().each {String id, UiDefinition uiDefinition ->
+            def menuBar = uiDefinition.menuBar
+            if(menuBar?.productDynamicBar) {
+                menuBar.show = menuBarSupport.productDynamicBar(id, menuBar.defaultVisibility, menuBar.defaultPosition)
+            }
+            def show = menuBar?.show
+            if (show in Closure) {
+                show.delegate = delegate
+                show = show()
+            }
+            if (show && show.visible) {
+                menuElements << [title: menuBar.title,
+                        id: id,
+                        selected: id == session.currentWindow,
+                        position: show.pos.toInteger() ?: 1,
+                        widgetable: uiDefinition.widget ? true : false,
+                ]
+            } else if (show) {
+                menuElementsHiddden << [title: menuBar.title,
+                        id: id,
+                        selected: id == session.currentWindow,
+                        position: show.pos ?: 1,
+                        widgetable: uiDefinition.widget ? true : false,
+                ]
             }
         }
         menuElements = menuElements.sort {it.position}

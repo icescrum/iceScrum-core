@@ -25,7 +25,6 @@ import grails.converters.XML
 import org.atmosphere.cpr.BroadcasterFactory
 import org.codehaus.groovy.grails.commons.GrailsClassUtils
 import org.codehaus.groovy.grails.scaffolding.view.ScaffoldingViewResolver
-import org.icescrum.components.UiControllerArtefactHandler
 import org.icescrum.core.services.SecurityService
 import org.icescrum.core.utils.IceScrumDomainClassMarshaller
 import org.springframework.context.ApplicationContext
@@ -67,6 +66,9 @@ import org.springframework.web.servlet.support.RequestContextUtils as RCU
 import grails.plugins.springsecurity.SpringSecurityService
 import org.codehaus.groovy.grails.plugins.jasper.JasperService
 import org.icescrum.core.support.ProgressSupport
+import org.icescrum.core.services.UiDefinitionService
+import org.icescrum.core.ui.UiDefinitionArtefactHandler
+import org.codehaus.groovy.grails.commons.ControllerArtefactHandler
 
 class IcescrumCoreGrailsPlugin {
     def groupId = 'org.icescrum'
@@ -82,7 +84,12 @@ class IcescrumCoreGrailsPlugin {
             "grails-app/views/error.gsp"
     ]
 
-    def artefacts = [new UiControllerArtefactHandler()]
+    def artefacts = [new UiDefinitionArtefactHandler()]
+
+    def watchedResources = [
+        "file:./grails-app/conf/*UiDefinition.groovy",
+        "file:./plugins/*/grails-app/conf/*UiDefinition.groovy"
+    ]
 
     def observe = ['controllers']
 
@@ -252,11 +259,12 @@ class IcescrumCoreGrailsPlugin {
         SecurityService securityService = ctx.getBean('securityService')
         SpringSecurityService springSecurityService = ctx.getBean('springSecurityService')
         JasperService jasperService = ctx.getBean('jasperService')
+        UiDefinitionService uiDefinitionService = ctx.getBean('uiDefinitionService')
+        uiDefinitionService.loadDefinitions()
 
         application.controllerClasses.each {
-            if (it.hasProperty(UiControllerArtefactHandler.PROPERTY)) {
-                application.addArtefact(UiControllerArtefactHandler.TYPE, it)
-                def plugin = it.hasProperty(UiControllerArtefactHandler.PLUGINNAME) ? it.getPropertyValue(UiControllerArtefactHandler.PLUGINNAME) : null
+            if(uiDefinitionService.hasDefinition(it.logicalPropertyName)) {
+                def plugin = it.hasProperty('pluginName') ? it.getPropertyValue('pluginName') : null
                 addUIControllerMethods(it, ctx, plugin)
             }
             addBroadcastMethods(it, securityService, application)
@@ -275,23 +283,40 @@ class IcescrumCoreGrailsPlugin {
     }
 
     def onChange = { event ->
-        def controller = application.getControllerClass(event.source?.name)
-        if (controller?.hasProperty(UiControllerArtefactHandler.PROPERTY)) {
-            ScaffoldingViewResolver.clearViewCache()
-            application.addArtefact(UiControllerArtefactHandler.TYPE, controller)
-            def plugin = controller.hasProperty(UiControllerArtefactHandler.PLUGINNAME) ? controller.getPropertyValue(UiControllerArtefactHandler.PLUGINNAME) : null
-            addUIControllerMethods(controller, application.mainContext, plugin)
+        UiDefinitionService uiDefinitionService = event.ctx.getBean('uiDefinitionService')
+        def type = UiDefinitionArtefactHandler.TYPE
+
+        if (application.isArtefactOfType(type, event.source))
+        {
+            def oldClass = application.getArtefact(type, event.source.name)
+            application.addArtefact(type, event.source)
+            application.getArtefacts(type).each {
+                if (it.clazz != event.source && oldClass.clazz.isAssignableFrom(it.clazz)) {
+                    def newClass = application.classLoader.reloadClass(it.clazz.name)
+                    application.addArtefact(type, newClass)
+                }
+            }
+            uiDefinitionService.reload()
         }
-        if (application.isControllerClass(event.source)) {
-            SecurityService securityService = event.ctx.getBean('securityService')
-            addBroadcastMethods(event.source, securityService, application)
+        else if (application.isArtefactOfType(ControllerArtefactHandler.TYPE, event.source))
+        {
+            def controller = application.getControllerClass(event.source?.name)
+            if(uiDefinitionService.hasDefinition(controller.logicalPropertyName)) {
+                ScaffoldingViewResolver.clearViewCache()
+                def plugin = controller.hasProperty('pluginName') ? controller.getPropertyValue('pluginName') : null
+                addUIControllerMethods(controller, application.mainContext, plugin)
+            }
+            if (application.isControllerClass(event.source)) {
+                SecurityService securityService = event.ctx.getBean('securityService')
+                addBroadcastMethods(event.source, securityService, application)
 
-            addErrorMethod(event.source)
-            addWithObjectsMethods(event.source)
+                addErrorMethod(event.source)
+                addWithObjectsMethods(event.source)
 
-            SpringSecurityService springSecurityService = event.ctx.getBean('springSecurityService')
-            JasperService jasperService = event.ctx.getBean('jasperService')
-            addJasperMethod(event.source, springSecurityService, jasperService)
+                SpringSecurityService springSecurityService = event.ctx.getBean('springSecurityService')
+                JasperService jasperService = event.ctx.getBean('jasperService')
+                addJasperMethod(event.source, springSecurityService, jasperService)
+            }
         }
     }
 
