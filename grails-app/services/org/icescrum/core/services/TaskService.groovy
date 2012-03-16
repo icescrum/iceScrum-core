@@ -88,7 +88,7 @@ class TaskService {
 
     @PreAuthorize('inProduct() and !archivedProduct()')
     void saveStoryTask(Task task, Story story, User user) {
-        task.parentStory = story
+        story.addToTasks(task)
         def currentProduct = (Product) story.backlog
         if (currentProduct.preferences.assignOnCreateTask) {
             task.responsible = user
