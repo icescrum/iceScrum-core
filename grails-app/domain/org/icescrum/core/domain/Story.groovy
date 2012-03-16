@@ -352,7 +352,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
             }
         }
 
-        findStoriesFilter { s, term = null, u = null ->
+        findStoriesFilter { s, term = null, u = null, userid = null ->
             cache false
             parentSprint {
                 eq 'id', s.id
@@ -372,7 +372,11 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                             }
                         }
                     }
-                    if (u) {
+                    if (userid) {
+                        responsible {
+                            eq 'id', userid
+                        }
+                    } else if (u) {
                         responsible {
                             if (u.preferences.filterTask == 'myTasks') {
                                 eq 'id', u.id

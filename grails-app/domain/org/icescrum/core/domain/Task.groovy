@@ -97,7 +97,7 @@ class Task extends BacklogElement implements Serializable {
             order("id", "asc")
         }
 
-        findUrgentTasksFilter { s, term = null, u = null ->
+        findUrgentTasksFilter { s, term = null, u = null, userid = null ->
             backlog {
                 eq 'id', s.id
             }
@@ -112,7 +112,11 @@ class Task extends BacklogElement implements Serializable {
                     ilike 'notes', term
                 }
             }
-            if (u) {
+            if (userid) {
+                responsible {
+                    eq 'id', userid
+                }
+            } else if (u) {
                 responsible {
                     if (u.preferences.filterTask == 'myTasks') {
                         eq 'id', u.id
@@ -128,7 +132,7 @@ class Task extends BacklogElement implements Serializable {
             eq 'type', Task.TYPE_URGENT
         }
 
-        findRecurrentTasksFilter { s, term = null, u = null ->
+        findRecurrentTasksFilter { s, term = null, u = null, userid = null ->
             backlog {
                 eq 'id', s.id
             }
@@ -144,7 +148,11 @@ class Task extends BacklogElement implements Serializable {
                     }
                 }
             }
-            if (u) {
+            if (userid) {
+                responsible {
+                    eq 'id', userid
+                }
+            } else if (u) {
                 responsible {
                     if (u.preferences.filterTask == 'myTasks') {
                         eq 'id', u.id
