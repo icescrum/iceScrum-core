@@ -254,7 +254,6 @@ class StoryService {
                 if (autoCreateTaskOnEmptyStory && !story.tasks) {
                     def emptyTask = new Task(name: story.name, state: Task.STATE_WAIT, description: story.description)
                     taskService.saveStoryTask(emptyTask, story, user)
-                    story.refresh()
                 }
             clicheService.createOrUpdateDailyTasksCliche(sprint)
         } else {

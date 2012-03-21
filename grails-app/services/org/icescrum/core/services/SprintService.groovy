@@ -69,7 +69,7 @@ class SprintService {
         if (previousSprint && sprint.startDate <= previousSprint.endDate)
             throw new IllegalStateException('is.sprint.error.previous.overlap')
 
-        sprint.parentRelease = release
+        release.addToSprints(sprint)
 
         if (!sprint.save())
             throw new RuntimeException()
@@ -219,7 +219,8 @@ class SprintService {
                     startDate: (Date) firstDate.clone(),
                     endDate: endDate
             )
-            newSprint.parentRelease = release
+
+            release.addToSprints(newSprint)
 
             if (!newSprint.save())
                 throw new RuntimeException()
@@ -228,8 +229,7 @@ class SprintService {
             sprints << newSprint
             publishEvent(new IceScrumSprintEvent(newSprint, this.class, (User) springSecurityService.currentUser, IceScrumEvent.EVENT_CREATED))
         }
-        //because we have added sprints
-        release.refresh()
+
         broadcast(function: 'add', message: [class: Sprint.class, sprints: sprints], channel:'product-'+release.parentProduct.id)
         return sprints
     }
