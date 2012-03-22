@@ -71,10 +71,10 @@ class Feature extends BacklogElement implements Serializable {
                 eq 'id', p
             }
             or {
-                def termLong = term?.replaceAll('%','')
-                if (termLong?.isLong()){
-                    eq 'id', termLong.toLong()
-                }else{
+                def termInteger = term?.replaceAll('%','')
+                if (termInteger?.isInteger()){
+                    eq 'uid', termInteger.toInteger()
+                } else{
                     ilike 'name', term
                     ilike 'description', term
                     ilike 'notes', term
