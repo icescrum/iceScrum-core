@@ -16,19 +16,6 @@
   - along with iceScrum.  If not, see <http://www.gnu.org/licenses/>.
   --}%
 <div class="widget-bar">
-  <g:if test="${product != null}">
-    <div class="box-simple box-simple-last ui-corner-all" id="project-details">
-        <ul>
-          <li>${message(code: "is.ui.details.product.name")}
-            <strong>${product.name.encodeAsHTML()}</strong>
-          </li>
-          <li>${message(code:"is.ui.details.role.name")} <a href="javascript:;" onclick="jQuery('#edit-members a').click();"><strong> <is:displayRole /> </strong></a></li>
-          <g:if test="${user}">
-            <li><is:avatar user="${user}"/></li>
-          </g:if>
-        </ul>
-    </div>
-  </g:if>
   <div id="widget-list">
     <g:each in="${widgetsList}" var="widget">
       <is:widget attrs="${widget}"/>
