@@ -429,7 +429,6 @@ class ProductService {
                 releaseService.unMarshall(it, p, progress)
                 progress?.updateProgress((product.releases.release.size() * (index + 1) / 100).toInteger(), g.message(code: 'is.parse', args: [g.message(code: 'is.release')]))
             }
-            println "toto"
             // ensure rank for stories in each sprint
             p.releases.each{Release release ->
                 release.sprints.each{Sprint sprint ->

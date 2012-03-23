@@ -79,6 +79,7 @@ class WindowTagLib {
         }
 
         def params = [
+                projectName: attrs.projectName,
                 type: type,
                 title: attrs.title ?: null,
                 help: attrs.help ?: null,
