@@ -98,6 +98,9 @@
 </div>
 <jq:jquery>
     <g:if test="${type == 'window'}">
+        <g:if test="${hasToolbar}">
+            $.icescrum.checkToolbar();
+        </g:if>
         $("#${type}-id-${id}").isWindow({maximizeable:${titleBarActions?.maximizeable},widgetable:${titleBarActions?.widgetable},closeable:${titleBarActions?.closeable}});
         document.title = '${projectName ?: 'iceScrum'} - ${title.encodeAsJavaScript()}';
         $("#${type}-id-${id}").focus();

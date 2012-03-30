@@ -112,6 +112,9 @@ class WindowTagLib {
         out << body()
         out << '</ul>'
         out << '</div>'
+        if(attrs.type?.equals('window')) {
+            out << '<div id="toolbar-overflow" class="box-navigation" style="display:none; top:54px; z-index:-1;"><ul></ul></div>'
+        }
     }
 
     /**

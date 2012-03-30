@@ -116,6 +116,5 @@
         }
     }).disableSelection();
     $.icescrum.checkMenuBar();
-    $(window).bind('resize',function(){$.icescrum.checkMenuBar();});
     </jq:jquery>
 </sec:ifLoggedIn>
