@@ -160,7 +160,7 @@ class PanelTagLib {
                 paramsIcon.icon = attrs.icon
 
             out << "<li class=\"navigation-item\" id=\"${attrs.id}-navigation-item\">"
-            out << "<div class=\"dropmenu\" id=\"${attrs.id}-list\">"
+            out << "<div class=\"dropmenu ${attrs.remove('classDropmenu')?:''}\" id=\"${attrs.id}-list\">"
 
             def str = attrs.text
 

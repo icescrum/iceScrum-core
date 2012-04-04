@@ -102,7 +102,7 @@
             $.icescrum.checkToolbar();
         </g:if>
         $("#${type}-id-${id}").isWindow({maximizeable:${titleBarActions?.maximizeable},widgetable:${titleBarActions?.widgetable},closeable:${titleBarActions?.closeable}});
-        document.title = '${projectName ?: 'iceScrum'} - ${title.encodeAsJavaScript()}';
+        document.title = "${projectName ?: 'iceScrum'} - ${title.encodeAsJavaScript()}";
         $("#${type}-id-${id}").focus();
     </g:if>
     <g:if test="${type == 'widget'}">

@@ -32,6 +32,7 @@ class UserPreferences implements Serializable{
     String language = "en"
     String activity
     String filterTask = "allTasks"
+    String lastProductOpened
 
     boolean hideDoneState = false
 
@@ -40,6 +41,7 @@ class UserPreferences implements Serializable{
 
     static constraints = {
         activity nullable: true
+        lastProductOpened nullable: true
     }
 
 
