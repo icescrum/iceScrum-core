@@ -44,7 +44,7 @@ class ReleaseService {
     def g = new org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib()
 
 
-    @PreAuthorize('(productOwner(#product) or scrumMaster()) and !archivedProduct(#product)')
+    @PreAuthorize('(productOwner(#product) or scrumMaster() or owner(#product)) and !archivedProduct(#product)')
     void save(Release release, Product product) {
         release.parentProduct = product
 
@@ -262,6 +262,8 @@ class ReleaseService {
 
         broadcast(function: 'delete', message: [class: release.class, id: release.id])
     }
+
+
 
 
     def releaseBurndownValues(Release release) {
