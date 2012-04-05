@@ -30,6 +30,9 @@ import org.springframework.web.context.request.RequestContextHolder as RCH
 import org.icescrum.core.event.IceScrumEvent
 import org.icescrum.core.domain.Feature
 import org.icescrum.core.support.ApplicationSupport
+import org.eclipse.mylyn.wikitext.core.util.ServiceLocator
+import org.eclipse.mylyn.wikitext.core.parser.builder.HtmlDocumentBuilder
+import org.eclipse.mylyn.wikitext.core.parser.MarkupParser
 
 
 class NotificationEmailService implements ApplicationListener<IceScrumStoryEvent> {
@@ -69,7 +72,7 @@ class NotificationEmailService implements ApplicationListener<IceScrumStoryEvent
         }
 
         def listTo = []
-        def subjectArgs = [story.backlog.name, story.id]
+        def subjectArgs = [story.backlog.name, story.name]
         def permalink = grailsApplication.config.grails.serverURL + '/p/' + story.backlog.pkey + '-' + story.uid
         def projectLink = grailsApplication.config.grails.serverURL + '/p/' + story.backlog.pkey + '#project'
 
@@ -89,7 +92,7 @@ class NotificationEmailService implements ApplicationListener<IceScrumStoryEvent
             }
             send([
                     bcc: group*.email.toArray(),
-                    subject: getMessage('is.template.email.story.' + event.toLowerCase() + '.subject', (Locale) locale, subjectArgs),
+                    subject: grailsApplication.config.icescrum.alerts.subject_prefix + getMessage('is.template.email.story.' + event.toLowerCase() + '.subject', (Locale) locale, subjectArgs),
                     view: '/emails-templates/story' + event,
                     model: [locale: locale, storyName: story.name, permalink: permalink, linkName: story.backlog.name, link: projectLink]
             ])
@@ -103,7 +106,7 @@ class NotificationEmailService implements ApplicationListener<IceScrumStoryEvent
         }
 
         def listTo = []
-        def subjectArgs = [story.backlog.name, story.id]
+        def subjectArgs = [story.backlog.name, story.name]
         def permalink = grailsApplication.config.grails.serverURL + '/p/' + story.backlog.pkey + '-' + story.uid
         def projectLink = grailsApplication.config.grails.serverURL + '/p/' + story.backlog.pkey + '#project'
 
@@ -114,7 +117,7 @@ class NotificationEmailService implements ApplicationListener<IceScrumStoryEvent
             }
             send([
                     bcc: group*.email.toArray(),
-                    subject: getMessage('is.template.email.story.changedState.subject', (Locale) locale, subjectArgs),
+                    subject: grailsApplication.config.icescrum.alerts.subject_prefix + getMessage('is.template.email.story.changedState.subject', (Locale) locale, subjectArgs),
                     view: '/emails-templates/storyChangedState',
                     model: [state: getMessage('is.template.email.story.changedState.' + type.toLowerCase(), (Locale) locale), locale: locale, storyName: story.name, permalink: permalink, linkName: story.backlog.name, link: projectLink]
             ])
@@ -129,21 +132,30 @@ class NotificationEmailService implements ApplicationListener<IceScrumStoryEvent
         }
 
         def listTo = []
-        def subjectArgs = [story.backlog.name, story.id]
+        def subjectArgs = [story.backlog.name, story.name]
         def permalink = grailsApplication.config.grails.serverURL + '/p/' + story.backlog.pkey + '-' + story.uid
         def projectLink = grailsApplication.config.grails.serverURL + '/p/' + story.backlog.pkey + '#project'
 
         if (type == IceScrumStoryEvent.EVENT_COMMENT_ADDED) {
             story.followers?.findAll {it.id != user.id}?.each { listTo << [email: it.email, locale: new Locale(it.preferences.language)] }
+
+            StringWriter text = new StringWriter()
+            HtmlDocumentBuilder builder = new HtmlDocumentBuilder(text)
+            builder.emitAsDocument = false
+            MarkupParser parser = new MarkupParser()
+            parser.markupLanguage = ServiceLocator.instance.getMarkupLanguage('Textile')
+            parser.builder = builder
+            parser.parse(comment.body).encodeAsHTML()
+
             listTo?.unique()?.groupBy {it.locale}?.each { locale, group ->
                 if (log.debugEnabled) {
                     log.debug "Send email, event:${type} to : ${group*.email.toArray()} with locale : ${locale}"
                 }
                 send([
                         bcc: group*.email.toArray(),
-                        subject: getMessage('is.template.email.story.commented.subject', (Locale) locale, subjectArgs),
+                        subject: grailsApplication.config.icescrum.alerts.subject_prefix + getMessage('is.template.email.story.commented.subject', (Locale) locale, subjectArgs),
                         view: '/emails-templates/storyCommented',
-                        model: [by: comment.poster.firstName + " " + comment.poster.lastName, locale: locale, storyName: story.name, permalink: permalink, linkName: story.backlog.name, link: projectLink]
+                        model: [by: comment.poster.firstName + " " + comment.poster.lastName, comment: text, locale: locale, storyName: story.name, permalink: permalink, linkName: story.backlog.name, link: projectLink]
                 ])
             }
         } else if (type == IceScrumStoryEvent.EVENT_COMMENT_UPDATED) {
@@ -154,7 +166,7 @@ class NotificationEmailService implements ApplicationListener<IceScrumStoryEvent
                 }
                 send([
                         bcc: group*.email.toArray(),
-                        subject: getMessage('is.template.email.story.commentEdited.subject', (Locale) locale, subjectArgs),
+                        subject: grailsApplication.config.icescrum.alerts.subject_prefix + getMessage('is.template.email.story.commentEdited.subject', (Locale) locale, subjectArgs),
                         view: '/emails-templates/storyCommentEdited',
                         model: [by: user.firstName + " " + user.lastName, locale: locale, storyName: story.name, permalink: permalink, linkName: story.backlog.name, link: projectLink]
                 ])
@@ -170,7 +182,7 @@ class NotificationEmailService implements ApplicationListener<IceScrumStoryEvent
 
         def listTo = []
         def product = element instanceof Feature ? element.backlog : element.backlog.parentRelease.parentProduct
-        def subjectArgs = [product.name, element.id]
+        def subjectArgs = [product.name, element.name]
         def projectLink = grailsApplication.config.grails.serverURL + '/p/' + product.pkey + '#project'
         element.followers?.findAll {it.id != user.id}?.each { listTo << [email: it.email, locale: new Locale(it.preferences.language)] }
 
@@ -182,7 +194,7 @@ class NotificationEmailService implements ApplicationListener<IceScrumStoryEvent
             }
             send([
                     bcc: group*.email.toArray(),
-                    subject: getMessage('is.template.email.story.acceptedAs.subject', (Locale) locale, subjectArgs),
+                    subject: grailsApplication.config.icescrum.alerts.subject_prefix + getMessage('is.template.email.story.acceptedAs.subject', (Locale) locale, subjectArgs),
                     view: '/emails-templates/storyAcceptedAs',
                     model: [acceptedAs: acceptedAs, locale: locale, elementName: element.name, linkName: product.name, link: projectLink]
             ])
@@ -197,7 +209,7 @@ class NotificationEmailService implements ApplicationListener<IceScrumStoryEvent
         }
         send([
                 to: user.email,
-                subject: getMessage('is.template.email.user.retrieve.subject', new Locale(user.preferences.language), [user.username]),
+                subject: grailsApplication.config.icescrum.alerts.subject_prefix + getMessage('is.template.email.user.retrieve.subject', new Locale(user.preferences.language), [user.username]),
                 view: "/emails-templates/retrieve",
                 model: [locale: new Locale(user.preferences.language), user: user, password: password, ip: request.getHeader('X-Forwarded-For') ?: request.getRemoteAddr(), link: link]
         ])

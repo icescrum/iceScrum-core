@@ -554,9 +554,14 @@ class StoryService {
 
             featureService.save(feature, (Product) pbi.backlog)
 
+            pbi.followers?.each{
+                feature.addFollower(it)
+            }
+
             pbi.attachments.each { attachment ->
                 feature.addAttachment(pbi.creator, attachmentableService.getFile(attachment), attachment.filename)
             }
+
             this.delete(pbi, false)
             features << feature
 
@@ -600,6 +605,9 @@ class StoryService {
 
             taskService.saveUrgentTask(task, sprint, pbi.creator)
 
+            pbi.followers?.each{
+                task.addFollower(it)
+            }
 
             pbi.attachments.each { attachment ->
                 task.addAttachment(pbi.creator, attachmentableService.getFile(attachment), attachment.filename)

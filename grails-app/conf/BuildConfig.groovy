@@ -76,5 +76,6 @@ grails.project.dependency.resolution = {
         compile ':jasper:1.5.2'
         compile ':maven-publisher:0.8.1'
         compile ':rollback-on-exception:0.1'
+        compile ':wikitext:0.1.2'
     }
 }
