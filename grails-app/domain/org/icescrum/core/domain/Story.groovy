@@ -359,10 +359,13 @@ class Story extends BacklogElement implements Cloneable, Serializable {
             }
 
             or {
+                def termInteger = term?.replaceAll('%','')
+                if (termInteger?.isInteger()){
+                    eq 'uid', termInteger.toInteger()
+                }
                 tasks {
                     if (term) {
                         or {
-                            def termInteger = term.replaceAll('%','')
                             if (termInteger?.isInteger()){
                                 eq 'uid', termInteger.toInteger()
                             }else{
