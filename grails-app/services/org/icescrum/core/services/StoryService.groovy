@@ -238,9 +238,7 @@ class StoryService {
 
         User user = (User) springSecurityService.currentUser
 
-        def rank = sprint.stories? sprint.stories.size() + 1 : 1
         sprint.addToStories(story)
-        setRank(story, rank)
 
         // Change the story state
         if (sprint.state == Sprint.STATE_INPROGRESS) {
@@ -260,6 +258,9 @@ class StoryService {
             story.state = Story.STATE_PLANNED
             story.plannedDate = new Date()
         }
+
+        def rank = sprint.stories? sprint.stories.size() + 1 : 1
+        setRank(story, rank)
 
         if (!story.save(flush: true))
             throw new RuntimeException()
