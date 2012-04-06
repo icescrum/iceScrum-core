@@ -213,7 +213,7 @@ class FormTagLib {
         }
 
         attrs.from = locales
-        attrs.value = RCU.getLocale(request)
+        attrs.value = attrs.value ?: RCU.getLocale(request)
         attrs.optionValue = {"${it.getDisplayName(it).capitalize()}"}
         out << is.select(attrs)
     }

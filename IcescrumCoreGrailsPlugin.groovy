@@ -329,7 +329,7 @@ class IcescrumCoreGrailsPlugin {
         def dynamicActions = [
                 toolbar: {->
                     try {
-                        render(plugin: pluginName, template: "window/toolbar", model: [currentView: session.currentView, id: id])
+                        render(plugin: pluginName, template: "window/toolbar", model: [currentView: session.currentView, id: controllerName])
                     } catch (Exception e) {
                         render('')
                         e.printStackTrace()
@@ -337,7 +337,7 @@ class IcescrumCoreGrailsPlugin {
                 },
                 toolbarWidget: {->
                     try {
-                        render(plugin: pluginName, template: "widget/toolbar", model: [id: id])
+                        render(plugin: pluginName, template: "widget/toolbar", model: [id: controllerName])
                     } catch (Exception e) {
                         render('')
                         e.printStackTrace()
@@ -345,7 +345,7 @@ class IcescrumCoreGrailsPlugin {
                 },
                 titleBarContent: {
                     try {
-                        render(plugin: pluginName, template: "window/titleBarContent", model: [id: id])
+                        render(plugin: pluginName, template: "window/titleBarContent", model: [id: controllerName])
                     } catch (Exception e) {
                         render('')
                         e.printStackTrace()
@@ -353,7 +353,7 @@ class IcescrumCoreGrailsPlugin {
                 },
                 titleBarContentWidget: {
                     try {
-                        render(plugin: pluginName, template: "widget/titleBarContent", model: [id: id])
+                        render(plugin: pluginName, template: "widget/titleBarContent", model: [id: controllerName])
                     } catch (Exception e) {
                         render('')
                         e.printStackTrace()
@@ -752,6 +752,24 @@ class IcescrumCoreGrailsPlugin {
                 }
             } else {
                 returnError(text:message(code: 'is.release.error.not.exist'))
+            }
+        }
+
+        source.metaClass.withUser = { String id = 'id', Closure c ->
+            User user = User.get(params."$id"?.toLong())
+            if(user) {
+                try {
+                    c.call user
+                } catch (IllegalStateException e) {
+                    returnError(exception: e)
+                } catch (RuntimeException e) {
+                    if(user.errors)
+                        returnError(object:user, exception:e)
+                    else
+                        returnError(exception:e)
+                }
+            } else {
+                returnError(text:message(code: 'is.user.error.not.exist'))
             }
         }
     }

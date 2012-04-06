@@ -77,12 +77,12 @@ class NotificationEmailService implements ApplicationListener<IceScrumStoryEvent
         def projectLink = grailsApplication.config.grails.serverURL + '/p/' + story.backlog.pkey + '#project'
 
         if (type == IceScrumEvent.EVENT_CREATED) {
-            story.backlog.productOwners.findAll {it.id != user.id}.each {
+            story.backlog.productOwners.findAll {isCandidateForMail(it, user)}.each {
                 listTo << [email: it.email, locale: new Locale(it.preferences.language)]
             }
         }
         else {
-            story.followers?.findAll {it.id != user.id}?.each { listTo << [email: it.email, locale: new Locale(it.preferences.language)] }
+            story.followers?.findAll {isCandidateForMail(it, user)}?.each { listTo << [email: it.email, locale: new Locale(it.preferences.language)] }
         }
 
         def event = (IceScrumEvent.EVENT_CREATED == type) ? 'Created' : (IceScrumEvent.EVENT_UPDATED == type ? 'Updated' : 'Deleted')
@@ -110,7 +110,7 @@ class NotificationEmailService implements ApplicationListener<IceScrumStoryEvent
         def permalink = grailsApplication.config.grails.serverURL + '/p/' + story.backlog.pkey + '-' + story.uid
         def projectLink = grailsApplication.config.grails.serverURL + '/p/' + story.backlog.pkey + '#project'
 
-        story.followers?.findAll {it.id != user.id}?.each { listTo << [email: it.email, locale: new Locale(it.preferences.language)] }
+        story.followers?.findAll {isCandidateForMail(it, user)}?.each { listTo << [email: it.email, locale: new Locale(it.preferences.language)] }
         listTo?.unique()?.groupBy {it.locale}?.each { locale, group ->
             if (log.debugEnabled) {
                 log.debug "Send email, event:${type} to : ${group*.email.toArray()} with locale : ${locale}"
@@ -137,7 +137,7 @@ class NotificationEmailService implements ApplicationListener<IceScrumStoryEvent
         def projectLink = grailsApplication.config.grails.serverURL + '/p/' + story.backlog.pkey + '#project'
 
         if (type == IceScrumStoryEvent.EVENT_COMMENT_ADDED) {
-            story.followers?.findAll {it.id != user.id}?.each { listTo << [email: it.email, locale: new Locale(it.preferences.language)] }
+            story.followers?.findAll {isCandidateForMail(it, user)}?.each { listTo << [email: it.email, locale: new Locale(it.preferences.language)] }
 
             StringWriter text = new StringWriter()
             HtmlDocumentBuilder builder = new HtmlDocumentBuilder(text)
@@ -159,7 +159,7 @@ class NotificationEmailService implements ApplicationListener<IceScrumStoryEvent
                 ])
             }
         } else if (type == IceScrumStoryEvent.EVENT_COMMENT_UPDATED) {
-            story.followers?.findAll {it.id != user.id}?.each { listTo << [email: it.email, locale: new Locale(it.preferences.language)] }
+            story.followers?.findAll {isCandidateForMail(it, user)}?.each { listTo << [email: it.email, locale: new Locale(it.preferences.language)] }
             listTo?.unique()?.groupBy {it.locale}?.each { locale, group ->
                 if (log.debugEnabled) {
                     log.debug "Send email, event:${type} to : ${group*.email.toArray()} with locale : ${locale}"
@@ -184,7 +184,7 @@ class NotificationEmailService implements ApplicationListener<IceScrumStoryEvent
         def product = element instanceof Feature ? element.backlog : element.backlog.parentRelease.parentProduct
         def subjectArgs = [product.name, element.name]
         def projectLink = grailsApplication.config.grails.serverURL + '/p/' + product.pkey + '#project'
-        element.followers?.findAll {it.id != user.id}?.each { listTo << [email: it.email, locale: new Locale(it.preferences.language)] }
+        element.followers?.findAll {isCandidateForMail(it, user)}?.each { listTo << [email: it.email, locale: new Locale(it.preferences.language)] }
 
         listTo?.unique()?.groupBy {it.locale}?.each { locale, group ->
             def acceptedAs = getMessage(element instanceof Feature ? 'is.feature' : 'is.task', (Locale) locale)
@@ -241,5 +241,9 @@ class NotificationEmailService implements ApplicationListener<IceScrumStoryEvent
 
     String getMessage(String code, Locale locale, args = null, String defaultCode = null) {
         return messageSource.getMessage(code, args ? args.toArray() : null, defaultCode ?: code, locale)
+    }
+
+    private boolean isCandidateForMail(candidate, sender) {
+        return candidate.enabled && (candidate.id != sender.id)
     }
 }

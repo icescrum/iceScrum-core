@@ -98,7 +98,7 @@ class MenuTagLib {
 
         def content
         if (attrs.contentView)
-            content = render(template: "${attrs.contentView}", model: attrs.params)
+            content = render(template: "${attrs.contentView}", model: attrs.params, plugin:attrs.plugin)
         else
             content = body()
 
