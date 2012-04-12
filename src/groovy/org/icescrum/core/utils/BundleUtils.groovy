@@ -102,6 +102,11 @@ class BundleUtils {
             (Task.STATE_DONE): 'is.task.state.done'
     ]
 
+    static taskTypes = [
+            (Task.TYPE_RECURRENT) : 'is.task.type.recurrent',
+            (Task.TYPE_URGENT) : 'is.task.type.urgent'
+    ]
+
     static roles = [
             (Authority.MEMBER): 'is.role.teamMember',
             (Authority.SCRUMMASTER): 'is.role.scrumMaster',

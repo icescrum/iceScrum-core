@@ -97,6 +97,24 @@ class Task extends BacklogElement implements Serializable {
             order("id", "asc")
         }
 
+        findNextTaskInSprint { Task task ->
+            backlog {
+                eq 'id', task.backlog.id
+            }
+            gt 'id', task.id
+            maxResults(1)
+            order("id", "asc")
+        }
+
+        findPreviousTaskInSprint { Task task ->
+            backlog {
+                eq 'id', task.backlog.id
+            }
+            lt 'id', task.id
+            maxResults(1)
+            order("id", "desc")
+        }
+
         findUrgentTasksFilter { s, term = null, u = null, userid = null ->
             backlog {
                 eq 'id', s.id

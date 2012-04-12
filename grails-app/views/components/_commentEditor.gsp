@@ -17,7 +17,7 @@
   --}%
 <div id="commentEditorContainer${comment?.id ?: ''}" class="commentEditorContainer" ${hidden ? 'style="display:none;"' : ''}>
   <g:message code="is.ui.backlogelement.comment.wikisyntax.info"/>
-  <g:formRemote name="commentForm${comment?.id ?: ''}" url="[controller:'backlogElement',action:'addComment']" update="comments-list">
+  <g:formRemote name="commentForm${comment?.id ?: ''}" url="[controller:'story',action:'addComment']" update="comments-list">
     <markitup:editor id="commentBody${comment?.id ?: ''}" name="comment.body">
       ${mode && mode == 'edit' && comment?.body ? comment.body : ''}
     </markitup:editor>
@@ -33,7 +33,7 @@
       <g:if test="${!mode || mode=='add'}">
         <is:button
                 id="submitForm" type="submitToRemote"
-                url="[controller:'backlogElement', action:'saveComment', params:[product:params.product]]"
+                url="[controller:'story', action:'saveComment', params:[product:params.product]]"
                 onSuccess="jQuery('#commentEditorContainer').hide();jQuery('#commentBody').val('');jQuery('#start-follow').hide();jQuery('#stop-follow').show();jQuery.event.trigger('add_comment',data);"
                 value="${message(code:'is.ui.backlogelement.comment.post.button')}"
                 history="false"/>
@@ -41,7 +41,7 @@
       <g:elseif test="${mode && mode=='edit'}">
         <is:button
                 id="submitCommentForm${comment?.id ?: ''}" type="submitToRemote"
-                url="[controller:'backlogElement', action:'updateComment', params:[product:params.product]]"
+                url="[controller:'story', action:'updateComment', params:[product:params.product]]"
                 onSuccess="jQuery('#commentEditorWrapper${comment?.id ?: ''}').hide();jQuery('#comment${comment?.id ?: ''} .commentContent').show();jQuery.event.trigger('update_comment',data);"
                 value="${message(code:'is.ui.backlogelement.comment.edit.button')}"
                 history="false"/>

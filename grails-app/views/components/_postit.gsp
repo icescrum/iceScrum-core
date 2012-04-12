@@ -22,7 +22,7 @@
 
         <g:if test="${miniId}">
             <g:if test="${type == 'story'}">
-                <p class="postit-id"><is:scrumLink controller="backlogElement" id="${id}">${miniId}</is:scrumLink></p>
+                <p class="postit-id"><is:scrumLink controller="story" id="${id}">${miniId}</is:scrumLink></p>
             </g:if>
             <g:else>
                 <p class="postit-id">${miniId}</p>
