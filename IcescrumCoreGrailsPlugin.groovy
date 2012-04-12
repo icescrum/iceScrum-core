@@ -69,6 +69,7 @@ import org.icescrum.core.support.ProgressSupport
 import org.icescrum.core.services.UiDefinitionService
 import org.icescrum.core.ui.UiDefinitionArtefactHandler
 import org.codehaus.groovy.grails.commons.ControllerArtefactHandler
+import org.icescrum.core.domain.Product
 
 class IcescrumCoreGrailsPlugin {
     def groupId = 'org.icescrum'
@@ -571,137 +572,137 @@ class IcescrumCoreGrailsPlugin {
         }
     }
 
-    private void addWithObjectsMethods(source){
+    private addWithObjectsMethods = {source ->
         source.metaClass.withFeature = { String id = 'id', Closure c ->
-            Feature feature = Feature.getInProduct(params.long('product'),params."$id"?.toLong()).list()[0]
-            if (feature){
-                try{
+            Feature feature = Feature.getInProduct(params.long('product'), params."$id"?.toLong()).list()[0]
+            if (feature) {
+                try {
                     c.call feature
                 } catch (AttachmentException e) {
-                    returnError(exception:e)
+                    returnError(exception: e)
                 } catch (IllegalStateException e) {
-                    returnError(exception:e)
+                    returnError(exception: e)
                 } catch (RuntimeException e) {
-                    if(feature.errors)
-                        returnError(object:feature, exception:e)
+                    if (feature.errors)
+                        returnError(object: feature, exception: e)
                     else
-                        returnError(exception:e)
+                        returnError(exception: e)
                 }
             } else {
-                returnError(text:message(code: 'is.feature.error.not.exist'))
+                returnError(text: message(code: 'is.feature.error.not.exist'))
             }
         }
 
         source.metaClass.withFeatures = { String id = 'id', Closure c ->
             List<Feature> features = Feature.getAll(params.list(id))
-            if (features){
-                try{
+            if (features) {
+                try {
                     c.call features
                 } catch (IllegalStateException e) {
-                    returnError(exception:e)
+                    returnError(exception: e)
                 } catch (RuntimeException e) {
-                    returnError(exception:e)
+                    returnError(exception: e)
                 }
             } else {
-                returnError(text:message(code: 'is.actor.error.not.exist'))
+                returnError(text: message(code: 'is.actor.error.not.exist'))
             }
         }
 
         source.metaClass.withActor = { String id = 'id', Closure c ->
-            Actor actor = Actor.getInProduct(params.long('product'),params."$id"?.toLong()).list()[0]
-            if (actor){
-                try{
+            Actor actor = Actor.getInProduct(params.long('product'), params."$id"?.toLong()).list()[0]
+            if (actor) {
+                try {
                     c.call actor
                 } catch (AttachmentException e) {
-                    returnError(exception:e)
+                    returnError(exception: e)
                 } catch (IllegalStateException e) {
-                    returnError(exception:e)
+                    returnError(exception: e)
                 } catch (RuntimeException e) {
-                    if(actor.errors)
-                        returnError(object:actor, exception:e)
+                    if (actor.errors)
+                        returnError(object: actor, exception: e)
                     else
-                        returnError(exception:e)
+                        returnError(exception: e)
                 }
             } else {
-                returnError(text:message(code: 'is.actor.error.not.exist'))
+                returnError(text: message(code: 'is.actor.error.not.exist'))
             }
         }
 
         source.metaClass.withActors = { String id = 'id', Closure c ->
             List<Actor> actors = Actor.getAll(params.list(id))
-            if (actors){
-                try{
+            if (actors) {
+                try {
                     c.call actors
                 } catch (IllegalStateException e) {
-                    returnError(exception:e)
+                    returnError(exception: e)
                 } catch (RuntimeException e) {
-                    returnError(exception:e)
+                    returnError(exception: e)
                 }
             } else {
-                returnError(text:message(code: 'is.actor.error.not.exist'))
+                returnError(text: message(code: 'is.actor.error.not.exist'))
             }
         }
 
         source.metaClass.withStory = { String id = 'id', Closure c ->
-            Story story = Story.getInProduct(params.long('product'),params."$id"?.toLong()).list()[0]
-            if (story){
-                try{
+            Story story = Story.getInProduct(params.long('product'), params."$id"?.toLong()).list()[0]
+            if (story) {
+                try {
                     c.call story
                 } catch (AttachmentException e) {
-                    returnError(exception:e)
+                    returnError(exception: e)
                 } catch (IllegalStateException e) {
-                    returnError(exception:e)
+                    returnError(exception: e)
                 } catch (RuntimeException e) {
-                    if(story.errors)
-                        returnError(object:story, exception:e)
+                    if (story.errors)
+                        returnError(object: story, exception: e)
                     else
-                        returnError(exception:e)
+                        returnError(exception: e)
                 }
             } else {
-                returnError(text:message(code: 'is.story.error.not.exist'))
+                returnError(text: message(code: 'is.story.error.not.exist'))
             }
         }
 
         source.metaClass.withStories = { String id = 'id', Closure c ->
             List<Story> stories = Story.getAll(params.list(id))
-            if (stories){
-                try{
+            if (stories) {
+                try {
                     c.call stories
                 } catch (IllegalStateException e) {
-                    returnError(exception:e)
+                    returnError(exception: e)
                 } catch (RuntimeException e) {
-                    returnError(exception:e)
+                    returnError(exception: e)
                 }
             } else {
-                returnError(text:message(code: 'is.story.error.not.exist'))
+                returnError(text: message(code: 'is.story.error.not.exist'))
             }
         }
 
         source.metaClass.withTask = { String id = 'id', Closure c ->
-            Task task = Task.getInProduct(params.long('product'),params."$id"?.toLong())
-            if (task){
-                try{
+            Task task = Task.getInProduct(params.long('product'), params."$id"?.toLong())
+            if (task) {
+                try {
                     c.call task
                 } catch (AttachmentException e) {
                     returnError(object: task, exception: e)
                 } catch (IllegalStateException e) {
                     returnError(exception: e)
                 } catch (RuntimeException e) {
-                    if(task.errors)
+                    if (task.errors)
                         returnError(object: task, exception: e)
                     else
                         returnError(exception: e)
                 }
             } else {
-                returnError(text:message(code: 'is.task.error.not.exist'))
+                returnError(text: message(code: 'is.task.error.not.exist'))
             }
         }
 
         source.metaClass.withTasks = { String id = 'id', Closure c ->
-            def ids = params.list(id).collect{ it.toLong() }
-            List<Task> tasks = Task.getAllInProduct(params.long('product'),ids)
-            if (tasks){
-                try{
+            def ids = params.list(id).collect { it.toLong() }
+            List<Task> tasks = Task.getAllInProduct(params.long('product'), ids)
+            if (tasks) {
+                try {
                     c.call tasks
                 } catch (IllegalStateException e) {
                     returnError(exception: e)
@@ -709,67 +710,84 @@ class IcescrumCoreGrailsPlugin {
                     returnError(exception: e)
                 }
             } else {
-                returnError(text:message(code: 'is.tasks.error.not.exist'))
+                returnError(text: message(code: 'is.tasks.error.not.exist'))
             }
         }
 
         source.metaClass.withSprint = { String id = 'id', Closure c ->
-            Sprint sprint = Sprint.getInProduct(params.long('product'),params."$id"?.toLong()).list()[0]
-            if (sprint){
-                try{
+            Sprint sprint = Sprint.getInProduct(params.long('product'), params."$id"?.toLong()).list()[0]
+            if (sprint) {
+                try {
                     c.call sprint
                 } catch (IllegalStateException ise) {
-                     returnError(text:message(code: ise.getMessage()))
+                    returnError(text: message(code: ise.getMessage()))
                 } catch (AttachmentException e) {
                     returnError(object: sprint, exception: e)
                 } catch (IllegalStateException e) {
                     returnError(exception: e)
                 } catch (RuntimeException e) {
-                    if(sprint.errors)
+                    if (sprint.errors)
                         returnError(object: sprint, exception: e)
                     else
                         returnError(exception: e)
                 }
             } else {
-                returnError(text:message(code: 'is.sprint.error.not.exist'))
+                returnError(text: message(code: 'is.sprint.error.not.exist'))
             }
         }
 
         source.metaClass.withRelease = { String id = 'id', Closure c ->
-            Release release = Release.getInProduct(params.long('product'),params."$id"?.toLong()).list()[0]
-            if (release){
-                try{
+            Release release = Release.getInProduct(params.long('product'), params."$id"?.toLong()).list()[0]
+            if (release) {
+                try {
                     c.call release
                 } catch (AttachmentException e) {
                     returnError(object: release, exception: e)
                 } catch (IllegalStateException e) {
                     returnError(exception: e)
                 } catch (RuntimeException e) {
-                    if(release.errors)
+                    if (release.errors)
                         returnError(object: release, exception: e)
                     else
                         returnError(exception: e)
                 }
             } else {
-                returnError(text:message(code: 'is.release.error.not.exist'))
+                returnError(text: message(code: 'is.release.error.not.exist'))
             }
         }
 
         source.metaClass.withUser = { String id = 'id', Closure c ->
             User user = User.get(params."$id"?.toLong())
-            if(user) {
+            if (user) {
                 try {
                     c.call user
                 } catch (IllegalStateException e) {
                     returnError(exception: e)
                 } catch (RuntimeException e) {
-                    if(user.errors)
-                        returnError(object:user, exception:e)
+                    if (user.errors)
+                        returnError(object: user, exception: e)
                     else
-                        returnError(exception:e)
+                        returnError(exception: e)
                 }
             } else {
-                returnError(text:message(code: 'is.user.error.not.exist'))
+                returnError(text: message(code: 'is.user.error.not.exist'))
+            }
+        }
+
+        source.metaClass.withProduct = { String id = 'product', Closure c ->
+            def pid = params."$id"?.decodeProductKey()
+            Product product = Product.get(pid?.toLong())
+            if (product) {
+                try {
+                    c.call product
+                }catch (RuntimeException e) {
+                    if (product.errors)
+                        returnError(object: product, exception: e)
+                    else
+                        returnError(exception: e)
+                }
+            } else {
+                returnError(text: message(code: 'is.product.error.not.exist'))
             }
         }
     }
