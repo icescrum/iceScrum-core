@@ -39,6 +39,7 @@ import org.springframework.transaction.annotation.Transactional
 import org.icescrum.core.domain.*
 import org.icescrum.core.support.ApplicationSupport
 import org.codehaus.groovy.grails.plugins.springsecurity.SpringSecurityUtils
+import org.icescrum.core.domain.preferences.UserPreferences
 
 class ProductService {
 
@@ -512,6 +513,9 @@ class ProductService {
     def delete(Product p) {
         def id = p.id
         securityService.unsecureDomain p
+        UserPreferences.findAllByLastProductOpened(p.pkey)?.each {
+            it.lastProductOpened = null
+        }
         p.teams.each{
             it.removeFromProducts(p)
         }
