@@ -1,5 +1,7 @@
 package org.icescrum.core.utils
 
+import java.text.SimpleDateFormat
+
 /*
  * Copyright (c) 2010 iceScrum Technologies.
  *
@@ -10,7 +12,7 @@ package org.icescrum.core.utils
  * the Free Software Foundation, either version 3 of the License.
  *
  * iceScrum is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * but WITHOUT ANY WARRANTY without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
@@ -36,4 +38,22 @@ class ServicesUtils {
         return false
     }
   }
+
+    public static parseDateISO8601 (String input) {
+        //NOTE: SimpleDateFormat uses GMT[-+]hh:mm for the TZ which breaks
+        //things a bit.  Before we go on we have to repair this.
+        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssz")
+        //this is zero time so we need to add that TZ indicator for
+        if (input.endsWith("Z")) {
+            input = input.substring(0, input.length() - 1) + "GMT-00:00"
+        } else {
+            int inset = 6
+
+            String s0 = input.substring(0, input.length() - inset)
+            String s1 = input.substring(input.length() - inset, input.length())
+
+            input = s0 + "GMT" + s1
+        }
+        return df.parse(input)
+    }
 }

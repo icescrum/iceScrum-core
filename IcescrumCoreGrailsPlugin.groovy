@@ -428,9 +428,10 @@ class IcescrumCoreGrailsPlugin {
                             batch << messages[start..end]
                         }
                         if (messages.size() % size) batch << messages[partitionCount * size..-1]
+                        def session = request.getSession(false)
                         batch.each {
-                            if (attrs.excludeCaller) {
-                                broadcaster?.broadcast((it as JSON).toString(), request.getSession(false))
+                            if (attrs.excludeCaller && session) {
+                                broadcaster?.broadcast((it as JSON).toString(), session)
                             } else {
                                 broadcaster?.broadcast((it as JSON).toString())
                             }
@@ -467,8 +468,9 @@ class IcescrumCoreGrailsPlugin {
                         request.bufferBroadcast."${it}" << message
                     } else {
                         try {
-                            if (attrs.excludeCaller) {
-                                broadcaster?.broadcast((message as JSON).toString(), request.getSession(false))
+                            def session = request.getSession(false)
+                            if (attrs.excludeCaller && session) {
+                                broadcaster?.broadcast((message as JSON).toString(), session)
                             } else {
                                 broadcaster?.broadcast((message as JSON).toString())
                             }
