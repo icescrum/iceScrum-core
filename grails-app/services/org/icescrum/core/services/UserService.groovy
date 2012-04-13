@@ -52,6 +52,9 @@ class UserService {
     static transactional = true
 
     void save(User _user) {
+        if(_user.password.trim().length() == 0) {
+            throw new RuntimeException('user.password.blank')
+        }
         _user.password = springSecurityService.encodePassword(_user.password)
         if (!_user.save())
             throw new RuntimeException()
