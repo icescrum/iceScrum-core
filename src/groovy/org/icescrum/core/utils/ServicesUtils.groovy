@@ -1,6 +1,9 @@
 package org.icescrum.core.utils
 
 import java.text.SimpleDateFormat
+import javax.crypto.SecretKey
+import javax.crypto.spec.SecretKeySpec
+import javax.crypto.Mac
 
 /*
  * Copyright (c) 2010 iceScrum Technologies.
@@ -55,5 +58,23 @@ class ServicesUtils {
             input = s0 + "GMT" + s1
         }
         return df.parse(input)
+    }
+
+    public static byte[] calculateHMACMd5(String data, String key)
+    {
+        SecretKey skey = new SecretKeySpec(key.getBytes(), "HmacMD5")
+        Mac m = Mac.getInstance("HmacMD5")
+        m.init(skey)
+        m.update(data.getBytes())
+        byte[] mac = m.doFinal()
+        return mac
+    }
+
+	public static String getHexString(byte[] b) throws Exception {
+      String result = "";
+      for (int i=0; i < b.length; i++) {
+        result += Integer.toString( ( b[i] & 0xff ) + 0x100, 16).substring( 1 );
+      }
+      return result;
     }
 }

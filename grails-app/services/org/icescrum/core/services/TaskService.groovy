@@ -187,7 +187,8 @@ class TaskService {
                         task.responsible = task.responsible ? task.responsible : user;
                     task.state = Task.STATE_DONE
                     task.doneDate = new Date()
-                    task.addActivity(user, 'taskFinish', task.name)
+                    if (user)
+                        task.addActivity(user, 'taskFinish', task.name)
                     publishEvent(new IceScrumTaskEvent(task, this.class, user, IceScrumTaskEvent.EVENT_STATE_DONE))
                 } else if (task.state == Task.STATE_DONE) {
                     task.estimation = 0
