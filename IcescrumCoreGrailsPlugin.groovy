@@ -442,7 +442,7 @@ class IcescrumCoreGrailsPlugin {
             }
         }
 
-        source.metaClass.broadcast = {attrs ->
+        source.metaClass.broadcast = { attrs ->
             if (!application.config.icescrum.push?.enable)
                 return
             assert attrs.function, attrs.message
@@ -513,7 +513,12 @@ class IcescrumCoreGrailsPlugin {
     private addErrorMethod(source) {
         source.metaClass.returnError = { attrs ->
             if (attrs.exception){
+
+                if (delegate.log.debugEnabled)
+                    delegate.log.debug attrs.exception.printStackTrace()
+
                 if (attrs.object && attrs.exception instanceof RuntimeException){
+                    delegate.log.error attrs.exception.getMessage()
                     withFormat {
                         html { render(status: 400, contentType: 'application/json', text: [notice: [text: renderErrors(bean: attrs.object)]] as JSON) }
                         json { render(status: 500, contentType: 'application/json', text: is.renderErrors(bean: attrs.object, as:'json')) }
@@ -526,13 +531,13 @@ class IcescrumCoreGrailsPlugin {
                         xml  { render(status: 500, contentType: 'text/xml', text: [error: attrs.text?:'error'] as XML) }
                     }
                 }else{
+                    delegate.log.error attrs.exception.getMessage()
                     withFormat {
                         html { render(status: 400, contentType: 'application/json', text: [notice: [text: message(code: attrs.exception.getMessage())]] as JSON) }
                         json { render(status: 500, contentType: 'application/json', text: [error: message(code: attrs.exception.getMessage())] as JSON) }
                         xml {  render(status: 500, contentType: 'text/xml', text: [error: message(code: attrs.exception.getMessage())] as XML) }
                     }
                 }
-                if (log.debugEnabled) attrs.exception.printStackTrace()
             }else{
                 withFormat {
                     html { render(status: 400, contentType: 'application/json', text: [notice: [text:attrs.text?:'error']] as JSON) }
