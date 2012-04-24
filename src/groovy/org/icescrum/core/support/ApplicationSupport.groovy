@@ -34,6 +34,8 @@ class ApplicationSupport {
 
   private static final log = LogFactory.getLog(this)
 
+  public static final CONFIG_ENV_NAME = 'icescrum_config_location'
+
   static public generateFolders = {
     def config = ApplicationHolder.application.config
     def dirPath = config.icescrum.baseDir.toString() + File.separator + "images" + File.separator + "users" + File.separator
@@ -55,6 +57,27 @@ class ApplicationSupport {
       dir.mkdirs()
     config.icescrum.products.teams.dir = dirPath
   }
+    
+  static public stringToMap = { String st, String separatorK = "=", String separatorV = "," ->
+      def map = [:]
+      st?.split(separatorV)?.each { param ->
+          def nameAndValue = param.split(separatorK)
+          if (nameAndValue.size() == 2)
+              map[nameAndValue[0]] = nameAndValue[1]
+      }
+      map
+  }
+
+  static public mapToString = { Map map, String separatorK = "=", String separatorV = "," ->
+      String st = ""
+      map?.eachWithIndex{ it, i ->
+        st += "${it.key}${separatorK}${it.value}"
+        if (i != map.size() - 1){
+            st += "${separatorV}"
+        }  
+      }
+      st
+  }
 
   // See http://jira.codehaus.org/browse/GRAILS-6515
   static public booleanValue(def value) {
@@ -73,7 +96,7 @@ class ApplicationSupport {
 
   static public checkNewVersion = {
     def config = ApplicationHolder.application.config
-    if (config.icescrum.check.enable){
+    if (booleanValue(config.icescrum.check.enable)){
         def timer = new Timer()
         def interval = CheckerTimerTask.computeInterval(config.icescrum.check.interval?:360)
         timer.scheduleAtFixedRate(new CheckerTimerTask(timer,interval), 60000, interval)

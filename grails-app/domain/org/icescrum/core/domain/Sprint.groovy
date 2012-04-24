@@ -54,7 +54,7 @@ class Sprint extends TimeBox implements Serializable {
     ]
 
     static transients = [
-            'recurrentTasks', 'urgentTasks', 'hasNextSprint', 'parentReleaseId', 'activable', 'effectiveEndDate', 'effectiveStartDate', 'totalRemainingHours'
+            'recurrentTasks', 'urgentTasks', 'hasNextSprint', 'parentReleaseId', 'activable', 'effectiveEndDate', 'effectiveStartDate', 'totalRemainingHours', 'parentProduct'
     ]
 
     static namedQueries = {
@@ -277,6 +277,10 @@ class Sprint extends TimeBox implements Serializable {
                 raf += it
         }
         raf
+    }
+
+    def getParentProduct(){
+        return this.parentRelease.parentProduct
     }
 
     def beforeDelete() {

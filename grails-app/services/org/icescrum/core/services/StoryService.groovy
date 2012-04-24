@@ -85,7 +85,7 @@ class StoryService {
         }
     }
 
-    @PreAuthorize('!archivedProduct()')
+    @PreAuthorize('!archivedProduct(#story.backlog)')
     void delete(Collection<Story> stories, history = true) {
         bufferBroadcast()
         stories.each { _item ->
@@ -128,12 +128,12 @@ class StoryService {
         resumeBufferedBroadcast()
     }
 
-    @PreAuthorize('!archivedProduct()')
-    void delete(Story _item, boolean history = true) {
-        delete([_item], history)
+    @PreAuthorize('!archivedProduct(#story.backlog)')
+    void delete(Story story, boolean history = true) {
+        delete([story], history)
     }
 
-    @PreAuthorize('(productOwner() or scrumMaster()) and !archivedProduct()')
+    @PreAuthorize('(productOwner(#story.backlog) or scrumMaster(#story.backlog)) and !archivedProduct(#story.backlog)')
     void update(Story story, Sprint sp = null) {
         if (story.textAs != '' && story.actor?.name != story.textAs) {
             def actor = Actor.findByBacklogAndName(story.backlog, story.textAs)
@@ -173,7 +173,7 @@ class StoryService {
      * @param story
      * @param estimation
      */
-    @PreAuthorize('(teamMember() or scrumMaster()) and !archivedProduct()')
+    @PreAuthorize('(teamMember(#story.backlog) or scrumMaster(#story.backlog)) and !archivedProduct(#story.backlog)')
     void estimate(Story story, estimation) {
         def oldState = story.state
         if (story.state < Story.STATE_ACCEPTED || story.state == Story.STATE_DONE)
@@ -204,7 +204,7 @@ class StoryService {
             publishEvent(new IceScrumStoryEvent(story, this.class, u, IceScrumStoryEvent.EVENT_ACCEPTED))
     }
 
-    @PreAuthorize('(productOwner() or scrumMaster()) and !archivedProduct()')
+    @PreAuthorize('(productOwner(#sprint.parentProduct) or scrumMaster(#sprint.parentProduct)) and !archivedProduct(#sprint.parentProduct)')
     void plan(Sprint sprint, Collection<Story> stories) {
         stories.each {
             this.plan(sprint, it)
@@ -217,7 +217,7 @@ class StoryService {
      * @param story The story to associate
      * @param user The user performing the action
      */
-    @PreAuthorize('(productOwner() or scrumMaster()) and !archivedProduct()')
+    @PreAuthorize('(productOwner(#sprint.parentProduct) or scrumMaster(#sprint.parentProduct)) and !archivedProduct(#sprint.parentProduct)')
     void plan(Sprint sprint, Story story) {
         // It is possible to associate a story if it is at least in the "ESTIMATED" state and not in the "DONE" state
         // It is not possible to associate a story in a "DONE" sprint either
@@ -451,45 +451,45 @@ class StoryService {
         }
     }
 
-    @PreAuthorize('(productOwner() or scrumMaster())  and !archivedProduct()')
-    boolean rank(Story movedItem, int rank) {
-        if (movedItem.rank == rank) {
+    @PreAuthorize('(productOwner(#story.backlog) or scrumMaster(#story.backlog))  and !archivedProduct(#story.backlog)')
+    boolean rank(Story story, int rank) {
+        if (story.rank == rank) {
             return false
         }
 
         def stories = null
-        if (movedItem.state == Story.STATE_ACCEPTED || movedItem.state == Story.STATE_ESTIMATED)
-            stories = Story.findAllAcceptedOrEstimated(movedItem.backlog.id).list(order: 'asc', sort: 'rank')
-        else if (movedItem.state == Story.STATE_PLANNED || movedItem.state == Story.STATE_INPROGRESS || movedItem.state == Story.STATE_DONE) {
-            stories = movedItem.parentSprint.stories
+        if (story.state == Story.STATE_ACCEPTED || story.state == Story.STATE_ESTIMATED)
+            stories = Story.findAllAcceptedOrEstimated(story.backlog.id).list(order: 'asc', sort: 'rank')
+        else if (story.state == Story.STATE_PLANNED || story.state == Story.STATE_INPROGRESS || story.state == Story.STATE_DONE) {
+            stories = story.parentSprint.stories
             def maxRankInProgress = stories.findAll {it.state != Story.STATE_DONE}?.size()
-            if (movedItem.state == Story.STATE_INPROGRESS && rank > maxRankInProgress) {
+            if (story.state == Story.STATE_INPROGRESS && rank > maxRankInProgress) {
                 rank = maxRankInProgress
             }
         }
 
-        if (movedItem.rank > rank) {
+        if (story.rank > rank) {
             stories.each {it ->
-                if (it.rank >= rank && it.rank <= movedItem.rank && it != movedItem) {
+                if (it.rank >= rank && it.rank <= story.rank && it != story) {
                     it.rank = it.rank + 1
                     it.save()
                 }
             }
         } else {
             stories.each {it ->
-                if (it.rank <= rank && it.rank >= movedItem.rank && it != movedItem) {
+                if (it.rank <= rank && it.rank >= story.rank && it != story) {
                     it.rank = it.rank - 1
                     it.save()
                 }
             }
         }
-        movedItem.rank = rank
+        story.rank = rank
 
-        broadcast(function: 'update', message: movedItem)
-        return movedItem.save() ? true : false
+        broadcast(function: 'update', message: story)
+        return story.save() ? true : false
     }
 
-    @PreAuthorize('productOwner() and !archivedProduct()')
+    @PreAuthorize('productOwner(#story.backlog) and !archivedProduct(#story.backlog)')
     def acceptToBacklog(Story story) {
         return acceptToBacklog([story])
     }
@@ -525,7 +525,7 @@ class StoryService {
         return storiesA
     }
 
-    @PreAuthorize('productOwner() and !archivedProduct()')
+    @PreAuthorize('productOwner(#story.backlog) and !archivedProduct(#story.backlog)')
     def acceptToFeature(Story story) {
         return acceptToFeature([story])
     }
@@ -573,7 +573,7 @@ class StoryService {
         return features
     }
 
-    @PreAuthorize('productOwner() and !archivedProduct()')
+    @PreAuthorize('productOwner(#story.backlog) and !archivedProduct(#story.backlog)')
     def acceptToUrgentTask(Story story) {
         return acceptToUrgentTask([story])
     }
@@ -641,7 +641,7 @@ class StoryService {
     }
 
 
-    @PreAuthorize('inProduct() and !archivedProduct()')
+    @PreAuthorize('inProduct(#story.backlog) and !archivedProduct(#story.backlog)')
     void done(Story story) {
         done([story])
     }
@@ -686,7 +686,7 @@ class StoryService {
         resumeBufferedBroadcast()
     }
 
-    @PreAuthorize('productOwner() and !archivedProduct()')
+    @PreAuthorize('productOwner(#story.backlog) and !archivedProduct(#story.backlog)')
     void unDone(Story story) {
         unDone([story])
     }
@@ -747,7 +747,7 @@ class StoryService {
         publishEvent(new IceScrumStoryEvent(story, this.class, u, IceScrumStoryEvent.EVENT_FEATURE_DISSOCIATED))
     }
 
-    @PreAuthorize('inProduct() and !archivedProduct()')
+    @PreAuthorize('inProduct(#story.backlog) and !archivedProduct(#story.backlog)')
     def copy(Story story) {
         copy([story])
     }

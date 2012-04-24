@@ -238,9 +238,6 @@ class SecurityService {
         if (!springSecurityService.isLoggedIn())
             return false
 
-        if (SpringSecurityUtils.ifAnyGranted(Authority.ROLE_ADMIN))
-            return true
-
         def t = null
         def parsedTeam
 
@@ -261,6 +258,10 @@ class SecurityService {
 
     boolean isScrumMaster(team, auth, t = null) {
         if (team) {
+
+            if (SpringSecurityUtils.ifAnyGranted(Authority.ROLE_ADMIN))
+                return true
+
             def res = springcacheService.doWithCache(CACHE_SCRUMMASTER, new CacheKeyBuilder().append(team).append(auth.principal.id).append(getUserLastUpdated(auth.principal.id)).toCacheKey()) {
                 if (!t) t = Team.get(team)
                 if (!t || !auth) return false
@@ -276,9 +277,6 @@ class SecurityService {
     boolean stakeHolder(product, auth, onlyPrivate) {
         def p = null
 
-        if (SpringSecurityUtils.ifAnyGranted(Authority.ROLE_ADMIN))
-            return true
-
         if (!product)
             product = parseCurrentRequestProduct()
         else if (product in Product) {
@@ -290,6 +288,9 @@ class SecurityService {
 
             if (!p) p = Product.get(product)
             if (!p || !auth) return false
+
+            if (SpringSecurityUtils.ifAnyGranted(Authority.ROLE_ADMIN))
+                return true
 
             def authkey = SpringSecurityUtils.ifAnyGranted(Authority.ROLE_VISITOR) ? auth.principal : auth.principal.id + getUserLastUpdated(auth.principal.id).toString()
             return springcacheService.doWithCache(CACHE_STAKEHOLDER, new CacheKeyBuilder().append(onlyPrivate).append(product).append(p.lastUpdated).append(authkey).toCacheKey()) {
@@ -312,9 +313,6 @@ class SecurityService {
         if (!springSecurityService.isLoggedIn())
             return false
 
-        if (SpringSecurityUtils.ifAnyGranted(Authority.ROLE_ADMIN))
-            return true
-
         def p = null
 
         if (!product)
@@ -336,6 +334,10 @@ class SecurityService {
 
     boolean isProductOwner(product, auth, p = null) {
         if (product) {
+
+            if (SpringSecurityUtils.ifAnyGranted(Authority.ROLE_ADMIN))
+                return true
+
             return springcacheService.doWithCache(CACHE_PRODUCTOWNER, new CacheKeyBuilder().append(product).append(auth.principal.id).append(getUserLastUpdated(auth.principal.id)).toCacheKey()) {
                 if (!p) p = Product.get(product)
                 if (!p || !auth) return false
@@ -349,9 +351,6 @@ class SecurityService {
     boolean teamMember(team, auth) {
         if (!springSecurityService.isLoggedIn())
             return false
-
-        if (SpringSecurityUtils.ifAnyGranted(Authority.ROLE_ADMIN))
-            return true
 
         def t
         def parsedTeam
@@ -369,6 +368,10 @@ class SecurityService {
         }
 
         if (team) {
+
+            if (SpringSecurityUtils.ifAnyGranted(Authority.ROLE_ADMIN))
+                return true
+
             return springcacheService.doWithCache(CACHE_TEAMMEMBER, new CacheKeyBuilder().append(team).append(auth.principal.id).append(getUserLastUpdated(auth.principal.id)).toCacheKey()) {
                 if (!t) t = Team.get(team)
                 if (!t || !auth) return false

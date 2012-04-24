@@ -47,7 +47,7 @@ class SprintService {
     def springSecurityService
     def g = new org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib()
 
-    @PreAuthorize('(productOwner() or scrumMaster()) and !archivedProduct()')
+    @PreAuthorize('(productOwner(#release.parentProduct) or scrumMaster(#release.parentProduct)) and !archivedProduct(#release.parentProduct)')
     void save(Sprint sprint, Release release) {
         if (release.state == Release.STATE_DONE)
             throw new IllegalStateException('is.sprint.error.release.done')

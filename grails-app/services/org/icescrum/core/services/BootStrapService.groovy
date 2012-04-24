@@ -31,6 +31,8 @@ import org.codehaus.groovy.grails.commons.ApplicationHolder
 
 class BootStrapService {
 
+    def pluginManager
+
     void start() {
 
         AuthorityManager.initSecurity()
@@ -41,6 +43,11 @@ class BootStrapService {
         def config = ApplicationHolder.application.config
         config.grails.attachmentable.baseDir = config.icescrum.baseDir.toString()
         config.grails.mail.default.from = config.icescrum.alerts.default.from
+
+        if (config.grails.mail.props && config.grails.mail.props instanceof String){
+            config.grails.mail.props = ApplicationSupport.stringToMap(config.grails.mail.props)
+            pluginManager.informPluginsOfConfigChange()
+        }
 
         if (Environment.current == Environment.DEVELOPMENT)
             DummyPopulator.dummyze()

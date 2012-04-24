@@ -25,6 +25,7 @@ package org.icescrum.core.taglib
 
 import org.icescrum.components.UtilsWebComponents
 import org.icescrum.core.domain.Product
+import org.icescrum.core.support.ApplicationSupport
 
 
 class ScrumTagLib {
@@ -417,12 +418,12 @@ class ScrumTagLib {
 
     def avatar = { attrs, body ->
         assert attrs.user
-        if (grailsApplication.config.icescrum.gravatar?.enable){
+        if (ApplicationSupport.booleanValue(grailsApplication.config.icescrum.gravatar?.enable)){
             def hash = attrs.user.email.encodeAsMD5()
             def dgu = createLink(uri: '/' + is.currentThemeImage()) + "avatars/avatar.png"
             def gravatarBaseUrl
 
-            if (grailsApplication.config.icescrum.gravatar?.secure)
+            if (ApplicationSupport.booleanValue(grailsApplication.config.icescrum.gravatar?.secure))
                 gravatarBaseUrl = "https://secure.gravatar.com/avatar/"
             else
                 gravatarBaseUrl = "http://gravatar.com/avatar/"
