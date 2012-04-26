@@ -16,12 +16,12 @@ class IceScrumFeatureEvent extends IceScrumEvent {
   static final String EVENT_COPIED_AS_STORY = 'Copied'
   def story
 
-  IceScrumFeatureEvent(Feature feature, Class generatedBy, User doneBy, def type){
-    super(feature, generatedBy, doneBy, type)
+  IceScrumFeatureEvent(Feature feature, Class generatedBy, User doneBy, def type, boolean synchronous = false){
+    super(feature, generatedBy, doneBy, type, synchronous)
   }
 
-  IceScrumFeatureEvent(Feature feature, Story story, Class generatedBy, User doneBy, def type){
-    super(feature, generatedBy, doneBy, type)
+  IceScrumFeatureEvent(Feature feature, Story story, Class generatedBy, User doneBy, def type, boolean synchronous = false){
+    super(feature, generatedBy, doneBy, type, synchronous)
     this.story = story
   }
 }

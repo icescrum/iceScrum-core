@@ -15,12 +15,6 @@ import org.grails.comments.CommentLink
 
 class AddonsService implements ApplicationListener<IceScrumProductEvent> {
 
-    static transactional = true
-
-    def serviceMethod() {
-
-    }
-
     @Override
     void onApplicationEvent(IceScrumProductEvent e) {
         if (e.type == IceScrumProductEvent.EVENT_IMPORTED){
@@ -28,7 +22,6 @@ class AddonsService implements ApplicationListener<IceScrumProductEvent> {
             addActivities((Product) e.source, e.xml)
         }
     }
-
     void addComments(Product p, def root){
         def defaultU = p.productOwners.first()
         root.'**'.findAll{ it.name() == "story" }.each{ story ->

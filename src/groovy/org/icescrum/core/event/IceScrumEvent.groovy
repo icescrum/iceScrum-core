@@ -37,12 +37,14 @@ class IceScrumEvent extends ApplicationEvent {
   Class generatedBy
   def type
   def doneBy
+  boolean synchronous
 
-  IceScrumEvent(def source, Class generatedBy, User doneBy, def type){
+  IceScrumEvent(def source, Class generatedBy, User doneBy, def type, boolean synchronous = false){
     super(source)
     this.generatedBy = generatedBy
     this.type = type
     this.doneBy = doneBy
+    this.synchronous = synchronous
   }
 
   public getFullType(){

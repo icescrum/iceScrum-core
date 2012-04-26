@@ -298,7 +298,7 @@ class Task extends BacklogElement implements Serializable {
 
     def beforeDelete() {
         withNewSession {
-            publishEvent(new IceScrumTaskEvent(this, this.class, User.get(SCH.context?.authentication?.principal?.id), IceScrumEvent.EVENT_BEFORE_DELETE))
+            publishEvent(new IceScrumTaskEvent(this, this.class, User.get(SCH.context?.authentication?.principal?.id), IceScrumEvent.EVENT_BEFORE_DELETE, true))
         }
     }
 
@@ -310,7 +310,7 @@ class Task extends BacklogElement implements Serializable {
 
     def afterDelete() {
         withNewSession {
-            publishEvent(new IceScrumTaskEvent(this, this.class, User.get(SCH.context?.authentication?.principal?.id), IceScrumEvent.EVENT_AFTER_DELETE))
+            publishEvent(new IceScrumTaskEvent(this, this.class, User.get(SCH.context?.authentication?.principal?.id), IceScrumEvent.EVENT_AFTER_DELETE, true))
         }
     }
 }

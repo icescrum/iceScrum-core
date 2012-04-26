@@ -70,6 +70,7 @@ import org.icescrum.core.services.UiDefinitionService
 import org.icescrum.core.ui.UiDefinitionArtefactHandler
 import org.codehaus.groovy.grails.commons.ControllerArtefactHandler
 import org.icescrum.core.domain.Product
+import org.icescrum.core.event.IceScrumApplicationEventMulticaster
 
 class IcescrumCoreGrailsPlugin {
     def groupId = 'org.icescrum'
@@ -243,6 +244,10 @@ class IcescrumCoreGrailsPlugin {
         springcacheDefaultKeyGenerator(WebContentKeyGenerator){
             contentType = true
         }
+
+        asyncApplicationEventMulticaster(IceScrumApplicationEventMulticaster) {
+			persistenceInterceptor = ref("persistenceInterceptor")
+		}
     }
 
     private void mergeConfig(GrailsApplication app) {

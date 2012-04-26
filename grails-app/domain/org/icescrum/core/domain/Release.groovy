@@ -125,13 +125,13 @@ class Release extends TimeBox implements Cloneable {
 
     def beforeDelete() {
         withNewSession {
-            publishEvent(new IceScrumReleaseEvent(this, this.class, User.get(SCH.context?.authentication?.principal?.id), IceScrumEvent.EVENT_BEFORE_DELETE))
+            publishEvent(new IceScrumReleaseEvent(this, this.class, User.get(SCH.context?.authentication?.principal?.id), IceScrumEvent.EVENT_BEFORE_DELETE, true))
         }
     }
 
     def afterDelete() {
         withNewSession {
-            publishEvent(new IceScrumReleaseEvent(this, this.class, User.get(SCH.context?.authentication?.principal?.id), IceScrumEvent.EVENT_AFTER_DELETE))
+            publishEvent(new IceScrumReleaseEvent(this, this.class, User.get(SCH.context?.authentication?.principal?.id), IceScrumEvent.EVENT_AFTER_DELETE, true))
         }
     }
 }

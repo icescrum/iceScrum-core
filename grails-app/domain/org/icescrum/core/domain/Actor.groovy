@@ -149,13 +149,13 @@ class Actor extends BacklogElement implements Serializable, Comparable<Actor> {
 
     def beforeDelete() {
         withNewSession {
-            publishEvent(new IceScrumActorEvent(this, this.class, User.get(SCH.context?.authentication?.principal?.id), IceScrumEvent.EVENT_BEFORE_DELETE))
+            publishEvent(new IceScrumActorEvent(this, this.class, User.get(SCH.context?.authentication?.principal?.id), IceScrumEvent.EVENT_BEFORE_DELETE, true))
         }
     }
 
     def afterDelete() {
         withNewSession {
-            publishEvent(new IceScrumActorEvent(this, this.class, User.get(SCH.context?.authentication?.principal?.id), IceScrumEvent.EVENT_AFTER_DELETE))
+            publishEvent(new IceScrumActorEvent(this, this.class, User.get(SCH.context?.authentication?.principal?.id), IceScrumEvent.EVENT_AFTER_DELETE, true))
         }
     }
 

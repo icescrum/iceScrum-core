@@ -27,7 +27,7 @@ import org.icescrum.core.domain.User
 
 class IceScrumAcceptanceTestEvent extends IceScrumEvent {
 
-  IceScrumAcceptanceTestEvent(AcceptanceTest acceptanceTest, Class generatedBy, User doneBy, def type){
-    super(acceptanceTest, generatedBy, doneBy, type)
+  IceScrumAcceptanceTestEvent(AcceptanceTest acceptanceTest, Class generatedBy, User doneBy, def type, boolean synchronous = false){
+    super(acceptanceTest, generatedBy, doneBy, type, synchronous)
   }
 }

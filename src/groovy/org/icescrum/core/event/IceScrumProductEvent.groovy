@@ -18,12 +18,12 @@ class IceScrumProductEvent extends IceScrumEvent {
   static final String EVENT_TEAM_REMOVED = 'TeamRemoved'
   static final String EVENT_IMPORTED = 'productImported'
 
-  IceScrumProductEvent(Product product, Class generatedBy, User doneBy, def type){
-    super(product, generatedBy, doneBy, type)
+  IceScrumProductEvent(Product product, Class generatedBy, User doneBy, def type, boolean synchronous = false){
+    super(product, generatedBy, doneBy, type, synchronous)
   }
 
-  IceScrumProductEvent(Product product, File xml, Class generatedBy, User doneBy, def type){
-    super(product, generatedBy, doneBy, type)
+  IceScrumProductEvent(Product product, File xml, Class generatedBy, User doneBy, def type, boolean synchronous = false){
+    super(product, generatedBy, doneBy, type, synchronous)
     this.xml = new XmlSlurper().parse(xml)
     //be compatible with xml without export tag
     if (this.xml.find{it.name == 'export'}){
@@ -31,8 +31,8 @@ class IceScrumProductEvent extends IceScrumEvent {
     }
   }
 
-  IceScrumProductEvent(Product product, Team team, Class generatedBy, User doneBy, def type){
-    super(product, generatedBy, doneBy, type)
+  IceScrumProductEvent(Product product, Team team, Class generatedBy, User doneBy, def type, boolean synchronous = false){
+    super(product, generatedBy, doneBy, type, synchronous)
     this.team = team
   }
 }

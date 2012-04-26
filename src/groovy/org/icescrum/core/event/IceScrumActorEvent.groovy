@@ -12,7 +12,7 @@ import org.icescrum.core.domain.Actor
  */
 class IceScrumActorEvent extends IceScrumEvent {
 
-  IceScrumActorEvent(Actor actor, Class generatedBy, User doneBy, def type){
-    super(actor, generatedBy, doneBy, type)
+  IceScrumActorEvent(Actor actor, Class generatedBy, User doneBy, def type, boolean synchronous = false){
+    super(actor, generatedBy, doneBy, type, synchronous)
   }
 }

@@ -16,7 +16,7 @@ class IceScrumReleaseEvent extends IceScrumEvent {
   static final String EVENT_CLOSED = 'Closed'
   static final String EVENT_UPDATED_VISION = 'UpdatedVision'
 
-  IceScrumReleaseEvent(Release release, Class generatedBy, User doneBy, def type){
-    super(release, generatedBy, doneBy, type)
+  IceScrumReleaseEvent(Release release, Class generatedBy, User doneBy, def type, boolean synchronous = false){
+    super(release, generatedBy, doneBy, type, synchronous)
   }
 }

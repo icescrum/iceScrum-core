@@ -15,12 +15,12 @@ class IceScrumTeamEvent extends IceScrumEvent {
   static final String EVENT_MEMBER_ADDED = 'MemberAdded'
   static final String EVENT_MEMBER_REMOVED = 'MemberRemoved'
 
-  IceScrumTeamEvent(Team team, Class generatedBy, User doneBy, def type){
-    super(team, generatedBy, doneBy, type)
+  IceScrumTeamEvent(Team team, Class generatedBy, User doneBy, def type, boolean synchronous = false){
+    super(team, generatedBy, doneBy, type, synchronous)
   }
 
-  IceScrumTeamEvent(Team team, User user, Class generatedBy, User doneBy, def type){
-    super(team, generatedBy, doneBy, type)
+  IceScrumTeamEvent(Team team, User user, Class generatedBy, User doneBy, def type, boolean synchronous = false){
+    super(team, generatedBy, doneBy, type, synchronous)
     this.member = user
   }
 }

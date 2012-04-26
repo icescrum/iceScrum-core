@@ -18,7 +18,7 @@ class IceScrumSprintEvent extends IceScrumEvent {
   static final String EVENT_UPDATED_DONE_DEFINITION = 'UpdatedDoneDefinition'
   static final String EVENT_UPDATED_RETROSPECTIVE = 'UpdatedRetrospective'
 
-  IceScrumSprintEvent(Sprint sprint, Class generatedBy, User doneBy, def type){
-    super(sprint, generatedBy, doneBy, type)
+  IceScrumSprintEvent(Sprint sprint, Class generatedBy, User doneBy, def type, boolean synchronous = false){
+    super(sprint, generatedBy, doneBy, type, synchronous)
   }
 }

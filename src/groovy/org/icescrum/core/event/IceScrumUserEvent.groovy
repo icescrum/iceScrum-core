@@ -18,22 +18,22 @@ class IceScrumUserEvent extends IceScrumEvent {
   static final String EVENT_NOT_SCRUMMASTER = 'NotScrumMaster'
   static final String EVENT_NOT_MEMBER = 'NotMember'
 
-  IceScrumUserEvent(User user, Class generatedBy, User doneBy, def type){
-    super(user, generatedBy, doneBy, type)
+  IceScrumUserEvent(User user, Class generatedBy, User doneBy, def type, boolean synchronous = false){
+    super(user, generatedBy, doneBy, type, synchronous)
   }
 
-  IceScrumUserEvent(User user, Team team, Class generatedBy, User doneBy, def type){
-    super(user, generatedBy, doneBy, type)
+  IceScrumUserEvent(User user, Team team, Class generatedBy, User doneBy, def type, boolean synchronous = false){
+    super(user, generatedBy, doneBy, type, synchronous)
     this.team = team
   }
 
-  IceScrumUserEvent(User user, Product product, Class generatedBy, User doneBy, def type){
-    super(user, generatedBy, doneBy, type)
+  IceScrumUserEvent(User user, Product product, Class generatedBy, User doneBy, def type, boolean synchronous = false){
+    super(user, generatedBy, doneBy, type, synchronous)
     this.product = product
   }
 
-  IceScrumUserEvent(User user, def object, Class generatedBy, User doneBy, def type){
-    super(user, generatedBy, doneBy, type)
+  IceScrumUserEvent(User user, def object, Class generatedBy, User doneBy, def type, boolean synchronous = false){
+    super(user, generatedBy, doneBy, type, synchronous)
     this.object = object
   }
 }
