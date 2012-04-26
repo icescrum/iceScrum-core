@@ -649,10 +649,11 @@ class FormTagLib {
 
     def fieldInput = {attrs, body ->
         attrs."class" = attrs."class" ? attrs."class" + ' field-input clearfix' : 'field-input clearfix'
+        attrs.help = attrs.help ? message(code:attrs.help, default:null) : null
         if (attrs.remove("noborder") == "true")
             attrs."class" += " field-noseparator"
         out << "<p class=\"${attrs."class"}\" ${attrs.style ? 'style=\"' + attrs.style + '\"' : ''}>"
-        out << "<label for=\"${attrs."for"}\">${message(code: attrs.label)}${attrs.optional ? '<span class="optional"> (' + message(code: 'is.optional') + ')</span>' : ''}</label>"
+        out << "<label for=\"${attrs."for"}\">${message(code: attrs.label)}${attrs.optional ? '<span class="optional"> (' + message(code: 'is.optional') + ')</span>' : ''}${attrs.help ? '<span class="help" title="' + attrs.help + '"> (?)</span>' : ''}</label>"
         out << body()
         out << "</p>"
     }
@@ -662,10 +663,11 @@ class FormTagLib {
             return
         }
         attrs."class" = attrs."class" ? attrs."class" + ' field-input clearfix' : 'field-input clearfix'
+        attrs.help = attrs.help ? message(code:attrs.help, default:null) : null
         if (attrs.remove("noborder") == "true")
             attrs."class" += " field-noseparator"
         out << "<div class=\"${attrs."class"}\">"
-        out << "<label for=\"${attrs."for"}\">${message(code: attrs.label)}${attrs.optional ? '<span class="optional"> (' + message(code: 'is.optional') + ')</span>' : ''}</label>"
+        out << "<label for=\"${attrs."for"}\">${message(code: attrs.label)}${attrs.optional ? '<span class="optional"> (' + message(code: 'is.optional') + ')</span>' : ''}${attrs.help ? '<span class="help" title="' + attrs.help + '"> (?)</span>' : ''}</label>"
         out << body()
         out << "</div>"
     }
@@ -675,10 +677,11 @@ class FormTagLib {
             return
         }
         attrs."class" = attrs."class" ? attrs."class" + ' field-input clearfix' : 'field-input clearfix'
+        attrs.help = attrs.help ? message(code:attrs.help, default:null) : null
         if (attrs.remove("noborder") == "true")
             attrs."class" += " field-noseparator"
         out << "<p class=\"${attrs."class"}\">"
-        out << "<label for=\"${attrs."for"}\">${message(code: attrs.label)}${attrs.optional ? '<span class="optional"> (' + message(code: 'is.optional') + ')</span>' : ''}</label>"
+        out << "<label for=\"${attrs."for"}\">${message(code: attrs.label)}${attrs.optional ? '<span class="optional"> (' + message(code: 'is.optional') + ')</span>' : ''}${attrs.help ? '<span class="help" title="' + attrs.help + '"> (?)</span>' : ''}</label>"
         out << body()
         out << "</p>"
     }
@@ -695,20 +698,22 @@ class FormTagLib {
 
     def fieldSelect = {attrs, body ->
         attrs."class" = attrs."class" ? attrs."class" + ' field-select clearfix' : "field-select clearfix"
+        attrs.help = attrs.help ? message(code:attrs.help, default:null) : null
         if (attrs.remove("noborder") == "true")
             attrs."class" += " field-noseparator"
         out << "<p class=\"${attrs."class"}\">"
-        out << "<label for=\"${attrs."for"}\">${message(code: attrs.label)}${attrs.optional ? '<span class="optional"> (' + message(code: 'is.optional') + ')</span>' : ''}</label>"
+        out << "<label for=\"${attrs."for"}\">${message(code: attrs.label)}${attrs.optional ? '<span class="optional"> (' + message(code: 'is.optional') + ')</span>' : ''}${attrs.help ? '<span class="help" title="' + attrs.help + '"> (?)</span>' : ''}</label>"
         out << "<span class=\"selectmenu\">" + body() + "</span>"
         out << "</p>"
     }
 
     def fieldList = {attrs, body ->
         attrs."class" = attrs."class" ? attrs."class" + ' field-list clearfix' : "field-list clearfix"
+        attrs.help = attrs.help ? message(code:attrs.help, default:null) : null
         if (attrs.remove("noborder") == "true")
             attrs."class" += " field-noseparator"
         out << "<p class=\"${attrs."class"}\">"
-        out << "<label for=\"${attrs."for"}\">${message(code: attrs.label)}${attrs.optional ? '<span class="optional"> (' + message(code: 'is.optional') + ')</span>' : ''}</label>"
+        out << "<label for=\"${attrs."for"}\">${message(code: attrs.label)}${attrs.optional ? '<span class="optional"> (' + message(code: 'is.optional') + ')</span>' : ''}${attrs.help ? '<span class="help" title="' + attrs.help + '"> (?)</span>' : ''}</label>"
         out << body()
         out << "</p>"
     }
@@ -720,30 +725,33 @@ class FormTagLib {
 
     def fieldCheckbox = {attrs, body ->
         attrs."class" = attrs."class" ? attrs."class" + ' field-checkbox clearfix' : "field-checkbox clearfix"
+        attrs.help = attrs.help ? message(code:attrs.help, default:null) : null
         if (attrs.remove("noborder") == "true")
             attrs."class" += " field-noseparator"
         out << "<p class=\"${attrs."class"}\">"
-        out << "<label for=\"${attrs."for"}\">${message(code: attrs.label)}${attrs.optional ? '<span class="optional"> (' + message(code: 'is.optional') + ')</span>' : ''}</label>"
+        out << "<label for=\"${attrs."for"}\">${message(code: attrs.label)}${attrs.optional ? '<span class="optional"> (' + message(code: 'is.optional') + ')</span>' : ''}${attrs.help ? '<span class="help" title="' + attrs.help + '"> (?)</span>' : ''}</label>"
         out << "<span class=\"checkbox\">" + body() + "</span>"
         out << "</p>"
     }
 
     def fieldArea = {attrs, body ->
         attrs."class" = attrs."class" ? attrs."class" + ' field-area clearfix' : "field-area clearfix"
+        attrs.help = attrs.help ? message(code:attrs.help, default:null) : null
         if (attrs.remove("noborder") == "true")
             attrs."class" += " field-noseparator"
         out << "<p class=\"${attrs."class"}\">"
-        out << "<label for=\"${attrs."for"}\">${message(code: attrs.label)}${attrs.optional ? '<span class="optional"> (' + message(code: 'is.optional') + ')</span>' : ''}</label>"
+        out << "<label for=\"${attrs."for"}\">${message(code: attrs.label)}${attrs.optional ? '<span class="optional"> (' + message(code: 'is.optional') + ')</span>' : ''}${attrs.help ? '<span class="help" title="' + attrs.help + '"> (?)</span>' : ''}</label>"
         out << body()
         out << "</p>"
     }
 
     def fieldColor = {attrs, body ->
         attrs."class" = attrs."class" ? attrs."class" + ' field-color clearfix' : "field-color clearfix"
+        attrs.help = attrs.help ? message(code:attrs.help, default:null) : null
         if (attrs.remove("noborder") == "true")
             attrs."class" += " field-noseparator"
         out << "<p class=\"${attrs."class"}\">"
-        out << "<label for=\"${attrs."for"}\">${message(code: attrs.label)}${attrs.optional ? '<span class="optional"> (' + message(code: 'is.optional') + ')</span>' : ''}</label>"
+        out << "<label for=\"${attrs."for"}\">${message(code: attrs.label)}${attrs.optional ? '<span class="optional"> (' + message(code: 'is.optional') + ')</span>' : ''}${attrs.help ? '<span class="help" title="' + attrs.help + '"> (?)</span>' : ''}</label>"
         out << "<span class=\"color\">" + body() + "</span>"
         out << "</p>"
     }
