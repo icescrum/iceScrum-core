@@ -213,6 +213,10 @@ class Product extends TimeBox implements Serializable {
         }
     }
 
+    Set<Team> getTeams(){
+        return this.teams;
+    }
+
     def beforeDelete() {
         withNewSession {
             publishEvent(new IceScrumProductEvent(this, this.class, User.get(SCH.context?.authentication?.principal?.id), IceScrumEvent.EVENT_BEFORE_DELETE, true))
