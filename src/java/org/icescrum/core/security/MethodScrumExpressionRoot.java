@@ -136,13 +136,8 @@ public class MethodScrumExpressionRoot extends SecurityExpressionRoot implements
     }
 
     public boolean teamMember(Product p) {
-        Set<Team> teams = p.getTeams();
-        if (teams.size() > 0){
-            Team team = teams.iterator().next();
-            return securityService.teamMember(team, super.authentication);
-        }else{
-            return false;
-        }
+        Team team = p.getFirstTeam();
+        return team != null && securityService.teamMember(team, super.authentication);
     }
 
     public boolean scrumMaster() {
@@ -158,13 +153,8 @@ public class MethodScrumExpressionRoot extends SecurityExpressionRoot implements
     }
 
     public boolean scrumMaster(Product p) {
-        Set<Team> teams = p.getTeams();
-        if (teams.size() > 0){
-            Team team = teams.iterator().next();
-            return securityService.scrumMaster(team, super.authentication);
-        }else{
-            return false;
-        }
+        Team team = p.getFirstTeam();
+        return team != null && securityService.scrumMaster(team, super.authentication);
     }
 
     public boolean stakeHolder() {

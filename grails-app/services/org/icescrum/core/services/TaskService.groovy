@@ -58,7 +58,7 @@ class TaskService {
         return true
     }
 
-    @PreAuthorize('inProduct() and !archivedProduct()')
+    @PreAuthorize('inProduct(#sprint.parentProduct) and !archivedProduct(#sprint.parentProduct)')
     void save(Task task, Sprint sprint, User user) {
 
         if (!task.id && sprint.state == Sprint.STATE_DONE){
@@ -86,7 +86,7 @@ class TaskService {
         broadcast(function: 'add', message: task)
     }
 
-    @PreAuthorize('inProduct() and !archivedProduct()')
+    @PreAuthorize('inProduct(#story.backlog) and !archivedProduct(#story.backlog)')
     void saveStoryTask(Task task, Story story, User user) {
         story.addToTasks(task)
         def currentProduct = (Product) story.backlog
@@ -96,7 +96,7 @@ class TaskService {
         save(task, story.parentSprint, user)
     }
 
-    @PreAuthorize('inProduct() and !archivedProduct()')
+    @PreAuthorize('inProduct(#sprint.parentProduct) and !archivedProduct(#sprint.parentProduct)')
     void saveRecurrentTask(Task task, Sprint sprint, User user) {
         task.type = Task.TYPE_RECURRENT
         def currentProduct = (Product) sprint.parentRelease.parentProduct
@@ -106,7 +106,7 @@ class TaskService {
         save(task, sprint, user)
     }
 
-    @PreAuthorize('inProduct() and !archivedProduct()')
+    @PreAuthorize('inProduct(#sprint.parentProduct) and !archivedProduct(#sprint.parentProduct)')
     void saveUrgentTask(Task task, Sprint sprint, User user) {
         task.type = Task.TYPE_URGENT
         def currentProduct = (Product) sprint.parentRelease.parentProduct
@@ -122,7 +122,7 @@ class TaskService {
      * @param user
      * @param story
      */
-    @PreAuthorize('inProduct() and !archivedProduct()')
+    @PreAuthorize('inProduct(#story.backlog) and !archivedProduct(#story.backlog)')
     void changeTaskStory(Task task, Story story, User user) {
         if (task.parentStory.id != story.id) {
             task.parentStory = story
@@ -136,7 +136,7 @@ class TaskService {
      * @param user
      * @param type
      */
-    @PreAuthorize('inProduct() and !archivedProduct()')
+    @PreAuthorize('inProduct(#task.parentProduct) and !archivedProduct(#task.parentProduct)')
     void changeType(Task task, int type, User user) {
         task.type = type
         update(task, user)
@@ -148,7 +148,7 @@ class TaskService {
      * @param story
      * @param user
      */
-    @PreAuthorize('inProduct() and !archivedProduct()')
+    @PreAuthorize('inProduct(#story.backlog) and !archivedProduct(#story.backlog)')
     void sprintTaskToStoryTask(Task task, Story story, User user) {
         task.type = null
         update(task, user)
@@ -160,7 +160,7 @@ class TaskService {
      * @param type
      * @param user
      */
-    @PreAuthorize('inProduct() and !archivedProduct()')
+    @PreAuthorize('inProduct(#task.parentProduct) and !archivedProduct(#task.parentProduct)')
     void storyTaskToSprintTask(Task task, int type, User user) {
         def story = task.parentStory
         task.parentStory = null
@@ -174,7 +174,7 @@ class TaskService {
      * @param task
      * @param user
      */
-    @PreAuthorize('inProduct() and !archivedProduct()')
+    @PreAuthorize('inProduct(#task.parentProduct) and !archivedProduct(#task.parentProduct)')
     void update(Task task, User user, boolean force = false) {
         def sprint = (Sprint) task.backlog
         if (!(task.state == Task.STATE_DONE && task.doneDate)) {
@@ -273,7 +273,7 @@ class TaskService {
         return true
     }
 
-    @PreAuthorize('inProduct() and !archivedProduct()')
+    @PreAuthorize('inProduct(#task.parentProduct) and !archivedProduct(#task.parentProduct)')
     void delete(Task task, User user) {
         if (task.state == Task.STATE_DONE && !securityService.scrumMaster(null, springSecurityService.authentication)) {
             throw new IllegalStateException('is.task.error.delete.not.scrumMaster')
@@ -293,7 +293,7 @@ class TaskService {
         }
     }
 
-    @PreAuthorize('inProduct() and !archivedProduct()')
+    @PreAuthorize('inProduct(#task.parentProduct) and !archivedProduct(#task.parentProduct)')
     def copy(Task task, User user, def clonedState = Task.STATE_WAIT) {
         if (task.backlog.state == Sprint.STATE_DONE) {
             throw new IllegalStateException('is.task.error.copy.done')
@@ -340,7 +340,7 @@ class TaskService {
      * @param i
      * @return
      */
-    @PreAuthorize('inProduct() and !archivedProduct()')
+    @PreAuthorize('inProduct(#t.parentProduct) and !archivedProduct(#t.parentProduct)')
     void state(Task t, Integer state, User u) {
 
         def p = ((Sprint) t.backlog).parentRelease.parentProduct
@@ -374,7 +374,7 @@ class TaskService {
         }
     }
 
-    @PreAuthorize('inProduct() and !archivedProduct()')
+    @PreAuthorize('inProduct(#task.parentProduct) and !archivedProduct(#task.parentProduct)')
     void setRank(Task task, int rank) {
         def container = task.parentStory ?: task.backlog
         container.tasks.findAll {it.type == task.type && it.state == task.state}?.each { t ->
@@ -388,7 +388,7 @@ class TaskService {
             throw new RuntimeException()
     }
 
-    @PreAuthorize('inProduct() and !archivedProduct()')
+    @PreAuthorize('inProduct(#task.parentProduct) and !archivedProduct(#task.parentProduct)')
     void resetRank(Task task) {
         def container = task.parentStory ?: task.backlog
         container.tasks.findAll {it.type == task.type && it.state == task.state}.each { t ->
@@ -399,33 +399,33 @@ class TaskService {
         }
     }
 
-    @PreAuthorize('inProduct() and !archivedProduct()')
-    boolean rank(Task movedItem, int rank) {
+    @PreAuthorize('inProduct(#task.parentProduct) and !archivedProduct(#task.parentProduct)')
+    boolean rank(Task task, int rank) {
         def container
-        if (movedItem.parentStory) {
-            container = movedItem.parentStory
+        if (task.parentStory) {
+            container = task.parentStory
         } else {
-            container = movedItem.backlog
+            container = task.backlog
         }
 
-        if (movedItem.rank != rank) {
-            if (movedItem.rank > rank) {
-                container.tasks.findAll {it.type == movedItem.type && it.state == movedItem.state}.each {it ->
-                    if (it.rank >= rank && it.rank <= movedItem.rank && it != movedItem) {
+        if (task.rank != rank) {
+            if (task.rank > rank) {
+                container.tasks.findAll {it.type == task.type && it.state == task.state}.each {it ->
+                    if (it.rank >= rank && it.rank <= task.rank && it != task) {
                         it.rank = it.rank + 1
                         it.save()
                     }
                 }
             } else {
-                container.tasks.findAll {it.type == movedItem.type && it.state == movedItem.state}.each {it ->
-                    if (it.rank <= rank && it.rank >= movedItem.rank && it != movedItem) {
+                container.tasks.findAll {it.type == task.type && it.state == task.state}.each {it ->
+                    if (it.rank <= rank && it.rank >= task.rank && it != task) {
                         it.rank = it.rank - 1
                         it.save()
                     }
                 }
             }
-            movedItem.rank = rank
-            return movedItem.save() ? true : false
+            task.rank = rank
+            return task.save() ? true : false
         } else {
             return false
         }

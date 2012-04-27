@@ -193,7 +193,7 @@ class ProductService {
             throw new IllegalStateException('Product not saved')
     }
 
-    @PreAuthorize('(scrumMaster() or owner(#_product)) and !archivedProduct(#_product)')
+    @PreAuthorize('(scrumMaster(#_product) or owner(#_product)) and !archivedProduct(#_product)')
     void update(Product _product, boolean hasHiddenChanged) {
         if (!_product.name?.trim()) {
             throw new IllegalStateException("is.product.error.no.name")
@@ -310,7 +310,7 @@ class ProductService {
         return values
     }
 
-    @PreAuthorize('stakeHolder() or inProduct()')
+    @PreAuthorize('stakeHolder(#product) or inProduct(#product)')
     def productVelocityCapacityValues(Product product) {
         def values = []
         def capacity = 0, label = ""
@@ -523,7 +523,7 @@ class ProductService {
         broadcast(function: 'delete', message: [class: p.class, id: id])
     }
 
-    @PreAuthorize('owner(#p) or scrumMaster()')
+    @PreAuthorize('owner(#p) or scrumMaster(#p)')
     def archive(Product p) {
         p.preferences.archived = true
         p.lastUpdated = new Date()

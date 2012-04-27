@@ -59,7 +59,7 @@ class Task extends BacklogElement implements Serializable {
 
     static hasMany = [participants: User]
 
-    static transients = ['sprint']
+    static transients = ['sprint', 'parentProduct']
 
     static mapping = {
         cache true
@@ -306,6 +306,10 @@ class Task extends BacklogElement implements Serializable {
         if (this.getBacklog()?.id)
             return (Sprint)this.getBacklog()
         return null
+    }
+
+    Product getParentProduct(){
+        return this.sprint?.parentProduct
     }
 
     def afterDelete() {

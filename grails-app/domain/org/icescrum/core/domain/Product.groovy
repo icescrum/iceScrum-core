@@ -41,6 +41,7 @@ class Product extends TimeBox implements Serializable {
     String name = ""
     ProductPreferences preferences
     String pkey
+    SortedSet<Team> teams
 
     static hasMany = [
             actors: Actor,
@@ -66,7 +67,8 @@ class Product extends TimeBox implements Serializable {
             'productOwners',
             'erasableByUser',
             'stakeHolders',
-            'owner'
+            'owner',
+            'firstTeam'
     ]
 
     def erasableByUser = false
@@ -213,8 +215,8 @@ class Product extends TimeBox implements Serializable {
         }
     }
 
-    Set<Team> getTeams(){
-        return this.teams;
+    Team getFirstTeam(){
+        return this.teams? this.teams.first() : null
     }
 
     def beforeDelete() {
