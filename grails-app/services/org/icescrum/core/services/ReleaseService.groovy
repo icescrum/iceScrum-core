@@ -242,7 +242,7 @@ class ReleaseService {
         publishEvent(new IceScrumReleaseEvent(release, this.class, (User) springSecurityService.currentUser, IceScrumReleaseEvent.EVENT_CLOSED))
     }
 
-    @PreAuthorize('(productOwner(#release.parentProduct) or scrumMaster(#release.parentProduct)) and !archivedProduct(#release.parentProduct')
+    @PreAuthorize('(productOwner(#release.parentProduct) or scrumMaster(#release.parentProduct)) and !archivedProduct(#release.parentProduct)')
     void delete(Release release) {
         def product = release.parentProduct
         if (release.state == Release.STATE_INPROGRESS || release.state == Release.STATE_DONE)
