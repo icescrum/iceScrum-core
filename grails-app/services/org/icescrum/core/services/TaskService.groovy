@@ -240,15 +240,13 @@ class TaskService {
      * @param p
      * @return
      */
-    @PreAuthorize('inProduct() and !archivedProduct()')
-    boolean assign(Collection<Task> tasks, User user) {
-        tasks.each {
-            if (it.state == Task.STATE_DONE){
-                throw new IllegalStateException('is.task.error.done')
-            }
-            it.responsible = user
-            update(it, user)
+    @PreAuthorize('inProduct(#task.parentProduct) and !archivedProduct(#task.parentProduct)')
+    boolean assign(Task task, User user) {
+        if (task.state == Task.STATE_DONE){
+            throw new IllegalStateException('is.task.error.done')
         }
+        task.responsible = user
+        update(task, user)
         return true
     }
 
@@ -259,17 +257,15 @@ class TaskService {
      * @param p
      * @return
      */
-    @PreAuthorize('inProduct() and !archivedProduct()')
-    boolean unassign(Collection<Task> tasks, User user) {
-        tasks.each {
-            if (it.responsible.id != user.id)
-                throw new IllegalStateException('is.task.error.unassign.not.responsible')
-            if (it.state == Task.STATE_DONE)
-                throw new IllegalStateException('is.task.error.done')
-            it.responsible = null
-            it.state = Task.STATE_WAIT
-            update(it, user, true)
-        }
+    @PreAuthorize('inProduct(#task.parentProduct) and !archivedProduct(#task.parentProduct)')
+    boolean unassign(Task task, User user) {
+        if (task.responsible.id != user.id)
+            throw new IllegalStateException('is.task.error.unassign.not.responsible')
+        if (task.state == Task.STATE_DONE)
+            throw new IllegalStateException('is.task.error.done')
+        task.responsible = null
+        task.state = Task.STATE_WAIT
+        update(task, user, true)
         return true
     }
 

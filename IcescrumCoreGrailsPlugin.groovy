@@ -389,7 +389,7 @@ class IcescrumCoreGrailsPlugin {
             if (!request)
                 return
             if (!attrs.channel) {
-                def id = securityService.parseCurrentRequestProduct()
+                def id = securityService.parseCurrentRequestProduct(request)
                 attrs.channel = id ? 'product-' + id : '/push/app'
             }
 
@@ -412,7 +412,7 @@ class IcescrumCoreGrailsPlugin {
             if (!request)
                 return
             if (!attrs.channel) {
-                def id = securityService.parseCurrentRequestProduct()
+                def id = securityService.parseCurrentRequestProduct(request)
                 attrs.channel = id ? 'product-' + id : '/push/app'
             }
 
@@ -456,7 +456,7 @@ class IcescrumCoreGrailsPlugin {
             if (!request)
                 return
             if (!attrs.channel) {
-                def id = securityService.parseCurrentRequestProduct()
+                def id = securityService.parseCurrentRequestProduct(request)
                 attrs.channel = id ? 'product-' + id : '/push/app'
             }
             if (attrs.channel instanceof String) {

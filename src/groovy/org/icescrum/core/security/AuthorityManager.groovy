@@ -32,7 +32,6 @@ class AuthorityManager {
     static public createAppAuthorities = {ctx ->
 
         def springSecurityService = ctx.springSecurityService
-
         def adminRole = new Authority(authority: Authority.ROLE_ADMIN).save()
         def permissionRole = new Authority(authority: Authority.ROLE_PERMISSION).save()
 

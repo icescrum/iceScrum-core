@@ -33,7 +33,7 @@ class AcceptanceTestService {
 
     static transactional = true
 
-    @PreAuthorize('inProduct() and !archivedProduct()')
+    @PreAuthorize('inProduct(#acceptanceTest.parentProduct) and !archivedProduct(#acceptanceTest.parentProduct)')
     void save(AcceptanceTest acceptanceTest, Story parentStory, User user) {
         acceptanceTest.creator = user
         acceptanceTest.uid = AcceptanceTest.findNextUId(parentStory.backlog.id)
@@ -48,7 +48,7 @@ class AcceptanceTestService {
         broadcast(function: 'update', message: acceptanceTest.parentStory)
     }
 
-    @PreAuthorize('inProduct() and !archivedProduct()')
+    @PreAuthorize('inProduct(#acceptanceTest.parentProduct) and !archivedProduct(#acceptanceTest.parentProduct)')
     void update(AcceptanceTest acceptanceTest, User user) {
         if (!acceptanceTest.save(flush:true)) {
             throw new RuntimeException()
@@ -58,7 +58,7 @@ class AcceptanceTestService {
         broadcast(function: 'update', message: acceptanceTest.parentStory)
     }
 
-    @PreAuthorize('inProduct() and !archivedProduct()')
+    @PreAuthorize('inProduct(#acceptanceTest.parentProduct) and !archivedProduct(#acceptanceTest.parentProduct)')
     void delete(AcceptanceTest acceptanceTest) {
         def story = acceptanceTest.parentStory
         story.removeFromAcceptanceTests(acceptanceTest)

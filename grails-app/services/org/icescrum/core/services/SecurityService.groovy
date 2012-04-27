@@ -172,9 +172,15 @@ class SecurityService {
         boolean authorized = productOwner(product, auth)
         if (!authorized) {
             def p
-            if (!product)
-                product = parseCurrentRequestProduct()
+            if (!product){
+                def request = RCH.requestAttributes.currentRequest
+                if (request.filtered)
+                    return request.inProduct
+                else
+                    product = parseCurrentRequestProduct(request)
+            }
             else if (product in Product) {
+                p = product
                 product = product.id
             }
             if (product) {
@@ -196,13 +202,17 @@ class SecurityService {
 
     boolean archivedProduct(product){
         def p
-
         if (SpringSecurityUtils.ifAnyGranted(Authority.ROLE_ADMIN))
             return false
 
-        if (!product)
-                product = parseCurrentRequestProduct()
-            else if (product in Product) {
+        if (!product){
+                def request = RCH.requestAttributes.currentRequest
+                if (request.filtered)
+                    return request.productArchived ?: false
+                else
+                    product = parseCurrentRequestProduct(request)
+            }else if (product in Product) {
+                p = product
                 product = product.id
             }
             if (product) {
@@ -242,10 +252,15 @@ class SecurityService {
         def parsedTeam
 
         if (!team) {
-            def parsedProduct = parseCurrentRequestProduct()
-            if (parsedProduct) {
-                t = openProductTeam(parsedProduct, springSecurityService.principal.id)
-                team = t?.id
+            def request = RCH.requestAttributes.currentRequest
+            if (request.filtered)
+                return request.scrumMaster
+            else {
+                def parsedProduct = parseCurrentRequestProduct(request)
+                if (parsedProduct) {
+                    t = openProductTeam(parsedProduct, springSecurityService.principal.id)
+                    team = t?.id
+                }
             }
         }
         else if (team in Team) {
@@ -275,11 +290,19 @@ class SecurityService {
 
 
     boolean stakeHolder(product, auth, onlyPrivate) {
+
+        if (!springSecurityService.isLoggedIn() && onlyPrivate)
+            return false
+
         def p = null
 
-        if (!product)
-            product = parseCurrentRequestProduct()
-        else if (product in Product) {
+        if (!product){
+            def request = RCH.requestAttributes.currentRequest
+            if (request.filtered)
+                return request.stakeHolder
+            else
+                product = parseCurrentRequestProduct(request)
+        } else if (product in Product) {
             p = GrailsHibernateUtil.unwrapIfProxy(product)
             product = product.id
         }
@@ -315,9 +338,13 @@ class SecurityService {
 
         def p = null
 
-        if (!product)
-            product = parseCurrentRequestProduct()
-        else if (product in Product) {
+        if (!product){
+            def request = RCH.requestAttributes.currentRequest
+            if (request.filtered)
+                return request.productOwner
+            else
+                product = parseCurrentRequestProduct(request)
+        }else if (product in Product) {
             p = GrailsHibernateUtil.unwrapIfProxy(product)
             product = product.id
         }
@@ -356,10 +383,15 @@ class SecurityService {
         def parsedTeam
 
         if (!team) {
-            def parsedProduct = parseCurrentRequestProduct()
-            if (parsedProduct) {
-                t = openProductTeam(parsedProduct, springSecurityService.principal.id)
-                team = t?.id
+            def request = RCH.requestAttributes.currentRequest
+            if (request.filtered)
+                return request.inTeam
+            else{
+                def parsedProduct = parseCurrentRequestProduct(request)
+                if (parsedProduct) {
+                    t = openProductTeam(parsedProduct, springSecurityService.principal.id)
+                    team = t?.id
+                }
             }
         }
         else if (team in Team) {
@@ -386,8 +418,7 @@ class SecurityService {
         UserAuthority.countByAuthorityAndUser(Authority.findByAuthority(Authority.ROLE_ADMIN, [cache: true]), user, [cache: true])
     }
 
-    Long parseCurrentRequestProduct() {
-        def request = RCH.requestAttributes.currentRequest
+    Long parseCurrentRequestProduct(request) {
         def res = request[PRODUCT_ATTR]
         if (!res) {
             def param = request.getParameter(PRODUCT_URL_ATTR)
@@ -443,9 +474,14 @@ class SecurityService {
         def domainClass
 
         if (!domain) {
-            parsedDomain = parseCurrentRequestProduct()
-            domain = parsedDomain
-            domainClass = grailsApplication.getDomainClass(Product.class.name).newInstance()
+            def request = RCH.requestAttributes.currentRequest
+            if (request.filtered)
+                return request.owner
+            else{
+                parsedDomain = parseCurrentRequestProduct(request)
+                domain = parsedDomain
+                domainClass = grailsApplication.getDomainClass(Product.class.name).newInstance()
+            }
         } else {
             d = GrailsHibernateUtil.unwrapIfProxy(domain)
             domainClass = d
@@ -475,6 +511,7 @@ class SecurityService {
 
         if (!request || (request && request.filtered))
             return
+
         request.scrumMaster  = request.scrumMaster ?: scrumMaster(null,springSecurityService.authentication)
         request.productOwner = request.productOwner ?: productOwner(null,springSecurityService.authentication)
         request.teamMember   = request.teamMember ?: teamMember(null,springSecurityService.authentication)

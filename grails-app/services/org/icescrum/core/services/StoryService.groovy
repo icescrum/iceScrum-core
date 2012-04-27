@@ -494,32 +494,32 @@ class StoryService {
         return acceptToBacklog([story])
     }
 
-    @PreAuthorize('productOwner() and !archivedProduct()')
-    def acceptToBacklog(Collection<Story> stories) {
+    @PreAuthorize('productOwner(#stories[0].backlog) and !archivedProduct(#stories[0].backlog)')
+    def acceptToBacklog(List<Story> stories) {
         def storiesA = []
         bufferBroadcast()
-        stories.each { pbi ->
-            if (pbi.state != Story.STATE_SUGGESTED)
+        stories.each { story ->
+            if (story.state != Story.STATE_SUGGESTED)
                 throw new IllegalStateException('is.story.error.not.state.suggested')
 
-            pbi.rank = (Story.countAllAcceptedOrEstimated(pbi.backlog.id)?.list()[0] ?: 0) + 1
-            pbi.state = Story.STATE_ACCEPTED
-            pbi.acceptedDate = new Date()
-            if (((Product) pbi.backlog).preferences.noEstimation) {
-                pbi.estimatedDate = new Date()
-                pbi.effort = 1
-                pbi.state = Story.STATE_ESTIMATED
+            story.rank = (Story.countAllAcceptedOrEstimated(story.backlog.id)?.list()[0] ?: 0) + 1
+            story.state = Story.STATE_ACCEPTED
+            story.acceptedDate = new Date()
+            if (((Product) story.backlog).preferences.noEstimation) {
+                story.estimatedDate = new Date()
+                story.effort = 1
+                story.state = Story.STATE_ESTIMATED
             }
 
-            if (!pbi.save(flush: true))
+            if (!story.save(flush: true))
                 throw new RuntimeException()
 
             User u = (User) springSecurityService.currentUser
-            storiesA << pbi
+            storiesA << story
 
-            pbi.addActivity(u, 'acceptAs', pbi.name)
-            broadcast(function: 'accept', message: pbi)
-            publishEvent(new IceScrumStoryEvent(pbi, this.class, u, IceScrumStoryEvent.EVENT_ACCEPTED))
+            story.addActivity(u, 'acceptAs', story.name)
+            broadcast(function: 'accept', message: story)
+            publishEvent(new IceScrumStoryEvent(story, this.class, u, IceScrumStoryEvent.EVENT_ACCEPTED))
         }
         resumeBufferedBroadcast()
         return storiesA
@@ -530,8 +530,8 @@ class StoryService {
         return acceptToFeature([story])
     }
 
-    @PreAuthorize('productOwner() and !archivedProduct()')
-    def acceptToFeature(Collection<Story> stories) {
+    @PreAuthorize('productOwner(#stories[0].backlog) and !archivedProduct(#stories[0].backlog)')
+    def acceptToFeature(List<Story> stories) {
         def features = []
         bufferBroadcast()
         stories.each { pbi ->
@@ -578,8 +578,8 @@ class StoryService {
         return acceptToUrgentTask([story])
     }
 
-    @PreAuthorize('productOwner() and !archivedProduct()')
-    def acceptToUrgentTask(Collection<Story> stories) {
+    @PreAuthorize('productOwner(#stories[0].backlog) and !archivedProduct(#stories[0].backlog)')
+    def acceptToUrgentTask(List<Story> stories) {
         def tasks = []
         bufferBroadcast()
         stories.each { pbi ->
@@ -646,8 +646,8 @@ class StoryService {
         done([story])
     }
 
-    @PreAuthorize('productOwner() and !archivedProduct()')
-    void done(Collection<Story> stories) {
+    @PreAuthorize('productOwner(#stories[0].backlog) and !archivedProduct(#stories[0].backlog)')
+    void done(List<Story> stories) {
         bufferBroadcast()
         stories.each { story ->
 
@@ -691,8 +691,8 @@ class StoryService {
         unDone([story])
     }
 
-    @PreAuthorize('productOwner() and !archivedProduct()')
-    void unDone(Collection<Story> stories) {
+    @PreAuthorize('productOwner(#stories[0].backlog) and !archivedProduct(#stories[0].backlog)')
+    void unDone(List<Story> stories) {
         bufferBroadcast()
         stories.each { story ->
 
@@ -752,8 +752,8 @@ class StoryService {
         copy([story])
     }
 
-    @PreAuthorize('inProduct() and !archivedProduct()')
-    def copy(Collection<Story> stories) {
+    @PreAuthorize('inProduct(#stories[0].backlog) and !archivedProduct(#stories[0].backlog)')
+    def copy(List<Story> stories) {
         def copiedStories = []
         bufferBroadcast()
         stories.each { story ->

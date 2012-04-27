@@ -38,7 +38,7 @@ class ActorService {
     static transactional = true
     def springSecurityService
 
-    @PreAuthorize('productOwner() and !archivedProduct()')
+    @PreAuthorize('productOwner(#p) and !archivedProduct(#p)')
     void save(Actor act, Product p) {
         act.name = act.name?.trim()
         act.uid = Actor.findNextUId(p.id)
@@ -49,7 +49,7 @@ class ActorService {
         publishEvent(new IceScrumActorEvent(act, this.class, (User) springSecurityService.currentUser, IceScrumEvent.EVENT_CREATED))
     }
 
-    @PreAuthorize('productOwner() and !archivedProduct()')
+    @PreAuthorize('productOwner(#act.backlog) and !archivedProduct(#act.backlog)')
     void delete(Actor act) {
         Product p = (Product)act.backlog
         def id = act.id
@@ -60,7 +60,7 @@ class ActorService {
         broadcast(function: 'delete', message: [class: act.class, id: id])
     }
 
-    @PreAuthorize('productOwner() and !archivedProduct()')
+    @PreAuthorize('productOwner(#act.backlog) and !archivedProduct(#act.backlog)')
     void update(Actor act) {
         act.name = act.name?.trim()
         if (!act.save(flush: true))

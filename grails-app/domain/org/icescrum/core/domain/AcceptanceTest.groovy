@@ -45,6 +45,8 @@ class AcceptanceTest implements Serializable {
         name(blank: false)
     }
 
+    static transients = ['parentProduct']
+
     static namedQueries = {
         findLastUpdated {storyId ->
             parentStory {
@@ -104,5 +106,9 @@ class AcceptanceTest implements Serializable {
         result = 31 * result + (dateCreated != null ? dateCreated.hashCode() : 0);
         result = 31 * result + (lastUpdated != null ? lastUpdated.hashCode() : 0);
         return result;
+    }
+
+    def getParentProduct(){
+        return this.parentStory.backlog
     }
 }

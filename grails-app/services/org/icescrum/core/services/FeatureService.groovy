@@ -23,8 +23,6 @@
 package org.icescrum.core.services
 
 import java.text.SimpleDateFormat
-import org.codehaus.groovy.grails.commons.metaclass.GroovyDynamicMethodsInterceptor
-import org.codehaus.groovy.grails.web.metaclass.BindDynamicMethod
 import org.icescrum.core.event.IceScrumEvent
 import org.icescrum.core.event.IceScrumFeatureEvent
 import org.springframework.security.access.prepost.PreAuthorize
@@ -32,11 +30,6 @@ import org.springframework.transaction.annotation.Transactional
 import org.icescrum.core.domain.*
 
 class FeatureService {
-
-    FeatureService() {
-        GroovyDynamicMethodsInterceptor i = new GroovyDynamicMethodsInterceptor(this)
-        i.addDynamicMethodInvocation(new BindDynamicMethod())
-    }
 
     static transactional = true
     def productService
@@ -71,22 +64,22 @@ class FeatureService {
         publishEvent(new IceScrumFeatureEvent(feature, this.class, (User) springSecurityService.currentUser, IceScrumEvent.EVENT_CREATED))
     }
 
-    @PreAuthorize('productOwner() and !archivedProduct()')
-    void delete(Feature _feature) {
-        def p = _feature.backlog
+    @PreAuthorize('productOwner(#feature.backlog) and !archivedProduct(#feature.backlog)')
+    void delete(Feature feature) {
+        def p = feature.backlog
 
         bufferBroadcast()
-        _feature.stories?.each{
+        feature.stories?.each{
             it.feature = null
             it.save()
             broadcast(function: 'dissociated', message: it)
         }
 
 
-        def oldRank = _feature.rank
-        def id = _feature.id
+        def oldRank = feature.rank
+        def id = feature.id
 
-        p.removeFromFeatures(_feature)
+        p.removeFromFeatures(feature)
 
         //update rank on all features after that one
         p.features.each { it ->
@@ -95,22 +88,22 @@ class FeatureService {
                 it.save()
             }
         }
-        broadcast(function: 'delete', message: [class: _feature.class, id: id])
+        broadcast(function: 'delete', message: [class: feature.class, id: id])
         resumeBufferedBroadcast()
     }
 
-    @PreAuthorize('productOwner() and !archivedProduct()')
-    void update(Feature _feature) {
-        _feature.name = _feature.name.trim()
+    @PreAuthorize('productOwner(#feature.backlog) and !archivedProduct(#feature.backlog)')
+    void update(Feature feature) {
+        feature.name = feature.name.trim()
 
-        if (!_feature.save(flush: true)) {
+        if (!feature.save(flush: true)) {
             throw new RuntimeException()
         }
-        broadcast(function: 'update', message: _feature)
-        publishEvent(new IceScrumFeatureEvent(_feature, this.class, (User) springSecurityService.currentUser, IceScrumEvent.EVENT_UPDATED))
+        broadcast(function: 'update', message: feature)
+        publishEvent(new IceScrumFeatureEvent(feature, this.class, (User) springSecurityService.currentUser, IceScrumEvent.EVENT_UPDATED))
     }
 
-    @PreAuthorize('productOwner() and !archivedProduct()')
+    @PreAuthorize('productOwner(#feature.backlog) and !archivedProduct(#feature.backlog)')
     def copyToBacklog(feature) {
         def story = new Story(
                 name: feature.name,
@@ -131,8 +124,8 @@ class FeatureService {
         return story
     }
 
-    double calculateCompletion(Feature _feature, Release _r = null) {
-        def stories = Story.filterByFeature(_feature.backlog, _feature, _r).list()
+    double calculateCompletion(Feature feature, Release release = null) {
+        def stories = Story.filterByFeature(feature.backlog, feature, release).list()
 
         if (stories.size() == 0)
             return 0d
@@ -143,28 +136,28 @@ class FeatureService {
         return itemsDone / items
     }
 
-    @PreAuthorize('productOwner() and !archivedProduct()')
-    boolean rank(Feature movedItem, int rank) {
-        if (movedItem.rank != rank) {
-            if (movedItem.rank > rank) {
-                movedItem.backlog.features?.sort()?.each {it ->
-                    if (it.rank >= rank && it.rank <= movedItem.rank && it != movedItem) {
+    @PreAuthorize('productOwner(#feature.backlog) and !archivedProduct(#feature.backlog)')
+    boolean rank(Feature feature, int rank) {
+        if (feature.rank != rank) {
+            if (feature.rank > rank) {
+                feature.backlog.features?.sort()?.each {it ->
+                    if (it.rank >= rank && it.rank <= feature.rank && it != feature) {
                         it.rank = it.rank + 1
                         it.save()
                     }
                 }
             } else {
-                movedItem.backlog.features?.sort()?.each {it ->
-                    if (it.rank <= rank && it.rank >= movedItem.rank && it != movedItem) {
+                feature.backlog.features?.sort()?.each {it ->
+                    if (it.rank <= rank && it.rank >= feature.rank && it != feature) {
                         it.rank = it.rank - 1
                         it.save()
                     }
                 }
             }
-            movedItem.rank = rank
+            feature.rank = rank
 
-            broadcast(function: 'update', message: movedItem)
-            return movedItem.save() ? true : false
+            broadcast(function: 'update', message: feature)
+            return feature.save() ? true : false
         } else {
             return false
         }
