@@ -133,7 +133,7 @@ class StoryService {
         delete([story], history)
     }
 
-    @PreAuthorize('(productOwner(#story.backlog) or scrumMaster(#story.backlog)) and !archivedProduct(#story.backlog)')
+    @PreAuthorize('(productOwner(#story.backlog) or scrumMaster()) and !archivedProduct(#story.backlog)')
     void update(Story story, Sprint sp = null) {
         if (story.textAs != '' && story.actor?.name != story.textAs) {
             def actor = Actor.findByBacklogAndName(story.backlog, story.textAs)

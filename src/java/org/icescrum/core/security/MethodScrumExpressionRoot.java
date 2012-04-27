@@ -31,6 +31,9 @@ import org.springframework.security.access.expression.SecurityExpressionRoot;
 import org.springframework.security.core.Authentication;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 public class MethodScrumExpressionRoot extends SecurityExpressionRoot implements ScrumExpressionRoot {
 
@@ -132,6 +135,16 @@ public class MethodScrumExpressionRoot extends SecurityExpressionRoot implements
         return securityService.teamMember(t, super.authentication);
     }
 
+    public boolean teamMember(Product p) {
+        Set<Team> teams = p.getTeams();
+        if (teams.size() > 0){
+            Team team = teams.iterator().next();
+            return securityService.teamMember(team, super.authentication);
+        }else{
+            return false;
+        }
+    }
+
     public boolean scrumMaster() {
         return securityService.scrumMaster(null, super.authentication);
     }
@@ -142,6 +155,16 @@ public class MethodScrumExpressionRoot extends SecurityExpressionRoot implements
 
     public boolean scrumMaster(Team t) {
         return securityService.scrumMaster(t, super.authentication);
+    }
+
+    public boolean scrumMaster(Product p) {
+        Set<Team> teams = p.getTeams();
+        if (teams.size() > 0){
+            Team team = teams.iterator().next();
+            return securityService.scrumMaster(team, super.authentication);
+        }else{
+            return false;
+        }
     }
 
     public boolean stakeHolder() {

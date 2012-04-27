@@ -28,6 +28,7 @@ import org.icescrum.core.services.SecurityService;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.FilterInvocation;
 import org.springframework.security.web.access.expression.WebSecurityExpressionRoot;
+import java.util.Set;
 
 public class WebScrumExpressionRoot extends WebSecurityExpressionRoot implements ScrumExpressionRoot{
 
@@ -90,6 +91,16 @@ public class WebScrumExpressionRoot extends WebSecurityExpressionRoot implements
         return securityService.teamMember(t, super.authentication);
     }
 
+    public boolean teamMember(Product p) {
+        Set<Team> teams = p.getTeams();
+        if (teams.size() > 0){
+            Team team = teams.iterator().next();
+            return securityService.teamMember(team, super.authentication);
+        }else{
+            return false;
+        }
+    }
+
     public boolean scrumMaster() {
         return securityService.scrumMaster(null, super.authentication);
     }
@@ -100,6 +111,16 @@ public class WebScrumExpressionRoot extends WebSecurityExpressionRoot implements
 
      public boolean scrumMaster(Team t) {
         return securityService.scrumMaster(t, super.authentication);
+    }
+
+    public boolean scrumMaster(Product p) {
+        Set<Team> teams = p.getTeams();
+        if (teams.size() > 0){
+            Team team = teams.iterator().next();
+            return securityService.scrumMaster(team, super.authentication);
+        }else{
+            return false;
+        }
     }
 
     public boolean stakeHolder() {
