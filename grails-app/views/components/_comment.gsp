@@ -30,7 +30,7 @@
       <div class="comment-details">
         <is:scrumLink controller="user" action='profile' id="${comment.poster?.username}"><strong>${comment.poster?.firstName?.encodeAsHTML()} ${comment.poster?.lastName?.encodeAsHTML()}</strong></is:scrumLink>,
         <g:if test="${!template}">
-            <g:formatDate date="${comment.dateCreated}" formatName="is.date.format.short.time" class="comment-dateCreated" timeZone="${backlogelement.backlog.preferences.timezone}"/>
+            <g:formatDate date="${comment.dateCreated}" formatName="is.date.format.short.time" class="comment-dateCreated" timeZone="${backlogElement.backlog.preferences.timezone}"/>
         </g:if>
         <g:else>
             <span class="comment-dateCreated">${comment.dateCreated}</span>
@@ -45,7 +45,7 @@
                       action="editCommentEditor"
                       id="${comment.id}"
                       update="commentEditorWrapper${comment.id}"
-                      params="[commentable:backlogelement.id]"
+                      params="[commentable:backlogElement.id]"
                       onSuccess="jQuery('#commentEditorContainer').hide();jQuery('#comment${comment.id} .commentContent').hide();jQuery('#commentEditorWrapper${comment?.id ?: ''}').show();"
                       rendered="${(access || user?.id == comment.poster?.id) ? 'true' : 'false'}">
                 ${message(code:'is.ui.backlogelement.comment.edit')}
@@ -58,7 +58,7 @@
                         action="deleteComment"
                         id="${comment.id}"
                         onSuccess="jQuery.event.trigger('remove_comment',data)"
-                        params="[backlogelement:backlogelement.id]">
+                        params="[backlogElement:backlogElement.id]">
                 - ${message(code:'is.ui.backlogelement.comment.delete')}
                 </is:link>
               </g:if>
@@ -67,7 +67,7 @@
         </g:if>
         <g:if test="${!template && comment.lastUpdated && comment.lastUpdated.time >= (comment.dateCreated.time + 5000)}">
           <em>${message(code:'is.ui.backlogelement.comment.last.update')}
-                <g:formatDate date="${comment.lastUpdated}" formatName="is.date.format.short.time" class="comment-lastUpdated" timeZone="${backlogelement.backlog.preferences.timezone}"/>
+                <g:formatDate date="${comment.lastUpdated}" formatName="is.date.format.short.time" class="comment-lastUpdated" timeZone="${backlogElement.backlog.preferences.timezone}"/>
           </em>
         </g:if>
         <g:if test="${template}">
