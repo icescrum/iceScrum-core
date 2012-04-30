@@ -33,7 +33,7 @@ import org.springframework.security.core.context.SecurityContextHolder as SCH
 import org.codehaus.groovy.grails.commons.ApplicationHolder
 import org.grails.plugins.springsecurity.service.acl.AclUtilService
 
-class Team implements Serializable {
+class Team implements Serializable, Comparable {
 
     String name
     int velocity = 0
@@ -242,5 +242,10 @@ class Team implements Serializable {
         if (!this.id && !this.uid){
             this.uid = (this.name).encodeAsMD5()
         }
+    }
+
+    @Override
+    int compareTo(Object t) {
+        return this.name?.compareTo(t.name)
     }
 }
