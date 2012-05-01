@@ -169,6 +169,50 @@ class Product extends TimeBox implements Serializable {
                         "AND p.id = ai.objectId", [sid: user, p:permission*.mask ], params ?: [:])
     }
 
+    static searchPublicAndMyProducts(String user, String term, params) {
+        executeQuery("SELECT DISTINCT p "+
+                        "From org.icescrum.core.domain.Product as p "+
+                        "where "+
+                        " ( p.name LIKE :term AND p.preferences.hidden = false ) " +
+                        "or ( p.name LIKE :term AND p IN ( SELECT DISTINCT p "+
+                        "From org.icescrum.core.domain.Product as p, "+
+                        "org.codehaus.groovy.grails.plugins.springsecurity.acl.AclClass as ac, "+
+                        "org.codehaus.groovy.grails.plugins.springsecurity.acl.AclObjectIdentity as ai, "+
+                        "org.codehaus.groovy.grails.plugins.springsecurity.acl.AclSid as acl, "+
+                        "org.codehaus.groovy.grails.plugins.springsecurity.acl.AclEntry as ae "+
+                        "where "+
+                        "ac.className = 'org.icescrum.core.domain.Product' "+
+                        "AND ai.aclClass = ac.id "+
+                        "AND acl.sid = :sid "+
+                        "AND acl.id = ae.sid.id "+
+                        "AND ae.mask IN(:p) "+
+                        "AND ai.id = ae.aclObjectIdentity.id "+
+                        "AND p.id = ai.objectId ) )"
+                        , [term:term, sid: user, p:[BasePermission.WRITE,BasePermission.READ]*.mask ], params ?: [:])
+    }
+
+    static countPublicAndMyProducts(String user, String term, params) {
+        executeQuery("SELECT DISTINCT count(p) "+
+                        "From org.icescrum.core.domain.Product as p "+
+                        "where "+
+                        " ( p.name LIKE :term AND p.preferences.hidden = false ) " +
+                        "or ( p.name LIKE :term AND p IN ( SELECT DISTINCT p "+
+                        "From org.icescrum.core.domain.Product as p, "+
+                        "org.codehaus.groovy.grails.plugins.springsecurity.acl.AclClass as ac, "+
+                        "org.codehaus.groovy.grails.plugins.springsecurity.acl.AclObjectIdentity as ai, "+
+                        "org.codehaus.groovy.grails.plugins.springsecurity.acl.AclSid as acl, "+
+                        "org.codehaus.groovy.grails.plugins.springsecurity.acl.AclEntry as ae "+
+                        "where "+
+                        "ac.className = 'org.icescrum.core.domain.Product' "+
+                        "AND ai.aclClass = ac.id "+
+                        "AND acl.sid = :sid "+
+                        "AND acl.id = ae.sid.id "+
+                        "AND ae.mask IN(:p) "+
+                        "AND ai.id = ae.aclObjectIdentity.id "+
+                        "AND p.id = ai.objectId ) )"
+                        , [term:term, sid: user, p:[BasePermission.WRITE,BasePermission.READ]*.mask ], params ?: [:])
+    }
+
     def getProductOwners() {
         def aclUtilService = (AclUtilService) ApplicationHolder.application.mainContext.getBean('aclUtilService');
         //Only used when product is being imported

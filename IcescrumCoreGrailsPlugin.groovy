@@ -616,7 +616,7 @@ class IcescrumCoreGrailsPlugin {
                     returnError(exception: e)
                 }
             } else {
-                returnError(text: message(code: 'is.actor.error.not.exist'))
+                returnError(text: message(code: 'is.feature.error.not.exist'))
             }
         }
 

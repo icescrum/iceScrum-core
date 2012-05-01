@@ -52,16 +52,6 @@ class ProductService {
 
     static transactional = true
 
-    @PostFilter("stakeHolder(filterObject) or inProduct(filterObject)")
-    List getByTermProductList(term, params) {
-        return Product.findAllByNameIlike('%' + term + '%', params)
-    }
-
-    @PostFilter("(stakeHolder(filterObject,true) or inProduct(filterObject) or owner(filterObject)) and !hasRole('ROLE_ADMIN')")
-    List getByMemberProductList() {
-        return Product.list(cache: true)
-    }
-
     @PreAuthorize('isAuthenticated()')
     void save(Product _product, productOwners, stakeHolders) {
         if (!_product.endDate == null)
