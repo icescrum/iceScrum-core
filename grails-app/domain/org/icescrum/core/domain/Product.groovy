@@ -173,7 +173,7 @@ class Product extends TimeBox implements Serializable {
                         "WHERE t.id in " +
                         "(SELECT DISTINCT t2.id FROM org.icescrum.core.domain.Team as t2 " +
                         "INNER JOIN t2.members as m " +
-                        "WHERE m.id = :uid) ) )", [sid: user?.username?:'', uid: user?.id?:0, p:permission*.mask ], params ?: [:])
+                        "WHERE m.id = :uid) ) )", [sid: user?.username?:'', uid: user?.id?:0L, p:permission*.mask ], params ?: [:])
     }
 
     static searchPublicAndMyProducts(User user, String term, params) {
