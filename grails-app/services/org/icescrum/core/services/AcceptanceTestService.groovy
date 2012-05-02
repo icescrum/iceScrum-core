@@ -33,7 +33,7 @@ class AcceptanceTestService {
 
     static transactional = true
 
-    @PreAuthorize('inProduct(#acceptanceTest.parentProduct) and !archivedProduct(#acceptanceTest.parentProduct)')
+    @PreAuthorize('inProduct(#parentStory.backlog) and !archivedProduct(#parentStory.backlog)')
     void save(AcceptanceTest acceptanceTest, Story parentStory, User user) {
         acceptanceTest.creator = user
         acceptanceTest.uid = AcceptanceTest.findNextUId(parentStory.backlog.id)
