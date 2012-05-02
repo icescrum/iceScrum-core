@@ -154,26 +154,29 @@ class Product extends TimeBox implements Serializable {
 
     static findAllByRole(User user, List<BasePermission> permission, params) {
         executeQuery("SELECT DISTINCT p "+
+                        "From org.icescrum.core.domain.Product as p "+
+                        "where "+
+                        "( p IN "+
+                        "(SELECT DISTINCT p " +
+                        "FROM org.icescrum.core.domain.Product as p INNER JOIN p.teams as t " +
+                        "WHERE t.id in " +
+                        "(SELECT DISTINCT t2.id FROM org.icescrum.core.domain.Team as t2 " +
+                        "INNER JOIN t2.members as m " +
+                        "WHERE m.id = :uid) ) )" +
+                        "or ( p IN ( SELECT DISTINCT p "+
                         "From org.icescrum.core.domain.Product as p, "+
                         "org.codehaus.groovy.grails.plugins.springsecurity.acl.AclClass as ac, "+
                         "org.codehaus.groovy.grails.plugins.springsecurity.acl.AclObjectIdentity as ai, "+
                         "org.codehaus.groovy.grails.plugins.springsecurity.acl.AclSid as acl, "+
                         "org.codehaus.groovy.grails.plugins.springsecurity.acl.AclEntry as ae "+
                         "where "+
-                        "( ac.className = 'org.icescrum.core.domain.Product' "+
+                        "ac.className = 'org.icescrum.core.domain.Product' "+
                         "AND ai.aclClass = ac.id "+
                         "AND acl.sid = :sid "+
                         "AND acl.id = ae.sid.id "+
                         "AND ae.mask IN(:p) "+
                         "AND ai.id = ae.aclObjectIdentity.id "+
-                        "AND p.id = ai.objectId) "+
-                        "OR ( p IN "+
-                        "(SELECT DISTINCT p " +
-                        "FROM org.icescrum.core.domain.Product as p INNER JOIN p.teams as t " +
-                        "WHERE t.id in " +
-                        "(SELECT DISTINCT t2.id FROM org.icescrum.core.domain.Team as t2 " +
-                        "INNER JOIN t2.members as m " +
-                        "WHERE m.id = :uid) ) )", [sid: user?.username?:'', uid: user?.id?:0L, p:permission*.mask ], params ?: [:])
+                        "AND p.id = ai.objectId ) )", [sid: user?.username?:'', uid: user?.id?:0L, p:permission*.mask ], params ?: [:])
     }
 
     static searchPublicAndMyProducts(User user, String term, params) {
