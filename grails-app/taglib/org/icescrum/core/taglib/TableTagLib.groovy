@@ -298,12 +298,12 @@ class TableTagLib {
                     type:'${attrs.type}',
                     select:${attrs.highlight ?: false},
                     ajaxoptions:{dataType:'json'},
-                    data : function(value, settings) {settings.name = ${detach}; settings.id = '${attrs.var}.id';${data}},
+                    data : function(value, settings) {settings.name = ${detach}; settings.id = 'id';${data}},
                     onsubmit:function(settings, original){var finder = ${finder}; var origin = ${original}; if (finder == origin) { original.reset(); return false;}},
-                    submitdata : function(value, settings) {return {'name':\$(this).attr('name'),'table':true,'${attrs.var}.id':\$(this).parent().parent().attr('elemid'),'${attrs.var}.version':\$(this).parent().parent().attr('version')};},
+                    submitdata : function(value, settings) {return {'name':\$(this).attr('name'),'table':true,'id':\$(this).parent().parent().attr('elemid'),'${attrs.var}.version':\$(this).parent().parent().attr('version')};},
                     callback:function(value, settings) {\$(this).html(value.value); \$(this).parent().parent().attr('version',value.version);${attrs.success}},
                     onblur:'${attrs.onExitCell}'
-                    ${attrs.type == 'richarea' ? ", loaddata:function(revert, settings){settings.name = ${detach}; settings.id = '${attrs.var}.id'; return {'${attrs.var}.id':\$(this).parent().parent().attr('elemid')}},loadurl : '" + createLink(action: attrs.action, controller: attrs.controller, params: attrs.params) + "?loadrich=true',markitup : textileSettings" : ""}
+                    ${attrs.type == 'richarea' ? ", loaddata:function(revert, settings){settings.name = ${detach}; settings.id = 'id'; return {'id':\$(this).parent().parent().attr('elemid')}},loadurl : '" + createLink(action: attrs.action, controller: attrs.controller, params: attrs.params) + "?loadrich=true',markitup : textileSettings" : ""}
                 });
              """
         out << jqCode
