@@ -85,7 +85,7 @@ class ProductService {
     }
 
     @PreAuthorize('isAuthenticated()')
-    void saveImport(Product _product, String name, String xmlPath) {
+    void saveImport(Product _product, String name, String importPath) {
         if (!_product.endDate == null)
             throw new IllegalStateException("is.product.error.no.endDate")
         if (_product.startDate > _product.endDate)
@@ -148,8 +148,8 @@ class ProductService {
             }
 
             publishEvent(new IceScrumProductEvent(_product, this.class, (User) springSecurityService.currentUser, IceScrumEvent.EVENT_CREATED))
-            if (xmlPath)
-                publishEvent(new IceScrumProductEvent(_product, new File(xmlPath), this.class, (User) springSecurityService.currentUser, IceScrumProductEvent.EVENT_IMPORTED))
+            if (importPath)
+                publishEvent(new IceScrumProductEvent(_product, new File(importPath), this.class, (User) springSecurityService.currentUser, IceScrumProductEvent.EVENT_IMPORTED))
 
         } catch (Exception e) {
             throw new RuntimeException(e)
@@ -448,6 +448,37 @@ class ProductService {
     @PreAuthorize('isAuthenticated()')
     @Transactional(readOnly = true)
     def parseXML(File x, ProgressSupport progress = null) {
+        def g = grailsApplication.mainContext.getBean('org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib')
+        def prod = new XmlSlurper().parse(x)
+
+        progress?.updateProgress(0, g.message(code: 'is.parse', args: [g.message(code: 'is.product')]))
+
+        XMLConverterSupport converter = new XMLConverterSupport(prod)
+        if (converter.needConversion) {
+            prod = converter.convert()
+        }
+
+        progress?.updateProgress(5, g.message(code: 'is.parse', args: [g.message(code: 'is.product')]))
+        def Product p
+        try {
+            def product = prod
+
+            //be compatible with xml without export tag
+            if (prod.find{it.name == 'export'}){ product = prod.product }
+
+            p = this.unMarshall(product, progress)
+        } catch (RuntimeException e) {
+            if (log.debugEnabled) e.printStackTrace()
+            progress?.progressError(g.message(code: 'is.parse.error', args: [g.message(code: 'is.product')]))
+            return
+        }
+        progress.completeProgress(g.message(code: 'is.validate.complete'))
+        return p
+    }
+
+    @PreAuthorize('isAuthenticated()')
+    @Transactional(readOnly = true)
+    def extract(File x, ProgressSupport progress = null) {
         def g = grailsApplication.mainContext.getBean('org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib')
         def prod = new XmlSlurper().parse(x)
 

@@ -12,6 +12,7 @@ import java.text.SimpleDateFormat
 import org.grails.comments.Comment
 import org.grails.comments.CommentException
 import org.grails.comments.CommentLink
+import org.icescrum.core.domain.Task
 
 class AddonsService implements ApplicationListener<IceScrumProductEvent> {
 
@@ -20,8 +21,51 @@ class AddonsService implements ApplicationListener<IceScrumProductEvent> {
         if (e.type == IceScrumProductEvent.EVENT_IMPORTED){
             addComments((Product) e.source, e.xml)
             addActivities((Product) e.source, e.xml)
+            addAttachments((Product) e.source, e.xml, e.importPath)
         }
     }
+
+    void addAttachments(Product p, def root, File importPath){
+        def defaultU = p.productOwners.first()
+        def tasksCache = []
+        root.'**'.findAll{ it.name() in ["story","actor","task","feature"] }.each{ element ->
+            def elemt = null
+            if (element.attachments.attachment.text()){
+                switch(element.name()){
+                    case 'story':
+                        elemt = p.stories?.find { it.uid == element.@uid.text().toInteger() } ?: null
+                        break
+                    case 'actor':
+                        elemt = p.actors?.find { it.uid == element.@uid.text().toInteger() } ?: null
+                        break
+                    case 'task':
+                        tasksCache = tasksCache ?: Task.getAllInProduct(p.id)
+                        elemt = tasksCache?.find { it.uid == element.@uid.text().toInteger() } ?: null
+                        break
+                    case 'feature':
+                        elemt = p.features?.find { it.uid == element.@uid.text().toInteger() } ?: null
+                        break
+                }
+            }
+            if (elemt){
+                element.attachments.attachment.each{ attachment ->
+                    def u = root.'**'.find{ it.id.text() == attachment.posterId.text() &&  it.@uid.text() }
+                    if(u){
+                        u = User.findByUid(u.@uid.text())
+                    }else if(defaultU){
+                        u = defaultU
+                    }
+                    def originalName = attachment.inputName.text()
+                    def path = "${importPath.absolutePath}${File.separator}attachments${File.separator}${attachment.@id.text()}.${attachment.ext.text()}"
+                    def fileAttch = new File(path)
+                    if (fileAttch.exists()){
+                        elemt.addAttachment(u, fileAttch, originalName)
+                    }
+                }
+            }
+        }
+    }
+    
     void addComments(Product p, def root){
         def defaultU = p.productOwners.first()
         root.'**'.findAll{ it.name() == "story" }.each{ story ->
@@ -121,6 +165,30 @@ class AddonsService implements ApplicationListener<IceScrumProductEvent> {
         }
         c.save()
         def link = new CommentLink(comment:c, commentRef:object.id, type:GrailsNameUtils.getPropertyName(object.class))
+        link.save()
+        c.dateCreated = dateCreated
+    }
+
+    private addAttachment(def object, User poster, String code, String label, Date dateCreated, String desc){
+        def posterClass = poster.class.name
+        def i = posterClass.indexOf('_$$_javassist')
+        if (i > -1)
+            posterClass = posterClass[0..i - 1]
+
+        def c = new Activity(code: code,
+                cachedLabel: label,
+                posterId: poster.id,
+                posterClass: posterClass,
+                cachedId: object.id,
+                cachedDescription: desc)
+        if (!c.validate()) {
+            throw new ActivityException("Cannot create activity for arguments [$poster, $code, $label], they are invalid.")
+        }
+        c.save()
+        def delegateClass = object.class.name
+        i = delegateClass.indexOf('_$$_javassist')
+        if (i > -1) delegateClass = delegateClass[0..i - 1]
+        def link = new ActivityLink(activity: c, activityRef: object.id, type: GrailsNameUtils.getPropertyName(delegateClass))
         link.save()
         c.dateCreated = dateCreated
     }

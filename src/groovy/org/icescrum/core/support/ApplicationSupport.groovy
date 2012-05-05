@@ -28,6 +28,9 @@ import groovyx.net.http.RESTClient
 import grails.util.Metadata
 import org.apache.commons.logging.LogFactory
 import org.icescrum.core.domain.User
+import java.util.zip.ZipOutputStream
+import java.util.zip.ZipEntry
+import java.util.zip.ZipInputStream
 
 
 class ApplicationSupport {
@@ -145,6 +148,66 @@ class ApplicationSupport {
           return null
       }
   }
+
+    static public zipExportFile(File zipfile, File directory, File xml) throws IOException {
+        ZipOutputStream zout = new ZipOutputStream(new FileOutputStream(zipfile))
+        try {
+            if (log.debugEnabled){ log.debug "Zipping : ${xml.name}" }
+            zout.putNextEntry(new ZipEntry(xml.name))
+            zout << new FileInputStream(xml)
+            zout.closeEntry()
+            if (directory.exists()){
+                directory?.eachFileRecurse {
+                    if (log.debugEnabled){ log.debug "Zipping : ${it.name}" }
+                    if (it.isFile()) {
+                        zout.putNextEntry(new ZipEntry(File.separator+'attachments'+File.separator+it.name))
+                        zout << new FileInputStream(it)
+                        zout.closeEntry()
+                    }
+                }
+            }
+        } finally {
+            zout.close()
+        }
+    }
+    
+    static public unzip(File zip, File destination){
+        def result = new ZipInputStream(new FileInputStream(zip))
+
+        if (log.debugEnabled){ log.debug "Unzip file : ${zip.name} to ${destination.absolutePath}" }
+
+        if(!destination.exists()){
+            destination.mkdir();
+        }
+        result.withStream{
+            def entry
+            while(entry = result.nextEntry){
+                if (log.debugEnabled){ log.debug "Unzipping : ${entry.name}" }
+                if (!entry.isDirectory()){
+                    new File(destination.absolutePath + File.separator + entry.name).parentFile?.mkdirs()
+                    def output = new FileOutputStream(destination.absolutePath + File.separator + entry.name)
+                    output.withStream{
+                        int len = 0;
+                        byte[] buffer = new byte[4096]
+                        while ((len = result.read(buffer)) > 0){
+                            output.write(buffer, 0, len);
+                        }
+                    }
+                }
+                else {
+                    new File(destination.absolutePath + File.separator + entry.name).mkdir()
+                }
+            }
+        }
+    }
+
+    static public createTempDir(String name){
+        File dir = File.createTempFile( name, '.dir' )
+        dir.delete()  // delete the file that was created
+        dir.mkdir()   // create a directory in its place.
+        if (log.debugEnabled){ log.debug "Created tmp dir ${dir.absolutePath}" }
+        return dir
+    }
   
 }
 
