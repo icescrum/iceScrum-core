@@ -53,112 +53,112 @@ class ProductService {
     static transactional = true
 
     @PreAuthorize('isAuthenticated()')
-    void save(Product _product, productOwners, stakeHolders) {
-        if (!_product.endDate == null)
+    void save(Product product, productOwners, stakeHolders) {
+        if (!product.endDate == null)
             throw new IllegalStateException("is.product.error.no.endDate")
-        if (_product.startDate > _product.endDate)
+        if (product.startDate > product.endDate)
             throw new IllegalStateException('is.product.error.startDate')
-        if (_product.startDate == _product.endDate)
+        if (product.startDate == product.endDate)
             throw new IllegalStateException('is.product.error.duration')
-        if (!_product.planningPokerGameType in [0, 1])
+        if (!product.planningPokerGameType in [0, 1])
             throw new IllegalStateException("is.product.error.no.estimationSuite")
 
-        _product.orderNumber = (Product.count() ?: 0) + 1
+        product.orderNumber = (Product.count() ?: 0) + 1
 
-        if (!_product.save(flush: true))
+        if (!product.save(flush: true))
             throw new RuntimeException()
-        securityService.secureDomain(_product)
+        securityService.secureDomain(product)
 
         if (productOwners){
             for(productOwner in User.getAll(productOwners*.toLong())){
                 if (productOwner)
-                    addRole(_product, null, productOwner, Authority.PRODUCTOWNER)
+                    addRole(product, null, productOwner, Authority.PRODUCTOWNER)
             }
         }
         if (stakeHolders){
             for(stakeHolder in User.getAll(stakeHolders*.toLong())){
                 if (stakeHolder)
-                    addRole(_product, null, stakeHolder, Authority.STAKEHOLDER)
+                    addRole(product, null, stakeHolder, Authority.STAKEHOLDER)
             }
         }
-        publishEvent(new IceScrumProductEvent(_product, this.class, (User)springSecurityService.currentUser, IceScrumEvent.EVENT_CREATED))
+        publishEvent(new IceScrumProductEvent(product, this.class, (User)springSecurityService.currentUser, IceScrumEvent.EVENT_CREATED))
     }
 
     @PreAuthorize('isAuthenticated()')
-    void saveImport(Product _product, String name, String importPath) {
-        if (!_product.endDate == null)
+    void saveImport(Product product, String name, String importPath) {
+        if (!product.endDate == null)
             throw new IllegalStateException("is.product.error.no.endDate")
-        if (_product.startDate > _product.endDate)
+        if (product.startDate > product.endDate)
             throw new IllegalStateException('is.product.error.startDate')
-        if (_product.startDate == _product.endDate)
+        if (product.startDate == product.endDate)
             throw new IllegalStateException('is.product.error.duration')
-        if (!_product.planningPokerGameType in [0, 1])
+        if (!product.planningPokerGameType in [0, 1])
             throw new IllegalStateException("is.product.error.no.estimationSuite")
-        _product.orderNumber = (Product.count() ?: 0) + 1
+        product.orderNumber = (Product.count() ?: 0) + 1
 
-        if (_product.erasableByUser && _product.name == name) {
-            def p = Product.findByName(_product.name)
+        if (product.erasableByUser && product.name == name) {
+            def p = Product.findByName(product.name)
             p.teams.each{ it.removeFromProducts(p) }
             securityService.unsecureDomain(p)
             p.delete(flush: true)
         }
 
         try {
-            _product.teams.each { t ->
+            product.teams.each { t ->
                 if (t.id == null)
                     teamService.saveImport(t)
                 else {
                     def ts = Team.get(t.id)
-                    ts.removeFromProducts(_product)
-                    ts.addToProducts(_product)
+                    ts.removeFromProducts(product)
+                    ts.addToProducts(product)
                 }
             }
 
-            def productOwners = _product.productOwners
+            def productOwners = product.productOwners
 
             productOwners?.each {
                 if (it.id == null)
                     it.save()
             }
 
-            if (!_product.save()) {
+            if (!product.save()) {
                 throw new RuntimeException()
             }
-            securityService.secureDomain(_product)
+            securityService.secureDomain(product)
 
-            _product.teams.each{
+            product.teams.each{
                it.scrumMasters?.each{ u ->
                    u = User.get(u.id)
-                   securityService.createAdministrationPermissionsForProduct(u,_product)
+                   securityService.createAdministrationPermissionsForProduct(u,product)
                }
             }
 
             if (productOwners) {
                 productOwners?.eachWithIndex {it, index ->
                     it = User.get(it.id)
-                    securityService.createProductOwnerPermissions(it, _product)
+                    securityService.createProductOwnerPermissions(it, product)
                 }
                 def u = productOwners.first()
                 u = User.get(u.id)
-                securityService.changeOwner(u, _product)
+                securityService.changeOwner(u, product)
             } else {
                 def u = User.get(springSecurityService.principal.id)
-                securityService.createProductOwnerPermissions(u, _product)
-                securityService.changeOwner(u, _product)
+                securityService.createProductOwnerPermissions(u, product)
+                securityService.changeOwner(u, product)
             }
 
-            publishEvent(new IceScrumProductEvent(_product, this.class, (User) springSecurityService.currentUser, IceScrumEvent.EVENT_CREATED))
+            publishEvent(new IceScrumProductEvent(product, this.class, (User) springSecurityService.currentUser, IceScrumEvent.EVENT_CREATED))
             if (importPath)
-                publishEvent(new IceScrumProductEvent(_product, new File(importPath), this.class, (User) springSecurityService.currentUser, IceScrumProductEvent.EVENT_IMPORTED))
+                publishEvent(new IceScrumProductEvent(product, new File(importPath), this.class, (User) springSecurityService.currentUser, IceScrumProductEvent.EVENT_IMPORTED))
 
         } catch (Exception e) {
             throw new RuntimeException(e)
         }
     }
 
-    @PreAuthorize('owner(#_product) and !archivedProduct(#_product)')
-    void addTeamsToProduct(Product _product, teamIds) {
-        if (!_product)
+    @PreAuthorize('owner(#product) and !archivedProduct(#product)')
+    void addTeamsToProduct(Product product, teamIds) {
+        if (!product)
             throw new IllegalStateException('Product must not be null')
 
         if (!teamIds)
@@ -168,48 +168,55 @@ class ProductService {
         log.debug teamIds
         for (team in Team.getAll(teamIds*.toLong())) {
             if (team){
-                _product.addToTeams(team)
+                product.addToTeams(team)
                 team.scrumMasters?.each{
-                    securityService.createAdministrationPermissionsForProduct(it, _product)
+                    securityService.createAdministrationPermissionsForProduct(it, product)
                 }
                 team.members?.each{
-                    broadcastToSingleUser(user:it.username, function:'addRoleProduct', message:[class:'User',product:_product])
+                    broadcastToSingleUser(user:it.username, function:'addRoleProduct', message:[class:'User',product:product])
                 }
             }
-            publishEvent(new IceScrumProductEvent(_product, team, this.class, (User) springSecurityService.currentUser, IceScrumProductEvent.EVENT_TEAM_ADDED))
+            publishEvent(new IceScrumProductEvent(product, team, this.class, (User) springSecurityService.currentUser, IceScrumProductEvent.EVENT_TEAM_ADDED))
         }
 
-        if (!_product.save())
+        if (!product.save())
             throw new IllegalStateException('Product not saved')
     }
 
-    @PreAuthorize('(scrumMaster(#_product) or owner(#_product)) and !archivedProduct(#_product)')
-    void update(Product _product, boolean hasHiddenChanged) {
-        if (!_product.name?.trim()) {
+    @PreAuthorize('(scrumMaster(#product) or owner(#product)) and !archivedProduct(#product)')
+    void update(Product product, boolean hasHiddenChanged, String pkeyChanged) {
+        if (!product.name?.trim()) {
             throw new IllegalStateException("is.product.error.no.name")
         }
-        if (!_product.planningPokerGameType in [0, 1]) {
+        if (!product.planningPokerGameType in [0, 1]) {
             throw new IllegalStateException("is.product.error.no.estimationSuite")
         }
 
-        if (hasHiddenChanged && _product.preferences.hidden && !ApplicationSupport.booleanValue(grailsApplication.config.icescrum.project.private.enable)
+        if (hasHiddenChanged && product.preferences.hidden && !ApplicationSupport.booleanValue(grailsApplication.config.icescrum.project.private.enable)
               && !SpringSecurityUtils.ifAnyGranted(Authority.ROLE_ADMIN)) {
-            _product.preferences.hidden = false
+            product.preferences.hidden = false
         }
 
-        if (hasHiddenChanged && !_product.preferences.hidden) {
-            _product.stakeHolders?.each {
-                removeStakeHolder(_product,it)
+        if (hasHiddenChanged && !product.preferences.hidden) {
+            product.stakeHolders?.each {
+                removeStakeHolder(product,it)
             }
         }
 
-        _product.lastUpdated = new Date()
-        if (!_product.save(flush: true)) {
+        if (pkeyChanged){
+            UserPreferences.findAllByLastProductOpened(pkeyChanged)?.each {
+                it.lastProductOpened = product.pkey
+                it.save()
+            }
+        }
+
+        product.lastUpdated = new Date()
+        if (!product.save(flush: true)) {
             throw new RuntimeException()
         }
 
-        broadcast(function: 'update', message: _product)
-        publishEvent(new IceScrumProductEvent(_product, this.class, (User) springSecurityService.currentUser, IceScrumEvent.EVENT_UPDATED))
+        broadcast(function: 'update', message: product)
+        publishEvent(new IceScrumProductEvent(product, this.class, (User) springSecurityService.currentUser, IceScrumEvent.EVENT_UPDATED))
     }
 
     Release getLastRelease(Product p) {
