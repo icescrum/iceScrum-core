@@ -117,6 +117,7 @@ class StoryService {
             p.removeFromStories(_item)
 
             def id = _item.id
+            _item.comments*.delete()
             _item.delete()
 
             p.save()
@@ -308,26 +309,15 @@ class StoryService {
         if (sprint.state == Sprint.STATE_WAIT)
             sprint.capacity = (Double) sprint.stories?.sum { it.effort } ?: 0
 
-        if (sprint.state == Sprint.STATE_INPROGRESS) {
-            def tasks = story.tasks.asList()
-            for (task in tasks) {
-                if (task.state == Task.STATE_DONE) {
-                    taskService.storyTaskToSprintTask(task, Task.TYPE_URGENT, u)
-                } else {
-                    if (!deleteTasks) {
-                        task.state = Task.STATE_WAIT
-                        task.inProgressDate = null
-                    } else {
-                        taskService.delete(task, u)
-                    }
-                }
-            }
-        }
-
         def tasks = story.tasks.asList()
-        if (deleteTasks) {
-            for (task in tasks) {
+        tasks.each { Task task ->
+            if (task.state == Task.STATE_DONE) {
+                taskService.storyTaskToSprintTask(task, Task.TYPE_URGENT, u)
+            } else if (deleteTasks) {
                 taskService.delete(task, u)
+            } else {
+                task.state = Task.STATE_WAIT
+                task.inProgressDate = null
             }
         }
 
