@@ -26,7 +26,7 @@ import org.atmosphere.cpr.BroadcasterFactory
 import org.codehaus.groovy.grails.commons.GrailsClassUtils
 import org.codehaus.groovy.grails.scaffolding.view.ScaffoldingViewResolver
 import org.icescrum.core.services.SecurityService
-import org.icescrum.core.utils.IceScrumDomainClassMarshaller
+import org.icescrum.core.utils.JSONIceScrumDomainClassMarshaller
 import org.springframework.context.ApplicationContext
 import org.springframework.web.context.request.RequestContextHolder
 import org.codehaus.groovy.grails.commons.GrailsApplication
@@ -71,6 +71,8 @@ import org.icescrum.core.ui.UiDefinitionArtefactHandler
 import org.codehaus.groovy.grails.commons.ControllerArtefactHandler
 import org.icescrum.core.domain.Product
 import org.icescrum.core.event.IceScrumApplicationEventMulticaster
+import org.icescrum.core.utils.XMLIceScrumDomainClassMarshaller
+import org.apache.commons.lang.StringEscapeUtils
 
 class IcescrumCoreGrailsPlugin {
     def groupId = 'org.icescrum'
@@ -276,6 +278,7 @@ class IcescrumCoreGrailsPlugin {
             addBroadcastMethods(it, securityService, application)
             addErrorMethod(it)
             addWithObjectsMethods(it)
+            addRenderRESTMethod(it)
             addJasperMethod(it, springSecurityService, jasperService)
         }
         application.serviceClasses.each {
@@ -284,7 +287,20 @@ class IcescrumCoreGrailsPlugin {
     }
 
     def doWithApplicationContext = { applicationContext ->
-        JSON.registerObjectMarshaller(new IceScrumDomainClassMarshaller(true, application.config?.icescrum?.json))
+        //For iceScrum internal
+        def properties = application.config?.icescrum?.marshaller
+        JSON.registerObjectMarshaller(new JSONIceScrumDomainClassMarshaller(true, true, properties), 1)
+        XML.registerObjectMarshaller(new XMLIceScrumDomainClassMarshaller(true, properties), 1)
+
+        properties = application.config?.icescrum?.restMarshaller
+        //For rest API
+        JSON.createNamedConfig('rest'){
+            it.registerObjectMarshaller(new JSONIceScrumDomainClassMarshaller(false, false, properties),2)
+        }
+        XML.createNamedConfig('rest'){
+            it.registerObjectMarshaller(new XMLIceScrumDomainClassMarshaller(false, properties), 2)
+        }
+
         applicationContext.bootStrapService.start()
     }
 
@@ -318,6 +334,7 @@ class IcescrumCoreGrailsPlugin {
 
                 addErrorMethod(event.source)
                 addWithObjectsMethods(event.source)
+                addRenderRESTMethod(event.source)
 
                 SpringSecurityService springSecurityService = event.ctx.getBean('springSecurityService')
                 JasperService jasperService = event.ctx.getBean('jasperService')
@@ -526,29 +543,50 @@ class IcescrumCoreGrailsPlugin {
                     delegate.log.error attrs.exception.getMessage()
                     withFormat {
                         html { render(status: 400, contentType: 'application/json', text: [notice: [text: renderErrors(bean: attrs.object)]] as JSON) }
-                        json { render(status: 500, contentType: 'application/json', text: is.renderErrors(bean: attrs.object, as:'json')) }
-                        xml  { render(status: 500, contentType: 'text/xml', text: is.renderErrors(bean: attrs.object, as:'xml')) }
+                        json {
+                            def errors = []
+                            eachErrorInternal(attrs.object, { errors << [error:[object: it.objectName,field: it.field, message: message(error:it)?.toString(),'rejected-value': StringEscapeUtils.escapeXml(it.rejectedValue)]] })
+                            renderRESTJSON(text:errors, status:500)
+                        }
+                        xml  {
+                            def errors = []
+                            eachErrorInternal(attrs.object, { errors << [error:[object: it.objectName,field: it.field, message: message(error:it)?.toString(),'rejected-value': StringEscapeUtils.escapeXml(it.rejectedValue)]] })
+                            renderRESTXML(text:errors, status:500)
+                        }
                     }
                 }else if(attrs.text){
                     withFormat {
                         html { render(status: 400, contentType: 'application/json', text: [notice: [text:attrs.text?:'error']] as JSON) }
-                        json { render(status: 500, contentType: 'application/json', text: [error: attrs.text?:'error'] as JSON) }
-                        xml  { render(status: 500, contentType: 'text/xml', text: [error: attrs.text?:'error'] as XML) }
+                        json { renderRESTJSON(text:[error: attrs.text?:'error'], status:500) }
+                        xml  { renderRESTXML(text:[error: attrs.text?:'error'], status:500) }
                     }
                 }else{
                     delegate.log.error attrs.exception.getMessage()
                     withFormat {
                         html { render(status: 400, contentType: 'application/json', text: [notice: [text: message(code: attrs.exception.getMessage())]] as JSON) }
-                        json { render(status: 500, contentType: 'application/json', text: [error: message(code: attrs.exception.getMessage())] as JSON) }
-                        xml {  render(status: 500, contentType: 'text/xml', text: [error: message(code: attrs.exception.getMessage())] as XML) }
+                        json { renderRESTJSON(text:[error: message(code: attrs.exception.getMessage())], status:500) }
+                        xml  { renderRESTXML(text:[error: message(code: attrs.exception.getMessage())], status:500) }
                     }
                 }
             }else{
                 withFormat {
                     html { render(status: 400, contentType: 'application/json', text: [notice: [text:attrs.text?:'error']] as JSON) }
-                    json { render(status: 500, contentType: 'application/json', text: [error: attrs.text?:'error'] as JSON) }
-                    xml  { render(status: 500, contentType: 'text/xml', text: [error: attrs.text?:'error'] as XML) }
+                    json { renderRESTJSON(text:[error: attrs.text?:'error'], status:500) }
+                    xml  { renderRESTXML(text:[error: attrs.text?:'error'], status:500) }
                 }
+            }
+        }
+    }
+
+    private addRenderRESTMethod(source) {
+        source.metaClass.renderRESTJSON = { attrs ->
+            JSON.use('rest'){
+                render (status: attrs.status?:200, contentType: 'application/json', text: attrs.text as JSON)
+            }
+        }
+        source.metaClass.renderRESTXML = { attrs ->
+            XML.use('rest'){
+                render(status: attrs.status?:200, contentType: 'application/json', text: attrs.text as XML)
             }
         }
     }
@@ -584,7 +622,7 @@ class IcescrumCoreGrailsPlugin {
         }
     }
 
-    private addWithObjectsMethods = {source ->
+    private addWithObjectsMethods (source) {
         source.metaClass.withFeature = { String id = 'id', Closure c ->
             Feature feature = Feature.getInProduct(params.long('product'), params."$id"?.toLong()).list()[0]
             if (feature) {

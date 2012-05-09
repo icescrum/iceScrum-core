@@ -28,11 +28,11 @@ class UiDefinition {
 
     private final log = LoggerFactory.getLogger(this.class.name)
 
-    private String id
-    private MenuBarDefinition menuBar
-    private WidgetDefinition widget
-    private WindowDefinition window
-    private shortcuts
+    String id
+    MenuBarDefinition menuBar
+    WidgetDefinition widget
+    WindowDefinition window
+    def shortcuts
 
     UiDefinition(String id) {
         this.id = id

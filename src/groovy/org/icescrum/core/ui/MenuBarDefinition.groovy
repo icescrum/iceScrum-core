@@ -28,11 +28,11 @@ class MenuBarDefinition {
 
     private final log = LoggerFactory.getLogger(this.class.name)
 
-    private String title = ''
-    private show // no type because it can be a closure
-    private boolean defaultVisibility
-    private int  defaultPosition
-    private boolean productDynamicBar = false
+    String title = ''
+    def show // no type because it can be a closure
+    boolean defaultVisibility
+    int  defaultPosition
+    boolean productDynamicBar = false
 
     void title(String title) {
         this.title = title

@@ -28,13 +28,13 @@ class WindowDefinition {
 
     private final log = LoggerFactory.getLogger(this.class.name)
 
-    private String init = 'index'
-    private String title = ''
-    private boolean titleBarContent = false
-    private boolean toolbar = true
-    private boolean closeable = true
-    private help = null
-    private boolean maximizeable = true
+    String init = 'index'
+    String title = ''
+    boolean titleBarContent = false
+    boolean toolbar = true
+    boolean closeable = true
+    def help = null
+    boolean maximizeable = true
 
     void init(String init) {
         this.init = init

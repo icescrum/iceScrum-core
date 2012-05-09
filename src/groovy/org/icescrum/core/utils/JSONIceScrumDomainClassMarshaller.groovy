@@ -38,20 +38,22 @@ import grails.util.GrailsNameUtils
 import org.codehaus.groovy.grails.support.proxy.EntityProxyHandler
 import org.icescrum.core.domain.Cliche
 
-public class IceScrumDomainClassMarshaller extends DomainClassMarshaller {
+public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
 
     private ProxyHandler proxyHandler;
-    private ConfigObject configJSON;
+    private Map propertiesMap;
+    private boolean includeClass;
 
-    public IceScrumDomainClassMarshaller(boolean includeVersion, ConfigObject configJSON) {
+    public JSONIceScrumDomainClassMarshaller(boolean includeVersion, boolean includeClass, Map propertiesMap) {
         super(includeVersion)
         this.proxyHandler = new DefaultProxyHandler()
-        this.configJSON = configJSON;
+        this.propertiesMap = propertiesMap;
+        this.includeClass = includeClass;
     }
 
     public boolean supports(Object object) {
         def configName = GrailsNameUtils.getShortName(object.getClass()).toLowerCase()
-        return (ConverterUtil.isDomainClass(object.getClass()) && configJSON."${configName}" != null)
+        return (ConverterUtil.isDomainClass(object.getClass()) && propertiesMap."${configName}" != null)
     }
 
     public void marshalObject(Object value, JSON json) throws ConverterException {
@@ -63,12 +65,13 @@ public class IceScrumDomainClassMarshaller extends DomainClassMarshaller {
         def configName = GrailsNameUtils.getShortName(clazz).toLowerCase()
 
         writer.object();
-        writer.key("class").value(GrailsNameUtils.getShortName(domainClass.getClazz().getName()));
 
-        GrailsDomainClassProperty id = domainClass.getIdentifier();
-        Object idValue = extractValue(value, id);
-
-        json.property("id", idValue);
+        if (this.includeClass){
+            writer.key("class").value(GrailsNameUtils.getShortName(domainClass.getClazz().getName()));
+            GrailsDomainClassProperty id = domainClass.getIdentifier();
+            Object idValue = extractValue(value, id);
+            json.property("id", idValue);
+        }
 
         if (isIncludeVersion()) {
             GrailsDomainClassProperty versionProperty = domainClass.getVersion();
@@ -76,7 +79,16 @@ public class IceScrumDomainClassMarshaller extends DomainClassMarshaller {
             json.property("version", version);
         }
 
-        GrailsDomainClassProperty[] properties = domainClass.getPersistentProperties();
+        List<GrailsDomainClassProperty> properties = domainClass.getPersistentProperties().toList();
+
+        def excludes = []
+        if(propertiesMap.exclude)
+            excludes.addAll(propertiesMap.exclude)
+        if(propertiesMap."${configName}".exclude)
+            excludes.addAll(propertiesMap."${configName}".exclude)
+        if(propertiesMap."${configName}"?.include)
+            excludes.addAll(propertiesMap."${configName}".include)
+        properties.removeAll{ it.getName() in excludes }
 
         for (GrailsDomainClassProperty property: properties) {
             writer.key(property.getName());
@@ -153,7 +165,7 @@ public class IceScrumDomainClassMarshaller extends DomainClassMarshaller {
                 }
             }
         }
-        configJSON."${configName}"?.each {
+        propertiesMap."${configName}"?.include?.each {
             if (value.properties."${it}" != null) {
                 writer.key(it);
                 json.convertAnother(value.properties."${it}");
@@ -183,11 +195,15 @@ public class IceScrumDomainClassMarshaller extends DomainClassMarshaller {
         }
         JSONWriter writer = json.getWriter();
         writer.object();
-        writer.key("class").value(GrailsNameUtils.getShortName(referencedDomainClass.getName()));
+
+        if (this.includeClass){
+            writer.key("class").value(GrailsNameUtils.getShortName(referencedDomainClass.getName()));
+        }
+
         writer.key("id").value(idValue);
 
         def configName = GrailsNameUtils.getShortName(referencedDomainClass.getName()).toLowerCase()
-        configJSON.shortObject?."${configName}"?.each {
+        propertiesMap."${configName}"?.asShort?.each {
             if (refObj.properties."${it}" != null) {
                 writer.key(it);
                 json.convertAnother(refObj.properties."${it}");

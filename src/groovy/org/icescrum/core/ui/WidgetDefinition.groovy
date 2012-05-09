@@ -28,14 +28,14 @@ class WidgetDefinition {
 
     private final log = LoggerFactory.getLogger(this.class.name)
 
-    private String init = 'indexWidget'
-    private String title = ''
-    private boolean titleBarContent = false
-    private boolean toolbar = false
-    private boolean closeable = true
-    private height = false  // no type because it can be either an int or a boolean
-    private boolean sortable = true
-    private show // no type because it can be a closure
+    String init = 'indexWidget'
+    String title = ''
+    boolean titleBarContent = false
+    boolean toolbar = false
+    boolean closeable = true
+    def height = false  // no type because it can be either an int or a boolean
+    boolean sortable = true
+    def show // no type because it can be a closure
 
     void init(String init) {
         this.init = init
