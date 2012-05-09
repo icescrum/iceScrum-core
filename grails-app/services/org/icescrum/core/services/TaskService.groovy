@@ -271,11 +271,13 @@ class TaskService {
 
     @PreAuthorize('inProduct(#task.parentProduct) and !archivedProduct(#task.parentProduct)')
     void delete(Task task, User user) {
-        if (task.state == Task.STATE_DONE && !securityService.scrumMaster(null, springSecurityService.authentication)) {
+        def p = ((Sprint) task.backlog).parentRelease.parentProduct
+        boolean scrumMaster = securityService.scrumMaster(null, springSecurityService.authentication)
+        boolean productOwner = securityService.productOwner(p, springSecurityService.authentication)
+        if (task.state == Task.STATE_DONE && !scrumMaster && !productOwner) {
             throw new IllegalStateException('is.task.error.delete.not.scrumMaster')
         }
-        def p = ((Sprint) task.backlog).parentRelease.parentProduct
-        if (task.responsible && task.responsible.id.equals(user.id) || task.creator.id.equals(user.id) || securityService.productOwner(p, springSecurityService.authentication) || securityService.scrumMaster(null, springSecurityService.authentication)) {
+        if (task.responsible && task.responsible.id.equals(user.id) || task.creator.id.equals(user.id) || productOwner || scrumMaster) {
             task.removeAllAttachments()
             Sprint sprint = (Sprint)task.backlog
             if (task.parentStory) {
