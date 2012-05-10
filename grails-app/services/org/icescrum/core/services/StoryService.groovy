@@ -157,7 +157,7 @@ class StoryService {
                 story.estimatedDate = null
             }
         } else if (story.parentSprint && story.parentSprint.state == Sprint.STATE_WAIT) {
-            story.parentSprint.capacity = (Double) story.parentSprint.stories.sum { it.effort }
+            story.parentSprint.capacity = (Double) story.parentSprint.getTotalEffort()
         }
         if (!story.save())
             throw new RuntimeException()
@@ -188,10 +188,10 @@ class StoryService {
                 story.state = Story.STATE_ESTIMATED
             story.effort = estimation.toInteger()
             story.estimatedDate = new Date()
-        } /*
+        }
         if (story.parentSprint && story.parentSprint.state == Sprint.STATE_WAIT) {
-            story.parentSprint.capacity = (Double) story.parentSprint.stories.sum { it.effort }
-        }    */
+            story.parentSprint.capacity = (Double) story.parentSprint.getTotalEffort()
+        }
         if (!story.save())
             throw new RuntimeException()
 
@@ -268,7 +268,7 @@ class StoryService {
 
         // Calculate the velocity of the sprint
         if (sprint.state == Sprint.STATE_WAIT)
-            sprint.capacity = (Double) sprint.stories.sum { it.effort }
+            sprint.capacity = (Double) sprint.getTotalEffort()
         sprint.save()
 
         story.tasks.findAll {it.state == Task.STATE_WAIT}.each {
