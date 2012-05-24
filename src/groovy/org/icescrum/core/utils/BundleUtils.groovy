@@ -18,6 +18,8 @@
  * Authors:
  *
  * Vincent Barrier (vbarrier@kagilum.com)
+ * Nicolas Noullet (nnoullet@kagilum.com)
+ * Jeroen Broekhuizen (Jeroen.Broekhuizen@quintiq.com)
  */
 package org.icescrum.core.utils
 
@@ -95,6 +97,18 @@ class BundleUtils {
             'pink': 'is.postit.color.pink',
             'bluelight': 'is.postit.color.bluelight'
     ]
+
+	static taskColorsSelect = [
+			'yellow': 'is.postit.color.yellow',
+            'blue': 'is.postit.color.blue',
+            'green': 'is.postit.color.green',
+            'red': 'is.postit.color.red',
+            'orange': 'is.postit.color.orange',
+            'violet': 'is.postit.color.violet',
+            'gray': 'is.postit.color.gray',
+            'pink': 'is.postit.color.pink',
+            'bluelight': 'is.postit.color.bluelight'
+	]
 
     static taskStates = [
             (Task.STATE_WAIT): 'is.task.state.wait',

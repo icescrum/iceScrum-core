@@ -20,6 +20,8 @@
  * Vincent Barrier (vbarrier@kagilum.com)
  * Stéphane Maldini (stephane.maldini@icescrum.com)
  * Manuarii Stein (manuarii.stein@icescrum.com)
+ * Nicolas Noullet (nnoullet@kagilum.com)
+ * Jeroen Broekhuizen (Jeroen.Broekhuizen@quintiq.com)
  */
 
 
@@ -40,6 +42,8 @@ class Task extends BacklogElement implements Serializable {
     static final int TYPE_RECURRENT = 10
     static final int TYPE_URGENT = 11
 
+	String color = "yellow"
+	
     Integer type
     Float estimation
     Integer rank = 0
@@ -78,6 +82,7 @@ class Task extends BacklogElement implements Serializable {
         doneDate nullable: true
         inProgressDate nullable: true
         name unique: 'parentStory'
+		color nullable: true
     }
 
     static namedQueries = {
