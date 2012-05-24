@@ -42,7 +42,7 @@ class Task extends BacklogElement implements Serializable {
     static final int TYPE_RECURRENT = 10
     static final int TYPE_URGENT = 11
 
-	String color = "yellow"
+    String color = "yellow"
 	
     Integer type
     Float estimation
@@ -82,7 +82,7 @@ class Task extends BacklogElement implements Serializable {
         doneDate nullable: true
         inProgressDate nullable: true
         name unique: 'parentStory'
-		color nullable: true
+        color nullable: true
     }
 
     static namedQueries = {

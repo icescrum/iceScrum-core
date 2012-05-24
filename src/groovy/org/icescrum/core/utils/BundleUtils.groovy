@@ -98,8 +98,8 @@ class BundleUtils {
             'bluelight': 'is.postit.color.bluelight'
     ]
 
-	static taskColorsSelect = [
-			'yellow': 'is.postit.color.yellow',
+    static taskColorsSelect = [
+            'yellow': 'is.postit.color.yellow',
             'blue': 'is.postit.color.blue',
             'green': 'is.postit.color.green',
             'red': 'is.postit.color.red',
@@ -108,7 +108,7 @@ class BundleUtils {
             'gray': 'is.postit.color.gray',
             'pink': 'is.postit.color.pink',
             'bluelight': 'is.postit.color.bluelight'
-	]
+    ]
 
     static taskStates = [
             (Task.STATE_WAIT): 'is.task.state.wait',
