@@ -41,8 +41,8 @@ import org.icescrum.core.domain.Story
 import org.icescrum.core.domain.Task
 import org.icescrum.core.domain.Team
 import org.icescrum.core.domain.User
-import org.icescrum.core.security.ScrumDetailsService
 import org.codehaus.groovy.grails.plugins.springsecurity.GrailsUser
+import org.icescrum.core.domain.Actor
 
 class DummyPopulator {
 
@@ -102,6 +102,7 @@ class DummyPopulator {
             p.pkey = 'TESTPROJ'
             p.startDate = new Date().parse('yyyy-M-d', String.format('%tF', new Date()))
             p.preferences = new ProductPreferences()
+            p.preferences.webservices = true
             p.save()
 
             securityService.secureDomain(p)
@@ -136,13 +137,20 @@ class DummyPopulator {
             def feature2 = new Feature(uid: 2, name: 'La feature 2', value: 1, description: 'Une feature', backlog: p, rank: 2, color: 'pink').save()
             def feature3 = new Feature(uid: 3, name: 'La feature 3', value: 1, description: 'Une feature', backlog: p, rank: 3, color: 'orange').save()
 
-            p.addToFeatures(feature).addToFeatures(feature2).addToFeatures(feature3)
+            def actor = new Actor(uid: 1, name: 'ScrumMaster', description: 'Un ScrumMaster', backlog: p).save()
+            def actor2 = new Actor(uid: 2, name: 'ProductOwner', description: 'Un ProductOwner', backlog: p).save()
+            def actor3 = new Actor(uid: 3, name: 'StakeHolder', description: 'Un StakeHolder', backlog: p).save()
+            def actor4 = new Actor(uid: 4, name: 'Team member', description: 'Un Team member', backlog: p).save()
+            def actor5 = new Actor(uid: 5, name: 'visitor', description: 'Un visitor', backlog: p).save()
+
+            p.addToActors(actor).addToActors(actor2).addToActors(actor3).addToActors(actor4).addToActors(actor5).save()
 
             def _storyCount = 0
             def s
             def createStory = {state ->
                 s = new Story(backlog: p,
                         feature: _storyCount % 4 == 0 ? feature : _storyCount % 3 == 0 ? feature3 : feature2,
+                        actor:_storyCount % 5 == 0 ? actor4 : _storyCount % 4 == 0 ? actor : _storyCount % 3 == 0 ? actor3 : actor2,
                         name: "A story $_storyCount",
                         effort: 5,
                         uid: _storyCount + 1,
@@ -156,52 +164,121 @@ class DummyPopulator {
                         description: 'As a user, I can do something awesome',
                         notes: '<b>Un texte en gras</b> hahaha ! <em>et en italique</em>'
                 ).save()
+
+                if (s.state == Story.STATE_ACCEPTED || s.state == Story.STATE_SUGGESTED){
+                    s.estimatedDate = null
+                    s.rank = 0
+                    s.effort = null
+                }
+
                 s.addActivity(ua, state == Story.STATE_SUGGESTED ? Activity.CODE_SAVE : 'acceptAs', s.name)
 
             }
 
-            34.times {
+            80.times {
                 p.addToStories(createStory(it % 5 == 0 ? Story.STATE_SUGGESTED : Story.STATE_ESTIMATED))
             }
             p.save()
 
             sessionFactory.currentSession.flush()
-            storyService.autoPlan(rel, 20)
+            storyService.autoPlan(rel, 40)
 
             int i = 0
             int taskCount = 0
-            for (sp in rel.sprints) {
-                sprintService.activate(sp)
+
+            for(sp in rel.sprints) {
 
                 for (pbi in sp.stories) {
                     i.times {
                         taskCount++
-                        pbi.addToTasks(new Task(uid:taskCount, rank: it + 1, type: null, estimation: 3, name: "task ${it} story : ${pbi.id}", creator: ua, responsible: ua, parentStory: pbi, backlog: sp, creationDate: new Date()))
+                        def task = new Task(uid:taskCount, rank: it + 1, type: null, estimation: 3, name: "task ${it} story : ${pbi.id}", creator: ua, responsible: ua, parentStory: pbi, backlog: sp, creationDate: new Date())
+                        pbi.addToTasks(task)
+                        sp.addToTasks(task)
                     }
                 }
                 if (i == 0)
                     taskCount++
-                sp.addToTasks(new Task(uid:taskCount, type: Task.TYPE_RECURRENT, estimation: 5, name: "task recurrent ${sp.id}", creator: ua, responsible: ua, parentStory: null, backlog: sp, creationDate: new Date()))
-                taskCount++
-                sp.addToTasks(new Task(uid:taskCount, type: Task.TYPE_URGENT, estimation: 4, name: "task urgent ${sp.id}", creator: ua, responsible: ua, parentStory: null, backlog: sp, creationDate: new Date()))
+                20.times{
+                    def task = new Task(uid:taskCount, type: Task.TYPE_RECURRENT, estimation: 5, name: "task recurrent ${sp.id}", creator: ua, responsible: ua, parentStory: null, backlog: sp, creationDate: new Date())
+                    sp.addToTasks(task)
+                    task.save()
+                    taskCount++
 
+                    def task2 = new Task(uid:taskCount, type: Task.TYPE_URGENT, estimation: 4, name: "task urgent ${it} ${sp.id}", creator: ua, responsible: ua, parentStory: null, backlog: sp, creationDate: new Date())
+                    sp.addToTasks(task2)
+                    task2.save()
+                    taskCount++
+                }
                 if (i > 5)
                     break
 
-                2.times {
+                sp.save(flush:true)
+
+                //to keep one sprint with stories in todo
+                if (sp.orderNumber >= 7)
+                    break
+
+
+
+                sprintService.activate(sp)
+
+                10.times {
                     p.addToStories(createStory(it % 3 == 0 ? Story.STATE_ACCEPTED : Story.STATE_ESTIMATED))
                 }
+                p.save()
 
-                for (pbi in sp.stories) {
-                    pbi.state = Story.STATE_DONE
-                    pbi.tasks?.each { t ->
-                        t.state = Task.STATE_DONE
-                        t.estimation = 0
-                        t.doneDate = new Date()
+                if (sp.orderNumber < 6){
+                     for (pbi in sp.stories) {
+                        pbi.state = Story.STATE_DONE
+                        pbi.doneDate = new Date()
+                        pbi.tasks?.each { t ->
+                            t.state = Task.STATE_DONE
+                            t.estimation = 0
+                            t.doneDate = new Date()
+                        }
+                        pbi.save()
                     }
-                    pbi.save()
+                    sp.tasks.findAll{it.type == Task.TYPE_RECURRENT}.each{
+                            it.state = Task.STATE_DONE
+                            it.save()
+                    };
+                    sp.tasks.findAll{it.type == Task.TYPE_URGENT}.each{
+                            it.state = Task.STATE_DONE
+                            it.save()
+                    };
+                    sprintService.close(sp)
+                }else{
+                    sp.tasks.findAll{it.type == Task.TYPE_RECURRENT}.eachWithIndex { it, index ->
+                        if (index > 0 && index < 8){
+                            it.state = Task.STATE_BUSY
+                        }
+                        if (index == 8){
+                            it.state = Task.STATE_DONE
+                        }
+                        it.save()
+                    };
+
+                    sp.tasks.findAll{it.type == Task.TYPE_URGENT}.eachWithIndex { it, index ->
+                        if (index > 0 && index < 8){
+                            it.state = Task.STATE_BUSY
+                        }
+                        if (index == 8){
+                            it.state = Task.STATE_DONE
+                        }
+                        it.save()
+                    };
+
+                    sp.tasks.eachWithIndex{ it, index ->
+                        if (index == 0){
+                            it.state = Task.STATE_DONE
+                        }
+                        else if (index % 2 == 0){
+                            it.state = Task.STATE_BUSY
+
+                        }
+                        it.save()
+                    }
                 }
-                sprintService.close(sp)
 
                 i++
             }

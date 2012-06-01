@@ -34,7 +34,7 @@ class WidgetDefinition {
     boolean toolbar = false
     boolean closeable = true
     def height = false  // no type because it can be either an int or a boolean
-    boolean sortable = true
+    def sortable = true
     def show // no type because it can be a closure
 
     void init(String init) {

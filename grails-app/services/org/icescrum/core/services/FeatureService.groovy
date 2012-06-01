@@ -38,7 +38,7 @@ class FeatureService {
     @PreAuthorize('productOwner(#p) and !archivedProduct(#p)')
     void save(Feature feature, Product p) {
 
-        feature.name = feature.name.trim()
+        feature.name = feature.name?.trim()
 
         def rankProvided = null
         if (feature.rank != 0)

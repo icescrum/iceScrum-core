@@ -84,6 +84,7 @@ class Release extends TimeBox implements Cloneable {
             and {
                 eq 'id', id
             }
+            uniqueResult = true
         }
     }
 

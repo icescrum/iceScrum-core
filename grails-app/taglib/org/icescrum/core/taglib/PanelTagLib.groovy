@@ -114,31 +114,32 @@ class PanelTagLib {
     }
 
     def tabs = { attrs, body ->
-        pageScope.tab = []
+        request.tab = []
         body()
 
         out << "<div id='${attrs.elementId}'>"
         out << "<ul>"
-        pageScope.tab.each { t ->
+        request.tab.each { t ->
             out << "<li><a href='#${t.elementId}'>${t.title}</a></li>"
         }
         out << "</ul>"
-        pageScope.tab.each { t ->
+        request.tab.each { t ->
             out << "<div id='${t.elementId}' class='${t."class" ?: ''}'>${t.content}</div>"
         }
         out << "</div>"
         out << jq.jquery(null, "\$('#${attrs.elementId}').tabs();")
+        request.removeAttribute('tab')
     }
 
     def tab = { attrs, body ->
-        if (pageScope.tab == null) return
+        if (request.tab == null) return
         def param = [
                 elementId: attrs.elementId,
                 title: message(code: attrs.title),
                 content: body() ?: null,
                 "class": attrs."class"
         ]
-        pageScope.tab << param
+        request.tab << param
     }
 
     /**

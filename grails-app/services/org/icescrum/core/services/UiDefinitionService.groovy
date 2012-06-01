@@ -31,6 +31,7 @@ class UiDefinitionService {
     static transactional = false
 
     def grailsApplication
+    def pluginManager
 
     private Map definitionsById
 
@@ -38,15 +39,21 @@ class UiDefinitionService {
         if (log.infoEnabled) { log.info "Loading UI definitions..." }
         definitionsById = new ConcurrentHashMap()
         grailsApplication.uiDefinitionClasses.each{
-            def uiDefinitions = new ConfigSlurper().parse(it.clazz).uiDefinitions
-            if(uiDefinitions instanceof Closure) {
-                if (log.debugEnabled) { log.debug("Evaluating UI definitions from $it.clazz.name") }
-                def builder = new UiDefinitionsBuilder(definitionsById)
-                uiDefinitions.delegate = builder
-                uiDefinitions.resolveStrategy = Closure.DELEGATE_FIRST
-                uiDefinitions()
-            } else {
-                log.warn("UI definitions file $it.clazz.name does not define any UI definition")
+            def config = new ConfigSlurper().parse(it.clazz)
+            def loadable = config.pluginName ? pluginManager.getUserPlugins().find{ it.name == config.pluginName && it.isEnabled() } : true
+            if (loadable){
+                def uiDefinitions = config.uiDefinitions
+                if(uiDefinitions instanceof Closure) {
+                    if (log.debugEnabled) { log.debug("Evaluating UI definitions from $it.clazz.name") }
+                    def builder = new UiDefinitionsBuilder(definitionsById)
+                    uiDefinitions.delegate = builder
+                    uiDefinitions.resolveStrategy = Closure.DELEGATE_FIRST
+                    uiDefinitions()
+                } else {
+                    log.warn("UI definitions file $it.clazz.name does not define any UI definition")
+                }
+            }else{
+                log.warn("UI definitions file $it.clazz.name not loadable")
             }
         }
     }

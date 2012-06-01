@@ -436,6 +436,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
             and {
                 eq 'id', id
             }
+            uniqueResult = true
         }
 
         getInProductUid {p, id ->

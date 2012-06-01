@@ -94,6 +94,7 @@ class Actor extends BacklogElement implements Serializable, Comparable<Actor> {
             and {
                 eq 'id', id
             }
+            uniqueResult = true
         }
     }
 

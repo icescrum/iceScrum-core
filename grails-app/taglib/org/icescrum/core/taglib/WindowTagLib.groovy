@@ -33,6 +33,9 @@ class WindowTagLib {
     static namespace = 'is'
 
     def uiDefinitionService
+    def springSecurityService
+    def grailsApplication
+    def securityService
 
     /**
      * Generate a window
@@ -201,6 +204,7 @@ class WindowTagLib {
             def show = uiDefinition.widget?.show
             if (show in Closure) {
                 show.delegate = delegate
+                show.resolveStrategy = Closure.DELEGATE_FIRST
                 show = show()
             }
             if (show) {
@@ -219,7 +223,7 @@ class WindowTagLib {
             }
         }
         //Widgets with sortable=false can be ordered si a position is set
-        widgetsList.sort {it.sortable.position}
+        widgetsList.sort { it.sortable?.position }
         out << g.render(template: '/components/widgetBar', plugin: 'icescrum-core', model: [widgetsList: widgetsList])
     }
 

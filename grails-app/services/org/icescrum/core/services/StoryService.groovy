@@ -99,7 +99,7 @@ class StoryService {
             }
 
             if (_item.state >= Story.STATE_PLANNED)
-               throw new IllegalStateException()
+               throw new IllegalStateException('is.story.error.not.deleted.state')
 
             if (!springSecurityService.isLoggedIn()){
                 throw new IllegalAccessException()
@@ -110,6 +110,7 @@ class StoryService {
             }
             _item.removeAllAttachments()
             _item.removeLinkByFollow(_item.id)
+
             if (_item.state != Story.STATE_SUGGESTED)
                 resetRank(_item)
 
@@ -178,7 +179,7 @@ class StoryService {
     void estimate(Story story, estimation) {
         def oldState = story.state
         if (story.state < Story.STATE_ACCEPTED || story.state == Story.STATE_DONE)
-            throw new IllegalStateException('is.story.error.estimated')
+            throw new IllegalStateException()
         if (!(estimation instanceof Number) && (estimation instanceof String && !estimation.isNumber())) {
             story.state = Story.STATE_ACCEPTED
             story.effort = null
@@ -307,7 +308,7 @@ class StoryService {
         User u = (User) springSecurityService.currentUser
 
         if (sprint.state == Sprint.STATE_WAIT)
-            sprint.capacity = (Double) sprint.stories?.sum { it.effort } ?: 0
+            sprint.capacity =  (Double)sprint.getTotalEffort()?:0
 
         def tasks = story.tasks.asList()
         tasks.each { Task task ->
@@ -322,6 +323,9 @@ class StoryService {
         }
 
         story.state = Story.STATE_ESTIMATED
+        story.inProgressDate = null
+        story.plannedDate = null
+
         setRank(story, 1)
         if (!story.save(flush: true))
             throw new RuntimeException()
@@ -447,10 +451,14 @@ class StoryService {
             return false
         }
 
+        if (story.state in [Story.STATE_SUGGESTED, Story.STATE_DONE])
+            return false
+
         def stories = null
+
         if (story.state == Story.STATE_ACCEPTED || story.state == Story.STATE_ESTIMATED)
             stories = Story.findAllAcceptedOrEstimated(story.backlog.id).list(order: 'asc', sort: 'rank')
-        else if (story.state == Story.STATE_PLANNED || story.state == Story.STATE_INPROGRESS || story.state == Story.STATE_DONE) {
+        else if (story.state == Story.STATE_PLANNED || story.state == Story.STATE_INPROGRESS) {
             stories = story.parentSprint.stories
             def maxRankInProgress = stories.findAll {it.state != Story.STATE_DONE}?.size()
             if (story.state == Story.STATE_INPROGRESS && rank > maxRankInProgress) {
@@ -582,7 +590,7 @@ class StoryService {
             task.state = Task.STATE_WAIT
             task.description = (task.description ?: '') + ' ' + getTemplateStory(pbi)
 
-            def sprint = (Sprint) Sprint.findCurrentSprint(pbi.backlog.id).list()[0]
+            def sprint = (Sprint) Sprint.findCurrentSprint(pbi.backlog.id).list()
             if (!sprint)
                 throw new IllegalStateException('is.story.error.not.acceptedAsUrgentTask')
 
@@ -649,12 +657,13 @@ class StoryService {
                 throw new IllegalStateException('is.story.error.declareAsDone.state.not.inProgress')
             }
 
+            //Move story to last rank in sprint
+            rank(story, Story.countByParentSprint(story.parentSprint))
+
             story.state = Story.STATE_DONE
             story.doneDate = new Date()
             story.parentSprint.velocity += story.effort
 
-            //Move story to last rank in sprint
-            rank(story, Story.countByParentSprint(story.parentSprint))
 
             if (!story.save())
                 throw new RuntimeException()

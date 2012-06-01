@@ -68,10 +68,11 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
 
         if (this.includeClass){
             writer.key("class").value(GrailsNameUtils.getShortName(domainClass.getClazz().getName()));
-            GrailsDomainClassProperty id = domainClass.getIdentifier();
-            Object idValue = extractValue(value, id);
-            json.property("id", idValue);
         }
+
+        GrailsDomainClassProperty id = domainClass.getIdentifier();
+        Object idValue = extractValue(value, id);
+        json.property("id", idValue);
 
         if (isIncludeVersion()) {
             GrailsDomainClassProperty versionProperty = domainClass.getVersion();

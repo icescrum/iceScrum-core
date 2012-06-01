@@ -89,6 +89,7 @@ class Feature extends BacklogElement implements Serializable {
             and {
                 eq 'id', id
             }
+            uniqueResult = true
         }
     }
 

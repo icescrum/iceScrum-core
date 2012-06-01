@@ -61,12 +61,12 @@ grails.project.dependency.resolution = {
     }
 
     plugins {
-        compile 'org.icescrum:fluxiable:0.3.1'
+        compile 'org.icescrum:fluxiable:0.3.2'
         compile ':burning-image:0.5.0'
-        compile 'org.icescrum:icescrum-attachmentable:0.2.2'
+        compile 'org.icescrum:icescrum-attachmentable:0.3'
         compile 'spring:spring-security-core:1.2.7.3'
         compile 'spring:spring-security-acl:1.1'
-        compile ':commentable:0.7.5'
+        compile 'org.icescrum:commentable:1.0.BUILD-SNAPSHOT'
         compile ':followable:0.3'
         compile ':autobase:1.0.0.0'
         compile ':jdbc-pool:1.0.9.3'

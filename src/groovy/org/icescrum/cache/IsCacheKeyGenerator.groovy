@@ -348,11 +348,12 @@ public class ISKeyGeneratorHelper {
 
     public String retrieveLastUpdatedTask(GrailsParameterMap params){
         def lastUpdated = Task.createCriteria().get{
-            if (params.product && (params.sprint?.id || params.id)){
+            if (params.product && (params.sprint || params.id)){
                 backlog{
-                    eq 'id', params.sprint?.id ? params.sprint.id.toLong() : params.long('id')
+                    eq 'id', params.sprint ? params.sprint.toLong() : params.long('id')
                 }
             }else{
+                params.product = params.product.decodeProductKey()
                 def sprint = Sprint.findCurrentOrNextSprint(params.product.toLong()).list()[0]
                 if (sprint){
                     backlog{

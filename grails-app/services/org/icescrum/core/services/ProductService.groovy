@@ -24,7 +24,6 @@
 
 package org.icescrum.core.services
 
-import grails.plugins.springsecurity.Secured
 import java.text.SimpleDateFormat
 import org.codehaus.groovy.grails.commons.ApplicationHolder
 import org.icescrum.core.domain.preferences.ProductPreferences
@@ -33,7 +32,6 @@ import org.icescrum.core.event.IceScrumEvent
 import org.icescrum.core.event.IceScrumProductEvent
 import org.icescrum.core.support.ProgressSupport
 import org.icescrum.core.support.XMLConverterSupport
-import org.springframework.security.access.prepost.PostFilter
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.transaction.annotation.Transactional
 import org.icescrum.core.domain.*
@@ -652,13 +650,13 @@ class ProductService {
     }
 
     List getAllMembersProduct(def product) {
-        def team = product.teams.asList().first()
+        def team = product.teams?.asList()?.first()?:null
         def productOwners = product.productOwners
         def scrumMasters = team.scrumMasters
         def members = []
         def is = grailsApplication.mainContext.getBean('org.icescrum.core.taglib.ScrumTagLib')
 
-        team.members?.each{
+        team?.members?.each{
             def role = Authority.MEMBER
             if (scrumMasters*.id?.contains(it.id) && productOwners*.id?.contains(it.id)){
                 role = Authority.PO_AND_SM

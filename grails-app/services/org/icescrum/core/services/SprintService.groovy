@@ -55,6 +55,11 @@ class SprintService {
         sprint.orderNumber = (release.sprints?.size() ?: 0) + 1
         def previousSprint = release.sprints?.find { it.orderNumber == sprint.orderNumber - 1}
 
+        release.addToSprints(sprint)
+
+        if (!sprint.validate())
+            throw new RuntimeException()
+
         // Check sprint date integrity
         if (sprint.startDate > sprint.endDate)
             throw new IllegalStateException('is.sprint.error.startDate.after.endDate')
@@ -68,8 +73,6 @@ class SprintService {
         // Check date integrity regarding the previous sprint date
         if (previousSprint && sprint.startDate <= previousSprint.endDate)
             throw new IllegalStateException('is.sprint.error.previous.overlap')
-
-        release.addToSprints(sprint)
 
         if (!sprint.save())
             throw new RuntimeException()
@@ -261,13 +264,14 @@ class SprintService {
 
         def autoCreateTaskOnEmptyStory = sprint.parentRelease.parentProduct.preferences.autoCreateTaskOnEmptyStory
 
-        sprint.stories?.each { pbi ->
-            pbi.state = Story.STATE_INPROGRESS
-            if (autoCreateTaskOnEmptyStory && pbi.tasks?.size() == 0) {
-                def emptyTask = new Task(name: pbi.name, state: Task.STATE_WAIT, description: pbi.description, backlog: sprint)
-                taskService.saveStoryTask(emptyTask, pbi, (User) springSecurityService.currentUser)
+        sprint.stories?.each {
+            it.state = Story.STATE_INPROGRESS
+            it.inProgressDate = new Date()
+            if (autoCreateTaskOnEmptyStory && it.tasks?.size() == 0) {
+                def emptyTask = new Task(name: it.name, state: Task.STATE_WAIT, description: it.description, backlog: sprint)
+                taskService.saveStoryTask(emptyTask, it, (User) springSecurityService.currentUser)
             }
-            pbi.save()
+            it.save()
         }
 
         sprint.state = Sprint.STATE_INPROGRESS
@@ -275,14 +279,6 @@ class SprintService {
 
         sprint.parentRelease.lastUpdated = new Date()
         sprint.parentRelease.parentProduct.lastUpdated = new Date()
-
-        bufferBroadcast()
-        sprint.stories.each {
-            it.inProgressDate = new Date()
-            broadcast(function: 'inProgress', message: it)
-            publishEvent(new IceScrumStoryEvent(it, this.class, (User) springSecurityService.currentUser, IceScrumStoryEvent.EVENT_INPROGRESS))
-        }
-        resumeBufferedBroadcast()
 
         //retrieve last done definition if no done definition in the current sprint
         if (sprint.orderNumber != 1 && !sprint.doneDefinition) {
@@ -298,6 +294,13 @@ class SprintService {
 
         clicheService.createSprintCliche(sprint, new Date(), Cliche.TYPE_ACTIVATION)
         clicheService.createOrUpdateDailyTasksCliche(sprint)
+
+        bufferBroadcast()
+        sprint.stories.each {
+            broadcast(function: 'inProgress', message: it)
+            publishEvent(new IceScrumStoryEvent(it, this.class, (User) springSecurityService.currentUser, IceScrumStoryEvent.EVENT_INPROGRESS))
+        }
+        resumeBufferedBroadcast()
 
         publishEvent(new IceScrumSprintEvent(sprint, this.class, (User) springSecurityService.currentUser, IceScrumSprintEvent.EVENT_ACTIVATED))
         broadcast(function: 'activate', message: sprint)

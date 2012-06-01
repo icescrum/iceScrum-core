@@ -207,8 +207,6 @@ class ReleaseService {
             throw new IllegalStateException('is.release.error.not.state.wait')
         if (release.orderNumber != lastRelClose + 1)
             throw new IllegalStateException('is.release.error.not.next')
-        if (release.sprints.size() <= 0)
-            throw new IllegalStateException('is.release.error.no.sprint')
         release.state = Release.STATE_INPROGRESS
         if (!release.save())
             throw new RuntimeException()
@@ -219,16 +217,18 @@ class ReleaseService {
 
     @PreAuthorize('(productOwner(#release.parentProduct) or scrumMaster(#release.parentProduct)) and !archivedProduct(#release.parentProduct)')
     void close(Release release) {
+        if (release.state != Release.STATE_INPROGRESS)
+            throw new IllegalStateException('is.release.error.not.state.wait')
         def product = release.parentProduct
-        if (release.sprints.size() == 0 || release.sprints.any { it.state != Sprint.STATE_DONE })
+        if (release.sprints.any { it.state != Sprint.STATE_DONE })
             throw new IllegalStateException('is.release.error.sprint.not.done')
         release.state = Release.STATE_DONE
 
         def velocity = release.sprints.sum { it.velocity }
-        velocity = (velocity / release.sprints.size())
+        velocity = release.sprints ? (velocity / release.sprints.size()) : 0
         release.releaseVelocity = velocity.toDouble()
 
-        def lastDate = release.sprints.asList().last().endDate
+        def lastDate = release.sprints ? release.sprints.asList().last().endDate : new Date()
         release.endDate = lastDate
 
         if (release.orderNumber == product.releases.size()) {

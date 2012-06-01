@@ -37,7 +37,6 @@ class BootStrapService {
 
         AuthorityManager.initSecurity()
         ApplicationSupport.generateFolders()
-        ApplicationSupport.createUUID()
         ApplicationSupport.checkNewVersion()
 
         def config = ApplicationHolder.application.config

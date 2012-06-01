@@ -73,6 +73,7 @@ import org.icescrum.core.domain.Product
 import org.icescrum.core.event.IceScrumApplicationEventMulticaster
 import org.icescrum.core.utils.XMLIceScrumDomainClassMarshaller
 import org.apache.commons.lang.StringEscapeUtils
+import org.icescrum.core.support.ApplicationSupport
 
 class IcescrumCoreGrailsPlugin {
     def groupId = 'org.icescrum'
@@ -140,6 +141,7 @@ class IcescrumCoreGrailsPlugin {
 
     def doWithSpring = {
         mergeConfig(application)
+
         if (application.config.springcache.configLocation){
             springcacheCacheManager(EhCacheManagerFactoryBean) {
                 shared = false
@@ -250,10 +252,11 @@ class IcescrumCoreGrailsPlugin {
         asyncApplicationEventMulticaster(IceScrumApplicationEventMulticaster) {
 			persistenceInterceptor = ref("persistenceInterceptor")
 		}
+
+        ApplicationSupport.createUUID()
     }
 
     private void mergeConfig(GrailsApplication app) {
-
       ConfigObject currentConfig = app.config.icescrum
       ConfigSlurper slurper = new ConfigSlurper(Environment.getCurrent().getName());
       ConfigObject secondaryConfig = slurper.parse(app.classLoader.loadClass("DefaultIceScrumCoreConfig"))
@@ -300,7 +303,6 @@ class IcescrumCoreGrailsPlugin {
         XML.createNamedConfig('rest'){
             it.registerObjectMarshaller(new XMLIceScrumDomainClassMarshaller(false, properties), 2)
         }
-
         applicationContext.bootStrapService.start()
     }
 
@@ -537,42 +539,44 @@ class IcescrumCoreGrailsPlugin {
             if (attrs.exception){
 
                 if (delegate.log.debugEnabled)
-                    delegate.log.debug attrs.exception.printStackTrace()
+                    delegate.log.debug attrs.exception
 
                 if (attrs.object && attrs.exception instanceof RuntimeException){
-                    delegate.log.error attrs.exception.getMessage()
+                    if (!delegate.log.debugEnabled && delegate.log.errorEnabled)
+                        delegate.log.error attrs.exception
                     withFormat {
                         html { render(status: 400, contentType: 'application/json', text: [notice: [text: renderErrors(bean: attrs.object)]] as JSON) }
                         json {
-                            def errors = []
-                            eachErrorInternal(attrs.object, { errors << [error:[object: it.objectName,field: it.field, message: message(error:it)?.toString(),'rejected-value': StringEscapeUtils.escapeXml(it.rejectedValue)]] })
-                            renderRESTJSON(text:errors, status:500)
+                            JSON.use('rest'){
+                                render(status: 400, contentType: 'application/json', text: is.renderErrors(bean: attrs.object, as:'json'))
+                            }
                         }
                         xml  {
-                            def errors = []
-                            eachErrorInternal(attrs.object, { errors << [error:[object: it.objectName,field: it.field, message: message(error:it)?.toString(),'rejected-value': StringEscapeUtils.escapeXml(it.rejectedValue)]] })
-                            renderRESTXML(text:errors, status:500)
+                            XML.use('rest'){
+                                render(status: 400, contentType: 'application/xml', text: is.renderErrors(bean: attrs.object, as:'xml'))
+                            }
                         }
                     }
                 }else if(attrs.text){
                     withFormat {
                         html { render(status: 400, contentType: 'application/json', text: [notice: [text:attrs.text?:'error']] as JSON) }
-                        json { renderRESTJSON(text:[error: attrs.text?:'error'], status:500) }
-                        xml  { renderRESTXML(text:[error: attrs.text?:'error'], status:500) }
+                        json { renderRESTJSON(text:[error: attrs.text?:'error'], status:400) }
+                        xml  { renderRESTXML(text:[error: attrs.text?:'error'], status:400) }
                     }
                 }else{
-                    delegate.log.error attrs.exception.getMessage()
+                    if (!delegate.log.debugEnabled && delegate.log.errorEnabled)
+                        delegate.log.error attrs.exception.getMessage()
                     withFormat {
                         html { render(status: 400, contentType: 'application/json', text: [notice: [text: message(code: attrs.exception.getMessage())]] as JSON) }
-                        json { renderRESTJSON(text:[error: message(code: attrs.exception.getMessage())], status:500) }
-                        xml  { renderRESTXML(text:[error: message(code: attrs.exception.getMessage())], status:500) }
+                        json { renderRESTJSON(text:[error: message(code: attrs.exception.getMessage())], status:400) }
+                        xml  { renderRESTXML(text:[error: message(code: attrs.exception.getMessage())], status:400) }
                     }
                 }
             }else{
                 withFormat {
                     html { render(status: 400, contentType: 'application/json', text: [notice: [text:attrs.text?:'error']] as JSON) }
-                    json { renderRESTJSON(text:[error: attrs.text?:'error'], status:500) }
-                    xml  { renderRESTXML(text:[error: attrs.text?:'error'], status:500) }
+                    json { renderRESTJSON(text:[error: attrs.text?:'error'], status:400) }
+                    xml  { renderRESTXML(text:[error: attrs.text?:'error'], status:400) }
                 }
             }
         }
@@ -586,7 +590,7 @@ class IcescrumCoreGrailsPlugin {
         }
         source.metaClass.renderRESTXML = { attrs ->
             XML.use('rest'){
-                render(status: attrs.status?:200, contentType: 'application/json', text: attrs.text as XML)
+                render(status: attrs.status?:200, contentType: 'application/xml', text: attrs.text as XML)
             }
         }
     }
@@ -623,16 +627,19 @@ class IcescrumCoreGrailsPlugin {
     }
 
     private addWithObjectsMethods (source) {
-        source.metaClass.withFeature = { String id = 'id', Closure c ->
-            Feature feature = Feature.getInProduct(params.long('product'), params."$id"?.toLong()).list()[0]
+        source.metaClass.withFeature = { def id = 'id', Closure c ->
+            def feature = (Feature)Feature.getInProduct(params.long('product'), (id instanceof String ? params."$id".toLong() : id) ).list()
             if (feature) {
                 try {
                     c.call feature
                 } catch (AttachmentException e) {
+                    feature.discard()
                     returnError(exception: e)
                 } catch (IllegalStateException e) {
+                    feature.discard()
                     returnError(exception: e)
                 } catch (RuntimeException e) {
+                    feature.discard()
                     if (feature.errors)
                         returnError(object: feature, exception: e)
                     else
@@ -658,16 +665,19 @@ class IcescrumCoreGrailsPlugin {
             }
         }
 
-        source.metaClass.withActor = { String id = 'id', Closure c ->
-            Actor actor = Actor.getInProduct(params.long('product'), params."$id"?.toLong()).list()[0]
+        source.metaClass.withActor = { def id = 'id', Closure c ->
+            def actor = (Actor)Actor.getInProduct(params.long('product'), (id instanceof String ? params."$id".toLong() : id) ).list()
             if (actor) {
                 try {
                     c.call actor
                 } catch (AttachmentException e) {
+                    actor.discard()
                     returnError(exception: e)
                 } catch (IllegalStateException e) {
+                    actor.discard()
                     returnError(exception: e)
                 } catch (RuntimeException e) {
+                    actor.discard()
                     if (actor.errors)
                         returnError(object: actor, exception: e)
                     else
@@ -693,16 +703,19 @@ class IcescrumCoreGrailsPlugin {
             }
         }
 
-        source.metaClass.withStory = { String id = 'id', Closure c ->
-            Story story = Story.getInProduct(params.long('product'), params."$id"?.toLong()).list()[0]
+        source.metaClass.withStory = { def id = 'id', Closure c ->
+            def story = (Story)Story.getInProduct(params.long('product'), (id instanceof String ? params."$id".toLong() : id) ).list()
             if (story) {
                 try {
                     c.call story
                 } catch (AttachmentException e) {
+                    story.discard()
                     returnError(exception: e)
                 } catch (IllegalStateException e) {
+                    story.discard()
                     returnError(exception: e)
                 } catch (RuntimeException e) {
+                    story.discard()
                     if (story.errors)
                         returnError(object: story, exception: e)
                     else
@@ -728,16 +741,19 @@ class IcescrumCoreGrailsPlugin {
             }
         }
 
-        source.metaClass.withTask = { String id = 'id', Closure c ->
-            Task task = Task.getInProduct(params.long('product'), params."$id"?.toLong())
+        source.metaClass.withTask = { def id = 'id', Closure c ->
+            def task = Task.getInProduct(params.long('product'), (id instanceof String ? params."$id".toLong() : id))
             if (task) {
                 try {
                     c.call task
                 } catch (AttachmentException e) {
+                    task.discard()
                     returnError(object: task, exception: e)
                 } catch (IllegalStateException e) {
+                    task.discard()
                     returnError(exception: e)
                 } catch (RuntimeException e) {
+                    task.discard()
                     if (task.errors)
                         returnError(object: task, exception: e)
                     else
@@ -764,18 +780,22 @@ class IcescrumCoreGrailsPlugin {
             }
         }
 
-        source.metaClass.withSprint = { String id = 'id', Closure c ->
-            Sprint sprint = Sprint.getInProduct(params.long('product'), params."$id"?.toLong()).list()[0]
+        source.metaClass.withSprint = { def id = 'id', Closure c ->
+            def sprint = (Sprint)Sprint.getInProduct(params.long('product'), (id instanceof String ? params."$id".toLong() : id) ).list()
             if (sprint) {
                 try {
                     c.call sprint
                 } catch (IllegalStateException ise) {
+                    sprint.discard()
                     returnError(text: message(code: ise.getMessage()))
                 } catch (AttachmentException e) {
+                    sprint.discard()
                     returnError(object: sprint, exception: e)
                 } catch (IllegalStateException e) {
+                    sprint.discard()
                     returnError(exception: e)
                 } catch (RuntimeException e) {
+                    sprint.discard()
                     if (sprint.errors)
                         returnError(object: sprint, exception: e)
                     else
@@ -786,16 +806,19 @@ class IcescrumCoreGrailsPlugin {
             }
         }
 
-        source.metaClass.withRelease = { String id = 'id', Closure c ->
-            Release release = Release.getInProduct(params.long('product'), params."$id"?.toLong()).list()[0]
+        source.metaClass.withRelease = { def id = 'id', Closure c ->
+            def release = (Release)Release.getInProduct(params.long('product'), (id instanceof String ? params."$id".toLong() : id) ).list()
             if (release) {
                 try {
                     c.call release
                 } catch (AttachmentException e) {
+                    release.discard()
                     returnError(object: release, exception: e)
                 } catch (IllegalStateException e) {
+                    release.discard()
                     returnError(exception: e)
                 } catch (RuntimeException e) {
+                    release.discard()
                     if (release.errors)
                         returnError(object: release, exception: e)
                     else
@@ -812,8 +835,10 @@ class IcescrumCoreGrailsPlugin {
                 try {
                     c.call user
                 } catch (IllegalStateException e) {
+                    user.discard()
                     returnError(exception: e)
                 } catch (RuntimeException e) {
+                    user.discard()
                     if (user.errors)
                         returnError(object: user, exception: e)
                     else

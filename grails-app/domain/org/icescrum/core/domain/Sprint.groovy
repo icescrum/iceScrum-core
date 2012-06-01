@@ -65,6 +65,7 @@ class Sprint extends TimeBox implements Serializable {
                 }
             }
             eq 'id', id
+            uniqueResult = true
         }
 
         findCurrentSprint {p ->
@@ -76,7 +77,7 @@ class Sprint extends TimeBox implements Serializable {
                 order("orderNumber", "asc")
             }
             eq 'state', Sprint.STATE_INPROGRESS
-            maxResults(1)
+            uniqueResult = true
         }
 
         findCurrentOrNextSprint {p ->

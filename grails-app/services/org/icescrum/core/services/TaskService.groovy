@@ -178,6 +178,11 @@ class TaskService {
     @PreAuthorize('inProduct(#task.parentProduct) and !archivedProduct(#task.parentProduct)')
     void update(Task task, User user, boolean force = false) {
         def sprint = (Sprint) task.backlog
+
+        if(sprint.state == Sprint.STATE_DONE){
+            throw new IllegalStateException('is.sprint.error.state.not.inProgress')
+        }
+
         if (!(task.state == Task.STATE_DONE && task.doneDate)) {
             checkEstimation(task)
             def p = (Product) sprint.parentRelease.parentProduct
@@ -221,6 +226,8 @@ class TaskService {
                     }
                 }
             }
+        }else{
+            throw new IllegalStateException('is.task.error.done')
         }
         if (!task.save(flush: true)) {
             throw new RuntimeException()
@@ -260,7 +267,7 @@ class TaskService {
      */
     @PreAuthorize('inProduct(#task.parentProduct) and !archivedProduct(#task.parentProduct)')
     boolean unassign(Task task, User user) {
-        if (task.responsible.id != user.id)
+        if (task.responsible?.id != user.id)
             throw new IllegalStateException('is.task.error.unassign.not.responsible')
         if (task.state == Task.STATE_DONE)
             throw new IllegalStateException('is.task.error.done')
@@ -346,6 +353,10 @@ class TaskService {
 
         if(((Sprint)t.backlog).state != Sprint.STATE_INPROGRESS && state >= Task.STATE_BUSY){
             throw new IllegalStateException('is.sprint.error.state.not.inProgress')
+        }
+
+        if (t.state == Task.STATE_DONE){
+            throw new IllegalStateException('is.task.error.done')
         }
 
         if (t.responsible == null && p.preferences.assignOnBeginTask && state >= Task.STATE_BUSY) {
