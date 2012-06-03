@@ -151,6 +151,29 @@ class Sprint extends TimeBox implements Serializable {
         activationDate nullable: true
         closeDate nullable: true
         resource nullable: true
+        endDate(validator:{ val, obj ->
+            if (!val)
+                return ['no.endDate']
+
+            if (val > obj.parentRelease.endDate)
+                return ['out.of.release.bounds']
+            return true
+        })
+        startDate(validator:{ val, obj ->
+            if (!val)
+                return ['no.startDate']
+            if (val < obj.parentRelease.startDate)
+                return ['out.of.release.bounds']
+            if (val > obj.endDate)
+                return ['after.endDate']
+            if (val == obj.endDate)
+                return ['equals.endDate']
+
+            def previousSprint = obj.parentRelease.sprints?.find { it.orderNumber == obj.orderNumber - 1}
+            if (previousSprint && val <= previousSprint.endDate)
+                return ['previous.overlap']
+            return true
+        })
     }
 
     int state = Sprint.STATE_WAIT

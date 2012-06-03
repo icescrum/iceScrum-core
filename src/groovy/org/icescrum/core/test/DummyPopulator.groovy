@@ -129,7 +129,13 @@ class DummyPopulator {
             def rel = new Release(startDate: new Date().parse('yyyy-M-d',
                     String.format('%tF', new Date())), endDate: new Date().parse('yyyy-M-d', String.format('%tF', new Date())) + 120,
                     goal: 'test Goal', description: 'bla', name: "dummy relesase")
+
+            def rel2 = new Release(startDate: new Date().parse('yyyy-M-d',
+                    String.format('%tF', new Date())) + 121, endDate: new Date().parse('yyyy-M-d', String.format('%tF', new Date())) + 241,
+                    goal: 'test Goal 2', description: 'bla 2', name: "dummy relesase 2")
+
             releaseService.save(rel, p)
+            releaseService.save(rel2, p)
             sprintService.generateSprints(rel)
 
 

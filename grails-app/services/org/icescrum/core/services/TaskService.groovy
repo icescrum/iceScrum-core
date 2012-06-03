@@ -180,6 +180,7 @@ class TaskService {
         def sprint = (Sprint) task.backlog
 
         if(sprint.state == Sprint.STATE_DONE){
+            task.discard()
             throw new IllegalStateException('is.sprint.error.state.not.inProgress')
         }
 

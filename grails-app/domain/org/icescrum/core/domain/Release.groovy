@@ -62,6 +62,40 @@ class Release extends TimeBox implements Cloneable {
     static constraints = {
         vision nullable: true
         name(blank: false, unique: 'parentProduct')
+        endDate(validator:{ val, obj ->
+            if (!val){
+                return ['blank']
+            }
+            if(val.after(obj.endDate)){
+                return ['after.startDate']
+            }
+            def r = obj.parentProduct.releases?.find{ it.orderNumber == obj.orderNumber + 1}
+            if (r && val.after(r.startDate)) {
+                return ['after.next']
+            }
+            return true
+        })
+        startDate(validator:{ val, obj ->
+            if (!val){
+                return ['blank']
+            }
+            if(val == obj.endDate){
+                return ['equals.endDate']
+            }
+            if (val.before(obj.parentProduct.startDate)){
+                return ['before.productStartDate']
+            }
+            def r = obj.parentProduct.releases?.find{ it.orderNumber == obj.orderNumber - 1}
+            if (r && val.before(r.endDate)) {
+                return ['before.previous']
+            }
+            return true
+        })
+        state(validator:{ val, obj ->
+            if (val == STATE_DONE && obj.sprints.any { it.state != Sprint.STATE_DONE })
+                return ['sprint.not.done']
+            return true
+        })
     }
 
     static namedQueries = {

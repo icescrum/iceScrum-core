@@ -41,37 +41,18 @@ class ReleaseService {
     def storyService
     def clicheService
     def springSecurityService
-    def g = new org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib()
+    def grailsApplication
 
 
     @PreAuthorize('(productOwner(#product) or scrumMaster(#product) or owner(#product)) and !archivedProduct(#product)')
     void save(Release release, Product product) {
         release.parentProduct = product
-
-        // Check data integrity
-        if (release.endDate == null) {
-            throw new IllegalStateException('is.release.error.no.endDate')
-        } else if (release.startDate.after(release.endDate)) {
-            throw new IllegalStateException('is.release.error.update.startDate.before.endDate')
-        } else if (release.startDate == null) {
-            throw new IllegalStateException('is.release.error.no.startDate')
-        } else if (release.startDate == release.endDate) {
-            throw new IllegalStateException('is.release.error.update.startDate.equals.endDate')
-        } else if (release.startDate.before(product.startDate)) {
-            throw new IllegalStateException('is.release.error.update.startDate.before.productStartDate')
-        } else {
-            Release _r = productService.getLastRelease(product)
-            if (_r != null && _r.endDate.after(release.startDate)) {
-                throw new IllegalStateException('is.release.error.update.startDate.before.previous')
-            }
-        }
         release.state = Release.STATE_WAIT
         // If this is the first release of the product, it is automatically activated
         if (product.releases?.size() <= 0 || product.releases == null) {
             release.state = Release.STATE_INPROGRESS
         }
         release.orderNumber = (product.releases?.size() ?: 0) + 1
-
         if (!release.save(flush: true))
             throw new RuntimeException()
         product.addToReleases(release)
@@ -84,34 +65,15 @@ class ReleaseService {
     @PreAuthorize('(productOwner(#release.parentProduct) or scrumMaster(#release.parentProduct)) and !archivedProduct(#release.parentProduct)')
     void update(Release release, Date startDate = null, Date endDate = null) {
         def product = release.parentProduct
-        if (!startDate) {
-            startDate = release.startDate
-        }
 
-        if (!endDate) {
-            endDate = release.endDate
-        }
+        startDate = startDate ?: release.startDate
+        endDate = endDate ?: release.endDate
 
-        if (release.state == Release.STATE_DONE)
+        if (release.state == Release.STATE_DONE){
             throw new IllegalStateException('is.release.error.update.state.done')
-
-        // Check sprint date integrity
-        if (startDate > endDate)
-            throw new IllegalStateException('is.release.error.update.startDate.before.endDate')
-        if (startDate == endDate)
-            throw new IllegalStateException('is.release.error.update.startDate.equals.endDate')
-        if (startDate.before(product.startDate)) {
-            throw new IllegalStateException('is.release.error.update.startDate.before.productStartDate')
         }
+
         int ind = product.releases.asList().indexOf(release)
-
-        // Check that the start date is after the previous release end date
-        if (ind > 0) {
-            Release _previous = product.releases.asList()[ind - 1]
-            if (_previous.endDate.after(startDate)) {
-                throw new IllegalStateException('is.release.error.update.startDate.before.previous')
-            }
-        }
 
         def sprintService = (SprintService) ApplicationHolder.application.mainContext.getBean('sprintService');
 
@@ -192,21 +154,19 @@ class ReleaseService {
 
     @PreAuthorize('(productOwner(#release.parentProduct) or scrumMaster(#release.parentProduct)) and !archivedProduct(#release.parentProduct)')
     void activate(Release release) {
-        def relActivated = false
-        def lastRelClose = 0
-        def product = release.parentProduct
-        product.releases.sort {a, b -> a.orderNumber <=> b.orderNumber}.eachWithIndex { r, i ->
-            if (r.state == Release.STATE_INPROGRESS)
-                relActivated = true
-            else if (r.state == Release.STATE_DONE)
-                lastRelClose = r.orderNumber
-        }
-        if (relActivated)
-            throw new IllegalStateException('is.release.error.already.active')
+
         if (release.state != Release.STATE_WAIT)
             throw new IllegalStateException('is.release.error.not.state.wait')
-        if (release.orderNumber != lastRelClose + 1)
+
+        def product = release.parentProduct
+
+        if (product.releases.find{it.state == Release.STATE_INPROGRESS})
+            throw new IllegalStateException('is.release.error.already.active')
+
+        def lastRelease = product.releases.findAll{it.state == Release.STATE_DONE}.max{ it.orderNumber }
+        if ( lastRelease.orderNumber + 1 != release.orderNumber)
             throw new IllegalStateException('is.release.error.not.next')
+
         release.state = Release.STATE_INPROGRESS
         if (!release.save())
             throw new RuntimeException()
@@ -219,9 +179,9 @@ class ReleaseService {
     void close(Release release) {
         if (release.state != Release.STATE_INPROGRESS)
             throw new IllegalStateException('is.release.error.not.state.wait')
+
         def product = release.parentProduct
-        if (release.sprints.any { it.state != Sprint.STATE_DONE })
-            throw new IllegalStateException('is.release.error.sprint.not.done')
+
         release.state = Release.STATE_DONE
 
         def velocity = release.sprints.sum { it.velocity }
@@ -284,6 +244,7 @@ class ReleaseService {
 
     @Transactional(readOnly = true)
     def unMarshall(def release, Product p = null, ProgressSupport progress) {
+        def g = grailsApplication.mainContext.getBean('org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib')
         try {
             def r = new Release(
                     state: release.state.text().toInteger(),

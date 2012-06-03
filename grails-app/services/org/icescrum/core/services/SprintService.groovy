@@ -53,26 +53,11 @@ class SprintService {
             throw new IllegalStateException('is.sprint.error.release.done')
 
         sprint.orderNumber = (release.sprints?.size() ?: 0) + 1
-        def previousSprint = release.sprints?.find { it.orderNumber == sprint.orderNumber - 1}
 
         release.addToSprints(sprint)
 
         if (!sprint.validate())
             throw new RuntimeException()
-
-        // Check sprint date integrity
-        if (sprint.startDate > sprint.endDate)
-            throw new IllegalStateException('is.sprint.error.startDate.after.endDate')
-        if (sprint.startDate == sprint.endDate)
-            throw new IllegalStateException('is.sprint.error.startDate.equals.endDate')
-
-        // Check date integrity regarding the release dates
-        if (sprint.startDate < release.startDate || sprint.endDate > release.endDate)
-            throw new IllegalStateException('is.sprint.error.out.of.release.bounds')
-
-        // Check date integrity regarding the previous sprint date
-        if (previousSprint && sprint.startDate <= previousSprint.endDate)
-            throw new IllegalStateException('is.sprint.error.previous.overlap')
 
         if (!sprint.save())
             throw new RuntimeException()
@@ -88,19 +73,14 @@ class SprintService {
      */
     void update(Sprint sprint, Date startDate, Date endDate, def checkIntegrity = true) {
 
-        def previousSprint = sprint.parentRelease.sprints?.find { it.orderNumber == sprint.orderNumber - 1}
-        def nextSprint = sprint.parentRelease.sprints?.find { it.orderNumber == sprint.orderNumber + 1}
+        if (!sprint.validate())
+            throw new RuntimeException()
 
         if (checkIntegrity) {
             // A done sprint cannot be modified
-            if (sprint.state == Sprint.STATE_DONE)
+            if (sprint.state == Sprint.STATE_DONE){
                 throw new IllegalStateException('is.sprint.error.update.done')
-
-            // Check sprint date integrity
-            if (startDate > endDate)
-                throw new IllegalStateException('is.sprint.error.startDate.after.endDate')
-            if (startDate == endDate)
-                throw new IllegalStateException('is.sprint.error.startDate.equals.endDate')
+            }
 
             // If the sprint is in INPROGRESS state, cannot change the startDate
             if (sprint.state == Sprint.STATE_INPROGRESS) {
@@ -108,16 +88,9 @@ class SprintService {
                     throw new IllegalStateException('is.sprint.error.update.startdate.inprogress')
                 }
             }
-
-            // Check date integrity regarding the release dates
-            if (startDate < sprint.parentRelease.startDate || endDate > sprint.parentRelease.endDate)
-                throw new IllegalStateException('is.sprint.error.out.of.release.bounds')
         }
 
-        // Check date integrity regarding the previous sprint date
-        if (previousSprint && startDate <= previousSprint.endDate)
-            throw new IllegalStateException('is.sprint.error.previous.overlap')
-
+        def nextSprint = sprint.parentRelease.sprints?.find { it.orderNumber == sprint.orderNumber + 1}
         // If the end date has changed and overlap the next sprint start date,
         // the sprints coming after are shifted
         if (sprint.endDate != endDate && nextSprint && endDate >= nextSprint.startDate) {
@@ -350,9 +323,7 @@ class SprintService {
             throw new RuntimeException()
         }
 
-        sprint.refresh()
-
-        clicheService.createSprintCliche(sprint, new Date(), Cliche.TYPE_CLOSE)
+        clicheService.createSprintCliche(sprint.refresh(), new Date(), Cliche.TYPE_CLOSE)
         clicheService.createOrUpdateDailyTasksCliche(sprint)
 
         broadcast(function: 'close', message: sprint)

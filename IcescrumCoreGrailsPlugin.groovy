@@ -74,6 +74,7 @@ import org.icescrum.core.event.IceScrumApplicationEventMulticaster
 import org.icescrum.core.utils.XMLIceScrumDomainClassMarshaller
 import org.apache.commons.lang.StringEscapeUtils
 import org.icescrum.core.support.ApplicationSupport
+import org.springframework.validation.Errors
 
 class IcescrumCoreGrailsPlugin {
     def groupId = 'org.icescrum'
@@ -633,13 +634,10 @@ class IcescrumCoreGrailsPlugin {
                 try {
                     c.call feature
                 } catch (AttachmentException e) {
-                    feature.discard()
                     returnError(exception: e)
                 } catch (IllegalStateException e) {
-                    feature.discard()
                     returnError(exception: e)
                 } catch (RuntimeException e) {
-                    feature.discard()
                     if (feature.errors)
                         returnError(object: feature, exception: e)
                     else
@@ -671,13 +669,10 @@ class IcescrumCoreGrailsPlugin {
                 try {
                     c.call actor
                 } catch (AttachmentException e) {
-                    actor.discard()
                     returnError(exception: e)
                 } catch (IllegalStateException e) {
-                    actor.discard()
                     returnError(exception: e)
                 } catch (RuntimeException e) {
-                    actor.discard()
                     if (actor.errors)
                         returnError(object: actor, exception: e)
                     else
@@ -709,13 +704,10 @@ class IcescrumCoreGrailsPlugin {
                 try {
                     c.call story
                 } catch (AttachmentException e) {
-                    story.discard()
                     returnError(exception: e)
                 } catch (IllegalStateException e) {
-                    story.discard()
                     returnError(exception: e)
                 } catch (RuntimeException e) {
-                    story.discard()
                     if (story.errors)
                         returnError(object: story, exception: e)
                     else
@@ -747,13 +739,10 @@ class IcescrumCoreGrailsPlugin {
                 try {
                     c.call task
                 } catch (AttachmentException e) {
-                    task.discard()
                     returnError(object: task, exception: e)
                 } catch (IllegalStateException e) {
-                    task.discard()
                     returnError(exception: e)
                 } catch (RuntimeException e) {
-                    task.discard()
                     if (task.errors)
                         returnError(object: task, exception: e)
                     else
@@ -786,16 +775,12 @@ class IcescrumCoreGrailsPlugin {
                 try {
                     c.call sprint
                 } catch (IllegalStateException ise) {
-                    sprint.discard()
                     returnError(text: message(code: ise.getMessage()))
                 } catch (AttachmentException e) {
-                    sprint.discard()
                     returnError(object: sprint, exception: e)
                 } catch (IllegalStateException e) {
-                    sprint.discard()
                     returnError(exception: e)
                 } catch (RuntimeException e) {
-                    sprint.discard()
                     if (sprint.errors)
                         returnError(object: sprint, exception: e)
                     else
@@ -812,13 +797,10 @@ class IcescrumCoreGrailsPlugin {
                 try {
                     c.call release
                 } catch (AttachmentException e) {
-                    release.discard()
                     returnError(object: release, exception: e)
                 } catch (IllegalStateException e) {
-                    release.discard()
                     returnError(exception: e)
                 } catch (RuntimeException e) {
-                    release.discard()
                     if (release.errors)
                         returnError(object: release, exception: e)
                     else
