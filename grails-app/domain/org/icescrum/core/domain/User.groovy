@@ -49,6 +49,7 @@ class User implements Serializable, Attachmentable {
     String uid
 
     boolean enabled = true
+    boolean accountExternal = false
     boolean accountExpired
     boolean accountLocked
     boolean passwordExpired

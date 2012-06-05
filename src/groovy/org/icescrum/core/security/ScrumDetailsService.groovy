@@ -43,7 +43,7 @@ class ScrumDetailsService extends GormUserDetailsService {
         Class<?> User = grailsApplication.getDomainClass(conf.userLookup.userDomainClassName).clazz
 
         User.withTransaction { status ->
-            def user = User.findWhere((conf.userLookup.usernamePropertyName): username)
+            def user = User.findWhere((conf.userLookup.usernamePropertyName): username, accountExternal:false)
             if (!user) {
                 log.warn "User not found: $username"
                 throw new UsernameNotFoundException('User not found', username)

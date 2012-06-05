@@ -405,6 +405,8 @@ class FormTagLib {
         def typedAttrs = attrs.typed ?: null
         attrs.remove('typed')
 
+        attrs.disabled ?: attrs.remove('disabled')
+
         out << "<span id=\"${attrs.id}-field\" class=\"${attrs."class"}\">"
         out << "<span class=\"start\"></span>"
         out << "<span class=\"content\">"

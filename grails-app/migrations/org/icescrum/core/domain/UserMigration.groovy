@@ -82,6 +82,24 @@ class UserMigration {
                 sql('UPDATE icescrum2_user set uid = MD5(CONCAT(username,email)) WHERE uid is NULL')
                 addNotNullConstraint(tableName:"icescrum2_user",columnName:'uid',columnDataType:'varchar(255)')
             }
+
+            changeSet(id:'user_constraint_external_column', author:'vbarrier') {
+                preConditions(onFail:"MARK_RAN"){
+                    not{
+                        dbms(type:'mssql')
+                    }
+                }
+                sql('UPDATE icescrum2_user set account_external = false WHERE account_external is NULL')
+                addNotNullConstraint(tableName:"icescrum2_user",columnName:'account_external',columnDataType:'BOOLEAN')
+            }
+
+            changeSet(id:'user_constraint_external_column_mssql', author:'vbarrier') {
+                preConditions(onFail:"MARK_RAN"){
+                    dbms(type:'mssql')
+                }
+                sql('UPDATE icescrum2_user set account_external = 0 WHERE account_external is NULL')
+                addNotNullConstraint(tableName:"icescrum2_user",columnName:'account_external',columnDataType:'BIT')
+            }
     }
 }
 

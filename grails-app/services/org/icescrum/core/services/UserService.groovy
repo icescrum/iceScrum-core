@@ -192,6 +192,7 @@ class UserService {
                         accountExpired: user.accountExpired.text().toBoolean() ?: false,
                         accountLocked: user.accountLocked.text().toBoolean() ?: false,
                         passwordExpired: user.passwordExpired.text().toBoolean() ?: false,
+                        accountExternal: user.accountExternal?.text()?.toBoolean() ?: false,
                         uid: user.@uid.text() ?: (user.username.text() + user.email.text()).encodeAsMD5()
                 )
 
