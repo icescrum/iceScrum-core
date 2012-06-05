@@ -787,16 +787,23 @@ class FormTagLib {
             attrs.id = 'button-bar'
 
         pageScope.parent = "true"
+        pageScope.leftButtonBar = ""
+
+        def content = body()
 
         out << "<div class=\"field-buttons\" id=\"${attrs.id}\">"
         out << "<table cellpadding=\"0\" cellspacing=\"0\" border=\"0\">"
         out << "<tr>"
-        out << "<td width=\"50%\">&nbsp;</td>"
-        out << body()
+        out << "<td class=\"left-buttons\" width=\"50%\">${pageScope.leftButtonBar?:'&nbsp;'}</td>"
+        out <<  content
         out << "<td width=\"50%\">&nbsp;</td>"
         out << "</tr>"
         out << "</table>"
         out << "</div>"
+    }
+
+    def leftButtonBar = {attrs, body ->
+        pageScope.leftButtonBar = body()?:null
     }
 
     def fieldInformation = {attrs, body ->
