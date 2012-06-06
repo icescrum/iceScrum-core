@@ -311,6 +311,7 @@ class TaskService {
                 rank: Task.countByParentStoryAndType(task.parentStory, task.type) + 1,
                 state: clonedState,
                 creator: user,
+                color: task.color,
                 description: task.description,
                 notes: task.notes,
                 dateCreated: new Date(),
