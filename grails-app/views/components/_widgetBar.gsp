@@ -17,6 +17,12 @@
   --}%
 <div class="widget-bar">
   <div id="widget-list">
+    <sec:ifLoggedIn>
+        <div class="upgrade" style="display:none;">
+            <span class="close"><g:message code="is.upgrade.icescrum.pro.hide"/></span>
+            <g:message code="is.upgrade.icescrum.pro"/>
+        </div>
+    </sec:ifLoggedIn>
     <g:each in="${widgetsList}" var="widget">
       <is:widget attrs="${widget}"/>
     </g:each>
@@ -42,6 +48,5 @@
     hoverClass: 'local-active',
     accept: '.widgetable'
   });
-
 </jq:jquery>
 
