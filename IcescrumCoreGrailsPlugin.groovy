@@ -277,6 +277,7 @@ class IcescrumCoreGrailsPlugin {
         application.controllerClasses.each {
             if(uiDefinitionService.hasDefinition(it.logicalPropertyName)) {
                 def plugin = it.hasProperty('pluginName') ? it.getPropertyValue('pluginName') : null
+                println "Add UI Controller methods for ${it.logicalPropertyName}"
                 addUIControllerMethods(it, ctx, plugin)
             }
             addBroadcastMethods(it, securityService, application)
@@ -358,7 +359,7 @@ class IcescrumCoreGrailsPlugin {
                         render(plugin: pluginName, template: "window/toolbar", model: [currentView: session.currentView, id: controllerName])
                     } catch (Exception e) {
                         render('')
-                        e.printStackTrace()
+                        log.debug(e.getMessage())
                     }
                 },
                 toolbarWidget: {->
@@ -366,7 +367,7 @@ class IcescrumCoreGrailsPlugin {
                         render(plugin: pluginName, template: "widget/toolbar", model: [id: controllerName])
                     } catch (Exception e) {
                         render('')
-                        e.printStackTrace()
+                        log.debug(e.getMessage())
                     }
                 },
                 titleBarContent: {
@@ -374,7 +375,7 @@ class IcescrumCoreGrailsPlugin {
                         render(plugin: pluginName, template: "window/titleBarContent", model: [id: controllerName])
                     } catch (Exception e) {
                         render('')
-                        e.printStackTrace()
+                        log.debug(e.getMessage())
                     }
                 },
                 titleBarContentWidget: {
@@ -382,7 +383,7 @@ class IcescrumCoreGrailsPlugin {
                         render(plugin: pluginName, template: "widget/titleBarContent", model: [id: controllerName])
                     } catch (Exception e) {
                         render('')
-                        e.printStackTrace()
+                        log.debug(e.getMessage())
                     }
                 }
         ]
