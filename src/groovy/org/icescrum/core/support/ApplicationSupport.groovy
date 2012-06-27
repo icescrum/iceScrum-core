@@ -112,6 +112,9 @@ class ApplicationSupport {
     def fileID = new File(filePath)
 
     if(!fileID.exists() || !fileID.readLines()[0]){
+        if (!fileID.exists()){
+            fileID.parentFile.mkdirs()
+        }
         !fileID.exists() ?: fileID.delete()
         if (!fileID.createNewFile()){
             println "Error could not create file : ${filePath} please check directory & user permission"
