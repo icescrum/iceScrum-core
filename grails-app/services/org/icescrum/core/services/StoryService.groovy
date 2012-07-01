@@ -313,6 +313,7 @@ class StoryService {
         def tasks = story.tasks.asList()
         tasks.each { Task task ->
             if (task.state == Task.STATE_DONE) {
+                task.doneDate = null
                 taskService.storyTaskToSprintTask(task, Task.TYPE_URGENT, u)
             } else if (deleteTasks) {
                 taskService.delete(task, u)
