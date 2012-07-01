@@ -167,7 +167,7 @@ class TaskService {
         task.parentStory = null
         task.type = type
         update(task, user)
-        story.addActivity(user, (type == Task.TYPE_URGENT ? 'taskAssociateUrgent' : 'taskAssociateRecurrent'), task.name)
+        //story.addActivity(user, (type == Task.TYPE_URGENT ? 'taskAssociateUrgent' : 'taskAssociateRecurrent'), task.name)
     }
 
     /**
