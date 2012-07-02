@@ -699,8 +699,13 @@ class IcescrumCoreGrailsPlugin {
             }
         }
 
-        source.metaClass.withStory = { def id = 'id', Closure c ->
-            def story = (Story)Story.getInProduct(params.long('product'), (id instanceof String ? params."$id".toLong() : id) ).list()
+        source.metaClass.withStory = { def id = 'id', def uid = false, Closure c ->
+            def story
+            if (uid)
+                story = (Story)Story.getInProductUid(params.long('product'), (id instanceof String ? params."$id".toInteger() : id) ).list()
+            else
+                story = (Story)Story.getInProduct(params.long('product'), (id instanceof String ? params."$id".toLong() : id) ).list()
+
             if (story) {
                 try {
                     c.call story
