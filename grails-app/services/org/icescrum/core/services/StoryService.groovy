@@ -118,7 +118,7 @@ class StoryService {
             p.removeFromStories(_item)
 
             def id = _item.id
-            _item.comments*.delete()
+            _item.deleteComments()
             _item.delete()
 
             p.save()
