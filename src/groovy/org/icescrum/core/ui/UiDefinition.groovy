@@ -28,14 +28,16 @@ class UiDefinition {
 
     private final log = LoggerFactory.getLogger(this.class.name)
 
+    boolean disabled
     String id
     MenuBarDefinition menuBar
     WidgetDefinition widget
     WindowDefinition window
     def shortcuts
 
-    UiDefinition(String id) {
+    UiDefinition(String id, boolean disabled) {
         this.id = id
+        this.disabled = disabled
     }
     
     void menuBar(Closure menuBarClosure) {

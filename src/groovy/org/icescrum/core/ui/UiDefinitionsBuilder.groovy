@@ -30,15 +30,17 @@ class UiDefinitionsBuilder {
     private final log = LoggerFactory.getLogger(this.class.name)
 
     private ConcurrentHashMap definitionsById
+    private boolean disabled = false
     
-    UiDefinitionsBuilder(ConcurrentHashMap definitionsById) {
+    UiDefinitionsBuilder(ConcurrentHashMap definitionsById, boolean disabled) {
         this.definitionsById = definitionsById
+        this.disabled = disabled
     }
 
     def invokeMethod(String name, args) {
         if (args.size() == 1 && args[0] instanceof Closure) {
             def uiDefinitionClosure = args[0]
-            UiDefinition uiDefinition = new UiDefinition(name)
+            UiDefinition uiDefinition = new UiDefinition(name, disabled)
             uiDefinitionClosure.delegate = uiDefinition
             uiDefinitionClosure.resolveStrategy = Closure.DELEGATE_FIRST
             uiDefinitionClosure()
@@ -46,7 +48,7 @@ class UiDefinitionsBuilder {
                 log.warn("UI definition for $name will be overriden")
             }
             definitionsById[name] = uiDefinition
-            if (log.debugEnabled) { log.debug("Added new UI definition for $name") }
+            if (log.debugEnabled) { log.debug("Added new UI definition for $name and status is : ${disabled ? 'disabled' : 'enabled'}") }
         }
     }
 }
