@@ -277,7 +277,6 @@ class IcescrumCoreGrailsPlugin {
         application.controllerClasses.each {
             if(uiDefinitionService.hasDefinition(it.logicalPropertyName)) {
                 def plugin = it.hasProperty('pluginName') ? it.getPropertyValue('pluginName') : null
-                println "Add UI Controller methods for ${it.logicalPropertyName}"
                 addUIControllerMethods(it, ctx, plugin)
             }
             addBroadcastMethods(it, securityService, application)
