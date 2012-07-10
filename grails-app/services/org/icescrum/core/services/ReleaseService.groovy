@@ -218,8 +218,10 @@ class ReleaseService {
             product.removeFromReleases((Release) it)
             broadcast(function: 'delete', message: [class: it.class, id: it.id])
         }
-        product.endDate = product.releases?.min {it.orderNumber}?.endDate ?: null
-
+        def lastRelease = product.releases?.min {it.orderNumber}
+        product.endDate = lastRelease?.endDate ?: null
+        lastRelease?.lastUpdated = new Date()
+        lastRelease?.save()
         broadcast(function: 'delete', message: [class: release.class, id: release.id])
     }
 
