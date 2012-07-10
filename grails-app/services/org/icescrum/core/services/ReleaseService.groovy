@@ -275,6 +275,12 @@ class ReleaseService {
                     progress?.updateProgress((release.sprints.sprint.size() * (index + 1) / 100).toInteger(), g.message(code: 'is.parse', args: [g.message(code: 'is.sprint')]))
                 }
                 p.addToReleases(r)
+                release.features?.feature?.each { feature ->
+                    def f = p.features.find { it.uid == feature.@uid.text().toInteger() } ?: null
+                    if (f) {
+                        r.addToFeatures(f)
+                    }
+                }
             }
             return r
         } catch (Exception e) {

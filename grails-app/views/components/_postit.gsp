@@ -27,7 +27,7 @@
             <g:elseif test="${type == 'task'}">
                 <p class="postit-id"><is:scrumLink controller="task" id="${id}">${miniId}</is:scrumLink></p>
             </g:elseif>
-            <g:else test="">
+            <g:else>
                 <p class="postit-id">${miniId}</p>
             </g:else>
         </g:if>

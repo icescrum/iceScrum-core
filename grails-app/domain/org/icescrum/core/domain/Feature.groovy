@@ -45,7 +45,8 @@ class Feature extends BacklogElement implements Serializable {
     static transients = ['countFinishedStories']
 
     static belongsTo = [
-            parentDomain: Domain
+            parentDomain: Domain,
+            parentRelease: Release
     ]
 
     static hasMany = [stories: Story]
@@ -61,6 +62,7 @@ class Feature extends BacklogElement implements Serializable {
 
     static constraints = {
         parentDomain(nullable: true)
+        parentRelease(nullable: true)
         value(nullable: true)
     }
 

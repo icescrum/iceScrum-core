@@ -14,6 +14,8 @@ import org.icescrum.core.domain.Story
 class IceScrumFeatureEvent extends IceScrumEvent {
 
   static final String EVENT_COPIED_AS_STORY = 'Copied'
+  static final String EVENT_PLANNED = 'Planned'
+  static final String EVENT_UNPLANNED = 'UnPlanned'
   def story
 
   IceScrumFeatureEvent(Feature feature, Class generatedBy, User doneBy, def type, boolean synchronous = false){

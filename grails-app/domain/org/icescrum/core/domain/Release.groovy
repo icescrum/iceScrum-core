@@ -45,9 +45,9 @@ class Release extends TimeBox implements Cloneable {
 
     static belongsTo = [parentProduct: Product]
 
-    static hasMany = [sprints: Sprint]
+    static hasMany = [sprints: Sprint, features: Feature]
 
-    static mappedBy = [sprints: 'parentRelease']
+    static mappedBy = [sprints: 'parentRelease',features: 'parentRelease']
 
     static transients = ['firstDate']
 
