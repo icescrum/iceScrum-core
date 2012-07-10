@@ -539,12 +539,23 @@ class IcescrumCoreGrailsPlugin {
         source.metaClass.returnError = { attrs ->
             if (attrs.exception){
 
-                if (delegate.log.debugEnabled)
-                    delegate.log.debug attrs.exception
+                if (delegate.log.debugEnabled){
+                    delegate.log.debug(attrs.exception)
+                    delegate.log.debug(attrs.exception.cause)
+                    attrs.exception.stackTrace.each {
+                        delegate.log.debug(it)
+                    }
+                }
 
                 if (attrs.object && attrs.exception instanceof RuntimeException){
-                    if (!delegate.log.debugEnabled && delegate.log.errorEnabled)
-                        delegate.log.error attrs.exception
+                    if (!delegate.log.debugEnabled && delegate.log.errorEnabled){
+                        delegate.log.error(attrs.exception)
+                        delegate.log.error(attrs.exception.cause)
+                        attrs.exception.stackTrace.each {
+                            delegate.log.error(it)
+                        }
+                    }
+
                     withFormat {
                         html { render(status: 400, contentType: 'application/json', text: [notice: [text: renderErrors(bean: attrs.object)]] as JSON) }
                         json {
@@ -565,8 +576,13 @@ class IcescrumCoreGrailsPlugin {
                         xml  { renderRESTXML(text:[error: attrs.text?:'error'], status:400) }
                     }
                 }else{
-                    if (!delegate.log.debugEnabled && delegate.log.errorEnabled)
-                        delegate.log.error attrs.exception.getMessage()
+                    if (!delegate.log.debugEnabled && delegate.log.errorEnabled && attrs.exception){
+                        delegate.log.error(attrs.exception)
+                        delegate.log.error(attrs.exception.cause)
+                        attrs.exception.stackTrace.each {
+                            delegate.log.error(it)
+                        }
+                    }
                     withFormat {
                         html { render(status: 400, contentType: 'application/json', text: [notice: [text: message(code: attrs.exception.getMessage())]] as JSON) }
                         json { renderRESTJSON(text:[error: message(code: attrs.exception.getMessage())], status:400) }

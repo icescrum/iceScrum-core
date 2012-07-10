@@ -119,7 +119,7 @@ class StoryService {
 
             def id = _item.id
             _item.deleteComments()
-            _item.delete()
+            _item.delete(flush:true)
 
             p.save()
             if (history) {
