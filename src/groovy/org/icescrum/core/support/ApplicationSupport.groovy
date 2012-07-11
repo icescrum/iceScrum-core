@@ -152,22 +152,18 @@ class ApplicationSupport {
       }
   }
 
-    static public zipExportFile(File zipfile, File directory, File xml) throws IOException {
+    static public zipExportFile(File zipfile, List<File> files, File xml) throws IOException {
         ZipOutputStream zout = new ZipOutputStream(new FileOutputStream(zipfile))
         try {
             if (log.debugEnabled){ log.debug "Zipping : ${xml.name}" }
             zout.putNextEntry(new ZipEntry(xml.name))
             zout << new FileInputStream(xml)
             zout.closeEntry()
-            if (directory.exists()){
-                directory?.eachFileRecurse {
-                    if (log.debugEnabled){ log.debug "Zipping : ${it.name}" }
-                    if (it.isFile()) {
-                        zout.putNextEntry(new ZipEntry(File.separator+'attachments'+File.separator+it.name))
-                        zout << new FileInputStream(it)
-                        zout.closeEntry()
-                    }
-                }
+            files?.each{
+                if (log.debugEnabled){ log.debug "Zipping : ${it.name}" }
+                zout.putNextEntry(new ZipEntry(File.separator+'attachments'+File.separator+it.name))
+                zout << new FileInputStream(it)
+                zout.closeEntry()
             }
         } finally {
             zout.close()

@@ -526,6 +526,10 @@ class ProductService {
                         progress?.updateProgress((team.members.size() * (index2 + 1) / 100).toInteger(), g.message(code: 'is.validate', args: [g.message(code: 'is.user')]))
                     }
                 }
+                p.productOwners?.eachWithIndex{ productOwner, index ->
+                    productOwner.validate()
+                    progress?.updateProgress((p.productOwners.size() * (index + 1) / 100).toInteger(), g.message(code: 'is.validate', args: [g.message(code: 'is.user')]))
+                }
                 p.validate()
                 progress?.updateProgress(100, g.message(code: 'is.validate', args: [g.message(code: 'is.product')]))
             }
