@@ -131,12 +131,13 @@ class ReleaseService {
                         sprintService.update(firstSprint, _next.startDate, firstSprint.endDate)
                     }
                 }
-                return
+                //return
             }
         }
 
         release.endDate = endDate
         release.startDate = startDate
+
         if (!release.save(flush: true))
             throw new RuntimeException()
 
