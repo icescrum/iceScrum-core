@@ -90,41 +90,4 @@ class MenuTagLib {
         out << "<a class='button-s clearfix href='#${attrs.id}'><span class='start'></span><span class='content'>${message(code: attrs.title)}</span><span class='end'></span></a>"
         out << "</li>"
     }
-
-    def menu = { attrs, body ->
-
-        if (!UtilsWebComponents.rendered(attrs))
-            return
-
-        def content
-        if (attrs.contentView)
-            content = render(template: "${attrs.contentView}", model: attrs.params, plugin:attrs.plugin)
-        else
-            content = body()
-
-        if (!content.trim()) return
-
-        def params = [
-                id: attrs.id,
-                menuItems: content,
-                top: attrs.top ?: 13,
-                yoffset: attrs.yoffset ?: 0,
-                noWindows: attrs.noWindows ?: false,
-        ]
-
-        params.classdrop = attrs."class" ?: ""
-        out << g.render(template: '/components/menu', plugin: 'icescrum-core', model: params)
-    }
-
-    /**
-     * Generate a menu that appear when the mouse pointer come over the element
-     */
-    def dropMenu = { attrs, body ->
-        def params = [
-                idMenu: attrs.id,
-                title: attrs.title,
-                content: body()
-        ]
-        out << g.render(template: '/components/dropMenu', plugin: 'icescrum-core', model: params)
-    }
 }

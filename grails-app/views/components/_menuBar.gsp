@@ -37,7 +37,7 @@
         <div class="dropmenu-content ui-corner-all" id="menubar-list-content">
           <ul>
             <g:each in="${menuElementsHiddden}" var="menuElementHidden">
-              <is:menuElement title="${menuElementHidden.title}" hidden="${true}"  id="${menuElementHidden.id}" selected="${menuElementHidden.selected}" widgetable="${menuElementHidden.widgetable}"/>
+              <is:menuElement title="${menuElementHidden.title}" draggable="true" hidden="${true}"  id="${menuElementHidden.id}" selected="${menuElementHidden.selected}" widgetable="${menuElementHidden.widgetable}"/>
               <is:shortcut key="ctrl+shift+${menuElementHidden.position}" callback="\$(\$('#navigation .menubar')[${menuElementHidden.position.toInteger() - 1}]).click();"/>
             </g:each>
           </ul>

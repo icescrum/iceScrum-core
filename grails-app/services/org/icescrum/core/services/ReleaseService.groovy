@@ -213,10 +213,11 @@ class ReleaseService {
 
         storyService.unPlanAll(release.sprints)
         product.removeFromReleases(release)
-
+        release.features?.each{release.removeFromFeatures(it) }
         nextReleases.each {
             storyService.unPlanAll(it.sprints)
             product.removeFromReleases((Release) it)
+            it.features?.each{ feature -> release.removeFromFeatures(feature) }
             broadcast(function: 'delete', message: [class: it.class, id: it.id])
         }
         def lastRelease = product.releases?.min {it.orderNumber}

@@ -29,8 +29,9 @@ import grails.plugin.fluxiable.Fluxiable
 import org.icescrum.plugins.attachmentable.interfaces.Attachmentable
 import org.grails.comments.Commentable
 import org.grails.followable.Followable
+import org.grails.taggable.Taggable
 
-abstract class BacklogElement implements Fluxiable, Attachmentable, Commentable, Followable, Serializable {
+abstract class BacklogElement implements Fluxiable, Attachmentable, Commentable, Followable, Serializable, Taggable {
 
     static final long serialVersionUID = -6800252500987149051L
 

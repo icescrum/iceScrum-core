@@ -49,7 +49,7 @@ class Release extends TimeBox implements Cloneable {
 
     static mappedBy = [sprints: 'parentRelease',features: 'parentRelease']
 
-    static transients = ['firstDate']
+    static transients = ['firstDate','closable','activable']
 
     static mapping = {
         cache true
@@ -156,6 +156,27 @@ class Release extends TimeBox implements Cloneable {
             return sprints.asList().last().endDate
         else
             return startDate
+    }
+
+    boolean getClosable(){
+        if (state != STATE_INPROGRESS)
+            return false
+
+        if (sprints?.size()) {
+            if (sprints.asList().last().state == Sprint.STATE_DONE)
+                return true
+        }
+       return false
+    }
+
+    boolean getActivable(){
+        if (state == STATE_WAIT && parentProduct.releases?.find{it.state == STATE_INPROGRESS} == null){
+            if (orderNumber >= 2 && parentProduct.releases.find{it.orderNumber == orderNumber - 1}.state == STATE_DONE)
+                return true
+            if (orderNumber == 1)
+                return true
+        }
+        return false
     }
 
     def beforeDelete() {

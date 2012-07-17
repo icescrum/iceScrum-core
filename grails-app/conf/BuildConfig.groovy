@@ -62,6 +62,7 @@ grails.project.dependency.resolution = {
     }
 
     plugins {
+        compile ':taggable:1.0.1'
         compile 'org.icescrum:fluxiable:0.3.2'
         compile ':burning-image:0.5.0'
         compile 'org.icescrum:icescrum-attachmentable:0.3'

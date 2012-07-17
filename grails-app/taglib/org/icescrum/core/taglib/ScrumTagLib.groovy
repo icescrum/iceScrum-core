@@ -33,12 +33,10 @@ class ScrumTagLib {
     static namespace = 'is'
 
     static returnObjectForTags = ['storyTemplate']
-    def springcacheService
 
     def postit = { attrs, body ->
         def params = attrs
         try {
-            pageScope.menu = ''
             pageScope.tooltip = ''
         } catch (e) {}
 
@@ -54,7 +52,6 @@ class ScrumTagLib {
         params.sortable = (attrs.sortable != null && UtilsWebComponents.rendered(attrs.sortable) && UtilsWebComponents.enabled(attrs.sortable))
 
         try {
-            params.embeddedMenu = pageScope.menu
             params.tooltip = pageScope.tooltip
         } catch (e) {}
 
@@ -69,56 +66,6 @@ class ScrumTagLib {
     def postitIcon = {attrs, body ->
         def color = attrs.color ?: "yellow"
         out << "<span ${attrs.name ? 'title="' + attrs.name + '"' : ''} class=\"postit-icon postit-icon-${color}\">${body()}</span>"
-    }
-
-    /**
-     * Generate the embedded postit menu (the spanner)
-     * The menu will not be generated if it is outside a postit tag or
-     * if the body is empty or only contain blankspaces
-     */
-    def postitMenu = { attrs, body ->
-        if (!UtilsWebComponents.rendered(attrs))
-            return
-
-        if (pageScope?.menu != '') return
-        attrs.id = 'postit-' + attrs.id
-
-
-        pageScope.menu = is.menu(attrs, body())
-    }
-
-    def postitMenuItem = {attrs, body ->
-        if (!UtilsWebComponents.rendered(attrs))
-            return
-        out << "<li"
-
-        if (attrs.first)
-            out << " class=\"first ${attrs.class}\""
-        else if (attrs.class)
-            out << " class=\"${attrs.class}\""
-
-        if (attrs.elementId)
-            out << " id=\"${attrs.elementId}\""
-        out << ">"
-        out << body()
-        out << "</li>"
-    }
-
-    def menuItem = {attrs, body ->
-        if (!UtilsWebComponents.rendered(attrs))
-            return
-        out << "<li"
-
-        if (attrs.first)
-            out << " class=\"first ${attrs.class}\""
-        else if (attrs.class)
-            out << " class=\"${attrs.class}\""
-
-        if (attrs.elementId)
-            out << " id=\"${attrs.elementId}\""
-        out << ">"
-        out << body()
-        out << "</li>"
     }
 
     def backlogElementLayout = { attrs, body ->
