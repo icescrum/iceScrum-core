@@ -514,7 +514,7 @@ class FormTagLib {
 
             out << """
       <div class="is-multifiles-checkbox" id="file-${attachment.id}">
-            <div class="is-multifiles-filename file-icon ${attachment.ext.toLowerCase()}-format" style="display: inline-block; margin-left: 0px; ${attrs.width ? 'width:' + attrs.width + 'px;' : ''}">
+            <div class="is-multifiles-filename file-icon ${attachment.ext?.toLowerCase()}-format" style="display: inline-block; margin-left: 0px; ${attrs.width ? 'width:' + attrs.width + 'px;' : ''}">
               <a href="${g.createLink(controller: attrs.controller ?: controllerName, action: attrs.action ?: 'download', id: attachment.id, params: attrs.params)}"><span title="${attachment.filename}">${is.truncated(size: attrs.size ?: 23) {attachment.filename}}</span></a>
             </div>
       </div>"""
