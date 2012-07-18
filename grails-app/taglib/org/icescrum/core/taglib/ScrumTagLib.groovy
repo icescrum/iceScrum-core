@@ -48,7 +48,7 @@ class ScrumTagLib {
         params.content = body()
         params.type = attrs.type ? attrs.type : ""
         params.color = params.color ?: "yellow"
-        params.className = (attrs.rect) ? 'postit-rect' : 'postit'
+        params.className = (attrs.rect == true || attrs.rect == 'true') ? 'postit-rect' : 'postit'
         params.sortable = (attrs.sortable != null && UtilsWebComponents.rendered(attrs.sortable) && UtilsWebComponents.enabled(attrs.sortable))
 
         try {
