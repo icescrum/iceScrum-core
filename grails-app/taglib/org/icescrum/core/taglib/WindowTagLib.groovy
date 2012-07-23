@@ -99,7 +99,7 @@ class WindowTagLib {
                 titleBarContent: titleBarContent,
                 contentClass: attrs.contentClass,
                 sortable: attrs.sortable ?: false,
-                height: attrs.height ?: false,
+                resizable: attrs.resizable ?: false,
                 windowContent: windowContent
         ]
         out << g.render(template: '/components/window', plugin: 'icescrum-core', model: params)
@@ -212,7 +212,7 @@ class WindowTagLib {
                         id: id,
                         hasToolbar: uiDefinition.widget?.toolbar,
                         closeable: uiDefinition.widget?.closeable,
-                        height: uiDefinition.widget?.height,
+                        resizable: uiDefinition.widget?.resizable?: false,
                         windowable: uiDefinition.window ? true : false,
                         sortable: uiDefinition.widget?.sortable,
                         hasTitleBarContent: uiDefinition.widget?.titleBarContent,
@@ -241,7 +241,7 @@ class WindowTagLib {
                 ],
                 window: attrs.id,
                 sortable: attrs.sortable,
-                height: attrs.height,
+                resizable: attrs.resizable?:false,
                 hasStatusbar: false,
                 hasToolbar: attrs.hasToolbar,
                 init: attrs.init

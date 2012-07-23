@@ -1,3 +1,4 @@
+<%@ page import="grails.converters.JSON" %>
 %{--
   - Copyright (c) 2010 iceScrum Technologies.
   -
@@ -83,7 +84,7 @@
 
 %{-- Content --}%
 <div id="${type}-content-${id}"
-     class="box-content ${type}-content ${hasStatusbar ? type + '-content-statusbar' : ''} ${!hasToolbar ? type + '-content-without-toolbar' : ''}">
+     class="box-content ${type}-content ${hasStatusbar ? type + '-content-statusbar' : ''} ${!hasToolbar ? type + '-content-without-toolbar' : ''}" style="${resizable ? 'height:'+resizable.minHeight+'px; overflow-x:hidden; overflow-y:auto;' : ''}">
     ${windowContent}
 </div>
 
@@ -103,6 +104,6 @@
         $("#${type}-id-${id}").focus();
     </g:if>
     <g:if test="${type == 'widget'}">
-        jQuery("#${type}-id-${id}").isWidget({ windowable:${titleBarActions?.windowable},closeable:${titleBarActions?.closeable}, height:${height}});
+        jQuery("#${type}-id-${id}").isWidget({ windowable:${titleBarActions?.windowable},closeable:${titleBarActions?.closeable}, resizable:${resizable ? resizable as JSON : 'false'}});
     </g:if>
 </jq:jquery>

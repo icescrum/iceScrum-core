@@ -33,7 +33,7 @@ class WidgetDefinition {
     boolean titleBarContent = false
     boolean toolbar = false
     boolean closeable = true
-    def height = false  // no type because it can be either an int or a boolean
+    def resizable = false  // no type because it can be either an int or a map
     def sortable = true
     def show // no type because it can be a closure
 
@@ -57,8 +57,8 @@ class WidgetDefinition {
         this.closeable = closeable
     }
 
-    void height(int height) {
-        this.height = height
+    void resizable(Map resizable) {
+        this.resizable = resizable
     }
 
     void sortable(boolean sortable) {
