@@ -50,6 +50,7 @@ class FeatureService {
 
 
         feature.backlog = p
+        p.addToFeatures(feature)
 
 
         if (!feature.save()) {
