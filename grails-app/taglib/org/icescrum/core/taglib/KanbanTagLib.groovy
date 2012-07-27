@@ -57,7 +57,7 @@ class KanbanTagLib {
             out << "<thead>"
             out << '<tr class="table-legend">'
             pageScope.kanbanHeaders.eachWithIndex { col, index ->
-                out << '<th class="kanban-col"><div class="table-cell">' << col.name << '</div></th>'
+                out << '<th class="kanban-col"><div class="table-cell">' << col.name << (col.html ?: '') << '</div></th>'
             }
             out << '</tr>'
             out << "</thead>"
@@ -114,6 +114,7 @@ class KanbanTagLib {
         def options = [
                 name: attrs.name,
                 key: attrs.key,
+                html: attrs.html?:null,
                 'class': attrs.'class',
         ]
 

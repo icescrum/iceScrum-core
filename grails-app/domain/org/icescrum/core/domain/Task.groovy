@@ -148,7 +148,7 @@ class Task extends BacklogElement implements Serializable {
                 if (u.preferences.filterTask == 'freeTasks') {
                     isNull('responsible')
                 }
-                if (u.preferences.hideDoneState) {
+                if (u.preferences.hideDoneState && s?.state == Sprint.STATE_INPROGRESS) {
                     ne 'state', Task.STATE_DONE
                 }
             }
@@ -184,7 +184,7 @@ class Task extends BacklogElement implements Serializable {
                 if (u.preferences.filterTask == 'freeTasks') {
                     isNull('responsible')
                 }
-                if (u.preferences.hideDoneState) {
+                if (u.preferences.hideDoneState && s?.state == Sprint.STATE_INPROGRESS) {
                     ne 'state', Task.STATE_DONE
                 }
             }

@@ -396,7 +396,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                     }
                 }
             }
-            if (u?.preferences?.hideDoneState) {
+            if (u?.preferences?.hideDoneState && s?.state == Sprint.STATE_INPROGRESS) {
                 ne 'state', Story.STATE_DONE
             }
         }
