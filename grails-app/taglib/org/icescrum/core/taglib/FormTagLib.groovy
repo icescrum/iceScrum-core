@@ -1199,7 +1199,6 @@ class FormTagLib {
                 accept: UtilsWebComponents.wrap(attrs.accept)
         ]
         def opts = droppableOptions.findAll {k, v -> v}.collect {k, v -> " $k:$v"}.join(',')
-        println "\$('${attrs.on}').liveDroppable({$opts});"
         out << " \$('${attrs.on}').liveDroppable({$opts});"
     }
 }
