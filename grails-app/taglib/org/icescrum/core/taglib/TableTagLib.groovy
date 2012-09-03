@@ -63,7 +63,7 @@ class TableTagLib {
         maxRows = maxRows + (pageScope.tableRows?.size() ?: 0)
 
         pageScope.tableGroup.eachWithIndex { group, indexGroup ->
-            out << '<tr class="table-line table-group" elemid="' + group.elementId + '">'
+            out << '<tr class="table-line table-group" data-elemid="' + group.elementId + '">'
             out << '<td ' + (group.header.class ? 'class="' + group.header.class + '"' : '') + ' class="collapse" colspan="' + maxCols + '">' + group.header.body() + '</td>'
             out << '</tr>'
             def editables = [:]
@@ -217,7 +217,7 @@ class TableTagLib {
                 row.attrs.rowClass = row.attrs.rowClass(row.attrs."${row.attrs.var}")
             }
             def htmlRank = row.'data-rank' ? '" data-rank="' + row.'data-rank' : ''
-            out << '<tr class="table-line ' + (row.attrs.rowClass ? row.attrs.rowClass : '') + ' ' + (groupid ? groupid : '') + '" elemid="' + row.elemid + '" version="' + version + '"' + htmlRank + '">'
+            out << '<tr class="table-line ' + (row.attrs.rowClass ? row.attrs.rowClass : '') + ' ' + (groupid ? groupid : '') + '" data-elemid="' + row.elemid + '" version="' + version + '"' + htmlRank + '">'
             row.columns.eachWithIndex { col, indexCol ->
 
                 //gestion editable
@@ -300,10 +300,10 @@ class TableTagLib {
                     ajaxoptions:{dataType:'json'},
                     data : function(value, settings) {settings.name = ${detach}; settings.id = 'id';${data}},
                     onsubmit:function(settings, original){var finder = ${finder}; var origin = ${original}; if (finder == origin) { original.reset(); return false;}},
-                    submitdata : function(value, settings) {return {'name':\$(this).attr('name'),'table':true,'id':\$(this).parent().parent().attr('elemid'),'${attrs.var}.version':\$(this).parent().parent().attr('version')};},
+                    submitdata : function(value, settings) {return {'name':\$(this).attr('name'),'table':true,'id':\$(this).parent().parent().data('elemid'),'${attrs.var}.version':\$(this).parent().parent().attr('version')};},
                     callback:function(value, settings) {\$(this).html(value.value); \$(this).parent().parent().attr('version',value.version);${attrs.success}},
                     onblur:'${attrs.onExitCell}'
-                    ${attrs.type == 'richarea' ? ", loaddata:function(revert, settings){settings.name = ${detach}; settings.id = 'id'; return {'id':\$(this).parent().parent().attr('elemid')}},loadurl : '" + createLink(action: attrs.action, controller: attrs.controller, params: attrs.params) + "?loadrich=true',markitup : textileSettings" : ""}
+                    ${attrs.type == 'richarea' ? ", loaddata:function(revert, settings){settings.name = ${detach}; settings.id = 'id'; return {'id':\$(this).parent().parent().data('elemid')}},loadurl : '" + createLink(action: attrs.action, controller: attrs.controller, params: attrs.params) + "?loadrich=true',markitup : textileSettings" : ""}
                 });
              """
         out << jqCode

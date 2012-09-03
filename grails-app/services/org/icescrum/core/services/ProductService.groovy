@@ -119,7 +119,7 @@ class ProductService {
                     it.save()
             }
 
-            if (!product.save()) {
+            if (!product.save(flush: true)) {
                 throw new RuntimeException()
             }
             securityService.secureDomain(product)

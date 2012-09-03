@@ -512,15 +512,16 @@ class SecurityService {
         if (!request || (request && request.filtered))
             return
 
-        request.scrumMaster  = request.scrumMaster ?: scrumMaster(null,springSecurityService.authentication)
-        request.productOwner = request.productOwner ?: productOwner(null,springSecurityService.authentication)
-        request.teamMember   = request.teamMember ?: teamMember(null,springSecurityService.authentication)
-        request.stakeHolder  = request.stakeHolder ?: stakeHolder(null,springSecurityService.authentication,false)
-        request.owner        = request.owner ?: owner(null,springSecurityService.authentication)
-        request.inProduct    = request.inProduct ?: request.scrumMaster ?: request.productOwner ?: request.teamMember ?: false
-        request.inTeam       = request.inTeam ?: request.scrumMaster ?: request.teamMember ?: false
-        request.admin        = request.admin ?: admin(springSecurityService.authentication) ?: false
-        request.filtered     = request.filtered ?: true
+        request.authenticated =  springSecurityService.isLoggedIn()
+        request.scrumMaster   = request.scrumMaster ?: scrumMaster(null,springSecurityService.authentication)
+        request.productOwner  = request.productOwner ?: productOwner(null,springSecurityService.authentication)
+        request.teamMember    = request.teamMember ?: teamMember(null,springSecurityService.authentication)
+        request.stakeHolder   = request.stakeHolder ?: stakeHolder(null,springSecurityService.authentication,false)
+        request.owner         = request.owner ?: owner(null,springSecurityService.authentication)
+        request.inProduct     = request.inProduct ?: request.scrumMaster ?: request.productOwner ?: request.teamMember ?: false
+        request.inTeam        = request.inTeam ?: request.scrumMaster ?: request.teamMember ?: false
+        request.admin         = request.admin ?: admin(springSecurityService.authentication) ?: false
+        request.filtered      = request.filtered ?: true
 
         if (request.owner && !request.inProduct && !request.admin){
             request.stakeholder = true

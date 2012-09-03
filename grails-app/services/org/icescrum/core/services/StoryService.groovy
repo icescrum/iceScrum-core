@@ -88,44 +88,55 @@ class StoryService {
     @PreAuthorize('!archivedProduct(#story.backlog)')
     void delete(Collection<Story> stories, history = true) {
         bufferBroadcast()
-        stories.each { _item ->
+        stories.each { story ->
 
-            if (_item.actor){
-                _item.actor.removeFromStories(_item)
+            if (story.actor){
+                story.actor.removeFromStories(story)
             }
 
-            if (_item.feature){
-                _item.feature.removeFromStories(_item)
+            if (story.feature){
+                story.feature.removeFromStories(story)
             }
 
-            if (_item.state >= Story.STATE_PLANNED)
+            //dependences on the story
+            def dependences = story.dependences
+            if (dependences){
+                dependences.each{
+                    notDependsOn(it)
+                }
+            }
+            //precedence on the story
+            if (story.dependsOn)
+                notDependsOn(story)
+
+            if (story.state >= Story.STATE_PLANNED)
                throw new IllegalStateException('is.story.error.not.deleted.state')
 
             if (!springSecurityService.isLoggedIn()){
                 throw new IllegalAccessException()
             }
 
-            if (!(_item.creator.id == springSecurityService.currentUser?.id) && !securityService.productOwner(_item.backlog.id, springSecurityService.authentication)) {
+            if (!(story.creator.id == springSecurityService.currentUser?.id) && !securityService.productOwner(story.backlog.id, springSecurityService.authentication)) {
                 throw new IllegalAccessException()
             }
-            _item.removeAllAttachments()
-            _item.removeLinkByFollow(_item.id)
+            story.removeAllAttachments()
+            story.removeLinkByFollow(story.id)
 
-            if (_item.state != Story.STATE_SUGGESTED)
-                resetRank(_item)
+            if (story.state != Story.STATE_SUGGESTED)
+                resetRank(story)
 
-            def p = _item.backlog
-            p.removeFromStories(_item)
+            def p = story.backlog
+            p.removeFromStories(story)
 
-            def id = _item.id
-            _item.deleteComments()
-            _item.delete(flush:true)
+            def id = story.id
+            story.deleteComments()
+            story.delete(flush:true)
 
             p.save()
             if (history) {
-                p.addActivity(springSecurityService.currentUser, Activity.CODE_DELETE, _item.name)
+                p.addActivity(springSecurityService.currentUser, Activity.CODE_DELETE, story.name)
             }
-            broadcast(function: 'delete', message: [class: _item.class, id: id, state: _item.state])
+            broadcast(function: 'delete', message: [class: story.class, id: id, state: story.state])
         }
         resumeBufferedBroadcast()
     }
@@ -221,6 +232,19 @@ class StoryService {
      */
     @PreAuthorize('(productOwner(#sprint.parentProduct) or scrumMaster(#sprint.parentProduct)) and !archivedProduct(#sprint.parentProduct)')
     void plan(Sprint sprint, Story story) {
+        if (story.dependsOn){
+            if (story.dependsOn.state < Story.STATE_PLANNED){
+                throw new IllegalStateException(g.message(code:'is.story.error.dependsOn.notPlanned',args: [story.name, story.dependsOn.name]).toString())
+            }else if(story.dependsOn.parentSprint.startDate > sprint.startDate){
+                throw new IllegalStateException(g.message(code:'is.story.error.dependsOn.beforePlanned',args: [story.name, story.dependsOn.name]).toString())
+            }
+        }
+        if (story.dependences){
+            def startDate = story.dependences.findAll{ it.parentSprint }?.collect{ it.parentSprint.startDate }?.min()
+            if (startDate && sprint.startDate > startDate){
+                throw new IllegalStateException(g.message(code:'is.story.error.dependences.beforePlanned', args: [story.name]).toString())
+            }
+        }
         // It is possible to associate a story if it is at least in the "ESTIMATED" state and not in the "DONE" state
         // It is not possible to associate a story in a "DONE" sprint either
         if (sprint.state == Sprint.STATE_DONE)
@@ -261,7 +285,8 @@ class StoryService {
             story.plannedDate = new Date()
         }
 
-        def rank = sprint.stories? sprint.stories.size() + 1 : 1
+        def rank = sprint.stories? sprint.stories.size() : 1
+
         setRank(story, rank)
 
         if (!story.save(flush: true))
@@ -291,7 +316,7 @@ class StoryService {
      * @param pbi
      * @return
      */
-    void unPlan(Story story, Boolean deleteTasks = true) {
+    void unPlan(Story story, Boolean fullUnPlan = true) {
 
         def sprint = story.parentSprint
         if (!sprint)
@@ -299,6 +324,9 @@ class StoryService {
 
         if (story.state == Story.STATE_DONE)
             throw new IllegalStateException('is.sprint.error.dissociate.story.done')
+
+        if (fullUnPlan && story.dependences?.find{it.state > Story.STATE_ESTIMATED})
+            throw new RuntimeException(g.message(code:'is.story.error.dependences.dissociate',args: [story.name, story.dependences.find{it.state > Story.STATE_ESTIMATED}.name]).toString())
 
         resetRank(story)
 
@@ -315,7 +343,7 @@ class StoryService {
             if (task.state == Task.STATE_DONE) {
                 task.doneDate = null
                 taskService.storyTaskToSprintTask(task, Task.TYPE_URGENT, u)
-            } else if (deleteTasks) {
+            } else if (fullUnPlan) {
                 taskService.delete(task, u)
             } else {
                 task.state = Task.STATE_WAIT
@@ -420,6 +448,9 @@ class StoryService {
         else if (story.state == Story.STATE_PLANNED || story.state == Story.STATE_INPROGRESS || story.state == Story.STATE_DONE) {
             stories = story.parentSprint?.stories
         }
+
+        rank = checkRankDependencies(story, rank)
+
         stories?.each { pbi ->
             if (pbi.rank >= rank) {
                 pbi.rank++
@@ -448,8 +479,13 @@ class StoryService {
 
     @PreAuthorize('(productOwner(#story.backlog) or scrumMaster(#story.backlog))  and !archivedProduct(#story.backlog)')
     boolean rank(Story story, int rank) {
-        if (story.rank == rank) {
+
+        /*if (story.rank == rank) {
             return false
+        }*/
+        rank = checkRankDependencies(story, rank)
+        if ((story.dependsOn || story.dependences ) && story.rank == rank) {
+            return true
         }
 
         if (story.state in [Story.STATE_SUGGESTED, Story.STATE_DONE])
@@ -488,6 +524,37 @@ class StoryService {
         return story.save() ? true : false
     }
 
+    private int checkRankDependencies(story, rank){
+        if (story.dependsOn){
+            if (story.state in [Story.STATE_ACCEPTED, Story.STATE_ESTIMATED]){
+                if (rank <= story.dependsOn.rank){
+                    rank = story.dependsOn.rank + 1
+                }
+            }
+            else if (story.dependsOn.parentSprint == story.parentSprint){
+                if (rank <= story.dependsOn.rank){
+                    rank = story.dependsOn.rank + 1
+                }
+            }
+        }
+
+        if (story.dependences){
+            if (story.state in [Story.STATE_ACCEPTED, Story.STATE_ESTIMATED]){
+                def highestRank = story.dependences.findAll{ it.state in [Story.STATE_ACCEPTED, Story.STATE_ESTIMATED]}?.collect{it.rank}?.min()
+                if (highestRank && highestRank <= rank){
+                    rank = highestRank - 1
+                }
+            }
+            else if (story.state > Story.STATE_ESTIMATED){
+                def highestRank = story.dependences.findAll{ it.parentSprint == story.parentSprint }?.collect{it.rank}?.min()
+                if (highestRank && highestRank <= rank){
+                    rank = highestRank - 1
+                }
+            }
+        }
+        return rank
+    }
+
     @PreAuthorize('productOwner(#story.backlog) and !archivedProduct(#story.backlog)')
     def acceptToBacklog(Story story) {
         return acceptToBacklog([story])
@@ -500,6 +567,9 @@ class StoryService {
         stories.each { story ->
             if (story.state != Story.STATE_SUGGESTED)
                 throw new IllegalStateException('is.story.error.not.state.suggested')
+
+            if (story.dependsOn?.state == Story.STATE_SUGGESTED)
+                throw new IllegalStateException(g.message(code:'is.story.error.dependsOn.suggested', args:[story.name, story.dependsOn.name]).toString())
 
             story.rank = (Story.countAllAcceptedOrEstimated(story.backlog.id)?.list()[0] ?: 0) + 1
             story.state = Story.STATE_ACCEPTED
@@ -602,6 +672,9 @@ class StoryService {
                 task.name = task.name + '_' + i
                 task.validate()
             }
+
+            if (pbi.feature)
+                task.color = pbi.feature.color
 
             taskService.saveUrgentTask(task, sprint, pbi.creator)
 
@@ -734,6 +807,34 @@ class StoryService {
         broadcast(function: 'associated', message: story)
         User u = (User) springSecurityService.currentUser
         publishEvent(new IceScrumStoryEvent(story, this.class, u, IceScrumStoryEvent.EVENT_FEATURE_ASSOCIATED))
+    }
+
+    void notDependsOn(Story story) {
+        def oldDepends = story.dependsOn
+        story.dependsOn = null
+        oldDepends.lastUpdated = new Date()
+        oldDepends.save()
+
+        broadcast(function: 'update', message: story)
+        broadcast(function: 'notDependsOn', message: oldDepends)
+        User u = (User) springSecurityService.currentUser
+        publishEvent(new IceScrumStoryEvent(story, this.class, u, IceScrumStoryEvent.EVENT_NOT_DEPENDS_ON))
+    }
+
+    void dependsOn(Story story, Story dependsOn) {
+
+        if (story.dependsOn){
+            notDependsOn(story)
+        }
+        story.dependsOn = dependsOn
+
+        dependsOn.lastUpdated = new Date()
+        dependsOn.save()
+
+        broadcast(function: 'update', message: story)
+        broadcast(function: 'dependsOn', message: dependsOn)
+        User u = (User) springSecurityService.currentUser
+        publishEvent(new IceScrumStoryEvent(story, this.class, u, IceScrumStoryEvent.EVENT_DEPENDS_ON))
     }
 
     void dissociateFeature(Story story) {

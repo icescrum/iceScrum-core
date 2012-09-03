@@ -17,7 +17,7 @@
   - along with iceScrum.  If not, see <http://www.gnu.org/licenses/>.
   --}%
 
-<li id="comment${comment.id}${commentId ? '-'+commentId : ''}" class="comment" elemid="${comment.id}">
+<li id="comment${comment.id}${commentId ? '-'+commentId : ''}" class="comment" data-elemid="${comment.id}">
 
     <div class=commentContent>
 

@@ -52,7 +52,7 @@ class KanbanTagLib {
                 opts = selectableOptions.findAll {k, v -> v}.collect {k, v -> " $k:$v" }.join(',')
             }
 
-            out << '<table border="0" cellpadding="0" cellspacing="0" ' + (attrs.id ? "id=\"${attrs.id}\" " : '') + (attrs.elemid ? " elemid=\"${attrs.elemid}\" " : '') + 'class="table kanban '+ (attrs.class ?:'') +'">'
+            out << '<table border="0" cellpadding="0" cellspacing="0" ' + (attrs.id ? "id=\"${attrs.id}\" " : '') + (attrs.elemid ? " data-elemid=\"${attrs.elemid}\" " : '') + 'class="table kanban '+ (attrs.class ?:'') +'">'
             // Header
             out << "<thead>"
             out << '<tr class="table-legend">'
@@ -73,7 +73,7 @@ class KanbanTagLib {
                 tbodyGroup = row.attrs.type
             }
             if (row) {
-                out << '<tr class="table-line ' + (row.attrs?.'class' ? row.attrs?.'class' : '') + ' " ' + (row.attrs.type != null ? 'type="' + row.attrs.type + '"' : '') + ' ' + (row.elemid ? 'elemid="' + row.elemid + '"' : '') + '> '
+                out << '<tr class="table-line ' + (row.attrs?.'class' ? row.attrs?.'class' : '') + ' " ' + (row.attrs.type != null ? 'type="' + row.attrs.type + '"' : '') + ' ' + (row.elemid ? 'data-elemid="' + row.elemid + '"' : '') + '> '
                 row.columns.eachWithIndex { col, indexCol ->
                     out << '<td class="kanban-col kanban-cell ' + col.'class' + '" ' + (col.key != null ? 'type="' + col.key + '"' : '') + '">' + is.nbps(null, col?.body(row.attrs)) + '</td>'
                 }

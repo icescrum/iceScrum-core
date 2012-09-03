@@ -102,8 +102,10 @@ class WindowTagLib {
                 resizable: attrs.resizable ?: false,
                 windowContent: windowContent
         ]
-        out << g.render(template: '/components/window', plugin: 'icescrum-core', model: params)
-        out << jq.jquery(render: true)
+        if (windowContent){
+            out << g.render(template: '/components/window', plugin: 'icescrum-core', model: params)
+            out << jq.jquery(render: true)
+        }
     }
 
     /**

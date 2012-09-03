@@ -16,13 +16,18 @@
   - along with iceScrum.  If not, see <http://www.gnu.org/licenses/>.
   --}%
 
-<div class="${className} ${styleClass} postit-${type}" id="postit-${type}-${id}" elemId="${id}">
+<div class="${className} ${styleClass} postit-${type}" id="postit-${type}-${id}" data-elemid="${id}" ${dependsOn ? 'data-dependsOn="'+dependsOn.id+'"' : ''}>
 
     <div class="postit-layout postit-${color}">
 
         <g:if test="${miniId}">
             <g:if test="${type == 'story'}">
-                <p class="postit-id"><is:scrumLink controller="story" id="${id}">${miniId}</is:scrumLink></p>
+                <p class="postit-id">
+                    <is:scrumLink controller="story" id="${id}">${miniId}</is:scrumLink>
+                    <g:if test="${dependsOn}">
+                        <span class="dependsOn" data-elemid="${dependsOn.id}">(<is:scrumLink controller="story" id="${dependsOn.id}">${dependsOn.uid}</is:scrumLink>)</span>
+                    </g:if>
+                </p>
             </g:if>
             <g:elseif test="${type == 'task'}">
                 <p class="postit-id"><is:scrumLink controller="task" id="${id}">${miniId}</is:scrumLink></p>

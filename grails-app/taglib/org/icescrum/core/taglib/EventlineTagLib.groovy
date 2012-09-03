@@ -101,7 +101,7 @@ class EventlineTagLib {
                     accept: UtilsWebComponents.wrap(attrs.droppable.accept)
             ]
             def opts = droppableOptions.findAll {k, v -> v}.collect {k, v -> " $k:$v"}.join(',')
-            jqCode += "\$('.event-container[elemid=${pageScope.event.elemid}] > .event-content-list').liveDroppable({$opts});"
+            jqCode += "\$('.event-container[data-elemid=${pageScope.event.elemid}] > .event-content-list').liveDroppable({$opts});"
         }
         attrs.remove('droppable')
         pageScope.event.content += jqCode ? jq.jquery(null, jqCode) : ''

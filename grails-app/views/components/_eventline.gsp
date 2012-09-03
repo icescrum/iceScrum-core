@@ -17,12 +17,12 @@
   --}%
 
 %{-- Main Wrapper --}%
-<div class="event-overflow" elemid="${elemid}">
+<div class="event-overflow" data-elemid="${elemid}">
     ${events}
 </div>
 
 <div class="event-select">
     <g:each in="${titles}" var="t">
-        <span class="event-select-item" elemid="${t.elemid}">${t.title}</span>
+        <span class="event-select-item" data-elemid="${t.elemid}">${t.title}</span>
     </g:each>
 </div>

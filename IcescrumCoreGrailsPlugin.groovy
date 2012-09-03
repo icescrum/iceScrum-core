@@ -79,7 +79,7 @@ import org.springframework.validation.Errors
 class IcescrumCoreGrailsPlugin {
     def groupId = 'org.icescrum'
     // the plugin version
-    def version = "1.5-SNAPSHOT"
+    def version = "1.6-SNAPSHOT"
     // the version or versions of Grails the plugin is designed for
     def grailsVersion = "1.3.7 > *"
     // the other plugins this plugin depends on
@@ -454,12 +454,16 @@ class IcescrumCoreGrailsPlugin {
                         }
                         if (messages.size() % size) batch << messages[partitionCount * size..-1]
                         def session = request.getSession(false)
-                        batch.each {
-                            if (attrs.excludeCaller && session) {
-                                broadcaster?.broadcast((it as JSON).toString(), session)
-                            } else {
-                                broadcaster?.broadcast((it as JSON).toString())
+                        try {
+                            batch.each {
+                                if (attrs.excludeCaller && session) {
+                                    broadcaster?.broadcast((it as JSON).toString(), session)
+                                } else {
+                                    broadcaster?.broadcast((it as JSON).toString())
+                                }
                             }
+                        }catch(Exception e){
+                            log.error("Error when broadcasting, message: ${e.getMessage()}", e)
                         }
                     }
                 }
@@ -499,7 +503,7 @@ class IcescrumCoreGrailsPlugin {
                             } else {
                                 broadcaster?.broadcast((message as JSON).toString())
                             }
-                        }catch(IllegalStateException e){
+                        }catch(Exception e){
                             log.error("Error when broadcasting, message: ${e.getMessage()}", e)
                         }
                     }
@@ -526,7 +530,7 @@ class IcescrumCoreGrailsPlugin {
                     def broadcaster = BroadcasterFactory.default.lookup(bc, it)
                     try {
                         broadcaster?.broadcast((message as JSON).toString())
-                    }catch(IllegalStateException e){
+                    }catch(Exception e){
                         log.error("Error when broadcasting, message: ${e.getMessage()}", e)
                     }
                 }
@@ -654,7 +658,7 @@ class IcescrumCoreGrailsPlugin {
                 } catch (IllegalStateException e) {
                     returnError(exception: e)
                 } catch (RuntimeException e) {
-                    if (feature.errors)
+                    if (feature.errors.errorCount)
                         returnError(object: feature, exception: e)
                     else
                         returnError(exception: e)
@@ -689,7 +693,7 @@ class IcescrumCoreGrailsPlugin {
                 } catch (IllegalStateException e) {
                     returnError(exception: e)
                 } catch (RuntimeException e) {
-                    if (actor.errors)
+                    if (actor.errors.errorCount)
                         returnError(object: actor, exception: e)
                     else
                         returnError(exception: e)
@@ -729,7 +733,7 @@ class IcescrumCoreGrailsPlugin {
                 } catch (IllegalStateException e) {
                     returnError(exception: e)
                 } catch (RuntimeException e) {
-                    if (story.errors)
+                    if (story.errors.errorCount)
                         returnError(object: story, exception: e)
                     else
                         returnError(exception: e)
@@ -802,7 +806,7 @@ class IcescrumCoreGrailsPlugin {
                 } catch (IllegalStateException e) {
                     returnError(exception: e)
                 } catch (RuntimeException e) {
-                    if (sprint.errors)
+                    if (sprint.errors.errorCount)
                         returnError(object: sprint, exception: e)
                     else
                         returnError(exception: e)
@@ -822,7 +826,7 @@ class IcescrumCoreGrailsPlugin {
                 } catch (IllegalStateException e) {
                     returnError(exception: e)
                 } catch (RuntimeException e) {
-                    if (release.errors)
+                    if (release.errors.errorCount)
                         returnError(object: release, exception: e)
                     else
                         returnError(exception: e)
@@ -842,7 +846,7 @@ class IcescrumCoreGrailsPlugin {
                     returnError(exception: e)
                 } catch (RuntimeException e) {
                     user.discard()
-                    if (user.errors)
+                    if (user.errors.errorCount)
                         returnError(object: user, exception: e)
                     else
                         returnError(exception: e)
@@ -859,7 +863,7 @@ class IcescrumCoreGrailsPlugin {
                 try {
                     c.call product
                 }catch (RuntimeException e) {
-                    if (product.errors)
+                    if (product.errors.errorCount)
                         returnError(object: product, exception: e)
                     else
                         returnError(exception: e)

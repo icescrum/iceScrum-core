@@ -69,7 +69,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
     String textICan
     String textTo
     String affectVersion
-
+    Story dependsOn
 
     static belongsTo = [
             creator: User,
@@ -88,7 +88,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
     ]
 
     static transients = [
-            'todo'
+            'todo', 'dependences'
     ]
 
     static mapping = {
@@ -114,6 +114,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
         affectVersion(nullable: true)
         effort(nullable: true)
         creator(nullable: true) // in case of a user deletion, the story can remain without owner
+        dependsOn(nullable: true)
     }
 
     static namedQueries = {
@@ -401,6 +402,49 @@ class Story extends BacklogElement implements Cloneable, Serializable {
             }
         }
 
+        findPossiblesDependences{ Story story ->
+            backlog {
+                eq 'id', story.backlog.id
+            }
+            or{
+                if (story.state == Story.STATE_SUGGESTED){
+                    and {
+                        ge 'state', Story.STATE_SUGGESTED
+                        ne 'id', story.id
+                        if (story.dependences){
+                        not {
+                                'in' 'id', story.dependences.collect{ it.id }
+                            }
+                        }
+                    }
+                }
+
+                if (story.state in [Story.STATE_ACCEPTED, Story.STATE_ESTIMATED]){
+                    and {
+                        'in' 'state', [Story.STATE_ACCEPTED, Story.STATE_ESTIMATED]
+                        lt 'rank', story.rank
+                    }
+                    and {
+                        gt 'state', Story.STATE_ESTIMATED
+                    }
+                }
+                else if (story.state in [Story.STATE_PLANNED, Story.STATE_INPROGRESS]){
+                    and {
+                        'in' 'state', [Story.STATE_PLANNED, Story.STATE_INPROGRESS, Story.STATE_DONE]
+                        lt 'rank', story.rank
+                        parentSprint{
+                            eq 'id', story.parentSprint.id
+                        }
+                    }
+                    and {
+                        parentSprint{
+                            lt 'startDate', story.parentSprint.startDate
+                        }
+                    }
+                }
+            }
+        }
+
         filterByFeature { p, f, r = null ->
             backlog {
                 eq 'id', p.id
@@ -563,6 +607,10 @@ class Story extends BacklogElement implements Cloneable, Serializable {
         } else if (!state.equals(other.state))
             return false
         return true
+    }
+
+    def getDependences(){
+        return Story.findAllByDependsOn(this,[cache:true,sort:"state",order:"asc"])
     }
 
     def onAddComment = { Comment c ->

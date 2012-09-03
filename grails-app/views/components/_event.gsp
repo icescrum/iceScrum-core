@@ -15,8 +15,8 @@
   - You should have received a copy of the GNU Lesser General Public License
   - along with iceScrum.  If not, see <http://www.gnu.org/licenses/>.
   --}%
-<div class="event-container" elemid="${elemid}">
-    <div elemid="${elemid}" class="event-header ${headerClass}" ${headerAttrs}>
+<div class="event-container" data-elemid="${elemid}">
+    <div data-elemid="${elemid}" class="event-header ${headerClass}" ${headerAttrs}>
         ${header}
     </div>
 

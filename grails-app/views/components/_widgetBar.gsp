@@ -19,8 +19,8 @@
   <div id="widget-list">
     <sec:ifLoggedIn>
         <div class="upgrade" style="display:none;">
-            <span class="close"><g:message code="is.upgrade.icescrum.pro.hide"/></span>
-            <g:message code="is.upgrade.icescrum.pro"/>
+            <span class="close"><g:message code="is.ui.hide"/></span>
+            <g:message code="is.ui.hide"/>
         </div>
     </sec:ifLoggedIn>
     <g:each in="${widgetsList}" var="widget">

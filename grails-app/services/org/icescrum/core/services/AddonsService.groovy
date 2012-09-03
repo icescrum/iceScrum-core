@@ -19,9 +19,26 @@ class AddonsService implements ApplicationListener<IceScrumProductEvent> {
     @Override
     void onApplicationEvent(IceScrumProductEvent e) {
         if (e.type == IceScrumProductEvent.EVENT_IMPORTED){
+            addDependsOn((Product) e.source, e.xml)
             addComments((Product) e.source, e.xml)
             addActivities((Product) e.source, e.xml)
             addAttachments((Product) e.source, e.xml, e.importPath)
+        }
+    }
+
+    void addDependsOn(Product p, def root) {
+        root.'**'.findAll{ it.name() == "story" }.each{ element ->
+            if (!element.dependsOn?.@uid?.isEmpty() && p) {
+                def dependsOn = p.stories.find { it.uid == element.dependsOn.@uid.text().toInteger() } ?: null
+                def story = p.stories?.find { it.uid == element.@uid.text().toInteger() } ?: null
+                if (dependsOn) {
+                    story.dependsOn = dependsOn
+                    dependsOn.lastUpdated = new Date()
+                    story.lastUpdated = new Date()
+                    story.save()
+                    dependsOn.save()
+                }
+            }
         }
     }
 

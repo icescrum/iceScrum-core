@@ -259,7 +259,7 @@ class FormTagLib {
         attrs.remove('change');
         def jqCode = ''
 
-        if (attrs.disabled == null || attrs.disabled == 'false' || attrs.disabled == false) {
+        if (attrs.disabled == null || attrs.disabled == 'false' || attrs.disabled == false || attrs.disabled == 'disabled') {
             jqCode += " \$('select[name=\"${attrs.name}\"]').selectmenu({$opts});"
             out << jq.jquery(null, {jqCode})
         } else {
@@ -290,7 +290,7 @@ class FormTagLib {
             noSelection = noSelection.entrySet().iterator().next()
         }
         def disabled = attrs.remove('disabled')
-        if (disabled && Boolean.valueOf(disabled)) {
+        if ((disabled && Boolean.valueOf(disabled)) || disabled == 'disabled') {
             attrs.disabled = 'disabled'
         }
 
@@ -1189,5 +1189,17 @@ class FormTagLib {
         } else {
             out << jqCode
         }
+    }
+
+    def droppable = { attrs ->
+        def droppableOptions = [
+                drop: attrs.drop ? "function(event, ui) {${attrs.drop}}" : null,
+                hoverClass: UtilsWebComponents.wrap(attrs.hoverClass),
+                activeClass: UtilsWebComponents.wrap(attrs.activeClass),
+                accept: UtilsWebComponents.wrap(attrs.accept)
+        ]
+        def opts = droppableOptions.findAll {k, v -> v}.collect {k, v -> " $k:$v"}.join(',')
+        println "\$('${attrs.on}').liveDroppable({$opts});"
+        out << " \$('${attrs.on}').liveDroppable({$opts});"
     }
 }

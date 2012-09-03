@@ -20,6 +20,9 @@ class IceScrumStoryEvent extends IceScrumEvent {
     static final String EVENT_FEATURE_ASSOCIATED = 'featureAssociated'
     static final String EVENT_FEATURE_DISSOCIATED = 'featureDissociated'
 
+    static final String EVENT_DEPENDS_ON = 'dependsOn'
+    static final String EVENT_NOT_DEPENDS_ON = 'notDependsOn'
+
     static final String EVENT_ACCEPTED_AS_FEATURE = 'AcceptedAsFeature'
     static final String EVENT_ACCEPTED_AS_TASK = 'AcceptedAsTask'
 
