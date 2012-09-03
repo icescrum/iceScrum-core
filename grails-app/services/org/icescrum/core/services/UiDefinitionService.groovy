@@ -43,6 +43,7 @@ class UiDefinitionService {
             def enabled = config.pluginName ? pluginManager.getUserPlugins().find{ it.name == config.pluginName && it.isEnabled() } : true
             enabled = enabled ? true : false
             def uiDefinitions = config.uiDefinitions
+
             if(uiDefinitions instanceof Closure) {
                 if (log.debugEnabled) { log.debug("Evaluating UI definitions from $it.clazz.name") }
                 def builder = new UiDefinitionsBuilder(definitionsById, !enabled)
@@ -51,6 +52,17 @@ class UiDefinitionService {
                 uiDefinitions()
             } else {
                 log.warn("UI definitions file $it.clazz.name does not define any UI definition")
+            }
+
+            if (config.modulesResources){
+                grailsApplication.config.modulesResources = grailsApplication.config.modulesResources ?: []
+                if (config.modulesResources instanceof String){
+                    grailsApplication.config.modulesResources.add(config.modulesResources)
+                    if (log.debugEnabled) { log.debug "Resources module added: ${config.modulesResources}" }
+                }else{
+                    grailsApplication.config.modulesResources.addAll(config.modulesResources)
+                    if (log.debugEnabled) { log.debug "Resources modules added: ${config.modulesResources.join(',')}" }
+                }
             }
         }
     }
