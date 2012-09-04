@@ -19,10 +19,42 @@ class AddonsService implements ApplicationListener<IceScrumProductEvent> {
     @Override
     void onApplicationEvent(IceScrumProductEvent e) {
         if (e.type == IceScrumProductEvent.EVENT_IMPORTED){
-            addDependsOn((Product) e.source, e.xml)
-            addComments((Product) e.source, e.xml)
-            addActivities((Product) e.source, e.xml)
-            addAttachments((Product) e.source, e.xml, e.importPath)
+            //do something
+        }
+    }
+
+    void synchronisedDataImport(IceScrumProductEvent e){
+        addTags((Product) e.source, e.xml)
+        addDependsOn((Product) e.source, e.xml)
+        addComments((Product) e.source, e.xml)
+        addActivities((Product) e.source, e.xml)
+        addAttachments((Product) e.source, e.xml, e.importPath)
+    }
+
+    void addTags(Product p, def root) {
+        root.'**'.findAll{ it.name() in ["story","actor","task","feature"] }.each{ element ->
+            def elemt = null
+            def tasksCache = []
+            if (element.tags.text()){
+                switch(element.name()){
+                    case 'story':
+                        elemt = p.stories?.find { it.uid == element.@uid.text().toInteger() } ?: null
+                        break
+                    case 'actor':
+                        elemt = p.actors?.find { it.uid == element.@uid.text().toInteger() } ?: null
+                        break
+                    case 'task':
+                        tasksCache = tasksCache ?: Task.getAllInProduct(p.id)
+                        elemt = tasksCache?.find { it.uid == element.@uid.text().toInteger() } ?: null
+                        break
+                    case 'feature':
+                        elemt = p.features?.find { it.uid == element.@uid.text().toInteger() } ?: null
+                        break
+                }
+            }
+            if (elemt){
+                elemt.tags = element.tags.text().replaceAll(' ','').replace('[','').replace(']','').split(',')
+            }
         }
     }
 

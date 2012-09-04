@@ -38,15 +38,16 @@ import org.icescrum.core.domain.*
 import org.icescrum.core.support.ApplicationSupport
 import org.codehaus.groovy.grails.plugins.springsecurity.SpringSecurityUtils
 import org.icescrum.core.domain.preferences.UserPreferences
+import org.apache.commons.io.FilenameUtils
 
 class ProductService {
 
-    def springcacheService
     def springSecurityService
     def securityService
     def teamService
     def actorService
     def grailsApplication
+    def addonsService
 
     static transactional = true
 
@@ -146,9 +147,11 @@ class ProductService {
             }
 
             publishEvent(new IceScrumProductEvent(product, this.class, (User) springSecurityService.currentUser, IceScrumEvent.EVENT_CREATED))
-            if (importPath)
-                publishEvent(new IceScrumProductEvent(product, new File(importPath), this.class, (User) springSecurityService.currentUser, IceScrumProductEvent.EVENT_IMPORTED))
-
+            if (importPath){
+                def event = new IceScrumProductEvent(product, new File(importPath), this.class, (User) springSecurityService.currentUser, IceScrumProductEvent.EVENT_IMPORTED)
+                addonsService.synchronisedDataImport(event)
+                publishEvent(event)
+            }
         } catch (Exception e) {
             throw new RuntimeException(e)
         }
