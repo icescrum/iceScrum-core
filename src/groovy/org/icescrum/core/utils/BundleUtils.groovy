@@ -60,6 +60,12 @@ class BundleUtils {
             (Feature.TYPE_ARCHITECTURAL): 'is.feature.type.architectural'
     ]
 
+    static featureStates = [
+            (Feature.STATE_WAIT): 'is.feature.state.wait',
+            (Feature.STATE_BUSY): 'is.feature.state.inprogress',
+            (Feature.STATE_DONE): 'is.feature.state.done'
+    ]
+
     static storyStates = [
             (Story.STATE_SUGGESTED): 'is.story.state.suggested',
             (Story.STATE_ACCEPTED): 'is.story.state.accepted',

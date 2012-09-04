@@ -35,6 +35,9 @@ class Feature extends BacklogElement implements Serializable {
 
     static final int TYPE_FUNCTIONAL = 0
     static final int TYPE_ARCHITECTURAL = 1
+    static final int STATE_WAIT = 0
+    static final int STATE_BUSY = 1
+    static final int STATE_DONE = 2
 
     String color = "blue"
 
@@ -42,7 +45,7 @@ class Feature extends BacklogElement implements Serializable {
     int type = Feature.TYPE_FUNCTIONAL
     int rank
 
-    static transients = ['countFinishedStories']
+    static transients = ['countDoneStories', 'state', 'effort']
 
     static belongsTo = [
             parentDomain: Domain,
@@ -130,6 +133,25 @@ class Feature extends BacklogElement implements Serializable {
                    FROM org.icescrum.core.domain.Feature as f, org.icescrum.core.domain.Product as p
                    WHERE f.backlog = p
                    AND p.id = :pid """, [pid: pid])[0]?:0) + 1
+    }
+
+    def getCountDoneStories(){
+        return stories?.sum {(it.state == Story.STATE_DONE) ? 1 : 0}
+    }
+
+    def getState(){
+        if (!stories || stories.find{ it.state > Story.STATE_INPROGRESS} == null ) {
+            return STATE_WAIT
+        }
+        if (stories.collect{it.state}.count(Story.STATE_DONE) == stories.size()){
+            return STATE_DONE
+        }else{
+            return STATE_BUSY
+        }
+    }
+
+    def getEffort(){
+        return stories?.sum {it.effort ?: 0}
     }
 
     def beforeDelete() {
