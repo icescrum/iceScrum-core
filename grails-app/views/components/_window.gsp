@@ -84,7 +84,7 @@
 
 %{-- Content --}%
 <div id="${type}-content-${id}"
-     class="box-content ${type}-content ${hasStatusbar ? type + '-content-statusbar' : ''} ${!hasToolbar ? type + '-content-without-toolbar' : ''}" style="${resizable ? 'height:'+resizable.minHeight+'px; overflow-x:hidden; overflow-y:auto;' : ''}">
+     class="box-content ${type}-content ${hasStatusbar ? type + '-content-statusbar' : ''} ${!hasToolbar ? type + '-content-without-toolbar' : ''}" style="${resizable ? 'overflow-x:hidden; overflow-y:auto;' : ''}">
     ${windowContent}
 </div>
 
