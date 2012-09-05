@@ -47,7 +47,7 @@ class WindowTagLib {
         def type = attrs.type ?: 'window'
 
         // Check for content window
-        def includeParams = [:]
+        def includeParams = ['windowType':type]
         params.each{ if (!(it.key in ["controller", "action"])) { includeParams << it} }
         def windowContent = (attrs.init) ? include(controller: windowId, action: attrs.init, params:includeParams) : body()
 
@@ -192,41 +192,6 @@ class WindowTagLib {
         else
             out << is.link(attrs, str).trim();
 
-    }
-
-    /**
-     * Generate the side widget bar
-     */
-    def widgetBar = { attrs, body ->
-
-        def widgetsList = []
-
-        //Default displayed widgets
-        uiDefinitionService.getDefinitions().each {String id, UiDefinition uiDefinition ->
-            def show = uiDefinition.widget?.show
-            if (show in Closure) {
-                show.delegate = delegate
-                show.resolveStrategy = Closure.DELEGATE_FIRST
-                show = show()
-            }
-            if (show) {
-                def widgetElement = [
-                        id: id,
-                        hasToolbar: uiDefinition.widget?.toolbar,
-                        closeable: uiDefinition.widget?.closeable,
-                        resizable: uiDefinition.widget?.resizable?: false,
-                        windowable: uiDefinition.window ? true : false,
-                        sortable: uiDefinition.widget?.sortable,
-                        hasTitleBarContent: uiDefinition.widget?.titleBarContent,
-                        title: message(code: uiDefinition.widget?.title),
-                        init: uiDefinition.widget?.init
-                ]
-                widgetsList.add(widgetElement)
-            }
-        }
-        //Widgets with sortable=false can be ordered si a position is set
-        widgetsList.sort { it.sortable?.position }
-        out << g.render(template: '/components/widgetBar', plugin: 'icescrum-core', model: [widgetsList: widgetsList])
     }
 
     /**

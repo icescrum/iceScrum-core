@@ -23,30 +23,7 @@
             <g:message code="is.ui.hide"/>
         </div>
     </sec:ifLoggedIn>
-    <g:each in="${widgetsList}" var="widget">
-      <is:widget attrs="${widget}"/>
-    </g:each>
   </div>
 </div>
-<jq:jquery>
-  $("#widget-list").sortable({
-    handle:".box-title",
-    items:".box-widget-sortable"
-  });
 
-  $("#local").droppable({
-    drop:function(event, ui){
-      var id = ui.draggable.attr('id').replace('elem_','');
-      if (id != ui.draggable.attr('id')){
-        if($("#window-id-"+id).is(':visible')){
-          $.icescrum.windowToWidget($("#window-id-"+id),event);
-        }else{
-          $.icescrum.addToWidgetBar(id);
-        }
-      }
-    },
-    hoverClass: 'local-active',
-    accept: '.widgetable'
-  });
-</jq:jquery>
 
