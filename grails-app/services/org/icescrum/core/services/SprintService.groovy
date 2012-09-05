@@ -441,6 +441,8 @@ class SprintService {
                         values << [
                                 storiesDone: xmlRoot."${Cliche.STORIES_DONE}".toInteger(),
                                 stories: xmlRoot."${Cliche.TOTAL_STORIES}".toInteger(),
+                                pointsDone: xmlRoot."${Cliche.STORIES_POINTS_DONE}"?.toString()?.isInteger() ? xmlRoot."${Cliche.STORIES_POINTS_DONE}".toInteger() :0,
+                                totalPoints: xmlRoot."${Cliche.STORIES_TOTAL_POINTS}"?.toString()?.isInteger() ? xmlRoot."${Cliche.STORIES_TOTAL_POINTS}".toInteger() :0,
                                 label: "${g.formatDate(date: lastDaycliche, formatName: 'is.date.format.short')}"
                         ]
                 }
@@ -454,6 +456,8 @@ class SprintService {
                     values << [
                             storiesDone: null,
                             stories: null,
+                            pointsDone: null,
+                            totalPoints: null,
                             label: "${g.formatDate(date: lastDaycliche + (it + 1), formatName: 'is.date.format.short')}"
                     ]
             }

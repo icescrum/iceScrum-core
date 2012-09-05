@@ -111,6 +111,8 @@ class Cliche implements Serializable {
     static final TOTAL_STORIES = 'stories'
     static final STORIES_DONE = 'doneStories'
     static final STORIES_INPROGRESS = 'inprogressStories'
+    static final STORIES_TOTAL_POINTS = 'pointsStories'
+    static final STORIES_POINTS_DONE = 'totalPointsStories'
 
     static final TOTAL_TASKS = 'tasks'
     static final TASKS_WAIT = 'waitTasks'

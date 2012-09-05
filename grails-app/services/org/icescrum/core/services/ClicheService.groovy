@@ -293,15 +293,19 @@ class ClicheService {
 
         int storiesDone = 0
         int storiesInProgress = 0
+        int totalPointsStories = 0
+        int pointsDoneStories = 0
         s.stories.each { storyd ->
             switch (storyd.state) {
                 case Story.STATE_DONE:
                     storiesDone++
+                    pointsDoneStories += storyd.effort
                     break
                 case Story.STATE_INPROGRESS:
                     storiesInProgress++
                     break
             }
+            totalPointsStories += storyd.effort
         }
 
         def clicheData = {
@@ -312,6 +316,10 @@ class ClicheService {
                 //Stories by state
                 "${Cliche.STORIES_INPROGRESS}"(storiesInProgress)
                 "${Cliche.STORIES_DONE}"(storiesDone)
+
+                //Points
+                "${Cliche.STORIES_TOTAL_POINTS}"(totalPointsStories)
+                "${Cliche.STORIES_POINTS_DONE}"(pointsDoneStories)
 
                 //Total tasks
                 "${Cliche.TOTAL_TASKS}"(wait + inprogress + done)
