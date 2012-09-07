@@ -36,6 +36,7 @@ import org.icescrum.core.event.IceScrumUserEvent
 import org.icescrum.core.event.IceScrumEvent
 
 class User implements Serializable, Attachmentable {
+
     static final long serialVersionUID = 813639032272976126L
 
     String lastName = "Doe"

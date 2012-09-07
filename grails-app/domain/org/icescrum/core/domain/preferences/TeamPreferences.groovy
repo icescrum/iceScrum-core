@@ -27,6 +27,8 @@ import org.icescrum.core.domain.Team
 
 class TeamPreferences implements Serializable{
 
+    static final long serialVersionUID = 813631845272976126L
+
     boolean allowNewMembers = false
 
     static belongsTo = [

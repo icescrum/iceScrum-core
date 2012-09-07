@@ -26,6 +26,7 @@
 package org.icescrum.core.domain
 
 class Impediment extends BacklogElement implements Serializable, Comparable<Impediment> {
+
     static final long serialVersionUID = -4539116826820983569L
 
     static final int TODO = 1

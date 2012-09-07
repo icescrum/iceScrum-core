@@ -35,6 +35,8 @@ import org.grails.plugins.springsecurity.service.acl.AclUtilService
 
 class Team implements Serializable, Comparable {
 
+    static final long serialVersionUID = 813639045272976126L
+
     String name
     int velocity = 0
     String description

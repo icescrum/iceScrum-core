@@ -29,6 +29,8 @@ import org.icescrum.core.domain.User
 
 class UserAuthority implements Serializable {
 
+    static final long serialVersionUID = 813639045272345126L
+
     User user
     Authority authority
 

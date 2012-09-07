@@ -29,6 +29,8 @@ import org.icescrum.core.domain.Product
 
 class ProductPreferences implements Serializable{
 
+    static final long serialVersionUID = 813639045272950126L
+
     //Project
     boolean hidden = false
     boolean archived = false

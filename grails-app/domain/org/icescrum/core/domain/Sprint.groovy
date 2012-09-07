@@ -32,6 +32,7 @@ import org.springframework.security.core.context.SecurityContextHolder as SCH
 
 
 class Sprint extends TimeBox implements Serializable {
+
     static final long serialVersionUID = -7022481404086376233L
 
     static final int STATE_WAIT = 1

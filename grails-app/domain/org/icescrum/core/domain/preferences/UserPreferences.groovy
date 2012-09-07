@@ -29,6 +29,8 @@ import org.icescrum.core.domain.User
 
 class UserPreferences implements Serializable{
 
+    static final long serialVersionUID = 813649045202976126L
+
     String language = "en"
     String activity
     String filterTask = "allTasks"
