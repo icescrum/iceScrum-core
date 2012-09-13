@@ -178,7 +178,7 @@ class WindowTagLib {
         }
 
         if (!attrs.text)
-            attrs.text = body().trim()
+            attrs.text = body()?.trim()
 
         str += "${attrs.text}</span><span class=\"end\">"
         if (attrs.dropmenu == 'true')
