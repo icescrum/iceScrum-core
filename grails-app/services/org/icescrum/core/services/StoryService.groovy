@@ -78,7 +78,7 @@ class StoryService {
             p.addToStories(story)
             story.addFollower(u)
             story.addActivity(u, Activity.CODE_SAVE, story.name)
-            broadcast(function: 'add', message: story)
+            broadcast(function: 'add', message: story, channel:'product-'+p.id)
             publishEvent(new IceScrumStoryEvent(story, this.class, u, IceScrumStoryEvent.EVENT_CREATED))
         } else {
             throw new RuntimeException()
@@ -872,7 +872,8 @@ class StoryService {
                     affectVersion: story.affectVersion,
                     origin: story.name,
                     feature: story.feature,
-                    actor: story.actor
+                    actor: story.actor,
+                    executionFrequency: story.executionFrequency
             )
 
             copiedStory.validate()

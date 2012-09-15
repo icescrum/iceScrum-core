@@ -152,31 +152,35 @@ class Product extends TimeBox implements Serializable {
                 "WHERE m.id = :uid)", [uid: userid], params ?: [:])
     }
 
-    static findAllByRole(User user, List<BasePermission> permission, params) {
+    static findAllByRole(User user, List<BasePermission> permission, params, members = true) {
         executeQuery("SELECT DISTINCT p "+
-                        "From org.icescrum.core.domain.Product as p "+
-                        "where "+
-                        "( p IN "+
-                        "(SELECT DISTINCT p " +
-                        "FROM org.icescrum.core.domain.Product as p INNER JOIN p.teams as t " +
-                        "WHERE t.id in " +
-                        "(SELECT DISTINCT t2.id FROM org.icescrum.core.domain.Team as t2 " +
-                        "INNER JOIN t2.members as m " +
-                        "WHERE m.id = :uid) ) )" +
-                        "or ( p IN ( SELECT DISTINCT p "+
-                        "From org.icescrum.core.domain.Product as p, "+
-                        "org.codehaus.groovy.grails.plugins.springsecurity.acl.AclClass as ac, "+
-                        "org.codehaus.groovy.grails.plugins.springsecurity.acl.AclObjectIdentity as ai, "+
-                        "org.codehaus.groovy.grails.plugins.springsecurity.acl.AclSid as acl, "+
-                        "org.codehaus.groovy.grails.plugins.springsecurity.acl.AclEntry as ae "+
-                        "where "+
-                        "ac.className = 'org.icescrum.core.domain.Product' "+
-                        "AND ai.aclClass = ac.id "+
-                        "AND acl.sid = :sid "+
-                        "AND acl.id = ae.sid.id "+
-                        "AND ae.mask IN(:p) "+
-                        "AND ai.id = ae.aclObjectIdentity.id "+
-                        "AND p.id = ai.objectId ) )", [sid: user?.username?:'', uid: user?.id?:0L, p:permission*.mask ], params ?: [:])
+                "From org.icescrum.core.domain.Product as p "+
+                "where "
+
+                + ( members ?
+            "( p IN "+
+                    "(SELECT DISTINCT p " +
+                    "FROM org.icescrum.core.domain.Product as p INNER JOIN p.teams as t " +
+                    "WHERE t.id in " +
+                    "(SELECT DISTINCT t2.id FROM org.icescrum.core.domain.Team as t2 " +
+                    "INNER JOIN t2.members as m " +
+                    "WHERE m.id = :uid) ) )" +
+                    "or" : "")
+
+                + "( p IN ( SELECT DISTINCT p "+
+                "From org.icescrum.core.domain.Product as p, "+
+                "org.codehaus.groovy.grails.plugins.springsecurity.acl.AclClass as ac, "+
+                "org.codehaus.groovy.grails.plugins.springsecurity.acl.AclObjectIdentity as ai, "+
+                "org.codehaus.groovy.grails.plugins.springsecurity.acl.AclSid as acl, "+
+                "org.codehaus.groovy.grails.plugins.springsecurity.acl.AclEntry as ae "+
+                "where "+
+                "ac.className = 'org.icescrum.core.domain.Product' "+
+                "AND ai.aclClass = ac.id "+
+                "AND acl.sid = :sid "+
+                "AND acl.id = ae.sid.id "+
+                "AND ae.mask IN(:p) "+
+                "AND ai.id = ae.aclObjectIdentity.id "+
+                "AND p.id = ai.objectId ) )", members ? [sid: user?.username?:'', uid: user?.id?:0L, p:permission*.mask ] : [sid: user?.username?:'', p:permission*.mask ], params ?: [:])
     }
 
     static searchPublicAndMyProducts(User user, String term, params) {
