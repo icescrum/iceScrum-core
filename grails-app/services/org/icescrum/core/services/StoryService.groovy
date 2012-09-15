@@ -63,15 +63,13 @@ class StoryService {
         }
 
         story.uid = Story.findNextUId(p.id)
-        story.state = Story.STATE_SUGGESTED
         story.suggestedDate = new Date()
 
-        if (story.state < Story.STATE_ACCEPTED && story.effort >= 0)
-            null;
-
-        else if (story.effort > 0) {
+        if (story.effort > 0) {
             story.state = Story.STATE_ESTIMATED
             story.estimatedDate = new Date()
+        }else{
+            story.state = Story.STATE_SUGGESTED
         }
 
         if (story.save()) {
@@ -125,11 +123,12 @@ class StoryService {
             if (story.state != Story.STATE_SUGGESTED)
                 resetRank(story)
 
+            def id = story.id
+            story.deleteComments()
+
             def p = story.backlog
             p.removeFromStories(story)
 
-            def id = story.id
-            story.deleteComments()
             story.delete(flush:true)
 
             p.save()
