@@ -152,8 +152,8 @@ class ApplicationSupport {
       }
   }
 
-    static public zipExportFile(File zipfile, List<File> files, File xml) throws IOException {
-        ZipOutputStream zout = new ZipOutputStream(new FileOutputStream(zipfile))
+    static public zipExportFile(OutputStream zipStream, List<File> files, File xml) throws IOException {
+        ZipOutputStream zout = new ZipOutputStream(zipStream)
         try {
             if (log.debugEnabled){ log.debug "Zipping : ${xml.name}" }
             zout.putNextEntry(new ZipEntry(xml.name))
