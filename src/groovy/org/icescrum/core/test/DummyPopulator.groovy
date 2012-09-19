@@ -205,7 +205,7 @@ class DummyPopulator {
                 if (i == 0)
                     taskCount++
                 20.times{
-                    def task = new Task(uid:taskCount, type: Task.TYPE_RECURRENT, estimation: 5, name: "task recurrent ${sp.id}", creator: ua, responsible: ua, parentStory: null, backlog: sp, creationDate: new Date())
+                    def task = new Task(uid:taskCount, type: Task.TYPE_RECURRENT, estimation: 5, name: "task recurrent ${it} ${sp.id}", creator: ua, responsible: ua, parentStory: null, backlog: sp, creationDate: new Date())
                     sp.addToTasks(task)
                     task.save()
                     taskCount++
