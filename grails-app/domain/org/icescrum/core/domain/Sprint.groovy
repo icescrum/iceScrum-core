@@ -178,8 +178,8 @@ class Sprint extends TimeBox implements Serializable {
     }
 
     int state = Sprint.STATE_WAIT
-    String retrospective
-    String doneDefinition
+    String retrospective  // Beware of distinct, it won't work in MSSQL since this attribute is TEXT
+    String doneDefinition // Beware of distinct, it won't work in MSSQL since this attribute is TEXT
     Date activationDate
     Date closeDate
     Double velocity = 0d

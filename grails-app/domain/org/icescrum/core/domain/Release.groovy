@@ -39,7 +39,7 @@ class Release extends TimeBox implements Cloneable {
 
     int state = Release.STATE_WAIT
     Double releaseVelocity = 0d
-    String vision = ""
+    String vision = "" // Beware of distinct, it won't work in MSSQL since this attribute is TEXT
     String name = "R"
     SortedSet<Sprint> sprints
 

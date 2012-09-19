@@ -32,7 +32,7 @@ class Cliche implements Serializable {
     static belongsTo = [parentTimeBox: TimeBox]
 
     Date datePrise
-    String data
+    String data  // Beware of distinct, it won't work in MSSQL since this attribute is TEXT
     int type = Cliche.TYPE_ACTIVATION
 
     static mapping = {

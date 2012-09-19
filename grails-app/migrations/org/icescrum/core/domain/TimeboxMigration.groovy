@@ -17,6 +17,7 @@
  * Authors:
  *
  * Vincent Barrier (vbarrier@kagilum.com)
+ * Nicolas Noullet (nnoullet@kagilum.com)
  */
 package org.icescrum.core.domain
 
@@ -57,6 +58,13 @@ class TimeboxMigration {
                   }
                   sql('UPDATE icescrum2_timebox set last_updated = GETDATE() WHERE last_updated is NULL')
                   addNotNullConstraint(tableName:"icescrum2_timebox",columnName:'last_updated',columnDataType:'DATETIME')
+            }
+            changeSet(id:'timebox_change_text_datatype_mssql', author:'nnoullet') {
+                  preConditions(onFail:"MARK_RAN"){
+                      dbms(type:'mssql')
+                  }
+                  sql('ALTER TABLE icescrum2_timebox ALTER COLUMN description VARCHAR(MAX)')
+                  sql('ALTER TABLE icescrum2_timebox ALTER COLUMN goal VARCHAR(MAX)')
             }
             // OTHERS
             changeSet(id:'timebox_add_constraint_dateCreated_sql', author:'vbarrier') {
