@@ -698,7 +698,7 @@ class ProductService {
                          avatar:is.avatar(user:it,link:true),
                          role: Authority.STAKEHOLDER])
         }
-        members.sort{ a,b -> a.role > b.role ? -1 : 1  }
+        members.sort{ a,b -> b.role <=> a.role ?: a.name <=> b.name }
     }
 
     private void addProductOwner(Product product, User productOwner) {
