@@ -218,7 +218,7 @@ public class ISKeyGeneratorHelper {
     }
 
     public Map retrieveTimeBox(GrailsParameterMap params, String type){
-        def timeboxId = params.product ?: params.sprint?.id ?: params.release?.id ?: params.id ?: null
+        def timeboxId = params.product ? params.product.decodeProductKey() : params.sprint?.id ?: params.release?.id ?: params.id ?: null
         if (timeboxId){
             def timebox
             switch (type){
@@ -229,7 +229,7 @@ public class ISKeyGeneratorHelper {
                     timebox = Release.get(params.release?.id ?: params.id)
                     break
                 case 'product':
-                    timebox = Product.get(params.product ?: params.id)
+                    timebox = Product.get(params.product.toLong() ?: params.id)
                     break
             }
             if (timebox)
@@ -287,67 +287,67 @@ public class ISKeyGeneratorHelper {
     }
 
     public String retrieveLastUpdatedRelease(GrailsParameterMap params){
-        def lastUpdated = Release.createCriteria().get{
+        params.product = params.product?.decodeProductKey()
+        def result = Release.createCriteria().get{
             parentProduct{
-                eq 'id', params.long('product')
+                eq 'id', params.product?.toLong()
             }
             projections {
-                property 'lastUpdated'
+                max('lastUpdated')
+                count('lastUpdated')
             }
-            order("lastUpdated", "desc")
-            maxResults(1)
             cache true
         }
-        return lastUpdated
+        return result.join('_')
     }
 
     public String retrieveLastUpdatedFeature(GrailsParameterMap params){
-        def lastUpdated = Feature.createCriteria().get{
+        params.product = params.product?.decodeProductKey()
+        def result = Feature.createCriteria().get{
             backlog{
-                eq 'id', params.long('product')
+                eq 'id', params.product?.toLong()
             }
             projections {
-                property 'lastUpdated'
+                max('lastUpdated')
+                count('lastUpdated')
             }
-            order("lastUpdated", "desc")
-            maxResults(1)
             cache true
         }
-        return lastUpdated
+        return result.join('_')
     }
 
     public String retrieveLastUpdatedStory(GrailsParameterMap params){
-        def lastUpdated = Story.createCriteria().get{
+        params.product = params.product?.decodeProductKey()
+        def result = Story.createCriteria().get{
             backlog{
-                eq 'id', params.long('product')
+                eq 'id', params.product?.toLong()
             }
             projections {
-                property 'lastUpdated'
+                max('lastUpdated')
+                count('lastUpdated')
             }
-            order("lastUpdated", "desc")
-            maxResults(1)
             cache true
         }
-        return lastUpdated
+        return result.join('_')
     }
 
     public String retrieveLastUpdatedActor(GrailsParameterMap params){
-        def lastUpdated = Actor.createCriteria().get{
+        params.product = params.product?.decodeProductKey()
+        def result = Actor.createCriteria().get{
             backlog{
-                eq 'id', params.long('product')
+                eq 'id', params.product?.toLong()
             }
             projections {
-                property 'lastUpdated'
+                max('lastUpdated')
+                count('lastUpdated')
             }
-            order("lastUpdated", "desc")
-            maxResults(1)
             cache true
         }
-        return lastUpdated
+        return result.join('_')
     }
 
     public String retrieveLastUpdatedTask(GrailsParameterMap params){
-        def lastUpdated = Task.createCriteria().get{
+        def result = Task.createCriteria().get{
             if (params.product && (params.sprint || params.id)){
                 backlog{
                     eq 'id', params.sprint ? params.sprint.toLong() : params.long('id')
@@ -362,13 +362,12 @@ public class ISKeyGeneratorHelper {
                 }
             }
             projections {
-                property 'lastUpdated'
+                max('lastUpdated')
+                count('lastUpdated')
             }
-            order("lastUpdated", "desc")
-            maxResults(1)
             cache true
         } ?: null
-        return lastUpdated
+        return result.join('_')
     }
 
 }

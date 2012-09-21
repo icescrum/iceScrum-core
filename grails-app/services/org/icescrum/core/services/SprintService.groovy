@@ -233,7 +233,7 @@ class SprintService {
 
         // There is (in the release) sprints before 'sprint' which are not closed
         if (sprint.orderNumber != 1 && sprint.orderNumber > lastSprintClosed + 1)
-            throw new IllegalStateException('is.sprint.error.activate.other.inprogress')
+            throw new IllegalStateException('is.sprint.error.activate.previous.not.closed')
 
         def autoCreateTaskOnEmptyStory = sprint.parentRelease.parentProduct.preferences.autoCreateTaskOnEmptyStory
 
