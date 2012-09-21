@@ -63,12 +63,16 @@ class StoryService {
         }
 
         story.uid = Story.findNextUId(p.id)
-        story.suggestedDate = new Date()
+        if(!story.suggestedDate)
+            story.suggestedDate = new Date()
 
         if (story.effort > 0) {
             story.state = Story.STATE_ESTIMATED
-            story.estimatedDate = new Date()
-        }else{
+            if(!story.estimatedDate)
+                story.estimatedDate = new Date()
+        } else if (story.acceptedDate) {
+            story.state = Story.STATE_ACCEPTED
+        } else {
             story.state = Story.STATE_SUGGESTED
         }
 
