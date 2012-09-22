@@ -27,7 +27,10 @@ package org.icescrum.core.taglib
 
 import org.codehaus.groovy.grails.plugins.jasper.JasperExportFormat
 import org.icescrum.components.UtilsWebComponents
-import org.icescrum.core.ui.UiDefinition
+import org.codehaus.groovy.grails.web.servlet.GrailsApplicationAttributes
+import org.codehaus.groovy.grails.web.metaclass.ControllerDynamicMethods
+import org.codehaus.groovy.grails.web.mapping.ForwardUrlMappingInfo
+import org.codehaus.groovy.grails.web.util.WebUtils
 
 class WindowTagLib {
     static namespace = 'is'
@@ -49,7 +52,21 @@ class WindowTagLib {
         // Check for content window
         def includeParams = ['windowType':type]
         params.each{ if (!(it.key in ["controller", "action"])) { includeParams << it} }
-        def windowContent = (attrs.init) ? include(controller: windowId, action: attrs.init, params:includeParams) : body()
+        def windowContent
+            if (attrs.init){
+                def result = includeContent([controller: windowId, action: attrs.init, params:includeParams], null)
+                if (result.contentType == 'application/json;charset=utf-8'){
+                    response.setStatus(400)
+                    response.setContentType(result.contentType)
+                    out << result.content
+                    return
+                }else{
+                    windowContent = result.content
+                }
+            }
+            else {
+                windowContent = body()
+            }
 
         // Check for toolbar existence
         def titleBarContent = ''
@@ -102,66 +119,9 @@ class WindowTagLib {
                 resizable: attrs.resizable ?: false,
                 windowContent: windowContent
         ]
-        if (windowContent){
+        if (windowContent && !webRequest?.params?.returnError){
             out << g.render(template: '/components/window', plugin: 'icescrum-core', model: params)
-            out << jq.jquery(render: true)
         }
-    }
-
-    /**
-     * Generate a toolbar for a window
-     */
-    def toolbar = { attrs, body ->
-        out << '<div class="box-navigation">'
-        out << "<ul id='${attrs.type}-toolbar'>"
-        out << body()
-        out << '</ul>'
-        out << '</div>'
-    }
-
-    /**
-     * Generate a button for a toolbar
-     */
-    def iconButton = { attrs, body ->
-
-        def uid = 'toolbar-' + (new Date().time);
-        def classes = attrs."class" ?: ''
-        attrs."class" = "${attrs."class" ?: ''} tool-button"
-        attrs.remote = attrs.remote ?: 'true'
-
-        if (UtilsWebComponents.rendered(attrs)) {
-            out << '<li class=\"navigation-item ' + classes + '\" uid="' << uid << '"'
-            if (attrs.style) {
-                out << ' style="' << attrs.style << '"'
-                attrs.remove('style')
-            }
-            out << '>'
-            if (attrs.onload) {
-                out << jq.jquery(null, attrs.onload);
-                attrs.remove('onload');
-            }
-
-            if (attrs.shortcut && attrs.shortcut.key && attrs.shortcut.scope) {
-                out << is.shortcut(key: attrs.shortcut.key, callback: "\$('#window-toolbar [uid=${uid}] > a').click();", scope: attrs.shortcut.scope, listenOn: "'#window-id-${attrs.shortcut.scope}'")
-                attrs.remove('shortcut')
-            }
-
-            out << is.buttonNavigation(attrs, body())
-            out << '</li>'
-        }
-    }
-
-    def separatorSmall = { attrs, body ->
-        if (UtilsWebComponents.rendered(attrs))
-            out << "<li class=\"navigation-item separator-s ${attrs.class}\" ${attrs.elementId ? 'id=\"' + attrs.elementId + '\"' : ''}></li>"
-    }
-
-    /**
-     * A separator in a toolbar, has the rendered** attributes.
-     */
-    def separator = {attrs, body ->
-        if (UtilsWebComponents.rendered(attrs))
-            out << "<li class=\"navigation-item separator ${attrs.class}\" ${attrs.elementId ? 'id=\"' + attrs.elementId + '\"' : ''}></li>"
     }
 
     def buttonNavigation = { attrs, body ->
@@ -169,28 +129,25 @@ class WindowTagLib {
         attrs."class" += attrs.button ? attrs.button : " button-n"
         attrs.remove("button");
 
-        def str = "<span class=\"start\"></span><span class=\"content\">"
+        def str = "<span class='start'></span><span class='content'>"
 
         if (attrs.icon) {
             attrs."class" += " button-ico button-" + attrs.icon
-            str += "<span class=\"ico\"></span>"
+            str += "<span class='ico'></span>"
             attrs.remove('icon')
         }
 
         if (!attrs.text)
             attrs.text = body()?.trim()
 
-        str += "${attrs.text}</span><span class=\"end\">"
+        str += "${attrs.text}</span><span class='end'>"
         if (attrs.dropmenu == 'true')
-            str += "<span class=\"arrow\"></span>"
+            str += "<span class='arrow'></span>"
 
         str += "</span>"
         attrs.remove("text");
 
-        if (attrs.remove('dialog'))
-            out << is.remoteDialog(attrs, str).trim()
-        else
-            out << is.link(attrs, str).trim();
+        out << is.link(attrs, str).trim();
 
     }
 
@@ -214,21 +171,6 @@ class WindowTagLib {
                 init: attrs.init
         ]
         out << is.window(params, {})
-    }
-
-    def remoteDialog = { attrs, body ->
-        attrs.remoteDialog = true
-        def result = dialogMethod(attrs)
-        if (attrs.noprefix) {
-            result.noprefix = true
-        }
-        out << is.link(result, body)
-    }
-
-    def remoteDialogFunction = { attrs ->
-        attrs.remoteDialog = true
-        def result = dialogMethod(attrs)
-        out << remoteFunction(result)
     }
 
     def dialog = { attrs, body ->
@@ -352,36 +294,7 @@ class WindowTagLib {
 
         attrs.remove('onOpen');
 
-        if (attrs.remoteDialog) {
-            attrs.remove('remoteDialog')
-            attrs.onSuccess = dialogCode
-            attrs.remote = "true"
-            attrs.update = "dialog"
-            attrs.onLoaded = "\$(document.body).append('<div id=\\'dialog\\'></div>');"
-            attrs.history = "false"
-            return attrs
-        } else {
-            return jq.jquery(null, dialogCode)
-        }
-    }
-
-    def onClose = {attrs, body ->
-        def outClose = pageScope.onClose ?: ''
-        if (body) {
-            outClose << body()
-            if (outClose)
-                pageScope.outClose = outClose
-        }
-        outClose
-    }
-
-    def dialogButton = {attrs, body ->
-        def outButtons = pageScope.dialogButton
-        if (attrs) {
-            def outButton = outButtons ? "$outButtons," : ''
-            outButton << "{'${message(code: attrs.label ?: "is.button.cancel")}': function() {${attrs.callback ?: "\$(this).dialog('close');" }}"
-            pageScope.outButtons = outButtons
-        }
+        return jq.jquery(null, dialogCode)
     }
 
     /**
@@ -391,7 +304,7 @@ class WindowTagLib {
         out << jq.jquery(attrs, """
     jQuery(document).ajaxSend(function() { jQuery.icescrum.loading(); jQuery(document.body).css('cursor','progress'); });
     jQuery(document).ajaxError(function(data) { jQuery.icescrum.loadingError(); jQuery(document.body).css('cursor','default'); });
-    jQuery(document).ajaxComplete(function(e,xhr,settings){ jQuery.icescrum.loading(false); if(xhr.status == 403){ $attrs.on403;}else if(xhr.status == 401){ $attrs.on401; }else if(xhr.status == 400){ $attrs.on400; }else if(xhr.status == 500){ $attrs.on500; } });
+    jQuery(document).ajaxComplete(function(e,xhr,settings){  jQuery.icescrum.loading(false); if(xhr.status == 403){ $attrs.on403;}else if(xhr.status == 401){ $attrs.on401; }else if(xhr.status == 400){ $attrs.on400; }else if(xhr.status == 500){ $attrs.on500; } });
     jQuery(document).ajaxStop(function() { jQuery.icescrum.loading(false); jQuery(document.body).css('cursor','default'); });
     """)
     }
@@ -438,21 +351,13 @@ class WindowTagLib {
      *
      */
     def helpButton = { attrs, body ->
-
         assert attrs.id
-
-        out << jq.jquery(null, {"\$('#${attrs.id}-list').dropmenu({top:15});"})
-
-        out << "<li class=\"navigation-item\">"
-        out << "<div class=\"dropmenu window-help\" id=\"${attrs.id}-list\">"
-
-        def str = "<span class=\"help\">" + attrs.text + "</span>"
-
-        out << str
+        out << "<li class='navigation-item'>"
+        out << "<div class='dropmenu window-help' id='${attrs.id}-list' data-dropmenu='true' data-top='15'>"
+        out << "<span class='help'>" + attrs.text + "</span>"
         out << """<div class="dropmenu-content ui-corner-all content-help">
-        ${body()}
-      </div>"""
-
+            ${body()}
+          </div>"""
         out << "</div>"
         out << '</li>'
     }
@@ -483,19 +388,7 @@ class WindowTagLib {
         def formatsLinks = '<ul><li class="first">' + targetedFormats.findAll {
             (it instanceof Collection && it[0] in supportedFormats) || (it in supportedFormats)
         }.asList().unique().collect {
-            is.remoteDialog([
-                    action: attrs.action,
-                    controller: attrs.controller ?: controllerName,
-                    params: "'format=${it instanceof Collection ? it[0] : it}&${attrs.params ? attrs.params : ''}'",
-                    withTitlebar: "false",
-                    onClose: "\$.doTimeout('progressBar');",
-                    buttons: "'${message(code: 'is.button.close')}': function() { \$(this).dialog('close'); }",
-                    draggable: "false"
-            ],
-                    '<div style="display:inline-block" class="file-icon ' + (it instanceof Collection ? it[0] : it).toLowerCase() + '-format">' +
-                            (it instanceof Collection ? it[1] : it) + '</div>'
-            )
-
+            '<div style="display:inline-block" class="file-icon ' + (it instanceof Collection ? it[0] : it).toLowerCase() + '-format"> <a href="'+(g.createLink(action: attrs.action,controller: attrs.controller ?: controllerName, params:[format:it instanceof Collection ? it[0] : it, product:params.product]))+(attrs.params ? '&'+attrs.params : '')+'" data-ajax="true"> '+(it instanceof Collection ? it[1] : it) + '</a></div>'
         }.join('</li><li>') + '</li></ul>'
 
         out << is.panelButton(
@@ -507,5 +400,23 @@ class WindowTagLib {
                 ],
                 formatsLinks
         )
+    }
+
+    private def includeContent = { attrs, body ->
+        if (attrs.action && !attrs.controller) {
+            def controller = request?.getAttribute(GrailsApplicationAttributes.CONTROLLER)
+            def controllerName = controller?.getProperty(ControllerDynamicMethods.CONTROLLER_NAME_PROPERTY)
+            attrs.controller = controllerName
+        }
+
+        if (attrs.controller || attrs.view) {
+            def mapping = new ForwardUrlMappingInfo(controller: attrs.controller,
+                                                    action: attrs.action,
+                                                    view: attrs.view,
+                                                    id: attrs.id,
+                                                    params: attrs.params)
+
+            WebUtils.includeForUrlMappingInfo(request, response, mapping, attrs.model ?: [:])
+        }
     }
 }

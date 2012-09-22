@@ -30,7 +30,7 @@ class PanelTagLib {
     def panel = {attrs, body ->
 
         def id = attrs.id ?: "panel" + new Date().time
-        out << "<div class=\"panel-box ${attrs.class ?: ''}\" id=\"${id}\">"
+        out << "<div class='panel-box ${attrs.class ?: ''}' id='${id}'>"
         out << body()
         out << "</div>"
 
@@ -39,7 +39,7 @@ class PanelTagLib {
     }
 
     def panelTitle = {attrs, body ->
-        out << "<h3 class=\"panel-box-title\" ${attrs.id ? 'id= \"' + attrs.id + '\"' : ''}>"
+        out << "<h3 class='panel-box-title' ${attrs.id ? 'id= "' + attrs.id + '"' : ''}>"
         out << body()
         out << "</h3>"
     }
@@ -48,9 +48,9 @@ class PanelTagLib {
         assert pageScope.panelContext
         if (UtilsWebComponents.rendered(attrs)) {
             def line = { isLast ->
-                "<tr class=\"panel-line ${isLast ? "panel-line-last" : ""}\" ${attrs.id ? 'id="' + attrs.remove('id') + '"' : ''}>" +
-                        "<td class=\"line-left\">" + attrs.remove("legend") + "</td>" +
-                        "<td class=\"line-right\">" + body() + "</td>" +
+                "<tr class='panel-line ${isLast ? "panel-line-last" : ""}' ${attrs.id ? 'id="' + attrs.remove('id') + '"' : ''}>" +
+                        "<td class='line-left'>" + attrs.remove("legend") + "</td>" +
+                        "<td class='line-right'>" + body() + "</td>" +
                         "</tr>"
             }
             pageScope.panelContext.lines << line
@@ -59,7 +59,7 @@ class PanelTagLib {
 
     def panelContext = {attrs, body ->
         pageScope.panelContext = [lines: []]
-        out << "<table cellspacing=\"0\" cellpadding=\"0\" border=\"0\" style=\"width:100%\">"
+        out << "<table cellspacing='0' cellpadding='0' border='0' style='width:100%'>"
         out << body()
         pageScope.panelContext.lines.eachWithIndex { line, index ->
             out << line(index == pageScope.panelContext.lines.size() - 1)
@@ -69,7 +69,7 @@ class PanelTagLib {
 
     def panelTabButton = {attrs, body ->
         def id = attrs.remove("id") ?: ""
-        out << "<div id=\"${id}\" class=\"panel-tab-button clearfix\">"
+        out << "<div id='${id}' class='panel-tab-button clearfix'>"
         out << body()
         out << "</div>"
     }
@@ -78,7 +78,7 @@ class PanelTagLib {
         def c = attrs.remove("selected") ? "tab-selected" : ""
         def id = attrs.remove("id") ?: ""
 
-        out << "<div id=\"${id}\" class=\"panel-tab-content ${c}\">"
+        out << "<div id='${id}' class='panel-tab-content ${c}'>"
         out << body()
         out << "</div>"
     }
@@ -150,7 +150,6 @@ class PanelTagLib {
         assert attrs.id
 
         if (UtilsWebComponents.rendered(attrs)) {
-            out << jq.jquery(null, {"\$('#${attrs.id}-list').dropmenu();"})
             def paramsIcon = [
                     class: 'button-n dropmenu-button',
                     disabled: 'true',
@@ -160,8 +159,8 @@ class PanelTagLib {
             if (attrs.icon)
                 paramsIcon.icon = attrs.icon
 
-            out << "<li class=\"navigation-item\" id=\"${attrs.id}-navigation-item\">"
-            out << "<div class=\"dropmenu ${attrs.remove('classDropmenu')?:''}\" id=\"${attrs.id}-list\">"
+            out << "<li class='navigation-item' id='${attrs.id}-navigation-item'>"
+            out << "<div class='dropmenu ${attrs.remove('classDropmenu')?:''}' id='${attrs.id}-list' data-dropmenu='true'>"
 
             def str = attrs.text
 
@@ -169,7 +168,7 @@ class PanelTagLib {
 
             attrs."class" ?: ""
 
-            out << """<div class="dropmenu-content ui-corner-all ${attrs."class"}">
+            out << """<div class="dropmenu-content ui-corner-all ${attrs."class"?:''}">
           ${body()}
         </div>"""
 
@@ -180,20 +179,13 @@ class PanelTagLib {
 
     def panelSearch = {attrs, body ->
         assert attrs.id
-
-        out << "<li class=\"navigation-search search\" id=\"" + attrs.id + "\">"
-        out << "<a class=\"search-button\"></a>"
-        out << "<div class=\"search-content ui-corner-all\">"
-        out << "<div class=\"input-content\">"
+        out << "<li class='navigation-search search' id='" + attrs.id + "' data-searchmenu='true' data-top='27' data-content='search-content' data-left='-24' data-noWindow='true' data-hover='search-hover'>"
+        out << "<a class='search-button'></a>"
+        out << "<div class='search-content ui-corner-all'>"
+        out << "<div class='input-content'>"
         out << body()
         out << "</div>"
         out << "</div>"
         out << '</li>'
-
-        out << jq.jquery(null, {"\$('#${attrs.id}').searchmenu({hover:\"search-hover\", content:\"search-content\", top:27, left:130, noWindows:true})"})
-    }
-
-    def chartView = { attrs, body ->
-        out << "<div class=\"view-chart\">${body()}</div>"
     }
 }

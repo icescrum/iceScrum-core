@@ -55,7 +55,7 @@ class ActorService {
         def id = act.id
         def stillHasPbi = p.stories.any {it.actor?.id == act.id}
         if (stillHasPbi)
-            throw new RuntimeException()
+            throw new RuntimeException('is.actor.error.still.hasStories')
         p.removeFromActors(act)
         broadcast(function: 'delete', message: [class: act.class, id: id])
     }

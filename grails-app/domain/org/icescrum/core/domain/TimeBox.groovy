@@ -28,6 +28,8 @@ import grails.plugin.fluxiable.Fluxiable
 
 class TimeBox implements Comparable<TimeBox>, Fluxiable, Serializable {
 
+    static final long serialVersionUID = -88023090297032383L
+
     Date startDate
     Date endDate
     String goal

@@ -96,11 +96,6 @@
                     </div>
                 </div>
             </g:if>
-
-            <g:if test="${tooltip}">
-                ${tooltip}
-            </g:if>
-
         </div>
 
     </div>

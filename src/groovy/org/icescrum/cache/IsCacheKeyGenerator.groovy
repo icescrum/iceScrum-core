@@ -223,13 +223,13 @@ public class ISKeyGeneratorHelper {
             def timebox
             switch (type){
                 case 'sprint':
-                    timebox = Sprint.get(params.timebox?.id ?: params.id)
+                    timebox = Sprint.get(timeboxId.toLong())
                     break
                 case 'release':
-                    timebox = Release.get(params.release?.id ?: params.id)
+                    timebox = Release.get(timeboxId.toLong())
                     break
                 case 'product':
-                    timebox = Product.get(params.product.toLong() ?: params.id)
+                    timebox = Product.get(timeboxId.toLong())
                     break
             }
             if (timebox)

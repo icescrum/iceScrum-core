@@ -77,9 +77,11 @@
 
 %{-- Toolbar --}%
 <g:if test="${hasToolbar}">
-    <is:toolbar type="${type}">
-        ${toolbar}
-    </is:toolbar>
+    <div class="box-navigation">
+        <ul id='${type}-toolbar'>
+            ${toolbar}
+        </ul>
+    </div>
 </g:if>
 
 %{-- Content --}%

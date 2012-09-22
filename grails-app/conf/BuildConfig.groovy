@@ -67,7 +67,7 @@ grails.project.dependency.resolution = {
         compile ':burning-image:0.5.0'
         compile 'org.icescrum:icescrum-attachmentable:0.3'
         compile 'spring:spring-security-core:1.2.7.3'
-        compile 'spring:spring-security-acl:1.1'
+        compile 'spring:spring-security-acl:1.1.1'
         compile 'org.icescrum:commentable:1.1'
         compile ':followable:0.3'
         compile ':autobase:1.0.0.0'

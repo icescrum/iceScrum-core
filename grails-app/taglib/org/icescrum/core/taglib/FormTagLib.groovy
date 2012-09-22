@@ -544,7 +544,7 @@ class FormTagLib {
             if (value == attrs.value) checked = true
             out << "<span class='${attrs.id}-${index}'>${key}</span>"
             out << g.radio(onClick: attrs.onClick ?: '', name: attrs.name, value: value, checked: checked, id: "${attrs.id}-${index}")
-            out << jq.jquery(null, "\$('input:radio[id=${attrs.id}-${index}]').checkBox();")
+            out << jq.jquery(null, "\$('input:radio[id=\"${attrs.id}-${index}\"]').checkBox();")
         }
         out << "</span>"
 

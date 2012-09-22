@@ -26,7 +26,7 @@
   </g:each>
   <sec:ifLoggedIn>
     <li class="navigation-line" id="menubar-list-button" style="visibility:${menuElementsHiddden?'visible':'hidden'}">
-      <div class="dropmenu" id="menubar-list">
+      <div class="dropmenu" id="menubar-list" data-dropmenu="true" data-autoClick="false">
         <a class="button-s clearfix">
           <span class="start"></span>
           <span class="content">
@@ -45,7 +45,6 @@
       </div>
     </li>
     <jq:jquery>
-    $('#menubar-list').dropmenu({autoClick:false});
     $(".navigation-content").sortable({
         connectWith:'.widget-bar #menubar-list-button',
         revert:true,

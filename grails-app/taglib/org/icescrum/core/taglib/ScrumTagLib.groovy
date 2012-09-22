@@ -36,9 +36,6 @@ class ScrumTagLib {
 
     def postit = { attrs, body ->
         def params = attrs
-        try {
-            pageScope.tooltip = ''
-        } catch (e) {}
 
         if (attrs.notruncate) {
             params.title = attrs.title
@@ -50,11 +47,6 @@ class ScrumTagLib {
         params.color = params.color ?: "yellow"
         params.className = (attrs.rect == true || attrs.rect == 'true') ? 'postit-rect' : 'postit'
         params.sortable = (attrs.sortable != null && UtilsWebComponents.rendered(attrs.sortable) && UtilsWebComponents.enabled(attrs.sortable))
-
-        try {
-            params.tooltip = pageScope.tooltip
-        } catch (e) {}
-
 
         if (params.content.trim() == '') {
             params.content = '&nbsp;';
