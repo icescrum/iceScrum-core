@@ -75,7 +75,7 @@ grails.project.dependency.resolution = {
         compile ':spring-events:1.2'
         compile ':springcache:1.3.1'
         compile ':mail:1.0'
-        compile ':jasper:1.5.3'
+        compile ':jasper:1.6.0'
         compile ':maven-publisher:0.8.1'
         compile ':rollback-on-exception:0.1'
         compile ':wikitext:0.1.2'
