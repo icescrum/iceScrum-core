@@ -62,7 +62,7 @@ class EventlineTagLib {
                     focus: attrs.focus
             ]
             def opts = jsParams.findAll {k, v -> v}.collect {k, v -> " $k:$v"}.join(',')
-            out << jq.jquery(null, "jQuery('${attrs.container}').eventline({${opts}});")
+            out << jq.jquery(null, "jQuery('${attrs.container}').eventline({${opts}});jQuery.doTimeout(200,function(){jQuery(window).trigger('resize');});")
         } else {
             params.events.each {
                     out << it
