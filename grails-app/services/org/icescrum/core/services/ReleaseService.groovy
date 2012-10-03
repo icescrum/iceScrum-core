@@ -97,10 +97,7 @@ class ReleaseService {
                 // Retrieve the sprints that are out of the bound of the dates interval
                 def tooHighSprint = release.sprints.findAll {it.startDate >= endDate}
                 if (tooHighSprint) {
-                    // Those sprints are deleted and their stories return in the backlog
-                    for (Sprint s: tooHighSprint) {
-                        sprintService.delete(s)
-                    }
+                    sprintService.delete(tooHighSprint.min { it.startDate }) // deleting the first will delete the next ones
                 }
 
                 // Check for a sprint that can be reduced
