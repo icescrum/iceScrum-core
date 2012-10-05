@@ -37,11 +37,11 @@ class ReleaseService {
     final static long DAY = 1000 * 60 * 60 * 24
 
     static transactional = true
+
     def productService
     def storyService
     def clicheService
     def springSecurityService
-
     def grailsApplication
 
     @PreAuthorize('(productOwner(#product) or scrumMaster(#product) or owner(#product)) and !archivedProduct(#product)')
