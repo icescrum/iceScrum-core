@@ -66,12 +66,8 @@ class Release extends TimeBox implements Cloneable {
             if (!val){
                 return ['blank']
             }
-            if(val.after(obj.endDate)){
-                return ['after.startDate']
-            }
-            def r = obj.parentProduct.releases?.find{ it.orderNumber == obj.orderNumber + 1}
-            if (r && val.after(r.startDate)) {
-                return ['after.next']
+            if(val.before(obj.startDate)){
+                return ['before.startDate']
             }
             return true
         })

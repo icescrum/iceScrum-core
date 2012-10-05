@@ -71,9 +71,9 @@ class SprintService {
      * @param sprint
      * @param uCurrent
      */
-    void update(Sprint sprint, Date startDate, Date endDate, def checkIntegrity = true) {
+    void update(Sprint sprint, Date startDate, Date endDate, def checkIntegrity = true, boolean updateRelease = true) {
 
-        if (!sprint.validate())
+        if (!sprint.validate() && updateRelease)
             throw new RuntimeException()
 
         if (checkIntegrity) {
@@ -106,7 +106,7 @@ class SprintService {
                         // The delete method should automatically dissociate and delete the following sprints, so we can
                         // break out the loop
                     } else {
-                        update(nextSprint, nextSprint.startDate + deltaDays, sprint.parentRelease.endDate, false)
+                        update(nextSprint, nextSprint.startDate + deltaDays, sprint.parentRelease.endDate, false, updateRelease)
                     }
                 }
             }
@@ -114,11 +114,15 @@ class SprintService {
 
         sprint.startDate = startDate
         sprint.endDate = endDate
-        sprint.parentRelease.lastUpdated = new Date()
 
-        // Finally save the sprint / release
-        if (!sprint.parentRelease.save(flush: true))
-            throw new RuntimeException()
+        if (updateRelease) {
+            sprint.parentRelease.lastUpdated = new Date()
+            if (!sprint.parentRelease.save(flush: true)) {
+                throw new RuntimeException()
+            }
+        } else {
+            sprint.save()
+        }
 
         publishEvent(new IceScrumSprintEvent(sprint, this.class, (User) springSecurityService.currentUser, IceScrumEvent.EVENT_UPDATED))
         broadcast(function: 'update', message: sprint)

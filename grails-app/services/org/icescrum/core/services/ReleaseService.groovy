@@ -33,16 +33,66 @@ import org.springframework.transaction.annotation.Transactional
 import org.icescrum.core.domain.*
 
 class ReleaseService {
+    @PreAuthorize('(productOwner(#release.parentProduct) or scrumMaster(#release.parentProduct)) and !archivedProduct(#release.parentProduct)')
+    void update(Release release, Date startDate = null, Date endDate = null) {
+
+        if (release.state == Release.STATE_DONE){
+            throw new IllegalStateException('is.release.error.update.state.done')
+        }
+
+        startDate = startDate ?: release.startDate
+        endDate = endDate ?: release.endDate
+
+        def nextRelease = release.parentProduct.releases.findAll { it.orderNumber > release.orderNumber } ?.min { it.orderNumber }
+        if (nextRelease && nextRelease.startDate <= endDate) {
+            def nextStartDate = endDate + 1
+            if (nextStartDate >= nextRelease.endDate) {
+                throw new IllegalStateException('is.release.error.endDate.after.next.release')
+            }
+            update(nextRelease, nextStartDate)  // updating the next release will update the next ones
+        }
+
+        if (!release.sprints.isEmpty()) {
+            def sprintService = (SprintService) ApplicationHolder.application.mainContext.getBean('sprintService');
+            def firstSprint = release.sprints.min { it.startDate }
+            if (firstSprint.startDate.before(startDate)) {
+                if (firstSprint.state >= Sprint.STATE_INPROGRESS) {
+                    throw new IllegalStateException('is.release.error.endDate.before.inprogress.sprint')
+                }
+                sprintService.update(firstSprint, startDate, (startDate + firstSprint.duration - 1), false, false)
+            }
+            def outOfBoundsSprints = release.sprints.findAll {it.startDate >= endDate}
+            if (outOfBoundsSprints) {
+                sprintService.delete(outOfBoundsSprints.min { it.startDate }) // deleting the first will delete the next ones
+            }
+            def overlappingSprint = release.sprints.find {it.endDate.after(endDate)}
+            if (overlappingSprint) {
+                if (overlappingSprint.state >= Sprint.STATE_INPROGRESS) {
+                    throw new IllegalStateException('is.release.error.endDate.before.inprogress.sprint')
+                }
+                sprintService.update(overlappingSprint, overlappingSprint.startDate, endDate, false, false)
+            }
+        }
+
+        release.startDate = startDate
+        release.endDate = endDate
+
+        if (!release.save(flush: true))
+            throw new RuntimeException()
+
+        broadcast(function: 'update', message: release)
+        publishEvent(new IceScrumReleaseEvent(release, this.class, (User) springSecurityService.currentUser, IceScrumEvent.EVENT_UPDATED))
+    }
+
     final static long DAY = 1000 * 60 * 60 * 24
 
     static transactional = true
-
     def productService
     def storyService
     def clicheService
     def springSecurityService
-    def grailsApplication
 
+    def grailsApplication
 
     @PreAuthorize('(productOwner(#product) or scrumMaster(#product) or owner(#product)) and !archivedProduct(#product)')
     void save(Release release, Product product) {
@@ -60,86 +110,6 @@ class ReleaseService {
 
         broadcast(function: 'add', message: release, channel:'product-'+product.id)
         publishEvent(new IceScrumReleaseEvent(release, this.class, (User) springSecurityService.currentUser, IceScrumEvent.EVENT_CREATED))
-    }
-
-    @PreAuthorize('(productOwner(#release.parentProduct) or scrumMaster(#release.parentProduct)) and !archivedProduct(#release.parentProduct)')
-    void update(Release release, Date startDate = null, Date endDate = null) {
-        def product = release.parentProduct
-
-        startDate = startDate ?: release.startDate
-        endDate = endDate ?: release.endDate
-
-        if (release.state == Release.STATE_DONE){
-            throw new IllegalStateException('is.release.error.update.state.done')
-        }
-
-        int ind = product.releases.asList().indexOf(release)
-
-        def sprintService = (SprintService) ApplicationHolder.application.mainContext.getBean('sprintService');
-
-        if (release.startDate != startDate && startDate >= release.startDate) {
-            if (!release.sprints.isEmpty()) {
-                def firstSprint = release.sprints.asList().first()
-                //we update the first sprint and next sprints in release if needed
-                if (firstSprint.startDate < startDate && firstSprint.state >= Sprint.STATE_INPROGRESS) {
-                    throw new IllegalStateException('is.release.error.endDate.before.inprogress.sprint')
-                }
-                if (firstSprint.startDate < startDate) {
-                    sprintService.update(firstSprint, startDate, (startDate + (firstSprint.endDate - firstSprint.startDate)))
-                }
-            }
-        }
-
-        // If there are sprints that are out of the bound of the release's dates
-        // we reduce the time alocated to the sprints or delete them if there is not enough time.
-        if (release.endDate != endDate && endDate <= release.endDate) {
-            if (!release.sprints.isEmpty()) {
-                // Retrieve the sprints that are out of the bound of the dates interval
-                def tooHighSprint = release.sprints.findAll {it.startDate >= endDate}
-                if (tooHighSprint) {
-                    sprintService.delete(tooHighSprint.min { it.startDate }) // deleting the first will delete the next ones
-                }
-
-                // Check for a sprint that can be reduced
-                def sprintToReduce = release.sprints.find {it.endDate > endDate}
-                if (sprintToReduce && sprintToReduce.state < Sprint.STATE_INPROGRESS) {
-                    sprintToReduce.endDate = endDate
-                    sprintService.update(sprintToReduce, sprintToReduce.startDate, endDate)
-                } else if (sprintToReduce && sprintToReduce.state >= Sprint.STATE_INPROGRESS) {
-                    throw new IllegalStateException('is.release.error.endDate.before.inprogress.sprint')
-                }
-            }
-        }
-
-        // Check that the end date is before the next release start date
-        if (ind < product.releases.size() - 1) {
-            Release _next = product.releases.asList()[ind + 1]
-            if (_next.startDate <= (endDate)) {
-                if (!release.save())
-                    throw new RuntimeException()
-                _next.startDate = endDate + 1
-                _next.endDate = _next.endDate + 1
-                //We update all releases after
-                this.update(_next)
-                if (!_next.sprints.isEmpty()) {
-                    def firstSprint = _next.sprints.asList().first()
-                    //we update the first sprint and next sprints in release if needed
-                    if (firstSprint.startDate < _next.startDate) {
-                        sprintService.update(firstSprint, _next.startDate, firstSprint.endDate)
-                    }
-                }
-                //return
-            }
-        }
-
-        release.endDate = endDate
-        release.startDate = startDate
-
-        if (!release.save(flush: true))
-            throw new RuntimeException()
-
-        broadcast(function: 'update', message: release)
-        publishEvent(new IceScrumReleaseEvent(release, this.class, (User) springSecurityService.currentUser, IceScrumEvent.EVENT_UPDATED))
     }
 
     void updateVision(Release release) {
@@ -223,9 +193,6 @@ class ReleaseService {
         lastRelease?.save()
         broadcast(function: 'delete', message: [class: release.class, id: release.id])
     }
-
-
-
 
     def releaseBurndownValues(Release release) {
         def values = []
