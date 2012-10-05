@@ -33,6 +33,35 @@ import org.springframework.transaction.annotation.Transactional
 import org.icescrum.core.domain.*
 
 class ReleaseService {
+
+    final static long DAY = 1000 * 60 * 60 * 24
+
+    static transactional = true
+    def productService
+    def storyService
+    def clicheService
+    def springSecurityService
+
+    def grailsApplication
+
+    @PreAuthorize('(productOwner(#product) or scrumMaster(#product) or owner(#product)) and !archivedProduct(#product)')
+    void save(Release release, Product product) {
+        release.parentProduct = product
+        release.state = Release.STATE_WAIT
+        // If this is the first release of the product, it is automatically activated
+        if (product.releases?.size() <= 0 || product.releases == null) {
+            release.state = Release.STATE_INPROGRESS
+        }
+        release.orderNumber = (product.releases?.size() ?: 0) + 1
+        if (!release.save(flush: true))
+            throw new RuntimeException()
+        product.addToReleases(release)
+        product.endDate = release.endDate
+
+        broadcast(function: 'add', message: release, channel:'product-'+product.id)
+        publishEvent(new IceScrumReleaseEvent(release, this.class, (User) springSecurityService.currentUser, IceScrumEvent.EVENT_CREATED))
+    }
+
     @PreAuthorize('(productOwner(#release.parentProduct) or scrumMaster(#release.parentProduct)) and !archivedProduct(#release.parentProduct)')
     void update(Release release, Date startDate = null, Date endDate = null) {
 
@@ -82,34 +111,6 @@ class ReleaseService {
 
         broadcast(function: 'update', message: release)
         publishEvent(new IceScrumReleaseEvent(release, this.class, (User) springSecurityService.currentUser, IceScrumEvent.EVENT_UPDATED))
-    }
-
-    final static long DAY = 1000 * 60 * 60 * 24
-
-    static transactional = true
-    def productService
-    def storyService
-    def clicheService
-    def springSecurityService
-
-    def grailsApplication
-
-    @PreAuthorize('(productOwner(#product) or scrumMaster(#product) or owner(#product)) and !archivedProduct(#product)')
-    void save(Release release, Product product) {
-        release.parentProduct = product
-        release.state = Release.STATE_WAIT
-        // If this is the first release of the product, it is automatically activated
-        if (product.releases?.size() <= 0 || product.releases == null) {
-            release.state = Release.STATE_INPROGRESS
-        }
-        release.orderNumber = (product.releases?.size() ?: 0) + 1
-        if (!release.save(flush: true))
-            throw new RuntimeException()
-        product.addToReleases(release)
-        product.endDate = release.endDate
-
-        broadcast(function: 'add', message: release, channel:'product-'+product.id)
-        publishEvent(new IceScrumReleaseEvent(release, this.class, (User) springSecurityService.currentUser, IceScrumEvent.EVENT_CREATED))
     }
 
     void updateVision(Release release) {
