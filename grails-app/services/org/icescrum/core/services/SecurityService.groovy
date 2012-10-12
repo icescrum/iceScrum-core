@@ -208,7 +208,7 @@ class SecurityService {
         if (!product){
                 def request = RCH.requestAttributes.currentRequest
                 if (request.filtered)
-                    return request.productArchived ?: false
+                    return request.archivedProduct ?: false
                 else
                     product = parseCurrentRequestProduct(request)
             }else if (product in Product) {
@@ -521,7 +521,6 @@ class SecurityService {
         request.inProduct     = request.inProduct ?: request.scrumMaster ?: request.productOwner ?: request.teamMember ?: false
         request.inTeam        = request.inTeam ?: request.scrumMaster ?: request.teamMember ?: false
         request.admin         = request.admin ?: admin(springSecurityService.authentication) ?: false
-        request.filtered      = request.filtered ?: true
 
         if (request.owner && !request.inProduct && !request.admin){
             request.stakeholder = true
@@ -534,8 +533,10 @@ class SecurityService {
             request.inTeam          = false
             request.inProduct       = false
             request.owner           = false
-            request.productArchived = true
+            request.archivedProduct = true
         }
+
+        request.filtered = request.filtered ?: true
     }
 
     def getUserLastUpdated(id){

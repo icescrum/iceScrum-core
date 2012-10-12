@@ -136,7 +136,7 @@ class Feature extends BacklogElement implements Serializable {
     }
 
     def getCountDoneStories(){
-        return stories?.sum {(it.state == Story.STATE_DONE) ? 1 : 0}
+        return stories?.sum {(it.state == Story.STATE_DONE) ? 1 : 0}?:0
     }
 
     def getState(){
@@ -151,7 +151,7 @@ class Feature extends BacklogElement implements Serializable {
     }
 
     def getEffort(){
-        return stories?.sum {it.effort ?: 0}
+        return stories?.sum {it.effort ?: 0}?:0
     }
 
     def beforeDelete() {
