@@ -236,6 +236,16 @@ class Task extends BacklogElement implements Serializable {
                    AND t.id = :id """, [pid: pid, id:id], [max:1])[0]
     }
 
+    static Task getInProductWithUid(Long pid, int uid) {
+        executeQuery(
+                """SELECT DISTINCT t
+                   FROM org.icescrum.core.domain.Task as t, org.icescrum.core.domain.Sprint as s, org.icescrum.core.domain.Release as r
+                   WHERE t.backlog = s
+                   AND s.parentRelease = r
+                   AND r.parentProduct.id = :pid
+                   AND t.uid = :uid """, [pid: pid, uid:uid], [max:1])[0]
+    }
+
     static List<Task> getAllInProduct(Long pid, List id) {
         executeQuery(
                 """SELECT DISTINCT t
