@@ -279,8 +279,16 @@ class Sprint extends TimeBox implements Serializable {
             return false
         else if (this.parentRelease.state == Release.STATE_INPROGRESS && (this.orderNumber == 1 || this.orderNumber == Sprint.countByStateAndParentRelease(Sprint.STATE_DONE, this.parentRelease) + 1))
             return true
-        else if (this.parentRelease.state == Release.STATE_WAIT && Release.countByState(Release.STATE_INPROGRESS) == 0 && this.orderNumber == 1)
+        else if (this.parentRelease.state == Release.STATE_WAIT && Release.countByStateAndParentProduct(Release.STATE_INPROGRESS, this.parentProduct) == 0 && this.orderNumber == 1)
             return true
+        else if(Release.countByStateAndParentProduct(Release.STATE_INPROGRESS, this.parentProduct) == 1){
+            def previous = Release.findByStateAndParentProduct(Release.STATE_INPROGRESS, this.parentProduct)
+            if (!previous.sprints || previous.sprints.find{ it.state != Sprint.STATE_DONE }){
+                return false
+            }else if(this.parentRelease.state == Release.STATE_WAIT && this.orderNumber == 1){
+                return true
+            }
+        }
         else
             return false;
     }
