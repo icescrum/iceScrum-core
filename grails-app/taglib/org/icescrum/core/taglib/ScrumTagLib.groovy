@@ -49,7 +49,7 @@ class ScrumTagLib {
         params.sortable = (attrs.sortable != null && UtilsWebComponents.rendered(attrs.sortable) && UtilsWebComponents.enabled(attrs.sortable))
 
         if (params.content.trim() == '') {
-            params.content = '&nbsp;';
+            params.content = '';
         }
 
         out << g.render(template: '/components/postit', plugin: 'icescrum-core', model: params)

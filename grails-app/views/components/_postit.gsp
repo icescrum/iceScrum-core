@@ -63,8 +63,8 @@
             <p class="postit-label break-word">${title.encodeAsHTML()}</p>
         </g:else>
 
-        <g:if test="${className != 'postit-rect'}">
-            <p class="postit-excerpt">${content.replace('<br>', '')}</p>
+        <g:if test="${content}">
+            <div class="postit-excerpt">${content.replace('<br>', '')}</div>
         </g:if>
 
         <g:if test="${typeNumber}">

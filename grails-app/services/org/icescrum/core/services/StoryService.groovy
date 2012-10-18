@@ -288,7 +288,7 @@ class StoryService {
             story.plannedDate = new Date()
         }
 
-        def rank = sprint.stories? sprint.stories.size() : 1
+        def rank = sprint.stories?.findAll{ it.state != Story.STATE_DONE }?.size() ?: 1
 
         setRank(story, rank)
 
