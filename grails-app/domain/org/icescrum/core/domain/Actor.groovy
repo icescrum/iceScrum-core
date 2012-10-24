@@ -71,7 +71,7 @@ class Actor extends BacklogElement implements Serializable, Comparable<Actor> {
     }
 
     static namedQueries = {
-        findActorByProductAndTerm { pid, term ->
+        findAllByProductAndTerm { pid, term ->
             backlog {
                 eq 'id', pid
             }

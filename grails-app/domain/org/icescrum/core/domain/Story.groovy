@@ -144,7 +144,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
             }
         }
 
-        findInStories{p, term ->
+        findAllByProductAndTerm{p, term ->
             backlog {
                 eq 'id', p
             }

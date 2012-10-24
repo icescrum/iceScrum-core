@@ -71,7 +71,7 @@ class Feature extends BacklogElement implements Serializable {
 
     static namedQueries = {
 
-        findInAll {p, term ->
+        findAllByProductAndTerm {p, term ->
             backlog {
                 eq 'id', p
             }
