@@ -216,8 +216,9 @@ class TableTagLib {
                 row.attrs.rowClass.delegate = delegate
                 row.attrs.rowClass = row.attrs.rowClass(row.attrs."${row.attrs.var}")
             }
-            def htmlRank = row.'data-rank' ? '" data-rank="' + row.'data-rank' : ''
-            out << '<tr class="table-line ' + (row.attrs.rowClass ? row.attrs.rowClass : '') + ' ' + (groupid ? groupid : '') + '" data-elemid="' + row.elemid + '" version="' + version + '"' + htmlRank + '">'
+            def htmlRank = row.'data-rank' ? ' data-rank="' + row.'data-rank' + '"' : ''
+            def htmlElemid = row.elemid ? ' data-elemid="' + row.elemid + '"' : ''
+            out << '<tr class="table-line ' + (row.attrs.rowClass ? row.attrs.rowClass : '') + ' ' + (groupid ? groupid : '') + '"' + htmlElemid + ' version="' + version + '"' + htmlRank + '>'
             row.columns.eachWithIndex { col, indexCol ->
 
                 //gestion editable
@@ -226,8 +227,10 @@ class TableTagLib {
                     editables."${editable}" = [id: col.editable.id ?: '', type: col.editable.type, values: col.editable.values ?: null, detach: col.editable.detach ?: false, highlight: col.editable.highlight ?: false]
                 }
 
-                col."class" = col."class" ?: ""
-                out << '<td class="' + col."class" + ' break-word"><div ' + is.editableCell(col.editable) + '>' + is.nbps(null, col?.body(row.attrs)) + '</div></td>'
+                col['class'] = col['class'] ?: ""
+                out << '<td class="' + col['class'] + ' break-word">'
+                out << '<div ' + editableCell(col.editable) + '>'
+                out << is.nbps( null, col.body ? col.body(row.attrs) : '' ) + '</div></td>'
             }
             out << '</tr>'
         }
@@ -254,11 +257,12 @@ class TableTagLib {
         out << body()?.trim() ?: ''
     }
 
-    def editableCell = {attrs ->
-        if (attrs?.type && attrs?.name && !attrs?.disabled)
-            out << 'class="table-cell table-cell-editable table-cell-' + attrs.type + (attrs.id ? '-' + attrs.id : '') + ' table-cell-editable-' + attrs.type + (attrs.id ? '-' + attrs.id : '') + '" name="' + attrs.name + '"'
-        else
-            out << 'class="table-cell table-cell-' + attrs.type + (attrs.id ? '-' + attrs.id : '') + '" name="' + attrs.name + '"'
+    private editableCell(def attrs) {
+        if (attrs && attrs.type && attrs.name && !attrs.disabled)
+            return 'class="table-cell table-cell-editable table-cell-' + attrs.type + (attrs.id ? '-' + attrs.id : '') + ' table-cell-editable-' + attrs.type + (attrs.id ? '-' + attrs.id : '') + '" name="' + attrs.name + '"'
+        else {
+            return 'class="table-cell"'
+        }
     }
 
     def jeditable = {attrs ->

@@ -76,7 +76,7 @@ class MenuTagLib {
      */
     def menuElement = { attrs, body ->
 
-        out << "<li class='menubar navigation-line li ${attrs.widgetable ? 'widgetable' : ''} ${attrs.draggable ? 'draggable-to-desktop' : ''}' ${attrs.hidden ? 'hidden=\'true\'' : ''} id='elem_${attrs.id}'>"
+        out << "<li class='menubar ${ attrs.separator ? 'separator' : ''} navigation-line li ${attrs.widgetable ? 'widgetable' : ''} ${attrs.draggable ? 'draggable-to-desktop' : ''}' ${attrs.hidden ? 'hidden=\'true\'' : ''} id='elem_${attrs.id}'>"
         out << "<a class='button-s clearfix' href='#${attrs.id}'><span class='start'></span><span class='content'>${message(code: attrs.title)}</span><span class='end'></span></a>"
         out << "</li>"
     }

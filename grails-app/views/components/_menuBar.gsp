@@ -20,8 +20,8 @@
 - Vincent Barrier (vbarrier@kagilum.com)
 - Damien vitrac (damien@oocube.com)
   --}%
-  <g:each in="${menuElements}" var="menuElement">
-    <is:menuElement title="${menuElement.title}" draggable="true" id="${menuElement.id}" selected="${menuElement.selected}" widgetable="${menuElement.widgetable}"/>
+  <g:each in="${menuElements}" var="menuElement" status="index">
+    <is:menuElement separator="${index == 0}" title="${menuElement.title}" draggable="true" id="${menuElement.id}" selected="${menuElement.selected}" widgetable="${menuElement.widgetable}"/>
     <is:shortcut key="ctrl+shift+${menuElement.position}" callback="\$(\$('#navigation .menubar')[${menuElement.position.toInteger() - 1}]).click();"/>
   </g:each>
   <sec:ifLoggedIn>

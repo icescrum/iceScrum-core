@@ -159,7 +159,7 @@ class PanelTagLib {
             if (attrs.icon)
                 paramsIcon.icon = attrs.icon
 
-            out << "<li class='navigation-item' id='${attrs.id}-navigation-item'>"
+            out << "<li class='navigation-item ${ attrs.separator ? 'separator' : ''}' id='${attrs.id}-navigation-item'>"
             out << "<div class='dropmenu ${attrs.remove('classDropmenu')?:''}' id='${attrs.id}-list' data-dropmenu='true'>"
 
             def str = attrs.text
@@ -179,7 +179,7 @@ class PanelTagLib {
 
     def panelSearch = {attrs, body ->
         assert attrs.id
-        out << "<li class='navigation-search search' id='" + attrs.id + "' data-searchmenu='true' data-top='27' data-content='search-content' data-left='-24' data-noWindow='true' data-hover='search-hover'>"
+        out << "<li class='navigation-search search' id='" + attrs.id + "' data-searchmenu='true' data-top='27' data-content='search-content' data-noWindow='true' data-hover='search-hover'>"
         out << "<a class='search-button'></a>"
         out << "<div class='search-content ui-corner-all'>"
         out << "<div class='input-content'>"

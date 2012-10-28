@@ -75,7 +75,7 @@ class KanbanTagLib {
             if (row) {
                 out << '<tr class="table-line ' + (row.attrs?.'class' ? row.attrs?.'class' : '') + ' " ' + (row.attrs.type != null ? 'type="' + row.attrs.type + '"' : '') + ' ' + (row.elemid ? 'data-elemid="' + row.elemid + '"' : '') + '> '
                 row.columns.eachWithIndex { col, indexCol ->
-                    out << '<td class="kanban-col kanban-cell ' + col.'class' + '" ' + (col.key != null ? 'type="' + col.key + '"' : '') + '">' + is.nbps(null, col?.body(row.attrs)) + '</td>'
+                    out << '<td class="kanban-col kanban-cell ' + col.'class' + '" ' + (col.key != null ? 'type="' + col.key + '"' : '') + '>' + is.nbps(null, col?.body(row.attrs)) + '</td>'
                 }
                 out << '</tr>'
             }
