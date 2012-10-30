@@ -68,7 +68,8 @@ class Product extends TimeBox implements Serializable {
             'erasableByUser',
             'stakeHolders',
             'owner',
-            'firstTeam'
+            'firstTeam',
+            'versions'
     ]
 
     def erasableByUser = false
@@ -301,5 +302,12 @@ class Product extends TimeBox implements Serializable {
         withNewSession {
             publishEvent(new IceScrumProductEvent(this, this.class, User.get(SCH.context?.authentication?.principal?.id), IceScrumEvent.EVENT_AFTER_DELETE, true))
         }
+    }
+
+    def getVersions(def onlyFromSprints = false, def onlyDelivered = false) {
+        def versions = onlyFromSprints ? [] : this.stories.findAll{it.affectVersion}*.affectVersion
+        def sprints = this.releases*.sprints?.flatten()
+        versions <<  onlyDelivered ? sprints?.findAll{ it.state == Sprint.STATE_DONE && it.deliveredVersion }*.deliveredVersion : sprints?.findAll{ it.deliveredVersion }*.deliveredVersion
+        return versions.unique()
     }
 }

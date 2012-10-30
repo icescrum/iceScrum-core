@@ -134,6 +134,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                     ilike 'textTo', term
                     ilike 'description', term
                     ilike 'notes', term
+                    ilike 'affectVersion', term
                     feature {
                         ilike 'name', term
                     }
@@ -159,6 +160,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                     ilike 'textTo', term
                     ilike 'description', term
                     ilike 'notes', term
+                    ilike 'affectVersion', term
                     feature {
                         ilike 'name', term
                     }
@@ -181,6 +183,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                     ilike 'textTo', term
                     ilike 'description', term
                     ilike 'notes', term
+                    ilike 'affectVersion', term
                     feature {
                         ilike 'name', term
                     }

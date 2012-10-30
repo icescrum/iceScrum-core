@@ -39,6 +39,7 @@ class Sprint extends TimeBox implements Serializable {
     static final int STATE_INPROGRESS = 2
     static final int STATE_DONE = 3
 
+    String deliveredVersion
 
     static mappedBy = [
             stories: "parentSprint",
@@ -147,6 +148,7 @@ class Sprint extends TimeBox implements Serializable {
     }
 
     static constraints = {
+        deliveredVersion nullable: true
         retrospective nullable: true
         doneDefinition nullable: true
         activationDate nullable: true

@@ -76,6 +76,8 @@ class StoryService {
             story.state = Story.STATE_SUGGESTED
         }
 
+        story.affectVersion = (story.type == Story.TYPE_DEFECT ? story.affectVersion : null)
+
         if (story.save()) {
             p.addToStories(story)
             story.addFollower(u)
@@ -174,6 +176,9 @@ class StoryService {
         } else if (story.parentSprint && story.parentSprint.state == Sprint.STATE_WAIT) {
             story.parentSprint.capacity = (Double) story.parentSprint.getTotalEffort()
         }
+
+        story.affectVersion = (story.type == Story.TYPE_DEFECT ? story.affectVersion : null)
+
         if (!story.save())
             throw new RuntimeException()
 
@@ -316,7 +321,7 @@ class StoryService {
     /**
      * UnPlan the specified backlog item from the specified sprint
      * @param _sprint
-     * @param pbi
+     * @param story
      * @return
      */
     void unPlan(Story story, Boolean fullUnPlan = true) {
@@ -378,8 +383,8 @@ class StoryService {
         def storiesUnPlanned = []
         spList.sort { sp1, sp2 -> sp2.orderNumber <=> sp1.orderNumber }.each { sp ->
             if ((!sprintState) || (sprintState && sp.state == sprintState)) {
-                def stories = sp.stories.findAll { pbi ->
-                    pbi.state != Story.STATE_DONE
+                def stories = sp.stories.findAll { story ->
+                    story.state != Story.STATE_DONE
                 }.sort {st1, st2 -> st2.rank <=> st1.rank }
                 stories.each {
                     unPlan(it)
@@ -401,20 +406,20 @@ class StoryService {
         def sprints = release.sprints.findAll { it.state == Sprint.STATE_WAIT }.sort { it.orderNumber }.asList()
         int maxSprint = sprints.size()
 
-        // Get the list of PBI that have been estimated
+        // Get the list of stories that have been estimated
         Collection<Story> itemsList = product.stories.findAll { it.state == Story.STATE_ESTIMATED }.sort { it.rank };
 
         Sprint currentSprint = null
 
         def plannedStories = []
-        // Associate pbi in each sprint
-        for (Story pbi: itemsList) {
-            if ((nbPoints + pbi.effort) > capacity || currentSprint == null) {
+        // Associate story in each sprint
+        for (Story story: itemsList) {
+            if ((nbPoints + story.effort) > capacity || currentSprint == null) {
                 nbPoints = 0
                 if (nbSprint < maxSprint) {
                     currentSprint = sprints[nbSprint++]
                     nbPoints += currentSprint.capacity
-                    while (nbPoints + pbi.effort > capacity && currentSprint.capacity > 0) {
+                    while (nbPoints + story.effort > capacity && currentSprint.capacity > 0) {
                         nbPoints = 0
                         if (nbSprint < maxSprint) {
                             currentSprint = sprints[nbSprint++]
@@ -428,17 +433,17 @@ class StoryService {
                     if (nbSprint > maxSprint) {
                         break
                     }
-                    this.plan(currentSprint, pbi)
-                    plannedStories << pbi
-                    nbPoints += pbi.effort
+                    this.plan(currentSprint, story)
+                    plannedStories << story
+                    nbPoints += story.effort
 
                 } else {
                     break
                 }
             } else {
-                this.plan(currentSprint, pbi)
-                plannedStories << pbi
-                nbPoints += pbi.effort
+                this.plan(currentSprint, story)
+                plannedStories << story
+                nbPoints += story.effort
             }
         }
         return plannedStories
@@ -454,10 +459,10 @@ class StoryService {
 
         rank = checkRankDependencies(story, rank)
 
-        stories?.each { pbi ->
-            if (pbi.rank >= rank) {
-                pbi.rank++
-                pbi.save()
+        stories?.each {
+            if (it.rank >= rank) {
+                it.rank++
+                it.save()
             }
         }
         story.rank = rank
@@ -472,10 +477,10 @@ class StoryService {
         else if (story.state == Story.STATE_PLANNED || story.state == Story.STATE_INPROGRESS || story.state == Story.STATE_DONE) {
             stories = story.parentSprint?.stories
         }
-        stories.each { pbi ->
-            if (pbi.rank > story.rank) {
-                pbi.rank--
-                pbi.save()
+        stories.each {
+            if (it.rank > story.rank) {
+                it.rank--
+                it.save()
             }
         }
     }
@@ -606,13 +611,13 @@ class StoryService {
     def acceptToFeature(List<Story> stories) {
         def features = []
         bufferBroadcast()
-        stories.each { pbi ->
-            if (pbi.state != Story.STATE_SUGGESTED)
+        stories.each { story ->
+            if (story.state != Story.STATE_SUGGESTED)
                 throw new IllegalStateException('is.story.error.not.state.suggested')
 
             User user = (User) springSecurityService.currentUser
-            def feature = new Feature(pbi.properties)
-            feature.description = (feature.description ?: '') + ' ' + getTemplateStory(pbi)
+            def feature = new Feature(story.properties)
+            feature.description = (feature.description ?: '') + ' ' + getTemplateStory(story)
             feature.validate()
             def i = 1
             while (feature.hasErrors()) {
@@ -625,17 +630,17 @@ class StoryService {
                 }
             }
 
-            featureService.save(feature, (Product) pbi.backlog)
+            featureService.save(feature, (Product) story.backlog)
 
-            pbi.followers?.each{
+            story.followers?.each{
                 feature.addFollower(it)
             }
 
-            pbi.attachments.each { attachment ->
-                feature.addAttachment(pbi.creator, attachmentableService.getFile(attachment), attachment.filename)
+            story.attachments.each { attachment ->
+                feature.addAttachment(story.creator, attachmentableService.getFile(attachment), attachment.filename)
             }
 
-            this.delete(pbi, false)
+            this.delete(story, false)
             features << feature
 
             feature.addActivity(user, 'acceptAs', feature.name)
@@ -654,17 +659,17 @@ class StoryService {
     def acceptToUrgentTask(List<Story> stories) {
         def tasks = []
         bufferBroadcast()
-        stories.each { pbi ->
+        stories.each { story ->
 
-            if (pbi.state != Story.STATE_SUGGESTED)
+            if (story.state != Story.STATE_SUGGESTED)
                 throw new IllegalStateException('is.story.error.not.state.suggested')
 
-            def task = new Task(pbi.properties)
+            def task = new Task(story.properties)
 
             task.state = Task.STATE_WAIT
-            task.description = (task.description ?: '') + ' ' + getTemplateStory(pbi)
+            task.description = (story.affectVersion ? g.message(code: 'is.story.affectVersion') + ': ' + story.affectVersion : '') + (task.description ?: '') + ' ' + getTemplateStory(story)
 
-            def sprint = (Sprint) Sprint.findCurrentSprint(pbi.backlog.id).list()
+            def sprint = (Sprint) Sprint.findCurrentSprint(story.backlog.id).list()
             if (!sprint)
                 throw new IllegalStateException('is.story.error.not.acceptedAsUrgentTask')
 
@@ -676,24 +681,24 @@ class StoryService {
                 task.validate()
             }
 
-            if (pbi.feature)
-                task.color = pbi.feature.color
+            if (story.feature)
+                task.color = story.feature.color
 
-            taskService.saveUrgentTask(task, sprint, pbi.creator)
+            taskService.saveUrgentTask(task, sprint, story.creator)
 
-            pbi.followers?.each{
+            story.followers?.each{
                 task.addFollower(it)
             }
 
-            pbi.attachments.each { attachment ->
-                task.addAttachment(pbi.creator, attachmentableService.getFile(attachment), attachment.filename)
+            story.attachments.each { attachment ->
+                task.addAttachment(story.creator, attachmentableService.getFile(attachment), attachment.filename)
             }
-            pbi.comments.each {
+            story.comments.each {
                 comment ->
                 task.notes = (task.notes ?: '') + '\n --- \n ' + comment.body + '\n --- \n '
             }
             tasks << task
-            this.delete(pbi, false)
+            this.delete(story, false)
 
             publishEvent(new IceScrumStoryEvent(task, this.class, (User) springSecurityService.currentUser, IceScrumStoryEvent.EVENT_ACCEPTED_AS_TASK))
         }
@@ -751,7 +756,7 @@ class StoryService {
             story.addActivity(u, 'done', story.name)
             publishEvent(new IceScrumStoryEvent(story, this.class, u, IceScrumStoryEvent.EVENT_DONE))
 
-            // Set all tasks to done (and pbi's estimation to 0)
+            // Set all tasks to done (and story estimation to 0)
             story.tasks?.findAll{ it.state != Task.STATE_DONE }?.each { t ->
                 t.estimation = 0
                 taskService.update(t, u)
