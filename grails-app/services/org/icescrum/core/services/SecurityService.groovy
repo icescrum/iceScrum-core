@@ -36,7 +36,6 @@ import org.icescrum.core.domain.Team
 import org.icescrum.core.domain.User
 import org.icescrum.core.domain.security.Authority
 import org.icescrum.core.domain.security.UserAuthority
-import org.icescrum.core.event.IceScrumUserEvent
 import org.springframework.security.acls.domain.BasePermission
 import org.springframework.security.acls.domain.PrincipalSid
 import org.springframework.security.core.Authentication
@@ -99,35 +98,30 @@ class SecurityService {
         aclUtilService.changeOwner GrailsHibernateUtil.unwrapIfProxy(o), u.username
         u.lastUpdated = new Date()
         u.save()
-        publishEvent(new IceScrumUserEvent(u, o, this.class, (User) springSecurityService.currentUser, IceScrumUserEvent.EVENT_IS_OWNER))
     }
 
     void createProductOwnerPermissions(User u, Product p) {
         aclUtilService.addPermission GrailsHibernateUtil.unwrapIfProxy(p), u.username, WRITE
         u.lastUpdated = new Date()
         u.save()
-        publishEvent(new IceScrumUserEvent(u, p, this.class, (User) springSecurityService.currentUser, IceScrumUserEvent.EVENT_IS_PRODUCTOWNER))
     }
 
     void deleteProductOwnerPermissions(User u, Product p) {
         aclUtilService.deletePermission GrailsHibernateUtil.unwrapIfProxy(p), u.username, WRITE
         u.lastUpdated = new Date()
         u.save()
-        publishEvent(new IceScrumUserEvent(u, p, this.class, (User) springSecurityService.currentUser, IceScrumUserEvent.EVENT_NOT_PRODUCTOWNER))
     }
 
     void createTeamMemberPermissions(User u, Team t) {
         aclUtilService.addPermission GrailsHibernateUtil.unwrapIfProxy(t), u.username, READ
         u.lastUpdated = new Date()
         u.save()
-        publishEvent(new IceScrumUserEvent(u, t, this.class, (User) springSecurityService.currentUser, IceScrumUserEvent.EVENT_IS_MEMBER))
     }
 
     void deleteTeamMemberPermissions(User u, Team t) {
         aclUtilService.deletePermission GrailsHibernateUtil.unwrapIfProxy(t), u.username, READ
         u.lastUpdated = new Date()
         u.save()
-        publishEvent(new IceScrumUserEvent(u, t, this.class, (User) springSecurityService.currentUser, IceScrumUserEvent.EVENT_NOT_MEMBER))
     }
 
     void createAdministrationPermissionsForProduct(User u, Product p){
@@ -141,7 +135,6 @@ class SecurityService {
         aclUtilService.addPermission GrailsHibernateUtil.unwrapIfProxy(t), u.username, ADMINISTRATION
         u.lastUpdated = new Date()
         u.save()
-        publishEvent(new IceScrumUserEvent(u, t, this.class, (User) springSecurityService.currentUser, IceScrumUserEvent.EVENT_IS_SCRUMMASTER))
     }
 
     void deleteScrumMasterPermissions(User u, Team t) {
@@ -149,7 +142,6 @@ class SecurityService {
         aclUtilService.deletePermission GrailsHibernateUtil.unwrapIfProxy(t), u.username, ADMINISTRATION
         u.lastUpdated = new Date()
         u.save()
-        publishEvent(new IceScrumUserEvent(u, t, this.class, (User) springSecurityService.currentUser, IceScrumUserEvent.EVENT_NOT_SCRUMMASTER))
     }
 
     void createStakeHolderPermissions(User u, Product p) {

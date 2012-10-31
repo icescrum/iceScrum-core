@@ -38,7 +38,8 @@ import org.icescrum.core.domain.*
 import org.icescrum.core.support.ApplicationSupport
 import org.codehaus.groovy.grails.plugins.springsecurity.SpringSecurityUtils
 import org.icescrum.core.domain.preferences.UserPreferences
-import org.apache.commons.io.FilenameUtils
+
+import org.icescrum.core.event.IceScrumUserEvent
 
 class ProductService {
 
@@ -576,7 +577,7 @@ class ProductService {
         broadcast(function: 'unarchive', message: p)
     }
 
-    void removeAllRoles(Product product, Team team, User user, boolean broadcast = true){
+    void removeAllRoles(Product product, Team team, User user, boolean broadcast = true, boolean raiseEvent = true) {
         if (team){
             teamService.removeMemberOrScrumMaster(team,user)
         }
@@ -598,9 +599,12 @@ class ProductService {
                 }
             }
         }
+        if(raiseEvent && product) {
+            publishEvent(new IceScrumUserEvent(user, product, this.class, (User) springSecurityService.currentUser, IceScrumUserEvent.EVENT_REMOVED_FROM_PRODUCT))
+        }
     }
 
-    void addRole(Product product, Team team, User user, int role, boolean broadcast = true){
+    void addRole(Product product, Team team, User user, int role, boolean broadcast = true, boolean raiseEvent = true) {
         switch (role){
             case Authority.SCRUMMASTER:
                 teamService.addScrumMaster(team,user)
@@ -640,11 +644,15 @@ class ProductService {
                 }
             }
         }
+        if(raiseEvent && product) {
+            publishEvent(new IceScrumUserEvent(user, product, role, this.class, (User) springSecurityService.currentUser, IceScrumUserEvent.EVENT_ADDED_TO_PRODUCT))
+        }
     }
 
     void changeRole(Product product, Team team, User user, int role, boolean broadcast = true){
-        removeAllRoles(product,team,user,false)
-        addRole(product,team,user,role,false)
+        removeAllRoles(product, team, user, false, false)
+        addRole(product, team, user, role, false, false)
+        publishEvent(new IceScrumUserEvent(user, product, role, this.class, (User) springSecurityService.currentUser, IceScrumUserEvent.EVENT_CHANGED_ROLE_IN_PRODUCT))
         if(broadcast){
             if (product){
                 broadcastToSingleUser(user:user.username, function:'updateRoleProduct', message:[class:'User',product:product])
