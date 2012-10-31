@@ -40,7 +40,7 @@ class KanbanTagLib {
         def opts
         def maxCols = pageScope.kanbanHeaders.size()
 
-        if (!attrs.onlyRows) {
+         if (!attrs.onlyRows) {
             // Selectable options
             if (attrs.selectable != null) {
                 def selectableOptions = [

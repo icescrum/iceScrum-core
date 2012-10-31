@@ -24,7 +24,6 @@
 
 package org.icescrum.core.taglib
 
-import org.icescrum.components.UtilsWebComponents
 import org.icescrum.core.ui.UiDefinition
 
 class MenuTagLib {
@@ -38,37 +37,8 @@ class MenuTagLib {
      * Generate iceScrum menu bar (only show up when a project is opened)
      */
     def menuBar = { attrs, body ->
-        def menuElements = []
-        def menuElementsHiddden = []
-        uiDefinitionService.getDefinitions().each {String id, UiDefinition uiDefinition ->
-            def menuBar = uiDefinition.menuBar
-            if(menuBar?.productDynamicBar) {
-                menuBar.show = menuBarSupport.productDynamicBar(id, menuBar.defaultVisibility, menuBar.defaultPosition)
-            }
-            def show = menuBar?.show
-            if (show in Closure) {
-                show.delegate = delegate
-                show = show()
-            }
-            if (show && show.visible) {
-                menuElements << [title: menuBar.title,
-                        id: id,
-                        selected: id == session.currentWindow,
-                        position: show.pos.toInteger() ?: 1,
-                        widgetable: uiDefinition.widget ? true : false,
-                ]
-            } else if (show) {
-                menuElementsHiddden << [title: menuBar.title,
-                        id: id,
-                        selected: id == session.currentWindow,
-                        position: show.pos ?: 1,
-                        widgetable: uiDefinition.widget ? true : false,
-                ]
-            }
-        }
-        menuElements = menuElements.sort {it.position}
-        menuElementsHiddden = menuElementsHiddden.sort {it.position}
-        out << g.render(template: '/components/menuBar', plugin: 'icescrum-core', model: [menuElements: menuElements, menuElementsHiddden: menuElementsHiddden])
+        def menus = getMenuBarFromUiDefinitions()
+        out << g.render(template: '/components/menuBar', plugin: 'icescrum-core', model: [menuElements: menus.visible.sort {it.position}, menuElementsHiddden: menus.hidden.sort {it.position}])
     }
 
     /**
@@ -81,13 +51,36 @@ class MenuTagLib {
         out << "</li>"
     }
 
-    /**
-     * Generate a project menu element
-     */
-    def menuElementHidden = { attrs, body ->
+    def getMenuBarFromUiDefinitions(boolean splitHidden = true) {
+        def menus = splitHidden ? [visible:[], hidden:[]] : []
+        uiDefinitionService.getDefinitions().each {String id, UiDefinition uiDefinition ->
+            def menuBar = uiDefinition.menuBar
+            if(menuBar?.productDynamicBar) {
+                menuBar.show = menuBarSupport.productDynamicBar(id, menuBar.defaultVisibility, menuBar.defaultPosition)
+            }
+            def show = menuBar?.show
+            if (show in Closure) {
+                show.delegate = delegate
+                show = show()
+            }
 
-        out << "<li>"
-        out << "<a class='button-s clearfix href='#${attrs.id}'><span class='start'></span><span class='content'>${message(code: attrs.title)}</span><span class='end'></span></a>"
-        out << "</li>"
+            def menu = [title: menuBar?.title,
+                        id: id,
+                        position: show instanceof Map ? show.pos.toInteger() ?: 1 : 1,
+                        widgetable: uiDefinition.widget ? true : false]
+
+            if (splitHidden){
+                if (show && show.visible) {
+                    menus.visible << menu
+                } else if (show) {
+                    menus.hidden << menu
+                }
+            } else {
+                if (show){
+                    menus << menu
+                }
+            }
+        }
+        return menus
     }
 }

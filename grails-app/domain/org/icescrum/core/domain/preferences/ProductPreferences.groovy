@@ -58,9 +58,11 @@ class ProductPreferences implements Serializable{
     String dailyMeetingHour = "11:00"
     String sprintReviewHour = "14:00"
     String sprintRetrospectiveHour = "16:00"
+    String stakeHolderRestrictedViews
 
     static constraints = {
         url(nullable: true, url: true)
+        stakeHolderRestrictedViews(nullable: true)
     }
 
     static belongsTo = [

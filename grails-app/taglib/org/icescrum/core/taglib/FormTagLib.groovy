@@ -552,7 +552,7 @@ class FormTagLib {
 
     def checkbox = {attrs, body ->
         out << "<span class='radio'>"
-        out << g.checkBox(onClick: attrs.onClick ?: '', name: attrs.name, value: attrs.value, "class": "checkbox")
+        out << g.checkBox(onClick: attrs.onClick ?: '', name: attrs.name, value: attrs.value, "class": "checkbox", checked: attrs.checked)
         out << attrs.label.encodeAsHTML()
         out << jq.jquery(null, "\$('.checkbox').checkBox();")
         out << "</span>"

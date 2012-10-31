@@ -281,7 +281,7 @@ class SecurityService {
     }
 
 
-    boolean stakeHolder(product, auth, onlyPrivate) {
+    boolean stakeHolder(product, auth, onlyPrivate, controllerName = null) {
 
         if (!springSecurityService.isLoggedIn() && onlyPrivate)
             return false
@@ -290,7 +290,7 @@ class SecurityService {
 
         if (!product){
             def request = RCH.requestAttributes.currentRequest
-            if (request.filtered)
+            if (request.filtered  && !controllerName)
                 return request.stakeHolder
             else
                 product = parseCurrentRequestProduct(request)
@@ -307,16 +307,18 @@ class SecurityService {
             if (SpringSecurityUtils.ifAnyGranted(Authority.ROLE_ADMIN))
                 return true
 
-            def authkey = SpringSecurityUtils.ifAnyGranted(Authority.ROLE_VISITOR) ? auth.principal : auth.principal.id + getUserLastUpdated(auth.principal.id).toString()
+            def authkey = SpringSecurityUtils.ifAnyGranted(Authority.ROLE_VISITOR) ? auth.principal : auth.principal.id + getUserLastUpdated(auth.principal.id).toString() + controllerName ?: ''
             return springcacheService.doWithCache(CACHE_STAKEHOLDER, new CacheKeyBuilder().append(onlyPrivate).append(product).append(p.lastUpdated).append(authkey).toCacheKey()) {
                 //Owner always has an access to product... (even if not in team or PO)
                 if (springSecurityService.isLoggedIn()){
                     if (p.owner?.id == auth.principal.id) return true
                 }
-                if (p.preferences.hidden)
-                    return aclUtilService.hasPermission(auth, GrailsHibernateUtil.unwrapIfProxy(p), SecurityService.stakeHolderPermissions)
-                else
-                    return !onlyPrivate
+                def access = p.preferences.hidden ? aclUtilService.hasPermission(auth, GrailsHibernateUtil.unwrapIfProxy(p), SecurityService.stakeHolderPermissions) : !onlyPrivate
+                if (access && controllerName){
+                    return !(controllerName in p.preferences.stakeHolderRestrictedViews?.split(','))
+                }else{
+                    return access
+                }
             }
 
         }

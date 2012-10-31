@@ -21,7 +21,7 @@
 - Damien vitrac (damien@oocube.com)
   --}%
   <g:each in="${menuElements}" var="menuElement" status="index">
-    <is:menuElement separator="${index == 0}" title="${menuElement.title}" draggable="true" id="${menuElement.id}" selected="${menuElement.selected}" widgetable="${menuElement.widgetable}"/>
+    <is:menuElement separator="${index == 0}" title="${menuElement.title}" draggable="true" id="${menuElement.id}" widgetable="${menuElement.widgetable}"/>
     <is:shortcut key="ctrl+shift+${menuElement.position}" callback="\$(\$('#navigation .menubar')[${menuElement.position.toInteger() - 1}]).click();"/>
   </g:each>
   <sec:ifLoggedIn>
@@ -37,7 +37,7 @@
         <div class="dropmenu-content ui-corner-all" id="menubar-list-content">
           <ul>
             <g:each in="${menuElementsHiddden}" var="menuElementHidden">
-              <is:menuElement title="${menuElementHidden.title}" draggable="true" hidden="${true}"  id="${menuElementHidden.id}" selected="${menuElementHidden.selected}" widgetable="${menuElementHidden.widgetable}"/>
+              <is:menuElement title="${menuElementHidden.title}" draggable="true" hidden="${true}"  id="${menuElementHidden.id}" widgetable="${menuElementHidden.widgetable}"/>
               <is:shortcut key="ctrl+shift+${menuElementHidden.position}" callback="\$(\$('#navigation .menubar')[${menuElementHidden.position.toInteger() - 1}]).click();"/>
             </g:each>
           </ul>

@@ -22,6 +22,7 @@
 
 package org.icescrum.core.security;
 
+import org.codehaus.groovy.grails.web.servlet.GrailsApplicationAttributes;
 import org.icescrum.core.domain.Product;
 import org.icescrum.core.domain.Team;
 import org.icescrum.core.services.SecurityService;
@@ -114,19 +115,19 @@ public class WebScrumExpressionRoot extends WebSecurityExpressionRoot implements
     }
 
     public boolean stakeHolder() {
-        return securityService.stakeHolder(null, super.authentication, false);
+        return securityService.stakeHolder(null, super.authentication, false, this.request.getAttribute(GrailsApplicationAttributes.CONTROLLER_NAME_ATTRIBUTE));
     }
 
     public boolean stakeHolder(long p) {
-        return securityService.stakeHolder(p, super.authentication, false);
+        return securityService.stakeHolder(p, super.authentication, false, this.request.getAttribute(GrailsApplicationAttributes.CONTROLLER_NAME_ATTRIBUTE));
     }
 
     public boolean stakeHolder(Product p) {
-        return securityService.stakeHolder(p, super.authentication, false);
+        return securityService.stakeHolder(p, super.authentication, false, this.request.getAttribute(GrailsApplicationAttributes.CONTROLLER_NAME_ATTRIBUTE));
     }
 
     public boolean stakeHolder(Product p, boolean onlyPrivate) {
-        return securityService.stakeHolder(p, super.authentication, onlyPrivate);
+        return securityService.stakeHolder(p, super.authentication, onlyPrivate, this.request.getAttribute(GrailsApplicationAttributes.CONTROLLER_NAME_ATTRIBUTE));
     }
 
     public boolean owner() {
