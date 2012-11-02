@@ -73,6 +73,9 @@ class SprintService {
      */
     void update(Sprint sprint, Date startDate, Date endDate, def checkIntegrity = true, boolean updateRelease = true) {
 
+        Date oldStartDate = sprint.startDate
+        Date oldEndDate = sprint.endDate
+
         if (!sprint.validate() && updateRelease)
             throw new RuntimeException()
 
@@ -124,7 +127,7 @@ class SprintService {
             sprint.save()
         }
 
-        publishEvent(new IceScrumSprintEvent(sprint, this.class, (User) springSecurityService.currentUser, IceScrumEvent.EVENT_UPDATED))
+        publishEvent(new IceScrumSprintEvent(sprint, oldStartDate, oldEndDate, this.class, (User) springSecurityService.currentUser, IceScrumEvent.EVENT_UPDATED))
         broadcast(function: 'update', message: sprint)
     }
 

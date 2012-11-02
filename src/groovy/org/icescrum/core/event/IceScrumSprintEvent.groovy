@@ -13,12 +13,21 @@ import org.icescrum.core.domain.Sprint
 
 class IceScrumSprintEvent extends IceScrumEvent {
 
-  static final String EVENT_ACTIVATED = 'Activated'
-  static final String EVENT_CLOSED = 'Closed'
-  static final String EVENT_UPDATED_DONE_DEFINITION = 'UpdatedDoneDefinition'
-  static final String EVENT_UPDATED_RETROSPECTIVE = 'UpdatedRetrospective'
+    static final String EVENT_ACTIVATED = 'Activated'
+    static final String EVENT_CLOSED = 'Closed'
+    static final String EVENT_UPDATED_DONE_DEFINITION = 'UpdatedDoneDefinition'
+    static final String EVENT_UPDATED_RETROSPECTIVE = 'UpdatedRetrospective'
 
-  IceScrumSprintEvent(Sprint sprint, Class generatedBy, User doneBy, def type, boolean synchronous = false){
-    super(sprint, generatedBy, doneBy, type, synchronous)
-  }
+    Date oldStartDate
+    Date oldEndDate
+
+    IceScrumSprintEvent(Sprint sprint, Class generatedBy, User doneBy, def type, boolean synchronous = false){
+        super(sprint, generatedBy, doneBy, type, synchronous)
+    }
+
+    IceScrumSprintEvent(Sprint sprint, Date oldStartDate, Date oldEndDate, Class generatedBy, User doneBy, def type, boolean synchronous = false){
+        super(sprint, generatedBy, doneBy, type, synchronous)
+        this.oldStartDate = oldStartDate
+        this.oldEndDate = oldEndDate
+    }
 }
