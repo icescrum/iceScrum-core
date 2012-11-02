@@ -62,13 +62,11 @@
     <resource>org.icescrum.core.taglib.KanbanTagLib</resource>
     <resource>org.icescrum.core.taglib.MarkItUpTagLib</resource>
     <resource>org.icescrum.core.taglib.MenuTagLib</resource>
-    <resource>org.icescrum.core.taglib.NoticeTagLib</resource>
     <resource>org.icescrum.core.taglib.PanelTagLib</resource>
     <resource>org.icescrum.core.taglib.ScrumTagLib</resource>
     <resource>org.icescrum.core.taglib.TableTagLib</resource>
     <resource>org.icescrum.core.taglib.ThemeTagLib</resource>
     <resource>org.icescrum.core.taglib.TimelineTagLib</resource>
-    <resource>org.icescrum.core.taglib.TooltipTagLib</resource>
     <resource>org.icescrum.core.taglib.WindowTagLib</resource>
     <resource>NL2BRCodec</resource>
     <resource>org.icescrum.core.support.MenuBarSupport</resource>
