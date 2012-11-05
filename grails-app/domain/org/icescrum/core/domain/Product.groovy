@@ -307,7 +307,7 @@ class Product extends TimeBox implements Serializable {
     def getVersions(def onlyFromSprints = false, def onlyDelivered = false) {
         def versions = onlyFromSprints ? [] : this.stories.findAll{it.affectVersion}*.affectVersion
         def sprints = this.releases*.sprints?.flatten()
-        versions <<  onlyDelivered ? sprints?.findAll{ it.state == Sprint.STATE_DONE && it.deliveredVersion }*.deliveredVersion : sprints?.findAll{ it.deliveredVersion }*.deliveredVersion
+        versions.addAll (onlyDelivered ? sprints?.findAll{ it.state == Sprint.STATE_DONE && it.deliveredVersion }*.deliveredVersion : sprints?.findAll{ it.deliveredVersion }*.deliveredVersion)
         return versions.unique()
     }
 }

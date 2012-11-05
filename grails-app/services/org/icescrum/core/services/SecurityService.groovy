@@ -240,6 +240,9 @@ class SecurityService {
         if (!springSecurityService.isLoggedIn())
             return false
 
+        if (SpringSecurityUtils.ifAnyGranted(Authority.ROLE_ADMIN))
+            return true
+
         def t = null
         def parsedTeam
 
@@ -372,6 +375,9 @@ class SecurityService {
     boolean teamMember(team, auth) {
         if (!springSecurityService.isLoggedIn())
             return false
+
+        if (SpringSecurityUtils.ifAnyGranted(Authority.ROLE_ADMIN))
+            return true
 
         def t
         def parsedTeam

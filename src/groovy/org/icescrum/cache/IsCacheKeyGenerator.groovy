@@ -218,24 +218,26 @@ public class ISKeyGeneratorHelper {
     }
 
     public Map retrieveTimeBox(GrailsParameterMap params, String type){
-        def timeboxId = params.product ? params.product.decodeProductKey() : params.sprint?.id ?: params.release?.id ?: params.id ?: null
-        if (timeboxId){
-            def timebox
-            switch (type){
-                case 'sprint':
-                    timebox = Sprint.get(timeboxId.toLong())
-                    break
-                case 'release':
-                    timebox = Release.get(timeboxId.toLong())
-                    break
-                case 'product':
-                    timebox = Product.get(timeboxId.toLong())
-                    break
-            }
-            if (timebox)
-                return [class:timebox.class,lastUpdated:timebox.lastUpdated,id:timebox.id]
+        def timebox = null
+        switch (type){
+            case 'sprint':
+                def id = params.sprint?.id?: params.id
+                timebox = id ? Sprint.get(id.toLong()) : null
+                break
+            case 'release':
+                def id = params.release?.id?: params.id
+                timebox = id ? Release.get(id.toLong()) : null
+                break
+            case 'product':
+                def id = params.product ? params.product.decodeProductKey() : params.id
+                timebox = id ? Product.get(id.toLong()) : null
+                break
         }
-        return null
+        if (timebox){
+            return [class:timebox.class,lastUpdated:timebox.lastUpdated,id:timebox.id]
+        } else {
+            return null
+        }
     }
 
     public Map retrieveBacklogElement(GrailsParameterMap params, String type){
