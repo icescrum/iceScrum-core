@@ -25,13 +25,10 @@ package org.icescrum.cache
 import org.springframework.web.context.request.RequestContextHolder as RCH
 import org.springframework.web.servlet.support.RequestContextUtils as RCU
 
-import grails.plugin.springcache.CacheResolver
 import grails.plugin.springcache.key.CacheKeyBuilder
 import grails.plugin.springcache.web.ContentCacheParameters
 import grails.plugin.springcache.web.key.WebContentKeyGenerator
 import org.icescrum.core.domain.Product
-import org.icescrum.core.domain.BacklogElement
-import org.icescrum.core.domain.TimeBox
 import org.codehaus.groovy.grails.web.servlet.mvc.GrailsParameterMap
 import org.icescrum.core.domain.Story
 import org.icescrum.core.domain.Feature
@@ -219,6 +216,7 @@ public class ISKeyGeneratorHelper {
 
     public Map retrieveTimeBox(GrailsParameterMap params, String type){
         def timebox = null
+        def options = null
         switch (type){
             case 'sprint':
                 def id = params.sprint?.id?: params.id
@@ -227,6 +225,7 @@ public class ISKeyGeneratorHelper {
             case 'release':
                 def id = params.release?.id?: params.id
                 timebox = id ? Release.get(id.toLong()) : null
+                options = timebox?.sprints*.lastUpdated.max()?:null
                 break
             case 'product':
                 def id = params.product ? params.product.decodeProductKey() : params.id
@@ -234,7 +233,7 @@ public class ISKeyGeneratorHelper {
                 break
         }
         if (timebox){
-            return [class:timebox.class,lastUpdated:timebox.lastUpdated,id:timebox.id]
+            return [class:timebox.class,lastUpdated:timebox.lastUpdated,id:timebox.id, options:options]
         } else {
             return null
         }
@@ -243,7 +242,7 @@ public class ISKeyGeneratorHelper {
     public Map retrieveBacklogElement(GrailsParameterMap params, String type){
         def backlogElementId = params.story?.id ?: params.task?.id ?: params.feature?.id ?: params.actor?.id ?: params.id ?: null
         if (backlogElementId){
-            def backlogElement
+            def backlogElement = null
             switch(type){
                 case 'story':
                     backlogElement = Story.get(params.story?.id ?: params.id)
