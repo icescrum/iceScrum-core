@@ -240,9 +240,6 @@ class SecurityService {
         if (!springSecurityService.isLoggedIn())
             return false
 
-        if (SpringSecurityUtils.ifAnyGranted(Authority.ROLE_ADMIN))
-            return true
-
         def t = null
         def parsedTeam
 
@@ -253,6 +250,8 @@ class SecurityService {
             else {
                 def parsedProduct = parseCurrentRequestProduct(request)
                 if (parsedProduct) {
+                    if (SpringSecurityUtils.ifAnyGranted(Authority.ROLE_ADMIN))
+                        return true
                     t = openProductTeam(parsedProduct, springSecurityService.principal.id)
                     team = t?.id
                 }
@@ -376,9 +375,6 @@ class SecurityService {
         if (!springSecurityService.isLoggedIn())
             return false
 
-        if (SpringSecurityUtils.ifAnyGranted(Authority.ROLE_ADMIN))
-            return true
-
         def t
         def parsedTeam
 
@@ -389,6 +385,8 @@ class SecurityService {
             else{
                 def parsedProduct = parseCurrentRequestProduct(request)
                 if (parsedProduct) {
+                    if (SpringSecurityUtils.ifAnyGranted(Authority.ROLE_ADMIN))
+                        return true
                     t = openProductTeam(parsedProduct, springSecurityService.principal.id)
                     team = t?.id
                 }
