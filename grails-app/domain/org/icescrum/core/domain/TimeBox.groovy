@@ -53,7 +53,7 @@ class TimeBox implements Comparable<TimeBox>, Fluxiable, Serializable {
         description(nullable: true)
     }
 
-    static transients = ['numberOfDays']
+    static transients = ['duration']
 
     static mapping = {
         cache true
@@ -65,11 +65,11 @@ class TimeBox implements Comparable<TimeBox>, Fluxiable, Serializable {
         sort: 'orderNumber'
     }
 
-    Integer getNumberOfDays() {
+    Integer getDuration() {
         def days = 0
-        if (startDate != null && endDate != null)
-            days = ((endDate.time - startDate.time) / (24 * 60 * 60 * 1000)).toInteger()
-
+        if (startDate != null && endDate != null){
+            days = this.endDate - this.startDate + 1
+        }
         return days
     }
 
