@@ -252,6 +252,7 @@ class IcescrumCoreGrailsPlugin {
 
         asyncApplicationEventMulticaster(IceScrumApplicationEventMulticaster) {
 			persistenceInterceptor = ref("persistenceInterceptor")
+            taskExecutor = java.util.concurrent.Executors.newCachedThreadPool()
 		}
 
         ApplicationSupport.createUUID()

@@ -617,22 +617,22 @@ class Story extends BacklogElement implements Cloneable, Serializable {
     }
 
     def onAddComment = { Comment c ->
-        publishEvent new IceScrumStoryEvent(this, c, this.class, (User)c.poster, IceScrumStoryEvent.EVENT_COMMENT_ADDED, true)
+        publishEvent new IceScrumStoryEvent(this, c, this.class, (User)c.poster, IceScrumStoryEvent.EVENT_COMMENT_ADDED)
     }
 
     def onAddAttachment = { Attachment a ->
-        publishEvent new IceScrumStoryEvent(this, a, this.class, (User)a.poster, IceScrumStoryEvent.EVENT_FILE_ATTACHED_ADDED, true)
+        publishEvent new IceScrumStoryEvent(this, a, this.class, (User)a.poster, IceScrumStoryEvent.EVENT_FILE_ATTACHED_ADDED)
     }
 
     def beforeDelete() {
         withNewSession {
-            publishEvent(new IceScrumStoryEvent(this, this.class, User.get(SCH.context?.authentication?.principal?.id), IceScrumEvent.EVENT_BEFORE_DELETE))
+            publishEvent(new IceScrumStoryEvent(this, this.class, User.get(SCH.context?.authentication?.principal?.id), IceScrumEvent.EVENT_BEFORE_DELETE, true))
         }
     }
 
     def afterDelete() {
         withNewSession {
-            publishEvent(new IceScrumStoryEvent(this, this.class, User.get(SCH.context?.authentication?.principal?.id), IceScrumEvent.EVENT_AFTER_DELETE))
+            publishEvent(new IceScrumStoryEvent(this, this.class, User.get(SCH.context?.authentication?.principal?.id), IceScrumEvent.EVENT_AFTER_DELETE, true))
         }
     }
 }

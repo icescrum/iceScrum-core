@@ -40,20 +40,20 @@ class IceScrumStoryEvent extends IceScrumEvent {
     def attachment = null
     def comment = null
 
-    IceScrumStoryEvent(Story story, Class generatedBy, User doneBy, def type, boolean synchronous = true) {
+    IceScrumStoryEvent(Story story, Class generatedBy, User doneBy, def type, boolean synchronous = false) {
         super(story, generatedBy, doneBy, type, synchronous)
     }
 
-    IceScrumStoryEvent(BacklogElement element, Class generatedBy, User doneBy, def type, boolean synchronous = true) {
+    IceScrumStoryEvent(BacklogElement element, Class generatedBy, User doneBy, def type, boolean synchronous = false) {
         super(element, generatedBy, doneBy, type, synchronous)
     }
 
-    IceScrumStoryEvent(BacklogElement element, Comment comment, Class generatedBy, User doneBy, def type, boolean synchronous = true) {
+    IceScrumStoryEvent(BacklogElement element, Comment comment, Class generatedBy, User doneBy, def type, boolean synchronous = false) {
         super(element, generatedBy, doneBy, type, synchronous)
         this.comment = comment
     }
 
-    IceScrumStoryEvent(BacklogElement element, Attachment attachment, Class generatedBy, User doneBy, def type, boolean synchronous = true) {
+    IceScrumStoryEvent(BacklogElement element, Attachment attachment, Class generatedBy, User doneBy, def type, boolean synchronous = false) {
         super(element, generatedBy, doneBy, type, synchronous)
         this.attachment = attachment
     }
