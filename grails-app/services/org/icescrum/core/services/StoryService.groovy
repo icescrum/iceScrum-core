@@ -30,7 +30,7 @@ import org.icescrum.core.event.IceScrumStoryEvent
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.transaction.annotation.Transactional
 import org.icescrum.core.domain.*
-import org.codehaus.groovy.grails.orm.hibernate.cfg.GrailsHibernateUtil
+
 import org.icescrum.core.support.ApplicationSupport
 
 class StoryService {
@@ -265,9 +265,8 @@ class StoryService {
         if (story.parentSprint != null) {
             //Shift to next Sprint (no delete tasks)
             unPlan(story, false)
-        } else {
-            resetRank(story)
         }
+        resetRank(story)
 
         User user = (User) springSecurityService.currentUser
 
@@ -377,20 +376,20 @@ class StoryService {
      * @param state (optional) If this argument is specified, dissociate only the sprint with the specified state
      */
     def unPlanAll(Collection<Sprint> sprintList, Integer sprintState = null) {
-        def spList = sprintList
+        sprintList.sort  { sprint1, sprint2 -> sprint2.orderNumber <=> sprint1.orderNumber }
         bufferBroadcast()
         def storiesUnPlanned = []
-        spList.sort { sp1, sp2 -> sp2.orderNumber <=> sp1.orderNumber }.each { sp ->
-            if ((!sprintState) || (sprintState && sp.state == sprintState)) {
-                def stories = sp.stories.findAll { story ->
+        sprintList.each { sprint ->
+            if ((!sprintState) || (sprintState && sprint.state == sprintState)) {
+                def stories = sprint.stories.findAll { story ->
                     story.state != Story.STATE_DONE
                 }.sort {st1, st2 -> st2.rank <=> st1.rank }
                 stories.each {
                     unPlan(it)
                 }
                 // Recalculate the sprint estimated velocity (capacite)
-                if (sp.state == Sprint.STATE_WAIT)
-                    sp.capacity = (Double) sp.stories?.sum { it.effort } ?: 0
+                if (sprint.state == Sprint.STATE_WAIT)
+                    sprint.capacity = (Double) sprint.stories?.sum { it.effort } ?: 0
                 storiesUnPlanned.addAll(stories)
             }
         }
@@ -451,7 +450,7 @@ class StoryService {
     void setRank(Story story, int rank) {
         def stories = null
         if (story.state == Story.STATE_ACCEPTED || story.state == Story.STATE_ESTIMATED)
-            stories = Story.findAllAcceptedOrEstimated(story.backlog.id).list(order: 'asc', sort: 'rank')
+            stories = story.backlog.stories.findAll{it.state == Story.STATE_ESTIMATED || it.state == Story.STATE_ACCEPTED}.asList().sort{it.rank}
         else if (story.state == Story.STATE_PLANNED || story.state == Story.STATE_INPROGRESS || story.state == Story.STATE_DONE) {
             stories = story.parentSprint?.stories?.asList()?.sort{ it.rank }
         }
@@ -475,7 +474,7 @@ class StoryService {
         stories.sort{ it.rank }
         int i = 0
         def error = false
-        while(i < stories.size() - 1 && !error){
+        while(i < stories.size() && !error){
             error = stories[i].rank != (i + 1)
             i++
         }
@@ -483,7 +482,7 @@ class StoryService {
             stories.eachWithIndex{ story, ind ->
                 if (story.rank != ind + 1){
                     if (log.debugEnabled)
-                        log.debug("story ${story.id} as rank ${story.rank} but should have ${ind + 1} fixing!!")
+                        log.debug("story ${story.uid} as rank ${story.rank} but should have ${ind + 1} fixing!!")
                     story.rank = ind + 1
                     story.save()
                 }
@@ -494,7 +493,7 @@ class StoryService {
     void resetRank(Story story) {
         def stories = null
         if (story.state == Story.STATE_ACCEPTED || story.state == Story.STATE_ESTIMATED)
-            stories = Story.findAllAcceptedOrEstimated(story.backlog.id).list(order: 'asc', sort: 'rank')
+            stories = story.backlog.stories.findAll{it.state == Story.STATE_ESTIMATED || it.state == Story.STATE_ACCEPTED}.asList().sort{it.rank}
         else if (story.state == Story.STATE_PLANNED || story.state == Story.STATE_INPROGRESS || story.state == Story.STATE_DONE) {
             stories = story.parentSprint?.stories?.asList()?.sort{ it.rank }
         }
@@ -504,7 +503,6 @@ class StoryService {
                 it.save()
             }
         }
-        cleanRanks(stories)
     }
 
     @PreAuthorize('(productOwner(#story.backlog) or scrumMaster(#story.backlog))  and !archivedProduct(#story.backlog)')
@@ -521,7 +519,7 @@ class StoryService {
         def stories = null
 
         if (story.state == Story.STATE_ACCEPTED || story.state == Story.STATE_ESTIMATED)
-            stories = Story.findAllAcceptedOrEstimated(story.backlog.id).list(order: 'asc', sort: 'rank')
+            stories = story.backlog.stories.findAll{it.state == Story.STATE_ESTIMATED || it.state == Story.STATE_ACCEPTED}.asList().sort{it.rank}
         else if (story.state == Story.STATE_PLANNED || story.state == Story.STATE_INPROGRESS) {
             stories = story.parentSprint.stories.asList().sort{ it.rank }
             def maxRankInProgress = stories.findAll {it.state != Story.STATE_DONE}?.size()

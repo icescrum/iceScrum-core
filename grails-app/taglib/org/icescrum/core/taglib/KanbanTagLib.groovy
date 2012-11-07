@@ -69,7 +69,7 @@ class KanbanTagLib {
                 if (tbodyGroup) {
                     out << "</tbody>"
                 }
-                out << '<tbody type="' + row.attrs.type + '">'
+                out << '<tbody class="' + row.attrs.type + '" type="' + row.attrs.type + '">'
                 tbodyGroup = row.attrs.type
             }
             if (row) {
