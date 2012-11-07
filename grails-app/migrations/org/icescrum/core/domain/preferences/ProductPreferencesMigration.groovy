@@ -88,6 +88,10 @@ class ProductPreferencesMigration {
           addNotNullConstraint(tableName:"icescrum2_product_preferences",columnName:'archived',columnDataType:'BIT')
           addNotNullConstraint(tableName:"icescrum2_product_preferences",columnName:'timezone',columnDataType:'varchar(255)',defaultNullValue:'UTC')
       }
+
+        changeSet(id:'product_preferences_default_stakeHolderRestrictedViews', author:'vbarrier') {
+            sql("UPDATE icescrum2_product_preferences set stake_holder_restricted_views = 'sprintPlan,actor,feature,finder' where stake_holder_restricted_views is NULL")
+        }
     }
 }
 
