@@ -115,8 +115,20 @@ class FeatureService {
                 feature: feature,
                 creator: (User)springSecurityService.currentUser,
                 rank: (Story.countAllAcceptedOrEstimated(feature.backlog.id)?.list()[0] ?: 0) + 1,
-                backlog: feature.backlog
+                backlog: feature.backlog,
+                uid: Story.findNextUId(feature.backlog.id)
         )
+        story.validate()
+        def i = 1
+        while (story.hasErrors()) {
+            if (story.errors.getFieldError('name')) {
+                i += 1
+                story.name = story.name + '_' + i
+                story.validate()
+            } else {
+                throw new RuntimeException()
+            }
+        }
         if (!story.save()) {
             throw new RuntimeException(story.errors.toString())
         }

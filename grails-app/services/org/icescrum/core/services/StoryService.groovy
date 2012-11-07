@@ -34,7 +34,6 @@ import org.codehaus.groovy.grails.orm.hibernate.cfg.GrailsHibernateUtil
 import org.icescrum.core.support.ApplicationSupport
 
 class StoryService {
-    def productService
     def taskService
     def springSecurityService
     def clicheService
@@ -454,7 +453,7 @@ class StoryService {
         if (story.state == Story.STATE_ACCEPTED || story.state == Story.STATE_ESTIMATED)
             stories = Story.findAllAcceptedOrEstimated(story.backlog.id).list(order: 'asc', sort: 'rank')
         else if (story.state == Story.STATE_PLANNED || story.state == Story.STATE_INPROGRESS || story.state == Story.STATE_DONE) {
-            stories = story.parentSprint?.stories
+            stories = story.parentSprint?.stories?.asList()?.sort{ it.rank }
         }
 
         rank = checkRankDependencies(story, rank)
@@ -468,6 +467,28 @@ class StoryService {
         story.rank = rank
         if (!story.save())
             throw new RuntimeException()
+
+        cleanRanks(stories)
+    }
+
+    void cleanRanks(stories){
+        stories.sort{ it.rank }
+        int i = 0
+        def error = false
+        while(i < stories.size() - 1 && !error){
+            error = stories[i].rank != (i + 1)
+            i++
+        }
+        if (error){
+            stories.eachWithIndex{ story, ind ->
+                if (story.rank != ind + 1){
+                    if (log.debugEnabled)
+                        log.debug("story ${story.id} as rank ${story.rank} but should have ${ind + 1} fixing!!")
+                    story.rank = ind + 1
+                    story.save()
+                }
+            }
+        }
     }
 
     void resetRank(Story story) {
@@ -475,7 +496,7 @@ class StoryService {
         if (story.state == Story.STATE_ACCEPTED || story.state == Story.STATE_ESTIMATED)
             stories = Story.findAllAcceptedOrEstimated(story.backlog.id).list(order: 'asc', sort: 'rank')
         else if (story.state == Story.STATE_PLANNED || story.state == Story.STATE_INPROGRESS || story.state == Story.STATE_DONE) {
-            stories = story.parentSprint?.stories
+            stories = story.parentSprint?.stories?.asList()?.sort{ it.rank }
         }
         stories.each {
             if (it.rank > story.rank) {
@@ -483,14 +504,12 @@ class StoryService {
                 it.save()
             }
         }
+        cleanRanks(stories)
     }
 
     @PreAuthorize('(productOwner(#story.backlog) or scrumMaster(#story.backlog))  and !archivedProduct(#story.backlog)')
     boolean rank(Story story, int rank) {
 
-        /*if (story.rank == rank) {
-            return false
-        }*/
         rank = checkRankDependencies(story, rank)
         if ((story.dependsOn || story.dependences ) && story.rank == rank) {
             return true
@@ -504,7 +523,7 @@ class StoryService {
         if (story.state == Story.STATE_ACCEPTED || story.state == Story.STATE_ESTIMATED)
             stories = Story.findAllAcceptedOrEstimated(story.backlog.id).list(order: 'asc', sort: 'rank')
         else if (story.state == Story.STATE_PLANNED || story.state == Story.STATE_INPROGRESS) {
-            stories = story.parentSprint.stories
+            stories = story.parentSprint.stories.asList().sort{ it.rank }
             def maxRankInProgress = stories.findAll {it.state != Story.STATE_DONE}?.size()
             if (story.state == Story.STATE_INPROGRESS && rank > maxRankInProgress) {
                 rank = maxRankInProgress
@@ -527,6 +546,8 @@ class StoryService {
             }
         }
         story.rank = rank
+
+        cleanRanks(stories)
 
         broadcast(function: 'update', message: story)
         return story.save() ? true : false
