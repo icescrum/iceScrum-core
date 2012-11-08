@@ -150,7 +150,7 @@ class ProductService {
             publishEvent(new IceScrumProductEvent(product, this.class, (User) springSecurityService.currentUser, IceScrumEvent.EVENT_CREATED))
             if (importPath){
                 def event = new IceScrumProductEvent(product, new File(importPath), this.class, (User) springSecurityService.currentUser, IceScrumProductEvent.EVENT_IMPORTED)
-                addonsService.synchronisedDataImport(event)
+                //addonsService.synchronisedDataImport(event)
                 publishEvent(event)
             }
         } catch (Exception e) {

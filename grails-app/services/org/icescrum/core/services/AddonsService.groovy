@@ -19,7 +19,7 @@ class AddonsService implements ApplicationListener<IceScrumProductEvent> {
     @Override
     void onApplicationEvent(IceScrumProductEvent e) {
         if (e.type == IceScrumProductEvent.EVENT_IMPORTED){
-            //do something
+            synchronisedDataImport(e)
         }
     }
 
@@ -32,6 +32,8 @@ class AddonsService implements ApplicationListener<IceScrumProductEvent> {
     }
 
     void addTags(Product p, def root) {
+        if (log.debugEnabled)
+            log.debug("start import tags")
         root.'**'.findAll{ it.name() in ["story","actor","task","feature"] }.each{ element ->
             def elemt = null
             def tasksCache = []
@@ -56,9 +58,13 @@ class AddonsService implements ApplicationListener<IceScrumProductEvent> {
                 elemt.tags = element.tags.text().replaceAll(' ','').replace('[','').replace(']','').split(',')
             }
         }
+        if (log.debugEnabled)
+            log.debug("end import tags")
     }
 
     void addDependsOn(Product p, def root) {
+        if (log.debugEnabled)
+            log.debug("start import dependsOn")
         root.'**'.findAll{ it.name() == "story" }.each{ element ->
             if (!element.dependsOn?.@uid?.isEmpty() && p) {
                 def dependsOn = p.stories.find { it.uid == element.dependsOn.@uid.text().toInteger() } ?: null
@@ -72,11 +78,15 @@ class AddonsService implements ApplicationListener<IceScrumProductEvent> {
                 }
             }
         }
+        if (log.debugEnabled)
+            log.debug("end import dependsOn")
     }
 
     void addAttachments(Product p, def root, File importPath){
         def defaultU = p.productOwners.first()
         def tasksCache = []
+        if (log.debugEnabled)
+            log.debug("start import files")
         root.'**'.findAll{ it.name() in ["story","actor","task","feature"] }.each{ element ->
             def elemt = null
             if (element.attachments.attachment.text()){
@@ -113,10 +123,14 @@ class AddonsService implements ApplicationListener<IceScrumProductEvent> {
                 }
             }
         }
+        if (log.debugEnabled)
+            log.debug("end import files")
     }
     
     void addComments(Product p, def root){
         def defaultU = p.productOwners.first()
+        if (log.debugEnabled)
+            log.debug("start import comments")
         root.'**'.findAll{ it.name() == "story" }.each{ story ->
             def s = null
             if (story.comments.comment.text()){
@@ -137,10 +151,14 @@ class AddonsService implements ApplicationListener<IceScrumProductEvent> {
                 }
             }
         }
+        if (log.debugEnabled)
+            log.debug("end import comments")
     }
 
     void addActivities(Product p, def root){
         def defaultU = p.productOwners.first()
+        if (log.debugEnabled)
+            log.debug("start import activities")
         root.'**'.findAll{ it.name() == "story" }.each{ story ->
             def s = null
             if (story.activities.activity.text()){
@@ -177,6 +195,9 @@ class AddonsService implements ApplicationListener<IceScrumProductEvent> {
                         new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(activity.dateCreated.text()),
                         activity.cachedDescription.text())
         }
+
+        if (log.debugEnabled)
+            log.debug("end import activities")
     }
 
     private addActivity(def object, User poster, String code, String label, Date dateCreated, String desc){
