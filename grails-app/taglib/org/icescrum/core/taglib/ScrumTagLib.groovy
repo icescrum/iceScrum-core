@@ -80,7 +80,7 @@ class ScrumTagLib {
                     selected: "function(event,ui){${attrs.selectable.selected}}"
             ]
             def opts = selectableOptions.findAll {k, v -> v}.collect {k, v -> " $k:$v" }.join(',')
-            jqCode += " \$('#backlog-layout-${attrs.id}').selectable({$opts}); "
+            jqCode += "if(!\$.support.touch){ \$('#backlog-layout-${attrs.id}').selectable({$opts}); };"
         }
 
         if (attrs.dblclickable != null && UtilsWebComponents.rendered(attrs.dblclickable)) {

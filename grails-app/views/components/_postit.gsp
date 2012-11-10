@@ -56,15 +56,10 @@
         </div>
 
     %{-- Title --}%
-        <g:if test="${sortable}">
-            <p class="postit-label postit-sortable break-word">${title.encodeAsHTML()}</p>
-        </g:if>
-        <g:else>
-            <p class="postit-label break-word">${title.encodeAsHTML()}</p>
-        </g:else>
+        <p class="postit-label ${sortable ? 'postit-sortable': ''} break-word">${title.encodeAsHTML()}</p>
 
         <g:if test="${content}">
-            <div class="postit-excerpt">${content.replace('<br>', '')}</div>
+            <div class="postit-excerpt ${sortable ? 'postit-sortable': ''}">${content.replace('<br>', '')}</div>
         </g:if>
 
         <g:if test="${typeNumber}">

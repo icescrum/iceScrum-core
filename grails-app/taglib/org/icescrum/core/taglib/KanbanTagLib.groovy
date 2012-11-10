@@ -86,7 +86,7 @@ class KanbanTagLib {
         if (!attrs.onlyRows) {
             out << "</tbody>"
             if (opts)
-                jqCode += " jQuery('.kanban').selectable({${opts}}); "
+                jqCode += "if(!\$.support.touch){ jQuery('.kanban').selectable({${opts}}); }"
             out << '</table>'
         }
 
