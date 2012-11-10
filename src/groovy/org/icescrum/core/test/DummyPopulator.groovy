@@ -177,6 +177,10 @@ class DummyPopulator {
                     s.effort = null
                 }
 
+                if (s.state >= Story.STATE_ACCEPTED){
+                    s.acceptedDate = new Date()
+                }
+
                 s.addActivity(ua, state == Story.STATE_SUGGESTED ? Activity.CODE_SAVE : 'acceptAs', s.name)
 
             }

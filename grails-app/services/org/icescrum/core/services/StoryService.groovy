@@ -592,7 +592,7 @@ class StoryService {
         def storiesA = []
         bufferBroadcast()
         stories.each { story ->
-            if (story.state != Story.STATE_SUGGESTED)
+            if (story.state > Story.STATE_SUGGESTED)
                 throw new IllegalStateException('is.story.error.not.state.suggested')
 
             if (story.dependsOn?.state == Story.STATE_SUGGESTED)
@@ -631,7 +631,7 @@ class StoryService {
         def features = []
         bufferBroadcast()
         stories.each { story ->
-            if (story.state != Story.STATE_SUGGESTED)
+            if (story.state > Story.STATE_SUGGESTED)
                 throw new IllegalStateException('is.story.error.not.state.suggested')
 
             User user = (User) springSecurityService.currentUser
@@ -680,7 +680,7 @@ class StoryService {
         bufferBroadcast()
         stories.each { story ->
 
-            if (story.state != Story.STATE_SUGGESTED)
+            if (story.state > Story.STATE_SUGGESTED)
                 throw new IllegalStateException('is.story.error.not.state.suggested')
 
             def task = new Task(story.properties)
