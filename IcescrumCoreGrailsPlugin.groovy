@@ -256,7 +256,7 @@ class IcescrumCoreGrailsPlugin {
 		}
 
         ApplicationSupport.createUUID()
-        System.setProperty('lbdsl.home', application.config.icescrum.baseDir.toString())
+        System.setProperty('lbdsl.home', "${application.config.icescrum.baseDir.toString()}${File.separator}lbdsl")
     }
 
     private void mergeConfig(GrailsApplication app) {
