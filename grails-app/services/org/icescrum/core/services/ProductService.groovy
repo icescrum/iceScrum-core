@@ -31,7 +31,6 @@ import org.icescrum.core.domain.security.Authority
 import org.icescrum.core.event.IceScrumEvent
 import org.icescrum.core.event.IceScrumProductEvent
 import org.icescrum.core.support.ProgressSupport
-import org.icescrum.core.support.XMLConverterSupport
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.transaction.annotation.Transactional
 import org.icescrum.core.domain.*
@@ -461,44 +460,6 @@ class ProductService {
         def prod = new XmlSlurper().parse(x)
 
         progress?.updateProgress(0, g.message(code: 'is.parse', args: [g.message(code: 'is.product')]))
-
-        XMLConverterSupport converter = new XMLConverterSupport(prod)
-        if (converter.needConversion) {
-            prod = converter.convert()
-        }
-
-        progress?.updateProgress(5, g.message(code: 'is.parse', args: [g.message(code: 'is.product')]))
-        def Product p
-        try {
-            def product = prod
-
-            //be compatible with xml without export tag
-            if (prod.find{it.name == 'export'}){ product = prod.product }
-
-            p = this.unMarshall(product, progress)
-        } catch (RuntimeException e) {
-            if (log.debugEnabled) e.printStackTrace()
-            progress?.progressError(g.message(code: 'is.parse.error', args: [g.message(code: 'is.product')]))
-            return
-        }
-        progress.completeProgress(g.message(code: 'is.validate.complete'))
-        return p
-    }
-
-    @PreAuthorize('isAuthenticated()')
-    @Transactional(readOnly = true)
-    def extract(File x, ProgressSupport progress = null) {
-        def g = grailsApplication.mainContext.getBean('org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib')
-        def prod = new XmlSlurper().parse(x)
-
-        progress?.updateProgress(0, g.message(code: 'is.parse', args: [g.message(code: 'is.product')]))
-
-        XMLConverterSupport converter = new XMLConverterSupport(prod)
-        if (converter.needConversion) {
-            prod = converter.convert()
-        }
-
-        progress?.updateProgress(5, g.message(code: 'is.parse', args: [g.message(code: 'is.product')]))
         def Product p
         try {
             def product = prod
