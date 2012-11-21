@@ -228,7 +228,7 @@ class Task extends BacklogElement implements Serializable {
 
     static Task getInProduct(Long pid, Long id) {
         executeQuery(
-                """SELECT DISTINCT t
+                """SELECT t
                    FROM org.icescrum.core.domain.Task as t, org.icescrum.core.domain.Sprint as s, org.icescrum.core.domain.Release as r
                    WHERE t.backlog = s
                    AND s.parentRelease = r
@@ -238,7 +238,7 @@ class Task extends BacklogElement implements Serializable {
 
     static Task getInProductByUid(Long pid, int uid) {
         executeQuery(
-                """SELECT DISTINCT t
+                """SELECT t
                    FROM org.icescrum.core.domain.Task as t, org.icescrum.core.domain.Sprint as s, org.icescrum.core.domain.Release as r
                    WHERE t.backlog = s
                    AND s.parentRelease = r
@@ -248,7 +248,7 @@ class Task extends BacklogElement implements Serializable {
 
     static List<Task> getAllInProduct(Long pid, List id) {
         executeQuery(
-                """SELECT DISTINCT t
+                """SELECT t
                    FROM org.icescrum.core.domain.Task as t, org.icescrum.core.domain.Sprint as s, org.icescrum.core.domain.Release as r
                    WHERE t.backlog = s
                    AND s.parentRelease = r
@@ -258,25 +258,16 @@ class Task extends BacklogElement implements Serializable {
 
     static List<Task> getAllInProduct(Long pid) {
         executeQuery(
-                """SELECT DISTINCT t
+                """SELECT t
                    FROM org.icescrum.core.domain.Task as t, org.icescrum.core.domain.Sprint as s, org.icescrum.core.domain.Release as r
                    WHERE t.backlog = s
                    AND s.parentRelease = r
                    AND r.parentProduct.id = :pid """, [pid: pid])
     }
 
-    static int countAllByProduct(Long pid) {
-        executeQuery(
-                """SELECT DISTINCT count(t)
-                   FROM org.icescrum.core.domain.Task as t, org.icescrum.core.domain.Sprint as s, org.icescrum.core.domain.Release as r
-                   WHERE t.backlog = s
-                   AND s.parentRelease = r
-                   AND r.parentProduct.id = :pid """, [pid: pid])[0]
-    }
-
     static int findNextUId(Long pid) {
         (executeQuery(
-                """SELECT DISTINCT MAX(t.uid)
+                """SELECT MAX(t.uid)
                    FROM org.icescrum.core.domain.Task as t, org.icescrum.core.domain.Sprint as s, org.icescrum.core.domain.Release as r
                    WHERE t.backlog = s
                    AND s.parentRelease = r

@@ -22,29 +22,38 @@
 package org.icescrum.core.domain.preferences
 
 class UserPreferencesMigration {
-		static migration = {
-            changeSet(id:'user_preferences_constraint_hideDoneState', author:'vbarrier') {
-                  preConditions(onFail:"MARK_RAN"){
-                    not{
-                      dbms(type:'mssql')
+
+    static migration = {
+        changeSet(id:'user_preferences_constraint_hideDoneState', author:'vbarrier', filePath:filePath) {
+              preConditions(onFail:"MARK_RAN"){
+                not{
+                    or {
+                        dbms(type:'mssql')
+                        dbms(type:'oracle')
                     }
-                  }
-                  sql('UPDATE icescrum2_user_preferences set hide_done_state = false WHERE hide_done_state is NULL')
-                  addNotNullConstraint(tableName:"icescrum2_user_preferences",columnName:'hide_done_state',columnDataType:'BOOLEAN')
-            }
-            changeSet(id:'user_preferences_constraint_hideDoneState_mssql', author:'vbarrier') {
-                  preConditions(onFail:"MARK_RAN"){
-                    dbms(type:'mssql')
-                  }
-                  sql('UPDATE icescrum2_user_preferences set hide_done_state = 0 WHERE hide_done_state is NULL')
-                  addNotNullConstraint(tableName:"icescrum2_user_preferences",columnName:'hide_done_state',columnDataType:'BIT')
-            }
-            changeSet(id:'user_preferences_drop_column_timezone', author:'vbarrier') {
-                preConditions(onFail:"MARK_RAN"){
-                    columnExists(tableName:"icescrum2_user_preferences", columnName:"timezone")
                 }
-                dropColumn(tableName:"icescrum2_user_preferences", columnName:"timezone")
+              }
+              sql('UPDATE icescrum2_user_preferences set hide_done_state = false WHERE hide_done_state is NULL')
+              addNotNullConstraint(tableName:"icescrum2_user_preferences",columnName:'hide_done_state',columnDataType:'BOOLEAN')
+        }
+        changeSet(id:'user_preferences_constraint_hideDoneState_mssql', author:'vbarrier', filePath:filePath) {
+              preConditions(onFail:"MARK_RAN"){
+                dbms(type:'mssql')
+              }
+              sql('UPDATE icescrum2_user_preferences set hide_done_state = 0 WHERE hide_done_state is NULL')
+              addNotNullConstraint(tableName:"icescrum2_user_preferences",columnName:'hide_done_state',columnDataType:'BIT')
+        }
+        changeSet(id:'user_preferences_drop_column_timezone', author:'vbarrier', filePath:filePath) {
+            preConditions(onFail:"MARK_RAN"){
+                columnExists(tableName:"icescrum2_user_preferences", columnName:"timezone")
             }
-		}
-	}
+            dropColumn(tableName:"icescrum2_user_preferences", columnName:"timezone")
+        }
+    }
+
+    static def getFilePath(){
+        ""
+    }
+
+}
 

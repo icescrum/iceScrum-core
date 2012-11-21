@@ -24,8 +24,14 @@ package org.icescrum.core.domain.preferences
 
 
 class ProductPreferencesMigration {
+
     static migration = {
-      changeSet(id:'product_preferences_constraint_releasePlanningHour_column', author:'vbarrier') {
+      changeSet(id:'product_preferences_constraint_releasePlanningHour_column', author:'vbarrier', filePath:filePath) {
+          preConditions(onFail:"MARK_RAN"){
+            not{
+                dbms(type:'oracle')
+            }
+          }
           addNotNullConstraint(tableName:"icescrum2_product_preferences",columnName:'release_planning_hour',columnDataType:'varchar(255)',defaultNullValue:'9:00')
           addNotNullConstraint(tableName:"icescrum2_product_preferences",columnName:'daily_meeting_hour',columnDataType:'varchar(255)',defaultNullValue:'11:00')
           addNotNullConstraint(tableName:"icescrum2_product_preferences",columnName:'sprint_planning_hour',columnDataType:'varchar(255)',defaultNullValue:'9:00')
@@ -33,17 +39,20 @@ class ProductPreferencesMigration {
           addNotNullConstraint(tableName:"icescrum2_product_preferences",columnName:'sprint_review_hour',columnDataType:'varchar(255)',defaultNullValue:'14:00')
       }
 
-      changeSet(id:'product_preferences_constraint_hideweekend_column', author:'vbarrier') {
+      changeSet(id:'product_preferences_constraint_hideweekend_column', author:'vbarrier', filePath:filePath) {
           preConditions(onFail:"MARK_RAN"){
             not{
-              dbms(type:'mssql')
+                or {
+                    dbms(type:'mssql')
+                    dbms(type:'oracle')
+                }
             }
           }
           sql('UPDATE icescrum2_product_preferences set hide_weekend = false WHERE hide_weekend is NULL')
           addNotNullConstraint(tableName:"icescrum2_product_preferences",columnName:'hide_weekend',columnDataType:'BOOLEAN')
       }
 
-      changeSet(id:'product_preferences_constraint_hideweekend_column_mssql', author:'vbarrier') {
+      changeSet(id:'product_preferences_constraint_hideweekend_column_mssql', author:'vbarrier', filePath:filePath) {
           preConditions(onFail:"MARK_RAN"){
             dbms(type:'mssql')
           }
@@ -51,24 +60,27 @@ class ProductPreferencesMigration {
           addNotNullConstraint(tableName:"icescrum2_product_preferences",columnName:'hide_weekend',columnDataType:'BIT')
       }
 
-      changeSet(id:'product_preferences_drop_lock_po_column', author:'vbarrier') {
+      changeSet(id:'product_preferences_drop_lock_po_column', author:'vbarrier', filePath:filePath) {
         preConditions(onFail:"MARK_RAN"){
             columnExists(tableName:"icescrum2_product_preferences", columnName:"lock_po")
         }
         dropColumn(tableName:"icescrum2_product_preferences", columnName:"lock_po")
       }
 
-      changeSet(id:'product_preferences_drop_new_teams_column', author:'vbarrier') {
+      changeSet(id:'product_preferences_drop_new_teams_column', author:'vbarrier', filePath:filePath) {
         preConditions(onFail:"MARK_RAN"){
             columnExists(tableName:"icescrum2_product_preferences", columnName:"new_teams")
         }
         dropColumn(tableName:"icescrum2_product_preferences", columnName:"new_teams")
       }
 
-      changeSet(id:'product_preferences_constraint_R3_R4_column', author:'vbarrier') {
+      changeSet(id:'product_preferences_constraint_R3_R4_column', author:'vbarrier', filePath:filePath) {
           preConditions(onFail:"MARK_RAN"){
             not{
-              dbms(type:'mssql')
+                or {
+                    dbms(type:'mssql')
+                    dbms(type:'oracle')
+                }
             }
           }
           sql('UPDATE icescrum2_product_preferences set archived = false WHERE archived is NULL')
@@ -78,7 +90,7 @@ class ProductPreferencesMigration {
           addNotNullConstraint(tableName:"icescrum2_product_preferences",columnName:'timezone',columnDataType:'varchar(255)',defaultNullValue:'UTC')
       }
 
-      changeSet(id:'product_preferences_constraint_R3_R4_column_mssql', author:'vbarrier') {
+      changeSet(id:'product_preferences_constraint_R3_R4_column_mssql', author:'vbarrier', filePath:filePath) {
           preConditions(onFail:"MARK_RAN"){
             dbms(type:'mssql')
           }
@@ -89,9 +101,18 @@ class ProductPreferencesMigration {
           addNotNullConstraint(tableName:"icescrum2_product_preferences",columnName:'timezone',columnDataType:'varchar(255)',defaultNullValue:'UTC')
       }
 
-        changeSet(id:'product_preferences_default_stakeHolderRestrictedViews', author:'vbarrier') {
+        changeSet(id:'product_preferences_default_stakeHolderRestrictedViews', author:'vbarrier', filePath:filePath) {
+            preConditions(onFail:"MARK_RAN"){
+                not{
+                    dbms(type:'oracle')
+                }
+            }
             sql("UPDATE icescrum2_product_preferences set stake_holder_restricted_views = 'sprintPlan,actor,feature,finder' where stake_holder_restricted_views is NULL")
         }
     }
-}
 
+    static def getFilePath(){
+        ""
+    }
+
+}

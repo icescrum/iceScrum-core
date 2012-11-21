@@ -32,6 +32,7 @@ import org.springframework.security.core.context.SecurityContextHolder as SCH
 import org.codehaus.groovy.grails.commons.ApplicationHolder
 import org.grails.plugins.springsecurity.service.acl.AclUtilService
 import org.springframework.security.acls.domain.BasePermission
+import grails.plugin.fluxiable.Activity
 
 class Product extends TimeBox implements Serializable {
 
@@ -136,31 +137,32 @@ class Product extends TimeBox implements Serializable {
     }
 
     static recentActivity(Product currentProductInstance) {
-        executeQuery("SELECT DISTINCT a.activity " +
-                "FROM grails.plugin.fluxiable.ActivityLink as a, org.icescrum.core.domain.Product as p " +
-                "WHERE a.type='product' " +
-                "and p.id=a.activityRef " +
-                "and p.id=:p " +
-                "ORDER BY a.activity.dateCreated DESC", [p: currentProductInstance.id], [max: 15])
+        executeQuery("""SELECT act FROM grails.plugin.fluxiable.Activity as act
+                        WHERE act.id IN (SELECT DISTINCT a.activity.id """ +
+                                                "FROM grails.plugin.fluxiable.ActivityLink as a, org.icescrum.core.domain.Product as p " +
+                                                "WHERE a.type='product' " +
+                                                "and p.id=a.activityRef " +
+                                                "and p.id=:p )" +
+                            "ORDER BY act.dateCreated DESC", [p: currentProductInstance.id], [max: 15])
     }
 
     static allProductsByUser(long userid, params) {
-        executeQuery("SELECT DISTINCT p " +
+        executeQuery("SELECT p FROM org.icescrum.core.domain.Product as p WHERE p.id IN (SELECT DISTINCT p.id " +
                 "FROM org.icescrum.core.domain.Product as p INNER JOIN p.teams as t " +
                 "WHERE t.id in" +
                 "(SELECT DISTINCT t2.id FROM org.icescrum.core.domain.Team as t2 " +
                 "INNER JOIN t2.members as m " +
-                "WHERE m.id = :uid)", [uid: userid], params ?: [:])
+                "WHERE m.id = :uid))", [uid: userid], params ?: [:])
     }
 
     static findAllByRole(User user, List<BasePermission> permission, params, members = true) {
-        executeQuery("SELECT DISTINCT p "+
+        executeQuery("SELECT p FROM org.icescrum.core.domain.Product as p WHERE p.id IN (SELECT DISTINCT p.id "+
                 "From org.icescrum.core.domain.Product as p "+
                 "where "
 
                 + ( members ?
-            "( p IN "+
-                    "(SELECT DISTINCT p " +
+            "( p.id IN "+
+                    "(SELECT DISTINCT p.id " +
                     "FROM org.icescrum.core.domain.Product as p INNER JOIN p.teams as t " +
                     "WHERE t.id in " +
                     "(SELECT DISTINCT t2.id FROM org.icescrum.core.domain.Team as t2 " +
@@ -181,22 +183,22 @@ class Product extends TimeBox implements Serializable {
                 "AND acl.id = ae.sid.id "+
                 "AND ae.mask IN(:p) "+
                 "AND ai.id = ae.aclObjectIdentity.id "+
-                "AND p.id = ai.objectId ) )", members ? [sid: user?.username?:'', uid: user?.id?:0L, p:permission*.mask ] : [sid: user?.username?:'', p:permission*.mask ], params ?: [:])
+                "AND p.id = ai.objectId ) ) )", members ? [sid: user?.username?:'', uid: user?.id?:0L, p:permission*.mask ] : [sid: user?.username?:'', p:permission*.mask ], params ?: [:])
     }
 
     static searchPublicAndMyProducts(User user, String term, params) {
-        executeQuery("SELECT DISTINCT p "+
+        executeQuery("SELECT p FROM org.icescrum.core.domain.Product as p WHERE p.id IN (SELECT DISTINCT p.id "+
                         "From org.icescrum.core.domain.Product as p "+
                         "where "+
                         " ( p.name LIKE :term AND p.preferences.hidden = false ) " +
-                        "OR ( p.name LIKE :term AND p IN "+
-                        "(SELECT DISTINCT p " +
+                        "OR ( p.name LIKE :term AND p.id IN "+
+                        "(SELECT DISTINCT p.id " +
                         "FROM org.icescrum.core.domain.Product as p INNER JOIN p.teams as t " +
                         "WHERE t.id in " +
                         "(SELECT DISTINCT t2.id FROM org.icescrum.core.domain.Team as t2 " +
                         "INNER JOIN t2.members as m " +
                         "WHERE m.id = :uid) ) )" +
-                        "or ( p.name LIKE :term AND p IN ( SELECT DISTINCT p "+
+                        "or ( p.name LIKE :term AND p.id IN ( SELECT DISTINCT p.id "+
                         "From org.icescrum.core.domain.Product as p, "+
                         "org.codehaus.groovy.grails.plugins.springsecurity.acl.AclClass as ac, "+
                         "org.codehaus.groovy.grails.plugins.springsecurity.acl.AclObjectIdentity as ai, "+
@@ -209,7 +211,7 @@ class Product extends TimeBox implements Serializable {
                         "AND acl.id = ae.sid.id "+
                         "AND ae.mask IN(:p) "+
                         "AND ai.id = ae.aclObjectIdentity.id "+
-                        "AND p.id = ai.objectId ) )"
+                        "AND p.id = ai.objectId ) ) )"
                         , [term:term, sid: user?.username?:'', uid: user?.id?:0L, p:[BasePermission.WRITE,BasePermission.READ]*.mask ], params ?: [:])
     }
 
@@ -218,14 +220,14 @@ class Product extends TimeBox implements Serializable {
                         "From org.icescrum.core.domain.Product as p "+
                         "where "+
                         " ( p.name LIKE :term AND p.preferences.hidden = false ) " +
-                        "OR ( p.name LIKE :term AND p IN "+
-                        "(SELECT DISTINCT p " +
+                        "OR ( p.name LIKE :term AND p.id IN "+
+                        "(SELECT DISTINCT p.id " +
                         "FROM org.icescrum.core.domain.Product as p INNER JOIN p.teams as t " +
                         "WHERE t.id in " +
                         "(SELECT DISTINCT t2.id FROM org.icescrum.core.domain.Team as t2 " +
                         "INNER JOIN t2.members as m " +
                         "WHERE m.id = :uid) ) )" +
-                        "or ( p.name LIKE :term AND p IN ( SELECT DISTINCT p "+
+                        "or ( p.name LIKE :term AND p.id IN ( SELECT DISTINCT p.id "+
                         "From org.icescrum.core.domain.Product as p, "+
                         "org.codehaus.groovy.grails.plugins.springsecurity.acl.AclClass as ac, "+
                         "org.codehaus.groovy.grails.plugins.springsecurity.acl.AclObjectIdentity as ai, "+

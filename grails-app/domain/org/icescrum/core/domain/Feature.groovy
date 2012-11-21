@@ -129,7 +129,7 @@ class Feature extends BacklogElement implements Serializable {
 
     static int findNextUId(Long pid) {
         (executeQuery(
-                """SELECT DISTINCT MAX(f.uid)
+                """SELECT MAX(f.uid)
                    FROM org.icescrum.core.domain.Feature as f, org.icescrum.core.domain.Product as p
                    WHERE f.backlog = p
                    AND p.id = :pid """, [pid: pid])[0]?:0) + 1

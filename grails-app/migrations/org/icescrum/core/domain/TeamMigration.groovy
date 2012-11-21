@@ -23,35 +23,40 @@ package org.icescrum.core.domain
 class TeamMigration {
 
     static migration = {
-            changeSet(id:'add_uid_column_team', author:'vbarrier') {
-                preConditions(onFail:"MARK_RAN"){
-                    not{
-                      or {
-                        dbms(type:'mssql')
-                        dbms(type:'hsqldb')
-                      }
-                    }
-                }
-                sql('UPDATE icescrum2_team set uid = MD5(name) WHERE uid is NULL')
-                addNotNullConstraint(tableName:"icescrum2_team",columnName:'uid',columnDataType:'varchar(255)')
-            }
-
-            changeSet(id:'add_uid_column_team_hsql', author:'vbarrier') {
-                preConditions(onFail:"MARK_RAN"){
-                    dbms(type:'hsqldb')
-                }
-                sql('CREATE ALIAS MD5 FOR "org.hsqldb.lib.MD5.encodeString"')
-                sql('UPDATE icescrum2_team set uid = MD5(name) WHERE uid is NULL')
-                addNotNullConstraint(tableName:"icescrum2_team",columnName:'uid',columnDataType:'varchar(255)')
-            }
-
-            changeSet(id:'add_uid_column_team_mssql', author:'vbarrier') {
-                preConditions(onFail:"MARK_RAN"){
+        changeSet(id:'add_uid_column_team', author:'vbarrier', filePath:filePath) {
+            preConditions(onFail:"MARK_RAN"){
+                not{
+                  or {
                     dbms(type:'mssql')
+                    dbms(type:'hsqldb')
+                    dbms(type:'oracle')
+                  }
                 }
-                sql('UPDATE icescrum2_team set uid = SUBSTRING(sys.fn_sqlvarbasetostr(HASHBYTES(\'MD5\',name)),3,32) WHERE uid is NULL')
-                addNotNullConstraint(tableName:"icescrum2_team",columnName:'uid',columnDataType:'varchar(max)')
             }
+            sql('UPDATE icescrum2_team set uid = MD5(name) WHERE uid is NULL')
+            addNotNullConstraint(tableName:"icescrum2_team",columnName:'uid',columnDataType:'varchar(255)')
+        }
+
+        changeSet(id:'add_uid_column_team_hsql', author:'vbarrier', filePath:filePath) {
+            preConditions(onFail:"MARK_RAN"){
+                dbms(type:'hsqldb')
+            }
+            sql('CREATE ALIAS MD5 FOR "org.hsqldb.lib.MD5.encodeString"')
+            sql('UPDATE icescrum2_team set uid = MD5(name) WHERE uid is NULL')
+            addNotNullConstraint(tableName:"icescrum2_team",columnName:'uid',columnDataType:'varchar(255)')
+        }
+
+        changeSet(id:'add_uid_column_team_mssql', author:'vbarrier', filePath:filePath) {
+            preConditions(onFail:"MARK_RAN"){
+                dbms(type:'mssql')
+            }
+            sql('UPDATE icescrum2_team set uid = SUBSTRING(sys.fn_sqlvarbasetostr(HASHBYTES(\'MD5\',name)),3,32) WHERE uid is NULL')
+            addNotNullConstraint(tableName:"icescrum2_team",columnName:'uid',columnDataType:'varchar(max)')
+        }
+    }
+
+    static def getFilePath(){
+        return ""
     }
 }
 

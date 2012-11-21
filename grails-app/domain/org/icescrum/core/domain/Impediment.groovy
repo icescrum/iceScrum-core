@@ -35,7 +35,9 @@ class Impediment extends BacklogElement implements Serializable, Comparable<Impe
 
     Date dateOpen = new Date()
     Date dateClose
+    //TODO ORACLE empty = null
     String impact = ""
+    //TODO ORACLE empty = null
     String solution = ""
     Integer rank
     int state = Impediment.TODO

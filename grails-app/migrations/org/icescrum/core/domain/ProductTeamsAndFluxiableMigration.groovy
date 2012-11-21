@@ -24,26 +24,30 @@ package org.icescrum.core.domain
 class ProductTeamsAndFluxiableMigration {
 
     static migration = {
-            // List of changesets
-            changeSet(id:'product_teams_mssql', author:'vbarrier') {
-                preConditions(onFail:"MARK_RAN"){
-                    dbms(type:'mssql')
-                    not{
-                        tableExists(tableName:"icescrum2_product_teams")
-                    }
+        changeSet(id:'product_teams_mssql', author:'vbarrier', filePath:filePath) {
+            preConditions(onFail:"MARK_RAN"){
+                dbms(type:'mssql')
+                not{
+                    tableExists(tableName:"icescrum2_product_teams")
                 }
-                sql('create table icescrum2_product_teams (product_id numeric(19,0) not null, team_id numeric(19,0) not null, primary key (product_id, team_id))')
-                sql('alter table icescrum2_product_teams add constraint FK_PRODUCT_TEAMS_PRODUCT foreign key (product_id) references icescrum2_product')
-                sql('alter table icescrum2_product_teams add constraint FK_PRODUCT_TEAMS_TEAM foreign key (team_id) references icescrum2_team')
             }
+            sql('create table icescrum2_product_teams (product_id numeric(19,0) not null, team_id numeric(19,0) not null, primary key (product_id, team_id))')
+            sql('alter table icescrum2_product_teams add constraint FK_PRODUCT_TEAMS_PRODUCT foreign key (product_id) references icescrum2_product')
+            sql('alter table icescrum2_product_teams add constraint FK_PRODUCT_TEAMS_TEAM foreign key (team_id) references icescrum2_team')
+        }
 
-            changeSet(id:'fluxiable_mssql', author:'vbarrier') {
-                preConditions(onFail:"MARK_RAN"){
-                    dbms(type:'mssql')
-                }
-                sql('alter table fluxiable_activity alter column cached_description varchar(max)')
-                sql('alter table fluxiable_activity alter column cached_label varchar(max)')
+        changeSet(id:'fluxiable_mssql', author:'vbarrier', filePath:filePath) {
+            preConditions(onFail:"MARK_RAN"){
+                dbms(type:'mssql')
             }
+            sql('alter table fluxiable_activity alter column cached_description varchar(max)')
+            sql('alter table fluxiable_activity alter column cached_label varchar(max)')
+        }
     }
+
+    static def getFilePath(){
+        return ""
+    }
+
 }
 

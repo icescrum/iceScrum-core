@@ -63,7 +63,7 @@ class AcceptanceTest implements Serializable {
 
     static int findNextUId(Long pid) {
         (executeQuery(
-                """SELECT DISTINCT MAX(t.uid)
+                """SELECT MAX(t.uid)
                    FROM org.icescrum.core.domain.AcceptanceTest as t, org.icescrum.core.domain.Story as s
                    WHERE t.parentStory = s
                    AND s.backlog.id = :pid """, [pid: pid])[0]?:0) + 1

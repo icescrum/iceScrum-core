@@ -32,6 +32,7 @@ import org.icescrum.core.event.IceScrumStoryEvent
 import org.icescrum.plugins.attachmentable.domain.Attachment
 import org.springframework.security.core.context.SecurityContextHolder as SCH
 import grails.util.GrailsNameUtils
+import grails.plugin.fluxiable.Activity
 
 
 class Story extends BacklogElement implements Cloneable, Serializable {
@@ -60,7 +61,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
     Date estimatedDate
     Date inProgressDate
     Date doneDate
-    String origin = ""
+    String origin
     Integer effort = null
     int rank = 0
     int state = Story.STATE_SUGGESTED
@@ -115,6 +116,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
         effort(nullable: true)
         creator(nullable: true) // in case of a user deletion, the story can remain without owner
         dependsOn(nullable: true)
+        origin(nullable: true)
     }
 
     static namedQueries = {
@@ -499,22 +501,23 @@ class Story extends BacklogElement implements Cloneable, Serializable {
 
     static int findNextUId(Long pid) {
         (executeQuery(
-                """SELECT DISTINCT MAX(s.uid)
+                """SELECT MAX(s.uid)
                    FROM org.icescrum.core.domain.Story as s, org.icescrum.core.domain.Product as p
                    WHERE s.backlog = p
                    AND p.id = :pid """, [pid: pid])[0]?:0) + 1
     }
 
     static recentActivity(Product currentProductInstance) {
-        executeQuery("SELECT DISTINCT a.activity " +
+        executeQuery("SELECT act FROM grails.plugin.fluxiable.Activity as act WHERE act.id IN (SELECT DISTINCT a.activity.id " +
                 "FROM grails.plugin.fluxiable.ActivityLink as a, org.icescrum.core.domain.Story as s " +
                 "WHERE a.type='story' " +
                 "and s.backlog=:p " +
                 "and s.id=a.activityRef " +
-                "and not (a.activity.code like 'task') " +
-                "ORDER BY a.activity.dateCreated DESC", [p: currentProductInstance], [max: 15])
+                "and not (a.activity.code like 'task') )" +
+                "ORDER BY act.dateCreated DESC", [p: currentProductInstance], [max: 15])
     }
 
+    //Not working on ORACLE
     static recentActivity(User user) {
         executeQuery("SELECT DISTINCT a.activity, s.backlog " +
                 "FROM grails.plugin.fluxiable.ActivityLink as a, org.icescrum.core.domain.Story as s " +
@@ -528,23 +531,6 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                 "and s.id=a.activityRef " +
                 "and not (a.activity.code like 'task') " +
                 "ORDER BY a.activity.dateCreated DESC", [uid: user.id], [cache:true,max: 15])
-    }
-
-    static recentActivity(Team currentTeamInstance) {
-        executeQuery("SELECT DISTINCT a.activity " +
-                "FROM grails.plugin.fluxiable.ActivityLink as a, org.icescrum.core.domain.Story as s, org.icescrum.core.domain.Product as p " +
-                "INNER JOIN s.backlog.teams as team " +
-                "WHERE " +
-                "((a.type='story' " +
-                "and team.id=:t " +
-                "and not (a.activity.code like 'task') " +
-                "and s.id=a.activityRef) " +
-                "OR (a.type='product' " +
-                "and p.id=a.activityRef " +
-                "and p.id=s.backlog.id)) " +
-                "and a.activity.posterId in " +
-                "(SELECT DISTINCT u2.id FROM org.icescrum.core.domain.User as u2 INNER JOIN u2.teams as t WHERE t.id = :t)" +
-                "ORDER BY a.activity.dateCreated DESC", [t: currentTeamInstance.id], [max: 15])
     }
 
     static findLastUpdatedComment(long storyId) {

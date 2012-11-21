@@ -1,6 +1,5 @@
 /*
- * Copyright (c) 2010 iceScrum Technologies.
- *
+ * Copyright (c) 2011 Kagilum SAS
  * This file is part of iceScrum.
  *
  * iceScrum is free software: you can redistribute it and/or modify
@@ -19,26 +18,21 @@
  *
  * Vincent Barrier (vbarrier@kagilum.com)
  */
-
-
 package org.icescrum.core.domain
 
-class Domain extends BacklogElement implements Serializable{
+class SprintMigration {
 
-    static final long serialVersionUID = 3311568364163793572L
-    //TODO ORACLE empty = null
-    String textColor = " "
-    String color = "#FFFFFF"
-    Boolean publish = true
-
-    static hasMany = [features: Feature]
-
-    static mappedBy = [features: "parentDomain"]
-
-    static constraints = {
+    static migration = {
+        changeSet(id:'remove_resource_column_sprint', author:'vbarrier', filePath:filePath) {
+            preConditions(onFail:"MARK_RAN"){
+                columnExists(tableName:"icescrum2_sprint", columnName:"resource")
+            }
+            dropColumn(tableName:"icescrum2_sprint", columnName:"resource")
+        }
     }
 
-    static mapping = {
-        table 'icescrum2_domain'
+    static def getFilePath(){
+        return ""
     }
 }
+

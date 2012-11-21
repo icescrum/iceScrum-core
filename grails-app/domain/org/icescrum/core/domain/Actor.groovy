@@ -49,7 +49,7 @@ class Actor extends BacklogElement implements Serializable, Comparable<Actor> {
     static final int USE_FREQUENCY_MONTH = 3
     static final int USE_FREQUENCY_TRIMESTER = 4
 
-    String satisfactionCriteria = ""
+    String satisfactionCriteria
 
     int instances = Actor.NUMBER_INSTANCES_INTERVAL_1
     int expertnessLevel = Actor.EXPERTNESS_LEVEL_MEDIUM
@@ -129,7 +129,7 @@ class Actor extends BacklogElement implements Serializable, Comparable<Actor> {
 
     static int findNextUId(Long pid) {
         (executeQuery(
-                """SELECT DISTINCT MAX(a.uid)
+                """SELECT MAX(a.uid)
                    FROM org.icescrum.core.domain.Actor as a, org.icescrum.core.domain.Product as p
                    WHERE a.backlog = p
                    AND p.id = :pid """, [pid: pid])[0]?:0) + 1

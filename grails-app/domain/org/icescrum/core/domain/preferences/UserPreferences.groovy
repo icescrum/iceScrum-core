@@ -53,6 +53,6 @@ class UserPreferences implements Serializable{
 
     static mapping = {
         cache true
-        table 'icescrum2_user_preferences'
+        table System.properties['icescrum.oracle'] ? 'icescrum2_u_pref' : 'icescrum2_user_preferences'
     }
 }

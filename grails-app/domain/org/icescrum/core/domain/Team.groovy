@@ -153,6 +153,7 @@ class Team implements Serializable, Comparable {
                         "AND t.id = ai.objectId", [sid: user, p:permission*.mask ], params ?: [:])
     }
 
+    //Not working on ORACLE
     static recentTeamsActivity(def uid) {
         executeQuery("SELECT DISTINCT a.activity, p2 " +
                 "FROM grails.plugin.fluxiable.ActivityLink as a, org.icescrum.core.domain.Product as p2 " +

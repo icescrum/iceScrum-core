@@ -25,41 +25,58 @@ class BacklogElementMigration {
     static runAfter = [ UserMigration ]
 
     static migration = {
-            // List of changesets
-            changeSet(id:'remove_id_from_import_column_feature', author:'vbarrier') {
-                preConditions(onFail:"MARK_RAN"){
-                    columnExists(tableName:"icescrum2_feature", columnName:"id_from_import")
+        // List of changesets
+        changeSet(id:'remove_id_from_import_column_feature', author:'vbarrier', filePath:filePath) {
+            preConditions(onFail:"MARK_RAN"){
+                columnExists(tableName:"icescrum2_feature", columnName:"id_from_import")
+            }
+            dropColumn(tableName:"icescrum2_feature", columnName:"id_from_import")
+        }
+        changeSet(id:'remove_id_from_import_column_task', author:'vbarrier', filePath:filePath) {
+            preConditions(onFail:"MARK_RAN"){
+                columnExists(tableName:"icescrum2_task", columnName:"id_from_import")
+            }
+            dropColumn(tableName:"icescrum2_task", columnName:"id_from_import")
+        }
+        changeSet(id:'remove_id_from_import_column_story', author:'vbarrier', filePath:filePath) {
+            preConditions(onFail:"MARK_RAN"){
+                columnExists(tableName:"icescrum2_story", columnName:"id_from_import")
+            }
+            dropColumn(tableName:"icescrum2_story", columnName:"id_from_import")
+        }
+        changeSet(id:'remove_id_from_import_column_impediment', author:'vbarrier', filePath:filePath) {
+            preConditions(onFail:"MARK_RAN"){
+                columnExists(tableName:"icescrum2_impediment", columnName:"id_from_import")
+            }
+            dropColumn(tableName:"icescrum2_impediment", columnName:"id_from_import")
+        }
+        changeSet(id:'add_uid_column_backlogelement', author:'vbarrier', filePath:filePath) {
+            preConditions(onFail:"MARK_RAN"){
+                not {
+                    dbms(type:'oracle')
                 }
-                dropColumn(tableName:"icescrum2_feature", columnName:"id_from_import")
             }
-            changeSet(id:'remove_id_from_import_column_task', author:'vbarrier') {
-                preConditions(onFail:"MARK_RAN"){
-                    columnExists(tableName:"icescrum2_task", columnName:"id_from_import")
+            sql('UPDATE icescrum2_task set uid = id WHERE uid is NULL')
+            addNotNullConstraint(tableName:"icescrum2_task",columnName:'uid',columnDataType:'BIGINT')
+            sql('UPDATE icescrum2_actor set uid = id WHERE uid is NULL')
+            addNotNullConstraint(tableName:"icescrum2_actor",columnName:'uid',columnDataType:'BIGINT')
+            sql('UPDATE icescrum2_feature set uid = id WHERE uid is NULL')
+            addNotNullConstraint(tableName:"icescrum2_feature",columnName:'uid',columnDataType:'BIGINT')
+            sql('UPDATE icescrum2_story set uid = id WHERE uid is NULL')
+            addNotNullConstraint(tableName:"icescrum2_story",columnName:'uid',columnDataType:'BIGINT')
+        }
+        changeSet(id:'remove_not_null_origin_story', author:'vbarrier', filePath:filePath) {
+            preConditions(onFail:"MARK_RAN"){
+                not {
+                    dbms(type:'oracle')
                 }
-                dropColumn(tableName:"icescrum2_task", columnName:"id_from_import")
             }
-            changeSet(id:'remove_id_from_import_column_story', author:'vbarrier') {
-                preConditions(onFail:"MARK_RAN"){
-                    columnExists(tableName:"icescrum2_story", columnName:"id_from_import")
-                }
-                dropColumn(tableName:"icescrum2_story", columnName:"id_from_import")
-            }
-            changeSet(id:'remove_id_from_import_column_impediment', author:'vbarrier') {
-                preConditions(onFail:"MARK_RAN"){
-                    columnExists(tableName:"icescrum2_impediment", columnName:"id_from_import")
-                }
-                dropColumn(tableName:"icescrum2_impediment", columnName:"id_from_import")
-            }
-            changeSet(id:'add_uid_column_backlogelement', author:'vbarrier') {
-                sql('UPDATE icescrum2_task set uid = id WHERE uid is NULL')
-                addNotNullConstraint(tableName:"icescrum2_task",columnName:'uid',columnDataType:'BIGINT')
-                sql('UPDATE icescrum2_actor set uid = id WHERE uid is NULL')
-                addNotNullConstraint(tableName:"icescrum2_actor",columnName:'uid',columnDataType:'BIGINT')
-                sql('UPDATE icescrum2_feature set uid = id WHERE uid is NULL')
-                addNotNullConstraint(tableName:"icescrum2_feature",columnName:'uid',columnDataType:'BIGINT')
-                sql('UPDATE icescrum2_story set uid = id WHERE uid is NULL')
-                addNotNullConstraint(tableName:"icescrum2_story",columnName:'uid',columnDataType:'BIGINT')
-            }
+            dropNotNullConstraint(tableName:"icescrum2_story", columnName:"origin")
+        }
+    }
+
+    static def getFilePath(){
+        return ""
     }
 }
 

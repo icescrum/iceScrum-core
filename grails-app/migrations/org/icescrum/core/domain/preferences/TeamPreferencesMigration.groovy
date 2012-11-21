@@ -24,13 +24,19 @@ package org.icescrum.core.domain.preferences
 
 
 class TeamPreferencesMigration {
+
     static migration = {
-      changeSet(id:'team_preferences_drop_allow_role_change_column', author:'vbarrier') {
+      changeSet(id:'team_preferences_drop_allow_role_change_column', author:'vbarrier', filePath:filePath) {
         preConditions(onFail:"MARK_RAN"){
-            columnExists(tableName:"icescrum2_team_preferences", columnName:"allow_role_change")
+            columnExists(tableName:'icescrum2_team_preferences', columnName:"allow_role_change")
         }
-        dropColumn(tableName:"icescrum2_team_preferences", columnName:"allow_role_change")
+        dropColumn(tableName:'icescrum2_team_preferences', columnName:"allow_role_change")
       }
     }
+
+    static def getFilePath(){
+        return ""
+    }
+
 }
 
