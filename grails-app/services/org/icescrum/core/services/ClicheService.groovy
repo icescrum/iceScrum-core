@@ -221,11 +221,6 @@ class ClicheService {
 
                 // Impediments
                 "${Cliche.UNRESOLVED_IMPEDIMENTS}"(unresolvedImpediments)
-
-                // Sprint Resource
-                "${Cliche.SPRINT_RESOURCES}"(s.resource)
-
-
             }
         }
         StreamingMarkupBuilder xmlBuilder = new StreamingMarkupBuilder()

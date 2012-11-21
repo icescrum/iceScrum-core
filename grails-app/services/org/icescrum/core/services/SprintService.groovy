@@ -527,7 +527,6 @@ class SprintService {
                     activationDate: activationDate,
                     closeDate: closeDate,
                     state: sprint.state.text().toInteger(),
-                    resource: (sprint.resource.text().isNumber()) ? sprint.resource.text().toInteger() : null,
                     velocity: (sprint.velocity.text().isNumber()) ? sprint.velocity.text().toDouble() : 0d,
                     dailyWorkTime: (sprint.dailyWorkTime.text().isNumber()) ? sprint.dailyWorkTime.text().toDouble() : 8d,
                     capacity: (sprint.capacity.text().isNumber()) ? sprint.capacity.text().toDouble() : 0d,
