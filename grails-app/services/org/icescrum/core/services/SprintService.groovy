@@ -61,8 +61,6 @@ class SprintService {
 
         if (!sprint.save())
             throw new RuntimeException()
-
-        publishEvent(new IceScrumSprintEvent(sprint, this.class, (User) springSecurityService.currentUser, IceScrumEvent.EVENT_CREATED))
         broadcast(function: 'add', message: sprint)
     }
 
@@ -210,7 +208,6 @@ class SprintService {
 
             firstDate.time = endDate.time + day
             sprints << newSprint
-            publishEvent(new IceScrumSprintEvent(newSprint, this.class, (User) springSecurityService.currentUser, IceScrumEvent.EVENT_CREATED))
         }
 
         broadcast(function: 'add', message: [class: Sprint.class, sprints: sprints], channel:'product-'+release.parentProduct.id)

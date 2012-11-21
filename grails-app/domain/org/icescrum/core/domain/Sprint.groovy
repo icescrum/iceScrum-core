@@ -40,6 +40,14 @@ class Sprint extends TimeBox implements Serializable {
     static final int STATE_DONE = 3
 
     String deliveredVersion
+    int state = Sprint.STATE_WAIT
+    String retrospective  // Beware of distinct, it won't work in MSSQL since this attribute is TEXT
+    String doneDefinition // Beware of distinct, it won't work in MSSQL since this attribute is TEXT
+    Date activationDate
+    Date closeDate
+    Double velocity = 0d
+    Double capacity = 0d
+    Double dailyWorkTime = 8d
 
     static mappedBy = [
             stories: "parentSprint",
@@ -153,7 +161,6 @@ class Sprint extends TimeBox implements Serializable {
         doneDefinition nullable: true
         activationDate nullable: true
         closeDate nullable: true
-        resource nullable: true
         endDate(validator:{ val, obj ->
             if (!val)
                 return ['no.endDate']
@@ -178,17 +185,6 @@ class Sprint extends TimeBox implements Serializable {
             return true
         })
     }
-
-    int state = Sprint.STATE_WAIT
-    String retrospective  // Beware of distinct, it won't work in MSSQL since this attribute is TEXT
-    String doneDefinition // Beware of distinct, it won't work in MSSQL since this attribute is TEXT
-    Date activationDate
-    Date closeDate
-    Double velocity = 0d
-    Double capacity = 0d
-    Double dailyWorkTime = 8d
-
-    Integer resource
 
     void setDone() {
         this.state = Sprint.STATE_DONE
@@ -320,6 +316,12 @@ class Sprint extends TimeBox implements Serializable {
 
     Integer getTotalEffort() {
         return (Integer) this.stories.sum { it.effort }
+    }
+
+    def afterInsert(){
+        withNewSession {
+            publishEvent(new IceScrumSprintEvent(this, this.class, User.get(SCH.context?.authentication?.principal?.id), IceScrumEvent.EVENT_CREATED, true))
+        }
     }
 
     def beforeDelete() {
