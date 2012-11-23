@@ -43,7 +43,6 @@ class SprintService {
     def clicheService
     def taskService
     def storyService
-    def releaseService
     def springSecurityService
     def g = new org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib()
 
@@ -295,7 +294,7 @@ class SprintService {
                 0
         } ?: 0
         bufferBroadcast()
-        def nextSprint = Sprint.findByParentReleaseAndOrderNumber(sprint.parentRelease, sprint.orderNumber + 1)
+        def nextSprint = Sprint.findByParentReleaseAndOrderNumber(sprint.parentRelease, sprint.orderNumber + 1) ?: Sprint.findByParentReleaseAndOrderNumber(Release.findByOrderNumber(sprint.parentRelease.orderNumber + 1), 1)
         if (nextSprint) {
             //Move not finished urgent task to next sprint
             sprint.tasks?.findAll {it.type == Task.TYPE_URGENT && it.state != Task.STATE_DONE}?.each {
@@ -471,13 +470,19 @@ class SprintService {
     }
 
     def copyRecurrentTasksFromPreviousSprint(Sprint sprint) {
-        if (sprint.orderNumber == 1) {
+        if (sprint.orderNumber == 1 && sprint.parentRelease.orderNumber == 1) {
             throw new IllegalStateException('is.sprint.copyRecurrentTasks.error.no.sprint.before')
         }
         if (sprint.state == Sprint.STATE_DONE) {
             throw new IllegalStateException('is.sprint.copyRecurrentTasks.error.sprint.done')
         }
-        def lastsprint = Sprint.findByParentReleaseAndOrderNumber(sprint.parentRelease, sprint.orderNumber - 1)
+        def lastsprint
+        if (sprint.orderNumber > 1){
+            lastsprint = Sprint.findByParentReleaseAndOrderNumber(sprint.parentRelease, sprint.orderNumber - 1)
+        }else{
+            def previousRelease = Release.findByOrderNumber(sprint.parentRelease.orderNumber - 1)
+            lastsprint = Sprint.findByParentReleaseAndOrderNumber(previousRelease, previousRelease.sprints.size())
+        }
         def tasks = lastsprint.tasks.findAll {it.type == Task.TYPE_RECURRENT}
 
         if (!tasks) {
