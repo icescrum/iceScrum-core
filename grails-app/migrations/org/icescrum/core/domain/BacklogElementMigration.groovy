@@ -71,7 +71,7 @@ class BacklogElementMigration {
                     dbms(type:'oracle')
                 }
             }
-            dropNotNullConstraint(tableName:"icescrum2_story", columnName:"origin")
+            dropNotNullConstraint(tableName:"icescrum2_story", columnName:"origin", columnDataType:'VARCHAR(255)')
         }
     }
 
