@@ -412,7 +412,6 @@ class FormTagLib {
         out << "<span class=\"content\">"
 
         attrs.remove('class')
-
         out << textField(attrs, body())
         out << "</span>"
         out << "<span class=\"end\"></span>"
@@ -424,9 +423,6 @@ class FormTagLib {
             jqCode = is.typed(typedAttrs)
         }
         jqCode += "\$('#${attrs.id}-field').input();"
-        if (attrs.focus) {
-            jqCode += "\$('#${attrs.id}').focus();"
-        }
         out << jq.jquery(null, jqCode)
     }
 
@@ -582,11 +578,6 @@ class FormTagLib {
             jqCode += "\$('#${attrs.id}-field').input({className:\"${classe}\"});"
         }
 
-        if (attrs.focus) {
-            jqCode += "\$('#${attrs.id}').focus();"
-            attrs.remove('focus')
-        }
-
         out << "<span class=\"${classe} ${classes}\" id=\"${attrs.id}-field\" style=\"${attrs.width ? 'width:' + attrs.width : ''}\">"
         if (attrs.rich) {
             if (attrs.rich.disabled) {
@@ -604,9 +595,6 @@ class FormTagLib {
             out << textArea(attrs, body())
         }
         out << "</span>"
-        if (attrs.focus) {
-            jqCode += "\$('#${attrs.id}').focus();"
-        }
         out << jq.jquery(null, jqCode)
     }
 
