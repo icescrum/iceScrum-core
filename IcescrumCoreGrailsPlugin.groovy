@@ -349,7 +349,8 @@ class IcescrumCoreGrailsPlugin {
     }
 
     def onConfigChange = { event ->
-        this.mergeConfig(application)
+        this.mergeConfig(event.application)
+        event.application.mainContext.uiDefinitionService.reload()
     }
 
     private addUIControllerMethods(clazz, ApplicationContext ctx, pluginName) {

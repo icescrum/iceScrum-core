@@ -38,6 +38,7 @@ class UiDefinitionService {
     def loadDefinitions() {
         if (log.infoEnabled) { log.info "Loading UI definitions..." }
         definitionsById = new ConcurrentHashMap()
+        grailsApplication.config.modulesResources = []
         grailsApplication.uiDefinitionClasses.each{
             def config = new ConfigSlurper().parse(it.clazz)
             def enabled = config.pluginName ? pluginManager.getUserPlugins().find{ it.name == config.pluginName && it.isEnabled() } : true
@@ -55,13 +56,13 @@ class UiDefinitionService {
             }
 
             if (config.modulesResources){
-                grailsApplication.config.modulesResources = grailsApplication.config.modulesResources ?: []
-                if (config.modulesResources instanceof String){
-                    grailsApplication.config.modulesResources.add(config.modulesResources)
-                    if (log.debugEnabled) { log.debug "Resources module added: ${config.modulesResources}" }
-                }else{
-                    grailsApplication.config.modulesResources.addAll(config.modulesResources)
-                    if (log.debugEnabled) { log.debug "Resources modules added: ${config.modulesResources.join(',')}" }
+                def modules = config.modulesResources instanceof Closure ? config.modulesResources(grailsApplication) : config.modulesResources
+                if (modules instanceof String){
+                    grailsApplication.config.modulesResources.add(modules)
+                    if (log.debugEnabled) { log.debug "Resources module added: ${modules}" }
+                }else if (modules){
+                    grailsApplication.config.modulesResources.addAll(modules)
+                    if (log.debugEnabled) { log.debug "Resources modules added: ${modules.join(',')}" }
                 }
             }
         }

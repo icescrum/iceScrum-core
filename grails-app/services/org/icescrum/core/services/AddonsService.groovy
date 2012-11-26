@@ -115,10 +115,14 @@ class AddonsService implements ApplicationListener<IceScrumProductEvent> {
                         u = defaultU
                     }
                     def originalName = attachment.inputName.text()
-                    def path = "${importPath.absolutePath}${File.separator}attachments${File.separator}${attachment.@id.text()}.${attachment.ext.text()}"
-                    def fileAttch = new File(path)
-                    if (fileAttch.exists()){
-                        elemt.addAttachment(u, fileAttch, originalName)
+                    if (!attachment.url?.text()){
+                        def path = "${importPath.absolutePath}${File.separator}attachments${File.separator}${attachment.@id.text()}.${attachment.ext.text()}"
+                        def fileAttch = new File(path)
+                        if (fileAttch.exists()){
+                            elemt.addAttachment(u, fileAttch, originalName)
+                        }
+                    }else{
+                        elemt.addAttachment(u, [filename:originalName, url:attachment.url.text(), provider:attachment.provider.text(), size:attachment.length.toInteger()])
                     }
                 }
             }
