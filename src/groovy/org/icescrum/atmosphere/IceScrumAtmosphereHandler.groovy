@@ -25,7 +25,6 @@ import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 import org.apache.commons.logging.LogFactory
 import org.icescrum.core.domain.Product
-import org.icescrum.core.domain.Team
 import org.springframework.security.core.context.SecurityContext
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository
 import org.atmosphere.cpr.*
@@ -37,6 +36,7 @@ import grails.converters.JSON
 class IceScrumAtmosphereHandler implements AtmosphereHandler<HttpServletRequest, HttpServletResponse> {
 
     private static final log = LogFactory.getLog(this)
+    private static final USER_CONTEXT = 'user_context'
 
     void onRequest(AtmosphereResource<HttpServletRequest, HttpServletResponse> event) throws IOException {
         def conf = ApplicationHolder.application.config.icescrum.push
@@ -53,7 +53,7 @@ class IceScrumAtmosphereHandler implements AtmosphereHandler<HttpServletRequest,
 
         def productID = event.request.getParameterValues("product") ? event.request.getParameterValues("product")[0] : null
         def user = getUserFromAtmosphereResource(event.request, true) ?: [fullName: 'anonymous', id: null, username: 'anonymous']
-        event.request.setAttribute('user_context', user)
+        event.request.setAttribute(USER_CONTEXT, user)
 
         def channel = null
 
@@ -67,23 +67,21 @@ class IceScrumAtmosphereHandler implements AtmosphereHandler<HttpServletRequest,
             def broadcaster = BroadcasterFactory.default.lookup(bc, channel)
             if(broadcaster == null){
                 broadcaster = bc.newInstance(channel, event.atmosphereConfig)
-                broadcaster.setBroadcasterLifeCyclePolicy(new Builder().policy(ATMOSPHERE_RESOURCE_POLICY.EMPTY_DESTROY).build())
-                broadcaster.broadcasterConfig.addFilter(new StreamFilter())
             }
             broadcaster.addAtmosphereResource(event)
             if (log.isDebugEnabled()) {
                 log.debug("add user ${user.username} to broadcaster: ${channel}")
             }
-            def users = broadcaster.atmosphereResources.collect{ it.request.getAttribute('user_context') }
+            def users = broadcaster.atmosphereResources.collect{ it.request.getAttribute(USER_CONTEXT) }
             broadcaster.broadcast(([broadcaster:[users:users]] as JSON).toString())
         }
-        if (user.id != null)
+        if (user.id)
             addBroadcasterToFactory(event, (String)user.username)
     }
 
     void onStateChange(AtmosphereResourceEvent<HttpServletRequest, HttpServletResponse> event) throws IOException {
 
-        def user = event.resource.request.getAttribute('user_context')?:null
+        def user = event.resource.request.getAttribute(USER_CONTEXT)?:null
 
         //Event cancelled
         if (event.cancelled) {
@@ -92,11 +90,12 @@ class IceScrumAtmosphereHandler implements AtmosphereHandler<HttpServletRequest,
             }
             //Help atmosphere to clear old events
             BroadcasterFactory.default.lookupAll().each {
-                it.removeAtmosphereResource(event.resource)
-                if (it instanceof ExcludeSessionBroadcaster){
-                    def users = it.atmosphereResources?.collect{ it.request.getAttribute('user_context') }
-                    if (users)
+                if (it.atmosphereResources.contains(event.resource)){
+                    it.removeAtmosphereResource(event.resource)
+                    if (it instanceof org.atmosphere.util.ExcludeSessionBroadcaster) {
+                        def users = it.atmosphereResources?.collect{ it.request.getAttribute(USER_CONTEXT) }
                         it.broadcast(([broadcaster:[users:users]] as JSON).toString())
+                    }
                 }
             }
 
@@ -111,7 +110,7 @@ class IceScrumAtmosphereHandler implements AtmosphereHandler<HttpServletRequest,
         }
 
         if (log.isDebugEnabled()) {
-            log.debug("broadcast to user ${user?.username ?: 'anonymous'}")
+            log.debug("broadcast to user ${user.username}")
         }
 
         //Finally broadcast message to client
@@ -146,8 +145,6 @@ class IceScrumAtmosphereHandler implements AtmosphereHandler<HttpServletRequest,
             return
         }
         Broadcaster selfBroadcaster = bc.newInstance(broadcasterID, resource.atmosphereConfig);
-        selfBroadcaster.broadcasterConfig.addFilter(new StreamFilter())
-        selfBroadcaster.setBroadcasterLifeCyclePolicy(new Builder().policy(ATMOSPHERE_RESOURCE_POLICY.EMPTY_DESTROY).build())
         selfBroadcaster.addAtmosphereResource(resource)
 
         BroadcasterFactory.getDefault().add(selfBroadcaster, broadcasterID);
