@@ -32,6 +32,7 @@ import org.atmosphere.cpr.*
 import org.atmosphere.cpr.BroadcasterLifeCyclePolicy.ATMOSPHERE_RESOURCE_POLICY
 import org.atmosphere.cpr.BroadcasterLifeCyclePolicy.Builder
 import org.codehaus.groovy.grails.commons.ApplicationHolder
+import grails.converters.JSON
 
 class IceScrumAtmosphereHandler implements AtmosphereHandler<HttpServletRequest, HttpServletResponse> {
 
@@ -51,16 +52,15 @@ class IceScrumAtmosphereHandler implements AtmosphereHandler<HttpServletRequest,
         event.suspend(60000, true);
 
         def productID = event.request.getParameterValues("product") ? event.request.getParameterValues("product")[0] : null
-        def teamID = event.request.getParameterValues("team") ? event.request.getParameterValues("team")[0] : null
-        def user = getUserFromAtmosphereResource(event.request, true)
+        def user = getUserFromAtmosphereResource(event.request, true) ?: [fullName: 'anonymous', id: null, username: 'anonymous']
+        event.request.setAttribute('user_context', user)
 
         def channel = null
+
         if (productID && productID.isLong()) {
             channel = Product.load(productID.toLong()) ? "product-${productID}" : null
-
-        } else if (teamID && teamID.isLong()) {
-            channel = Team.load(teamID.toLong()) ? "team-${teamID}" : null
         }
+
         channel = channel?.toString()
         if (channel) {
             Class<? extends org.atmosphere.cpr.Broadcaster> bc = (Class<? extends org.atmosphere.cpr.Broadcaster>) ApplicationHolder.application.getClassLoader().loadClass(conf?.broadcaster?:'org.icescrum.atmosphere.ExcludeSessionBroadcaster')
@@ -72,30 +72,34 @@ class IceScrumAtmosphereHandler implements AtmosphereHandler<HttpServletRequest,
             }
             broadcaster.addAtmosphereResource(event)
             if (log.isDebugEnabled()) {
-                log.debug("add user ${user?.username ?: 'anonymous'} to broadcaster: ${channel}")
+                log.debug("add user ${user.username} to broadcaster: ${channel}")
             }
+            def users = broadcaster.atmosphereResources.collect{ it.request.getAttribute('user_context') }
+            broadcaster.broadcast(([broadcaster:[users:users]] as JSON).toString())
         }
-        if (user)
+        if (user.id != null)
             addBroadcasterToFactory(event, (String)user.username)
     }
 
     void onStateChange(AtmosphereResourceEvent<HttpServletRequest, HttpServletResponse> event) throws IOException {
 
-        def user
-
-        if (log.isDebugEnabled()){
-            user = getUserFromAtmosphereResource(event.resource.request)
-        }
+        def user = event.resource.request.getAttribute('user_context')?:null
 
         //Event cancelled
         if (event.cancelled) {
             if (log.isDebugEnabled()) {
-                log.debug("user ${user?.username ?: 'anonymous'} disconnected")
+                log.debug("user ${user.username} disconnected")
             }
             //Help atmosphere to clear old events
             BroadcasterFactory.default.lookupAll().each {
                 it.removeAtmosphereResource(event.resource)
+                if (it instanceof ExcludeSessionBroadcaster){
+                    def users = it.atmosphereResources?.collect{ it.request.getAttribute('user_context') }
+                    if (users)
+                        it.broadcast(([broadcaster:[users:users]] as JSON).toString())
+                }
             }
+
             if (!event.message) {
                 return
             }
