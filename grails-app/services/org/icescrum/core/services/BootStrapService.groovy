@@ -48,7 +48,7 @@ class BootStrapService {
             pluginManager.informPluginsOfConfigChange()
         }
 
-        if (Environment.current == Environment.DEVELOPMENT)
+        if (Environment.current == Environment.DEVELOPMENT && !System.properties['dummy.populator'])
             DummyPopulator.dummyze()
     }
 }
