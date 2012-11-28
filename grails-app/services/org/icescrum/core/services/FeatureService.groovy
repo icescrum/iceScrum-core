@@ -104,7 +104,7 @@ class FeatureService {
     }
 
     @PreAuthorize('productOwner(#feature.backlog) and !archivedProduct(#feature.backlog)')
-    def copyToBacklog(feature) {
+    def copyToBacklog(def feature) {
         def story = new Story(
                 name: feature.name,
                 description: feature.description,
@@ -117,6 +117,7 @@ class FeatureService {
                 backlog: feature.backlog,
                 uid: Story.findNextUId(feature.backlog.id)
         )
+        feature.addToStories(story)
         story.validate()
         def i = 1
         while (story.hasErrors()) {
