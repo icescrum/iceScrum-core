@@ -43,6 +43,7 @@ class ActorService {
         act.name = act.name?.trim()
         act.uid = Actor.findNextUId(p.id)
         act.backlog = p
+        p.addToActors(act)
         if (!act.save(flush: true))
             throw new RuntimeException()
         broadcast(function: 'add', message: act)

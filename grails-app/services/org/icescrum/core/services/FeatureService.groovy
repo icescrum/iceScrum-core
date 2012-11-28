@@ -32,7 +32,6 @@ import org.icescrum.core.domain.*
 class FeatureService {
 
     static transactional = true
-    def productService
     def springSecurityService
 
     @PreAuthorize('productOwner(#p) and !archivedProduct(#p)')
