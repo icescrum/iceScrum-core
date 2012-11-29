@@ -48,7 +48,7 @@ class BootStrapService {
             pluginManager.informPluginsOfConfigChange()
         }
 
-        if (Environment.current == Environment.DEVELOPMENT && !System.properties['dummy.populator'])
+        if (Environment.current == Environment.DEVELOPMENT && !System.properties['icescrum.fixtures'])
             DummyPopulator.dummyze()
     }
 }
