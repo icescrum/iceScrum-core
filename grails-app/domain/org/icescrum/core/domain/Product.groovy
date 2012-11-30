@@ -155,7 +155,7 @@ class Product extends TimeBox implements Serializable {
                 "WHERE m.id = :uid))", [uid: userid], params ?: [:])
     }
 
-    static findAllByRole(User user, List<BasePermission> permission, params, members = true) {
+    static findAllByRole(User user, List<BasePermission> permission, params, members = true, archived = true) {
         executeQuery("SELECT p FROM org.icescrum.core.domain.Product as p WHERE p.id IN (SELECT DISTINCT p.id "+
                 "From org.icescrum.core.domain.Product as p "+
                 "where "
@@ -167,7 +167,9 @@ class Product extends TimeBox implements Serializable {
                     "WHERE t.id in " +
                     "(SELECT DISTINCT t2.id FROM org.icescrum.core.domain.Team as t2 " +
                     "INNER JOIN t2.members as m " +
-                    "WHERE m.id = :uid) ) )" +
+                    "WHERE m.id = :uid) "+
+                    (archived ? '' : " AND p.preferences.archived = false ") +
+                    ") )" +
                     "or" : "")
 
                 + "( p IN ( SELECT DISTINCT p "+
@@ -183,6 +185,7 @@ class Product extends TimeBox implements Serializable {
                 "AND acl.id = ae.sid.id "+
                 "AND ae.mask IN(:p) "+
                 "AND ai.id = ae.aclObjectIdentity.id "+
+                (archived ? '' : "AND p.preferences.archived = false ") +
                 "AND p.id = ai.objectId ) ) )", members ? [sid: user?.username?:'', uid: user?.id?:0L, p:permission*.mask ] : [sid: user?.username?:'', p:permission*.mask ], params ?: [:])
     }
 
