@@ -294,7 +294,7 @@ class SprintService {
                 0
         } ?: 0
         bufferBroadcast()
-        def nextSprint = Sprint.findByParentReleaseAndOrderNumber(sprint.parentRelease, sprint.orderNumber + 1) ?: Sprint.findByParentReleaseAndOrderNumber(Release.findByOrderNumber(sprint.parentRelease.orderNumber + 1), 1)
+        def nextSprint = Sprint.findByParentReleaseAndOrderNumber(sprint.parentRelease, sprint.orderNumber + 1) ?: Sprint.findByParentReleaseAndOrderNumber(Release.findByOrderNumberAndParentProduct(sprint.parentRelease.orderNumber + 1, sprint.parentProduct), 1)
         if (nextSprint) {
             //Move not finished urgent task to next sprint
             sprint.tasks?.findAll {it.type == Task.TYPE_URGENT && it.state != Task.STATE_DONE}?.each {

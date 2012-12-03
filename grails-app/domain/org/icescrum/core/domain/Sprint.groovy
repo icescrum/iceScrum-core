@@ -265,7 +265,14 @@ class Sprint extends TimeBox implements Serializable {
     }
 
     def getHasNextSprint() {
-        return Sprint.findHasNextSprint(parentRelease.id, orderNumber).list()[0] ? true : false
+        if (Sprint.findHasNextSprint(parentRelease.id, orderNumber).list()[0]){
+            return true
+        }
+        def nextRelease = Release.findByOrderNumberAndParentProduct(parentRelease.orderNumber + 1, parentRelease.parentProduct)
+        if (nextRelease && Sprint.findHasNextSprint(nextRelease.id, 1).list()[0]){
+            return true
+        }
+        return false
     }
 
     def getParentReleaseId() {
