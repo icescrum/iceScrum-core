@@ -87,7 +87,7 @@ class AddonsService implements ApplicationListener<IceScrumProductEvent> {
         def tasksCache = []
         if (log.debugEnabled)
             log.debug("start import files")
-        root.'**'.findAll{ it.name() in ["story","actor","task","feature"] }.each{ element ->
+        root.'**'.findAll{ it.name() in ["story","actor","task","feature", "release"] }.each{ element ->
             def elemt = null
             if (element.attachments.attachment.text()){
                 switch(element.name()){
@@ -103,6 +103,9 @@ class AddonsService implements ApplicationListener<IceScrumProductEvent> {
                         break
                     case 'feature':
                         elemt = p.features?.find { it.uid == element.@uid.text().toInteger() } ?: null
+                        break
+                    case 'release':
+                        elemt = p.releases?.find { it.orderNumber == element.orderNumber.text().toInteger() } ?: null
                         break
                 }
             }

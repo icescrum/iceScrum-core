@@ -19,6 +19,7 @@
  *
  * Vincent Barrier (vbarrier@kagilum.com)
  * Manuarii Stein (manuarii.stein@icescrum.com)
+ * Nicolas Noullet (nnoullet@kagilum.com)
  */
 
 
@@ -26,10 +27,11 @@ package org.icescrum.core.domain
 
 import org.icescrum.core.event.IceScrumReleaseEvent
 import org.icescrum.core.event.IceScrumEvent
+import org.icescrum.plugins.attachmentable.interfaces.Attachmentable
 import org.springframework.security.core.context.SecurityContextHolder as SCH
 
 
-class Release extends TimeBox implements Cloneable {
+class Release extends TimeBox implements Cloneable, Attachmentable {
 
     static final long serialVersionUID = -8505932836642777504L
 

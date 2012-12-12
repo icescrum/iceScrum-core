@@ -19,6 +19,7 @@
  *
  * Vincent Barrier (vbarrier@kagilum.com)
  * Manuarii Stein (manuarii.stein@icescrum.com)
+ * Nicolas Noullet (nnoullet@kagilum.com)
  */
 
 package org.icescrum.core.services
@@ -178,7 +179,7 @@ class ReleaseService {
             throw new IllegalStateException("is.release.error.not.deleted")
 
         def nextReleases = product.releases.findAll { it.orderNumber > release.orderNumber }
-
+        release.removeAllAttachments()
         storyService.unPlanAll(release.sprints)
         product.removeFromReleases(release)
         release.features?.each{release.removeFromFeatures(it) }

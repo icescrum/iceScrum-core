@@ -265,8 +265,14 @@ class WindowTagLib {
 
         attrs.withTitlebar = attrs.withTitlebar ? attrs.withTitlebar.toBoolean() : false
 
-        if (!attrs.withTitlebar)
-            dialogCode += "dialogClass: 'no-titlebar',"
+        if (!attrs.withTitlebar) {
+            if(attrs.dialogClass) {
+                attrs.dialogClass += " no-titlebar"
+            } else {
+                attrs.dialogClass = "no-titlebar"
+            }
+        }
+        dialogCode += "dialogClass: '${attrs.dialogClass}',"
 
         attrs.remove('withTitlebar')
 
