@@ -19,6 +19,7 @@
  *
  * Vincent Barrier (vbarrier@kagilum.com)
  * Manuarii Stein (manuarii.stein@icescrum.com)
+ * Nicolas Noullet (nnoullet@kagilum.com)
  */
 
 
@@ -28,10 +29,11 @@ package org.icescrum.core.domain
 
 import org.icescrum.core.event.IceScrumSprintEvent
 import org.icescrum.core.event.IceScrumEvent
+import org.icescrum.plugins.attachmentable.interfaces.Attachmentable
 import org.springframework.security.core.context.SecurityContextHolder as SCH
 
 
-class Sprint extends TimeBox implements Serializable {
+class Sprint extends TimeBox implements Serializable, Attachmentable {
 
     static final long serialVersionUID = -7022481404086376233L
 

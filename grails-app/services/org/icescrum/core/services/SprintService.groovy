@@ -19,6 +19,7 @@
  *
  * Vincent Barrier (vbarrier@kagilum.com)
  * Manuarii Stein (manuarii.stein@icescrum.com)
+ * Nicolas Noullet (nnoullet@kagilum.com)
  */
 
 package org.icescrum.core.services
@@ -138,6 +139,8 @@ class SprintService {
         if (sprint.state >= Sprint.STATE_INPROGRESS)
             throw new IllegalStateException('is.sprint.error.delete.inprogress')
 
+        sprint.removeAllAttachments()
+
         def release = sprint.parentRelease
         def nextSprints = release.sprints.findAll { it.orderNumber > sprint.orderNumber }
 
@@ -150,9 +153,9 @@ class SprintService {
         release.removeFromSprints(sprint)
         nextSprints.each {
             deletedSprints << [class: it.class, id: it.id, startDate: sprint.startDate, orderNumber: sprint.orderNumber, parentRelease: [id: release.id, class: release.class]]
+            it.removeAllAttachments()
             release.removeFromSprints(it)
         }
-
 
         broadcast(function: 'delete', message: [class: sprint.class, sprints: deletedSprints])
         return deletedSprints

@@ -514,6 +514,7 @@ class ProductService {
         p.teams.each{
             it.removeFromProducts(p)
         }
+        p.removeAllAttachments()
         p.delete(flush:true)
         broadcast(function: 'delete', message: [class: p.class, id: id])
     }

@@ -20,6 +20,7 @@
  * Vincent Barrier (vbarrier@kagilum.com)
  * Stéphane Maldini (stephane.maldini@icescrum.com)
  * Manuarii Stein (manuarii.stein@icescrum.com)
+ * Nicolas Noullet (nnoullet@kagilum.com)
  */
 
 package org.icescrum.core.domain
@@ -28,13 +29,13 @@ import org.icescrum.core.domain.preferences.ProductPreferences
 import org.icescrum.core.services.SecurityService
 import org.icescrum.core.event.IceScrumEvent
 import org.icescrum.core.event.IceScrumProductEvent
+import org.icescrum.plugins.attachmentable.interfaces.Attachmentable
 import org.springframework.security.core.context.SecurityContextHolder as SCH
 import org.codehaus.groovy.grails.commons.ApplicationHolder
 import org.grails.plugins.springsecurity.service.acl.AclUtilService
 import org.springframework.security.acls.domain.BasePermission
-import grails.plugin.fluxiable.Activity
 
-class Product extends TimeBox implements Serializable {
+class Product extends TimeBox implements Serializable, Attachmentable {
 
     static final long serialVersionUID = -8854429090297032383L
 
@@ -70,7 +71,8 @@ class Product extends TimeBox implements Serializable {
             'stakeHolders',
             'owner',
             'firstTeam',
-            'versions'
+            'versions',
+            'sprints'
     ]
 
     def erasableByUser = false
@@ -314,5 +316,9 @@ class Product extends TimeBox implements Serializable {
         def sprints = this.releases*.sprints?.flatten()
         versions.addAll (onlyDelivered ? sprints?.findAll{ it.state == Sprint.STATE_DONE && it.deliveredVersion }*.deliveredVersion : sprints?.findAll{ it.deliveredVersion }*.deliveredVersion)
         return versions.unique()
+    }
+
+    def getSprints () {
+        return this.releases*.sprints.flatten()
     }
 }
