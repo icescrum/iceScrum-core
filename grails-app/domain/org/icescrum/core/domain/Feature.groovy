@@ -164,4 +164,36 @@ class Feature extends BacklogElement implements Serializable {
         publishEvent(new IceScrumFeatureEvent(this, this.class, User.get(SCH.context?.authentication?.principal?.id), IceScrumEvent.EVENT_AFTER_DELETE, true))
     }
 
+    static search(product, options){
+        def criteria = {
+            backlog {
+                eq 'id', product
+            }
+            if (options.term || options.feature){
+                if (options.term){
+                    or {
+                        ilike 'name', options.term
+                        ilike 'description', options.term
+                        ilike 'notes', options.term
+                    }
+                }
+                if (options.feature?.type?.isInteger()){
+                    eq 'type', options.feature.type.toInteger()
+                }
+            }
+        }
+        if (options.tag){
+            return Feature.findAllByTagWithCriteria(options.tag) {
+                criteria.delegate = delegate
+                criteria.call()
+            }
+        } else if(options.term || options.feature)  {
+            return Feature.createCriteria().list {
+                criteria.delegate = delegate
+                criteria.call()
+            }
+        } else {
+            return Collections.EMPTY_LIST
+        }
+    }
 }

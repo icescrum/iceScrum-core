@@ -160,4 +160,43 @@ class Actor extends BacklogElement implements Serializable, Comparable<Actor> {
         }
     }
 
+    static search(product, options){
+        def criteria = {
+            backlog {
+                eq 'id', product
+            }
+            if (options.term || options.actor){
+                if(options.term) {
+                    or {
+                        ilike 'name', options.term
+                        ilike 'description', options.term
+                        ilike 'notes', options.term
+                        ilike 'satisfactionCriteria', options.term
+                    }
+                }
+                if (options.actor?.frequency?.isInteger()){
+                    eq 'useFrequency', options.actor.frequency.toInteger()
+                }
+                if (options.actor?.level?.isInteger()){
+                    eq 'expertnessLevel', options.actor.level.toInteger()
+                }
+                if (options.actor?.instance?.isInteger()){
+                    eq 'instances', options.actor.instance.toInteger()
+                }
+            }
+        }
+        if (options.tag){
+            return Actor.findAllByTagWithCriteria(options.tag) {
+                criteria.delegate = delegate
+                criteria.call()
+            }
+        } else if(options.term || options.actor) {
+            return Actor.createCriteria().list {
+                criteria.delegate = delegate
+                criteria.call()
+            }
+        } else {
+            return Collections.EMPTY_LIST
+        }
+    }
 }

@@ -323,4 +323,62 @@ class Task extends BacklogElement implements Serializable {
             publishEvent(new IceScrumTaskEvent(this, this.class, User.get(SCH.context?.authentication?.principal?.id), IceScrumEvent.EVENT_AFTER_DELETE, true))
         }
     }
+
+    static search(product, options){
+        def criteria = {
+            backlog {
+                if (options.task?.parentSprint?.isLong() && options.task.parentSprint.toLong() in product.releases*.sprints*.id.flatten()){
+                    eq 'id', options.task.parentSprint.toLong()
+                } else if (options.task?.parentRelease?.isLong() && options.task.parentRelease.toLong() in product.releases*.id){
+                    'in' 'id', product.releases.find{it.id == options.task.parentRelease.toLong()}.sprints*.id
+                } else {
+                    'in' 'id', product.releases*.sprints*.id.flatten()
+                }
+            }
+
+            if (options.term || options.task){
+                if (options.term){
+                    or {
+                        ilike 'name', options.term
+                        ilike 'description', options.term
+                        ilike 'notes', options.term
+                    }
+                }
+                if (options.task?.type?.isInteger()){
+                    eq 'type', options.task.type.toInteger()
+                }
+                if (options.task?.state?.isInteger()){
+                    eq 'state', options.task.state.toInteger()
+                }
+                if (options.task?.parentStory?.isLong()){
+                    parentStory{
+                        eq 'id', options.task.parentStory.toLong()
+                    }
+                }
+                if (options.task?.creator?.isLong()){
+                    creator {
+                        eq 'id', options.task.creator.toLong()
+                    }
+                }
+                if (options.task?.responsible?.isLong()){
+                    responsible {
+                        eq 'id', options.task.responsible.toLong()
+                    }
+                }
+            }
+        }
+        if (options.tag){
+            return Task.findAllByTagWithCriteria(options.tag) {
+                criteria.delegate = delegate
+                criteria.call()
+            }
+        } else if(options.term || options.task)  {
+            return Task.createCriteria().list {
+                criteria.delegate = delegate
+                criteria.call()
+            }
+        } else {
+            return Collections.EMPTY_LIST
+        }
+    }
 }

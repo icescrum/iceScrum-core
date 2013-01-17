@@ -32,7 +32,6 @@ import org.icescrum.core.event.IceScrumStoryEvent
 import org.icescrum.plugins.attachmentable.domain.Attachment
 import org.springframework.security.core.context.SecurityContextHolder as SCH
 import grails.util.GrailsNameUtils
-import grails.plugin.fluxiable.Activity
 
 
 class Story extends BacklogElement implements Cloneable, Serializable {
@@ -89,7 +88,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
     ]
 
     static transients = [
-            'todo', 'dependences'
+            'todo', 'dependences', 'deliveredVersion'
     ]
 
     static mapping = {
@@ -602,6 +601,10 @@ class Story extends BacklogElement implements Cloneable, Serializable {
         return Story.findAllByDependsOn(this,[cache:true,sort:"state",order:"asc"])
     }
 
+    def getDeliveredVersion(){
+        return this.state == STATE_DONE ? this.parentSprint.deliveredVersion ?: null : null
+    }
+
     def onAddComment = { Comment c ->
         publishEvent new IceScrumStoryEvent(this, c, this.class, (User)c.poster, IceScrumStoryEvent.EVENT_COMMENT_ADDED)
     }
@@ -620,5 +623,95 @@ class Story extends BacklogElement implements Cloneable, Serializable {
         withNewSession {
             publishEvent(new IceScrumStoryEvent(this, this.class, User.get(SCH.context?.authentication?.principal?.id), IceScrumEvent.EVENT_AFTER_DELETE, true))
         }
+    }
+
+    static search(product, options){
+        List<Story> stories = []
+        def criteria = {
+            backlog {
+                eq 'id', product
+            }
+            if (options.term || options.story){
+                if (options.term) {
+                    or {
+                        ilike 'name', options.term
+                        ilike 'textAs', options.term
+                        ilike 'textICan', options.term
+                        ilike 'textTo', options.term
+                        ilike 'description', options.term
+                        ilike 'notes', options.term
+                    }
+                }
+                if (options.story?.feature?.isLong()){
+                    feature {
+                        eq 'id', options.story.feature.toLong()
+                    }
+                }
+                if (options.story?.actor?.isLong()){
+                    actor {
+                        eq 'id', options.story.actor.toLong()
+                    }
+                }
+                if (options.story?.state?.isInteger()){
+                    eq 'state', options.story.state.toInteger()
+                }
+                if (options.story?.parentRelease?.isLong()){
+                    parentSprint {
+                        parentRelease{
+                            eq 'id', options.story.parentRelease.toLong()
+                        }
+                    }
+                }
+                if (options.story?.parentSprint?.isLong()){
+                    parentSprint {
+                        eq 'id', options.story.parentSprint.toLong()
+                    }
+                }
+                if (options.story?.creator?.isLong()){
+                    creator {
+                        eq 'id', options.story.creator.toLong()
+                    }
+                }
+                if (options.story?.type?.isInteger()){
+                    eq 'type', options.story.type.toInteger()
+                }
+                if (options.story?.dependsOn?.isLong()){
+                    dependsOn {
+                        eq 'id', options.story.dependsOn.toLong()
+                    }
+                }
+                if (options.story?.effort?.isInteger()){
+                    eq 'effort', options.story.effort.toInteger()
+                }
+                if (options.story?.affectedVersion){
+                    eq 'affectVersion', options.story.affectedVersion
+                }
+                if (options.story?.deliveredVersion){
+                    parentSprint {
+                        eq 'deliveredVersion', options.story.deliveredVersion
+                    }
+                }
+            }
+        }
+        if (options.tag){
+            stories = Story.findAllByTagWithCriteria(options.tag) {
+                criteria.delegate = delegate
+                criteria.call()
+            }
+        } else if(options.term || options.story) {
+            stories = Story.createCriteria().list {
+                criteria.delegate = delegate
+                criteria.call()
+            }
+        }
+        if (stories){
+            Map storiesGrouped = stories?.groupBy{ it.feature }
+            stories = []
+            storiesGrouped?.each{
+                it.value?.sort{ st -> st.state }
+                stories.addAll(it.value)
+            }
+        }
+        return stories ?: Collections.EMPTY_LIST
     }
 }
