@@ -22,11 +22,14 @@
 
 import grails.converters.JSON
 import grails.converters.XML
+import grails.util.GrailsNameUtils
 import org.atmosphere.cpr.BroadcasterFactory
 import org.codehaus.groovy.grails.commons.GrailsClassUtils
 import org.codehaus.groovy.grails.scaffolding.view.ScaffoldingViewResolver
 import org.icescrum.core.services.SecurityService
 import org.icescrum.core.utils.JSONIceScrumDomainClassMarshaller
+import org.icescrum.plugins.attachmentable.domain.Attachment
+import org.icescrum.plugins.attachmentable.services.AttachmentableService
 import org.springframework.context.ApplicationContext
 import org.springframework.web.context.request.RequestContextHolder
 import org.codehaus.groovy.grails.commons.GrailsApplication
@@ -75,6 +78,9 @@ import org.icescrum.core.utils.XMLIceScrumDomainClassMarshaller
 import org.apache.commons.lang.StringEscapeUtils
 import org.icescrum.core.support.ApplicationSupport
 import org.springframework.validation.Errors
+import pl.burningice.plugins.image.BurningImageService
+
+import javax.servlet.http.HttpServletResponse
 
 class IcescrumCoreGrailsPlugin {
     def groupId = 'org.icescrum'
@@ -139,6 +145,8 @@ class IcescrumCoreGrailsPlugin {
             }
         }
     }
+
+    def controllersWithDownloadAndPreview = ['story', 'actor', 'task', 'feature', 'sprint', 'release', 'project']
 
     def doWithSpring = {
         mergeConfig(application)
@@ -272,6 +280,8 @@ class IcescrumCoreGrailsPlugin {
         // Manually match the UIController classes
         SecurityService securityService = ctx.getBean('securityService')
         SpringSecurityService springSecurityService = ctx.getBean('springSecurityService')
+        BurningImageService burningImageService = ctx.getBean('burningImageService')
+        AttachmentableService attachmentableService = ctx.getBean('attachmentableService')
         JasperService jasperService = ctx.getBean('jasperService')
         UiDefinitionService uiDefinitionService = ctx.getBean('uiDefinitionService')
         uiDefinitionService.loadDefinitions()
@@ -286,7 +296,12 @@ class IcescrumCoreGrailsPlugin {
             addWithObjectsMethods(it)
             addRenderRESTMethod(it)
             addJasperMethod(it, springSecurityService, jasperService)
+
+            if (it.logicalPropertyName in controllersWithDownloadAndPreview){
+                addDownloadAndPreviewMethods(it, attachmentableService, burningImageService)
+            }
         }
+
         application.serviceClasses.each {
             addBroadcastMethods(it, securityService, application)
         }
@@ -328,10 +343,16 @@ class IcescrumCoreGrailsPlugin {
         else if (application.isArtefactOfType(ControllerArtefactHandler.TYPE, event.source))
         {
             def controller = application.getControllerClass(event.source?.name)
+            BurningImageService burningImageService = event.ctx.getBean('burningImageService')
+            AttachmentableService attachmentableService = event.ctx.getBean('attachmentableService')
+
             if(uiDefinitionService.hasDefinition(controller.logicalPropertyName)) {
                 ScaffoldingViewResolver.clearViewCache()
                 def plugin = controller.hasProperty('pluginName') ? controller.getPropertyValue('pluginName') : null
                 addUIControllerMethods(controller, application.mainContext, plugin)
+                if (controller.logicalPropertyName in controllersWithDownloadAndPreview){
+                    addDownloadAndPreviewMethods(controller, attachmentableService, burningImageService)
+                }
             }
             if (application.isControllerClass(event.source)) {
                 SecurityService securityService = event.ctx.getBean('securityService')
@@ -399,6 +420,101 @@ class IcescrumCoreGrailsPlugin {
                 }
                 clazz.registerMapping(actionName)
             }
+        }
+    }
+
+    private addDownloadAndPreviewMethods(clazz, attachmentableService, burningImageService){
+        def mc = clazz.metaClass
+        def dynamicActions = [
+            download : { ->
+                Attachment attachment = Attachment.get(params.id as Long)
+                if (attachment) {
+                    if (attachment.url){
+                        redirect(url: "${attachment.url}")
+                        return
+                    }else{
+                        File file = attachmentableService.getFile(attachment)
+
+                        if (file.exists()) {
+                            if (!attachment.previewable){
+                                String filename = attachment.filename
+                                ['Content-disposition': "attachment;filename=\"$filename\"",'Cache-Control': 'private','Pragma': ''].each {k, v ->
+                                    response.setHeader(k, v)
+                                }
+                            }
+                            response.contentType = attachment.contentType
+                            response.outputStream << file.newInputStream()
+                            return
+                        }
+                    }
+                }
+                response.status = HttpServletResponse.SC_NOT_FOUND
+            },
+            preview: {
+                Attachment attachment = Attachment.get(params.id as Long)
+                File file = attachmentableService.getFile(attachment)
+                def thumbnail = new File(file.parentFile.absolutePath+File.separator+attachment.id+'-thumbnail.'+attachment.ext)
+                if (!thumbnail.exists()){
+                    burningImageService.doWith(file.absolutePath, file.parentFile.absolutePath)
+                    .execute (attachment.id+'-thumbnail', {
+                       it.scaleApproximate(100, 100)
+                    })
+                }
+                if (thumbnail.exists()){
+                    response.contentType = attachment.contentType
+                    response.outputStream << thumbnail.newInputStream()
+                } else {
+                    render (status: 404)
+                }
+            }
+        ]
+
+        dynamicActions.each{ actionName, actionClosure ->
+            mc."${GrailsClassUtils.getGetterName(actionName)}" = {->
+                actionClosure.delegate = delegate
+                actionClosure.resolveStrategy = Closure.DELEGATE_FIRST
+                actionClosure
+            }
+            clazz.registerMapping(actionName)
+        }
+
+        mc.manageAttachments = { attachmentable, keptAttachments, addedAttachments ->
+            def needPush = false
+            if (!keptAttachments && attachmentable.attachments.size() > 0) {
+                attachmentable.removeAllAttachments()
+                needPush = true
+            } else {
+                attachmentable.attachments.each { attachment ->
+                    if (!keptAttachments.contains(attachment.id.toString())) {
+                        attachmentable.removeAttachment(attachment)
+                    }
+                    needPush = true
+                }
+            }
+            def uploadedFiles = []
+            addedAttachments.each { attachment ->
+                def parts = attachment.split(":")
+                if (parts[0].contains('http')) {
+                    uploadedFiles << [url: parts[0] +':'+ parts[1], filename: parts[2], length: parts[3], provider:parts[4]]
+                } else {
+                    if (session.uploadedFiles && session.uploadedFiles[parts[0]]) {
+                        uploadedFiles << [file: new File((String) session.uploadedFiles[parts[0]]), filename: parts[1]]
+                    }
+                }
+            }
+            session.uploadedFiles = null
+            def currentUser = (User) springSecurityService.currentUser
+            if (uploadedFiles){
+                attachmentable.addAttachments(currentUser, uploadedFiles)
+                needPush = true
+            }
+            def attachmentableClass = GrailsNameUtils.getShortName(attachmentable.class).toLowerCase()
+            def newAttachments = [class:'attachments', attachmentable: [class:attachmentableClass, id: attachmentable.id], controllerName:controllerName, attachments:attachmentable.attachments]
+            if (needPush){
+                attachmentable.lastUpdated = new Date()
+                broadcast(function: 'replaceAll', message: newAttachments)
+            }
+            return newAttachments
         }
     }
 

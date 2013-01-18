@@ -634,12 +634,16 @@ class Story extends BacklogElement implements Cloneable, Serializable {
             if (options.term || options.story){
                 if (options.term) {
                     or {
-                        ilike 'name', options.term
-                        ilike 'textAs', options.term
-                        ilike 'textICan', options.term
-                        ilike 'textTo', options.term
-                        ilike 'description', options.term
-                        ilike 'notes', options.term
+                        if (options.term?.isInteger()){
+                            eq 'uid', options.term.toInteger()
+                        }else{
+                            ilike 'name', '%'+options.term+'%'
+                            ilike 'textAs', '%'+options.term+'%'
+                            ilike 'textICan', '%'+options.term+'%'
+                            ilike 'textTo', '%'+options.term+'%'
+                            ilike 'description', '%'+options.term+'%'
+                            ilike 'notes', '%'+options.term+'%'
+                        }
                     }
                 }
                 if (options.story?.feature?.isLong()){

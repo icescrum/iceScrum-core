@@ -339,9 +339,13 @@ class Task extends BacklogElement implements Serializable {
             if (options.term || options.task){
                 if (options.term){
                     or {
-                        ilike 'name', options.term
-                        ilike 'description', options.term
-                        ilike 'notes', options.term
+                        if (options.term?.isInteger()){
+                            eq 'uid', options.term.toInteger()
+                        }else{
+                            ilike 'name', '%'+options.term+'%'
+                            ilike 'description', '%'+options.term+'%'
+                            ilike 'notes', '%'+options.term+'%'
+                        }
                     }
                 }
                 if (options.task?.type?.isInteger()){

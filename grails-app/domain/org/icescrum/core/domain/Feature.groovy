@@ -172,9 +172,13 @@ class Feature extends BacklogElement implements Serializable {
             if (options.term || options.feature){
                 if (options.term){
                     or {
-                        ilike 'name', options.term
-                        ilike 'description', options.term
-                        ilike 'notes', options.term
+                        if (options.term?.isInteger()){
+                            eq 'uid', options.term.toInteger()
+                        }else{
+                            ilike 'name', '%'+options.term+'%'
+                            ilike 'description', '%'+options.term+'%'
+                            ilike 'notes', '%'+options.term+'%'
+                        }
                     }
                 }
                 if (options.feature?.type?.isInteger()){
