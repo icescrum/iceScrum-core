@@ -168,10 +168,14 @@ class Actor extends BacklogElement implements Serializable, Comparable<Actor> {
             if (options.term || options.actor){
                 if(options.term) {
                     or {
-                        ilike 'name', options.term
-                        ilike 'description', options.term
-                        ilike 'notes', options.term
-                        ilike 'satisfactionCriteria', options.term
+                        if (options.term?.isInteger()){
+                            eq 'uid', options.term.toInteger()
+                        }else{
+                            ilike 'name', '%'+options.term+'%'
+                            ilike 'description', '%'+options.term+'%'
+                            ilike 'notes', '%'+options.term+'%'
+                            ilike 'satisfactionCriteria', '%'+options.term+'%'
+                        }
                     }
                 }
                 if (options.actor?.frequency?.isInteger()){
