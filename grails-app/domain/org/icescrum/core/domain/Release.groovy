@@ -109,6 +109,18 @@ class Release extends TimeBox implements Cloneable, Attachmentable {
             maxResults(1)
         }
 
+        findCurrentOrLastRelease {p ->
+            parentProduct {
+                eq 'id', p
+            }
+            or {
+                eq 'state', Release.STATE_INPROGRESS
+                eq 'state', Release.STATE_DONE
+            }
+            order("orderNumber", "asc")
+            maxResults(1)
+        }
+
         getInProduct {p, id ->
             parentProduct {
                 eq 'id', p

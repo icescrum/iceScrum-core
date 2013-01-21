@@ -34,6 +34,7 @@ class UiDefinition {
     WidgetDefinition widget
     WindowDefinition window
     def shortcuts
+    def options = [:]
 
     UiDefinition(String id, boolean disabled) {
         this.id = id
@@ -66,5 +67,10 @@ class UiDefinition {
     
     def methodMissing(String name, args) {
         log.warn("The field $name is unrecognized for $id UI definition")
+    }
+
+    def propertyMissing(String name, value){
+        this.options."$name" = value
+        log.warn("The field $name is unrecognized for $id UI definition added to options")
     }
 }

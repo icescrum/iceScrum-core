@@ -74,7 +74,7 @@ class UiDefinitionService {
     }
 
     UiDefinition getDefinitionById(String id) {
-        if (definitionsById[id] && !definitionsById[id].disabled)
+        if (definitionsById[id] && !definitionsById[id]?.disabled)
             definitionsById[id]
         else
             null
