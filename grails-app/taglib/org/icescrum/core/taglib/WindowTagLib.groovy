@@ -54,7 +54,7 @@ class WindowTagLib {
         params.each{ if (!(it.key in ["controller", "action"])) { includeParams << it} }
         def windowContent
             if (attrs.init){
-                def result = includeContent([controller: windowId, action: attrs.init, params:includeParams], null)
+                def result = includeContent([controller: windowId, action: attrs.init, params:includeParams])
                 if (result.contentType == 'application/json;charset=utf-8'){
                     response.setStatus(400)
                     response.setContentType(result.contentType)
@@ -316,6 +316,9 @@ class WindowTagLib {
     }
 
     def shortcut = {attrs ->
+        if (request.readOnly){
+            return
+        }
         assert attrs.key
         assert attrs.callback
 
@@ -336,6 +339,9 @@ class WindowTagLib {
      * Implements the drag & drop import feature
      */
     def dropImport = { attrs, body ->
+        if (request.readOnly){
+            return
+        }
         assert attrs.id
         def jqCode = """jQuery('#window-content-${attrs.id}').dnd({
         dropHelper:'#${attrs.id}-drophelper',
@@ -409,7 +415,7 @@ class WindowTagLib {
         )
     }
 
-    private def includeContent = { attrs, body ->
+    def includeContent(attrs) {
         if (attrs.action && !attrs.controller) {
             def controller = request?.getAttribute(GrailsApplicationAttributes.CONTROLLER)
             def controllerName = controller?.getProperty(ControllerDynamicMethods.CONTROLLER_NAME_PROPERTY)
@@ -422,8 +428,7 @@ class WindowTagLib {
                                                     view: attrs.view,
                                                     id: attrs.id,
                                                     params: attrs.params)
-
-            WebUtils.includeForUrlMappingInfo(request, response, mapping, attrs.model ?: [:])
+            return WebUtils.includeForUrlMappingInfo(request, response, mapping, attrs.model ?: [:])
         }
     }
 }

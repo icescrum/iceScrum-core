@@ -898,7 +898,7 @@ class FormTagLib {
 
     def editable = { attrs, body ->
 
-        if (!UtilsWebComponents.rendered(attrs)) {
+        if (!UtilsWebComponents.rendered(attrs) || request.readOnly) {
             return
         }
 

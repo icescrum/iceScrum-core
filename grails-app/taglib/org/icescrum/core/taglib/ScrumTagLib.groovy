@@ -68,7 +68,7 @@ class ScrumTagLib {
         def container = attrs.remove('container') ?: 'div'
 
         // Selectable options
-        if (attrs.selectable != null && UtilsWebComponents.rendered(attrs.selectable)) {
+        if (attrs.selectable != null && UtilsWebComponents.rendered(attrs.selectable) && !request.readOnly) {
             if (attrs.selectable.onload != null) {
                 jqCode += attrs.selectable.onload
                 attrs.selectable.remove('onload')
@@ -83,12 +83,12 @@ class ScrumTagLib {
             jqCode += "if(!\$.support.touch){ \$('#backlog-layout-${attrs.id}').selectable({$opts}); };"
         }
 
-        if (attrs.dblclickable != null && UtilsWebComponents.rendered(attrs.dblclickable)) {
+        if (attrs.dblclickable != null && UtilsWebComponents.rendered(attrs.dblclickable) && !request.readOnly) {
             jqCode += " jQuery('#backlog-layout-${attrs.id} ${attrs.dblclickable.selector}').die('dblclick').live('dblclick',function(e){ var obj = jQuery(e.currentTarget); ${attrs.dblclickable.callback}});"
         }
 
         // Sortable options
-        if (attrs.sortable != null && UtilsWebComponents.rendered(attrs.sortable)) {
+        if (attrs.sortable != null && UtilsWebComponents.rendered(attrs.sortable) && !request.readOnly) {
             if (attrs.changeRank) {
                 attrs.sortable.update = is.changeRank(attrs.changeRank)
             }
@@ -113,7 +113,7 @@ class ScrumTagLib {
         }
 
         // Draggable options
-        if (attrs.draggable != null && UtilsWebComponents.rendered(attrs.draggable)) {
+        if (attrs.draggable != null && UtilsWebComponents.rendered(attrs.draggable) && !request.readOnly) {
             def draggableOptions = [
                     revert: UtilsWebComponents.wrap(attrs.draggable.revert) ?: "true",
                     zIndex: 100,
@@ -131,7 +131,7 @@ class ScrumTagLib {
         }
 
         // Droppable options
-        if (attrs.droppable != null && UtilsWebComponents.rendered(attrs.droppable)) {
+        if (attrs.droppable != null && UtilsWebComponents.rendered(attrs.droppable) && !request.readOnly) {
             def droppableOptions = [
                     drop: attrs.droppable.drop ? "function(event, ui) {${attrs.droppable.drop}}" : null,
                     hoverClass: UtilsWebComponents.wrap(attrs.droppable.hoverClass),
@@ -142,7 +142,7 @@ class ScrumTagLib {
             jqCode += " \$('#backlog-layout-${attrs.id} > ${attrs.droppable.selector ?: 'div'}').liveDroppable({$opts});"
         }
 
-        if (attrs.editable != null && UtilsWebComponents.rendered(attrs.editable)) {
+        if (attrs.editable != null && UtilsWebComponents.rendered(attrs.editable) && !request.readOnly) {
             attrs.editable.wrap = false
             jqCode += is.editable(attrs.editable);
         }

@@ -85,13 +85,13 @@ class KanbanTagLib {
 
         if (!attrs.onlyRows) {
             out << "</tbody>"
-            if (opts)
+            if (opts  && !request.readOnly)
                 jqCode += "if(!\$.support.touch){ jQuery('.kanban').selectable({${opts}}); }"
             out << '</table>'
         }
 
         // Droppable options
-        if (attrs.droppable != null && UtilsWebComponents.rendered(attrs.droppable)) {
+        if (attrs.droppable != null && UtilsWebComponents.rendered(attrs.droppable) && !request.readOnly) {
             def droppableOptions = [
                     drop: attrs.droppable.drop ? "function(event, ui) {${attrs.droppable.drop}}" : null,
                     hoverClass: UtilsWebComponents.wrap(attrs.droppable.hoverClass),

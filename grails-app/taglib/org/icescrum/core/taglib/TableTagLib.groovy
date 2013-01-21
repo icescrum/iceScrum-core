@@ -68,7 +68,7 @@ class TableTagLib {
             out << '</tr>'
             def editables = [:]
             maxRows = writeRows(group.rows, maxRows, maxCols, editables, 'table-group-' + group.elementId)
-            if (group.editable) {
+            if (group.editable && !request.readOnly) {
                 group.editable.var = group.rows[0]?.attrs?.var ?: null
                 if (group.editable.var)
                     jqCode += writeEditable(group.editable, editables)
@@ -77,7 +77,7 @@ class TableTagLib {
         if (maxRows > 0) {
             def editables = [:]
             writeRows(pageScope.tableRows, maxRows, maxCols, editables)
-            if (attrs.editable) {
+            if (attrs.editable && !request.readOnly) {
                 attrs.editable.var = pageScope.tableRows?.attrs?.var[0] ?: null
                 if (attrs.editable.var)
                     jqCode += writeEditable(attrs.editable, editables)
@@ -258,7 +258,7 @@ class TableTagLib {
     }
 
     private editableCell(def attrs) {
-        if (attrs && attrs.type && attrs.name && !attrs.disabled)
+        if (attrs && attrs.type && attrs.name && !attrs.disabled && !request.readOnly)
             return 'class="table-cell table-cell-editable table-cell-' + attrs.type + (attrs.id ? '-' + attrs.id : '') + ' table-cell-editable-' + attrs.type + (attrs.id ? '-' + attrs.id : '') + '" name="' + attrs.name + '"'
         else {
             return 'class="table-cell"'
@@ -266,6 +266,7 @@ class TableTagLib {
     }
 
     def jeditable = {attrs ->
+
         def finder = ""
         def data = ""
         def original = "original.revert"

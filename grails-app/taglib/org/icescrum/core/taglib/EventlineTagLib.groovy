@@ -93,7 +93,7 @@ class EventlineTagLib {
     def eventContent = { attrs, body ->
         def jqCode = ''
         pageScope.event.content = body()
-        if (attrs.droppable != null && UtilsWebComponents.rendered(attrs.droppable)) {
+        if (attrs.droppable != null && UtilsWebComponents.rendered(attrs.droppable) && !request.readOnly) {
             def droppableOptions = [
                     drop: attrs.droppable.drop ? "function(event, ui) {${attrs.droppable.drop}}" : null,
                     hoverClass: UtilsWebComponents.wrap(attrs.droppable.hoverClass),
