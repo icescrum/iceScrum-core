@@ -702,7 +702,7 @@ class FormTagLib {
         attrs.help = attrs.help ? message(code:attrs.help, default:null) : null
         if (attrs.remove("noborder") == "true")
             attrs."class" += " field-noseparator"
-        out << "<p class=\"${attrs."class"}\">"
+        out << "<p class=\"${attrs."class"}\" ${attrs.style ? 'style=\"'+attrs.style+'\"' : ''}>"
         out << "<label for=\"${attrs."for"}\">${message(code: attrs.label)}${attrs.optional ? '<span class="optional"> (' + message(code: 'is.optional') + ')</span>' : ''}${attrs.help ? '<span class="help" title="' + attrs.help + '"> (?)</span>' : ''}</label>"
         out << "<span class=\"selectmenu\">" + body() + "</span>"
         out << "</p>"
