@@ -35,6 +35,7 @@ class WindowDefinition {
     boolean closeable = true
     def help = null
     boolean maximizeable = true
+    Closure before = null
 
     void init(String init) {
         this.init = init
@@ -58,6 +59,10 @@ class WindowDefinition {
 
     void help(String help) {
         this.help = help
+    }
+
+    void before(Closure before) {
+        this.before = before
     }
 
     void maximizeable(boolean maximizeable) {
