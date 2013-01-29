@@ -75,12 +75,11 @@ import org.codehaus.groovy.grails.commons.ControllerArtefactHandler
 import org.icescrum.core.domain.Product
 import org.icescrum.core.event.IceScrumApplicationEventMulticaster
 import org.icescrum.core.utils.XMLIceScrumDomainClassMarshaller
-import org.apache.commons.lang.StringEscapeUtils
 import org.icescrum.core.support.ApplicationSupport
-import org.springframework.validation.Errors
 import pl.burningice.plugins.image.BurningImageService
 
 import javax.servlet.http.HttpServletResponse
+import java.util.concurrent.ConcurrentHashMap
 
 class IcescrumCoreGrailsPlugin {
     def groupId = 'org.icescrum'
@@ -278,7 +277,6 @@ class IcescrumCoreGrailsPlugin {
 
     def doWithDynamicMethods = { ctx ->
         // Manually match the UIController classes
-        SecurityService securityService = ctx.getBean('securityService')
         SpringSecurityService springSecurityService = ctx.getBean('springSecurityService')
         BurningImageService burningImageService = ctx.getBean('burningImageService')
         AttachmentableService attachmentableService = ctx.getBean('attachmentableService')
@@ -291,7 +289,7 @@ class IcescrumCoreGrailsPlugin {
                 def plugin = it.hasProperty('pluginName') ? it.getPropertyValue('pluginName') : null
                 addUIControllerMethods(it, ctx, plugin)
             }
-            addBroadcastMethods(it, securityService, application)
+            addBroadcastMethods(it, application)
             addErrorMethod(it)
             addWithObjectsMethods(it)
             addRenderRESTMethod(it)
@@ -303,7 +301,7 @@ class IcescrumCoreGrailsPlugin {
         }
 
         application.serviceClasses.each {
-            addBroadcastMethods(it, securityService, application)
+            addBroadcastMethods(it, application)
         }
     }
 
@@ -355,8 +353,7 @@ class IcescrumCoreGrailsPlugin {
                 }
             }
             if (application.isControllerClass(event.source)) {
-                SecurityService securityService = event.ctx.getBean('securityService')
-                addBroadcastMethods(event.source, securityService, application)
+                addBroadcastMethods(event.source, application)
 
                 addErrorMethod(event.source)
                 addWithObjectsMethods(event.source)
@@ -512,59 +509,46 @@ class IcescrumCoreGrailsPlugin {
             def newAttachments = [class:'attachments', attachmentable: [class:attachmentableClass, id: attachmentable.id], controllerName:controllerName, attachments:attachmentable.attachments]
             if (needPush){
                 attachmentable.lastUpdated = new Date()
-                broadcast(function: 'replaceAll', message: newAttachments)
+                broadcast(function: 'replaceAll', message: newAttachments, channel:'product-'+params.product)
             }
             return newAttachments
         }
     }
 
-    private addBroadcastMethods(source, securityService, application) {
+    def bufferBroadcast = new ConcurrentHashMap<String, ArrayList<String>>()
+
+    private addBroadcastMethods(source, application) {
 
         source.metaClass.bufferBroadcast = { attrs ->
+
             if (!application.config.icescrum.push?.enable)
                 return
-            attrs = attrs ?: [channel: '']
-            def request = RequestContextHolder.requestAttributes?.request
-            if (!request)
-                return
-            if (!attrs.channel) {
-                def id = securityService.parseCurrentRequestProduct(request)
-                attrs.channel = id ? 'product-' + id : '/push/app'
-            }
 
-            if (!request.bufferBroadcast) {
-                request.bufferBroadcast = [:]
-            }
-
-            if (request.bufferBroadcast."${attrs.channel}" == null) {
-                request.bufferBroadcast."${attrs.channel}" = []
+            attrs.channel = attrs.channel ? (attrs.channel instanceof String ? [attrs.channel] : attrs.channel) : ['/push/app']
+            def threadId = Thread.currentThread().id
+            attrs.channel.each{ String it ->
+                if (!bufferBroadcast.containsKey(it)) {
+                    bufferBroadcast.put(threadId+'#'+it,[])
+                }
             }
         }
 
         source.metaClass.resumeBufferedBroadcast = { attrs ->
             if (!application.config.icescrum.push?.enable)
                 return
-            attrs = attrs ?: [channel: '']
-            def request = RequestContextHolder.requestAttributes?.request
+
+            attrs.channel = attrs.channel ? (attrs.channel instanceof String ? [attrs.channel] : attrs.channel) : ['/push/app']
             attrs.excludeCaller = attrs.excludeCaller ?: true
             def size = attrs.batchSize ?: 10
-            if (!request)
-                return
-            if (!attrs.channel) {
-                def id = securityService.parseCurrentRequestProduct(request)
-                attrs.channel = id ? 'product-' + id : '/push/app'
-            }
+            def threadId = Thread.currentThread().id
 
-            if (attrs.channel instanceof String) {
-                attrs.channel = [attrs.channel]
-            }
-            attrs.channel.each {
-                if (request.bufferBroadcast && request.bufferBroadcast."${it}") {
+            attrs.channel.each { String it ->
+                if (bufferBroadcast && bufferBroadcast.containsKey(threadId+'#'+it)) {
                     if(BroadcasterFactory.default){
                         Class<? extends org.atmosphere.cpr.Broadcaster> bc = (Class<? extends org.atmosphere.cpr.Broadcaster>)((GrailsApplication) application).getClassLoader().loadClass(application.config.icescrum.push?.broadcaster?:'org.atmosphere.util.ExcludeSessionBroadcaster')
                         def broadcaster = BroadcasterFactory.default.lookup(bc, it)
                         def batch = []
-                        def messages = request.bufferBroadcast."${it}"
+                        def messages = bufferBroadcast.get(threadId+'#'+it)
                         int partitionCount = messages.size() / size
                         partitionCount.times { partitionNumber ->
                             def start = partitionNumber * size
@@ -572,7 +556,7 @@ class IcescrumCoreGrailsPlugin {
                             batch << messages[start..end]
                         }
                         if (messages.size() % size) batch << messages[partitionCount * size..-1]
-                        def session = request.getSession(false)
+                        def session = RequestContextHolder.requestAttributes?.request?.getSession(false)?:null
                         try {
                             batch.each {
                                 if (attrs.excludeCaller && session) {
@@ -586,37 +570,41 @@ class IcescrumCoreGrailsPlugin {
                         }
                     }
                 }
-                request.bufferBroadcast."${it}" = null
+                bufferBroadcast.remove(threadId+'#'+it)
+            }
+
+            //clean old buffered broadcast if something happened...
+            def threadIds = Thread.getAllStackTraces().keySet()*.id
+            bufferBroadcast.keys().findAll{ String it ->
+                !((it.substring(0, it.indexOf('#'))).toLong() in threadIds)
+            }?.each{
+                if (log.errorEnabled){
+                    log.error("Clean old buffered broadcast")
+                }
+                bufferBroadcast.remove(it)
             }
         }
 
         source.metaClass.broadcast = { attrs ->
             if (!application.config.icescrum.push?.enable)
                 return
-            assert attrs.function, attrs.message
-            attrs.excludeCaller = attrs.excludeCaller ?: true
-            def request = RequestContextHolder.requestAttributes?.request
-            if (!request)
-                return
-            if (!attrs.channel) {
-                def id = securityService.parseCurrentRequestProduct(request)
-                attrs.channel = id ? 'product-' + id : '/push/app'
-            }
-            if (attrs.channel instanceof String) {
-                attrs.channel = [attrs.channel]
-            }
 
+            assert attrs.function, attrs.message
+
+            attrs.channel = attrs.channel ? (attrs.channel instanceof String ? [attrs.channel] : attrs.channel) : ['/push/app']
+            attrs.excludeCaller = attrs.excludeCaller ?: true
+            def threadId = Thread.currentThread().id
 
             def message = [call: attrs.function, object: attrs.message]
-            attrs.channel.each {
+            attrs.channel.each { String it ->
                 if(BroadcasterFactory.default){
                     Class<? extends org.atmosphere.cpr.Broadcaster> bc = (Class<? extends org.atmosphere.cpr.Broadcaster>)((GrailsApplication) application).getClassLoader().loadClass(application.config.icescrum.push?.broadcaster?:'org.atmosphere.util.ExcludeSessionBroadcaster')
                     def broadcaster = BroadcasterFactory.default.lookup(bc, it)
-                    if (request.bufferBroadcast?."${it}" != null) {
-                        request.bufferBroadcast."${it}" << message
+                    if (bufferBroadcast.containsKey(threadId+'#'+it)) {
+                        bufferBroadcast.get(threadId+'#'+it) << message
                     } else {
                         try {
-                            def session = request.getSession(false)
+                            def session = RequestContextHolder.requestAttributes?.request?.getSession(false)?:null
                             if (attrs.excludeCaller && session) {
                                 broadcaster?.broadcast((message as JSON).toString(), session)
                             } else {

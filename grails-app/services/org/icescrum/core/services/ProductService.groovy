@@ -216,7 +216,7 @@ class ProductService {
             throw new RuntimeException()
         }
 
-        broadcast(function: 'update', message: product)
+        broadcast(function: 'update', message: product, channel:'product-'+product.id)
         publishEvent(new IceScrumProductEvent(product, this.class, (User) springSecurityService.currentUser, IceScrumEvent.EVENT_UPDATED))
     }
 
@@ -516,7 +516,7 @@ class ProductService {
         }
         p.removeAllAttachments()
         p.delete(flush:true)
-        broadcast(function: 'delete', message: [class: p.class, id: id])
+        broadcast(function: 'delete', message: [class: p.class, id: id], channel:'product-'+id)
     }
 
     @PreAuthorize('owner(#p) or scrumMaster(#p)')
@@ -526,7 +526,7 @@ class ProductService {
         if (!p.save(flush:true)){
             throw new RuntimeException()
         }
-        broadcast(function: 'archive', message: p)
+        broadcast(function: 'archive', message: p, channel:'product-'+p.id)
     }
 
     @PreAuthorize("hasRole('ROLE_ADMIN')")
@@ -536,7 +536,7 @@ class ProductService {
         if (!p.save(flush:true)){
             throw new RuntimeException()
         }
-        broadcast(function: 'unarchive', message: p)
+        broadcast(function: 'unarchive', message: p, channel:'product-'+p.id)
     }
 
     void removeAllRoles(Product product, Team team, User user, boolean broadcast = true, boolean raiseEvent = true) {

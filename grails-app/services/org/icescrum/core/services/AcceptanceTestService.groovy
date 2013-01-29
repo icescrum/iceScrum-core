@@ -44,8 +44,8 @@ class AcceptanceTestService {
         }
         parentStory.addActivity(user, 'acceptanceTest', parentStory.name)
         publishEvent(new IceScrumAcceptanceTestEvent(acceptanceTest, this.class, user, IceScrumAcceptanceTestEvent.EVENT_CREATED))
-        broadcast(function: 'add', message: acceptanceTest)
-        broadcast(function: 'update', message: acceptanceTest.parentStory)
+        broadcast(function: 'add', message: acceptanceTest, channel:'product-'+acceptanceTest.parentStory.backlog.id)
+        broadcast(function: 'update', message: acceptanceTest.parentStory, channel:'product-'+acceptanceTest.parentStory.backlog.id)
     }
 
     @PreAuthorize('inProduct(#acceptanceTest.parentProduct) and !archivedProduct(#acceptanceTest.parentProduct)')
@@ -54,8 +54,8 @@ class AcceptanceTestService {
             throw new RuntimeException()
         }
         publishEvent(new IceScrumAcceptanceTestEvent(acceptanceTest, this.class, user, IceScrumAcceptanceTestEvent.EVENT_UPDATED))
-        broadcast(function: 'update', message: acceptanceTest)
-        broadcast(function: 'update', message: acceptanceTest.parentStory)
+        broadcast(function: 'update', message: acceptanceTest, channel:'product-'+acceptanceTest.parentStory.backlog.id)
+        broadcast(function: 'update', message: acceptanceTest.parentStory, channel:'product-'+acceptanceTest.parentStory.backlog.id)
     }
 
     @PreAuthorize('inProduct(#acceptanceTest.parentProduct) and !archivedProduct(#acceptanceTest.parentProduct)')
@@ -63,8 +63,8 @@ class AcceptanceTestService {
         def story = acceptanceTest.parentStory
         story.removeFromAcceptanceTests(acceptanceTest)
         acceptanceTest.delete()
-        broadcast(function: 'delete', message: [class: acceptanceTest.class, id: acceptanceTest.id])
-        broadcast(function: 'update', message: story)
+        broadcast(function: 'delete', message: [class: acceptanceTest.class, id: acceptanceTest.id], channel:'product-'+story.backlog.id)
+        broadcast(function: 'update', message: story, channel:'product-'+story.backlog.id)
     }
 
     def unMarshall(def acceptanceTest, Product product) {

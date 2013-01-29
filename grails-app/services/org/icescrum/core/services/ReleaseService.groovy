@@ -110,7 +110,7 @@ class ReleaseService {
         if (!release.save(flush: true))
             throw new RuntimeException()
 
-        broadcast(function: 'update', message: release)
+        broadcast(function: 'update', message: release, channel:'product-'+release.parentProduct.id)
         publishEvent(new IceScrumReleaseEvent(release, this.class, (User) springSecurityService.currentUser, IceScrumEvent.EVENT_UPDATED))
     }
 
@@ -118,7 +118,7 @@ class ReleaseService {
         if (!release.save()) {
             throw new RuntimeException()
         }
-        broadcast(function: 'vision', message: release)
+        broadcast(function: 'vision', message: release, channel:'product-'+release.parentProduct.id)
         publishEvent(new IceScrumReleaseEvent(release, this.class, (User) springSecurityService.currentUser, IceScrumReleaseEvent.EVENT_UPDATED_VISION))
     }
 
@@ -141,7 +141,7 @@ class ReleaseService {
         if (!release.save())
             throw new RuntimeException()
 
-        broadcast(function: 'activate', message: release)
+        broadcast(function: 'activate', message: release, channel:'product-'+release.parentProduct.id)
         publishEvent(new IceScrumReleaseEvent(release, this.class, (User) springSecurityService.currentUser, IceScrumReleaseEvent.EVENT_ACTIVATED))
     }
 
@@ -168,7 +168,7 @@ class ReleaseService {
         if (!release.save())
             throw new RuntimeException()
 
-        broadcast(function: 'close', message: release)
+        broadcast(function: 'close', message: release, channel:'product-'+release.parentProduct.id)
         publishEvent(new IceScrumReleaseEvent(release, this.class, (User) springSecurityService.currentUser, IceScrumReleaseEvent.EVENT_CLOSED))
     }
 
@@ -187,13 +187,13 @@ class ReleaseService {
             storyService.unPlanAll(it.sprints)
             product.removeFromReleases((Release) it)
             it.features?.each{ feature -> release.removeFromFeatures(feature) }
-            broadcast(function: 'delete', message: [class: it.class, id: it.id])
+            broadcast(function: 'delete', message: [class: it.class, id: it.id], channel:'product-'+product.id)
         }
         def lastRelease = product.releases?.min {it.orderNumber}
         product.endDate = lastRelease?.endDate ?: null
         lastRelease?.lastUpdated = new Date()
         lastRelease?.save()
-        broadcast(function: 'delete', message: [class: release.class, id: release.id])
+        broadcast(function: 'delete', message: [class: release.class, id: release.id], channel:'product-'+product.id)
     }
 
     def releaseBurndownValues(Release release) {

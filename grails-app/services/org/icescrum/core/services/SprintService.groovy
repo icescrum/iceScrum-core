@@ -61,7 +61,7 @@ class SprintService {
 
         if (!sprint.save())
             throw new RuntimeException()
-        broadcast(function: 'add', message: sprint)
+        broadcast(function: 'add', message: sprint, channel:'product-'+sprint.parentProduct.id)
     }
 
     /**
@@ -126,7 +126,7 @@ class SprintService {
         }
 
         publishEvent(new IceScrumSprintEvent(sprint, oldStartDate, oldEndDate, this.class, (User) springSecurityService.currentUser, IceScrumEvent.EVENT_UPDATED))
-        broadcast(function: 'update', message: sprint)
+        broadcast(function: 'update', message: sprint, channel:'product-'+sprint.parentProduct.id)
     }
 
     /**
@@ -157,7 +157,7 @@ class SprintService {
             release.removeFromSprints(it)
         }
 
-        broadcast(function: 'delete', message: [class: sprint.class, sprints: deletedSprints])
+        broadcast(function: 'delete', message: [class: sprint.class, sprints: deletedSprints], channel:'product-'+release.parentProduct.id)
         return deletedSprints
     }
 
@@ -274,15 +274,15 @@ class SprintService {
         clicheService.createSprintCliche(sprint, new Date(), Cliche.TYPE_ACTIVATION)
         clicheService.createOrUpdateDailyTasksCliche(sprint)
 
-        bufferBroadcast()
+        bufferBroadcast(channel:'product-'+sprint.parentProduct.id)
         sprint.stories.each {
-            broadcast(function: 'inProgress', message: it)
+            broadcast(function: 'inProgress', message: it, channel:'product-'+sprint.parentProduct.id)
             publishEvent(new IceScrumStoryEvent(it, this.class, (User) springSecurityService.currentUser, IceScrumStoryEvent.EVENT_INPROGRESS))
         }
-        resumeBufferedBroadcast()
+        resumeBufferedBroadcast(channel:'product-'+sprint.parentProduct.id)
 
         publishEvent(new IceScrumSprintEvent(sprint, this.class, (User) springSecurityService.currentUser, IceScrumSprintEvent.EVENT_ACTIVATED))
-        broadcast(function: 'activate', message: sprint)
+        broadcast(function: 'activate', message: sprint, channel:'product-'+sprint.parentProduct.id)
     }
 
     void close(Sprint sprint) {
@@ -296,7 +296,7 @@ class SprintService {
             else
                 0
         } ?: 0
-        bufferBroadcast()
+        bufferBroadcast(channel:'product-'+sprint.parentProduct.id)
         def nextSprint = Sprint.findByParentReleaseAndOrderNumber(sprint.parentRelease, sprint.orderNumber + 1) ?: Sprint.findByParentReleaseAndOrderNumber(Release.findByOrderNumberAndParentProduct(sprint.parentRelease.orderNumber + 1, sprint.parentProduct), 1)
         if (nextSprint) {
             //Move not finished urgent task to next sprint
@@ -307,7 +307,7 @@ class SprintService {
                 if (!it.save()) {
                     throw new RuntimeException()
                 }
-                broadcast(function: 'update', message: it)
+                broadcast(function: 'update', message: it, channel:'product-'+sprint.parentProduct.id)
             }
             storyService.plan(nextSprint, sprint.stories.findAll {it.state != Story.STATE_DONE})
         } else {
@@ -332,8 +332,8 @@ class SprintService {
         clicheService.createSprintCliche(sprint.refresh(), new Date(), Cliche.TYPE_CLOSE)
         clicheService.createOrUpdateDailyTasksCliche(sprint)
 
-        broadcast(function: 'close', message: sprint)
-        resumeBufferedBroadcast()
+        broadcast(function: 'close', message: sprint, channel:'product-'+sprint.parentProduct.id)
+        resumeBufferedBroadcast(channel:'product-'+sprint.parentProduct.id)
         publishEvent(new IceScrumSprintEvent(sprint, this.class, (User) springSecurityService.currentUser, IceScrumSprintEvent.EVENT_CLOSED))
 
     }
@@ -343,7 +343,7 @@ class SprintService {
             throw new RuntimeException()
         }
         publishEvent(new IceScrumSprintEvent(sprint, this.class, (User) springSecurityService.currentUser, IceScrumSprintEvent.EVENT_UPDATED_DONE_DEFINITION))
-        broadcast(function: 'doneDefinition', message: sprint)
+        broadcast(function: 'doneDefinition', message: sprint, channel:'product-'+sprint.parentProduct.id)
     }
 
     void updateRetrospective(Sprint sprint) {
@@ -351,7 +351,7 @@ class SprintService {
             throw new RuntimeException()
         }
         publishEvent(new IceScrumSprintEvent(sprint, this.class, (User) springSecurityService.currentUser, IceScrumSprintEvent.EVENT_UPDATED_RETROSPECTIVE))
-        broadcast(function: 'retrospective', message: sprint)
+        broadcast(function: 'retrospective', message: sprint, channel:'product-'+sprint.parentProduct.id)
     }
 
     def sprintBurndownHoursValues(Sprint sprint) {

@@ -84,7 +84,7 @@ class TaskService {
 
         task.addActivity(user, 'taskSave', task.name)
         publishEvent(new IceScrumTaskEvent(task, this.class, user, IceScrumTaskEvent.EVENT_CREATED))
-        broadcast(function: 'add', message: task)
+        broadcast(function: 'add', message: task, channel:'product-'+sprint.parentProduct.id)
     }
 
     @PreAuthorize('inProduct(#story.backlog) and !archivedProduct(#story.backlog)')
@@ -239,7 +239,7 @@ class TaskService {
             publishEvent(new IceScrumTaskEvent(task, this.class, user, IceScrumTaskEvent.EVENT_UPDATED))
         }
 
-        broadcast(function: 'update', message: task)
+        broadcast(function: 'update', message: task, channel:'product-'+sprint.parentProduct.id)
     }
 
     /**
@@ -296,7 +296,7 @@ class TaskService {
             resetRank(task)
             sprint.removeFromTasks(task)
             clicheService.createOrUpdateDailyTasksCliche((Sprint) sprint)
-            broadcast(function: 'delete', message: [class: task.class, id: task.id])
+            broadcast(function: 'delete', message: [class: task.class, id: task.id], channel:'product-'+sprint.parentProduct.id)
         }
     }
 

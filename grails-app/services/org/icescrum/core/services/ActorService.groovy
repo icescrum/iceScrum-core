@@ -46,7 +46,7 @@ class ActorService {
         p.addToActors(act)
         if (!act.save(flush: true))
             throw new RuntimeException()
-        broadcast(function: 'add', message: act)
+        broadcast(function: 'add', message: act, channel:'product-'+p.id)
         publishEvent(new IceScrumActorEvent(act, this.class, (User) springSecurityService.currentUser, IceScrumEvent.EVENT_CREATED))
     }
 
@@ -58,7 +58,7 @@ class ActorService {
         if (stillHasPbi)
             throw new RuntimeException('is.actor.error.still.hasStories')
         p.removeFromActors(act)
-        broadcast(function: 'delete', message: [class: act.class, id: id])
+        broadcast(function: 'delete', message: [class: act.class, id: id], channel:'product-'+p.id)
     }
 
     @PreAuthorize('productOwner(#act.backlog) and !archivedProduct(#act.backlog)')
@@ -67,7 +67,7 @@ class ActorService {
         if (!act.save(flush: true))
             throw new RuntimeException()
 
-        broadcast(function: 'update', message: act)
+        broadcast(function: 'update', message: act, channel:'product-'+act.backlog.id)
         publishEvent(new IceScrumActorEvent(act, this.class, (User) springSecurityService.currentUser, IceScrumEvent.EVENT_UPDATED))
     }
 

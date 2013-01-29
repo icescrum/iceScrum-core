@@ -34,8 +34,8 @@ class FeatureService {
     static transactional = true
     def springSecurityService
 
-    @PreAuthorize('productOwner(#p) and !archivedProduct(#p)')
-    void save(Feature feature, Product p) {
+    @PreAuthorize('productOwner(#product) and !archivedProduct(#product)')
+    void save(Feature feature, Product product) {
 
         feature.name = feature.name?.trim()
 
@@ -44,12 +44,12 @@ class FeatureService {
             rankProvided = feature.rank
 
         //We force last rank (if another rank has benn provide we will update it below
-        feature.rank = Feature.countByBacklog(p) + 1
-        feature.uid = Feature.findNextUId(p.id)
+        feature.rank = Feature.countByBacklog(product) + 1
+        feature.uid = Feature.findNextUId(product.id)
 
 
-        feature.backlog = p
-        p.addToFeatures(feature)
+        feature.backlog = product
+        product.addToFeatures(feature)
 
 
         if (!feature.save()) {
@@ -60,36 +60,35 @@ class FeatureService {
         if (rankProvided)
             rank(feature, rankProvided)
 
-        broadcast(function: 'add', message: feature)
+        broadcast(function: 'add', message: feature, channel:'product-'+product.id)
         publishEvent(new IceScrumFeatureEvent(feature, this.class, (User) springSecurityService.currentUser, IceScrumEvent.EVENT_CREATED))
     }
 
     @PreAuthorize('productOwner(#feature.backlog) and !archivedProduct(#feature.backlog)')
     void delete(Feature feature) {
-        def p = feature.backlog
-
-        bufferBroadcast()
+        def product = feature.backlog
+        bufferBroadcast(channel:'product-'+product.id)
         feature.stories?.each{
             it.feature = null
             it.save()
-            broadcast(function: 'dissociated', message: it)
+            broadcast(function: 'dissociated', message: it, channel:'product-'+product.id)
         }
 
 
         def oldRank = feature.rank
         def id = feature.id
 
-        p.removeFromFeatures(feature)
+        product.removeFromFeatures(feature)
 
         //update rank on all features after that one
-        p.features.each { it ->
+        product.features.each { it ->
             if (it.rank > oldRank) {
                 it.rank = it.rank - 1
                 it.save()
             }
         }
-        broadcast(function: 'delete', message: [class: feature.class, id: id])
-        resumeBufferedBroadcast()
+        broadcast(function: 'delete', message: [class: feature.class, id: id], channel:'product-'+product.id)
+        resumeBufferedBroadcast(channel:'product-'+product.id)
     }
 
     @PreAuthorize('productOwner(#feature.backlog) and !archivedProduct(#feature.backlog)')
@@ -99,7 +98,7 @@ class FeatureService {
         if (!feature.save(flush: true)) {
             throw new RuntimeException()
         }
-        broadcast(function: 'update', message: feature)
+        broadcast(function: 'update', message: feature, channel:'product-'+feature.backlog.id)
         publishEvent(new IceScrumFeatureEvent(feature, this.class, (User) springSecurityService.currentUser, IceScrumEvent.EVENT_UPDATED))
     }
 
@@ -132,7 +131,7 @@ class FeatureService {
         if (!story.save()) {
             throw new RuntimeException(story.errors.toString())
         }
-        broadcast(function: 'add', message: story)
+        broadcast(function: 'add', message: story, channel:'product-'+story.backlog.id)
         publishEvent(new IceScrumFeatureEvent(feature, story, this.class, (User) springSecurityService.currentUser, IceScrumFeatureEvent.EVENT_COPIED_AS_STORY))
         return story
     }
@@ -169,7 +168,7 @@ class FeatureService {
             }
             feature.rank = rank
 
-            broadcast(function: 'update', message: feature)
+            broadcast(function: 'update', message: feature, channel:'product-'+feature.backlog.id)
             return feature.save() ? true : false
         } else {
             return false

@@ -45,23 +45,23 @@ class StoryService {
 
     static transactional = true
 
-    @PreAuthorize('!archivedProduct(#p)')
-    void save(Story story, Product p, User u, Sprint s = null) {
+    @PreAuthorize('!archivedProduct(#product)')
+    void save(Story story, Product product, User u, Sprint s = null) {
 
         if (!story.effort)
             story.effort = null
 
-        story.backlog = p
+        story.backlog = product
         story.creator = u
 
         if (story.textAs != '') {
-            def actor = Actor.findByBacklogAndName(p, story.textAs)
+            def actor = Actor.findByBacklogAndName(product, story.textAs)
             if (actor) {
                 actor.addToStories(story)
             }
         }
 
-        story.uid = Story.findNextUId(p.id)
+        story.uid = Story.findNextUId(product.id)
         if(!story.suggestedDate)
             story.suggestedDate = new Date()
 
@@ -78,19 +78,20 @@ class StoryService {
         story.affectVersion = (story.type == Story.TYPE_DEFECT ? story.affectVersion : null)
 
         if (story.save()) {
-            p.addToStories(story)
+            product.addToStories(story)
             story.addFollower(u)
             story.addActivity(u, Activity.CODE_SAVE, story.name)
-            broadcast(function: 'add', message: story, channel:'product-'+p.id)
+            broadcast(function: 'add', message: story, channel:'product-'+product.id)
             publishEvent(new IceScrumStoryEvent(story, this.class, u, IceScrumStoryEvent.EVENT_CREATED))
         } else {
             throw new RuntimeException()
         }
     }
 
-    @PreAuthorize('!archivedProduct(#story.backlog)')
+    @PreAuthorize('!archivedProduct(#stories[0].backlog)')
     void delete(Collection<Story> stories, history = true) {
-        bufferBroadcast()
+        def product = stories[0].backlog
+        bufferBroadcast(channel:'product-'+product.id)
         stories.each { story ->
 
             if (story.actor){
@@ -119,7 +120,7 @@ class StoryService {
                 throw new IllegalAccessException()
             }
 
-            if (!(story.creator.id == springSecurityService.currentUser?.id) && !securityService.productOwner(story.backlog.id, springSecurityService.authentication)) {
+            if (!(story.creator.id == springSecurityService.currentUser?.id) && !securityService.productOwner(product.id, springSecurityService.authentication)) {
                 throw new IllegalAccessException()
             }
             story.removeAllAttachments()
@@ -131,18 +132,17 @@ class StoryService {
             def id = story.id
             story.deleteComments()
 
-            def p = story.backlog
-            p.removeFromStories(story)
+            product.removeFromStories(story)
 
             story.delete(flush:true)
 
-            p.save()
+            product.save()
             if (history) {
-                p.addActivity(springSecurityService.currentUser, Activity.CODE_DELETE, story.name)
+                product.addActivity(springSecurityService.currentUser, Activity.CODE_DELETE, story.name)
             }
-            broadcast(function: 'delete', message: [class: story.class, id: id, state: story.state])
+            broadcast(function: 'delete', message: [class: story.class, id: id, state: story.state], channel:'product-'+product.id)
         }
-        resumeBufferedBroadcast()
+        resumeBufferedBroadcast(channel:'product-'+product.id)
     }
 
     @PreAuthorize('!archivedProduct(#story.backlog)')
@@ -184,7 +184,7 @@ class StoryService {
         User u = (User) springSecurityService.currentUser
 
         story.addActivity(u, Activity.CODE_UPDATE, story.name)
-        broadcast(function: 'update', message: story)
+        broadcast(function: 'update', message: story, channel:'product-'+story.backlog.id)
         publishEvent(new IceScrumStoryEvent(story, this.class, u, IceScrumStoryEvent.EVENT_UPDATED))
     }
 
@@ -217,7 +217,7 @@ class StoryService {
         User u = (User) springSecurityService.currentUser
         story.addActivity(u, Activity.CODE_UPDATE, story.name)
 
-        broadcast(function: 'estimate', message: story)
+        broadcast(function: 'estimate', message: story, channel:'product-'+story.backlog.id)
         if (oldState != story.state && story.state == Story.STATE_ESTIMATED)
             publishEvent(new IceScrumStoryEvent(story, this.class, u, IceScrumStoryEvent.EVENT_ESTIMATED))
         else if (oldState != story.state && story.state == Story.STATE_ACCEPTED)
@@ -308,7 +308,7 @@ class StoryService {
             taskService.update(it, user)
         }
 
-        broadcast(function: 'plan', message: story)
+        broadcast(function: 'plan', message: story, channel:'product-'+story.backlog.id)
 
         if (story.state == Story.STATE_INPROGRESS)
             publishEvent(new IceScrumStoryEvent(story, this.class, user, IceScrumStoryEvent.EVENT_INPROGRESS))
@@ -365,8 +365,8 @@ class StoryService {
         if (!story.save(flush: true))
             throw new RuntimeException()
 
-        broadcast(function: 'update', message: sprint)
-        broadcast(function: 'unPlan', message: story)
+        broadcast(function: 'update', message: sprint, channel:'product-'+story.backlog.id)
+        broadcast(function: 'unPlan', message: story, channel:'product-'+story.backlog.id)
         publishEvent(new IceScrumStoryEvent(story, this.class, (User) springSecurityService.currentUser, IceScrumStoryEvent.EVENT_UNPLANNED))
     }
 
@@ -377,7 +377,8 @@ class StoryService {
      */
     def unPlanAll(Collection<Sprint> sprintList, Integer sprintState = null) {
         sprintList.sort  { sprint1, sprint2 -> sprint2.orderNumber <=> sprint1.orderNumber }
-        bufferBroadcast()
+        def product = sprintList.first().parentProduct
+        bufferBroadcast(channel:'product-'+product.id)
         def storiesUnPlanned = []
         sprintList.each { sprint ->
             if ((!sprintState) || (sprintState && sprint.state == sprintState)) {
@@ -393,7 +394,7 @@ class StoryService {
                 storiesUnPlanned.addAll(stories)
             }
         }
-        resumeBufferedBroadcast()
+        resumeBufferedBroadcast(channel:'product-'+product.id)
         return storiesUnPlanned
     }
 
@@ -547,7 +548,7 @@ class StoryService {
 
         cleanRanks(stories)
 
-        broadcast(function: 'update', message: story)
+        broadcast(function: 'update', message: story, channel:'product-'+story.backlog.id)
         return story.save() ? true : false
     }
 
@@ -590,7 +591,8 @@ class StoryService {
     @PreAuthorize('productOwner(#stories[0].backlog) and !archivedProduct(#stories[0].backlog)')
     def acceptToBacklog(List<Story> stories) {
         def storiesA = []
-        bufferBroadcast()
+        def product = stories[0].backlog
+        bufferBroadcast(channel:'product-'+product.id)
         stories.each { story ->
             if (story.state > Story.STATE_SUGGESTED)
                 throw new IllegalStateException('is.story.error.not.state.suggested')
@@ -614,10 +616,10 @@ class StoryService {
             storiesA << story
 
             story.addActivity(u, 'acceptAs', story.name)
-            broadcast(function: 'accept', message: story)
+            broadcast(function: 'accept', message: story, channel:'product-'+story.backlog.id)
             publishEvent(new IceScrumStoryEvent(story, this.class, u, IceScrumStoryEvent.EVENT_ACCEPTED))
         }
-        resumeBufferedBroadcast()
+        resumeBufferedBroadcast(channel:'product-'+product.id)
         return storiesA
     }
 
@@ -629,7 +631,8 @@ class StoryService {
     @PreAuthorize('productOwner(#stories[0].backlog) and !archivedProduct(#stories[0].backlog)')
     def acceptToFeature(List<Story> stories) {
         def features = []
-        bufferBroadcast()
+        def product =  stories[0].backlog
+        bufferBroadcast(channel:'product-'+product.id)
         stories.each { story ->
             if (story.state > Story.STATE_SUGGESTED)
                 throw new IllegalStateException('is.story.error.not.state.suggested')
@@ -665,7 +668,7 @@ class StoryService {
             feature.addActivity(user, 'acceptAs', feature.name)
             publishEvent(new IceScrumStoryEvent(feature, this.class, user, IceScrumStoryEvent.EVENT_ACCEPTED_AS_FEATURE))
         }
-        resumeBufferedBroadcast()
+        resumeBufferedBroadcast(channel:'product-'+product.id)
         return features
     }
 
@@ -677,7 +680,8 @@ class StoryService {
     @PreAuthorize('productOwner(#stories[0].backlog) and !archivedProduct(#stories[0].backlog)')
     def acceptToUrgentTask(List<Story> stories) {
         def tasks = []
-        bufferBroadcast()
+        def product = stories[0].backlog
+        bufferBroadcast(channel:'product-'+product.id)
         stories.each { story ->
 
             if (story.state > Story.STATE_SUGGESTED)
@@ -688,7 +692,7 @@ class StoryService {
             task.state = Task.STATE_WAIT
             task.description = (story.affectVersion ? g.message(code: 'is.story.affectVersion') + ': ' + story.affectVersion : '') + (task.description ?: '') + ' ' + getTemplateStory(story)
 
-            def sprint = (Sprint) Sprint.findCurrentSprint(story.backlog.id).list()
+            def sprint = (Sprint) Sprint.findCurrentSprint(product.id).list()
             if (!sprint)
                 throw new IllegalStateException('is.story.error.not.acceptedAsUrgentTask')
 
@@ -721,7 +725,7 @@ class StoryService {
 
             publishEvent(new IceScrumStoryEvent(task, this.class, (User) springSecurityService.currentUser, IceScrumStoryEvent.EVENT_ACCEPTED_AS_TASK))
         }
-        resumeBufferedBroadcast()
+        resumeBufferedBroadcast(channel:'product-'+product.id)
         return tasks
     }
 
@@ -747,7 +751,8 @@ class StoryService {
 
     @PreAuthorize('productOwner(#stories[0].backlog) and !archivedProduct(#stories[0].backlog)')
     void done(List<Story> stories) {
-        bufferBroadcast()
+        def product = stories[0].backlog
+        bufferBroadcast(channel:'product-'+product.id)
         stories.each { story ->
 
             if (story.parentSprint.state != Sprint.STATE_INPROGRESS) {
@@ -771,7 +776,7 @@ class StoryService {
 
             User u = (User) springSecurityService.currentUser
 
-            broadcast(function: 'done', message: story)
+            broadcast(function: 'done', message: story, channel:'product-'+product.id)
             story.addActivity(u, 'done', story.name)
             publishEvent(new IceScrumStoryEvent(story, this.class, u, IceScrumStoryEvent.EVENT_DONE))
 
@@ -783,7 +788,7 @@ class StoryService {
         }
         if (stories)
             clicheService.createOrUpdateDailyTasksCliche(stories[0]?.parentSprint)
-        resumeBufferedBroadcast()
+        resumeBufferedBroadcast(channel:'product-'+product.id)
     }
 
     @PreAuthorize('productOwner(#story.backlog) and !archivedProduct(#story.backlog)')
@@ -793,7 +798,8 @@ class StoryService {
 
     @PreAuthorize('productOwner(#stories[0].backlog) and !archivedProduct(#stories[0].backlog)')
     void unDone(List<Story> stories) {
-        bufferBroadcast()
+        def product = stories[0].backlog
+        bufferBroadcast(channel:'product-'+product.id)
         stories.each { story ->
 
             if (story.state != Story.STATE_DONE) {
@@ -818,12 +824,12 @@ class StoryService {
             User u = (User) springSecurityService.currentUser
 
             story.addActivity(u, 'unDone', story.name)
-            broadcast(function: 'unDone', message: story)
+            broadcast(function: 'unDone', message: story, channel:'product-'+product.id)
             publishEvent(new IceScrumStoryEvent(story, this.class, u, IceScrumStoryEvent.EVENT_UNDONE))
         }
         if (stories)
             clicheService.createOrUpdateDailyTasksCliche(stories[0]?.parentSprint)
-        resumeBufferedBroadcast()
+        resumeBufferedBroadcast(channel:'product-'+product.id)
     }
 
     void associateFeature(Feature feature, Story story) {
@@ -831,7 +837,7 @@ class StoryService {
         if (!feature.save(flush:true))
             throw new RuntimeException()
 
-        broadcast(function: 'associated', message: story)
+        broadcast(function: 'associated', message: story, channel:'product-'+story.backlog.id)
         User u = (User) springSecurityService.currentUser
         publishEvent(new IceScrumStoryEvent(story, this.class, u, IceScrumStoryEvent.EVENT_FEATURE_ASSOCIATED))
     }
@@ -842,8 +848,8 @@ class StoryService {
         oldDepends.lastUpdated = new Date()
         oldDepends.save()
 
-        broadcast(function: 'update', message: story)
-        broadcast(function: 'notDependsOn', message: oldDepends)
+        broadcast(function: 'update', message: story, channel:'product-'+story.backlog.id)
+        broadcast(function: 'notDependsOn', message: oldDepends, channel:'product-'+story.backlog.id)
         User u = (User) springSecurityService.currentUser
         publishEvent(new IceScrumStoryEvent(story, this.class, u, IceScrumStoryEvent.EVENT_NOT_DEPENDS_ON))
     }
@@ -858,8 +864,8 @@ class StoryService {
         dependsOn.lastUpdated = new Date()
         dependsOn.save()
 
-        broadcast(function: 'update', message: story)
-        broadcast(function: 'dependsOn', message: dependsOn)
+        broadcast(function: 'update', message: story, channel:'product-'+story.backlog.id)
+        broadcast(function: 'dependsOn', message: dependsOn, channel:'product-'+story.backlog.id)
         User u = (User) springSecurityService.currentUser
         publishEvent(new IceScrumStoryEvent(story, this.class, u, IceScrumStoryEvent.EVENT_DEPENDS_ON))
     }
@@ -870,7 +876,7 @@ class StoryService {
         if (!feature.save(flush:true))
             throw new RuntimeException()
 
-        broadcast(function: 'dissociated', message: story)
+        broadcast(function: 'dissociated', message: story, channel:'product-'+story.backlog.id)
         User u = (User) springSecurityService.currentUser
         publishEvent(new IceScrumStoryEvent(story, this.class, u, IceScrumStoryEvent.EVENT_FEATURE_DISSOCIATED))
     }
@@ -883,7 +889,8 @@ class StoryService {
     @PreAuthorize('inProduct(#stories[0].backlog) and !archivedProduct(#stories[0].backlog)')
     def copy(List<Story> stories) {
         def copiedStories = []
-        bufferBroadcast()
+        def product =  stories[0].backlog
+        bufferBroadcast(channel:'product-'+product.id)
         stories.each { story ->
             def copiedStory = new Story(
                     name: story.name + '_1',
@@ -895,7 +902,7 @@ class StoryService {
                     textAs: story.textAs,
                     textICan: story.textICan,
                     textTo: story.textTo,
-                    backlog: story.backlog,
+                    backlog: product,
                     affectVersion: story.affectVersion,
                     origin: story.name,
                     feature: story.feature,
@@ -917,7 +924,7 @@ class StoryService {
             save(copiedStory, (Product) story.backlog, (User) springSecurityService.currentUser)
             copiedStories << copiedStory
         }
-        resumeBufferedBroadcast()
+        resumeBufferedBroadcast(channel:'product-'+product.id)
         return copiedStories
     }
 
