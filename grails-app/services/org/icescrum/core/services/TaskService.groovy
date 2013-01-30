@@ -205,6 +205,7 @@ class TaskService {
 
                 if (task.state >= Task.STATE_BUSY && !task.inProgressDate) {
                     task.inProgressDate = new Date()
+                    task.initial = task.estimation
                     if (!task.isDirty('blocked'))
                         task.blocked = false
                     else {
@@ -214,8 +215,10 @@ class TaskService {
                     }
                 }
 
-                if (task.state < Task.STATE_BUSY && task.inProgressDate)
+                if (task.state < Task.STATE_BUSY && task.inProgressDate){
                     task.inProgressDate = null
+                    task.initial = null
+                }
 
                 if (!task.type && p.preferences.autoDoneStory && task.state == Task.STATE_DONE) {
                     ApplicationContext ctx = (ApplicationContext) ApplicationHolder.getApplication().getMainContext();

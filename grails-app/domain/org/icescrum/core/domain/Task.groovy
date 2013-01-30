@@ -46,6 +46,7 @@ class Task extends BacklogElement implements Serializable {
 	
     Integer type
     Float estimation
+    Float initial
     Integer rank = 0
     boolean blocked = false
 
@@ -75,6 +76,7 @@ class Task extends BacklogElement implements Serializable {
 
     static constraints = {
         estimation nullable: true
+        initial nullable: true
         responsible nullable: true
         impediment nullable: true
         parentStory nullable: true
