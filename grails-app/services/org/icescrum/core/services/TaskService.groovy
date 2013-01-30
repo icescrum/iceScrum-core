@@ -462,6 +462,7 @@ class TaskService {
                     description: task.description.text(),
                     notes: task.notes.text(),
                     estimation: (task.estimation.text().isNumber()) ? task.estimation.text().toFloat() : null,
+                    initial: (task.initial.text().isNumber()) ? task.initial.text().toFloat() : null,
                     rank: task.rank.text().toInteger(),
                     name: task."${'name'}".text(),
                     doneDate: doneDate,
