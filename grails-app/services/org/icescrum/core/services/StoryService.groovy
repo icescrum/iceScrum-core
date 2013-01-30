@@ -25,6 +25,10 @@
 package org.icescrum.core.services
 
 import grails.plugin.fluxiable.Activity
+import org.apache.maven.artifact.ant.shaded.FileUtils
+import org.grails.comments.Comment
+import org.icescrum.plugins.attachmentable.domain.Attachment
+
 import java.text.SimpleDateFormat
 import org.icescrum.core.event.IceScrumStoryEvent
 import org.springframework.security.access.prepost.PreAuthorize
@@ -922,6 +926,28 @@ class StoryService {
                 }
             }
             save(copiedStory, (Product) story.backlog, (User) springSecurityService.currentUser)
+
+            //copy attachments
+            story.attachments?.each{ Attachment a ->
+                def currentFile = attachmentableService.getFile(a)
+                def newFile = File.createTempFile(a.name, a.ext)
+                FileUtils.copyFile(currentFile, newFile)
+                copiedStory.addAttachment(a.poster, newFile, a.name+(a.ext? '.'+a.ext :''))
+            }
+
+            //copy comments
+            story.comments?.each{ Comment c ->
+                copiedStory.addComment(c.poster, c.body)
+            }
+
+            //copy tags
+            copiedStory.tags = story.tags
+
+            //copy acceptanceTests
+            story.acceptanceTests?.each{
+                acceptanceTestService.save(new AcceptanceTest(name:it.name, description:it.description), copiedStory, (User) springSecurityService.currentUser)
+            }
+
             copiedStories << copiedStory
         }
         resumeBufferedBroadcast(channel:'product-'+product.id)
