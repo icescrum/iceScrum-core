@@ -117,7 +117,7 @@ class Release extends TimeBox implements Cloneable, Attachmentable {
                 eq 'state', Release.STATE_INPROGRESS
                 eq 'state', Release.STATE_DONE
             }
-            order("orderNumber", "asc")
+            order("orderNumber", "desc")
             maxResults(1)
         }
 
