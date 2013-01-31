@@ -512,8 +512,8 @@ class FormTagLib {
                 out << """
                   <div class="is-multifiles-checkbox" id="file-${attachment.id}">
                         <div class="is-multifiles-filename" style="display:inline-block; float:left; margin:5px;">
-                          <a target="_blank" href="${g.createLink(controller:controllerName, action:'download', id: attachment.id, params: attrs.params)}">
-                            <img style="border:1px solid #666;" src="${g.createLink(controller:controllerName, action:'preview', id: attachment.id, params: attrs.params)}" title="${attachment.filename} ${attachment.provider? ' - ('+ attachment.provider + ' / ' + attachment.poster.firstName +' '+ attachment.poster.lastName + ')' : '' } "/>
+                          <a target="_blank" href="${g.createLink(controller:attrs.controller?:controllerName, action:'download', id: attachment.id, params: attrs.params)}">
+                            <img style="border:1px solid #666;" src="${g.createLink(controller:attrs.controller?:controllerName, action:'preview', id: attachment.id, params: attrs.params)}" title="${attachment.filename} ${attachment.provider? ' - ('+ attachment.provider + ' / ' + attachment.poster.firstName +' '+ attachment.poster.lastName + ')' : '' } "/>
                           </a>
                         </div>
                   </div>"""
@@ -521,7 +521,7 @@ class FormTagLib {
                 out << """
                   <div class="is-multifiles-checkbox" id="file-${attachment.id}" style="clear:both;">
                         <div class="is-multifiles-filename file-icon ${attachment.ext?.toLowerCase()}-format" style="display: inline-block; margin-left: 0px; ${attrs.width ? 'width:' + attrs.width + 'px;' : ''}">
-                          <a ${attachment.url ? 'target="_blank"' : ''} href="${g.createLink(controller:controllerName, action: 'download', id: attachment.id, params: attrs.params)}"><span title="${attachment.filename} ${attachment.provider? ' - ('+ attachment.provider + ' / ' + attachment.poster.firstName +' '+ attachment.poster.lastName + ')' : '' } ">${is.truncated(size: attrs.size ?: 23) {attachment.filename}}</span></a>
+                          <a ${attachment.url ? 'target="_blank"' : ''} href="${g.createLink(controller:attrs.controller?:controllerName, action: 'download', id: attachment.id, params: attrs.params)}"><span title="${attachment.filename} ${attachment.provider? ' - ('+ attachment.provider + ' / ' + attachment.poster.firstName +' '+ attachment.poster.lastName + ')' : '' } ">${is.truncated(size: attrs.size ?: 23) {attachment.filename}}</span></a>
                         </div>
                   </div>"""
             }
