@@ -71,6 +71,6 @@ class UiDefinition {
 
     def propertyMissing(String name, value){
         this.options."$name" = value
-        log.warn("The field $name is unrecognized for $id UI definition added to options")
+        log.debug("The field $name is unrecognized for $id UI definition added to options")
     }
 }
