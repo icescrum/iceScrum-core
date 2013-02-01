@@ -19,8 +19,16 @@
 - Vincent Barrier (vbarrier@kagilum.com)
 --}%
 <%@ page contentType="text/html"%>
-<g:message
-        locale="${locale}"
-        code='is.template.email.story.deleted.text'
-        args="[storyName,permalink]"/>
+<g:if test="${description}">
+    <g:message
+            locale="${locale}"
+            code='is.template.email.story.deleted.text.details'
+            args="[storyName, description]"/>
+</g:if>
+    <g:else>
+        <g:message
+                locale="${locale}"
+                code='is.template.email.story.deleted.text'
+                args="[storyName]"/>
+</g:else>
 <g:message locale="${locale}" code='is.template.email.footer' args="[link,linkName]"/>

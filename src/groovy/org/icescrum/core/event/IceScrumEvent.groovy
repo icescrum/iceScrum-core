@@ -32,7 +32,7 @@ class IceScrumEvent extends ApplicationEvent {
   static final String EVENT_BEFORE_DELETE = 'beforeDelete'
   static final String EVENT_AFTER_DELETE = 'Deleted'
 
-  static final EVENT_CUD = [EVENT_CREATED,EVENT_UPDATED]
+  static final EVENT_CUD = [EVENT_CREATED,EVENT_UPDATED,EVENT_BEFORE_DELETE]
 
   Class generatedBy
   def type

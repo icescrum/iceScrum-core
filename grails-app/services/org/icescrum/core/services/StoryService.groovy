@@ -93,7 +93,7 @@ class StoryService {
     }
 
     @PreAuthorize('!archivedProduct(#stories[0].backlog)')
-    void delete(Collection<Story> stories, history = true) {
+    void delete(Collection<Story> stories, history = true, reason = null) {
         def product = stories[0].backlog
         bufferBroadcast(channel:'product-'+product.id)
         stories.each { story ->
@@ -128,17 +128,17 @@ class StoryService {
                 throw new IllegalAccessException()
             }
             story.removeAllAttachments()
-            story.removeLinkByFollow(story.id)
-
             if (story.state != Story.STATE_SUGGESTED)
                 resetRank(story)
 
             def id = story.id
             story.deleteComments()
 
-            product.removeFromStories(story)
-
+            //give why you delete a story
+            story.description = reason ?: story.description
             story.delete(flush:true)
+            product.removeFromStories(story)
+            story.removeLinkByFollow(id)
 
             product.save()
             if (history) {
@@ -150,8 +150,8 @@ class StoryService {
     }
 
     @PreAuthorize('!archivedProduct(#story.backlog)')
-    void delete(Story story, boolean history = true) {
-        delete([story], history)
+    void delete(Story story, boolean history = true, def reason = null) {
+        delete([story], history, reason)
     }
 
     @PreAuthorize('(productOwner(#story.backlog) or scrumMaster()) and !archivedProduct(#story.backlog)')

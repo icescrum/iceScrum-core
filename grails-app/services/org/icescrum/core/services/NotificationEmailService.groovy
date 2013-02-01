@@ -94,7 +94,7 @@ class NotificationEmailService implements ApplicationListener<IceScrumStoryEvent
                     bcc: group*.email.toArray(),
                     subject: grailsApplication.config.icescrum.alerts.subject_prefix + getMessage('is.template.email.story.' + event.toLowerCase() + '.subject', (Locale) locale, subjectArgs),
                     view: '/emails-templates/story' + event,
-                    model: [locale: locale, storyName: story.name, permalink: permalink, linkName: story.backlog.name, link: projectLink]
+                    model: [locale: locale, storyName: story.name, permalink: permalink, linkName: story.backlog.name, link: projectLink, description:IceScrumEvent.EVENT_BEFORE_DELETE ? story.description?:null : null]
             ])
         }
     }
