@@ -109,14 +109,15 @@ class IceScrumAtmosphereHandler implements AtmosphereHandler<HttpServletRequest,
             return
         }
 
-        if (log.isDebugEnabled()) {
-            log.debug("broadcast to user ${user.username}")
-        }
-
         //Finally broadcast message to client
-        event.resource.response.writer.with {
-            write "${event.message}"
-            flush()
+        if (!event.resumedOnTimeout){
+            if (log.isDebugEnabled()) {
+                   log.debug("broadcast to user ${user.username}")
+               }
+            event.resource.response.writer.with {
+                write "${event.message}"
+                flush()
+            }
         }
     }
 
