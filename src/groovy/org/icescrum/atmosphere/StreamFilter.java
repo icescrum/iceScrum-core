@@ -31,7 +31,7 @@ public class StreamFilter implements PerRequestBroadcastFilter {
     @Override
     public BroadcastAction filter(HttpServletRequest request, HttpServletResponse response, Object message) {
         String msg = message.toString();
-        if (request.getParameter("useWebSocket") == null || !Boolean.valueOf(request.getParameter("useWebSocket"))){
+        if (request.getParameter("ws") == null || !Boolean.valueOf(request.getParameter("ws"))){
             msg = msg.length() + ";" + msg + ';';
         }
         return new BroadcastAction(BroadcastAction.ACTION.CONTINUE, msg);
