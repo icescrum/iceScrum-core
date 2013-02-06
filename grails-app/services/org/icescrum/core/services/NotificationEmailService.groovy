@@ -91,7 +91,7 @@ class NotificationEmailService implements ApplicationListener<IceScrumStoryEvent
                 log.debug "Send email, event:${type} to : ${group*.email.toArray()} with locale : ${locale}"
             }
             send([
-                    bcc: group*.email.toArray(),
+                    emails: group*.email.toArray(),
                     subject: grailsApplication.config.icescrum.alerts.subject_prefix + getMessage('is.template.email.story.' + event.toLowerCase() + '.subject', (Locale) locale, subjectArgs),
                     view: '/emails-templates/story' + event,
                     model: [locale: locale, storyName: story.name, permalink: permalink, linkName: story.backlog.name, link: projectLink, description:IceScrumEvent.EVENT_BEFORE_DELETE ? story.description?:null : null]
@@ -116,7 +116,7 @@ class NotificationEmailService implements ApplicationListener<IceScrumStoryEvent
                 log.debug "Send email, event:${type} to : ${group*.email.toArray()} with locale : ${locale}"
             }
             send([
-                    bcc: group*.email.toArray(),
+                    emails: group*.email.toArray(),
                     subject: grailsApplication.config.icescrum.alerts.subject_prefix + getMessage('is.template.email.story.changedState.subject', (Locale) locale, subjectArgs),
                     view: '/emails-templates/storyChangedState',
                     model: [state: getMessage('is.template.email.story.changedState.' + type.toLowerCase(), (Locale) locale), locale: locale, storyName: story.name, permalink: permalink, linkName: story.backlog.name, link: projectLink]
@@ -152,7 +152,7 @@ class NotificationEmailService implements ApplicationListener<IceScrumStoryEvent
                     log.debug "Send email, event:${type} to : ${group*.email.toArray()} with locale : ${locale}"
                 }
                 send([
-                        bcc: group*.email.toArray(),
+                        emails: group*.email.toArray(),
                         subject: grailsApplication.config.icescrum.alerts.subject_prefix + getMessage('is.template.email.story.commented.subject', (Locale) locale, subjectArgs),
                         view: '/emails-templates/storyCommented',
                         model: [by: comment.poster.firstName + " " + comment.poster.lastName, comment: text, locale: locale, storyName: story.name, permalink: permalink, linkName: story.backlog.name, link: projectLink]
@@ -165,7 +165,7 @@ class NotificationEmailService implements ApplicationListener<IceScrumStoryEvent
                     log.debug "Send email, event:${type} to : ${group*.email.toArray()} with locale : ${locale}"
                 }
                 send([
-                        bcc: group*.email.toArray(),
+                        emails: group*.email.toArray(),
                         subject: grailsApplication.config.icescrum.alerts.subject_prefix + getMessage('is.template.email.story.commentEdited.subject', (Locale) locale, subjectArgs),
                         view: '/emails-templates/storyCommentEdited',
                         model: [by: user.firstName + " " + user.lastName, locale: locale, storyName: story.name, permalink: permalink, linkName: story.backlog.name, link: projectLink]
@@ -193,7 +193,7 @@ class NotificationEmailService implements ApplicationListener<IceScrumStoryEvent
                 log.debug "Send email, event:${type} to : ${group*.email.toArray()} with locale : ${locale}"
             }
             send([
-                    bcc: group*.email.toArray(),
+                    emails: group*.email.toArray(),
                     subject: grailsApplication.config.icescrum.alerts.subject_prefix + getMessage('is.template.email.story.acceptedAs.subject', (Locale) locale, subjectArgs),
                     view: '/emails-templates/storyAcceptedAs',
                     model: [acceptedAs: acceptedAs, locale: locale, elementName: element.name, linkName: product.name, link: projectLink]
@@ -217,25 +217,42 @@ class NotificationEmailService implements ApplicationListener<IceScrumStoryEvent
 
     void send(def options) {
 
-        assert options.to || options.bcc || options.cc
+        assert options.emails || options.to || options.cc
         assert options.view
         assert options.subject
 
-        mailService.sendMail {
-            if (options.from)
-                from options.from
-            if (options.to)
-                to options.to
-            if (options.cc)
-                cc options.cc
-            if (options.bcc)
-                bcc options.bcc
-            subject options.subject
-            body(
-                    view: options.view,
-                    plugin: options.plugin ?: "icescrum-core",
-                    model: options.model ?: []
-            )
+        if (grailsApplication.config.icescrum.alerts.emailPerAccount && options.emails){
+            options.emails.each{ def toEmail ->
+                mailService.sendMail {
+                    if (options.from)
+                        from options.from
+                    to toEmail
+                    subject options.subject
+                    body(
+                            view: options.view,
+                            plugin: options.plugin ?: "icescrum-core",
+                            model: options.model ?: []
+                    )
+                }
+            }
+        }else{
+            options.bcc = options.emails?:options.bcc
+            mailService.sendMail {
+                if (options.from)
+                    from options.from
+                if (options.to)
+                    to options.to
+                if (options.cc)
+                    cc options.cc
+                if (options.bcc)
+                    bcc options.bcc
+                subject options.subject
+                body(
+                        view: options.view,
+                        plugin: options.plugin ?: "icescrum-core",
+                        model: options.model ?: []
+                )
+            }
         }
     }
 
