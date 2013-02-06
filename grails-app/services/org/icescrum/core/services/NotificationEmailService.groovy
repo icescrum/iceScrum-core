@@ -20,6 +20,9 @@
  */
 package org.icescrum.core.services
 
+import org.icescrum.core.domain.Sprint
+import org.icescrum.core.domain.Task
+import org.icescrum.core.event.IceScrumTaskEvent
 import org.springframework.context.ApplicationListener
 import org.icescrum.core.event.IceScrumStoryEvent
 import org.icescrum.core.domain.Story
@@ -35,29 +38,24 @@ import org.eclipse.mylyn.wikitext.core.parser.builder.HtmlDocumentBuilder
 import org.eclipse.mylyn.wikitext.core.parser.MarkupParser
 
 
-class NotificationEmailService implements ApplicationListener<IceScrumStoryEvent> {
+class NotificationEmailService implements ApplicationListener<IceScrumEvent> {
 
     def mailService
     def grailsApplication
     def messageSource
 
-    void onApplicationEvent(IceScrumStoryEvent e) {
-        if (log.debugEnabled) {
-            log.debug "Receive event ${e.type}"
-        }
+    void onApplicationEvent(IceScrumEvent e) {
         try {
-            if (e.type in IceScrumStoryEvent.EVENT_CUD) {
+            if (e instanceof IceScrumStoryEvent && e.type in IceScrumStoryEvent.EVENT_CUD) {
                 sendAlertCUD((Story) e.source, (User) e.doneBy, e.type)
-
-            } else if (e.type in IceScrumStoryEvent.EVENT_STATE_LIST) {
+            } else if (e instanceof IceScrumStoryEvent && e.type in IceScrumStoryEvent.EVENT_STATE_LIST) {
                 sendAlertState((Story) e.source, (User) e.doneBy, e.type)
-
-            } else if (e.type in IceScrumStoryEvent.EVENT_COMMENT_LIST) {
+            } else if (e instanceof IceScrumStoryEvent && e.type in IceScrumStoryEvent.EVENT_COMMENT_LIST) {
                 sendAlertComment((Story) e.source, (User) e.doneBy, e.type, e.comment)
-
-            } else if (e.type in IceScrumStoryEvent.EVENT_ACCEPTED_AS_LIST) {
+            } else if (e instanceof IceScrumStoryEvent && e.type in IceScrumStoryEvent.EVENT_ACCEPTED_AS_LIST) {
                 sendAlertAcceptedAs((BacklogElement) e.source, (User) e.doneBy, e.type)
-
+            } else if (e instanceof IceScrumTaskEvent && e.type in IceScrumTaskEvent.EVENT_CREATED && ((Task )e.source).type == Task.TYPE_URGENT && ((Task )e.source).sprint.state == Sprint.STATE_INPROGRESS){
+                sendAlertNewUrgentTask((Task) e.source, (User) e.doneBy, e.type)
             }
         } catch (Exception expt) {
             if (log.debugEnabled) expt.printStackTrace()
@@ -95,6 +93,34 @@ class NotificationEmailService implements ApplicationListener<IceScrumStoryEvent
                     subject: grailsApplication.config.icescrum.alerts.subject_prefix + getMessage('is.template.email.story.' + event.toLowerCase() + '.subject', (Locale) locale, subjectArgs),
                     view: '/emails-templates/story' + event,
                     model: [locale: locale, storyName: story.name, permalink: permalink, linkName: story.backlog.name, link: projectLink, description:IceScrumEvent.EVENT_BEFORE_DELETE ? story.description?:null : null]
+            ])
+        }
+    }
+
+    private void sendAlertNewUrgentTask(Task task, User user, String type) {
+
+        if (!ApplicationSupport.booleanValue(grailsApplication.config.icescrum.alerts.enable)) {
+            return
+        }
+
+        def listTo = []
+        def subjectArgs = [task.parentProduct.name, task.name]
+        def permalink = grailsApplication.config.grails.serverURL + '/p/' + task.parentProduct.pkey + '-T' + task.uid
+        def projectLink = grailsApplication.config.grails.serverURL + '/p/' + task.parentProduct.pkey + '#project'
+
+        task.parentProduct.firstTeam.members.findAll {isCandidateForMail(it, user)}.each {
+            listTo << [email: it.email, locale: new Locale(it.preferences.language)]
+        }
+
+        listTo?.unique()?.groupBy {it.locale}?.each { locale, group ->
+            if (log.debugEnabled) {
+                log.debug "Send email, event:${type} to : ${group*.email.toArray()} with locale : ${locale}"
+            }
+            send([
+                    emails: group*.email.toArray(),
+                    subject: grailsApplication.config.icescrum.alerts.subject_prefix + getMessage('is.template.email.task.created.subject', (Locale) locale, subjectArgs),
+                    view: '/emails-templates/taskCreated',
+                    model: [locale: locale, taskName: task.name, permalink: permalink, linkName: task.parentProduct.name, link: projectLink, description:IceScrumEvent.EVENT_BEFORE_DELETE ? task.description?:null : null]
             ])
         }
     }

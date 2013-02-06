@@ -17,7 +17,7 @@ class IceScrumTaskEvent extends IceScrumEvent {
   static final String EVENT_STATE_DONE = 'Done'
   static final String EVENT_STATE_BLOCKED = 'Blocked'
 
-  IceScrumTaskEvent(Task task, Class generatedBy, User doneBy, def type, boolean synchronous = true){
+  IceScrumTaskEvent(Task task, Class generatedBy, User doneBy, def type, boolean synchronous = false){
     super(task, generatedBy, doneBy, type, synchronous)
   }
 }
