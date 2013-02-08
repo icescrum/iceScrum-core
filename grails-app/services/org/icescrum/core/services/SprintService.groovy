@@ -267,6 +267,8 @@ class SprintService {
             }
         }
 
+        sprint.initialRemainingHours = sprint.totalRemainingHours
+
         if (!sprint.save()) {
             throw new RuntimeException()
         }
@@ -357,7 +359,6 @@ class SprintService {
     def sprintBurndownHoursValues(Sprint sprint) {
         def values = []
         def lastDaycliche = sprint.activationDate
-        def maxHours = null
         def date = (sprint.state == Sprint.STATE_DONE) ? sprint.closeDate : (sprint.state == Sprint.STATE_INPROGRESS) ? new Date() : sprint.endDate
         clicheService.createOrUpdateDailyTasksCliche(sprint)
 
@@ -367,9 +368,6 @@ class SprintService {
                 if (xmlRoot) {
                     lastDaycliche = cliche.datePrise
                     def currentRemaining = xmlRoot."${Cliche.REMAINING_HOURS}".toFloat()
-                    if (maxHours < currentRemaining) {
-                        maxHours = currentRemaining
-                    }
                     if ((ServicesUtils.isDateWeekend(lastDaycliche) && !sprint.parentRelease.parentProduct.preferences.hideWeekend) || !ServicesUtils.isDateWeekend(lastDaycliche))
                         values << [
                                 remainingHours: currentRemaining,
@@ -389,7 +387,7 @@ class SprintService {
             }
         }
         if (!values.isEmpty()) {
-            values.first()?.idealHours = maxHours
+            values.first()?.idealHours = sprint.initialRemainingHours?:0
             values.last()?.idealHours = 0
         }
         return values

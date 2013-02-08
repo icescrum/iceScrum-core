@@ -50,6 +50,7 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
     Double velocity = 0d
     Double capacity = 0d
     Double dailyWorkTime = 8d
+    Float initialRemainingHours
 
     static mappedBy = [
             stories: "parentSprint",
@@ -163,6 +164,7 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
         doneDefinition nullable: true
         activationDate nullable: true
         closeDate nullable: true
+        initialRemainingHours nullable: true
         endDate(validator:{ val, obj ->
             if (!val)
                 return ['no.endDate']
