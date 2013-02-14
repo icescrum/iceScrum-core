@@ -104,6 +104,10 @@ class UserMigration {
             sql('UPDATE icescrum2_user set account_external = 0 WHERE account_external is NULL')
             addNotNullConstraint(tableName:"icescrum2_user",columnName:'account_external',columnDataType:'BIT')
         }
+
+        changeSet(id:'user_update_en_to_us', author:'vbarrier', filePath:filePath) {
+            sql('UPDATE icescrum2_user_preferences set language = "en_US" WHERE language = "en"')
+        }
     }
 
     static def getFilePath(){

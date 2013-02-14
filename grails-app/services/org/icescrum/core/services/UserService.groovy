@@ -196,8 +196,15 @@ class UserService {
                         uid: user.@uid.text() ?: (user.username.text() + user.email.text()).encodeAsMD5()
                 )
 
+                def language = user.preferences.language.text()
+                if (language == "en") {
+                    def version = ApplicationSupport.findIceScrumVersionFromXml(user)
+                    if (version == null || version < "R6#2") {
+                        language = "en_US"
+                    }
+                }
                 u.preferences = new UserPreferences(
-                        language: user.preferences.language.text(),
+                        language: language,
                         activity: user.preferences.activity.text(),
                         filterTask: user.preferences.filterTask.text(),
                         menu: user.preferences.menu.text(),

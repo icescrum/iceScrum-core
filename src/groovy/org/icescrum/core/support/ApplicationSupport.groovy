@@ -152,6 +152,12 @@ class ApplicationSupport {
       }
   }
 
+
+  static public findIceScrumVersionFromXml(def object) {
+      def root = object.parent().parent().parent().parent().parent().parent().parent().parent().parent()
+      return root.find{ it.name == 'export' }?.@version?.text()
+  }
+
     static public zipExportFile(OutputStream zipStream, List<File> files, File xml, String subdir) throws IOException {
         ZipOutputStream zout = new ZipOutputStream(zipStream)
         try {
