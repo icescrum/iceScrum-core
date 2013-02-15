@@ -21,35 +21,30 @@
  */
 package org.icescrum.atmosphere
 
-import javax.servlet.http.HttpServletRequest
-import javax.servlet.http.HttpServletResponse
 import org.apache.commons.logging.LogFactory
 import org.icescrum.core.domain.Product
 import org.springframework.security.core.context.SecurityContext
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository
 import org.atmosphere.cpr.*
-import org.atmosphere.cpr.BroadcasterLifeCyclePolicy.ATMOSPHERE_RESOURCE_POLICY
-import org.atmosphere.cpr.BroadcasterLifeCyclePolicy.Builder
 import org.codehaus.groovy.grails.commons.ApplicationHolder
 import grails.converters.JSON
 
-class IceScrumAtmosphereHandler implements AtmosphereHandler<HttpServletRequest, HttpServletResponse> {
+import java.util.concurrent.TimeUnit
+
+class IceScrumAtmosphereHandler implements AtmosphereHandler {
 
     private static final log = LogFactory.getLog(this)
     private static final USER_CONTEXT = 'user_context'
 
-    void onRequest(AtmosphereResource<HttpServletRequest, HttpServletResponse> event) throws IOException {
+    void onRequest(AtmosphereResource event) throws IOException {
         def conf = ApplicationHolder.application.config.icescrum.push
-        if (!conf.enable || event.request.getMethod() == "POST") {
+        if (!conf.enable) {
             event.resume()
             return
         }
 
-        event.response.setContentType("text/plain;charset=ISO-8859-1");
-        event.response.addHeader("Cache-Control", "private");
-        event.response.addHeader("Pragma", "no-cache");
-        event.response.addHeader("Access-Control-Allow-Origin", "*");
-        event.suspend(60000, true);
+        event.response.setContentType("text/plain;charset=ISO-8859-1")
+        event.suspend(60, TimeUnit.SECONDS);
 
         def productID = event.request.getParameterValues("product") ? event.request.getParameterValues("product")[0] : null
         def user = getUserFromAtmosphereResource(event.request, true) ?: [fullName: 'anonymous', id: null, username: 'anonymous']
@@ -63,10 +58,9 @@ class IceScrumAtmosphereHandler implements AtmosphereHandler<HttpServletRequest,
 
         channel = channel?.toString()
         if (channel) {
-            Class<? extends org.atmosphere.cpr.Broadcaster> bc = (Class<? extends org.atmosphere.cpr.Broadcaster>) ApplicationHolder.application.getClassLoader().loadClass(conf?.broadcaster?:'org.icescrum.atmosphere.ExcludeSessionBroadcaster')
-            def broadcaster = BroadcasterFactory.default.lookup(bc, channel)
+            def broadcaster = BroadcasterFactory.default.lookup(channel)
             if(broadcaster == null){
-                broadcaster = bc.newInstance(channel, event.atmosphereConfig)
+                broadcaster = new DefaultBroadcaster(channel, event.atmosphereConfig)
             }
             broadcaster.addAtmosphereResource(event)
             if (log.isDebugEnabled()) {
@@ -79,7 +73,7 @@ class IceScrumAtmosphereHandler implements AtmosphereHandler<HttpServletRequest,
             addBroadcasterToFactory(event, (String)user.username)
     }
 
-    void onStateChange(AtmosphereResourceEvent<HttpServletRequest, HttpServletResponse> event) throws IOException {
+    void onStateChange(AtmosphereResourceEvent event) throws IOException {
 
         def user = event.resource.request.getAttribute(USER_CONTEXT)?:null
 
@@ -92,7 +86,7 @@ class IceScrumAtmosphereHandler implements AtmosphereHandler<HttpServletRequest,
             BroadcasterFactory.default.lookupAll().each {
                 if (it.atmosphereResources.contains(event.resource)){
                     it.removeAtmosphereResource(event.resource)
-                    if (it instanceof org.atmosphere.util.ExcludeSessionBroadcaster) {
+                    if (it.getID().contains('product-')) {
                         def users = it.atmosphereResources?.collect{ it.request.getAttribute(USER_CONTEXT) }
                         it.broadcast(([broadcaster:[users:users]] as JSON).toString())
                     }
@@ -125,7 +119,7 @@ class IceScrumAtmosphereHandler implements AtmosphereHandler<HttpServletRequest,
 
     }
 
-    private def getUserFromAtmosphereResource(def request, def createSession = false) {
+    private static def getUserFromAtmosphereResource(def request, def createSession = false) {
         def httpSession = request.getSession(createSession)
         def user = null
         if (httpSession != null) {
@@ -137,15 +131,13 @@ class IceScrumAtmosphereHandler implements AtmosphereHandler<HttpServletRequest,
         user
     }
 
-    private void addBroadcasterToFactory(AtmosphereResource resource, String broadcasterID){
-        def conf = ApplicationHolder.application.config.icescrum.push
-        Class<? extends org.atmosphere.cpr.Broadcaster> bc = (Class<? extends org.atmosphere.cpr.Broadcaster>) ApplicationHolder.application.getClassLoader().loadClass(conf?.userBroadcaster?:'org.atmosphere.cpr.DefaultBroadcaster')
-        Broadcaster singleBroadcaster= BroadcasterFactory.default.lookup(bc, broadcasterID);
+    private static void addBroadcasterToFactory(AtmosphereResource resource, String broadcasterID){
+        Broadcaster singleBroadcaster= BroadcasterFactory.default.lookup(broadcasterID);
         if(singleBroadcaster != null){
             singleBroadcaster.addAtmosphereResource(resource)
             return
         }
-        Broadcaster selfBroadcaster = bc.newInstance(broadcasterID, resource.atmosphereConfig);
+        Broadcaster selfBroadcaster = new DefaultBroadcaster(broadcasterID, resource.atmosphereConfig)
         selfBroadcaster.addAtmosphereResource(resource)
 
         BroadcasterFactory.getDefault().add(selfBroadcaster, broadcasterID);

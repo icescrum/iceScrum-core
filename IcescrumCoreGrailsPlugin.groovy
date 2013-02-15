@@ -23,14 +23,15 @@
 import grails.converters.JSON
 import grails.converters.XML
 import grails.util.GrailsNameUtils
+import org.atmosphere.cpr.AtmosphereResource
 import org.atmosphere.cpr.BroadcasterFactory
+import org.atmosphere.cpr.HeaderConfig
 import org.codehaus.groovy.grails.commons.GrailsClassUtils
 import org.codehaus.groovy.grails.scaffolding.view.ScaffoldingViewResolver
 import org.icescrum.core.utils.JSONIceScrumDomainClassMarshaller
 import org.icescrum.plugins.attachmentable.domain.Attachment
 import org.icescrum.plugins.attachmentable.services.AttachmentableService
 import org.springframework.context.ApplicationContext
-import org.springframework.web.context.request.RequestContextHolder
 import org.codehaus.groovy.grails.commons.GrailsApplication
 import grails.util.Environment
 import org.springframework.cache.ehcache.EhCacheManagerFactoryBean
@@ -64,6 +65,7 @@ import org.icescrum.plugins.attachmentable.interfaces.AttachmentException
 import org.codehaus.groovy.grails.plugins.jasper.JasperReportDef
 import org.icescrum.core.domain.User
 import org.codehaus.groovy.grails.plugins.jasper.JasperExportFormat
+import org.springframework.web.context.request.RequestContextHolder
 import org.springframework.web.servlet.support.RequestContextUtils as RCU
 import grails.plugins.springsecurity.SpringSecurityService
 import org.codehaus.groovy.grails.plugins.jasper.JasperService
@@ -449,7 +451,7 @@ class IcescrumCoreGrailsPlugin {
             preview: {
                 Attachment attachment = Attachment.get(params.id as Long)
                 File file = attachmentableService.getFile(attachment)
-                def thumbnail = new File(file.parentFile.absolutePath+File.separator+attachment.id+'-thumbnail.'+attachment.ext)
+                def thumbnail = new File(file.parentFile.absolutePath+File.separator+attachment.id+'-thumbnail.'+(attachment.ext?.toLowerCase() != 'gif'? attachment.ext :'jpg'))
                 if (!thumbnail.exists()){
                     burningImageService.doWith(file.absolutePath, file.parentFile.absolutePath)
                     .execute (attachment.id+'-thumbnail', {
@@ -544,10 +546,10 @@ class IcescrumCoreGrailsPlugin {
             attrs.channel.each { String it ->
                 if (bufferBroadcast && bufferBroadcast.containsKey(threadId+'#'+it)) {
                     if(BroadcasterFactory.default){
-                        Class<? extends org.atmosphere.cpr.Broadcaster> bc = (Class<? extends org.atmosphere.cpr.Broadcaster>)((GrailsApplication) application).getClassLoader().loadClass(application.config.icescrum.push?.broadcaster?:'org.atmosphere.util.ExcludeSessionBroadcaster')
-                        def broadcaster = BroadcasterFactory.default.lookup(bc, it)
+                        def broadcaster = BroadcasterFactory.default.lookup(it)
                         def batch = []
                         def messages = bufferBroadcast.get(threadId+'#'+it)
+                        def uuid = attrs.excludeCaller ? RequestContextHolder.currentRequestAttributes()?.request?.getHeader(HeaderConfig.X_ATMOSPHERE_TRACKING_ID) : null
                         int partitionCount = messages.size() / size
                         partitionCount.times { partitionNumber ->
                             def start = partitionNumber * size
@@ -555,11 +557,11 @@ class IcescrumCoreGrailsPlugin {
                             batch << messages[start..end]
                         }
                         if (messages.size() % size) batch << messages[partitionCount * size..-1]
-                        def session = RequestContextHolder.requestAttributes?.request?.getSession(false)?:null
                         try {
                             batch.each {
-                                if (attrs.excludeCaller && session) {
-                                    broadcaster?.broadcast((it as JSON).toString(), session)
+                                Set<AtmosphereResource> resources = uuid ? broadcaster.atmosphereResources?.findAll{ AtmosphereResource r -> r.uuid() !=  uuid} : null
+                                if(resources){
+                                    broadcaster?.broadcast((it as JSON).toString(), resources)
                                 } else {
                                     broadcaster?.broadcast((it as JSON).toString())
                                 }
@@ -597,15 +599,15 @@ class IcescrumCoreGrailsPlugin {
             def message = [call: attrs.function, object: attrs.message]
             attrs.channel.each { String it ->
                 if(BroadcasterFactory.default){
-                    Class<? extends org.atmosphere.cpr.Broadcaster> bc = (Class<? extends org.atmosphere.cpr.Broadcaster>)((GrailsApplication) application).getClassLoader().loadClass(application.config.icescrum.push?.broadcaster?:'org.atmosphere.util.ExcludeSessionBroadcaster')
-                    def broadcaster = BroadcasterFactory.default.lookup(bc, it)
+                    def broadcaster = BroadcasterFactory.default.lookup(it)
+                    def uuid = attrs.excludeCaller ? RequestContextHolder.currentRequestAttributes()?.request?.getHeader(HeaderConfig.X_ATMOSPHERE_TRACKING_ID) : null
                     if (bufferBroadcast.containsKey(threadId+'#'+it)) {
                         bufferBroadcast.get(threadId+'#'+it) << message
                     } else {
                         try {
-                            def session = RequestContextHolder.requestAttributes?.request?.getSession(false)?:null
-                            if (attrs.excludeCaller && session) {
-                                broadcaster?.broadcast((message as JSON).toString(), session)
+                            Set<AtmosphereResource> resources = uuid ? broadcaster.atmosphereResources?.findAll{ AtmosphereResource r -> r.uuid() !=  uuid} : null
+                            if(resources){
+                                broadcaster?.broadcast((message as JSON).toString(), resources)
                             } else {
                                 broadcaster?.broadcast((message as JSON).toString())
                             }
@@ -641,143 +643,143 @@ class IcescrumCoreGrailsPlugin {
                     }
                 }
 
+                }
             }
         }
-    }
 
-    private addErrorMethod(source) {
-        source.metaClass.returnError = { attrs ->
-            if (attrs.exception){
+        private addErrorMethod(source) {
+            source.metaClass.returnError = { attrs ->
+                if (attrs.exception){
 
-                if (delegate.log.debugEnabled){
-                    delegate.log.debug(attrs.exception)
-                    delegate.log.debug(attrs.exception.cause)
-                    attrs.exception.stackTrace.each {
-                        delegate.log.debug(it)
-                    }
-                }
-
-                if (attrs.object && attrs.exception instanceof RuntimeException){
-                    if (!delegate.log.debugEnabled && delegate.log.errorEnabled){
-                        delegate.log.error(attrs.exception)
-                        delegate.log.error(attrs.exception.cause)
+                    if (delegate.log.debugEnabled){
+                        delegate.log.debug(attrs.exception)
+                        delegate.log.debug(attrs.exception.cause)
                         attrs.exception.stackTrace.each {
-                            delegate.log.error(it)
+                            delegate.log.debug(it)
                         }
                     }
 
-                    withFormat {
-                        html { render(status: 400, contentType: 'application/json', text: [notice: [text: renderErrors(bean: attrs.object)]] as JSON) }
-                        json {
-                            JSON.use('rest'){
-                                render(status: 400, contentType: 'application/json', text: is.renderErrors(bean: attrs.object, as:'json'))
+                    if (attrs.object && attrs.exception instanceof RuntimeException){
+                        if (!delegate.log.debugEnabled && delegate.log.errorEnabled){
+                            delegate.log.error(attrs.exception)
+                            delegate.log.error(attrs.exception.cause)
+                            attrs.exception.stackTrace.each {
+                                delegate.log.error(it)
                             }
                         }
-                        xml  {
-                            XML.use('rest'){
-                                render(status: 400, contentType: 'application/xml', text: is.renderErrors(bean: attrs.object, as:'xml'))
+
+                        withFormat {
+                            html { render(status: 400, contentType: 'application/json', text: [notice: [text: renderErrors(bean: attrs.object)]] as JSON) }
+                            json {
+                                JSON.use('rest'){
+                                    render(status: 400, contentType: 'application/json', text: is.renderErrors(bean: attrs.object, as:'json'))
+                                }
                             }
+                            xml  {
+                                XML.use('rest'){
+                                    render(status: 400, contentType: 'application/xml', text: is.renderErrors(bean: attrs.object, as:'xml'))
+                                }
+                            }
+                        }
+                    }else if(attrs.text){
+                        withFormat {
+                            html { render(status: 400, contentType: 'application/json', text: [notice: [text:attrs.text?:'error']] as JSON) }
+                            json { renderRESTJSON(text:[error: attrs.text?:'error'], status:400) }
+                            xml  { renderRESTXML(text:[error: attrs.text?:'error'], status:400) }
+                        }
+                    }else{
+                        if (!delegate.log.debugEnabled && delegate.log.errorEnabled && attrs.exception){
+                            delegate.log.error(attrs.exception)
+                            delegate.log.error(attrs.exception.cause)
+                            attrs.exception.stackTrace.each {
+                                delegate.log.error(it)
+                            }
+                        }
+                        withFormat {
+                            html { render(status: 400, contentType: 'application/json', text: [notice: [text: message(code: attrs.exception.getMessage())]] as JSON) }
+                            json { renderRESTJSON(text:[error: message(code: attrs.exception.getMessage())], status:400) }
+                            xml  { renderRESTXML(text:[error: message(code: attrs.exception.getMessage())], status:400) }
                         }
                     }
-                }else if(attrs.text){
+                }else{
                     withFormat {
                         html { render(status: 400, contentType: 'application/json', text: [notice: [text:attrs.text?:'error']] as JSON) }
                         json { renderRESTJSON(text:[error: attrs.text?:'error'], status:400) }
                         xml  { renderRESTXML(text:[error: attrs.text?:'error'], status:400) }
                     }
-                }else{
-                    if (!delegate.log.debugEnabled && delegate.log.errorEnabled && attrs.exception){
-                        delegate.log.error(attrs.exception)
-                        delegate.log.error(attrs.exception.cause)
-                        attrs.exception.stackTrace.each {
-                            delegate.log.error(it)
-                        }
+                }
+            }
+        }
+
+        private addRenderRESTMethod(source) {
+            source.metaClass.renderRESTJSON = { attrs ->
+                JSON.use('rest'){
+                    render (status: attrs.status?:200, contentType: 'application/json', text: attrs.text as JSON)
+                }
+            }
+            source.metaClass.renderRESTXML = { attrs ->
+                XML.use('rest'){
+                    render(status: attrs.status?:200, contentType: 'application/xml', text: attrs.text as XML)
+                }
+            }
+        }
+
+        private void addJasperMethod(source, springSecurityService, jasperService){
+            try {
+                source.metaClass.outputJasperReport = { String reportName, String format, def data, String outputName = null, def parameters = null ->
+                    outputName = (outputName ? outputName.replaceAll("[^a-zA-Z\\s]", "").replaceAll(" ", "") + '-' + reportName : reportName) + '-' + (g.formatDate(formatName: 'is.date.file'))
+                    if (!session.progress){
+                         session.progress = new ProgressSupport()
                     }
-                    withFormat {
-                        html { render(status: 400, contentType: 'application/json', text: [notice: [text: message(code: attrs.exception.getMessage())]] as JSON) }
-                        json { renderRESTJSON(text:[error: message(code: attrs.exception.getMessage())], status:400) }
-                        xml  { renderRESTXML(text:[error: message(code: attrs.exception.getMessage())], status:400) }
+                    session.progress.updateProgress(50, message(code: 'is.report.processing'))
+                    if (parameters){
+                        parameters.SUBREPORT_DIR = "${servletContext.getRealPath('reports/subreports')}/"
+                    }else{
+                        parameters = [SUBREPORT_DIR: "${servletContext.getRealPath('reports/subreports')}/"]
                     }
+                    def reportDef = new JasperReportDef(name: reportName,
+                                                        reportData: data,
+                                                        locale: springSecurityService.isLoggedIn() ? new Locale(User.get(springSecurityService.principal?.id)?.preferences?.language) : RCU.getLocale(request),
+                                                        parameters: parameters,
+                                                        fileFormat: JasperExportFormat.determineFileFormat(format))
+
+                    response.setHeader("Content-disposition", "attachment; filename=" + outputName + "." + reportDef.fileFormat.extension)
+                    response.contentType = reportDef.fileFormat.mimeTyp
+                    response.characterEncoding = "UTF-8"
+                    response.outputStream << jasperService.generateReport(reportDef).toByteArray()
+                    session.progress?.completeProgress(message(code: 'is.report.complete'))
                 }
-            }else{
-                withFormat {
-                    html { render(status: 400, contentType: 'application/json', text: [notice: [text:attrs.text?:'error']] as JSON) }
-                    json { renderRESTJSON(text:[error: attrs.text?:'error'], status:400) }
-                    xml  { renderRESTXML(text:[error: attrs.text?:'error'], status:400) }
-                }
+            } catch (Exception e) {
+                if (log.debugEnabled) e.printStackTrace()
+                session.progress.progressError(message(code: 'is.report.error'))
             }
         }
-    }
 
-    private addRenderRESTMethod(source) {
-        source.metaClass.renderRESTJSON = { attrs ->
-            JSON.use('rest'){
-                render (status: attrs.status?:200, contentType: 'application/json', text: attrs.text as JSON)
-            }
-        }
-        source.metaClass.renderRESTXML = { attrs ->
-            XML.use('rest'){
-                render(status: attrs.status?:200, contentType: 'application/xml', text: attrs.text as XML)
-            }
-        }
-    }
-
-    private void addJasperMethod(source, springSecurityService, jasperService){
-        try {
-            source.metaClass.outputJasperReport = { String reportName, String format, def data, String outputName = null, def parameters = null ->
-                outputName = (outputName ? outputName.replaceAll("[^a-zA-Z\\s]", "").replaceAll(" ", "") + '-' + reportName : reportName) + '-' + (g.formatDate(formatName: 'is.date.file'))
-                if (!session.progress){
-                     session.progress = new ProgressSupport()
-                }
-                session.progress.updateProgress(50, message(code: 'is.report.processing'))
-                if (parameters){
-                    parameters.SUBREPORT_DIR = "${servletContext.getRealPath('reports/subreports')}/"
-                }else{
-                    parameters = [SUBREPORT_DIR: "${servletContext.getRealPath('reports/subreports')}/"]
-                }
-                def reportDef = new JasperReportDef(name: reportName,
-                                                    reportData: data,
-                                                    locale: springSecurityService.isLoggedIn() ? new Locale(User.get(springSecurityService.principal?.id)?.preferences?.language) : RCU.getLocale(request),
-                                                    parameters: parameters,
-                                                    fileFormat: JasperExportFormat.determineFileFormat(format))
-
-                response.setHeader("Content-disposition", "attachment; filename=" + outputName + "." + reportDef.fileFormat.extension)
-                response.contentType = reportDef.fileFormat.mimeTyp
-                response.characterEncoding = "UTF-8"
-                response.outputStream << jasperService.generateReport(reportDef).toByteArray()
-                session.progress?.completeProgress(message(code: 'is.report.complete'))
-            }
-        } catch (Exception e) {
-            if (log.debugEnabled) e.printStackTrace()
-            session.progress.progressError(message(code: 'is.report.error'))
-        }
-    }
-
-    private addWithObjectsMethods (source) {
-        source.metaClass.withFeature = { def id = 'id', Closure c ->
-            def feature = (Feature)Feature.getInProduct(params.long('product'), (id instanceof String ? params."$id".toLong() : id) ).list()
-            if (feature) {
-                try {
-                    c.call feature
-                } catch (AttachmentException e) {
-                    returnError(exception: e)
-                } catch (IllegalStateException e) {
-                    returnError(exception: e)
-                } catch (RuntimeException e) {
-                    if (feature.errors.errorCount)
-                        returnError(object: feature, exception: e)
-                    else
+        private addWithObjectsMethods (source) {
+            source.metaClass.withFeature = { def id = 'id', Closure c ->
+                def feature = (Feature)Feature.getInProduct(params.long('product'), (id instanceof String ? params."$id".toLong() : id) ).list()
+                if (feature) {
+                    try {
+                        c.call feature
+                    } catch (AttachmentException e) {
                         returnError(exception: e)
+                    } catch (IllegalStateException e) {
+                        returnError(exception: e)
+                    } catch (RuntimeException e) {
+                        if (feature.errors.errorCount)
+                            returnError(object: feature, exception: e)
+                        else
+                            returnError(exception: e)
+                    }
+                } else {
+                    returnError(text: message(code: 'is.feature.error.not.exist'))
                 }
-            } else {
-                returnError(text: message(code: 'is.feature.error.not.exist'))
             }
-        }
 
-        source.metaClass.withFeatures = { String id = 'id', Closure c ->
-            List<Feature> features = Feature.getAll(params.list(id))
-            if (features) {
-                try {
+            source.metaClass.withFeatures = { String id = 'id', Closure c ->
+                List<Feature> features = Feature.getAll(params.list(id))
+                if (features) {
+                    try {
                     c.call features
                 } catch (IllegalStateException e) {
                     returnError(exception: e)

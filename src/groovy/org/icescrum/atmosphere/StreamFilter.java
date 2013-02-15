@@ -21,6 +21,9 @@
  */
 package org.icescrum.atmosphere;
 
+import org.atmosphere.cpr.AtmosphereRequest;
+import org.atmosphere.cpr.AtmosphereResource;
+import org.atmosphere.cpr.BroadcastFilter;
 import org.atmosphere.cpr.PerRequestBroadcastFilter;
 
 import javax.servlet.http.HttpServletRequest;
@@ -29,8 +32,9 @@ import javax.servlet.http.HttpServletResponse;
 public class StreamFilter implements PerRequestBroadcastFilter {
 
     @Override
-    public BroadcastAction filter(HttpServletRequest request, HttpServletResponse response, Object message) {
+    public BroadcastAction filter(AtmosphereResource r, Object message, Object originalMessage) {
         String msg = message.toString();
+        AtmosphereRequest request = r.getRequest();
         if (request.getParameter("ws") == null || !Boolean.valueOf(request.getParameter("ws"))){
             msg = msg.length() + ";" + msg + ';';
         }

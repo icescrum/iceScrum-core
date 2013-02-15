@@ -34,13 +34,13 @@ icescrum {
                           'org.atmosphere.cpr.broadcaster.maxProcessingThreads': 5,
                           'org.atmosphere.cpr.broadcaster.maxAsyncWriteThreads': 5,
                           'org.atmosphere.cpr.broadcasterLifeCyclePolicy': 'EMPTY_DESTROY',
-                          'org.atmosphere.cpr.broadcastFilterClasses': 'org.icescrum.atmosphere.StreamFilter']
+                          'org.atmosphere.cpr.broadcastFilterClasses': 'org.atmosphere.client.TrackMessageSizeFilter']
             urlPattern = '/stream/app'
         }
         handlers {
             // This closure is used to generate the atmosphere.xml using a MarkupBuilder instance in META-INF folder
             atmosphereDotXml = {
-                'atmosphere-handler'('context-root': '/stream/app/*', 'class-name': 'org.icescrum.atmosphere.IceScrumAtmosphereHandler', 'broadcaster': 'org.atmosphere.util.ExcludeSessionBroadcaster')
+                'atmosphere-handler'('context-root': '/stream/app/*', 'class-name': 'org.icescrum.atmosphere.IceScrumAtmosphereHandler')
             }
         }
         redis {
