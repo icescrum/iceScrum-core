@@ -22,6 +22,7 @@ package org.icescrum.core.services
 
 import org.icescrum.core.domain.Sprint
 import org.icescrum.core.domain.Task
+import org.icescrum.core.event.IceScrumBacklogElementEvent
 import org.icescrum.core.event.IceScrumTaskEvent
 import org.springframework.context.ApplicationListener
 import org.icescrum.core.event.IceScrumStoryEvent
@@ -50,7 +51,7 @@ class NotificationEmailService implements ApplicationListener<IceScrumEvent> {
                 sendAlertCUD((Story) e.source, (User) e.doneBy, e.type)
             } else if (e instanceof IceScrumStoryEvent && e.type in IceScrumStoryEvent.EVENT_STATE_LIST) {
                 sendAlertState((Story) e.source, (User) e.doneBy, e.type)
-            } else if (e instanceof IceScrumStoryEvent && e.type in IceScrumStoryEvent.EVENT_COMMENT_LIST) {
+            } else if (e instanceof IceScrumBacklogElementEvent && e.source instanceof Story && e.type in IceScrumBacklogElementEvent.EVENT_COMMENT_LIST) {
                 sendAlertComment((Story) e.source, (User) e.doneBy, e.type, e.comment)
             } else if (e instanceof IceScrumStoryEvent && e.type in IceScrumStoryEvent.EVENT_ACCEPTED_AS_LIST) {
                 sendAlertAcceptedAs((BacklogElement) e.source, (User) e.doneBy, e.type)
@@ -162,7 +163,7 @@ class NotificationEmailService implements ApplicationListener<IceScrumEvent> {
         def permalink = grailsApplication.config.grails.serverURL + '/p/' + story.backlog.pkey + '-' + story.uid
         def projectLink = grailsApplication.config.grails.serverURL + '/p/' + story.backlog.pkey + '#project'
 
-        if (type == IceScrumStoryEvent.EVENT_COMMENT_ADDED) {
+        if (type == IceScrumBacklogElementEvent.EVENT_COMMENT_ADDED) {
             story.followers?.findAll {isCandidateForMail(it, user)}?.each { listTo << [email: it.email, locale: new Locale(it.preferences.language)] }
 
             StringWriter text = new StringWriter()
@@ -184,7 +185,7 @@ class NotificationEmailService implements ApplicationListener<IceScrumEvent> {
                         model: [by: comment.poster.firstName + " " + comment.poster.lastName, comment: text, locale: locale, storyName: story.name, permalink: permalink, linkName: story.backlog.name, link: projectLink]
                 ])
             }
-        } else if (type == IceScrumStoryEvent.EVENT_COMMENT_UPDATED) {
+        } else if (type == IceScrumBacklogElementEvent.EVENT_COMMENT_UPDATED) {
             story.followers?.findAll {isCandidateForMail(it, user)}?.each { listTo << [email: it.email, locale: new Locale(it.preferences.language)] }
             listTo?.unique()?.groupBy {it.locale}?.each { locale, group ->
                 if (log.debugEnabled) {

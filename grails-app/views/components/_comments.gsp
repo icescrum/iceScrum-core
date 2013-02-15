@@ -29,7 +29,7 @@
           collection="${comments}"
           var="comment"
           plugin="icescrum-core"
-          model="[noEscape:noEscape, backlogElement:commentable, moderation:true, access:poOrSm, user:user]"/>
+          model="[noEscape:noEscape, commentable:commentable, product:product, moderation:true, access:poOrSm, user:user]"/>
 </ul>
 <div id="addComment" class="addComment">
   <g:render template="/components/commentEditor"

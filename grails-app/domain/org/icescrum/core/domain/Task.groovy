@@ -28,6 +28,7 @@
 
 package org.icescrum.core.domain
 
+import grails.util.GrailsNameUtils
 import org.icescrum.core.event.IceScrumEvent
 import org.icescrum.core.event.IceScrumTaskEvent
 import org.springframework.security.core.context.SecurityContextHolder as SCH
@@ -274,6 +275,18 @@ class Task extends BacklogElement implements Serializable {
                    WHERE t.backlog = s
                    AND s.parentRelease = r
                    AND r.parentProduct.id = :pid """, [pid: pid])[0]?:0) + 1
+    }
+
+    static findLastUpdatedComment(def element) {
+        executeQuery("SELECT c.lastUpdated " +
+            "FROM org.grails.comments.Comment as c, org.grails.comments.CommentLink as cl, ${element.class.name} as b " +
+            "WHERE c = cl.comment " +
+            "AND cl.commentRef = b " +
+            "AND cl.type = :type " +
+            "AND b.id = :id " +
+            "ORDER BY c.lastUpdated DESC",
+            [id: element.id, type: GrailsNameUtils.getPropertyName(element.class)],
+            [max: 1])[0]
     }
 
     @Override

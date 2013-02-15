@@ -55,7 +55,7 @@ class CommentTagLib {
     def noEscape = attrs.containsKey('noEscape') ? attrs.noEscape : false
     def noComment = attrs.noComment ?: 'No comment.'
     if (bean?.metaClass?.hasProperty(bean, "comments")) {
-      out << g.render(template: "/components/comments", plugin: "icescrum-core", model: [commentable: bean, noEscape: noEscape, noComment:noComment, user:springSecurityService.currentUser])
+      out << g.render(template: "/components/comments", plugin: "icescrum-core", model: [commentable: bean, product:attrs.product, noEscape: noEscape, noComment:noComment, user:springSecurityService.currentUser])
     }
   }
 }

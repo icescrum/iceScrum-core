@@ -1,4 +1,4 @@
-<%@ page import="org.icescrum.core.domain.BacklogElement; org.icescrum.core.domain.User" %>
+<%@ page import="grails.util.GrailsNameUtils; org.icescrum.core.domain.BacklogElement; org.icescrum.core.domain.User" %>
 %{--
   - Copyright (c) 2010 iceScrum Technologies.
   -
@@ -30,7 +30,7 @@
       <div class="comment-details">
         <is:scrumLink controller="user" action='profile' id="${comment.poster?.username}"><strong>${comment.poster?.firstName?.encodeAsHTML()} ${comment.poster?.lastName?.encodeAsHTML()}</strong></is:scrumLink>,
         <g:if test="${!template}">
-            <g:formatDate date="${comment.dateCreated}" formatName="is.date.format.short.time" class="comment-dateCreated" timeZone="${backlogElement.backlog.preferences.timezone}"/>
+            <g:formatDate date="${comment.dateCreated}" formatName="is.date.format.short.time" class="comment-dateCreated" timeZone="${product.preferences.timezone}"/>
         </g:if>
         <g:else>
             <span class="comment-dateCreated">${comment.dateCreated}</span>
@@ -41,11 +41,11 @@
               <is:link history="false"
                       class="edit-comment"
                       remote="true"
-                      controller="story"
-                      action="editCommentEditor"
+                      controller="comment"
+                      action="editor"
                       id="${comment.id}"
                       update="commentEditorWrapper${comment.id}"
-                      params="[commentable:backlogElement.id]"
+                      params="[commentable:commentable.id, type:type?:GrailsNameUtils.getShortName(commentable.class).toLowerCase()]"
                       onSuccess="jQuery('#commentEditorContainer').hide();jQuery('#comment${comment.id} .commentContent').hide();jQuery('#commentEditorWrapper${comment?.id ?: ''}').show();"
                       rendered="${(access || user?.id == comment.poster?.id) ? 'true' : 'false'}">
                 ${message(code:'is.ui.backlogelement.comment.edit')}
@@ -54,11 +54,11 @@
                 <is:link history="false"
                         class="delete-comment"
                         remote="true"
-                        controller="story"
-                        action="deleteComment"
+                        controller="comment"
+                        action="delete"
                         id="${comment.id}"
                         onSuccess="jQuery.event.trigger('remove_comment',data)"
-                        params="[backlogElement:backlogElement.id]">
+                        params="[commentable:commentable.id,type:type?:GrailsNameUtils.getShortName(commentable.class).toLowerCase()]">
                 - ${message(code:'is.ui.backlogelement.comment.delete')}
                 </is:link>
               </g:if>
@@ -67,7 +67,7 @@
         </g:if>
         <g:if test="${!template && comment.lastUpdated && comment.lastUpdated.time >= (comment.dateCreated.time + 5000)}">
           <em>${message(code:'is.ui.backlogelement.comment.last.update')}
-                <g:formatDate date="${comment.lastUpdated}" formatName="is.date.format.short.time" class="comment-lastUpdated" timeZone="${backlogElement.backlog.preferences.timezone}"/>
+                <g:formatDate date="${comment.lastUpdated}" formatName="is.date.format.short.time" class="comment-lastUpdated" timeZone="${product.preferences.timezone}"/>
           </em>
         </g:if>
         <g:if test="${template}">
@@ -80,7 +80,7 @@
             ${comment.body}
         </g:if>
           <g:else>
-            <wikitext:renderHtml markup="Textile">${comment.body}</wikitext:renderHtml>
+              <div class="rich-content"><wikitext:renderHtml markup="Textile">${comment.body}</wikitext:renderHtml></div>
           </g:else>
       </div>
 

@@ -27,6 +27,7 @@
 package org.icescrum.core.domain
 
 import org.grails.comments.Comment
+import org.icescrum.core.event.IceScrumBacklogElementEvent
 import org.icescrum.core.event.IceScrumEvent
 import org.icescrum.core.event.IceScrumStoryEvent
 import org.icescrum.plugins.attachmentable.domain.Attachment
@@ -532,16 +533,16 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                 "ORDER BY a.activity.dateCreated DESC", [uid: user.id], [cache:true,max: 15])
     }
 
-    static findLastUpdatedComment(long storyId) {
+    static findLastUpdatedComment(def element) {
         executeQuery("SELECT c.lastUpdated " +
-                "FROM org.grails.comments.Comment as c, org.grails.comments.CommentLink as cl, org.icescrum.core.domain.Story as s " +
-                "WHERE c = cl.comment " +
-                "AND cl.commentRef = s " +
-                "AND cl.type = :storyType " +
-                "AND s.id = :storyId " +
-                "ORDER BY c.lastUpdated DESC",
-                [storyId: storyId, storyType: GrailsNameUtils.getPropertyName(Story)],
-                [max: 1])[0]
+            "FROM org.grails.comments.Comment as c, org.grails.comments.CommentLink as cl, ${element.class.name} as b " +
+            "WHERE c = cl.comment " +
+            "AND cl.commentRef = b " +
+            "AND cl.type = :type " +
+            "AND b.id = :id " +
+            "ORDER BY c.lastUpdated DESC",
+            [id: element.id, type: GrailsNameUtils.getPropertyName(element.class)],
+            [max: 1])[0]
     }
 
     int compareTo(Story o) {
@@ -603,10 +604,6 @@ class Story extends BacklogElement implements Cloneable, Serializable {
 
     def getDeliveredVersion(){
         return this.state == STATE_DONE ? this.parentSprint.deliveredVersion ?: null : null
-    }
-
-    def onAddComment = { Comment c ->
-        publishEvent new IceScrumStoryEvent(this, c, this.class, (User)c.poster, IceScrumStoryEvent.EVENT_COMMENT_ADDED)
     }
 
     def onAddAttachment = { Attachment a ->
