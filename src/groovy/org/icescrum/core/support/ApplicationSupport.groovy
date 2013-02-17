@@ -28,6 +28,8 @@ import groovyx.net.http.RESTClient
 import grails.util.Metadata
 import org.apache.commons.logging.LogFactory
 import org.icescrum.core.domain.User
+
+import java.security.MessageDigest
 import java.util.zip.ZipOutputStream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
@@ -119,7 +121,15 @@ class ApplicationSupport {
         if (!fileID.createNewFile()){
             println "Error could not create file : ${filePath} please check directory & user permission"
         }
-        config.icescrum.appID = UUID.randomUUID()
+        def uid = NetworkInterface.networkInterfaces?.nextElement()?.hardwareAddress
+        if (uid){
+            MessageDigest md = MessageDigest.getInstance("MD5")
+            md.update(uid)
+            uid = new BigInteger(1, md.digest() ).toString(16).padLeft(32, '0')
+            uid = uid.substring(0,8) +'-'+ uid.substring(8,12) +'-'+ uid.substring(12,16) +'-'+ uid.substring(16,20) +'-'+ uid.substring(20,32)
+        }
+        uid = uid ?: UUID.randomUUID()
+        config.icescrum.appID = uid
         fileID <<  config.icescrum.appID
         if (log.debugEnabled) log.debug('regenerate appID '+config.icescrum.appID)
     }else{
