@@ -545,8 +545,8 @@ class IcescrumCoreGrailsPlugin {
 
             attrs.channel.each { String it ->
                 if (bufferBroadcast && bufferBroadcast.containsKey(threadId+'#'+it)) {
-                    if(BroadcasterFactory.default){
-                        def broadcaster = BroadcasterFactory.default.lookup(it)
+                    def broadcaster = BroadcasterFactory.default.lookup(it)
+                    if(broadcaster){
                         def batch = []
                         def messages = bufferBroadcast.get(threadId+'#'+it)
                         def uuid = attrs.excludeCaller ? RequestContextHolder.currentRequestAttributes()?.request?.getHeader(HeaderConfig.X_ATMOSPHERE_TRACKING_ID) : null
