@@ -33,6 +33,7 @@ icescrum {
                           'org.atmosphere.cpr.broadcaster.shareableThreadPool': true,
                           'org.atmosphere.cpr.broadcaster.maxProcessingThreads': 5,
                           'org.atmosphere.cpr.broadcaster.maxAsyncWriteThreads': 5,
+                          'org.atmosphere.cpr.broadcasterClass' : 'org.atmosphere.cpr.DefaultBroadcaster',
                           'org.atmosphere.cpr.broadcasterLifeCyclePolicy': 'EMPTY_DESTROY',
                           'org.atmosphere.cpr.broadcastFilterClasses': 'org.atmosphere.client.TrackMessageSizeFilter']
             urlPattern = '/stream/app'
