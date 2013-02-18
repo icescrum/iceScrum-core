@@ -598,8 +598,8 @@ class IcescrumCoreGrailsPlugin {
 
             def message = [call: attrs.function, object: attrs.message]
             attrs.channel.each { String it ->
-                if(BroadcasterFactory.default){
-                    def broadcaster = BroadcasterFactory.default.lookup(it)
+                def broadcaster = BroadcasterFactory.default.lookup(it)
+                if(broadcaster){
                     def uuid = attrs.excludeCaller ? RequestContextHolder.currentRequestAttributes()?.request?.getHeader(HeaderConfig.X_ATMOSPHERE_TRACKING_ID) : null
                     if (bufferBroadcast.containsKey(threadId+'#'+it)) {
                         bufferBroadcast.get(threadId+'#'+it) << message
