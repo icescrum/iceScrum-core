@@ -459,10 +459,11 @@ class FormTagLib {
             ]
             def progress = '{' + paramP.findAll {k, v -> v != null}.collect {k, v -> " $k:$v"}.join(',') + '}'
 
+            def buttonLocale = RCU.getLocale(request).toString().toLowerCase().contains('fr') ? 'fr' : 'en'
             def paramM = [
                     name: '\'' + attrs.name + '\'',
                     accept: attrs.accept as JSON,
-                    image: '\'' + grailsApplication.config.grails.serverURL + '/' + is.currentThemeImage() + 'buttons/choose-' + RCU.getLocale(request) + '.png\'',
+                    image: '\'' + grailsApplication.config.grails.serverURL + '/' + is.currentThemeImage() + 'buttons/choose-' + buttonLocale + '.png\'',
                     size: attrs.size ?: null,
                     multi: attrs.multi ?: null,
                     onUploadComplete: attrs.onUploadComplete ? 'function(fileID){' + attrs.onUploadComplete + '}' : null,
