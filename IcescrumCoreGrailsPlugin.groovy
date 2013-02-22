@@ -545,7 +545,7 @@ class IcescrumCoreGrailsPlugin {
 
             attrs.channel.each { String it ->
                 if (bufferBroadcast && bufferBroadcast.containsKey(threadId+'#'+it)) {
-                    def broadcaster = BroadcasterFactory.default.lookup(it)
+                    def broadcaster = BroadcasterFactory?.default?.lookup(it)?:null
                     if(broadcaster){
                         def batch = []
                         def messages = bufferBroadcast.get(threadId+'#'+it)
@@ -562,7 +562,7 @@ class IcescrumCoreGrailsPlugin {
                                 Set<AtmosphereResource> resources = uuid ? broadcaster.atmosphereResources?.findAll{ AtmosphereResource r -> r.uuid() !=  uuid} : null
                                 if(resources){
                                     broadcaster?.broadcast((it as JSON).toString(), resources)
-                                } else {
+                                } else if (!uuid) {
                                     broadcaster?.broadcast((it as JSON).toString())
                                 }
                             }
@@ -598,7 +598,7 @@ class IcescrumCoreGrailsPlugin {
 
             def message = [call: attrs.function, object: attrs.message]
             attrs.channel.each { String it ->
-                def broadcaster = BroadcasterFactory.default.lookup(it)
+                def broadcaster = BroadcasterFactory?.default?.lookup(it)?:null
                 if(broadcaster){
                     def uuid = attrs.excludeCaller ? RequestContextHolder.currentRequestAttributes()?.request?.getHeader(HeaderConfig.X_ATMOSPHERE_TRACKING_ID) : null
                     if (bufferBroadcast.containsKey(threadId+'#'+it)) {
@@ -608,7 +608,7 @@ class IcescrumCoreGrailsPlugin {
                             Set<AtmosphereResource> resources = uuid ? broadcaster.atmosphereResources?.findAll{ AtmosphereResource r -> r.uuid() !=  uuid} : null
                             if(resources){
                                 broadcaster?.broadcast((message as JSON).toString(), resources)
-                            } else {
+                            } else if (!uuid) {
                                 broadcaster?.broadcast((message as JSON).toString())
                             }
                         }catch(Exception e){

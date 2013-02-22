@@ -47,6 +47,7 @@ class IceScrumAtmosphereHandler implements AtmosphereHandler {
         event.suspend(60, TimeUnit.SECONDS);
 
         def productID = event.request.getParameterValues("product") ? event.request.getParameterValues("product")[0] : null
+
         def user = getUserFromAtmosphereResource(event.request, true) ?: [fullName: 'anonymous', id: null, username: 'anonymous']
         event.request.setAttribute(USER_CONTEXT, user)
 
@@ -58,10 +59,7 @@ class IceScrumAtmosphereHandler implements AtmosphereHandler {
 
         channel = channel?.toString()
         if (channel) {
-            def broadcaster = BroadcasterFactory.default.lookup(channel)
-            if(broadcaster == null){
-                broadcaster = new DefaultBroadcaster(channel, event.atmosphereConfig)
-            }
+            def broadcaster = BroadcasterFactory.default.lookup(channel) ?: new DefaultBroadcaster(channel, event.atmosphereConfig)
             broadcaster.addAtmosphereResource(event)
             if (log.isDebugEnabled()) {
                 log.debug("add user ${user.username} to broadcaster: ${channel}")
@@ -69,8 +67,8 @@ class IceScrumAtmosphereHandler implements AtmosphereHandler {
             def users = broadcaster.atmosphereResources.collect{ it.request.getAttribute(USER_CONTEXT) }
             broadcaster.broadcast(([broadcaster:[users:users]] as JSON).toString())
         }
-        if (user.id)
-            addBroadcasterToFactory(event, (String)user.username)
+        //if (user.id)
+            //addBroadcasterToFactory(event, (String)user.username)
     }
 
     void onStateChange(AtmosphereResourceEvent event) throws IOException {
@@ -131,7 +129,7 @@ class IceScrumAtmosphereHandler implements AtmosphereHandler {
         user
     }
 
-    private static void addBroadcasterToFactory(AtmosphereResource resource, String broadcasterID){
+    /*private static void addBroadcasterToFactory(AtmosphereResource resource, String broadcasterID){
         Broadcaster singleBroadcaster= BroadcasterFactory.default.lookup(broadcasterID);
         if(singleBroadcaster != null){
             singleBroadcaster.addAtmosphereResource(resource)
@@ -144,5 +142,5 @@ class IceScrumAtmosphereHandler implements AtmosphereHandler {
         if (log.isDebugEnabled()) {
             log.debug('new broadcaster for user')
         }
-    }
+    }*/
 }
