@@ -90,6 +90,7 @@ class IceScrumAtmosphereHandler implements AtmosphereHandler {
                     }
                 }
             }
+            AtmosphereResourceFactory.getDefault().remove(event.resource.uuid());
 
             if (!event.message) {
                 return
