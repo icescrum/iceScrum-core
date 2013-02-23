@@ -56,7 +56,7 @@ class IceScrumAtmosphereEventListener implements AtmosphereResourceEventListener
             def broadcaster = BroadcasterFactory.default.lookup(channel) ?: BroadcasterFactory.default.get(channel)
             broadcaster.addAtmosphereResource(event.resource)
             if (log.isDebugEnabled()) {
-                log.debug("add user ${user.username} to broadcaster: ${channel}")
+                log.debug("add user ${user.username} with UUID ${event.resource.uuid()} to broadcaster: ${channel}")
             }
             def users = broadcaster.atmosphereResources.collect{
                 it.request.getAttribute(IceScrumAtmosphereEventListener.USER_CONTEXT)
@@ -67,14 +67,17 @@ class IceScrumAtmosphereEventListener implements AtmosphereResourceEventListener
 
     @Override
     void onResume(AtmosphereResourceEvent event) {
-        //To change body of implemented methods use File | Settings | File Templates.
+        def user = event.resource.request.getAttribute(USER_CONTEXT)?:null
+        if (log.isDebugEnabled()) {
+            log.debug("Resume connection for user ${user?.username} with UUID ${event.resource.uuid()}")
+        }
     }
 
     @Override
     void onDisconnect(AtmosphereResourceEvent event) {
         def user = event.resource.request.getAttribute(USER_CONTEXT)?:null
         if (log.isDebugEnabled()) {
-            log.debug("user ${user.username} disconnected")
+            log.debug("user ${user?.username} disconnected with UUID ${event.resource.uuid()}")
         }
         BroadcasterFactory.default.lookupAll().each {
             if (it.atmosphereResources.contains(event.resource)){
@@ -90,7 +93,10 @@ class IceScrumAtmosphereEventListener implements AtmosphereResourceEventListener
 
     @Override
     void onBroadcast(AtmosphereResourceEvent event) {
-        //To change body of implemented methods use File | Settings | File Templates.
+        def user = event.resource.request.getAttribute(USER_CONTEXT)?:null
+        if (log.isDebugEnabled()) {
+            log.debug("broadcast to user ${user?.username} with UUID ${event.resource.uuid()}")
+        }
     }
 
     @Override
