@@ -559,6 +559,9 @@ class IcescrumCoreGrailsPlugin {
                         }
                         if (messages.size() % size) batch << messages[partitionCount * size..-1]
                         try {
+                            if (log.debugEnabled()){
+                                log.debug("broadcast to channel ${it} and exclude uuid : ${uuid}")
+                            }
                             batch.each {
                                 Set<AtmosphereResource> resources = uuid ? broadcaster.atmosphereResources?.findAll{ AtmosphereResource r -> r.uuid() !=  uuid} : null
                                 if(resources){
@@ -606,6 +609,9 @@ class IcescrumCoreGrailsPlugin {
                         bufferBroadcast.get(threadId+'#'+it) << message
                     } else {
                         try {
+                            if (log.debugEnabled()){
+                                log.debug("broadcast to channel ${it} and exclude uuid : ${uuid}")
+                            }
                             Set<AtmosphereResource> resources = uuid ? broadcaster.atmosphereResources?.findAll{ AtmosphereResource r -> r.uuid() !=  uuid} : null
                             if(resources){
                                 broadcaster?.broadcast((message as JSON).toString(), resources)
