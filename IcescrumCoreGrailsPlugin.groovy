@@ -559,7 +559,7 @@ class IcescrumCoreGrailsPlugin {
                         }
                         if (messages.size() % size) batch << messages[partitionCount * size..-1]
                         try {
-                            if (log.debugEnabled()){
+                            if (log.debugEnabled){
                                 log.debug("broadcast to channel ${it} and exclude uuid : ${uuid}")
                             }
                             batch.each {
