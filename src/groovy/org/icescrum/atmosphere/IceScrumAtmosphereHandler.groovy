@@ -21,127 +21,25 @@
  */
 package org.icescrum.atmosphere
 
-import org.apache.commons.logging.LogFactory
-import org.icescrum.core.domain.Product
-import org.springframework.security.core.context.SecurityContext
-import org.springframework.security.web.context.HttpSessionSecurityContextRepository
+import org.atmosphere.handler.AbstractReflectorAtmosphereHandler
 import org.atmosphere.cpr.*
 import org.codehaus.groovy.grails.commons.ApplicationHolder
-import grails.converters.JSON
 
-import java.util.concurrent.TimeUnit
+class IceScrumAtmosphereHandler extends AbstractReflectorAtmosphereHandler {
 
-class IceScrumAtmosphereHandler implements AtmosphereHandler {
-
-    private static final log = LogFactory.getLog(this)
-    private static final USER_CONTEXT = 'user_context'
-
+    @Override
     void onRequest(AtmosphereResource event) throws IOException {
         def conf = ApplicationHolder.application.config.icescrum.push
         if (!conf.enable) {
             event.resume()
             return
         }
-
         event.response.setContentType("text/plain;charset=ISO-8859-1")
-        event.suspend(60, TimeUnit.SECONDS);
-
-        def productID = event.request.getParameterValues("product") ? event.request.getParameterValues("product")[0] : null
-
-        def user = getUserFromAtmosphereResource(event.request, true) ?: [fullName: 'anonymous', id: null, username: 'anonymous']
-        event.request.setAttribute(USER_CONTEXT, user)
-
-        def channel = null
-
-        if (productID && productID.isLong()) {
-            channel = Product.load(productID.toLong()) ? "product-${productID}" : null
-        }
-
-        channel = channel?.toString()
-        if (channel) {
-            def broadcaster = BroadcasterFactory.default.lookup(channel) ?: new DefaultBroadcaster(channel, event.atmosphereConfig)
-            broadcaster.addAtmosphereResource(event)
-            if (log.isDebugEnabled()) {
-                log.debug("add user ${user.username} to broadcaster: ${channel}")
-            }
-            def users = broadcaster.atmosphereResources.collect{ it.request.getAttribute(USER_CONTEXT) }
-            broadcaster.broadcast(([broadcaster:[users:users]] as JSON).toString())
-        }
-        //if (user.id)
-            //addBroadcasterToFactory(event, (String)user.username)
+        event.addEventListener( new IceScrumAtmosphereEventListener() {} );
+        event.suspend();
     }
 
-    void onStateChange(AtmosphereResourceEvent event) throws IOException {
-
-        def user = event.resource.request.getAttribute(USER_CONTEXT)?:null
-
-        //Event cancelled
-        if (event.cancelled) {
-            if (log.isDebugEnabled()) {
-                log.debug("user ${user.username} disconnected")
-            }
-            //Help atmosphere to clear old events
-            BroadcasterFactory.default.lookupAll().each {
-                if (it.atmosphereResources.contains(event.resource)){
-                    it.removeAtmosphereResource(event.resource)
-                    if (it.getID().contains('product-')) {
-                        def users = it.atmosphereResources?.collect{ it.request.getAttribute(USER_CONTEXT) }
-                        it.broadcast(([broadcaster:[users:users]] as JSON).toString())
-                    }
-                }
-            }
-            AtmosphereResourceFactory.getDefault().remove(event.resource.uuid());
-
-            if (!event.message) {
-                return
-            }
-        }
-
-        //No message why I'm here ?
-        if (!event.message) {
-            return
-        }
-
-        //Finally broadcast message to client
-        if (!event.resumedOnTimeout){
-            if (log.isDebugEnabled()) {
-                   log.debug("broadcast to user ${user.username}")
-               }
-            event.resource.response.writer.with {
-                write "${event.message}"
-                flush()
-            }
-        }
-    }
-
+    @Override
     void destroy() {
-
     }
-
-    private static def getUserFromAtmosphereResource(def request, def createSession = false) {
-        def httpSession = request.getSession(createSession)
-        def user = null
-        if (httpSession != null) {
-            def context = (SecurityContext) httpSession.getAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY);
-            if (context?.authentication?.isAuthenticated()) {
-                user = [fullName:context.authentication.principal.fullName, id:context.authentication.principal.id, username:context.authentication.principal.username]
-            }
-        }
-        user
-    }
-
-    /*private static void addBroadcasterToFactory(AtmosphereResource resource, String broadcasterID){
-        Broadcaster singleBroadcaster= BroadcasterFactory.default.lookup(broadcasterID);
-        if(singleBroadcaster != null){
-            singleBroadcaster.addAtmosphereResource(resource)
-            return
-        }
-        Broadcaster selfBroadcaster = new DefaultBroadcaster(broadcasterID, resource.atmosphereConfig)
-        selfBroadcaster.addAtmosphereResource(resource)
-
-        BroadcasterFactory.getDefault().add(selfBroadcaster, broadcasterID);
-        if (log.isDebugEnabled()) {
-            log.debug('new broadcaster for user')
-        }
-    }*/
 }

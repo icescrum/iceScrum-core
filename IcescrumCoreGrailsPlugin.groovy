@@ -28,6 +28,7 @@ import org.atmosphere.cpr.BroadcasterFactory
 import org.atmosphere.cpr.HeaderConfig
 import org.codehaus.groovy.grails.commons.GrailsClassUtils
 import org.codehaus.groovy.grails.scaffolding.view.ScaffoldingViewResolver
+import org.icescrum.atmosphere.IceScrumAtmosphereEventListener
 import org.icescrum.core.utils.JSONIceScrumDomainClassMarshaller
 import org.icescrum.plugins.attachmentable.domain.Attachment
 import org.icescrum.plugins.attachmentable.services.AttachmentableService
@@ -525,7 +526,7 @@ class IcescrumCoreGrailsPlugin {
             if (!application.config.icescrum.push?.enable)
                 return
 
-            attrs.channel = attrs.channel ? (attrs.channel instanceof String ? [attrs.channel] : attrs.channel) : ['/push/app']
+            attrs.channel = attrs.channel ? (attrs.channel instanceof String ? [attrs.channel] : attrs.channel) : ['/stream/app/*']
             def threadId = Thread.currentThread().id
             attrs.channel.each{ String it ->
                 if (!bufferBroadcast.containsKey(it)) {
@@ -538,7 +539,7 @@ class IcescrumCoreGrailsPlugin {
             if (!application.config.icescrum.push?.enable)
                 return
 
-            attrs.channel = attrs.channel ? (attrs.channel instanceof String ? [attrs.channel] : attrs.channel) : ['/push/app']
+            attrs.channel = attrs.channel ? (attrs.channel instanceof String ? [attrs.channel] : attrs.channel) : ['/stream/app/*']
             attrs.excludeCaller = attrs.excludeCaller ?: true
             def size = attrs.batchSize ?: 10
             def threadId = Thread.currentThread().id
@@ -592,7 +593,7 @@ class IcescrumCoreGrailsPlugin {
 
             assert attrs.function, attrs.message
 
-            attrs.channel = attrs.channel ? (attrs.channel instanceof String ? [attrs.channel] : attrs.channel) : ['/push/app']
+            attrs.channel = attrs.channel ? (attrs.channel instanceof String ? [attrs.channel] : attrs.channel) : ['/stream/app/*']
             attrs.excludeCaller = attrs.excludeCaller ?: true
             def threadId = Thread.currentThread().id
 
@@ -632,20 +633,17 @@ class IcescrumCoreGrailsPlugin {
                 attrs.user = [attrs.user]
             }
             def message = [call: attrs.function, object: attrs.message]
-            attrs.user.each {
-                if(BroadcasterFactory.default){
-                    Class<? extends org.atmosphere.cpr.Broadcaster> bc = (Class<? extends org.atmosphere.cpr.Broadcaster>)((GrailsApplication) application).getClassLoader().loadClass(application.config.icescrum.push?.userBroadcaster?:'org.atmosphere.cpr.DefaultBroadcaster')
-                    def broadcaster = BroadcasterFactory.default.lookup(bc, it)
-                    try {
-                        broadcaster?.broadcast((message as JSON).toString())
-                    }catch(Exception e){
-                        log.error("Error when broadcasting, message: ${e.getMessage()}", e)
-                    }
-                }
-
+            def broadcaster = BroadcasterFactory?.default?.lookup('/stream/app/*')?:null
+            Set<AtmosphereResource> resources = broadcaster?.atmosphereResources?.findAll{ it.request?.getAttribute(IceScrumAtmosphereEventListener.USER_CONTEXT)?.username in attrs.user }?:null
+            if(resources){
+                try {
+                    broadcaster.broadcast((message as JSON).toString(), resources)
+                }catch(Exception e){
+                    log.error("Error when broadcasting, message: ${e.getMessage()}", e)
                 }
             }
         }
+    }
 
         private addErrorMethod(source) {
             source.metaClass.returnError = { attrs ->
