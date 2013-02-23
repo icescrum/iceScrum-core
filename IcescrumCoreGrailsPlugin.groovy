@@ -609,7 +609,7 @@ class IcescrumCoreGrailsPlugin {
                         bufferBroadcast.get(threadId+'#'+it) << message
                     } else {
                         try {
-                            if (log.debugEnabled()){
+                            if (log.debugEnabled){
                                 log.debug("broadcast to channel ${it} and exclude uuid : ${uuid}")
                             }
                             Set<AtmosphereResource> resources = uuid ? broadcaster.atmosphereResources?.findAll{ AtmosphereResource r -> r.uuid() !=  uuid} : null
