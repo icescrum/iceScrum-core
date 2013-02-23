@@ -621,9 +621,8 @@ class IcescrumCoreGrailsPlugin {
         }
 
         source.metaClass.broadcastToSingleUser = {attrs ->
-            ConfigObject conf = application.config.icescrum.push
-            if (!conf?.enable)
-                return
+            if (!application.config.icescrum.push?.enable)
+               return
             assert attrs.function
             assert attrs.message
             assert attrs.user

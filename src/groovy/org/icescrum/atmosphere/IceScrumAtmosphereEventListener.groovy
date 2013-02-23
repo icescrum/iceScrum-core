@@ -1,3 +1,24 @@
+/*
+ * Copyright (c) 2013 Kagilum.
+ *
+ * This file is part of iceScrum.
+ *
+ * iceScrum is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License.
+ *
+ * iceScrum is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with iceScrum.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Authors:
+ *
+ * Vincent Barrier (vbarrier@kagilum.com)
+ */
 package org.icescrum.atmosphere
 
 import grails.converters.JSON
@@ -10,16 +31,10 @@ import org.icescrum.core.domain.Product
 import org.springframework.security.core.context.SecurityContext
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository
 
-/**
- * Created with IntelliJ IDEA.
- * User: vbarrier
- * Date: 22/02/13
- * Time: 16:55
- * To change this template use File | Settings | File Templates.
- */
+
 class IceScrumAtmosphereEventListener implements AtmosphereResourceEventListener {
 
-    private static final USER_CONTEXT = 'user_context'
+    public static final USER_CONTEXT = 'user_context'
     private static final log = LogFactory.getLog(this)
 
     @Override
