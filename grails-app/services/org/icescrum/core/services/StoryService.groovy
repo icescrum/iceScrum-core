@@ -45,6 +45,8 @@ class StoryService {
     def attachmentableService
     def securityService
     def acceptanceTestService
+    def notificationEmailService
+
     def g = new org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib()
 
     static transactional = true
@@ -109,35 +111,44 @@ class StoryService {
             //dependences on the story
             def dependences = story.dependences
             if (dependences){
-            dependences.each{
-                notDependsOn(it)
+                dependences.each{
+                    notDependsOn(it)
+                }
             }
-        }
-        //precedence on the story
-        if (story.dependsOn)
-            notDependsOn(story)
+            //precedence on the story
+            if (story.dependsOn)
+                notDependsOn(story)
 
-        if (story.state >= Story.STATE_PLANNED)
-           throw new IllegalStateException('is.story.error.not.deleted.state')
+            if (story.state >= Story.STATE_PLANNED)
+               throw new IllegalStateException('is.story.error.not.deleted.state')
 
-        if (!springSecurityService.isLoggedIn()){
-            throw new IllegalAccessException()
-        }
+            if (!springSecurityService.isLoggedIn()){
+                throw new IllegalAccessException()
+            }
 
-        if (!(story.creator.id == springSecurityService.currentUser?.id) && !securityService.productOwner(product.id, springSecurityService.authentication)) {
-            throw new IllegalAccessException()
-        }
-        story.removeAllAttachments()
-        if (story.state != Story.STATE_SUGGESTED)
-            resetRank(story)
+            if (!(story.creator.id == springSecurityService.currentUser?.id) && !securityService.productOwner(product.id, springSecurityService.authentication)) {
+                throw new IllegalAccessException()
+            }
+            story.removeAllAttachments()
+            if (story.state != Story.STATE_SUGGESTED)
+                resetRank(story)
 
-        def id = story.id
-        story.deleteComments()
+            def id = story.id
+            story.deleteComments()
 
-        //give why you delete a story
-        story.description = reason ?: story.description
-        story.delete()
-        product.removeFromStories(story)
+            //give why you delete a story
+            story.description = reason ?: story.description
+            //Send not asynchronous email
+            try{
+                notificationEmailService.sendAlertCUD(story, (User)springSecurityService.currentUser, IceScrumStoryEvent.EVENT_BEFORE_DELETE)
+            }catch(Exception e){
+                if(log.debugEnabled){
+                    log.debug(e.getMessage())
+                }
+            }
+
+            product.removeFromStories(story)
+            story.delete()
             story.removeLinkByFollow(id)
 
             product.save()

@@ -47,7 +47,7 @@ class NotificationEmailService implements ApplicationListener<IceScrumEvent> {
 
     void onApplicationEvent(IceScrumEvent e) {
         try {
-            if (e instanceof IceScrumStoryEvent && e.type in IceScrumStoryEvent.EVENT_CUD) {
+            if (e instanceof IceScrumStoryEvent && e.type != IceScrumStoryEvent.EVENT_BEFORE_DELETE && e.type in IceScrumStoryEvent.EVENT_CUD ) {
                 sendAlertCUD((Story) e.source, (User) e.doneBy, e.type)
             } else if (e instanceof IceScrumStoryEvent && e.type in IceScrumStoryEvent.EVENT_STATE_LIST) {
                 sendAlertState((Story) e.source, (User) e.doneBy, e.type)
@@ -64,7 +64,7 @@ class NotificationEmailService implements ApplicationListener<IceScrumEvent> {
 
     }
 
-    private void sendAlertCUD(Story story, User user, String type) {
+    void sendAlertCUD(Story story, User user, String type) {
 
         if (!ApplicationSupport.booleanValue(grailsApplication.config.icescrum.alerts.enable)) {
             return
