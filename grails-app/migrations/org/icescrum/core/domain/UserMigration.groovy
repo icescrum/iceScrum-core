@@ -106,7 +106,7 @@ class UserMigration {
         }
 
         changeSet(id:'user_update_en_to_us', author:'vbarrier', filePath:filePath) {
-            sql('UPDATE icescrum2_user_preferences set language = "en_US" WHERE language = "en"')
+            sql('UPDATE icescrum2_user_preferences set language = \'en_US\' WHERE language = \'en\'')
         }
     }
 
