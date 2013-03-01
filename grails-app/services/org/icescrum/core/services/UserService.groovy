@@ -43,7 +43,6 @@ import org.icescrum.core.support.ApplicationSupport
  */
 class UserService {
 
-    def productService
     def grailsApplication
     def springSecurityService
     def burningImageService
