@@ -166,6 +166,17 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
         closeDate nullable: true
         initialRemainingHours nullable: true
         endDate(validator:{ val, obj ->
+
+            println "endDate--"
+            println "val: "+val
+            println "val: "+val.class
+            println "val: "+val.time
+
+            println "obj: "+obj.parentRelease.endDate
+            println "obj: "+obj.parentRelease.endDate.class
+            println "obj: "+obj.parentRelease.endDate.time
+            println "--endDate"
+
             if (!val)
                 return ['no.endDate']
 
@@ -174,6 +185,21 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
             return true
         })
         startDate(validator:{ val, obj ->
+
+            println "startDate--"
+            println "val: "+val
+            println "val: "+val.class
+            println "val: "+val.time
+
+            println "obj.parentRelease.startDate: "+obj.parentRelease.startDate
+            println "obj.parentRelease.startDate: "+obj.parentRelease.startDate.class
+            println "obj.parentRelease.startDate: "+obj.parentRelease.startDate.time
+
+            println "obj.endDate: "+obj.endDate
+            println "obj.endDate: "+obj.endDate.class
+            println "obj.endDate: "+obj.endDate.time
+            println "--startDate"
+
             if (!val)
                 return ['no.startDate']
             if (val.time < obj.parentRelease.startDate.time)
