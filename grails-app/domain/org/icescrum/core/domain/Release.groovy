@@ -84,7 +84,7 @@ class Release extends TimeBox implements Cloneable, Attachmentable {
                 return ['before.productStartDate']
             }
             def r = obj.parentProduct.releases?.find{ it.orderNumber == obj.orderNumber - 1}
-            if (r && val < r.endDate.time) {
+            if (r && val.time < r.endDate.time) {
                 return ['before.previous']
             }
             return true
