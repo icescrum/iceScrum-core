@@ -77,7 +77,7 @@ class Release extends TimeBox implements Cloneable, Attachmentable {
             if (!val){
                 return ['blank']
             }
-            if(val == obj.endDate){
+            if(val.time == obj.endDate.time){
                 return ['equals.endDate']
             }
             if (val.before(obj.parentProduct.startDate)){

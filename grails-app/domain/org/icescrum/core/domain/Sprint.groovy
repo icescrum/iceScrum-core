@@ -169,27 +169,22 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
             if (!val)
                 return ['no.endDate']
 
-            if (val > obj.parentRelease.endDate)
+            if (val.after(obj.parentRelease.endDate))
                 return ['out.of.release.bounds']
             return true
         })
         startDate(validator:{ val, obj ->
             if (!val)
                 return ['no.startDate']
-            if (val < obj.parentRelease.startDate)
+            if (val.before(obj.parentRelease.startDate))
                 return ['out.of.release.bounds']
-            if (val > obj.endDate) {
-                println val
-                println obj.endDate
-                println val.class
-                println obj.endDate.class
+            if (val.after(obj.endDate))
                 return ['after.endDate']
-            }
-            if (val == obj.endDate)
+            if (val.time == obj.endDate.time)
                 return ['equals.endDate']
 
             def previousSprint = obj.parentRelease.sprints?.find { it.orderNumber == obj.orderNumber - 1}
-            if (previousSprint && val <= previousSprint.endDate)
+            if (previousSprint && val.time <= previousSprint.endDate.time)
                 return ['previous.overlap']
             return true
         })
