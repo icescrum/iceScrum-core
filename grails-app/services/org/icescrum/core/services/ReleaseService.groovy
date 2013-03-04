@@ -74,9 +74,9 @@ class ReleaseService {
         endDate = endDate ?: release.endDate
 
         def nextRelease = release.parentProduct.releases.findAll { it.orderNumber > release.orderNumber } ?.min { it.orderNumber }
-        if (nextRelease && nextRelease.startDate.time <= endDate.time) {
+        if (nextRelease && nextRelease.startDate <= endDate) {
             def nextStartDate = endDate + 1
-            if (nextStartDate.time >= nextRelease.endDate.time) {
+            if (nextStartDate >= nextRelease.endDate) {
                 throw new IllegalStateException('is.release.error.endDate.after.next.release')
             }
             update(nextRelease, nextStartDate)  // updating the next release will update the next ones
@@ -84,18 +84,18 @@ class ReleaseService {
 
         if (!release.sprints.isEmpty()) {
             def sprintService = (SprintService) ApplicationHolder.application.mainContext.getBean('sprintService');
-            def firstSprint = release.sprints.min { it.startDate.time }
-            if (firstSprint.startDate.time < startDate.time) {
+            def firstSprint = release.sprints.min { it.startDate }
+            if (firstSprint.startDate.before(startDate)) {
                 if (firstSprint.state >= Sprint.STATE_INPROGRESS) {
                     throw new IllegalStateException('is.release.error.endDate.before.inprogress.sprint')
                 }
                 sprintService.update(firstSprint, startDate, (startDate + firstSprint.duration - 1), false, false)
             }
-            def outOfBoundsSprints = release.sprints.findAll {it.startDate.time >= endDate.time}
+            def outOfBoundsSprints = release.sprints.findAll {it.startDate >= endDate}
             if (outOfBoundsSprints) {
-                sprintService.delete(outOfBoundsSprints.min { it.startDate.time }) // deleting the first will delete the next ones
+                sprintService.delete(outOfBoundsSprints.min { it.startDate }) // deleting the first will delete the next ones
             }
-            def overlappingSprint = release.sprints.find {it.endDate.time > endDate.time}
+            def overlappingSprint = release.sprints.find {it.endDate.after(endDate)}
             if (overlappingSprint) {
                 if (overlappingSprint.state >= Sprint.STATE_INPROGRESS) {
                     throw new IllegalStateException('is.release.error.endDate.before.inprogress.sprint')

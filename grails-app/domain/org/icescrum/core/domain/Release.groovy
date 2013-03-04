@@ -65,17 +65,6 @@ class Release extends TimeBox implements Cloneable, Attachmentable {
         vision nullable: true
         name(blank: false, unique: 'parentProduct')
         endDate(validator:{ val, obj ->
-
-            println "endDate--"
-            println "val: "+val
-            println "val: "+val.class
-            println "val: "+val.time
-
-            println "obj: "+obj.startDate
-            println "obj: "+obj.startDate.class
-            println "obj: "+obj.startDate.time
-            println "--endDate"
-
             if (!val){
                 return ['blank']
             }
@@ -85,32 +74,17 @@ class Release extends TimeBox implements Cloneable, Attachmentable {
             return true
         })
         startDate(validator:{ val, obj ->
-
-            println "startDate--"
-            println "val: "+val
-            println "val: "+val.class
-            println "val: "+val.time
-
-            println "obj.parentProduct.startDate: "+obj.parentProduct.startDate
-            println "obj.parentProduct.startDate: "+obj.parentProduct.startDate.class
-            println "obj.parentProduct.startDate: "+obj.parentProduct.startDate.time
-
-            println "obj.endDate: "+obj.endDate
-            println "obj.endDate: "+obj.endDate.class
-            println "obj.endDate: "+obj.endDate.time
-            println "--startDate"
-
             if (!val){
                 return ['blank']
             }
             if(val.time == obj.endDate.time){
                 return ['equals.endDate']
             }
-            if (val.time < obj.parentProduct.startDate.time){
+            if (val.before(obj.parentProduct.startDate)){
                 return ['before.productStartDate']
             }
             def r = obj.parentProduct.releases?.find{ it.orderNumber == obj.orderNumber - 1}
-            if (r && val.time < r.endDate.time) {
+            if (r && val.before(r.endDate)) {
                 return ['before.previous']
             }
             return true

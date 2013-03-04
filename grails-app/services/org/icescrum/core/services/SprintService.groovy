@@ -113,8 +113,8 @@ class SprintService {
             }
         }
 
-        sprint.startDate = startDate
-        sprint.endDate = endDate
+        sprint.startDate = startDate.toTimestamp()
+        sprint.endDate = endDate.toTimestamp()
 
         if (updateRelease) {
             sprint.parentRelease.lastUpdated = new Date()
