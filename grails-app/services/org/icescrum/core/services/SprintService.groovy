@@ -119,8 +119,6 @@ class SprintService {
         if (updateRelease) {
             sprint.parentRelease.lastUpdated = new Date()
             if (!sprint.parentRelease.save(flush: true)) {
-                log.debug(sprint.errors)
-                log.debug(sprint.parentRelease.errors)
                 throw new RuntimeException()
             }
         } else {

@@ -178,8 +178,13 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
                 return ['no.startDate']
             if (val < obj.parentRelease.startDate)
                 return ['out.of.release.bounds']
-            if (val > obj.endDate)
+            if (val > obj.endDate) {
+                log.debug(val)
+                log.debug(obj.endDate)
+                log.debug(val.class)
+                log.debug(obj.endDate.class)
                 return ['after.endDate']
+            }
             if (val == obj.endDate)
                 return ['equals.endDate']
 
