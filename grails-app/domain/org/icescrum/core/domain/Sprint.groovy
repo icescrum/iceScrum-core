@@ -176,7 +176,7 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
         startDate(validator:{ val, obj ->
             if (!val)
                 return ['no.startDate']
-            if (val.time > obj.parentRelease.startDate.time)
+            if (val.time < obj.parentRelease.startDate.time)
                 return ['out.of.release.bounds']
             if (val.time > obj.endDate.time)
                 return ['after.endDate']
