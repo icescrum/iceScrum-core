@@ -55,6 +55,7 @@ class User implements Serializable, Attachmentable {
     boolean accountLocked
     boolean passwordExpired
 
+    static transients = ['locale']
 
     static hasMany = [
             teams: Team
@@ -153,5 +154,9 @@ class User implements Serializable, Attachmentable {
         withNewSession {
             publishEvent(new IceScrumUserEvent(this, this.class, User.get(SCH.context?.authentication?.principal?.id), IceScrumEvent.EVENT_AFTER_DELETE, true))
         }
+    }
+
+    Locale getLocale() {
+        new Locale(*preferences.language.split('_', 3))
     }
 }
