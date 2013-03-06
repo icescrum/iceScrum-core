@@ -742,7 +742,7 @@ class IcescrumCoreGrailsPlugin {
                     }
                     def reportDef = new JasperReportDef(name: reportName,
                                                         reportData: data,
-                                                        locale: springSecurityService.isLoggedIn() ? new Locale(User.get(springSecurityService.principal?.id)?.preferences?.language) : RCU.getLocale(request),
+                                                        locale: springSecurityService.isLoggedIn() ? springSecurityService.currentUser.locale : RCU.getLocale(request),
                                                         parameters: parameters,
                                                         fileFormat: JasperExportFormat.determineFileFormat(format))
 
