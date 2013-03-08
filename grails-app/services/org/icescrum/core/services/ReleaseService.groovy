@@ -180,11 +180,15 @@ class ReleaseService {
 
         def nextReleases = product.releases.findAll { it.orderNumber > release.orderNumber }
         release.removeAllAttachments()
-        storyService.unPlanAll(release.sprints)
+        if (release.sprints) {
+            storyService.unPlanAll(release.sprints)
+        }
         product.removeFromReleases(release)
         release.features?.each{release.removeFromFeatures(it) }
         nextReleases.each {
-            storyService.unPlanAll(it.sprints)
+            if (it.sprints) {
+                storyService.unPlanAll(it.sprints)
+            }
             product.removeFromReleases((Release) it)
             it.features?.each{ feature -> release.removeFromFeatures(feature) }
             broadcast(function: 'delete', message: [class: it.class, id: it.id], channel:'product-'+product.id)

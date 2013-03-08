@@ -144,8 +144,9 @@ class SprintService {
         def release = sprint.parentRelease
         def nextSprints = release.sprints.findAll { it.orderNumber > sprint.orderNumber }
 
-        // Every sprints coming after this one in the release are also deleted!
-        storyService.unPlanAll(nextSprints)
+        if (nextSprints) {
+            storyService.unPlanAll(nextSprints) // Every sprints coming after this one in the release are also deleted!
+        }
         storyService.unPlanAll([sprint])
 
         def deletedSprints = []
