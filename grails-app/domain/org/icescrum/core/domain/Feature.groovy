@@ -161,7 +161,9 @@ class Feature extends BacklogElement implements Serializable {
     }
 
     def afterDelete() {
-        publishEvent(new IceScrumFeatureEvent(this, this.class, User.get(SCH.context?.authentication?.principal?.id), IceScrumEvent.EVENT_AFTER_DELETE, true))
+        withNewSession {
+            publishEvent(new IceScrumFeatureEvent(this, this.class, User.get(SCH.context?.authentication?.principal?.id), IceScrumEvent.EVENT_AFTER_DELETE, true))
+        }
     }
 
     static search(product, options){
