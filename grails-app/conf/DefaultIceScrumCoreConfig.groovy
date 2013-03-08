@@ -35,7 +35,8 @@ icescrum {
                           'org.atmosphere.cpr.broadcaster.maxAsyncWriteThreads': 5,
                           'org.atmosphere.cpr.broadcasterClass' : 'org.atmosphere.cpr.DefaultBroadcaster',
                           'org.atmosphere.cpr.broadcasterLifeCyclePolicy': 'EMPTY_DESTROY',
-                          'org.atmosphere.cpr.broadcastFilterClasses': 'org.atmosphere.client.TrackMessageSizeFilter']
+                          'org.atmosphere.cpr.broadcastFilterClasses': 'org.atmosphere.client.TrackMessageSizeFilter',
+                          'org.atmosphere.cpr.AtmosphereInterceptor':'org.icescrum.atmosphere.HeartbeatInterceptor']
             urlPattern = '/stream/app'
         }
         handlers {
