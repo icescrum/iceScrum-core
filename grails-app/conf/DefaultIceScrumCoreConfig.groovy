@@ -25,6 +25,10 @@ icescrum {
     push {
         enable = true
         websocket = false
+        heartBeat {
+            enable = true
+            delay = 30
+        }
         servlet {
             // Servlet initialization parameters
             initParams = ['org.atmosphere.useNative': true,
@@ -35,8 +39,7 @@ icescrum {
                           'org.atmosphere.cpr.broadcaster.maxAsyncWriteThreads': 5,
                           'org.atmosphere.cpr.broadcasterClass' : 'org.atmosphere.cpr.DefaultBroadcaster',
                           'org.atmosphere.cpr.broadcasterLifeCyclePolicy': 'EMPTY_DESTROY',
-                          'org.atmosphere.cpr.broadcastFilterClasses': 'org.atmosphere.client.TrackMessageSizeFilter',
-                          'org.atmosphere.cpr.AtmosphereInterceptor':'org.icescrum.atmosphere.HeartbeatInterceptor']
+                          'org.atmosphere.cpr.broadcastFilterClasses': 'org.atmosphere.client.TrackMessageSizeFilter']
             urlPattern = '/stream/app'
         }
         handlers {

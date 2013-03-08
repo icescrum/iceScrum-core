@@ -23,15 +23,22 @@
 
 package org.icescrum.core.services
 
+import grails.converters.JSON
 import grails.util.Environment
+import org.atmosphere.cpr.BroadcasterFactory
 import org.icescrum.core.security.AuthorityManager
 import org.icescrum.core.support.ApplicationSupport
 import org.icescrum.core.test.DummyPopulator
 import org.codehaus.groovy.grails.commons.ApplicationHolder
 
+import java.util.concurrent.Executors
+import java.util.concurrent.ScheduledExecutorService
+import java.util.concurrent.TimeUnit
+
 class BootStrapService {
 
     def pluginManager
+    private ScheduledExecutorService heartBeat
 
     void start() {
 
@@ -40,10 +47,26 @@ class BootStrapService {
         ApplicationSupport.checkNewVersion()
 
         def config = ApplicationHolder.application.config
+
+        if (config.icescrum.push.heartBeat.enable) {
+            def message = [heart: true];
+            if (!heartBeat) {
+                heartBeat = Executors.newSingleThreadScheduledExecutor()
+                Runnable task = new Runnable() {
+                    @Override
+                    void run() {
+                            def broadcaster = BroadcasterFactory?.default?.lookup('/stream/app/*') ?: null
+                        broadcaster?.broadcast((message as JSON).toString());
+                    }
+                }
+                heartBeat.scheduleAtFixedRate(task, 0, config.icescrum.push.heartBeat.delay, TimeUnit.SECONDS);
+            }
+        }
+
         config.grails.attachmentable.baseDir = config.icescrum.baseDir.toString()
         config.grails.mail.default.from = config.icescrum.alerts.default.from
 
-        if (config.grails.mail.props && config.grails.mail.props instanceof String){
+        if (config.grails.mail.props && config.grails.mail.props instanceof String) {
             config.grails.mail.props = ApplicationSupport.stringToMap(config.grails.mail.props)
             pluginManager.informPluginsOfConfigChange()
         }
