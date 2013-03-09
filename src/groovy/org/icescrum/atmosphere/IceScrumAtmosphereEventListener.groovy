@@ -51,10 +51,6 @@ class IceScrumAtmosphereEventListener implements AtmosphereResourceEventListener
             channel = Product.load(productID.toLong()) ? "product-${productID}" : null
         }
 
-        if (log.isDebugEnabled()) {
-            log.debug("Check product ${productID} to create new channel: ${channel}")
-        }
-
         channel = channel?.toString()
         if (channel) {
             def broadcaster = BroadcasterFactory.default.lookup(channel) ?: BroadcasterFactory.default.get(channel)
