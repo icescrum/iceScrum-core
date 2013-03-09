@@ -35,8 +35,8 @@ class IceScrumAtmosphereHandler extends AbstractReflectorAtmosphereHandler {
             return
         }
         event.response.setContentType("text/plain;charset=ISO-8859-1")
-        event.addEventListener( new IceScrumAtmosphereEventListener() {} );
-        event.suspend();
+        event.addEventListener( new IceScrumAtmosphereEventListener() )
+        event.suspend()
     }
 
     @Override
