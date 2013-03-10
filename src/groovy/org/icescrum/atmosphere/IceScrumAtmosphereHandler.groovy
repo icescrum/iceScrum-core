@@ -34,6 +34,17 @@ class IceScrumAtmosphereHandler extends AbstractReflectorAtmosphereHandler {
             event.resume()
             return
         }
+        if (event.request.getMethod().equalsIgnoreCase("POST")) {
+            if (event.request.getParameterValues("window")) {
+                AtmosphereResource resource = AtmosphereResourceFactory.default.find(event.uuid())
+                if (resource){
+                    def user = resource.request.getAttribute(IceScrumAtmosphereEventListener.USER_CONTEXT)
+                    user.window = event.request.getParameterValues("window") ? event.request.getParameterValues("window")[0] : null
+                    resource.request.setAttribute(IceScrumAtmosphereEventListener.USER_CONTEXT, user)
+                }
+            }
+            event.resume()
+        }
         event.response.setContentType("text/plain;charset=ISO-8859-1")
         event.addEventListener( new IceScrumAtmosphereEventListener() )
         event.suspend()

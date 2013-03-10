@@ -40,13 +40,12 @@ class IceScrumAtmosphereEventListener implements AtmosphereResourceEventListener
     @Override
     void onSuspend(AtmosphereResourceEvent event) {
         def request = event.resource.request
-        def productID = request.getParameterValues("product") ? request.getParameterValues("product")[0] : null
 
-        def user = getUserFromAtmosphereResource(request, true) ?: [fullName: 'anonymous', id: null, username: 'anonymous']
+        def user = getUserFromAtmosphereResource(event.resource, true)
         request.setAttribute(USER_CONTEXT, user)
 
         def channel = null
-
+        def productID = request.getParameterValues("product") ? request.getParameterValues("product")[0] : null
         if (productID && productID.isLong()) {
             channel = Product.load(productID.toLong()) ? "product-${productID}" : null
         }
@@ -104,13 +103,16 @@ class IceScrumAtmosphereEventListener implements AtmosphereResourceEventListener
         //To change body of implemented methods use File | Settings | File Templates.
     }
 
-    private static def getUserFromAtmosphereResource(def request, def createSession = false) {
-        def httpSession = request.getSession(createSession)
-        def user = null
+    private static def getUserFromAtmosphereResource(def resource, def createSession = false) {
+        def window = resource.request.getParameterValues("window") ? resource.request.getParameterValues("window")[0] : null
+        def httpSession = resource.request.getSession(createSession)
+        def user = [uuid:resource.uuid(), window:window]
         if (httpSession != null) {
             def context = (SecurityContext) httpSession.getAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY);
             if (context?.authentication?.isAuthenticated()) {
-                user = [fullName:context.authentication.principal.fullName, id:context.authentication.principal.id, username:context.authentication.principal.username]
+                user.putAll([fullName:context.authentication.principal.fullName, id:context.authentication.principal.id, username:context.authentication.principal.username])
+            } else {
+                user.putAll([fullName: 'anonymous', id: null, username: 'anonymous'])
             }
         }
         user
