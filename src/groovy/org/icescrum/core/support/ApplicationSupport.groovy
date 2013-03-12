@@ -37,136 +37,136 @@ import java.util.zip.ZipInputStream
 
 class ApplicationSupport {
 
-  private static final log = LogFactory.getLog(this)
+    private static final log = LogFactory.getLog(this)
 
-  public static final CONFIG_ENV_NAME = 'icescrum_config_location'
+    public static final CONFIG_ENV_NAME = 'icescrum_config_location'
 
-  static public generateFolders = {
-    def config = ApplicationHolder.application.config
-    def dirPath = config.icescrum.baseDir.toString() + File.separator + "images" + File.separator + "users" + File.separator
-    def dir = new File(dirPath)
-    if (!dir.exists())
-      dir.mkdirs()
-    println dirPath
-    config.icescrum.images.users.dir = dirPath
+    static public generateFolders = {
+        def config = ApplicationHolder.application.config
+        def dirPath = config.icescrum.baseDir.toString() + File.separator + "images" + File.separator + "users" + File.separator
+        def dir = new File(dirPath)
+        if (!dir.exists())
+            dir.mkdirs()
+        println dirPath
+        config.icescrum.images.users.dir = dirPath
 
-    dirPath = config.icescrum.baseDir.toString() + File.separator + "images" + File.separator + "products" + File.separator
-    dir = new File(dirPath)
-    if (!dir.exists())
-      dir.mkdirs()
-    config.icescrum.products.users.dir = dirPath
+        dirPath = config.icescrum.baseDir.toString() + File.separator + "images" + File.separator + "products" + File.separator
+        dir = new File(dirPath)
+        if (!dir.exists())
+            dir.mkdirs()
+        config.icescrum.products.users.dir = dirPath
 
-    dirPath = config.icescrum.baseDir.toString() + File.separator + "images" + File.separator + "teams" + File.separator
-    dir = new File(dirPath)
-    if (!dir.exists())
-      dir.mkdirs()
-    config.icescrum.products.teams.dir = dirPath
-  }
-    
-  static public stringToMap = { String st, String separatorK = "=", String separatorV = "," ->
-      def map = [:]
-      st?.split(separatorV)?.each { param ->
-          def nameAndValue = param.split(separatorK)
-          if (nameAndValue.size() == 2)
-              map[nameAndValue[0]] = nameAndValue[1]
-      }
-      map
-  }
-
-  static public mapToString = { Map map, String separatorK = "=", String separatorV = "," ->
-      String st = ""
-      map?.eachWithIndex{ it, i ->
-        st += "${it.key}${separatorK}${it.value}"
-        if (i != map.size() - 1){
-            st += "${separatorV}"
-        }  
-      }
-      st
-  }
-
-  // See http://jira.codehaus.org/browse/GRAILS-6515
-  static public booleanValue(def value) {
-      if (value.class == java.lang.Boolean) {
-          // because 'true.toBoolean() == false' !!!
-          return value
-      } else if(value.class == ConfigObject){
-        return value.asBoolean()
-      } else if(value.class == Closure){
-        return value()
-      }
-      else {
-          return value.toBoolean()
-      }
-  }
-
-  static public checkNewVersion = {
-    def config = ApplicationHolder.application.config
-    if (booleanValue(config.icescrum.check.enable)){
-        def timer = new Timer()
-        def interval = CheckerTimerTask.computeInterval(config.icescrum.check.interval?:360)
-        timer.scheduleAtFixedRate(new CheckerTimerTask(timer,interval), 60000, interval)
+        dirPath = config.icescrum.baseDir.toString() + File.separator + "images" + File.separator + "teams" + File.separator
+        dir = new File(dirPath)
+        if (!dir.exists())
+            dir.mkdirs()
+        config.icescrum.products.teams.dir = dirPath
     }
-  }
 
-  static public createUUID = {
-    def config = ApplicationHolder.application.config
-    def filePath = config.icescrum.baseDir.toString() + File.separator + "appID.txt"
-    def fileID = new File(filePath)
-
-    if(!fileID.exists() || !fileID.readLines()[0]){
-        if (!fileID.exists()){
-            fileID.parentFile.mkdirs()
+    static public stringToMap = { String st, String separatorK = "=", String separatorV = "," ->
+        def map = [:]
+        st?.split(separatorV)?.each { param ->
+            def nameAndValue = param.split(separatorK)
+            if (nameAndValue.size() == 2)
+                map[nameAndValue[0]] = nameAndValue[1]
         }
-        !fileID.exists() ?: fileID.delete()
-        if (!fileID.createNewFile()){
-            println "Error could not create file : ${filePath} please check directory & user permission"
-        }
-        def uid = NetworkInterface.networkInterfaces?.nextElement()?.hardwareAddress
-        if (uid){
-            MessageDigest md = MessageDigest.getInstance("MD5")
-            md.update(uid)
-            uid = new BigInteger(1, md.digest() ).toString(16).padLeft(32, '0')
-            uid = uid.substring(0,8) +'-'+ uid.substring(8,12) +'-'+ uid.substring(12,16) +'-'+ uid.substring(16,20) +'-'+ uid.substring(20,32)
-        }
-        uid = uid ?: UUID.randomUUID()
-        config.icescrum.appID = uid
-        fileID <<  config.icescrum.appID
-        if (log.debugEnabled) log.debug('regenerate appID '+config.icescrum.appID)
-    }else{
-        config.icescrum.appID = fileID.readLines()[0]
-        if (log.debugEnabled) log.debug('retrieve appID '+config.icescrum.appID)
+        map
     }
-  }
-    
-  public static Date getMidnightTime(Date time){
-    def midnightTime = Calendar.getInstance()
-    midnightTime.setTime(time)
-    midnightTime.set(Calendar.HOUR_OF_DAY, 0)
-    midnightTime.set(Calendar.MINUTE, 0)
-    midnightTime.set(Calendar.SECOND, 0)
-    midnightTime.set(Calendar.MILLISECOND,0)
-    return midnightTime.getTime()
-  }
-    
-  static public findUserUIDOldXMl(def object, name, users){
-      //be sure we are at root node
-      def root = object.parent().parent().parent().parent().parent().parent().parent().parent().parent()
-      //be compatible with xml without export tag
-      if (root.find{ it.name == 'export' }){ root = root.product }
-      def uXml = root.'**'.find{ it.@id.text() == (name ? object."${name}".@id.text() : object.@id.text() )  && it.username.text()}
-      if (uXml){
-          def UXmlUID = (uXml.username?.text() + uXml.email?.text()).encodeAsMD5()
-          return users ? ((User) users?.find { it.uid == UXmlUID } ) : User.findByUid(UXmlUID) ?: null
-      }else{
-          return null
-      }
-  }
+
+    static public mapToString = { Map map, String separatorK = "=", String separatorV = "," ->
+        String st = ""
+        map?.eachWithIndex{ it, i ->
+            st += "${it.key}${separatorK}${it.value}"
+            if (i != map.size() - 1){
+                st += "${separatorV}"
+            }
+        }
+        st
+    }
+
+    // See http://jira.codehaus.org/browse/GRAILS-6515
+    static public booleanValue(def value) {
+        if (value.class == java.lang.Boolean) {
+            // because 'true.toBoolean() == false' !!!
+            return value
+        } else if(value.class == ConfigObject){
+            return value.asBoolean()
+        } else if(value.class == Closure){
+            return value()
+        }
+        else {
+            return value.toBoolean()
+        }
+    }
+
+    static public checkNewVersion = {
+        def config = ApplicationHolder.application.config
+        if (booleanValue(config.icescrum.check.enable)){
+            def timer = new Timer()
+            def interval = CheckerTimerTask.computeInterval(config.icescrum.check.interval?:360)
+            timer.scheduleAtFixedRate(new CheckerTimerTask(timer,interval), 60000, interval)
+        }
+    }
+
+    static public createUUID = {
+        def config = ApplicationHolder.application.config
+        def filePath = config.icescrum.baseDir.toString() + File.separator + "appID.txt"
+        def fileID = new File(filePath)
+
+        if(!fileID.exists() || !fileID.readLines()[0]){
+            if (!fileID.exists()){
+                fileID.parentFile.mkdirs()
+            }
+            !fileID.exists() ?: fileID.delete()
+            if (!fileID.createNewFile()){
+                println "Error could not create file : ${filePath} please check directory & user permission"
+            }
+            def uid = NetworkInterface.networkInterfaces?.nextElement()?.hardwareAddress
+            if (uid){
+                MessageDigest md = MessageDigest.getInstance("MD5")
+                md.update(uid)
+                uid = new BigInteger(1, md.digest() ).toString(16).padLeft(32, '0')
+                uid = uid.substring(0,8) +'-'+ uid.substring(8,12) +'-'+ uid.substring(12,16) +'-'+ uid.substring(16,20) +'-'+ uid.substring(20,32)
+            }
+            uid = uid ?: UUID.randomUUID()
+            config.icescrum.appID = uid
+            fileID <<  config.icescrum.appID
+            if (log.debugEnabled) log.debug('regenerate appID '+config.icescrum.appID)
+        }else{
+            config.icescrum.appID = fileID.readLines()[0]
+            if (log.debugEnabled) log.debug('retrieve appID '+config.icescrum.appID)
+        }
+    }
+
+    public static Date getMidnightTime(Date time){
+        def midnightTime = Calendar.getInstance()
+        midnightTime.setTime(time)
+        midnightTime.set(Calendar.HOUR_OF_DAY, 0)
+        midnightTime.set(Calendar.MINUTE, 0)
+        midnightTime.set(Calendar.SECOND, 0)
+        midnightTime.set(Calendar.MILLISECOND,0)
+        return midnightTime.getTime()
+    }
+
+    static public findUserUIDOldXMl(def object, name, users){
+        //be sure we are at root node
+        def root = object.parent().parent().parent().parent().parent().parent().parent().parent().parent()
+        //be compatible with xml without export tag
+        if (root.find{ it.name == 'export' }){ root = root.product }
+        def uXml = root.'**'.find{ it.@id.text() == (name ? object."${name}".@id.text() : object.@id.text() )  && it.username.text()}
+        if (uXml){
+            def UXmlUID = (uXml.username?.text() + uXml.email?.text()).encodeAsMD5()
+            return users ? ((User) users?.find { it.uid == UXmlUID } ) : User.findByUid(UXmlUID) ?: null
+        }else{
+            return null
+        }
+    }
 
 
-  static public findIceScrumVersionFromXml(def object) {
-      def root = object.parent().parent().parent().parent().parent().parent().parent().parent().parent()
-      return root.find{ it.name == 'export' }?.@version?.text()
-  }
+    static public findIceScrumVersionFromXml(def object) {
+        def root = object.parent().parent().parent().parent().parent().parent().parent().parent().parent()
+        return root.find{ it.name == 'export' }?.@version?.text()
+    }
 
     static public zipExportFile(OutputStream zipStream, List<File> files, File xml, String subdir) throws IOException {
         ZipOutputStream zout = new ZipOutputStream(zipStream)
@@ -193,7 +193,7 @@ class ApplicationSupport {
             zout.close()
         }
     }
-    
+
     static public unzip(File zip, File destination){
         def result = new ZipInputStream(new FileInputStream(zip))
 
