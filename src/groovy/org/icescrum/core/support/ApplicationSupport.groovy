@@ -109,32 +109,41 @@ class ApplicationSupport {
     }
 
     static public createUUID = {
+        if (log.debugEnabled) log.debug "Retrieving appID..."
         def config = ApplicationHolder.application.config
         def filePath = config.icescrum.baseDir.toString() + File.separator + "appID.txt"
         def fileID = new File(filePath)
 
-        if(!fileID.exists() || !fileID.readLines()[0]){
-            if (!fileID.exists()){
-                fileID.parentFile.mkdirs()
+        if (!fileID.exists() || !fileID.readLines()[0]) {
+            def uid
+            try {
+                uid = NetworkInterface.networkInterfaces?.nextElement()?.hardwareAddress
+                if (uid != null) {
+                    MessageDigest md = MessageDigest.getInstance("MD5")
+                    md.update(uid)
+                    uid = new BigInteger(1, md.digest() ).toString(16).padLeft(32, '0')
+                    uid = uid.substring(0,8) +'-'+ uid.substring(8,12) +'-'+ uid.substring(12,16) +'-'+ uid.substring(16,20) +'-'+ uid.substring(20,32)
+                }
+            } catch (IOException ioe) {
+                if (log.debugEnabled) log.debug "Warning could not access network interfaces, message: $ioe.message"
             }
-            !fileID.exists() ?: fileID.delete()
-            if (!fileID.createNewFile()){
-                println "Error could not create file : ${filePath} please check directory & user permission"
+            config.icescrum.appID = uid ?: UUID.randomUUID()
+            if (log.debugEnabled) log.debug "Generated (${uid?'m':'r'}) appID: $config.icescrum.appID"
+            try {
+                if (!fileID.exists()) fileID.parentFile.mkdirs()
+                if (fileID.exists()) fileID.delete()
+                if (fileID.createNewFile()){
+                    fileID << config.icescrum.appID
+                } else {
+                    log.error "Error could not create file: ${filePath} please check directory & user permission"
+                }
+            } catch (IOException ioe) {
+                log.error "Error (exception) could not create file: ${filePath} please check directory & user permission"
+                throw ioe
             }
-            def uid = NetworkInterface.networkInterfaces?.nextElement()?.hardwareAddress
-            if (uid){
-                MessageDigest md = MessageDigest.getInstance("MD5")
-                md.update(uid)
-                uid = new BigInteger(1, md.digest() ).toString(16).padLeft(32, '0')
-                uid = uid.substring(0,8) +'-'+ uid.substring(8,12) +'-'+ uid.substring(12,16) +'-'+ uid.substring(16,20) +'-'+ uid.substring(20,32)
-            }
-            uid = uid ?: UUID.randomUUID()
-            config.icescrum.appID = uid
-            fileID <<  config.icescrum.appID
-            if (log.debugEnabled) log.debug('regenerate appID '+config.icescrum.appID)
-        }else{
+        } else {
             config.icescrum.appID = fileID.readLines()[0]
-            if (log.debugEnabled) log.debug('retrieve appID '+config.icescrum.appID)
+            if (log.debugEnabled) log.debug "Retrieved appID: $config.icescrum.appID"
         }
     }
 
