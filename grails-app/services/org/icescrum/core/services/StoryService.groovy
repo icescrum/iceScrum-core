@@ -147,11 +147,8 @@ class StoryService {
                 }
             }
 
-            product.removeFromStories(story)
-            story.delete()
             story.removeLinkByFollow(id)
-
-            product.save()
+            story.delete()
             if (history) {
                 product.addActivity(springSecurityService.currentUser, Activity.CODE_DELETE, story.name)
             }
