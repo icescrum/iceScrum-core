@@ -52,7 +52,7 @@ class IceScrumAtmosphereEventListener implements AtmosphereResourceEventListener
 
         channel = channel?.toString()
         if (channel) {
-            def broadcaster = BroadcasterFactory.default.lookup(channel) ?: BroadcasterFactory.default.get(channel)
+            IceScrumBroadcaster broadcaster = (IceScrumBroadcaster)BroadcasterFactory.default.lookup(channel, true)
             broadcaster.addAtmosphereResource(event.resource)
             if (log.isDebugEnabled()) {
                 log.debug("add user ${user.username} with UUID ${event.resource.uuid()} to broadcaster: ${channel}")
@@ -60,7 +60,7 @@ class IceScrumAtmosphereEventListener implements AtmosphereResourceEventListener
             def users = broadcaster.atmosphereResources.collect{
                 it.request.getAttribute(IceScrumAtmosphereEventListener.USER_CONTEXT)
             }
-            broadcaster.broadcast(([broadcaster:[users:users]] as JSON).toString())
+            broadcaster.broadcast(([[command:'connected',object:users]] as JSON).toString())
         }
     }
 
@@ -83,7 +83,7 @@ class IceScrumAtmosphereEventListener implements AtmosphereResourceEventListener
                 it.removeAtmosphereResource(event.resource)
                 if (it.getID().contains('product-')) {
                     def users = it.atmosphereResources?.collect{ it.request.getAttribute(IceScrumAtmosphereEventListener.USER_CONTEXT) }
-                    it.broadcast(([broadcaster:[users:users]] as JSON).toString())
+                    it.broadcast(([[command:'connected',object:users]] as JSON).toString())
                 }
             }
         }

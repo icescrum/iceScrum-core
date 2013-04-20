@@ -526,7 +526,7 @@ class IcescrumCoreGrailsPlugin {
             if (!application.config.icescrum.push?.enable)
                 return
 
-            attrs.channel = attrs.channel ? (attrs.channel instanceof String ? [attrs.channel] : attrs.channel) : ['/stream/app/*']
+            attrs.channel = attrs.channel ? (attrs.channel instanceof String ? [attrs.channel] : attrs.channel) : [application.config.icescrum.push.mainChannel]
             def threadId = Thread.currentThread().id
             attrs.channel.each{ String it ->
                 if (!bufferBroadcast.containsKey(it)) {
@@ -539,7 +539,7 @@ class IcescrumCoreGrailsPlugin {
             if (!application.config.icescrum.push?.enable)
                 return
 
-            attrs.channel = attrs.channel ? (attrs.channel instanceof String ? [attrs.channel] : attrs.channel) : ['/stream/app/*']
+            attrs.channel = attrs.channel ? (attrs.channel instanceof String ? [attrs.channel] : attrs.channel) : [application.config.icescrum.push.mainChannel]
             attrs.excludeCaller = attrs.excludeCaller ?: true
             def size = attrs.batchSize ?: 10
             def threadId = Thread.currentThread().id
@@ -596,7 +596,7 @@ class IcescrumCoreGrailsPlugin {
 
             assert attrs.function, attrs.message
 
-            attrs.channel = attrs.channel ? (attrs.channel instanceof String ? [attrs.channel] : attrs.channel) : ['/stream/app/*']
+            attrs.channel = attrs.channel ? (attrs.channel instanceof String ? [attrs.channel] : attrs.channel) : [application.config.icescrum.push.mainChannel]
             attrs.excludeCaller = attrs.excludeCaller ?: true
             def threadId = Thread.currentThread().id
 
@@ -638,7 +638,7 @@ class IcescrumCoreGrailsPlugin {
                 attrs.user = [attrs.user]
             }
             def message = [call: attrs.function, object: attrs.message]
-            def broadcaster = BroadcasterFactory?.default?.lookup('/stream/app/*')?:null
+            def broadcaster = BroadcasterFactory?.default?.lookup(application.config.icescrum.push.mainChannel)?:null
             Set<AtmosphereResource> resources = broadcaster?.atmosphereResources?.findAll{ it.request?.getAttribute(IceScrumAtmosphereEventListener.USER_CONTEXT)?.username in attrs.user }?:null
             if(resources){
                 try {

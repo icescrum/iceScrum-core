@@ -23,6 +23,7 @@ import org.springframework.cache.ehcache.EhCacheFactoryBean
 */
 icescrum {
     push {
+        mainChannel = '/stream/app/*'
         enable = true
         websocket = false
         heartBeat {
@@ -37,7 +38,7 @@ icescrum {
                           'org.atmosphere.cpr.broadcaster.shareableThreadPool': true,
                           'org.atmosphere.cpr.broadcaster.maxProcessingThreads': 5,
                           'org.atmosphere.cpr.broadcaster.maxAsyncWriteThreads': 5,
-                          'org.atmosphere.cpr.broadcasterClass' : 'org.atmosphere.cpr.DefaultBroadcaster',
+                          'org.atmosphere.cpr.broadcasterClass' : 'org.icescrum.atmosphere.IceScrumBroadcaster',
                           'org.atmosphere.cpr.broadcasterLifeCyclePolicy': 'EMPTY_DESTROY',
                           'org.atmosphere.cpr.broadcastFilterClasses': 'org.atmosphere.client.TrackMessageSizeFilter']
             urlPattern = '/stream/app'
@@ -45,7 +46,7 @@ icescrum {
         handlers {
             // This closure is used to generate the atmosphere.xml using a MarkupBuilder instance in META-INF folder
             atmosphereDotXml = {
-                'atmosphere-handler'('context-root': '/stream/app/*', 'class-name': 'org.icescrum.atmosphere.IceScrumAtmosphereHandler')
+                'atmosphere-handler'('context-root': icescrum.push.mainChannel, 'class-name': 'org.icescrum.atmosphere.IceScrumAtmosphereHandler')
             }
         }
         redis {
