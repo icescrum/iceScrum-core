@@ -21,6 +21,7 @@
  */
 package org.icescrum.atmosphere
 
+import grails.converters.JSON
 import org.atmosphere.handler.AbstractReflectorAtmosphereHandler
 import org.atmosphere.cpr.*
 import org.codehaus.groovy.grails.commons.ApplicationHolder
@@ -41,6 +42,13 @@ class IceScrumAtmosphereHandler extends AbstractReflectorAtmosphereHandler {
                     def user = resource.request.getAttribute(IceScrumAtmosphereEventListener.USER_CONTEXT)
                     user.window = event.request.getParameterValues("window") ? event.request.getParameterValues("window")[0] : null
                     resource.request.setAttribute(IceScrumAtmosphereEventListener.USER_CONTEXT, user)
+                }
+            }
+            if (event.request.getParameterValues("message") && event.request.getParameterValues("uuid")){
+                Broadcaster broadcaster = BroadcasterFactory.default.lookup('/stream/app/*')
+                AtmosphereResource resource = AtmosphereResourceFactory.default.find(event.request.getParameterValues("uuid")[0])
+                if (resource){
+                    broadcaster.broadcast(([command:"message",object:event.request.getParameterValues("message")[0], uuid:event.uuid()] as JSON).toString(),resource)
                 }
             }
             event.resume()
