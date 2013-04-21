@@ -36,19 +36,19 @@ class IceScrumAtmosphereHandler extends AbstractReflectorAtmosphereHandler {
             return
         }
         if (event.request.getMethod().equalsIgnoreCase("POST")) {
-            if (event.request.getParameterValues("window")) {
-                AtmosphereResource resource = AtmosphereResourceFactory.default.find(event.uuid())
-                if (resource){
-                    def user = resource.request.getAttribute(IceScrumAtmosphereEventListener.USER_CONTEXT)
+            AtmosphereResource resourceFrom = AtmosphereResourceFactory.default.find(event.uuid())
+            if (resourceFrom){
+                def user = resourceFrom.request.getAttribute(IceScrumAtmosphereEventListener.USER_CONTEXT)
+                if (event.request.getParameterValues("window")) {
                     user.window = event.request.getParameterValues("window") ? event.request.getParameterValues("window")[0] : null
-                    resource.request.setAttribute(IceScrumAtmosphereEventListener.USER_CONTEXT, user)
+                    resourceFrom.request.setAttribute(IceScrumAtmosphereEventListener.USER_CONTEXT, user)
                 }
-            }
-            if (event.request.getParameterValues("message") && event.request.getParameterValues("uuid")){
-                Broadcaster broadcaster = BroadcasterFactory.default.lookup('/stream/app/*')
-                AtmosphereResource resource = AtmosphereResourceFactory.default.find(event.request.getParameterValues("uuid")[0])
-                if (resource){
-                    broadcaster.broadcast(([command:"message",object:event.request.getParameterValues("message")[0], uuid:event.uuid()] as JSON).toString(),resource)
+                else if (event.request.getParameterValues("command") && event.request.getParameterValues("data") && event.request.getParameterValues("to")){
+                    Broadcaster broadcaster = BroadcasterFactory.default.lookup('/stream/app/*')
+                    AtmosphereResource resourceTo = AtmosphereResourceFactory.default.find(event.request.getParameterValues("to")[0])
+                    if (resourceTo){
+                        broadcaster.broadcast(([command:event.request.getParameterValues("command")[0],data:event.request.getParameterValues("data")[0], from:event.uuid()] as JSON).toString(),resourceTo)
+                    }
                 }
             }
             event.resume()
