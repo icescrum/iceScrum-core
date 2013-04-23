@@ -20,6 +20,7 @@
  * Vincent Barrier (vbarrier@kagilum.com)
  * Stéphane Maldini (stephane.maldini@icescrum.com)
  * Manuarii Stein (manuarii.stein@icescrum.com)
+ * Nicolas Noullet (nnoullet@kagilum.com)
  */
 
 package org.icescrum.core.services
@@ -149,9 +150,14 @@ class StoryService {
 
             story.removeLinkByFollow(id)
             story.delete()
+
+            product.attach() // required because the product is no longer in hibernate session (don't know why...)
             if (history) {
                 product.addActivity(springSecurityService.currentUser, Activity.CODE_DELETE, story.name)
             }
+            product.removeFromStories(story)
+            product.save()
+
             broadcast(function: 'delete', message: [class: story.class, id: id, state: story.state], channel:'product-'+product.id)
         }
         resumeBufferedBroadcast(channel:'product-'+product.id)
