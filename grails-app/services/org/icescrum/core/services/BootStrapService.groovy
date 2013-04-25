@@ -55,8 +55,10 @@ class BootStrapService {
                 Runnable task = new Runnable() {
                     @Override
                     void run() {
-                            def broadcaster = BroadcasterFactory?.default?.lookup('/stream/app/*') ?: null
-                        broadcaster?.broadcast((message as JSON).toString());
+                        def broadcaster = BroadcasterFactory?.default?.lookup('/stream/app/*') ?: null
+                        if (broadcaster?.atmosphereResources){
+                            broadcaster?.broadcast((message as JSON).toString());
+                        }
                     }
                 }
                 heartBeat.scheduleAtFixedRate(task, 0, config.icescrum.push.heartBeat.delay, TimeUnit.SECONDS);

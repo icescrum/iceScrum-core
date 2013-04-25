@@ -80,14 +80,14 @@ class IceScrumAtmosphereEventListener implements AtmosphereResourceEventListener
         }
         BroadcasterFactory.default.lookupAll().each {
             if (it.atmosphereResources.contains(event.resource)){
-                it.removeAtmosphereResource(event.resource)
-                if (it.getID().contains('product-')) {
-                    def users = it.atmosphereResources?.collect{ it.request.getAttribute(IceScrumAtmosphereEventListener.USER_CONTEXT) }
-                    it.broadcast(([[command:'connected',object:users]] as JSON).toString())
+                if (it.getID().contains('product-') && it.atmosphereResources) {
+                    def users = it.atmosphereResources?.findAll{ it.uuid() != event.resource.uuid() }?.collect{ it.request.getAttribute(IceScrumAtmosphereEventListener.USER_CONTEXT) }
+                    if (users){
+                        it.broadcast(([[command:'connected',object:users]] as JSON).toString())
+                    }
                 }
             }
         }
-        AtmosphereResourceFactory.getDefault().remove(event.resource.uuid());
     }
 
     @Override
