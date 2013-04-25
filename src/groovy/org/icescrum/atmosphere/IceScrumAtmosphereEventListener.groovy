@@ -23,6 +23,7 @@ package org.icescrum.atmosphere
 
 import grails.converters.JSON
 import org.apache.commons.logging.LogFactory
+import org.atmosphere.cpr.AtmosphereResource
 import org.atmosphere.cpr.AtmosphereResourceEvent
 import org.atmosphere.cpr.AtmosphereResourceEventListener
 import org.atmosphere.cpr.AtmosphereResourceFactory
@@ -42,6 +43,10 @@ class IceScrumAtmosphereEventListener implements AtmosphereResourceEventListener
         def request = event.resource.request
 
         def user = getUserFromAtmosphereResource(event.resource, true)
+        if (!user){
+            event.resource.resume();
+            return
+        }
         request.setAttribute(USER_CONTEXT, user)
 
         def channel = null
@@ -67,27 +72,31 @@ class IceScrumAtmosphereEventListener implements AtmosphereResourceEventListener
     @Override
     void onResume(AtmosphereResourceEvent event) {
         def user = event.resource.request.getAttribute(USER_CONTEXT)?:null
-        if (log.isDebugEnabled()) {
+        if (user && log.isDebugEnabled()) {
             log.debug("Resume connection for user ${user?.username} with UUID ${event.resource.uuid()}")
         }
     }
 
     @Override
     void onDisconnect(AtmosphereResourceEvent event) {
-        def user = event.resource.request.getAttribute(USER_CONTEXT)?:null
-        if (log.isDebugEnabled()) {
-            log.debug("user ${user?.username} disconnected with UUID ${event.resource.uuid()}")
-        }
-        BroadcasterFactory.default.lookupAll().each {
-            if (it.atmosphereResources.contains(event.resource)){
-                if (it.getID().contains('product-') && it.atmosphereResources) {
-                    def users = it.atmosphereResources?.findAll{ it.uuid() != event.resource.uuid() }?.collect{ it.request.getAttribute(IceScrumAtmosphereEventListener.USER_CONTEXT) }
-                    if (users){
-                        it.broadcast(([[command:'connected',object:users]] as JSON).toString())
+        def resource =  AtmosphereResourceFactory.default.find(event.resource.uuid());
+        if (resource){
+            def user = resource.request.getAttribute(USER_CONTEXT)?:null
+            if (log.isDebugEnabled() && user) {
+                log.debug("user ${user?.username} disconnected with UUID ${event.resource.uuid()}")
+            }
+            BroadcasterFactory.default.lookupAll().each {
+                if (it.atmosphereResources.contains(resource)){
+                    if (it.getID().contains('product-') && it.atmosphereResources) {
+                        def users = it.atmosphereResources?.findAll{ it.uuid() != resource.uuid() }?.collect{ it.request.getAttribute(IceScrumAtmosphereEventListener.USER_CONTEXT) }
+                        if (users){
+                            it.broadcast(([[command:'connected',object:users]] as JSON).toString())
+                        }
                     }
                 }
             }
         }
+
     }
 
     @Override
@@ -114,6 +123,8 @@ class IceScrumAtmosphereEventListener implements AtmosphereResourceEventListener
             } else {
                 user.putAll([fullName: 'anonymous', id: null, username: 'anonymous'])
             }
+        } else {
+            user = null
         }
         user
     }
