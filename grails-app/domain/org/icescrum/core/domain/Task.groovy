@@ -154,6 +154,9 @@ class Task extends BacklogElement implements Serializable {
                 if (u.preferences.hideDoneState && s?.state == Sprint.STATE_INPROGRESS) {
                     ne 'state', Task.STATE_DONE
                 }
+                if (u.preferences.filterTask == 'blockedTasks') {
+                    eq 'blocked', true
+                }
             }
             eq 'type', Task.TYPE_URGENT
         }
@@ -189,6 +192,9 @@ class Task extends BacklogElement implements Serializable {
                 }
                 if (u.preferences.hideDoneState && s?.state == Sprint.STATE_INPROGRESS) {
                     ne 'state', Task.STATE_DONE
+                }
+                if (u.preferences.filterTask == 'blockedTasks') {
+                    eq 'blocked', true
                 }
             }
             eq 'type', Task.TYPE_RECURRENT
