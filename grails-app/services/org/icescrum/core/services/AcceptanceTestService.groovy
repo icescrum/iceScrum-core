@@ -72,6 +72,7 @@ class AcceptanceTestService {
             def at = new AcceptanceTest(
                 name: acceptanceTest."${'name'}".text(),
                 description: acceptanceTest."${'description'}".text(),
+                state: acceptanceTest."${'state'}".text().toInteger(),
                 uid: acceptanceTest.@uid.text().toInteger()
             )
             if (product) {
