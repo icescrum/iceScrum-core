@@ -20,19 +20,19 @@
  * Vincent Barrier (vbarrier@kagilum.com)
  * Stéphane Maldini (stephane.maldini@icescrum.com)
  * Manuarii Stein (manuarii.stein@icescrum.com)
+ * Nicolas Noullet (nnoullet@kagilum.com)
  */
 
 
 
 package org.icescrum.core.domain
 
-import org.grails.comments.Comment
-import org.icescrum.core.event.IceScrumBacklogElementEvent
 import org.icescrum.core.event.IceScrumEvent
 import org.icescrum.core.event.IceScrumStoryEvent
 import org.icescrum.plugins.attachmentable.domain.Attachment
 import org.springframework.security.core.context.SecurityContextHolder as SCH
 import grails.util.GrailsNameUtils
+import org.icescrum.core.domain.AcceptanceTest.AcceptanceTestState
 
 
 class Story extends BacklogElement implements Cloneable, Serializable {
@@ -89,7 +89,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
     ]
 
     static transients = [
-            'todo', 'dependences', 'deliveredVersion'
+            'todo', 'dependences', 'deliveredVersion', 'testState', 'testStateEnum'
     ]
 
     static mapping = {
@@ -717,5 +717,55 @@ class Story extends BacklogElement implements Cloneable, Serializable {
             }
         }
         return stories ?: Collections.EMPTY_LIST
+    }
+
+    enum TestState {
+        NOTEST(0),
+        TOCHECK(1),
+        FAILED(5),
+        INPROGRESS(7),
+        SUCCESS(10)
+
+        final Integer id
+        static TestState byId(Integer id) { values().find { TestState stateEnum -> stateEnum.id == id } }
+        private TestState(Integer id) { this.id = id }
+        String toString() { "is.story.teststate." + name().toLowerCase() }
+    }
+
+    int getTestState() {
+        getTestStateEnum().id
+    }
+
+
+    TestState getTestStateEnum() {
+        Map testsByStateCount = countTestsByState()
+        if (testsByStateCount.values().sum() == 0) {
+            TestState.NOTEST
+        } else if (testsByStateCount[AcceptanceTestState.FAILED] > 0) {
+            TestState.FAILED
+        } else if (testsByStateCount[AcceptanceTestState.SUCCESS] > 0) {
+            testsByStateCount[AcceptanceTestState.TOCHECK] > 0 ? TestState.INPROGRESS : TestState.SUCCESS
+        } else {
+            TestState.TOCHECK
+        }
+    }
+
+    Map countTestsByState() {
+        createCriteria().list {
+            eq "id", id
+            acceptanceTests {
+                projections {
+                    groupProperty "state"
+                    countDistinct "id"
+                }
+            }
+        }.inject([:]) { countByState, group ->
+            def state = group[0]
+            def stateCount = group[1]
+            if (AcceptanceTestState.exists(state)) {
+                countByState[AcceptanceTestState.byId(state)] = stateCount
+            }
+            countByState
+        }
     }
 }

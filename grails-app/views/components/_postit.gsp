@@ -14,6 +14,10 @@
   -
   - You should have received a copy of the GNU Lesser General Public License
   - along with iceScrum.  If not, see <http://www.gnu.org/licenses/>.
+  - Authors:
+  -
+  - Vincent Barrier (vbarrier@kagilum.com)
+  - Nicolas Noullet (nnoullet@kagilum.com)
   --}%
 
 <div class="${className} ${styleClass} postit-${type}" id="postit-${type}-${id}" data-elemid="${id}" ${dependsOn ? 'data-dependsOn="'+dependsOn.id+'"' : ''}>
@@ -50,7 +54,7 @@
             </g:if>
 
             <g:if test="${acceptanceTestCount}">
-                <span class="postit-acceptance-test icon"
+                <span class="postit-acceptance-test icon icon${testState}"
                       title="${message(code: 'is.postit.acceptanceTest.count', args: [acceptanceTestCount, (acceptanceTestCount instanceof Integer && acceptanceTestCount > 1) ? 's' : ''])}"></span>
             </g:if>
         </div>

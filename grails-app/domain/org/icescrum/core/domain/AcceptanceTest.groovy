@@ -34,10 +34,14 @@ class AcceptanceTest implements Serializable {
     Date dateCreated
     Date lastUpdated
 
+    int state = AcceptanceTestState.TOCHECK.id
+
+    AcceptanceTestState getStateEnum() { AcceptanceTestState.byId(state) }
+    void setStateEnum(AcceptanceTestState stateEnum) { state = stateEnum.id }
+
     static belongsTo = [
         creator: User,
         parentStory: Story
-
     ]
 
     static constraints = {
@@ -45,7 +49,7 @@ class AcceptanceTest implements Serializable {
         name(blank: false)
     }
 
-    static transients = ['parentProduct']
+    static transients = ['parentProduct', 'stateEnum']
 
     static namedQueries = {
         findLastUpdated {storyId ->
@@ -110,5 +114,17 @@ class AcceptanceTest implements Serializable {
 
     def getParentProduct(){
         return this.parentStory.backlog
+    }
+
+    enum AcceptanceTestState {
+        TOCHECK(1),
+        FAILED(5),
+        SUCCESS(10)
+
+        final Integer id
+        static AcceptanceTestState byId(Integer id) { values().find { AcceptanceTestState stateEnum -> stateEnum.id == id } }
+        static boolean exists(Integer id) { values().id.contains(id) }
+        private AcceptanceTestState(Integer id) { this.id = id }
+        String toString() { "is.acceptanceTest.state." + name().toLowerCase() }
     }
 }
