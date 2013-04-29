@@ -751,15 +751,14 @@ class Story extends BacklogElement implements Cloneable, Serializable {
     }
 
     Map countTestsByState() {
-        createCriteria().list {
-            eq "id", id
-            acceptanceTests {
-                projections {
-                    groupProperty "state"
-                    countDistinct "id"
-                }
-            }
-        }.inject([:]) { countByState, group ->
+        // Criteria didn't work because sort on acceptanceTests uid isn't in "group by" clause
+        Story.executeQuery("""
+            SELECT test.state, COUNT(test.id)
+            FROM Story story INNER JOIN story.acceptanceTests AS test
+            WHERE story.id = :id
+            GROUP BY test.state
+            ORDER BY test.state ASC """, [id: id]
+        ).inject([:]) { countByState, group ->
             def state = group[0]
             def stateCount = group[1]
             if (AcceptanceTestState.exists(state)) {
