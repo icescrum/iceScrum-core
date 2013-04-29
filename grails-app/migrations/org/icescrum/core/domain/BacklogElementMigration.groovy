@@ -73,6 +73,15 @@ class BacklogElementMigration {
             }
             dropNotNullConstraint(tableName:"icescrum2_story", columnName:"origin", columnDataType:'VARCHAR(255)')
         }
+
+        // Acceptance tests states
+        changeSet(id:'add_acceptance_test_state_default', author:'vbarrier', filePath:filePath) {
+            sql('UPDATE acceptance_test SET state = 1 WHERE state IS NULL')
+
+        }
+        changeSet(id:'add_acceptance_test_state_non_nullable', author:'vbarrier', filePath:filePath) {
+            addNotNullConstraint(tableName:"acceptance_test", columnName:'state', columnDataType:'INTEGER')
+        }
     }
 
     static def getFilePath(){
