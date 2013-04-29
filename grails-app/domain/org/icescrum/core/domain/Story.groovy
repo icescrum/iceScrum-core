@@ -370,9 +370,6 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                     eq 'uid', termInteger.toInteger()
                 }
                 tasks {
-                    if (u.preferences.filterTask == 'blockedTasks') {
-                        eq 'blocked', true
-                    }
                     if (term) {
                         or {
                             if (termInteger?.isInteger()){
@@ -396,6 +393,9 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                         }
                         if (u.preferences.filterTask == 'freeTasks') {
                             isNull('responsible')
+                        }
+                        if (u.preferences.filterTask == 'blockedTasks') {
+                            eq 'blocked', true
                         }
                     }
                 }
