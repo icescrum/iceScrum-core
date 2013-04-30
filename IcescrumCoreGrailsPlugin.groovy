@@ -29,6 +29,7 @@ import org.atmosphere.cpr.HeaderConfig
 import org.codehaus.groovy.grails.commons.GrailsClassUtils
 import org.codehaus.groovy.grails.scaffolding.view.ScaffoldingViewResolver
 import org.icescrum.atmosphere.IceScrumAtmosphereEventListener
+import org.icescrum.core.domain.AcceptanceTest
 import org.icescrum.core.utils.JSONIceScrumDomainClassMarshaller
 import org.icescrum.plugins.attachmentable.domain.Attachment
 import org.icescrum.plugins.attachmentable.services.AttachmentableService
@@ -866,6 +867,26 @@ class IcescrumCoreGrailsPlugin {
                 }
             } else {
                 returnError(text: message(code: 'is.story.error.not.exist'))
+            }
+        }
+
+        source.metaClass.withAcceptanceTest = { def id = 'id', Closure c ->
+            def acceptanceTest = (AcceptanceTest) AcceptanceTest.getInProduct(params.long('product'), (id instanceof String ? params."$id".toLong() : id) ).list()
+            if (acceptanceTest) {
+                try {
+                    c.call acceptanceTest
+                } catch (AttachmentException e) {
+                    returnError(exception: e)
+                } catch (IllegalStateException e) {
+                    returnError(exception: e)
+                } catch (RuntimeException e) {
+                    if (acceptanceTest.errors.errorCount)
+                        returnError(object: acceptanceTest, exception: e)
+                    else
+                        returnError(exception: e)
+                }
+            } else {
+                returnError(text: message(code: 'is.acceptanceTest.error.not.exist'))
             }
         }
 

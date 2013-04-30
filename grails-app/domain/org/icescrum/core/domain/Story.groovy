@@ -759,8 +759,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
             GROUP BY test.state
             ORDER BY test.state ASC """, [id: id]
         ).inject([:]) { countByState, group ->
-            def state = group[0]
-            def stateCount = group[1]
+            def (state, stateCount) = group
             if (AcceptanceTestState.exists(state)) {
                 countByState[AcceptanceTestState.byId(state)] = stateCount
             }

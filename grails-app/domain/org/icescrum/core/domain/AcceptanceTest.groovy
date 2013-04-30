@@ -63,6 +63,16 @@ class AcceptanceTest implements Serializable {
             maxResults(1)
             cache true
         }
+
+        getInProduct { productId, id ->
+            parentStory {
+                backlog {
+                    eq 'id', productId
+                }
+            }
+            eq 'id', id
+            uniqueResult = true
+        }
     }
 
     static int findNextUId(Long pid) {
