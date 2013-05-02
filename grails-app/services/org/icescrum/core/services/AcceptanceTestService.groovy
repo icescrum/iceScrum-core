@@ -23,6 +23,7 @@
 package org.icescrum.core.services
 
 import org.icescrum.core.domain.AcceptanceTest
+import org.icescrum.core.domain.AcceptanceTest.AcceptanceTestState
 import org.springframework.security.access.prepost.PreAuthorize
 import org.icescrum.core.domain.Story
 import org.icescrum.core.domain.User
@@ -33,38 +34,57 @@ class AcceptanceTestService {
 
     static transactional = true
 
+    def springSecurityService
+
     @PreAuthorize('inProduct(#parentStory.backlog) and !archivedProduct(#parentStory.backlog)')
     void save(AcceptanceTest acceptanceTest, Story parentStory, User user) {
+
         acceptanceTest.creator = user
         acceptanceTest.uid = AcceptanceTest.findNextUId(parentStory.backlog.id)
         acceptanceTest.parentStory = parentStory
         parentStory.lastUpdated = new Date()
+
         if (!acceptanceTest.save(flush:true)) {
             throw new RuntimeException()
         }
-        parentStory.addActivity(user, 'acceptanceTest', parentStory.name)
+
+        acceptanceTest.addActivity(user, 'acceptanceTestSave', acceptanceTest.name)
         publishEvent(new IceScrumAcceptanceTestEvent(acceptanceTest, this.class, user, IceScrumAcceptanceTestEvent.EVENT_CREATED))
-        broadcast(function: 'add', message: acceptanceTest, channel:'product-'+acceptanceTest.parentStory.backlog.id)
-        broadcast(function: 'update', message: acceptanceTest.parentStory, channel:'product-'+acceptanceTest.parentStory.backlog.id)
+
+        def channel = 'product-' + parentStory.backlog.id
+        broadcast(function: 'add', message: acceptanceTest, channel: channel)
+        broadcast(function: 'update', message: parentStory, channel: channel)
     }
 
     @PreAuthorize('inProduct(#acceptanceTest.parentProduct) and !archivedProduct(#acceptanceTest.parentProduct)')
-    void update(AcceptanceTest acceptanceTest, User user) {
+    void update(AcceptanceTest acceptanceTest, User user, boolean stateChanged) {
+
         if (!acceptanceTest.save(flush:true)) {
             throw new RuntimeException()
         }
+
+        def activityType = 'acceptanceTest' + (stateChanged ? acceptanceTest.stateEnum.name().toLowerCase().capitalize() : 'Update')
+        acceptanceTest.addActivity(user, activityType, acceptanceTest.name)
         publishEvent(new IceScrumAcceptanceTestEvent(acceptanceTest, this.class, user, IceScrumAcceptanceTestEvent.EVENT_UPDATED))
-        broadcast(function: 'update', message: acceptanceTest, channel:'product-'+acceptanceTest.parentStory.backlog.id)
-        broadcast(function: 'update', message: acceptanceTest.parentStory, channel:'product-'+acceptanceTest.parentStory.backlog.id)
+
+        def parentStory = acceptanceTest.parentStory
+        def channel = 'product-' + parentStory.backlog.id
+        broadcast(function: 'update', message: acceptanceTest, channel: channel)
+        broadcast(function: 'update', message: parentStory, channel: channel)
     }
 
     @PreAuthorize('inProduct(#acceptanceTest.parentProduct) and !archivedProduct(#acceptanceTest.parentProduct)')
     void delete(AcceptanceTest acceptanceTest) {
-        def story = acceptanceTest.parentStory
-        story.removeFromAcceptanceTests(acceptanceTest)
+
+        def parentStory = acceptanceTest.parentStory
+        parentStory.removeFromAcceptanceTests(acceptanceTest)
         acceptanceTest.delete()
-        broadcast(function: 'delete', message: [class: acceptanceTest.class, id: acceptanceTest.id], channel:'product-'+story.backlog.id)
-        broadcast(function: 'update', message: story, channel:'product-'+story.backlog.id)
+
+        parentStory.addActivity(springSecurityService.currentUser, 'acceptanceTestDelete', acceptanceTest.name)
+
+        def channel = 'product-' + parentStory.backlog.id
+        broadcast(function: 'delete', message: [class: acceptanceTest.class, id: acceptanceTest.id], channel: channel)
+        broadcast(function: 'update', message: parentStory, channel: channel)
     }
 
     def unMarshall(def acceptanceTest, Product product) {

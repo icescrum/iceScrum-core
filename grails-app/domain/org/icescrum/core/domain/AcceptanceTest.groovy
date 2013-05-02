@@ -22,10 +22,11 @@
  */
 package org.icescrum.core.domain
 
+import grails.plugin.fluxiable.Fluxiable
 import org.icescrum.core.event.IceScrumAcceptanceTestEvent
 import org.springframework.security.core.context.SecurityContextHolder as SCH
 
-class AcceptanceTest implements Serializable {
+class AcceptanceTest implements Fluxiable, Serializable {
 
     String name
     String description
