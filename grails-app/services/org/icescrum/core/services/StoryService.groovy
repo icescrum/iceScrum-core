@@ -35,6 +35,7 @@ import org.icescrum.core.event.IceScrumStoryEvent
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.transaction.annotation.Transactional
 import org.icescrum.core.domain.*
+import org.icescrum.core.domain.AcceptanceTest.AcceptanceTestState
 
 import org.icescrum.core.support.ApplicationSupport
 
@@ -802,6 +803,13 @@ class StoryService {
             story.tasks?.findAll{ it.state != Task.STATE_DONE }?.each { t ->
                 t.estimation = 0
                 taskService.update(t, u)
+            }
+
+            story.acceptanceTests.each { AcceptanceTest acceptanceTest ->
+                if (acceptanceTest.stateEnum != AcceptanceTestState.SUCCESS) {
+                    acceptanceTest.stateEnum = AcceptanceTestState.SUCCESS
+                    acceptanceTestService.update(acceptanceTest, u, true)
+                }
             }
         }
         if (stories)

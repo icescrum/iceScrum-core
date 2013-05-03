@@ -44,7 +44,7 @@ class AcceptanceTestService {
         acceptanceTest.parentStory = parentStory
         parentStory.lastUpdated = new Date()
 
-        if (!acceptanceTest.save(flush:true)) {
+        if (!acceptanceTest.save()) {
             throw new RuntimeException()
         }
 
@@ -62,7 +62,7 @@ class AcceptanceTestService {
         def parentStory = acceptanceTest.parentStory
         parentStory.lastUpdated = new Date()
 
-        if (!acceptanceTest.save(flush:true)) {
+        if (!acceptanceTest.save()) {
             throw new RuntimeException()
         }
 
