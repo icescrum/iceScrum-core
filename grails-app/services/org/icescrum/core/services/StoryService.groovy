@@ -26,7 +26,7 @@
 package org.icescrum.core.services
 
 import grails.plugin.fluxiable.Activity
-import org.apache.maven.artifact.ant.shaded.FileUtils
+import org.apache.commons.io.FileUtils
 import org.grails.comments.Comment
 import org.icescrum.plugins.attachmentable.domain.Attachment
 
