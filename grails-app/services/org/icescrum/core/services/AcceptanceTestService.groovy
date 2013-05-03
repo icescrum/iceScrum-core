@@ -59,6 +59,9 @@ class AcceptanceTestService {
     @PreAuthorize('inProduct(#acceptanceTest.parentProduct) and !archivedProduct(#acceptanceTest.parentProduct)')
     void update(AcceptanceTest acceptanceTest, User user, boolean stateChanged) {
 
+        def parentStory = acceptanceTest.parentStory
+        parentStory.lastUpdated = new Date()
+
         if (!acceptanceTest.save(flush:true)) {
             throw new RuntimeException()
         }
@@ -67,7 +70,6 @@ class AcceptanceTestService {
         acceptanceTest.addActivity(user, activityType, acceptanceTest.name)
         publishEvent(new IceScrumAcceptanceTestEvent(acceptanceTest, this.class, user, IceScrumAcceptanceTestEvent.EVENT_UPDATED))
 
-        def parentStory = acceptanceTest.parentStory
         def channel = 'product-' + parentStory.backlog.id
         broadcast(function: 'update', message: acceptanceTest, channel: channel)
         broadcast(function: 'update', message: parentStory, channel: channel)
