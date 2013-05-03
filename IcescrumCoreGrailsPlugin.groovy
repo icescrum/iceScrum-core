@@ -871,7 +871,7 @@ class IcescrumCoreGrailsPlugin {
         }
 
         source.metaClass.withAcceptanceTest = { def id = 'id', Closure c ->
-            def acceptanceTest = (AcceptanceTest) AcceptanceTest.getInProduct(params.long('product'), (id instanceof String ? params."$id".toLong() : id) ).list()
+            def acceptanceTest = (AcceptanceTest) AcceptanceTest.getInProduct(params.long('product'), (id instanceof String ? params."$id".toLong() : id) )
             if (acceptanceTest) {
                 try {
                     c.call acceptanceTest

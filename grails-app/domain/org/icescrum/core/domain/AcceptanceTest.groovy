@@ -64,16 +64,6 @@ class AcceptanceTest implements Fluxiable, Serializable {
             maxResults(1)
             cache true
         }
-
-        getInProduct { productId, id ->
-            parentStory {
-                backlog {
-                    eq 'id', productId
-                }
-            }
-            eq 'id', id
-            uniqueResult = true
-        }
     }
 
     static int findNextUId(Long pid) {
@@ -82,6 +72,14 @@ class AcceptanceTest implements Fluxiable, Serializable {
                    FROM org.icescrum.core.domain.AcceptanceTest as t, org.icescrum.core.domain.Story as s
                    WHERE t.parentStory = s
                    AND s.backlog.id = :pid """, [pid: pid])[0]?:0) + 1
+    }
+
+    static AcceptanceTest getInProduct(productId, id) {
+        executeQuery(
+                """SELECT at
+                   FROM org.icescrum.core.domain.AcceptanceTest as at
+                   WHERE at.id = :id
+                   AND at.parentStory.backlog.id = :pid """, [id: id, pid: productId]).first()
     }
 
     def beforeDelete() {
