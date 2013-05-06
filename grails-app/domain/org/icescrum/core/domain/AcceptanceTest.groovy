@@ -37,9 +37,6 @@ class AcceptanceTest implements Fluxiable, Serializable {
 
     int state = AcceptanceTestState.TOCHECK.id
 
-    AcceptanceTestState getStateEnum() { AcceptanceTestState.byId(state) }
-    void setStateEnum(AcceptanceTestState stateEnum) { state = stateEnum.id }
-
     static belongsTo = [
         creator: User,
         parentStory: Story
@@ -51,20 +48,6 @@ class AcceptanceTest implements Fluxiable, Serializable {
     }
 
     static transients = ['parentProduct', 'stateEnum']
-
-    static namedQueries = {
-        findLastUpdated {storyId ->
-            parentStory {
-                eq 'id', storyId
-            }
-            projections {
-                property 'lastUpdated'
-            }
-            order("lastUpdated", "desc")
-            maxResults(1)
-            cache true
-        }
-    }
 
     static int findNextUId(Long pid) {
         (executeQuery(
@@ -135,5 +118,13 @@ class AcceptanceTest implements Fluxiable, Serializable {
         static boolean exists(Integer id) { values().id.contains(id) }
         private AcceptanceTestState(Integer id) { this.id = id }
         String toString() { "is.acceptanceTest.state." + name().toLowerCase() }
+    }
+
+    AcceptanceTestState getStateEnum() {
+        AcceptanceTestState.byId(state)
+    }
+
+    void setStateEnum(AcceptanceTestState stateEnum) {
+        state = stateEnum.id
     }
 }

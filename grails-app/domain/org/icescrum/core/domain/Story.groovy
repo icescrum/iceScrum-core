@@ -739,7 +739,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
 
     TestState getTestStateEnum() {
         Map testsByStateCount = countTestsByState()
-        if (testsByStateCount.values().sum() == 0) {
+        if (testsByStateCount.size() == 0) {
             TestState.NOTEST
         } else if (testsByStateCount[AcceptanceTestState.FAILED] > 0) {
             TestState.FAILED
@@ -757,7 +757,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
             FROM Story story INNER JOIN story.acceptanceTests AS test
             WHERE story.id = :id
             GROUP BY test.state
-            ORDER BY test.state ASC """, [id: id]
+            ORDER BY test.state ASC """, [id: id, cache:true]
         ).inject([:]) { countByState, group ->
             def (state, stateCount) = group
             if (AcceptanceTestState.exists(state)) {
