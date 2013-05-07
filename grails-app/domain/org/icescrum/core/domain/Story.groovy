@@ -766,4 +766,8 @@ class Story extends BacklogElement implements Cloneable, Serializable {
             countByState
         }
     }
+
+    Integer countAcceptanceTests() {
+        countTestsByState().values().sum()
+    }
 }
