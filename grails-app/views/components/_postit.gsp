@@ -54,7 +54,7 @@
             </g:if>
 
             <g:if test="${acceptanceTestCount}">
-                <span class="postit-acceptance-test icon icon${testState}"
+                <span class="icon story-icon-acceptance-test icon-acceptance-test${testState}"
                       title="${message(code: 'is.postit.acceptanceTest.count', args: [acceptanceTestCount, (acceptanceTestCount instanceof Integer && acceptanceTestCount > 1) ? 's' : ''])}, ${message(code: 'is.postit.acceptanceTest.progress')} ${testStateLabel}"></span>
             </g:if>
         </div>

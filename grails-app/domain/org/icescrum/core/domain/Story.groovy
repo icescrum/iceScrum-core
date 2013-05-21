@@ -723,7 +723,6 @@ class Story extends BacklogElement implements Cloneable, Serializable {
         NOTEST(0),
         TOCHECK(1),
         FAILED(5),
-        INPROGRESS(7),
         SUCCESS(10)
 
         final Integer id
@@ -743,10 +742,10 @@ class Story extends BacklogElement implements Cloneable, Serializable {
             TestState.NOTEST
         } else if (testsByStateCount[AcceptanceTestState.FAILED] > 0) {
             TestState.FAILED
-        } else if (testsByStateCount[AcceptanceTestState.SUCCESS] > 0) {
-            testsByStateCount[AcceptanceTestState.TOCHECK] > 0 ? TestState.INPROGRESS : TestState.SUCCESS
-        } else {
+        } else if (testsByStateCount[AcceptanceTestState.TOCHECK] > 0) {
             TestState.TOCHECK
+        } else {
+            TestState.SUCCESS
         }
     }
 
