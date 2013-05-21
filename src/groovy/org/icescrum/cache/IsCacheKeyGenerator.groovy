@@ -18,6 +18,7 @@
  * Authors:
  *
  * Vincent Barrier (vbarrier@kagilum.com)
+ * Nicolas Noullet (nnoullet@kagilum.com)
  *
  */
 package org.icescrum.cache
@@ -224,8 +225,12 @@ public class ISKeyGeneratorHelper {
                 break
             case 'release':
                 def id = params.release?.id?: params.id
-                timebox = id ? Release.get(id.toLong()) : null
-                options = timebox?.sprints*.lastUpdated.max()?:null
+                if (id) {
+                    timebox = Release.get(id.toLong())
+                    if (timebox) {
+                        options = Release.findLastUpdatedSprint(timebox)
+                    }
+                }
                 break
             case 'product':
                 def id = params.product ? params.product.decodeProductKey() : params.id

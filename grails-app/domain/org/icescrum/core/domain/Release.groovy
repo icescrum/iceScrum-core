@@ -30,6 +30,8 @@ import org.icescrum.core.event.IceScrumEvent
 import org.icescrum.plugins.attachmentable.interfaces.Attachmentable
 import org.springframework.security.core.context.SecurityContextHolder as SCH
 
+import java.sql.Timestamp
+
 
 class Release extends TimeBox implements Cloneable, Attachmentable {
 
@@ -130,6 +132,14 @@ class Release extends TimeBox implements Cloneable, Attachmentable {
             }
             uniqueResult = true
         }
+    }
+
+    static Timestamp findLastUpdatedSprint(Release release) {
+        executeQuery(
+                """SELECT max(sprint.lastUpdated)
+                   FROM Release release
+                   INNER JOIN release.sprints as sprint
+                   WHERE release = :release""", [release: release]).first() as Timestamp
     }
 
     int hashCode() {
