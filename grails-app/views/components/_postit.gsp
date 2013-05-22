@@ -1,3 +1,4 @@
+<%@ page import="org.icescrum.core.domain.Story; org.icescrum.core.domain.Story.TestState" %>
 %{--
   - Copyright (c) 2010 iceScrum Technologies.
   -
@@ -53,9 +54,9 @@
                       title="${message(code: 'is.postit.attachment', args: [attachment, (attachment instanceof Integer && attachment > 1) ? 's' : ''])}"></span>
             </g:if>
 
-            <g:if test="${acceptanceTestCount}">
+            <g:if test="${testCount}">
                 <span class="icon story-icon-acceptance-test icon-acceptance-test${testState}"
-                      title="${message(code: 'is.postit.acceptanceTest.count', args: [acceptanceTestCount, (acceptanceTestCount instanceof Integer && acceptanceTestCount > 1) ? 's' : ''])}, ${message(code: 'is.postit.acceptanceTest.progress')} ${testStateLabel}"></span>
+                      title="${message(code: 'is.postit.acceptanceTest.count', args: [testCount, (testCount instanceof Integer && testCount > 1) ? 's' : ''])}${testCountByStateLabel ? ' ('+ testCountByStateLabel + ')' : ''}"></span>
             </g:if>
         </div>
 
