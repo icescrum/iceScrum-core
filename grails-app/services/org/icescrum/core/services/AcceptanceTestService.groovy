@@ -90,7 +90,7 @@ class AcceptanceTestService {
 
         def channel = 'product-' + parentStory.backlog.id
         bufferBroadcast(channel:channel)
-        broadcast(function: 'delete', message: [class: acceptanceTest.class, id: acceptanceTest.id], channel: channel)
+        broadcast(function: 'delete', message: [class: acceptanceTest.class, id: acceptanceTest.id, parentStory: [id: parentStory.id]], channel: channel)
         broadcast(function: 'update', message: parentStory, channel: channel)
         resumeBufferedBroadcast(channel:channel)
     }

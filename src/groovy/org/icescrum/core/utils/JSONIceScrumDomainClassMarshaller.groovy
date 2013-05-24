@@ -89,6 +89,8 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
             excludes.addAll(propertiesMap."${configName}".exclude)
         if(propertiesMap."${configName}"?.include)
             excludes.addAll(propertiesMap."${configName}".include)
+        if(propertiesMap."${configName}"?.includeShort)
+            excludes.addAll(propertiesMap."${configName}".includeShort)
         properties.removeAll{ it.getName() in excludes }
 
         for (GrailsDomainClassProperty property: properties) {
@@ -172,6 +174,24 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
                 json.convertAnother(value.properties."${it}");
             }
         }
+        propertiesMap."${configName}"?.includeShort?.each {
+            if (value.properties."${it}" != null) {
+                writer.key(it);
+                def referenceObject = value.properties."${it}"
+                if (referenceObject instanceof Collection && referenceObject.size() > 0) {
+                    referenceObject = new ArrayList((Collection) referenceObject);
+                    GrailsDomainClass referencedDomainClass = ConverterUtil.getDomainClass(referenceObject[0].getClass().getName())
+                    writer.array()
+                    for (Object el: referenceObject) {
+                        asShortObject(el, json,  referencedDomainClass.getIdentifier(), referencedDomainClass)
+                    }
+                    writer.endArray()
+                } else if(!(referenceObject instanceof Collection)) {
+                    GrailsDomainClass referencedDomainClass = ConverterUtil.getDomainClass(referenceObject.getClass().getName())
+                    asShortObject(referenceObject, json, referencedDomainClass.getIdentifier(), referencedDomainClass);
+                }
+            }
+        }
         writer.endObject();
     }
 
@@ -179,10 +199,6 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
     protected void asShortObject(Object refObj, JSON json, GrailsDomainClassProperty idProperty, GrailsDomainClass referencedDomainClass) throws ConverterException {
 
         Object idValue;
-
-        if (referencedDomainClass.getName() == Cliche.class) {
-            return
-        }
 
         if (proxyHandler instanceof EntityProxyHandler) {
             idValue = ((EntityProxyHandler) proxyHandler).getProxyIdentifier(refObj);
