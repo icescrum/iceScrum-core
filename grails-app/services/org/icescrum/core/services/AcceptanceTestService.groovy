@@ -52,8 +52,10 @@ class AcceptanceTestService {
         publishEvent(new IceScrumAcceptanceTestEvent(acceptanceTest, this.class, user, IceScrumAcceptanceTestEvent.EVENT_CREATED))
 
         def channel = 'product-' + parentStory.backlog.id
+        bufferBroadcast(channel:channel)
         broadcast(function: 'add', message: acceptanceTest, channel: channel)
         broadcast(function: 'update', message: parentStory, channel: channel)
+        resumeBufferedBroadcast(channel:channel)
     }
 
     @PreAuthorize('inProduct(#acceptanceTest.parentProduct) and !archivedProduct(#acceptanceTest.parentProduct)')
@@ -71,8 +73,10 @@ class AcceptanceTestService {
         publishEvent(new IceScrumAcceptanceTestEvent(acceptanceTest, this.class, user, IceScrumAcceptanceTestEvent.EVENT_UPDATED))
 
         def channel = 'product-' + parentStory.backlog.id
+        bufferBroadcast(channel:channel)
         broadcast(function: 'update', message: acceptanceTest, channel: channel)
         broadcast(function: 'update', message: parentStory, channel: channel)
+        resumeBufferedBroadcast(channel:channel)
     }
 
     @PreAuthorize('inProduct(#acceptanceTest.parentProduct) and !archivedProduct(#acceptanceTest.parentProduct)')
@@ -85,8 +89,10 @@ class AcceptanceTestService {
         parentStory.addActivity(springSecurityService.currentUser, 'acceptanceTestDelete', acceptanceTest.name)
 
         def channel = 'product-' + parentStory.backlog.id
+        bufferBroadcast(channel:channel)
         broadcast(function: 'delete', message: [class: acceptanceTest.class, id: acceptanceTest.id], channel: channel)
         broadcast(function: 'update', message: parentStory, channel: channel)
+        resumeBufferedBroadcast(channel:channel)
     }
 
     def unMarshall(def acceptanceTest, Product product) {
