@@ -681,6 +681,8 @@ class StoryService {
                 feature.addAttachment(story.creator, attachmentableService.getFile(attachment), attachment.filename)
             }
 
+            feature.tags = story.tags
+
             this.delete(story, false)
             features << feature
 
@@ -739,6 +741,8 @@ class StoryService {
                 comment ->
                 task.notes = (task.notes ?: '') + '\n --- \n ' + comment.body + '\n --- \n '
             }
+            task.tags = story.tags
+
             tasks << task
             this.delete(story, false)
 
