@@ -76,12 +76,10 @@ class BacklogElementMigration {
 
         // Acceptance tests states
         changeSet(id:'add_acceptance_test_state_success_on_done_stories', author:'vbarrier', filePath:filePath) {
-            sql('UPDATE acceptance_test SET acceptance_test.state = 10 WHERE EXISTS (SELECT * FROM icescrum2_story WHERE acceptance_test.parent_story_id = icescrum2_story.id AND icescrum2_story.state = 7)')
-
+            sql('UPDATE acceptance_test SET state = 10 WHERE EXISTS (SELECT * FROM icescrum2_story WHERE acceptance_test.parent_story_id = icescrum2_story.id AND icescrum2_story.state = 7)')
         }
         changeSet(id:'add_acceptance_test_state_tocheck_on_remaining_tests', author:'vbarrier', filePath:filePath) {
             sql('UPDATE acceptance_test SET state = 1 WHERE state IS NULL')
-
         }
         changeSet(id:'add_acceptance_test_state_non_nullable', author:'vbarrier', filePath:filePath) {
             addNotNullConstraint(tableName:"acceptance_test", columnName:'state', columnDataType:'INTEGER')
