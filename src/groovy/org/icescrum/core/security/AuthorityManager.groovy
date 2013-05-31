@@ -22,7 +22,6 @@
 
 package org.icescrum.core.security
 
-import org.codehaus.groovy.grails.commons.ApplicationHolder
 import org.icescrum.core.domain.User
 import org.icescrum.core.domain.preferences.UserPreferences
 import org.icescrum.core.domain.security.Authority
@@ -48,9 +47,9 @@ class AuthorityManager {
         UserAuthority.create admin, permissionRole, true
     }
 
-    static public initSecurity = {
+    static public initSecurity = { def grailsApplication ->
 
-        def ctx = ApplicationHolder.application.mainContext
+        def ctx = grailsApplication.mainContext
         def securityService = ctx.securityService
         ctx.webExpressionHandler?.securityService = securityService
         ctx.expressionHandler?.securityService = securityService

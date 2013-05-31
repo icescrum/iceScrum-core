@@ -38,17 +38,18 @@ import java.util.concurrent.TimeUnit
 class BootStrapService {
 
     def pluginManager
+    def grailsApplication
     private ScheduledExecutorService heartBeat
 
     void start() {
+        AuthorityManager.initSecurity(grailsApplication)
 
-        AuthorityManager.initSecurity()
-        ApplicationSupport.generateFolders()
-        ApplicationSupport.checkNewVersion()
+        def config = grailsApplication.config
+        ApplicationSupport.checkInitialConfig(config)
+        ApplicationSupport.generateFolders(config)
+        ApplicationSupport.checkNewVersion(config)
 
-        def config = ApplicationHolder.application.config
-
-        if (config.icescrum.push.heartBeat.enable) {
+        if (config.icescrum.push.enable && config.icescrum.push.heartBeat.enable) {
             def message = [heart: true];
             if (!heartBeat) {
                 heartBeat = Executors.newSingleThreadScheduledExecutor()
@@ -75,5 +76,6 @@ class BootStrapService {
 
         if (Environment.current == Environment.DEVELOPMENT && !System.properties['icescrum.fixtures'])
             DummyPopulator.dummyze()
+
     }
 }

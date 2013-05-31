@@ -23,6 +23,7 @@
 
 package org.icescrum.core.support
 
+import grails.util.Environment
 import org.codehaus.groovy.grails.commons.ApplicationHolder
 import groovyx.net.http.RESTClient
 import grails.util.Metadata
@@ -38,11 +39,31 @@ import java.util.zip.ZipInputStream
 class ApplicationSupport {
 
     private static final log = LogFactory.getLog(this)
+    public  static final CONFIG_ENV_NAME = 'icescrum_config_location'
 
-    public static final CONFIG_ENV_NAME = 'icescrum_config_location'
+    public static boolean isProVersion() {
+        return Metadata.current['app.version']?.contains('Pro') ? true : false
+    }
 
-    static public generateFolders = {
-        def config = ApplicationHolder.application.config
+    static public checkInitialConfig = { def config ->
+        //check if Tomcat version is compatible
+        try{
+            def loader = delegate.classLoader.rootLoader
+            loader.findClass("javax.servlet.http.Part")
+        }catch(ClassNotFoundException e){
+            config.icescrum.errors << [title:'is.warning.httpPart.title',
+                                       message:'is.warning.httpPart.message' + (isProVersion() ? '.pro' : '')]
+            config.icescrum.push.enable = false;
+        }
+        //check if serverURL is valid
+        if (config.grails.serverURL.contains('localhost') && Environment.current != Environment.DEVELOPMENT){
+            config.icescrum.errors << [title:'is.warning.serverUrl.title',
+                                       message:'is.warning.serverUrl.message' + (isProVersion() ? '.pro' : ''),
+                                       args:[config.grails.serverURL]]
+        }
+    }
+
+    static public generateFolders = { def config ->
         def dirPath = config.icescrum.baseDir.toString() + File.separator + "images" + File.separator + "users" + File.separator
         def dir = new File(dirPath)
         if (!dir.exists())
@@ -99,8 +120,7 @@ class ApplicationSupport {
         }
     }
 
-    static public checkNewVersion = {
-        def config = ApplicationHolder.application.config
+    static public checkNewVersion = { def config ->
         if (booleanValue(config.icescrum.check.enable)){
             def timer = new Timer()
             def interval = CheckerTimerTask.computeInterval(config.icescrum.check.interval?:360)
@@ -268,10 +288,10 @@ class CheckerTimerTask extends TimerTask {
                                 headers:['User-Agent' : 'iceScrum-Agent/1.0','Referer' : config.grails.serverURL])
             if(resp.success && resp.status == 200){
                 if (resp.data.version?.text()){
-                    config.icescrum.check.available = [version:resp.data.version.text(), url:resp.data.url.text(), message:resp.data.message?.text()]
+                    config.icescrum.errors << [title:'is.warning.version', version:resp.data.version.text(), url:resp.data.url.text(), message:resp.data.message?.text()]
                     if (log.debugEnabled) log.debug('Automatic check update - A new version is available : '+resp.data.version.text())
+                    return
                 }else{
-                    config.icescrum.check.available = false
                     if (log.debugEnabled) log.debug('Automatic check update - iceScrum is up to date')
                 }
             }
@@ -295,5 +315,4 @@ class CheckerTimerTask extends TimerTask {
     public static computeInterval(int interval){
         return 1000 * 60 * interval
     }
-
 }
