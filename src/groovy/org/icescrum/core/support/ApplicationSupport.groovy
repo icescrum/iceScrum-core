@@ -48,8 +48,7 @@ class ApplicationSupport {
     static public checkInitialConfig = { def config ->
         //check if Tomcat version is compatible
         try{
-            def loader = delegate.classLoader.rootLoader
-            loader.findClass("javax.servlet.http.Part")
+            ApplicationSupport.forName("javax.servlet.http.Part")
         }catch(ClassNotFoundException e){
             config.icescrum.errors << [title:'is.warning.httpPart.title',
                                        message:'is.warning.httpPart.message' + (isProVersion() ? '.pro' : '')]
