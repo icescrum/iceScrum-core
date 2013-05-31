@@ -139,7 +139,7 @@ class StoryService {
             story.deleteComments()
 
             //give why you delete a story
-            story.description = reason ?: story.description
+            story.description = reason ?: null
             //Send not asynchronous email
             try{
                 notificationEmailService.sendAlertCUD(story, (User)springSecurityService.currentUser, IceScrumStoryEvent.EVENT_BEFORE_DELETE)
