@@ -25,11 +25,11 @@
       ${noComment}
     </li>
   </g:if>
-  <g:render template="/components/comment"
-          collection="${comments}"
-          var="comment"
-          plugin="icescrum-core"
-          model="[noEscape:noEscape, commentable:commentable, product:product, moderation:true, access:poOrSm, user:user]"/>
+  <g:each in="${comments}" var="comment" status="i">
+      <g:render template="/components/comment"
+                plugin="icescrum-core"
+                model="[last:comments.size() == (i + 1),comment:comment, noEscape:noEscape, commentable:commentable, product:product, moderation:true, access:poOrSm, user:user]"/>
+  </g:each>
 </ul>
 <div id="addComment" class="addComment">
   <g:render template="/components/commentEditor"
