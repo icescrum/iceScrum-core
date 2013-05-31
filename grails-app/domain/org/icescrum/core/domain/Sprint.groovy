@@ -312,13 +312,8 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
         return this.state == STATE_WAIT ? startDate : activationDate
     }
 
-    Float getTotalRemainingHours(){
-        Float raf = 0
-        this.tasks*.estimation?.each{
-            if (it)
-                raf += it
-        }
-        raf
+    BigDecimal getTotalRemainingHours() {
+        (BigDecimal) tasks.sum { Task t -> t.estimation ? t.estimation.toBigDecimal() : 0.0 }
     }
 
     def getParentProduct(){
