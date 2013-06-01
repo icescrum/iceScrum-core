@@ -49,7 +49,7 @@ class PanelTagLib {
         if (UtilsWebComponents.rendered(attrs)) {
             def line = { isLast ->
                 "<tr class='panel-line ${isLast ? "panel-line-last" : ""}' ${attrs.id ? 'id="' + attrs.remove('id') + '"' : ''}>" +
-                        "<td class='line-left'>" + attrs.remove("legend") + "</td>" +
+                        "<td class='line-left' ${attrs.title ? 'title="' + attrs.remove('title') + '"' : ''}>" + attrs.remove("legend") + "</td>" +
                         "<td class='line-right'>" + body() + "</td>" +
                         "</tr>"
             }
