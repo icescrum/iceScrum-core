@@ -29,6 +29,7 @@ import org.atmosphere.cpr.HeaderConfig
 import org.codehaus.groovy.grails.commons.GrailsClassUtils
 import org.codehaus.groovy.grails.scaffolding.view.ScaffoldingViewResolver
 import org.icescrum.atmosphere.IceScrumAtmosphereEventListener
+import org.icescrum.core.cors.CorsFilter
 import org.icescrum.core.domain.AcceptanceTest
 import org.icescrum.core.utils.JSONIceScrumDomainClassMarshaller
 import org.icescrum.plugins.attachmentable.domain.Attachment
@@ -145,6 +146,11 @@ class IcescrumCoreGrailsPlugin {
                 def urlPattern = application.config.icescrum.push.servlet?.urlPattern ?: '/atmosphere/*'
                 'url-pattern'(urlPattern)
             }
+        }
+
+        def cors = application.config.icescrum.cors
+        if (!cors.containsKey('enabled') || cors.enabled){
+            addCorsSupport(xml, cors)
         }
     }
 
@@ -1006,6 +1012,49 @@ class IcescrumCoreGrailsPlugin {
                 }
             } else {
                 returnError(text: message(code: 'is.product.error.not.exist'))
+            }
+        }
+    }
+
+    private addCorsSupport(def xml, def config){
+        def contextParam = xml.'context-param'
+        contextParam[contextParam.size() - 1] + {
+            'filter' {
+                'filter-name'('cors-headers')
+                'filter-class'(CorsFilter.name)
+                if (config.allow.origin.regex) {
+                    'init-param' {
+                        'param-name'('allow.origin.regex')
+                        'param-value'(config.allow.origin.regex.toString())
+                    }
+                }
+                if (config.headers instanceof Map) {
+                    config.headers.each { k,v ->
+                        'init-param' {
+                            'param-name'('header:' + k)
+                            'param-value'(v)
+                        }
+                    }
+                }
+                if (config.expose.headers) {
+                    'init-param' {
+                        'param-name'('expose.headers')
+                        'param-value'(cors.expose.headers.toString())
+                    }
+                }
+            }
+        }
+
+        def urlPattern = config.url.pattern ?: '/*'
+        List list = urlPattern instanceof List ? urlPattern : [urlPattern]
+
+        def filter = xml.'filter'
+        list.each { pattern ->
+            filter[0] + {
+                'filter-mapping'{
+                    'filter-name'('cors-headers')
+                    'url-pattern'(pattern)
+                }
             }
         }
     }
