@@ -107,7 +107,6 @@ class IcescrumCoreGrailsPlugin {
     ]
 
     def observe = ['controllers']
-
     def loadAfter = ['controllers', 'feeds', 'springcache']
 
     // TODO Fill in these fields
