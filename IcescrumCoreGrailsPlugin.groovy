@@ -149,7 +149,7 @@ class IcescrumCoreGrailsPlugin {
         }
 
         def cors = application.config.icescrum.cors
-        if (!cors.containsKey('enabled') || cors.enabled){
+        if (cors.enable){
             addCorsSupport(xml, cors)
         }
     }
