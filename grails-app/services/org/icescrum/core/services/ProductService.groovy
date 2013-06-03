@@ -515,6 +515,7 @@ class ProductService {
             it.removeFromProducts(p)
         }
         p.removeAllAttachments()
+        p.allUsers?.each{ it.preferences.removeEmailsSettings(p.pkey) }
         p.delete(flush:true)
         broadcast(function: 'delete', message: [class: p.class, id: id], channel:'product-'+id)
     }
@@ -551,6 +552,9 @@ class ProductService {
                 removeProductOwner(it,user)
                 removeStakeHolder(it,user)
             }
+        }
+        if (broadcast || raiseEvent){
+            user.preferences.removeEmailsSettings(product.pkey)
         }
         if (broadcast){
             if (product){

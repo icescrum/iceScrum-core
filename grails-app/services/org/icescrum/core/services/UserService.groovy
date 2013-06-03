@@ -207,8 +207,9 @@ class UserService {
                         activity: user.preferences.activity.text(),
                         filterTask: user.preferences.filterTask.text(),
                         menu: user.preferences.menu.text(),
-                        menuHidden: user.preferences.menu.text(),
-                        hideDoneState: user.preferences.hideDoneState.text()?.toBoolean() ?: false
+                        menuHidden: user.preferences.menuHidden.text(),
+                        hideDoneState: user.preferences.hideDoneState.text()?.toBoolean() ?: false,
+                        emailsSettingsData: user.preferences.emailsSettingsData?.text()?:null
                 )
             }
             return u

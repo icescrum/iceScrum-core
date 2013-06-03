@@ -20,6 +20,7 @@
  */
 package org.icescrum.core.services
 
+import org.icescrum.core.domain.Product
 import org.icescrum.core.domain.Sprint
 import org.icescrum.core.domain.Task
 import org.icescrum.core.event.IceScrumBacklogElementEvent
@@ -70,12 +71,13 @@ class NotificationEmailService implements ApplicationListener<IceScrumEvent> {
             return
         }
 
-        def subjectArgs = [story.backlog.name, story.name]
-        def permalink = grailsApplication.config.grails.serverURL + '/p/' + story.backlog.pkey + '-' + story.uid
-        def projectLink = grailsApplication.config.grails.serverURL + '/p/' + story.backlog.pkey + '#project'
+        Product product = (Product)story.backlog
+        def subjectArgs = [product.name, story.name]
+        def permalink = grailsApplication.config.grails.serverURL + '/p/' + product.pkey + '-' + story.uid
+        def projectLink = grailsApplication.config.grails.serverURL + '/p/' + product.pkey + '#project'
         def event = (IceScrumEvent.EVENT_CREATED == type) ? 'Created' : (IceScrumEvent.EVENT_UPDATED == type ? 'Updated' : 'Deleted')
 
-        def listTo = (type == IceScrumEvent.EVENT_CREATED) ? receiversByLocale(story.backlog.productOwners, user) : receiversByLocale(story.followers, user)
+        def listTo = (type == IceScrumEvent.EVENT_CREATED) ? receiversByLocale(product.allUsers, user.id, [type:'onStory',pkey:product.pkey]) : receiversByLocale(story.followers, user.id)
         listTo?.each { locale, group ->
             if (log.debugEnabled) {
                 log.debug "Send email, event:${type} to : ${group*.email.toArray()} with locale : ${locale}"
@@ -84,7 +86,7 @@ class NotificationEmailService implements ApplicationListener<IceScrumEvent> {
                     emails: group*.email.toArray(),
                     subject: grailsApplication.config.icescrum.alerts.subject_prefix + getMessage('is.template.email.story.' + event.toLowerCase() + '.subject', (Locale) locale, subjectArgs),
                     view: '/emails-templates/story' + event,
-                    model: [locale: locale, storyName: story.name, permalink: permalink, linkName: story.backlog.name, link: projectLink, description:IceScrumEvent.EVENT_BEFORE_DELETE ? story.description?:"" : null]
+                    model: [locale: locale, storyName: story.name, permalink: permalink, linkName: product.name, link: projectLink, description:IceScrumEvent.EVENT_BEFORE_DELETE ? story.description?:"" : null]
             ])
         }
     }
@@ -94,12 +96,12 @@ class NotificationEmailService implements ApplicationListener<IceScrumEvent> {
         if (!ApplicationSupport.booleanValue(grailsApplication.config.icescrum.alerts.enable)) {
             return
         }
+        Product product = task.parentProduct
+        def subjectArgs = [product.name, task.name]
+        def permalink = grailsApplication.config.grails.serverURL + '/p/' + product.pkey + '-T' + task.uid
+        def projectLink = grailsApplication.config.grails.serverURL + '/p/' + product.pkey + '#project'
 
-        def subjectArgs = [task.parentProduct.name, task.name]
-        def permalink = grailsApplication.config.grails.serverURL + '/p/' + task.parentProduct.pkey + '-T' + task.uid
-        def projectLink = grailsApplication.config.grails.serverURL + '/p/' + task.parentProduct.pkey + '#project'
-
-        def listTo = receiversByLocale(task.parentProduct.firstTeam.members, user)
+        def listTo = receiversByLocale(product.allUsers, user.id, [type:'onUrgentTask',pkey:product.pkey])
         listTo?.each { locale, group ->
             if (log.debugEnabled) {
                 log.debug "Send email, event:${type} to : ${group*.email.toArray()} with locale : ${locale}"
@@ -108,7 +110,7 @@ class NotificationEmailService implements ApplicationListener<IceScrumEvent> {
                     emails: group*.email.toArray(),
                     subject: grailsApplication.config.icescrum.alerts.subject_prefix + getMessage('is.template.email.task.created.subject', (Locale) locale, subjectArgs),
                     view: '/emails-templates/taskCreated',
-                    model: [locale: locale, taskName: task.name, permalink: permalink, linkName: task.parentProduct.name, link: projectLink, description:IceScrumEvent.EVENT_BEFORE_DELETE ? task.description?:null : null]
+                    model: [locale: locale, taskName: task.name, permalink: permalink, linkName: product.name, link: projectLink, description:IceScrumEvent.EVENT_BEFORE_DELETE ? task.description?:null : null]
             ])
         }
     }
@@ -123,7 +125,7 @@ class NotificationEmailService implements ApplicationListener<IceScrumEvent> {
         def permalink = grailsApplication.config.grails.serverURL + '/p/' + story.backlog.pkey + '-' + story.uid
         def projectLink = grailsApplication.config.grails.serverURL + '/p/' + story.backlog.pkey + '#project'
 
-        def listTo = receiversByLocale(story.followers, user)
+        def listTo = receiversByLocale(story.followers, user.id)
         listTo?.each { locale, group ->
             if (log.debugEnabled) {
                 log.debug "Send email, event:${type} to : ${group*.email.toArray()} with locale : ${locale}"
@@ -158,7 +160,7 @@ class NotificationEmailService implements ApplicationListener<IceScrumEvent> {
             parser.builder = builder
             parser.parse(comment.body).encodeAsHTML()
 
-            def listTo = receiversByLocale(story.followers, user)
+            def listTo = receiversByLocale(story.followers, user.id)
             listTo?.each { locale, group ->
                 if (log.debugEnabled) {
                     log.debug "Send email, event:${type} to : ${group*.email.toArray()} with locale : ${locale}"
@@ -171,7 +173,7 @@ class NotificationEmailService implements ApplicationListener<IceScrumEvent> {
                 ])
             }
         } else if (type == IceScrumBacklogElementEvent.EVENT_COMMENT_UPDATED) {
-            def listTo = receiversByLocale(story.followers, user)
+            def listTo = receiversByLocale(story.followers, user.id)
             listTo?.each { locale, group ->
                 if (log.debugEnabled) {
                     log.debug "Send email, event:${type} to : ${group*.email.toArray()} with locale : ${locale}"
@@ -196,7 +198,7 @@ class NotificationEmailService implements ApplicationListener<IceScrumEvent> {
         def subjectArgs = [product.name, element.name]
         def projectLink = grailsApplication.config.grails.serverURL + '/p/' + product.pkey + '#project'
 
-        def listTo = receiversByLocale(element.followers, user)
+        def listTo = receiversByLocale(element.followers, user.id)
         listTo?.each { locale, group ->
             def acceptedAs = getMessage(element instanceof Feature ? 'is.feature' : 'is.task', (Locale) locale)
             subjectArgs << acceptedAs
@@ -271,9 +273,9 @@ class NotificationEmailService implements ApplicationListener<IceScrumEvent> {
         return messageSource.getMessage(code, args ? args.toArray() : null, defaultCode ?: code, locale)
     }
 
-    private Map receiversByLocale(candidates, sender) {
+    private Map receiversByLocale(candidates, long sender, Map options = null) {
         candidates?.findAll { User candidate ->
-            candidate.enabled && (candidate.id != sender.id)
+            candidate.enabled && (candidate.id != sender) && (!options || (options.pkey in candidate.preferences.emailsSettings?."$options.type"))
         }?.collect { User receiver ->
             [email: receiver.email, locale: receiver.locale]
         }?.unique()?.groupBy { receiver ->

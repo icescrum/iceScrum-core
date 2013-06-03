@@ -88,6 +88,10 @@ class StoryService {
         if (story.save()) {
             product.addToStories(story)
             story.addFollower(u)
+            //Add users who want to autoFollow
+            product.allUsers.findAll{ u.id != it.id && product.pkey in it.preferences.emailsSettings?.autoFollow }?.each{
+                story.addFollower(it)
+            }
             story.addActivity(u, Activity.CODE_SAVE, story.name)
             broadcast(function: 'add', message: story, channel:'product-'+product.id)
             publishEvent(new IceScrumStoryEvent(story, this.class, u, IceScrumStoryEvent.EVENT_CREATED))
@@ -259,6 +263,7 @@ class StoryService {
     @PreAuthorize('(productOwner(#sprint.parentProduct) or scrumMaster(#sprint.parentProduct)) and !archivedProduct(#sprint.parentProduct)')
     void plan(Sprint sprint, Story story) {
         if (story.dependsOn){
+            def g = grailsApplication.mainContext.getBean("")
             if (story.dependsOn.state < Story.STATE_PLANNED){
                 throw new IllegalStateException(g.message(code:'is.story.error.dependsOn.notPlanned',args: [story.name, story.dependsOn.name]).toString())
             }else if(story.dependsOn.parentSprint.startDate > sprint.startDate){
