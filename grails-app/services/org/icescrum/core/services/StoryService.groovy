@@ -263,7 +263,6 @@ class StoryService {
     @PreAuthorize('(productOwner(#sprint.parentProduct) or scrumMaster(#sprint.parentProduct)) and !archivedProduct(#sprint.parentProduct)')
     void plan(Sprint sprint, Story story) {
         if (story.dependsOn){
-            def g = grailsApplication.mainContext.getBean("")
             if (story.dependsOn.state < Story.STATE_PLANNED){
                 throw new IllegalStateException(g.message(code:'is.story.error.dependsOn.notPlanned',args: [story.name, story.dependsOn.name]).toString())
             }else if(story.dependsOn.parentSprint.startDate > sprint.startDate){
