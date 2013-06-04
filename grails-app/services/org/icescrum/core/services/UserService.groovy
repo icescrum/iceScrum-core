@@ -20,6 +20,7 @@
  * Vincent Barrier (vbarrier@kagilum.com)
  * Stéphane Maldini (stephane.maldini@icescrum.com)
  * Manuarii Stein (manuarii.stein@icescrum.com)
+ * Nicolas Noullet (nnoullet@kagilum.com)
  */
 
 package org.icescrum.core.services
@@ -208,8 +209,7 @@ class UserService {
                         filterTask: user.preferences.filterTask.text(),
                         menu: user.preferences.menu.text(),
                         menuHidden: user.preferences.menuHidden.text(),
-                        hideDoneState: user.preferences.hideDoneState.text()?.toBoolean() ?: false,
-                        emailsSettingsData: user.preferences.emailsSettingsData?.text()?:null
+                        hideDoneState: user.preferences.hideDoneState.text()?.toBoolean() ?: false
                 )
             }
             return u

@@ -18,6 +18,7 @@
  * Authors:
  *
  * Vincent Barrier (vbarrier@kagilum.com)
+ * Nicolas Noullet (nnoullet@kagilum.com)
  */
 
 
@@ -37,8 +38,7 @@ class UserPreferences implements Serializable{
     String activity
     String filterTask = "allTasks"
     String lastProductOpened
-    //[onStory:['pkey','pkey2'...],onUrgentTask:['pkey','pkey2'...],autoFollow['pkey','pkey2'...]]
-    String emailsSettingsData
+    String emailsSettingsData //[onStory:['pkey','pkey2'...],onUrgentTask:['pkey','pkey2'...],autoFollow['pkey','pkey2'...]]
 
     boolean hideDoneState = false
 
@@ -65,29 +65,27 @@ class UserPreferences implements Serializable{
     }
 
     public void setEmailsSettings(Map settings) {
-        settings.onStory = settings.onStory instanceof String ? settings.onStory = [settings.onStory] : settings.onStory
-        settings.autoFollow = settings.autoFollow instanceof String ? settings.autoFollow = [settings.autoFollow] : settings.autoFollow
-        settings.onUrgentTask = settings.onUrgentTask instanceof String ? settings.onUrgentTask = [settings.onUrgentTask] : settings.onUrgentTask
+        ['onStory', 'autoFollow', 'onUrgentTask'].each { setting ->
+            if (settings[setting] instanceof String) {
+                settings[setting] = [settings[setting]]
+            }
+        }
         emailsSettingsData = settings ? settings as JSON : null
     }
 
     public Map getEmailsSettings() {
-        return emailsSettingsData ? JSON.parse(emailsSettingsData) as Map : [:]
+        emailsSettingsData ? JSON.parse(emailsSettingsData) as Map : [:]
     }
 
-    public removeEmailsSettings(value){
+    public removeEmailsSettings(pkey){
         def settings = getEmailsSettings()
-        if (settings){
-            if(settings.autoFollow != JSONObject.NULL && settings.autoFollow?.indexOf(value) >= 0){
-                settings.autoFollow.remove(settings.autoFollow.indexOf(value))
+        if (settings) {
+            settings.each { setting ->
+                if (setting != JSONObject.NULL && setting?.indexOf(pkey) >= 0) {
+                    setting.remove(setting.indexOf(pkey))
+                }
             }
-            if(settings.onStory != JSONObject.NULL && settings.onStory?.indexOf(value) >= 0){
-                settings.onStory.remove(settings.onStory.indexOf(value))
-            }
-            if(settings.onUrgentTask != JSONObject.NULL && settings.onUrgentTask?.indexOf(value) >= 0){
-                settings.onUrgentTask.remove(settings.onUrgentTask.indexOf(value))
-            }
+            setEmailsSettings(settings)
         }
-        setEmailsSettings(settings)
     }
 }

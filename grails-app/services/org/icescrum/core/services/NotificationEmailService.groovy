@@ -17,6 +17,7 @@
  * Authors:
  *
  * Vincent Barrier (vbarrier@kagilum.com)
+ * Nicolas Noullet (nnoullet@kagilum.com)
  */
 package org.icescrum.core.services
 
@@ -273,9 +274,9 @@ class NotificationEmailService implements ApplicationListener<IceScrumEvent> {
         return messageSource.getMessage(code, args ? args.toArray() : null, defaultCode ?: code, locale)
     }
 
-    private Map receiversByLocale(candidates, long sender, Map options = null) {
+    private Map receiversByLocale(candidates, long senderId, Map options = null) {
         candidates?.findAll { User candidate ->
-            candidate.enabled && (candidate.id != sender) && (!options || (options.pkey in candidate.preferences.emailsSettings?."$options.type"))
+            candidate.enabled && (candidate.id != senderId) && (!options || (options.pkey in candidate.preferences.emailsSettings[options.type]))
         }?.collect { User receiver ->
             [email: receiver.email, locale: receiver.locale]
         }?.unique()?.groupBy { receiver ->

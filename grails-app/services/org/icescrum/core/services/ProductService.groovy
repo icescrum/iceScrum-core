@@ -511,11 +511,11 @@ class ProductService {
         UserPreferences.findAllByLastProductOpened(p.pkey)?.each {
             it.lastProductOpened = null
         }
+        p.allUsers.each{ it.preferences.removeEmailsSettings(p.pkey) }
         p.teams.each{
             it.removeFromProducts(p)
         }
         p.removeAllAttachments()
-        p.allUsers?.each{ it.preferences.removeEmailsSettings(p.pkey) }
         p.delete(flush:true)
         broadcast(function: 'delete', message: [class: p.class, id: id], channel:'product-'+id)
     }
@@ -553,8 +553,8 @@ class ProductService {
                 removeStakeHolder(it,user)
             }
         }
-        if (broadcast || raiseEvent){
-            user.preferences.removeEmailsSettings(product.pkey)
+        if (broadcast || raiseEvent) {
+            user.preferences.removeEmailsSettings(product.pkey) // Remove email settings only if it's not a role update (remove -> add)
         }
         if (broadcast){
             if (product){

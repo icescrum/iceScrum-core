@@ -89,7 +89,9 @@ class StoryService {
             product.addToStories(story)
             story.addFollower(u)
             //Add users who want to autoFollow
-            product.allUsers.findAll{ u.id != it.id && product.pkey in it.preferences.emailsSettings?.autoFollow }?.each{
+            product.allUsers.findAll {
+                u.id != it.id && product.pkey in it.preferences.emailsSettings.autoFollow
+            }.each {
                 story.addFollower(it)
             }
             story.addActivity(u, Activity.CODE_SAVE, story.name)
