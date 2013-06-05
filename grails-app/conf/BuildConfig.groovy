@@ -56,7 +56,7 @@ grails.project.dependency.resolution = {
         compile('org.codehaus.groovy.modules.http-builder:http-builder:0.5.0') {
             excludes "commons-logging", "xml-apis", "groovy"
         }
-        compile('org.atmosphere:atmosphere-runtime:1.0.12'){
+        compile('org.atmosphere:atmosphere-runtime:1.0.13'){
             excludes 'slf4j-api', 'atmosphere-ping'
         }
         runtime('org.apache.geronimo.specs:geronimo-servlet_3.0_spec:1.0')
