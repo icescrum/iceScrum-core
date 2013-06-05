@@ -30,10 +30,12 @@ import org.icescrum.core.services.SecurityService
 import org.icescrum.core.event.IceScrumEvent
 import org.icescrum.core.event.IceScrumProductEvent
 import org.icescrum.plugins.attachmentable.interfaces.Attachmentable
+import org.springframework.security.acls.model.NotFoundException
 import org.springframework.security.core.context.SecurityContextHolder as SCH
 import org.codehaus.groovy.grails.commons.ApplicationHolder
 import org.grails.plugins.springsecurity.service.acl.AclUtilService
 import org.springframework.security.acls.domain.BasePermission
+import org.springframework.security.acls.model.Acl
 
 class Product extends TimeBox implements Serializable, Attachmentable {
 
@@ -250,13 +252,12 @@ class Product extends TimeBox implements Serializable, Attachmentable {
     }
 
     def getProductOwners() {
-        def aclUtilService = (AclUtilService) ApplicationHolder.application.mainContext.getBean('aclUtilService');
         //Only used when product is being imported
         if (this.productOwners) {
             this.productOwners
         }
         else if (this.id) {
-            def acl = aclUtilService.readAcl(this.getClass(), this.id)
+            def acl = retrieveAclProduct()
             def users = acl.entries.findAll {it.permission in SecurityService.productOwnerPermissions}*.sid*.principal;
             if (users)
                 return User.findAll("from User as u where u.username in (:users)",[users:users], [cache: true])
@@ -268,14 +269,13 @@ class Product extends TimeBox implements Serializable, Attachmentable {
     }
 
     def getStakeHolders() {
-        def aclUtilService = (AclUtilService) ApplicationHolder.application.mainContext.getBean('aclUtilService');
         //Only used when product is being imported
         if (this.stakeHolders) {
             this.stakeHolders
         }
         else if (this.id) {
-            def acl = aclUtilService.readAcl(this.getClass(), this.id)
-            def users = acl.entries.findAll {it.permission in SecurityService.stakeHolderPermissions}*.sid*.principal;
+            def acl = retrieveAclProduct()
+            def users = acl.entries.findAll {it.permission in SecurityService.stakeHolderPermissions}*.sid*.principal
             if (users)
                 return User.findAll("from User as u where u.username in (:users)",[users:users], [cache: true])
             else
@@ -286,9 +286,8 @@ class Product extends TimeBox implements Serializable, Attachmentable {
     }
 
     def getOwner() {
-        def aclUtilService = (AclUtilService) ApplicationHolder.application.mainContext.getBean('aclUtilService');
         if (this.id) {
-            def acl = aclUtilService.readAcl(this.getClass(), this.id)
+            def acl = retrieveAclProduct()
             return User.findByUsername(acl.owner.principal,[cache: true])
         } else {
             null
@@ -320,5 +319,23 @@ class Product extends TimeBox implements Serializable, Attachmentable {
 
     def getSprints () {
         return this.releases*.sprints.flatten()
+    }
+
+    private Acl retrieveAclProduct(){
+        def aclUtilService = (AclUtilService) ApplicationHolder.application.mainContext.getBean('aclUtilService')
+        def acl
+        try{
+            acl = aclUtilService.readAcl(this.getClass(), this.id)
+        }catch(NotFoundException e){
+            if (log.debugEnabled){
+                log.debug(e.getMessage())
+                log.debug("fixing unsecured project ... admin user will be the owner")
+            }
+            def securityService = (SecurityService) ApplicationHolder.application.mainContext.getBean('securityService')
+            securityService.secureDomain(this)
+            securityService.changeOwner(User.findById(1),this)
+            acl = aclUtilService.readAcl(this.getClass(), this.id)
+        }
+        return acl
     }
 }

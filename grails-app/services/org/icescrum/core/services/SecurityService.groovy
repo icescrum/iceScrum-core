@@ -241,7 +241,6 @@ class SecurityService {
             return false
 
         def t = null
-        def parsedTeam
 
         if (!team) {
             def request = RCH.requestAttributes.currentRequest
@@ -376,7 +375,6 @@ class SecurityService {
             return false
 
         def t
-        def parsedTeam
 
         if (!team) {
             def request = RCH.requestAttributes.currentRequest
