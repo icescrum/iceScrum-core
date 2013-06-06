@@ -276,7 +276,7 @@ class NotificationEmailService implements ApplicationListener<IceScrumEvent> {
         return messageSource.getMessage(code, args ? args.toArray() : null, defaultCode ?: code, locale)
     }
 
-    private Map receiversByLocale(candidates, long senderId, Map options = null) {
+    private static Map receiversByLocale(candidates, long senderId, Map options = null) {
         candidates?.findAll { User candidate ->
             candidate.enabled && (candidate.id != senderId) && (!options || (options.pkey in candidate.preferences.emailsSettings[options.type]))
         }?.collect { User receiver ->
