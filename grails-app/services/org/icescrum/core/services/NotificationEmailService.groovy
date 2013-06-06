@@ -47,6 +47,8 @@ class NotificationEmailService implements ApplicationListener<IceScrumEvent> {
     def grailsApplication
     def messageSource
 
+    static transactional = false
+
     void onApplicationEvent(IceScrumEvent e) {
         try {
             if (e instanceof IceScrumStoryEvent && e.type != IceScrumStoryEvent.EVENT_BEFORE_DELETE && e.type in IceScrumStoryEvent.EVENT_CUD ) {
