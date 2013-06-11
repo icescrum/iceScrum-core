@@ -47,6 +47,8 @@ class NotificationEmailService implements ApplicationListener<IceScrumEvent> {
     def grailsApplication
     def messageSource
 
+    static transactional = false
+
     void onApplicationEvent(IceScrumEvent e) {
         try {
             if (e instanceof IceScrumStoryEvent && e.type != IceScrumStoryEvent.EVENT_BEFORE_DELETE && e.type in IceScrumStoryEvent.EVENT_CUD ) {
@@ -274,7 +276,7 @@ class NotificationEmailService implements ApplicationListener<IceScrumEvent> {
         return messageSource.getMessage(code, args ? args.toArray() : null, defaultCode ?: code, locale)
     }
 
-    private Map receiversByLocale(candidates, long senderId, Map options = null) {
+    private static Map receiversByLocale(candidates, long senderId, Map options = null) {
         candidates?.findAll { User candidate ->
             candidate.enabled && (candidate.id != senderId) && (!options || (options.pkey in candidate.preferences.emailsSettings[options.type]))
         }?.collect { User receiver ->
