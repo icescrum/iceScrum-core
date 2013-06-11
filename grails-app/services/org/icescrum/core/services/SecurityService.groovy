@@ -288,13 +288,18 @@ class SecurityService {
             return false
 
         def p = null
+        def stakeHolder = false
 
         if (!product){
             def request = RCH.requestAttributes.currentRequest
             if (request.filtered  && !controllerName)
                 return request.stakeHolder
-            else
+            else {
                 product = parseCurrentRequestProduct(request)
+                if(request.stakeHolder) {
+                    stakeHolder = request.stakeHolder
+                }
+            }
         } else if (product in Product) {
             p = GrailsHibernateUtil.unwrapIfProxy(product)
             product = product.id
@@ -314,7 +319,7 @@ class SecurityService {
                 if (springSecurityService.isLoggedIn()){
                     if (p.owner?.id == auth.principal.id) return true
                 }
-                def access = p.preferences.hidden ? aclUtilService.hasPermission(auth, GrailsHibernateUtil.unwrapIfProxy(p), SecurityService.stakeHolderPermissions) : !onlyPrivate
+                def access = stakeHolder ?: p.preferences.hidden ? aclUtilService.hasPermission(auth, GrailsHibernateUtil.unwrapIfProxy(p), SecurityService.stakeHolderPermissions) : !onlyPrivate
                 if (access && controllerName){
                     return !(controllerName in p.preferences.stakeHolderRestrictedViews?.split(','))
                 }else{
