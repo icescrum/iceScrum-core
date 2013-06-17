@@ -146,12 +146,14 @@ class StoryService {
 
             //give why you delete a story
             story.description = reason ?: null
-            //Send not asynchronous email
-            try{
-                notificationEmailService.sendAlertCUD(story, (User)springSecurityService.currentUser, IceScrumStoryEvent.EVENT_BEFORE_DELETE)
-            }catch(Exception e){
-                if(log.debugEnabled){
-                    log.debug(e.getMessage())
+            //Send an email synchronously
+            if (history) {
+                try{
+                    notificationEmailService.sendAlertCUD(story, (User)springSecurityService.currentUser, IceScrumStoryEvent.EVENT_BEFORE_DELETE)
+                }catch(Exception e){
+                    if(log.debugEnabled){
+                        log.debug(e.getMessage())
+                    }
                 }
             }
 
