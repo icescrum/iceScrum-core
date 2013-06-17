@@ -17,10 +17,15 @@
 - Authors:
 -
 - Vincent Barrier (vbarrier@kagilum.com)
+- Nicolas Noullet (nnoullet@kagilum.com)
 --}%
 <%@ page contentType="text/html"%>
 <g:message
         locale="${locale}"
         code='is.template.email.story.created.text'
         args="[storyName,permalink]"/>
-<g:message locale="${locale}" code='is.template.email.footer' args="[link,linkName]"/>
+<br/><br/>--<br/>
+<g:message locale="${locale}" code='is.template.email.footer.reason.new.stories' args="[link,linkName]"/>
+<g:message locale="${locale}" code='is.template.email.footer.preferences.information'/>
+<br/>-<br/>
+<g:message locale="${locale}" code='is.template.email.footer.website'/>
