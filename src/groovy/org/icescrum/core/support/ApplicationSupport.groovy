@@ -132,12 +132,13 @@ class ApplicationSupport {
         def config = ApplicationHolder.application.config
         def filePath = config.icescrum.baseDir.toString() + File.separator + "appID.txt"
         def fileID = new File(filePath)
+        def line = fileID.exists() ?  fileID.readLines()[0] : null
 
-        if (!fileID.exists() || !fileID.readLines()[0]) {
+        if (!line || line == 'd41d8cd9-8f00-b204-e980-0998ecf8427e') {
             def uid
             try {
                 uid = NetworkInterface.networkInterfaces?.nextElement()?.hardwareAddress
-                if (uid != null) {
+                if (uid) {
                     MessageDigest md = MessageDigest.getInstance("MD5")
                     md.update(uid)
                     uid = new BigInteger(1, md.digest() ).toString(16).padLeft(32, '0')
@@ -161,7 +162,7 @@ class ApplicationSupport {
                 throw ioe
             }
         } else {
-            config.icescrum.appID = fileID.readLines()[0]
+            config.icescrum.appID = line
             if (log.debugEnabled) log.debug "Retrieved appID: $config.icescrum.appID"
         }
     }
