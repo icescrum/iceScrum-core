@@ -95,12 +95,18 @@ class AcceptanceTestService {
         resumeBufferedBroadcast(channel:channel)
     }
 
-    def unMarshall(def acceptanceTest, Product product) {
+    def unMarshall(def acceptanceTest, Product product, Story story) {
         try {
+            def state = acceptanceTest."${'state'}".text()
+            if (state) {
+                state = state.toInteger()
+            } else {
+                state = (story.state < Story.STATE_DONE) ? AcceptanceTestState.TOCHECK.id : AcceptanceTestState.SUCCESS.id
+            }
             def at = new AcceptanceTest(
                 name: acceptanceTest."${'name'}".text(),
                 description: acceptanceTest."${'description'}".text(),
-                state: acceptanceTest."${'state'}".text().toInteger(),
+                state: state,
                 uid: acceptanceTest.@uid.text().toInteger()
             )
             if (product) {

@@ -1084,7 +1084,7 @@ class StoryService {
             }
 
             story.acceptanceTests?.acceptanceTest?.each {
-                def at = acceptanceTestService.unMarshall(it, p)
+                def at = acceptanceTestService.unMarshall(it, p, s)
                 s.addToAcceptanceTests(at)
             }
 
