@@ -313,7 +313,7 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
     }
 
     BigDecimal getTotalRemainingHours() {
-        (BigDecimal) tasks.sum { Task t -> t.estimation ? t.estimation.toBigDecimal() : 0.0 } ?: 0.0
+        (BigDecimal) tasks?.sum { Task t -> t.estimation ? t.estimation.toBigDecimal() : 0.0 } ?: 0.0
     }
 
     def getParentProduct(){
