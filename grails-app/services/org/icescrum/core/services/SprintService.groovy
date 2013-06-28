@@ -541,6 +541,7 @@ class SprintService {
                     orderNumber: sprint.orderNumber.text().toInteger(),
                     description: sprint.description.text() ?: '',
                     goal: sprint.goal?.text() ?: '',
+                    deliveredVersion: sprint.deliveredVersion?.text() ?: ''
             )
 
             sprint.cliches.cliche.each {
