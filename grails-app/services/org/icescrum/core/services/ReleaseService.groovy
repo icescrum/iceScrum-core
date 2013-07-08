@@ -205,15 +205,35 @@ class ReleaseService {
         Cliche.findAllByParentTimeBoxAndType(release, Cliche.TYPE_ACTIVATION, [sort: "datePrise", order: "asc"])?.each { it ->
             def xmlRoot = new XmlSlurper().parseText(it.data)
             if (xmlRoot) {
-                values << [
+                def sprintEntry = [
                         label: xmlRoot."${Cliche.SPRINT_ID}".toString(),
                         userstories: xmlRoot."${Cliche.FUNCTIONAL_STORY_PRODUCT_REMAINING_POINTS}".toInteger(),
                         technicalstories: xmlRoot."${Cliche.TECHNICAL_STORY_PRODUCT_REMAINING_POINTS}".toInteger(),
                         defectstories: xmlRoot."${Cliche.DEFECT_STORY_PRODUCT_REMAINING_POINTS}".toInteger()
                 ]
+                sprintEntry << computeLabelsForSprintEntry(sprintEntry)
+                values << sprintEntry
             }
         }
         return values
+    }
+
+    private static Map computeLabelsForSprintEntry(sprintEntry) {
+        def computePercents = { part ->
+            def total = sprintEntry.userstories + sprintEntry.technicalstories + sprintEntry.defectstories
+            (Integer) Math.ceil(part / total * 100)
+        }
+        def generateLabel = { part, percents ->
+            percents > 0 ? part + ' (' + percents + '%)' : ''
+        }
+        def labels = [:]
+        def percentsUS = computePercents(sprintEntry.userstories)
+        def percentsTechnical = computePercents(sprintEntry.technicalstories)
+        def percentsDefect = 100 - percentsUS - percentsTechnical
+        labels['userstoriesLabel'] = generateLabel(sprintEntry.userstories, percentsUS)
+        labels['technicalstoriesLabel'] = generateLabel(sprintEntry.userstories + sprintEntry.technicalstories, percentsTechnical)
+        labels['defectstoriesLabel'] = generateLabel(sprintEntry.userstories + sprintEntry.technicalstories + sprintEntry.defectstories, percentsDefect)
+        labels
     }
 
     @Transactional(readOnly = true)

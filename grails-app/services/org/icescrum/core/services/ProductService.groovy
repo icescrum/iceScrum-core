@@ -20,6 +20,7 @@
  * Vincent Barrier (vbarrier@kagilum.com)
  * Stéphane Maldini (stephane.maldini@icescrum.com)
  * Manuarii Stein (manuarii.stein@icescrum.com)
+ * Nicolas Noullet (nnoullet@kagilum.com)
  */
 
 package org.icescrum.core.services
@@ -165,8 +166,6 @@ class ProductService {
         if (!teamIds)
             throw new IllegalStateException('Product must have at least one team')
 
-
-        log.debug teamIds
         for (team in Team.getAll(teamIds*.toLong())) {
             if (team){
                 product.addToTeams(team)
@@ -277,12 +276,14 @@ class ProductService {
             Cliche.findAllByParentTimeBoxAndType(it, Cliche.TYPE_ACTIVATION, [sort: "datePrise", order: "asc"])?.each { cliche ->
                 def xmlRoot = new XmlSlurper().parseText(cliche.data)
                 if (xmlRoot) {
-                    values << [
+                    def sprintEntry = [
                             label: xmlRoot."${Cliche.SPRINT_ID}".toString(),
                             userstories: xmlRoot."${Cliche.FUNCTIONAL_STORY_PRODUCT_REMAINING_POINTS}".toInteger(),
                             technicalstories: xmlRoot."${Cliche.TECHNICAL_STORY_PRODUCT_REMAINING_POINTS}".toInteger(),
                             defectstories: xmlRoot."${Cliche.DEFECT_STORY_PRODUCT_REMAINING_POINTS}".toInteger()
                     ]
+                    sprintEntry << computeLabelsForSprintEntry(sprintEntry)
+                    values << sprintEntry
                 }
             }
         }
@@ -296,12 +297,14 @@ class ProductService {
             Cliche.findAllByParentTimeBoxAndType(it, Cliche.TYPE_CLOSE, [sort: "datePrise", order: "asc"])?.each { cliche ->
                 def xmlRoot = new XmlSlurper().parseText(cliche.data)
                 if (xmlRoot) {
-                    values << [
+                    def sprintEntry = [
                             userstories: xmlRoot."${Cliche.FUNCTIONAL_STORY_VELOCITY}".toInteger(),
                             defectstories: xmlRoot."${Cliche.DEFECT_STORY_VELOCITY}".toInteger(),
                             technicalstories: xmlRoot."${Cliche.TECHNICAL_STORY_VELOCITY}".toInteger(),
                             label: xmlRoot."${Cliche.SPRINT_ID}".toString()
                     ]
+                    sprintEntry << computeLabelsForSprintEntry(sprintEntry)
+                    values << sprintEntry
                 }
             }
         }
@@ -332,6 +335,24 @@ class ProductService {
             }
         }
         return values
+    }
+
+    private static Map computeLabelsForSprintEntry(sprintEntry) {
+        def computePercents = { part ->
+            def total = sprintEntry.userstories + sprintEntry.technicalstories + sprintEntry.defectstories
+            (Integer) Math.ceil(part / total * 100)
+        }
+        def generateLabel = { part, percents ->
+            percents > 0 ? part + ' (' + percents + '%)' : ''
+        }
+        def labels = [:]
+        def percentsUS = computePercents(sprintEntry.userstories)
+        def percentsTechnical = computePercents(sprintEntry.technicalstories)
+        def percentsDefect = 100 - percentsUS - percentsTechnical
+        labels['userstoriesLabel'] = generateLabel(sprintEntry.userstories, percentsUS)
+        labels['technicalstoriesLabel'] = generateLabel(sprintEntry.userstories + sprintEntry.technicalstories, percentsTechnical)
+        labels['defectstoriesLabel'] = generateLabel(sprintEntry.userstories + sprintEntry.technicalstories + sprintEntry.defectstories, percentsDefect)
+        labels
     }
 
     @PreAuthorize('isAuthenticated()')
