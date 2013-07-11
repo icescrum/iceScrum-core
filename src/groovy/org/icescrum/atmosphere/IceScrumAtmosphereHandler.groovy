@@ -39,7 +39,7 @@ class IceScrumAtmosphereHandler extends AbstractReflectorAtmosphereHandler {
             AtmosphereResource resourceFrom = AtmosphereResourceFactory.default.find(event.uuid())
             if (resourceFrom){
                 def user = resourceFrom.request.getAttribute(IceScrumAtmosphereEventListener.USER_CONTEXT)
-                if (event.request.getParameterValues("window")) {
+                if (event.request.getParameterValues("window") && user) {
                     user.window = event.request.getParameterValues("window") ? event.request.getParameterValues("window")[0] : null
                     resourceFrom.request.setAttribute(IceScrumAtmosphereEventListener.USER_CONTEXT, user)
                 }
