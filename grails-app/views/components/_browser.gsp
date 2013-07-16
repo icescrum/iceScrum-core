@@ -23,7 +23,7 @@
         <div class="browse-legend"><g:message code="${browserLabel}"/></div>
         <div class="browse-filter clearfix">
           <label><g:message code="is.ui.autocompletechoose.filter"/></label>
-          <is:autoCompleteSearch elementId="${name}-browse" update="${name}-column" controller="${controller}" action="${actionColumn}"/>
+          <is:autoCompleteSearch elementId="${name}-browse" update="${name}-column" controller="${controller}" action="${actionColumn}" minLength="0" searchOnInit="true"/>
         </div>
         <span id="${name}-column">
         </span>
@@ -41,6 +41,5 @@
   </is:fieldset>
 </div>
 <jq:jquery>
-  $("#${name}-browse").autocomplete('search');
   $("#${name}-details").tabs();
 </jq:jquery>

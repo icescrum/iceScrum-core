@@ -19,6 +19,7 @@
  *
  * Vincent Barrier (vbarrier@kagilum.com)
  * Stéphane Maldini (stephane.maldini@icescrum.com)
+ * Nicolas Noullet (nnoullet@kagilum.com)
  */
 
 
@@ -26,10 +27,8 @@
 package org.icescrum.core.domain
 
 import grails.plugin.fluxiable.Fluxiable
-import grails.util.GrailsNameUtils
 import org.grails.comments.Comment
 import org.icescrum.core.event.IceScrumBacklogElementEvent
-import org.icescrum.core.event.IceScrumStoryEvent
 import org.icescrum.plugins.attachmentable.interfaces.Attachmentable
 import org.grails.comments.Commentable
 import org.grails.followable.Followable
@@ -38,6 +37,8 @@ import org.grails.taggable.Taggable
 abstract class BacklogElement implements Fluxiable, Attachmentable, Commentable, Followable, Serializable, Taggable {
 
     static final long serialVersionUID = -6800252500987149051L
+
+    static final String TAG_KEYWORD = "tag:"
 
     String description
     String notes

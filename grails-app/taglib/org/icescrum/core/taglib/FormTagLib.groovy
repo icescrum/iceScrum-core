@@ -20,6 +20,7 @@
  * Vincent Barrier (vbarrier@kagilum.com)
  * Damien Vitrac (damien@oocube.com)
  * Manuarii Stein (manuarii.stein@icescrum.com)
+ * Nicolas Noullet (nnoullet@kagilum.com)
  */
 
 
@@ -43,70 +44,6 @@ class FormTagLib {
 
     def grailsApplication
     def grailsAttributes
-
-    /**
-     * Generate an autocomplete field
-     */
-    def autoComplete = { attrs, body ->
-        assert attrs.elementId
-
-        def id = attrs.elementId
-        def sourceURL = createLink(controller: attrs.controller, action: attrs.action, elementId: attrs.elementId, id: attrs.id, params: params.product ? [product: params.product] : params.team ? [team: params.team] : null)
-        def source = attrs.remove('source')
-        if (source) {
-            source = "function(request,response){$source(request,response,'$sourceURL',${attrs.remove('sourceOptions') as JSON});}"
-        }
-
-        def autoParams = [
-                minLength: attrs.minLength ?: '2',
-                source: source ?: "'${sourceURL}'",
-                search: attrs.onSearch,
-                select: attrs.onSelect,
-                change: attrs.onChange,
-                open: attrs.onOpen
-        ]
-
-        attrs.remove('onSearch')
-        attrs.remove('onSelect')
-        attrs.remove('onChange')
-        attrs.remove('onOpen')
-        attrs.remove('minLength')
-        attrs.remove('controller')
-        attrs.remove('action')
-        attrs.remove('id')
-        attrs.remove('elementId')
-
-        def autoCode = "\$('#${id}').autocomplete({"
-        autoCode += autoParams.findAll {k, v -> v}.collect {k, v ->
-            " $k:$v"
-        }.join(',')
-        autoCode += "});"
-
-        if (attrs.remove('init')) {
-            autoCode += "\$('#$id').autocomplete('search' );"
-        }
-
-        out << jq.jquery(null, {autoCode})
-        out << """<input id="${id}" name="${attrs.name ?: id}" ${attrs.collect {k, v -> " $k=\"$v\"" }.join('')} />"""
-    }
-
-    def autoCompleteChoose = { attrs, body ->
-
-        assert attrs.name
-        assert attrs.controller
-
-        assert attrs.elementLabel
-
-        attrs.resultId = attrs.resultId ?: 'searchid'
-
-        def id = attrs.name.replaceAll("\\.", "-")
-        def source = "choose-select-$id"
-        def target = "choose-list-$id"
-
-        out << g.render(template: '/components/autoCompleteChoose', plugin: 'icescrum-core', model: [elementLabel: attrs.elementLabel, controller: attrs.controller, action: attrs.action,
-                source: source, target: target, id: id, resultId: attrs.resultId, minLength: attrs.minLength])
-
-    }
 
     def autoCompleteSkin = {attrs, body ->
         assert attrs.id
@@ -181,16 +118,33 @@ class FormTagLib {
     }
 
     def autoCompleteSearch = { attrs, body ->
-        out << is.autoComplete(controller: attrs.controller,
-                action: attrs.action ?: 'index',
-                minLength: attrs.minLength ?: '0',
-                elementId: attrs.elementId,
-                id: attrs.id,
-                onSearch: "function(event,ui){if (\$(this).val().length > 0){\$('#search-ui .search-button').addClass('active-search');}else{\$('#search-ui .search-button').removeClass('active-search');}}",
-                source: "\$.icescrum.autoCompleteSearch",
-                sourceOptions: [update: attrs.update, before: attrs.before])
-        out << is.shortcut(key: "ctrl+f", callback: "\$('#search-ui').mouseover();", scope: attrs.controller)
-        out << is.shortcut(key: "esc", callback: "\$('#search-ui').mouseout();", scope: attrs.controller, listenOn: "'#${attrs.elementId}'")
+        def elementId = attrs.remove('elementId')
+        def update = attrs.remove('update')
+        def controller = attrs.remove('controller')
+        def action = attrs.remove('action')
+        def id = attrs.remove('id')
+        def name = attrs.remove('name') ?: elementId
+        def withTags = attrs.remove('withTags')
+        def searchOnInit = attrs.remove('searchOnInit') == "true"
+        def minLength = attrs.remove('minLength') ?: 1
+        def urlParams = [:]
+        if (params.product) {
+            urlParams.product = params.product
+        }
+        def url = createLink(controller: controller, action: action, params: params.product ? [product: params.product] : null , id: id)
+
+        out << """<input class="auto-complete-searchable"
+                         id="$elementId"
+                         name="$name"
+                         data-update="$update"
+                         data-url="$url"
+                         data-search-on-init="$searchOnInit"
+                         ${withTags ? 'data-tag-url="' + createLink(controller: 'finder', action: 'tag', params: [product: params.product, withKeyword: true]) + '"' : ''}
+                         data-min-length="$minLength"
+                         ${attrs.collect {k, v -> " $k=\"$v\"" }.join('')} />"""
+
+        out << is.shortcut(key: "ctrl+f", callback: "jQuery('#search-ui').mouseover();", scope: controller)
+        out << is.shortcut(key: "esc", callback: "jQuery('#search-ui').mouseout();", scope: controller, listenOn: "'#$elementId'")
     }
 
     /**
