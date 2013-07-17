@@ -78,4 +78,23 @@ abstract class BacklogElement implements Fluxiable, Attachmentable, Commentable,
             this.removeAllAttachments()
         }
     }
+
+    static boolean hasTagKeyword(String term) {
+        term.startsWith(TAG_KEYWORD)
+    }
+
+    static String removeTagKeyword(String term) {
+        term - TAG_KEYWORD
+    }
+
+    static Map addTermOrTagToSearch (Map searchOptions, term) {
+        if (term) {
+            if (hasTagKeyword(term)) {
+                searchOptions.tag = removeTagKeyword(term)
+            } else {
+                searchOptions.term = term
+            }
+        }
+        searchOptions
+    }
 }

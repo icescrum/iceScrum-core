@@ -126,11 +126,7 @@ class FormTagLib {
         def name = attrs.remove('name') ?: elementId
         def withTags = attrs.remove('withTags')
         def searchOnInit = attrs.remove('searchOnInit') == "true"
-        def minLength = attrs.remove('minLength') ?: 1
-        def urlParams = [:]
-        if (params.product) {
-            urlParams.product = params.product
-        }
+        def minLength = 0
         def url = createLink(controller: controller, action: action, params: params.product ? [product: params.product] : null , id: id)
 
         out << """<input class="auto-complete-searchable"

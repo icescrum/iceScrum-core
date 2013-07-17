@@ -19,6 +19,7 @@
  *
  * Vincent Barrier (vbarrier@kagilum.com)
  * Manuarii Stein (manuarii.stein@icescrum.com)
+ * Nicolas Noullet (nnoullet@kagilum.com)
  */
 
 
@@ -71,6 +72,7 @@ class Feature extends BacklogElement implements Serializable {
 
     static namedQueries = {
 
+        // TODO delete unused method
         findAllByProductAndTerm {p, term ->
             backlog {
                 eq 'id', p
@@ -202,4 +204,14 @@ class Feature extends BacklogElement implements Serializable {
             return Collections.EMPTY_LIST
         }
     }
+
+    static searchByTermOrTag(productId, searchOptions, term) {
+        search(productId, addTermOrTagToSearch(searchOptions, term))
+    }
+
+    static searchAllByTermOrTag(productId, term) {
+        def searchOptions = [feature: [empty:'']] // TODO FIX
+        searchByTermOrTag(productId, searchOptions, term)
+    }
+
 }

@@ -121,6 +121,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
 
     static namedQueries = {
 
+        // TODO delete unused method
         findInStoriesSuggested {p, term ->
             backlog {
                 eq 'id', p
@@ -147,6 +148,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
             }
         }
 
+        // TODO delete unused method
         findAllByProductAndTerm{p, term ->
             backlog {
                 eq 'id', p
@@ -717,6 +719,34 @@ class Story extends BacklogElement implements Cloneable, Serializable {
             }
         }
         return stories ?: Collections.EMPTY_LIST
+    }
+
+    static searchByTermOrTag(productId, searchOptions, term) {
+        search(productId, addTermOrTagToSearch(searchOptions, term))
+    }
+
+    static searchAllByTermOrTag(productId, term) {
+        def searchOptions = [story: [empty:'']] // TODO FIX
+        searchByTermOrTag(productId, searchOptions, term)
+    }
+
+    static searchByTermOrTagInSandbox(productId, term) {
+        def searchOptions = [story: [state: STATE_SUGGESTED.toString()]]
+        searchByTermOrTag(productId, searchOptions, term)
+    }
+
+    static searchByTermOrTagInBacklog(product, term) {
+        def stories
+        if (term) {
+            if (hasTagKeyword(term)) {
+                stories = search(product.id, [tag: removeTagKeyword(term)]).findAll { it.state in [STATE_ACCEPTED, STATE_ESTIMATED] }
+            } else {
+                stories = findInStoriesAcceptedEstimated(product.id, '%' + term + '%').list()
+            }
+        } else {
+            stories = findAllByBacklogAndStateBetween(product, STATE_ACCEPTED, STATE_ESTIMATED, [cache: true, sort: 'rank'])
+        }
+        stories
     }
 
     enum TestState {
