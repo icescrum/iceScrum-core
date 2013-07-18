@@ -32,7 +32,7 @@ icescrum {
         }
         servlet {
             // Servlet initialization parameters
-            initParams = ['org.atmosphere.useNative': true,
+            initParams = ['org.atmosphere.useNative': false,
                           'org.atmosphere.useWebSocket': icescrum.push.websocket,
                           'org.atmosphere.cpr.AtmosphereInterceptor.disableDefaults': true,
                           'org.atmosphere.cpr.broadcaster.shareableThreadPool': true,
