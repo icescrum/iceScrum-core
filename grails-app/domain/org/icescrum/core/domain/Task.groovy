@@ -416,4 +416,13 @@ class Task extends BacklogElement implements Serializable {
             return Collections.EMPTY_LIST
         }
     }
+
+    static searchByTermOrTag(product, searchOptions, term) {
+        search(product, addTermOrTagToSearch(searchOptions, term))
+    }
+
+    static searchAllByTermOrTag(product, term) {
+        def searchOptions = [task: [empty:'']] // TODO FIX
+        searchByTermOrTag(product, searchOptions, term)
+    }
 }
