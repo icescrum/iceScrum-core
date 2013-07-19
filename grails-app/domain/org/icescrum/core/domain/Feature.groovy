@@ -72,23 +72,6 @@ class Feature extends BacklogElement implements Serializable {
 
     static namedQueries = {
 
-        // TODO delete unused method
-        findAllByProductAndTerm {p, term ->
-            backlog {
-                eq 'id', p
-            }
-            or {
-                def termInteger = term?.replaceAll('%','')
-                if (termInteger?.isInteger()){
-                    eq 'uid', termInteger.toInteger()
-                } else{
-                    ilike 'name', term
-                    ilike 'description', term
-                    ilike 'notes', term
-                }
-            }
-        }
-
         getInProduct {p, id ->
             backlog {
                 eq 'id', p
@@ -195,7 +178,7 @@ class Feature extends BacklogElement implements Serializable {
                 criteria.delegate = delegate
                 criteria.call()
             }
-        } else if(options.term || options.feature)  {
+        } else if(options.term || options.feature != null)  {
             return Feature.createCriteria().list {
                 criteria.delegate = delegate
                 criteria.call()
@@ -210,7 +193,7 @@ class Feature extends BacklogElement implements Serializable {
     }
 
     static searchAllByTermOrTag(productId, term) {
-        def searchOptions = [feature: [empty:'']] // TODO FIX
+        def searchOptions = [feature: [:]]
         searchByTermOrTag(productId, searchOptions, term)
     }
 

@@ -367,7 +367,7 @@ class Task extends BacklogElement implements Serializable {
                 }
             }
 
-            if (options.term || options.task){
+            if (options.term || options.task != null){
                 if (options.term){
                     or {
                         if (options.term?.isInteger()){
@@ -422,7 +422,7 @@ class Task extends BacklogElement implements Serializable {
     }
 
     static searchAllByTermOrTag(product, term) {
-        def searchOptions = [task: [empty:'']] // TODO FIX
+        def searchOptions = [task: [:]]
         searchByTermOrTag(product, searchOptions, term)
     }
 }

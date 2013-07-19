@@ -121,57 +121,6 @@ class Story extends BacklogElement implements Cloneable, Serializable {
 
     static namedQueries = {
 
-        // TODO delete unused method
-        findInStoriesSuggested {p, term ->
-            backlog {
-                eq 'id', p
-            }
-            or {
-                def termInteger = term?.replaceAll('%','')
-                if (termInteger?.isInteger()){
-                    eq 'uid', termInteger.toInteger()
-                } else{
-                    ilike 'name', term
-                    ilike 'textAs', term
-                    ilike 'textICan', term
-                    ilike 'textTo', term
-                    ilike 'description', term
-                    ilike 'notes', term
-                    ilike 'affectVersion', term
-                    feature {
-                        ilike 'name', term
-                    }
-                }
-            }
-            and {
-                eq 'state', Story.STATE_SUGGESTED
-            }
-        }
-
-        // TODO delete unused method
-        findAllByProductAndTerm{p, term ->
-            backlog {
-                eq 'id', p
-            }
-            or {
-                def termInteger = term?.replaceAll('%','')
-                if (termInteger?.isInteger()){
-                    eq 'uid', termInteger.toInteger()
-                } else{
-                    ilike 'name', term
-                    ilike 'textAs', term
-                    ilike 'textICan', term
-                    ilike 'textTo', term
-                    ilike 'description', term
-                    ilike 'notes', term
-                    ilike 'affectVersion', term
-                    feature {
-                        ilike 'name', term
-                    }
-                }
-            }
-        }
-
         findInStoriesAcceptedEstimated {p, term ->
             backlog {
                 eq 'id', p
@@ -704,7 +653,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                 criteria.delegate = delegate
                 criteria.call()
             }
-        } else if(options.term || options.story) {
+        } else if(options.term || options.story != null) {
             stories = Story.createCriteria().list {
                 criteria.delegate = delegate
                 criteria.call()
@@ -726,7 +675,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
     }
 
     static searchAllByTermOrTag(productId, term) {
-        def searchOptions = [story: [empty:'']] // TODO FIX
+        def searchOptions = [story: [:]]
         searchByTermOrTag(productId, searchOptions, term)
     }
 

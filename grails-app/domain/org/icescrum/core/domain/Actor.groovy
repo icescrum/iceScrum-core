@@ -72,22 +72,6 @@ class Actor extends BacklogElement implements Serializable, Comparable<Actor> {
     }
 
     static namedQueries = {
-        // TODO delete unused method
-        findAllByProductAndTerm { pid, term ->
-            backlog {
-                eq 'id', pid
-            }
-            or {
-                def termInteger = term?.replaceAll('%','')
-                if (termInteger?.isInteger()){
-                    eq 'uid', termInteger.toInteger()
-                } else{
-                    ilike 'name', term
-                    ilike 'description', term
-                    ilike 'notes', term
-                }
-            }
-        }
 
         getInProduct {p, id ->
             backlog {
@@ -196,7 +180,7 @@ class Actor extends BacklogElement implements Serializable, Comparable<Actor> {
                 criteria.delegate = delegate
                 criteria.call()
             }
-        } else if(options.term || options.actor) {
+        } else if(options.term || options.actor != null) {
             return Actor.createCriteria().list {
                 criteria.delegate = delegate
                 criteria.call()
@@ -211,7 +195,7 @@ class Actor extends BacklogElement implements Serializable, Comparable<Actor> {
     }
 
     static searchAllByTermOrTag(productId, term) {
-        def searchOptions = [actor: [empty:'']] // TODO FIX
+        def searchOptions = [actor: [:]]
         searchByTermOrTag(productId, searchOptions, term)
     }
 }
