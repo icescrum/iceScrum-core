@@ -177,60 +177,56 @@ class TaskService {
      */
     @PreAuthorize('inProduct(#task.parentProduct) and !archivedProduct(#task.parentProduct)')
     void update(Task task, User user, boolean force = false) {
-        def sprint = (Sprint) task.backlog
 
-        if(sprint.state == Sprint.STATE_DONE){
-            task.discard()
+        def sprint = (Sprint) task.backlog
+        if (sprint.state == Sprint.STATE_DONE) {
             throw new IllegalStateException('is.sprint.error.state.not.inProgress')
         }
 
         if (!(task.state == Task.STATE_DONE && task.doneDate)) {
             checkEstimation(task)
-            def p = (Product) sprint.parentRelease.parentProduct
+            def product = (Product) sprint.parentRelease.parentProduct
             // TODO add check : if SM or PO, always allow
             if (force || (task.responsible && task.responsible.id.equals(user.id)) || task.creator.id.equals(user.id) || securityService.scrumMaster(null, springSecurityService.authentication)) {
-                if (task.estimation == 0 && task.state != Task.STATE_DONE && sprint.state == Sprint.STATE_INPROGRESS) {
-                    if(p.preferences.assignOnBeginTask)
-                        task.responsible = task.responsible ? task.responsible : user;
+
+                if (task.state == Task.STATE_DONE) {
+                    done(task, user, product)
+                } else if (task.doneDate) {
+                    def story = task.type ? null : Story.get(task.parentStory?.id)
+                    if (story && story.state == Story.STATE_DONE) {
+                        throw new IllegalStateException('is.story.error.done')
+                    }
+                    if (task.estimation == 0) {
+                        task.estimation = null
+                    }
+                    task.doneDate = null
+                } else if (task.estimation == 0 && sprint.state == Sprint.STATE_INPROGRESS) {
+                    if (product.preferences.assignOnBeginTask && !task.responsible) {
+                        task.responsible = user
+                    }
                     task.state = Task.STATE_DONE
-                    task.doneDate = new Date()
-                    if (user)
-                        task.addActivity(user, 'taskFinish', task.name)
-                    publishEvent(new IceScrumTaskEvent(task, this.class, user, IceScrumTaskEvent.EVENT_STATE_DONE))
-                } else if (task.state == Task.STATE_DONE) {
-                    task.estimation = 0
-                    task.blocked = false
-                    task.doneDate = new Date()
+                    done(task, user, product)
                 }
 
+                // Task moved from "to do" to another column
                 if (task.state >= Task.STATE_BUSY && !task.inProgressDate) {
                     task.inProgressDate = new Date()
                     task.initial = task.estimation
-                    if (!task.isDirty('blocked'))
-                        task.blocked = false
-                    else {
-                        if (task.blocked) {
-                            publishEvent(new IceScrumTaskEvent(task, this.class, user, IceScrumTaskEvent.EVENT_STATE_BLOCKED))
-                        }
-                    }
+                    task.blocked = false
                 }
 
-                if (task.state < Task.STATE_BUSY && task.inProgressDate){
+                if (task.isDirty('blocked') && task.blocked) {
+                    publishEvent(new IceScrumTaskEvent(task, this.class, user, IceScrumTaskEvent.EVENT_STATE_BLOCKED))
+                }
+
+                // Task moved from another column to "to do"
+                if (task.state < Task.STATE_BUSY && task.inProgressDate) {
                     task.inProgressDate = null
                     task.initial = null
                 }
 
-                if (!task.type && p.preferences.autoDoneStory && task.state == Task.STATE_DONE) {
-                    ApplicationContext ctx = (ApplicationContext) ApplicationHolder.getApplication().getMainContext();
-                    StoryService service = (StoryService) ctx.getBean("storyService");
-
-                    Story s = Story.get(task.parentStory.id)
-                    if (!s.tasks.any { it.state != Task.STATE_DONE } && s.state != Story.STATE_DONE) {
-                        service.done(s)
-                    }
-                }
             }
-        }else{
+        } else {
             throw new IllegalStateException('is.task.error.done')
         }
         if (!task.save(flush: true)) {
@@ -243,6 +239,22 @@ class TaskService {
         }
 
         broadcast(function: 'update', message: task, channel:'product-'+sprint.parentProduct.id)
+    }
+
+    private done(Task task, User user, Product product) {
+        task.estimation = 0
+        task.blocked = false
+        task.doneDate = new Date()
+        def story = task.type ? null : Story.get(task.parentStory?.id)
+        if (story && product.preferences.autoDoneStory && !story.tasks.any { it.state != Task.STATE_DONE } && story.state != Story.STATE_DONE) {
+            ApplicationContext ctx = (ApplicationContext) ApplicationHolder.getApplication().getMainContext();
+            StoryService service = (StoryService) ctx.getBean("storyService");
+            service.done(story)
+        }
+        if (user) {
+            task.addActivity(user, 'taskFinish', task.name)
+        }
+        publishEvent(new IceScrumTaskEvent(task, this.class, user, IceScrumTaskEvent.EVENT_STATE_DONE))
     }
 
     /**
@@ -344,48 +356,41 @@ class TaskService {
         return clonedTask
     }
 
-    /**
-     * Change the state of a task
-     * @param t
-     * @param u
-     * @param i
-     * @return
-     */
-    @PreAuthorize('inProduct(#t.parentProduct) and !archivedProduct(#t.parentProduct)')
-    void state(Task t, Integer state, User u) {
+    @PreAuthorize('inProduct(#task.parentProduct) and !archivedProduct(#task.parentProduct)')
+    void state(Task task, Integer newState, User user) {
 
-        def p = ((Sprint) t.backlog).parentRelease.parentProduct
+        def sprint = (Sprint) task.backlog
+        def product = sprint.parentRelease.parentProduct
 
-        if(((Sprint)t.backlog).state != Sprint.STATE_INPROGRESS && state >= Task.STATE_BUSY){
+        if (sprint.state != Sprint.STATE_INPROGRESS && newState >= Task.STATE_BUSY) {
             throw new IllegalStateException('is.sprint.error.state.not.inProgress')
         }
 
-        if (t.state == Task.STATE_DONE){
-            throw new IllegalStateException('is.task.error.done')
+        if (task.responsible == null && product.preferences.assignOnBeginTask && newState >= Task.STATE_BUSY) {
+            task.responsible = user
         }
 
-        if (t.responsible == null && p.preferences.assignOnBeginTask && state >= Task.STATE_BUSY) {
-            t.responsible = u
-        }
-
-        if (t.type == Task.TYPE_URGENT
-                && state == Task.STATE_BUSY
-                && t.state != Task.STATE_BUSY
-                && p.preferences.limitUrgentTasks != 0
-                && p.preferences.limitUrgentTasks == ((Sprint) t.backlog).tasks?.findAll {it.type == Task.TYPE_URGENT && it.state == Task.STATE_BUSY}?.size()) {
+        if (task.type == Task.TYPE_URGENT
+                && newState == Task.STATE_BUSY
+                && task.state != Task.STATE_BUSY
+                && product.preferences.limitUrgentTasks != 0
+                && product.preferences.limitUrgentTasks == sprint.tasks?.findAll {it.type == Task.TYPE_URGENT && it.state == Task.STATE_BUSY}?.size()) {
             throw new IllegalStateException('is.task.error.limitTasksUrgent')
         }
 
-        if ((t.responsible && u.id.equals(t.responsible.id)) || u.id.equals(t.creator.id) || securityService.productOwner(p, springSecurityService.authentication) || securityService.scrumMaster(null, springSecurityService.authentication)) {
-            if (state == Task.STATE_BUSY && t.state != Task.STATE_BUSY) {
-                t.addActivity(u, 'taskInprogress', t.name)
-                publishEvent(new IceScrumTaskEvent(t, this.class, u, IceScrumTaskEvent.EVENT_STATE_IN_PROGRESS))
-            } else if (state == Task.STATE_WAIT && t.state != Task.STATE_WAIT) {
-                t.addActivity(u, 'taskWait', t.name)
-                publishEvent(new IceScrumTaskEvent(t, this.class, u, IceScrumTaskEvent.EVENT_STATE_WAIT))
+        if ((task.responsible && user.id.equals(task.responsible.id))
+                || user.id.equals(task.creator.id)
+                || securityService.productOwner(product, springSecurityService.authentication)
+                || securityService.scrumMaster(null, springSecurityService.authentication)) {
+            if (newState == Task.STATE_BUSY && task.state != Task.STATE_BUSY) {
+                task.addActivity(user, 'taskInprogress', task.name)
+                publishEvent(new IceScrumTaskEvent(task, this.class, user, IceScrumTaskEvent.EVENT_STATE_IN_PROGRESS))
+            } else if (newState == Task.STATE_WAIT && task.state != Task.STATE_WAIT) {
+                task.addActivity(user, 'taskWait', task.name)
+                publishEvent(new IceScrumTaskEvent(task, this.class, user, IceScrumTaskEvent.EVENT_STATE_WAIT))
             }
-            t.state = state
-            update(t, u)
+            task.state = newState
+            update(task, user)
         }
     }
 
