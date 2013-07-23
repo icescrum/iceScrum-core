@@ -34,6 +34,10 @@ import org.springframework.transaction.annotation.Transactional
 import org.icescrum.core.domain.*
 import org.icescrum.core.support.ApplicationSupport
 
+// Transactional required in order to make the "update" call by "state" transactional
+// Don't know why, maybe related to the fact that there is a transactional annotation on "unmarshall"
+// that disables default transactional behavior
+@Transactional
 class TaskService {
 
 
@@ -117,75 +121,36 @@ class TaskService {
         save(task, sprint, user)
     }
 
-    /**
-     * An update with a Task changing its parentStory
-     * @param task
-     * @param user
-     * @param story
-     */
-    @PreAuthorize('inProduct(#story.backlog) and !archivedProduct(#story.backlog)')
-    void changeTaskStory(Task task, Story story, User user) {
-        if (task.parentStory.id != story.id) {
-            task.parentStory = story
-            update(task, user)
-        }
-    }
-
-    /**
-     * An update with a Task changing its type (URGENT/RECURRENT)
-     * @param task
-     * @param user
-     * @param type
-     */
     @PreAuthorize('inProduct(#task.parentProduct) and !archivedProduct(#task.parentProduct)')
-    void changeType(Task task, int type, User user) {
-        task.type = type
-        update(task, user)
-    }
-
-    /**
-     * Transforms a Sprint Task into a Story Task
-     * @param task
-     * @param story
-     * @param user
-     */
-    @PreAuthorize('inProduct(#story.backlog) and !archivedProduct(#story.backlog)')
-    void sprintTaskToStoryTask(Task task, Story story, User user) {
-        task.type = null
-        update(task, user)
-        task.parentStory = story
-    }
-    /**
-     * Transforms a Story Task into a Sprint Task
-     * @param task
-     * @param type
-     * @param user
-     */
-    @PreAuthorize('inProduct(#task.parentProduct) and !archivedProduct(#task.parentProduct)')
-    void storyTaskToSprintTask(Task task, int type, User user) {
-        def story = task.parentStory
-        task.parentStory = null
-        task.type = type
-        update(task, user)
-        //story.addActivity(user, (type == Task.TYPE_URGENT ? 'taskAssociateUrgent' : 'taskAssociateRecurrent'), task.name)
-    }
-
-    /**
-     * Update a Task
-     * @param task
-     * @param user
-     */
-    @PreAuthorize('inProduct(#task.parentProduct) and !archivedProduct(#task.parentProduct)')
-    void update(Task task, User user, boolean force = false) {
+    void update(Task task, User user, boolean force = false, Integer newType = null, Long newStory = null) {
 
         def sprint = (Sprint) task.backlog
         if (sprint.state == Sprint.STATE_DONE) {
             throw new IllegalStateException('is.sprint.error.state.not.inProgress')
         }
+        def product = sprint.parentProduct
+
+        if (newType != null) {
+            if (newType in [Task.TYPE_RECURRENT, Task.TYPE_URGENT]) {
+                task.parentStory = null
+                task.type = newType
+            } else {
+                throw new IllegalArgumentException('is.task.error.not.updated')
+            }
+        } else if (newStory != null) {
+            Story story = (Story) Story.getInProduct(product.id, newStory).list()
+            if (story) {
+                task.parentStory = story
+                task.type = null
+            } else {
+                // we could also check that the story.parentSprint = sprint
+                // but caution with intermediary states when moving stories
+                throw new IllegalArgumentException('is.story.error.not.exist')
+            }
+        }
 
         if (!(task.state == Task.STATE_DONE && task.doneDate)) {
             checkEstimation(task)
-            def product = (Product) sprint.parentRelease.parentProduct
             // TODO add check : if SM or PO, always allow
             if (force || (task.responsible && task.responsible.id.equals(user.id)) || task.creator.id.equals(user.id) || securityService.scrumMaster(null, springSecurityService.authentication)) {
 
@@ -357,7 +322,7 @@ class TaskService {
     }
 
     @PreAuthorize('inProduct(#task.parentProduct) and !archivedProduct(#task.parentProduct)')
-    void state(Task task, Integer newState, User user) {
+    void state(Task task, Integer newState, User user, Integer newType = null, Long newStory = null) {
 
         def sprint = (Sprint) task.backlog
         def product = sprint.parentRelease.parentProduct
@@ -370,7 +335,8 @@ class TaskService {
             task.responsible = user
         }
 
-        if (task.type == Task.TYPE_URGENT
+        def type = newType ?: task.type
+        if (type == Task.TYPE_URGENT
                 && newState == Task.STATE_BUSY
                 && task.state != Task.STATE_BUSY
                 && product.preferences.limitUrgentTasks != 0
@@ -390,7 +356,7 @@ class TaskService {
                 publishEvent(new IceScrumTaskEvent(task, this.class, user, IceScrumTaskEvent.EVENT_STATE_WAIT))
             }
             task.state = newState
-            update(task, user)
+            update(task, user, false, newType, newStory)
         }
     }
 

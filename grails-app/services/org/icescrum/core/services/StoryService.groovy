@@ -375,7 +375,7 @@ class StoryService {
         tasks.each { Task task ->
             if (task.state == Task.STATE_DONE) {
                 task.doneDate = null
-                taskService.storyTaskToSprintTask(task, Task.TYPE_URGENT, u)
+                taskService.update(task, u, false, Task.TYPE_URGENT)
             } else if (fullUnPlan) {
                 taskService.delete(task, u)
             } else {
