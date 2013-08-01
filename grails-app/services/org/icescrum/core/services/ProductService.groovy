@@ -340,7 +340,7 @@ class ProductService {
     private static Map computeLabelsForSprintEntry(sprintEntry) {
         def computePercents = { part ->
             def total = sprintEntry.userstories + sprintEntry.technicalstories + sprintEntry.defectstories
-            (Integer) Math.ceil(part / total * 100)
+            total ? (Integer) Math.ceil(part / total * 100) : 0
         }
         def generateLabel = { part, percents ->
             percents > 0 ? part + ' (' + percents + '%)' : ''
