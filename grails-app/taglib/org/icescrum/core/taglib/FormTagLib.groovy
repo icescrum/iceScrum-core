@@ -562,7 +562,7 @@ class FormTagLib {
 
     def password = {attrs, body ->
         attrs."class" = attrs."class" ? attrs."class" +" input" : "input"
-        out << "<span id=\"${attrs.id}-field\" class=\"${attrs."class"}\">"
+        out << "<span id=\"${attrs.id}-field\" class=\"${attrs.remove("class")}\">"
         out << "<span class=\"start\"></span>"
         out << "<span class=\"content\">"
         out << passwordField(attrs, body())
