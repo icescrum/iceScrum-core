@@ -175,7 +175,7 @@ class TeamService {
             securityService.changeOwner(team.scrumMasters.first(), team)
         } else {
             if (!u.isAttached()) u = u.merge()
-            securityService.createScrumMasterPermissions u, team
+            addScrumMaster(team,u)
             securityService.changeOwner(u, team)
         }
         publishEvent(new IceScrumTeamEvent(team, this.class, u, IceScrumEvent.EVENT_CREATED))
