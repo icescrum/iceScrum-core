@@ -991,7 +991,7 @@ class StoryService {
                 acceptanceTestService.save(new AcceptanceTest(name:it.name, description:it.description), copiedStory, (User) springSecurityService.currentUser)
             }
 
-            copiedStories << copiedStory
+            copiedStories << copiedStory.refresh()
         }
         resumeBufferedBroadcast(channel:'product-'+product.id)
         return copiedStories
