@@ -50,13 +50,13 @@ class ApplicationSupport {
         try{
             ApplicationSupport.forName("javax.servlet.http.Part")
         }catch(ClassNotFoundException e){
-            config.icescrum.errors << [title:'is.warning.httpPart.title',
+            config.icescrum.errors << [error:true, title:'is.warning.httpPart.title',
                                        message:'is.warning.httpPart.message' + (isProVersion() ? '.pro' : '')]
             config.icescrum.push.enable = false;
         }
         //check if serverURL is valid
         if (config.grails.serverURL.contains('localhost') && Environment.current != Environment.DEVELOPMENT){
-            config.icescrum.errors << [title:'is.warning.serverUrl.title',
+            config.icescrum.errors << [error:true, title:'is.warning.serverUrl.title',
                                        message:'is.warning.serverUrl.message' + (isProVersion() ? '.pro' : ''),
                                        args:[config.grails.serverURL]]
         }
@@ -288,7 +288,7 @@ class CheckerTimerTask extends TimerTask {
                                 headers:['User-Agent' : 'iceScrum-Agent/1.0','Referer' : config.grails.serverURL])
             if(resp.success && resp.status == 200){
                 if (resp.data.version?.text()){
-                    config.icescrum.errors << [title:'is.warning.version', version:resp.data.version.text(), url:resp.data.url.text(), message:resp.data.message?.text()]
+                    config.icescrum.errors << [error:false, title:'is.warning.version', version:resp.data.version.text(), url:resp.data.url.text(), message:resp.data.message?.text()]
                     if (log.debugEnabled) log.debug('Automatic check update - A new version is available : '+resp.data.version.text())
                     return
                 }else{
