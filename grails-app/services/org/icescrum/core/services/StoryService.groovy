@@ -96,7 +96,16 @@ class StoryService {
             }
             story.addActivity(u, Activity.CODE_SAVE, story.name)
             broadcast(function: 'add', message: story, channel:'product-'+product.id)
+
+            if (story.effort > 0){
+                publishEvent(new IceScrumStoryEvent(story, this.class, u, IceScrumStoryEvent.EVENT_ESTIMATED))
+            } else if (story.acceptedDate){
+                publishEvent(new IceScrumStoryEvent(story, this.class, u, IceScrumStoryEvent.EVENT_ACCEPTED))
+            } else {
+                publishEvent(new IceScrumStoryEvent(story, this.class, u, IceScrumStoryEvent.EVENT_SUGGESTED))
+            }
             publishEvent(new IceScrumStoryEvent(story, this.class, u, IceScrumStoryEvent.EVENT_CREATED))
+
         } else {
             throw new RuntimeException()
         }
