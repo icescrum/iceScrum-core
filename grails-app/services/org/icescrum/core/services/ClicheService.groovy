@@ -249,7 +249,7 @@ class ClicheService {
         int urgent = 0
         int story = 0
 
-        float remainingHours = 0
+        float remainingTime = 0
         s.tasks.each { task ->
 
             def use = true
@@ -282,7 +282,7 @@ class ClicheService {
                         story++
                         break
                 }
-                remainingHours += task.estimation ?: 0
+                remainingTime += task.estimation ?: 0
             }
         }
 
@@ -330,8 +330,8 @@ class ClicheService {
                 "${Cliche.TASKS_URGENT}"(urgent)
                 "${Cliche.TASKS_STORY}"(story)
 
-                //daily remainingHours
-                "${Cliche.REMAINING_HOURS}"(remainingHours)
+                //daily remainingTime
+                "${Cliche.REMAINING_TIME}"(remainingTime)
 
             }
         }

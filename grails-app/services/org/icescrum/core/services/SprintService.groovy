@@ -268,7 +268,7 @@ class SprintService {
             }
         }
 
-        sprint.initialRemainingHours = sprint.totalRemainingHours
+        sprint.initialRemainingTime = sprint.totalRemaining
 
         if (!sprint.save()) {
             throw new RuntimeException()
@@ -357,7 +357,7 @@ class SprintService {
         broadcast(function: 'retrospective', message: sprint, channel:'product-'+sprint.parentProduct.id)
     }
 
-    def sprintBurndownHoursValues(Sprint sprint) {
+    def sprintBurndownRemainingValues(Sprint sprint) {
         def values = []
         def lastDaycliche = sprint.activationDate
         def date = (sprint.state == Sprint.STATE_DONE) ? sprint.closeDate : (sprint.state == Sprint.STATE_INPROGRESS) ? new Date() : sprint.endDate
@@ -368,10 +368,10 @@ class SprintService {
                 def xmlRoot = new XmlSlurper().parseText(cliche.data)
                 if (xmlRoot) {
                     lastDaycliche = cliche.datePrise
-                    def currentRemaining = xmlRoot."${Cliche.REMAINING_HOURS}".toFloat()
+                    def currentRemaining = xmlRoot."${Cliche.REMAINING_TIME}".toFloat()
                     if ((ServicesUtils.isDateWeekend(lastDaycliche) && !sprint.parentRelease.parentProduct.preferences.hideWeekend) || !ServicesUtils.isDateWeekend(lastDaycliche))
                         values << [
-                                remainingHours: currentRemaining,
+                                remainingTime: currentRemaining,
                                 label: "${g.formatDate(date: lastDaycliche, formatName: 'is.date.format.short')}"
                         ]
                 }
@@ -382,14 +382,14 @@ class SprintService {
             nbDays.times {
                 if ((ServicesUtils.isDateWeekend(lastDaycliche + (it + 1)) && !sprint.parentRelease.parentProduct.preferences.hideWeekend) || !ServicesUtils.isDateWeekend(lastDaycliche + (it + 1)))
                     values << [
-                            remainingHours: null,
+                            remainingTime: null,
                             label: "${g.formatDate(date: lastDaycliche + (it + 1), formatName: 'is.date.format.short')}"
                     ]
             }
         }
         if (!values.isEmpty()) {
-            values.first()?.idealHours = sprint.initialRemainingHours?:0
-            values.last()?.idealHours = 0
+            values.first()?.idealTime = sprint.initialRemainingTime?:0
+            values.last()?.idealTime = 0
         }
         return values
     }

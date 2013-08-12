@@ -82,6 +82,23 @@ class SprintMigration {
                     WHERE task.backlog_id = icescrum2_sprint.id)
             ''')
         }
+        changeSet(id:'rename_initial_remaining_hours_column', author:'vbarrier', filePath:filePath) {
+            preConditions(onFail:"MARK_RAN"){
+                not{
+                    dbms(type:'hsqldb')
+                }
+                columnExists(tableName:"icescrum2_sprint", columnName:'initial_remaining_hours')
+            }
+            renameColumn(tableName:"icescrum2_sprint", oldColumnName:'initial_remaining_hours', newColumnName:"initial_remaining_time", columnDataType:'FLOAT')
+        }
+
+        changeSet(id:'rename_initial_remaining_hours_column_hsql', author:'vbarrier', filePath:filePath) {
+            preConditions(onFail:"MARK_RAN"){
+                dbms(type:'hsqldb')
+                sqlCheck("SELECT count(COLUMN_NAME) FROM INFORMATION_SCHEMA.SYSTEM_COLUMNS WHERE TABLE_NAME = 'ICESCRUM2_SPRINT' AND COLUMN_NAME = 'INITIAL_REMAINING_TIME'",expectedResult:'1')
+            }
+            renameColumn(tableName:"icescrum2_sprint", oldColumnName:'initial_remaining_hours', newColumnName:"initial_remaining_time", columnDataType:'FLOAT')
+        }
     }
 
     static def getFilePath(){

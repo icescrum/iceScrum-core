@@ -50,7 +50,7 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
     Double velocity = 0d
     Double capacity = 0d
     Double dailyWorkTime = 8d
-    Float initialRemainingHours
+    Float initialRemainingTime
 
     static mappedBy = [
             stories: "parentSprint",
@@ -67,7 +67,7 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
     ]
 
     static transients = [
-            'recurrentTasks', 'urgentTasks', 'hasNextSprint', 'parentReleaseId', 'activable', 'effectiveEndDate', 'effectiveStartDate', 'totalRemainingHours', 'parentProduct', 'totalEffort'
+            'recurrentTasks', 'urgentTasks', 'hasNextSprint', 'parentReleaseId', 'activable', 'effectiveEndDate', 'effectiveStartDate', 'totalRemaining', 'parentProduct', 'totalEffort'
     ]
 
     static namedQueries = {
@@ -164,7 +164,7 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
         doneDefinition nullable: true
         activationDate nullable: true
         closeDate nullable: true
-        initialRemainingHours nullable: true
+        initialRemainingTime nullable: true
         endDate(validator:{ val, obj ->
             if (!val)
                 return ['no.endDate']
@@ -312,7 +312,7 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
         return this.state == STATE_WAIT ? startDate : activationDate
     }
 
-    BigDecimal getTotalRemainingHours() {
+    BigDecimal getTotalRemaining() {
         (BigDecimal) tasks?.sum { Task t -> t.estimation ? t.estimation.toBigDecimal() : 0.0 } ?: 0.0
     }
 
