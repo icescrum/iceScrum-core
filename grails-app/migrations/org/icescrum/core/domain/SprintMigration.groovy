@@ -95,7 +95,7 @@ class SprintMigration {
         changeSet(id:'rename_initial_remaining_hours_column_hsql', author:'vbarrier', filePath:filePath) {
             preConditions(onFail:"MARK_RAN"){
                 dbms(type:'hsqldb')
-                sqlCheck("SELECT count(COLUMN_NAME) FROM INFORMATION_SCHEMA.SYSTEM_COLUMNS WHERE TABLE_NAME = 'ICESCRUM2_SPRINT' AND COLUMN_NAME = 'INITIAL_REMAINING_TIME'",expectedResult:'1')
+                sqlCheck("SELECT count(COLUMN_NAME) FROM INFORMATION_SCHEMA.SYSTEM_COLUMNS WHERE TABLE_NAME = 'ICESCRUM2_SPRINT' AND COLUMN_NAME = 'INITIAL_REMAINING_HOURS'",expectedResult:'1')
             }
             renameColumn(tableName:"icescrum2_sprint", oldColumnName:'initial_remaining_hours', newColumnName:"initial_remaining_time", columnDataType:'FLOAT')
         }
