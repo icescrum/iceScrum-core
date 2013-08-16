@@ -102,7 +102,7 @@
 <jq:jquery>
     <g:if test="${type == 'window'}">
         $("#${type}-id-${id}").isWindow({maximizeable:${titleBarActions?.maximizeable},widgetable:${titleBarActions?.widgetable},closeable:${titleBarActions?.closeable}});
-        document.title = "${projectName ?: 'iceScrum'} - ${title.encodeAsJavaScript()}";
+        document.title = "${spaceName ?: 'iceScrum'} - ${title.encodeAsJavaScript()}";
         $("#${type}-id-${id}").focus();
     </g:if>
     <g:if test="${type == 'widget'}">

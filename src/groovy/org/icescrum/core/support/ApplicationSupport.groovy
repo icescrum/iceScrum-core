@@ -260,6 +260,18 @@ class ApplicationSupport {
         if (log.debugEnabled){ log.debug "Created tmp dir ${dir.absolutePath}" }
         return dir
     }
+
+    public static getCurrentSpace(def params, def id = null){
+        def space = ApplicationHolder.application.config.icescrum.spaces.find{ id ? it.key == id : params."$it.key" }
+        if (space){
+            def object = space.value.spaceClass.get(params.long("$space.key"))
+            return object ? [name:space.key,
+                    object:object,
+                    config:space.value.config(object),
+                    params:space.value.params(object),
+                    indexScrumOS:space.value.indexScrumOS] : false
+        }
+    }
   
 }
 

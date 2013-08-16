@@ -55,11 +55,13 @@ class MenuBarSupport {
             return null
     }
 
-    def productDynamicBar = {id, defaultVisibility, defaultPosition ->
+    def spaceDynamicBar = { id, defaultVisibility, defaultPosition, space ->
         return {
-            if (!params?.product) return false
+            if (!params?."$space") return false
             if (!defaultPosition) return false
-            if (!commonVerification(createLink(controller: id, params: [product: params.product]))) return false
+            def attrs = [:]
+            attrs."$space" = params."$space"
+            if (!commonVerification(createLink(controller: id, params:attrs))) return false
             commonUserPreferences(id) ?: [visible: defaultVisibility, pos: defaultPosition]
         }
     }

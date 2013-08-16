@@ -1,3 +1,4 @@
+import org.icescrum.core.domain.Product
 import org.springframework.cache.ehcache.EhCacheFactoryBean
 
 /*
@@ -53,6 +54,24 @@ icescrum {
         redis {
             enable = false
             host = "http://localhost:6379"
+        }
+    }
+    spaces {
+        product {
+            spaceClass = Product
+            config = { product -> [key:product.pkey, path:'p'] }
+            params = { product -> [product:product.id] }
+            indexScrumOS = { product, user, securityService, springSecurityService ->
+                if (product?.preferences?.hidden && !securityService.inProduct(product, springSecurityService.authentication) && !securityService.stakeHolder(product,springSecurityService.authentication,false)){
+                    forward(action:springSecurityService.isLoggedIn() ? 'error403' : 'error401',controller:'errors')
+                    return
+                }
+
+                if (product && user && !securityService.hasRoleAdmin(user) && user.preferences.lastProductOpened != product.pkey){
+                    user.preferences.lastProductOpened = product.pkey
+                    user.save()
+                }
+            }
         }
     }
 }

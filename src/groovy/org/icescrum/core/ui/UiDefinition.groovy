@@ -30,6 +30,7 @@ class UiDefinition {
 
     boolean disabled
     String id
+    String space = "product"
     MenuBarDefinition menuBar
     WidgetDefinition widget
     WindowDefinition window

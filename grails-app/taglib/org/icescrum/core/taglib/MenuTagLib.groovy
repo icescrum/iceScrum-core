@@ -55,8 +55,8 @@ class MenuTagLib {
         def menus = splitHidden ? [visible:[], hidden:[]] : []
         uiDefinitionService.getDefinitions().each {String id, UiDefinition uiDefinition ->
             def menuBar = uiDefinition.menuBar
-            if(menuBar?.productDynamicBar) {
-                menuBar.show = menuBarSupport.productDynamicBar(id, menuBar.defaultVisibility, menuBar.defaultPosition)
+            if(menuBar?.spaceDynamicBar) {
+                menuBar.show = menuBarSupport.spaceDynamicBar(id, menuBar.defaultVisibility, menuBar.defaultPosition, uiDefinition.space)
             }
             def show = menuBar?.show
             if (show in Closure) {
