@@ -89,6 +89,7 @@ class SprintMigration {
                 }
                 columnExists(tableName:"icescrum2_sprint", columnName:'initial_remaining_hours')
             }
+            dropColumn(tableName:"icescrum2_sprint", columnName:"initial_remaining_time")  // required because the new column is already created
             renameColumn(tableName:"icescrum2_sprint", oldColumnName:'initial_remaining_hours', newColumnName:"initial_remaining_time", columnDataType:'FLOAT')
         }
 
@@ -97,6 +98,7 @@ class SprintMigration {
                 dbms(type:'hsqldb')
                 sqlCheck("SELECT count(COLUMN_NAME) FROM INFORMATION_SCHEMA.SYSTEM_COLUMNS WHERE TABLE_NAME = 'ICESCRUM2_SPRINT' AND COLUMN_NAME = 'INITIAL_REMAINING_HOURS'",expectedResult:'1')
             }
+            dropColumn(tableName:"icescrum2_sprint", columnName:"initial_remaining_time")  // required because the new column is already created
             renameColumn(tableName:"icescrum2_sprint", oldColumnName:'initial_remaining_hours', newColumnName:"initial_remaining_time", columnDataType:'FLOAT')
         }
     }
