@@ -679,9 +679,12 @@ class StoryService {
             feature.validate()
             def i = 1
             while (feature.hasErrors()) {
-                if (feature.errors.getFieldError('name')) {
+                if (feature.errors.getFieldError('name')?.defaultMessage?.contains("unique")) {
                     i += 1
                     feature.name = feature.name + '_' + i
+                    feature.validate()
+                }else if (story.errors.getFieldError('name')?.defaultMessage?.contains("maximum size")) {
+                    feature.name = feature.name[0..20]
                     feature.validate()
                 } else {
                     throw new RuntimeException()
@@ -737,9 +740,16 @@ class StoryService {
             task.validate()
             def i = 1
             while (task.hasErrors() && task.errors.getFieldError('name')) {
-                i += 1
-                task.name = task.name + '_' + i
-                task.validate()
+                if (task.errors.getFieldError('name')?.defaultMessage?.contains("unique")) {
+                    i += 1
+                    task.name = task.name + '_' + i
+                    task.validate()
+                }else if (story.errors.getFieldError('name')?.defaultMessage?.contains("maximum size")) {
+                    task.name = task.name[0..20]
+                    task.validate()
+                } else {
+                    throw new RuntimeException()
+                }
             }
 
             if (story.feature)
@@ -960,11 +970,14 @@ class StoryService {
             copiedStory.validate()
             def i = 1
             while (copiedStory.hasErrors()) {
-                if (copiedStory.errors.getFieldError('name')) {
+                if (copiedStory.errors.getFieldError('name')?.defaultMessage?.contains("unique")) {
                     i += 1
-                    copiedStory.name = story.name + '_' + i
+                    copiedStory.name = copiedStory.name + '_' + i
                     copiedStory.validate()
-                } else {
+                } else if (story.errors.getFieldError('name')?.defaultMessage?.contains("maximum size")) {
+                    copiedStory.name = copiedStory.name[0..20]
+                    copiedStory.validate()
+                }else {
                     throw new RuntimeException()
                 }
             }

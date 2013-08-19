@@ -307,11 +307,14 @@ class TaskService {
 
         def i = 1
         while (clonedTask.hasErrors()) {
-            if (clonedTask.errors.getFieldError('name')) {
+            if (clonedTask.errors.getFieldError('name')?.defaultMessage?.contains("unique")) {
                 i += 1
-                clonedTask.name = task.name + '_' + i
+                clonedTask.name = clonedTask.name + '_' + i
                 clonedTask.validate()
-            } else {
+            } else if (clonedTask.errors.getFieldError('name')?.defaultMessage?.contains("maximum size")) {
+                clonedTask.name = clonedTask.name[0..20]
+                clonedTask.validate()
+            }else {
                 throw new RuntimeException()
             }
         }

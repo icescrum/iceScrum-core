@@ -120,11 +120,14 @@ class FeatureService {
         story.validate()
         def i = 1
         while (story.hasErrors()) {
-            if (story.errors.getFieldError('name')) {
+            if (story.errors.getFieldError('name')?.defaultMessage?.contains("unique")) {
                 i += 1
                 story.name = story.name + '_' + i
                 story.validate()
-            } else {
+            } else if (story.errors.getFieldError('name')?.defaultMessage?.contains("maximum size")) {
+                story.name = story.name[0..20]
+                story.validate()
+            }else {
                 throw new RuntimeException()
             }
         }
