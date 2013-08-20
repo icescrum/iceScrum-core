@@ -542,7 +542,7 @@ class SprintService {
                     description: sprint.description.text() ?: '',
                     goal: sprint.goal?.text() ?: '',
                     deliveredVersion: sprint.deliveredVersion?.text() ?: '',
-                    initialRemainingTime: (sprint.initialRemainingTime?.text()?.isNumber() || sprint.initialRemainingHours?.text()?.isNumber()) ? sprint.initialRemainingTime?.text()?.toFloat() ?: sprint.initialRemainingHours?.text()?.toFloat() : null,
+                    initialRemainingTime: sprint.initialRemainingTime?.text()?.isNumber() ? sprint.initialRemainingTime.text().toFloat() : sprint.initialRemainingHours?.text()?.isNumber() ? sprint.initialRemainingHours.text().toFloat() : null
             )
 
             sprint.cliches.cliche.each {
