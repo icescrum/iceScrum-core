@@ -556,7 +556,12 @@ class IcescrumCoreGrailsPlugin {
                     if(broadcaster){
                         def batch = []
                         def messages = bufferBroadcast.get(threadId+'#'+it)
-                        def uuid = attrs.excludeCaller ? RequestContextHolder.currentRequestAttributes()?.request?.getHeader(HeaderConfig.X_ATMOSPHERE_TRACKING_ID) : null
+                        def uuid = null
+                        try{
+                            uuid = attrs.excludeCaller ? RequestContextHolder.currentRequestAttributes()?.request?.getHeader(HeaderConfig.X_ATMOSPHERE_TRACKING_ID) : null
+                        }catch(IllegalStateException e){
+                            //something we are not in a webrequest (like in batch threads)
+                        }
                         int partitionCount = messages.size() / size
                         partitionCount.times { partitionNumber ->
                             def start = partitionNumber * size
@@ -610,7 +615,12 @@ class IcescrumCoreGrailsPlugin {
             attrs.channel.each { String it ->
                 def broadcaster = BroadcasterFactory?.default?.lookup(it)?:null
                 if(broadcaster){
-                    def uuid = attrs.excludeCaller ? RequestContextHolder.currentRequestAttributes()?.request?.getHeader(HeaderConfig.X_ATMOSPHERE_TRACKING_ID) : null
+                    def uuid = null
+                    try{
+                        uuid = attrs.excludeCaller ? RequestContextHolder.currentRequestAttributes()?.request?.getHeader(HeaderConfig.X_ATMOSPHERE_TRACKING_ID) : null
+                    }catch(IllegalStateException e){
+                        //something we are not in a webrequest (like in batch threads)
+                    }
                     if (bufferBroadcast.containsKey(threadId+'#'+it)) {
                         bufferBroadcast.get(threadId+'#'+it) << message
                     } else {
