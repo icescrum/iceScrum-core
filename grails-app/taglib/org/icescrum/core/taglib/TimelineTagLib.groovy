@@ -71,7 +71,7 @@ class TimelineTagLib {
             }
             it.remove('options')
 
-            jsCode += it.findAll {k, v -> (v != null)}.collect {k, v -> " $k:$v"}.join(',')
+            jsCode += it.findAll {k, v -> (v != null && k != 'onLoaded')}.collect {k, v -> " $k:$v"}.join(',')
             jsCode += "})"
             bands << jsCode
         }
@@ -117,6 +117,7 @@ class TimelineTagLib {
                         resizeTimerID = window.setTimeout(function() {
                             resizeTimerID = null;
                             ${attrs.name}.layout();
+                            ${attrs.onResize? attrs.onResize + ';' :''}
                         }, 500);
                     }
                 }
@@ -133,6 +134,7 @@ class TimelineTagLib {
             jqCode += """${pageScope.timelineRoot.name}.loadJSON(${it.url},function(json, url){
                         eventSource${index}.clear();
                         eventSource${index}.loadJSON(json, url);
+                        ${it.onLoaded ? it.onLoaded + ';' : ''}
                     });
                    """
         }
@@ -157,6 +159,7 @@ class TimelineTagLib {
                 themeOptions: attrs.themeOptions ?: null,
                 eventPainter: attrs.eventPainter ?: null,
                 overview: attrs.overview ?: false,
+                onLoaded: attrs.remove('onLoaded') ?: null,
                 url: '\'' + createLink(attrs) + '\''
         ]
 
