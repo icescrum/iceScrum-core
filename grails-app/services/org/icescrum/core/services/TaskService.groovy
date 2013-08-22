@@ -128,7 +128,16 @@ class TaskService {
         if (sprint.state == Sprint.STATE_DONE) {
             throw new IllegalStateException('is.sprint.error.state.not.inProgress')
         }
+
         def product = sprint.parentProduct
+
+        def type = newType ?: task.type
+        if (type == Task.TYPE_URGENT
+                && task.state == Task.STATE_BUSY
+                && product.preferences.limitUrgentTasks != 0
+                && product.preferences.limitUrgentTasks == sprint.tasks?.findAll {it.type == Task.TYPE_URGENT && it.state == Task.STATE_BUSY && it.id != task.id }?.size()) {
+            throw new IllegalStateException('is.task.error.limitTasksUrgent')
+        }
 
         if (newType != null) {
             if (newType in [Task.TYPE_RECURRENT, Task.TYPE_URGENT]) {
@@ -336,15 +345,6 @@ class TaskService {
 
         if (task.responsible == null && product.preferences.assignOnBeginTask && newState >= Task.STATE_BUSY) {
             task.responsible = user
-        }
-
-        def type = newType ?: task.type
-        if (type == Task.TYPE_URGENT
-                && newState == Task.STATE_BUSY
-                && task.state != Task.STATE_BUSY
-                && product.preferences.limitUrgentTasks != 0
-                && product.preferences.limitUrgentTasks == sprint.tasks?.findAll {it.type == Task.TYPE_URGENT && it.state == Task.STATE_BUSY}?.size()) {
-            throw new IllegalStateException('is.task.error.limitTasksUrgent')
         }
 
         if ((task.responsible && user.id.equals(task.responsible.id))
