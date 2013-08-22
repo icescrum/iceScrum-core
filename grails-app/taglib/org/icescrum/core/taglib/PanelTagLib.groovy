@@ -59,7 +59,7 @@ class PanelTagLib {
 
     def panelContext = {attrs, body ->
         pageScope.panelContext = [lines: []]
-        out << "<table cellspacing='0' cellpadding='0' border='0' style='width:100%'>"
+        out << "<table cellspacing='0' cellpadding='0' border='0'>"
         out << body()
         pageScope.panelContext.lines.eachWithIndex { line, index ->
             out << line(index == pageScope.panelContext.lines.size() - 1)
