@@ -343,23 +343,32 @@ class TaskService {
             throw new IllegalStateException('is.sprint.error.state.not.inProgress')
         }
 
-        if (task.responsible == null && product.preferences.assignOnBeginTask && newState >= Task.STATE_BUSY) {
-            task.responsible = user
-        }
-
-        if ((task.responsible && user.id.equals(task.responsible.id))
-                || user.id.equals(task.creator.id)
-                || securityService.productOwner(product, springSecurityService.authentication)
-                || securityService.scrumMaster(null, springSecurityService.authentication)) {
-            if (newState == Task.STATE_BUSY && task.state != Task.STATE_BUSY) {
-                task.addActivity(user, 'taskInprogress', task.name)
-                publishEvent(new IceScrumTaskEvent(task, this.class, user, IceScrumTaskEvent.EVENT_STATE_IN_PROGRESS))
-            } else if (newState == Task.STATE_WAIT && task.state != Task.STATE_WAIT) {
-                task.addActivity(user, 'taskWait', task.name)
-                publishEvent(new IceScrumTaskEvent(task, this.class, user, IceScrumTaskEvent.EVENT_STATE_WAIT))
+        if (task.state == Task.STATE_DONE && task.doneDate && newState == Task.STATE_DONE  && (newType != null || newStory != null)) {
+            // If the task is done and moved to another type at the state done, remove the done date to allow the update
+            def story = task.type ? null : Story.get(task.parentStory?.id)
+            if (story && story.state == Story.STATE_DONE) {
+                throw new IllegalStateException('is.story.error.done')
             }
-            task.state = newState
+            task.doneDate = null
             update(task, user, false, newType, newStory)
+        } else {
+            if (task.responsible == null && product.preferences.assignOnBeginTask && newState >= Task.STATE_BUSY) {
+                task.responsible = user
+            }
+            if ((task.responsible && user.id.equals(task.responsible.id))
+                    || user.id.equals(task.creator.id)
+                    || securityService.productOwner(product, springSecurityService.authentication)
+                    || securityService.scrumMaster(null, springSecurityService.authentication)) {
+                if (newState == Task.STATE_BUSY && task.state != Task.STATE_BUSY) {
+                    task.addActivity(user, 'taskInprogress', task.name)
+                    publishEvent(new IceScrumTaskEvent(task, this.class, user, IceScrumTaskEvent.EVENT_STATE_IN_PROGRESS))
+                } else if (newState == Task.STATE_WAIT && task.state != Task.STATE_WAIT) {
+                    task.addActivity(user, 'taskWait', task.name)
+                    publishEvent(new IceScrumTaskEvent(task, this.class, user, IceScrumTaskEvent.EVENT_STATE_WAIT))
+                }
+                task.state = newState
+                update(task, user, false, newType, newStory)
+            }
         }
     }
 
