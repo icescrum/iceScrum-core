@@ -45,7 +45,7 @@
       </div>
     </li>
     <jq:jquery>
-    $(".navigation-content").sortable({
+    $(".navigation-content:first").sortable({
         connectWith:'.widget-bar #menubar-list-button',
         revert:true,
         helper: 'clone',
@@ -60,6 +60,7 @@
         },
         start:function(event, ui) {
             ui.helper.css('cursor','move');
+            ui.helper.removeClass('separator');
             $('#menubar-list-button').css('visibility','visible');
           },
         update:function(event,ui){
@@ -67,11 +68,13 @@
               return;
             }else{
               ${is.changeRank(selector: ".navigation-content .menubar", controller: "user", action: "changeMenuOrder", params:[product:params?.product?:null])}
-            }
-          },
-        receive:function(event,ui){
-            ui.item.addClass('draggable-to-desktop');
-            ui.item.removeAttr('hidden');
+            $(".navigation-content .menubar.separator").removeClass("separator");
+            $(".navigation-content .menubar:first").addClass("separator");
+        }
+      },
+    receive:function(event,ui){
+        ui.item.addClass('draggable-to-desktop');
+        ui.item.removeAttr('hidden');
             ${is.changeRank(selector: ".navigation-content .menubar", controller: "user", action: "changeMenuOrder", params:[product:params?.product?:null])}
             if ($('#menubar-list-content > ul .menubar').size() > 0){
             $('#menubar-list-button').css('visibility','visible');
