@@ -26,8 +26,10 @@
 package org.icescrum.core.services
 
 import grails.plugin.fluxiable.Activity
+import grails.util.GrailsNameUtils
 import org.apache.commons.io.FileUtils
 import org.grails.comments.Comment
+import org.grails.comments.CommentLink
 import org.icescrum.plugins.attachmentable.domain.Attachment
 
 import java.text.SimpleDateFormat
@@ -764,9 +766,13 @@ class StoryService {
             story.attachments.each { attachment ->
                 task.addAttachment(story.creator, attachmentableService.getFile(attachment), attachment.filename)
             }
-            story.comments.each {
-                comment ->
-                task.notes = (task.notes ?: '') + '\n --- \n ' + comment.body + '\n --- \n '
+            story.comments.each { Comment comment ->
+                def commentLink = CommentLink.findByComment(comment)
+                if (commentLink) {
+                    commentLink.commentRef = task.id
+                    commentLink.type = GrailsNameUtils.getPropertyName(task.class)
+                    commentLink.save()
+                }
             }
             task.tags = story.tags
 
