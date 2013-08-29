@@ -416,7 +416,7 @@ class IcescrumCoreGrailsPlugin {
                 },
                 titleBarContentWidget: {
                     try {
-                        render(plugin: pluginName, template: "widget/titleBartitleBarContent", model: [id: controllerName])
+                        render(plugin: pluginName, template: "widget/titleBarContent", model: [id: controllerName])
                     } catch (Exception e) {
                         render('')
                         log.debug(e.getMessage())
