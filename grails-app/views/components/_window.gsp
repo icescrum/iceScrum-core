@@ -90,6 +90,12 @@
     ${windowContent}
 </div>
 
+<g:if test="${type == 'window'}">
+    <div id="right" class="right-resizable" data-resizable="true" data-grid="400" data-max-width="400" data-empty-hide="${right ? "false" : "true"}">
+        ${right}
+    </div>
+</g:if>
+
 %{-- Status bar --}%
 <g:if test="${hasStatusbar}">
     <div id="${type}-status-bar-${id}" class="status-bar nav clearfix">

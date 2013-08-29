@@ -31,6 +31,7 @@ class WindowDefinition {
     String init = 'index'
     String title = ''
     boolean titleBarContent = false
+    boolean right = false
     boolean toolbar = true
     boolean closeable = true
     def help = null
@@ -47,6 +48,10 @@ class WindowDefinition {
 
     void titleBarContent(boolean titleBarContent) {
         this.titleBarContent = titleBarContent
+    }
+
+    void right(boolean right) {
+        this.right = right
     }
 
     void toolbar(boolean toolbar) {

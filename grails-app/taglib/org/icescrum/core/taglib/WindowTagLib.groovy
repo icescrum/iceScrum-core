@@ -86,6 +86,11 @@ class WindowTagLib {
                 toolbarContent = include(controller: windowId, action: 'toolbar', params: includeParams)
             }
         }
+        // Check for right content
+        def right = ''
+        if (attrs.hasRight) {
+            right = include(controller: windowId, action: 'right', params: includeParams)
+        }
 
         if (attrs.shortcuts) {
             attrs.help = attrs.help ?: ""
@@ -114,6 +119,7 @@ class WindowTagLib {
                 hasTitleBarContent: attrs.hasTitleBarContent,
                 toolbar: toolbarContent,
                 titleBarContent: titleBarContent,
+                right:right,
                 contentClass: attrs.contentClass,
                 sortable: attrs.sortable ?: false,
                 resizable: attrs.resizable ?: false,
