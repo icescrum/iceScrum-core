@@ -652,28 +652,29 @@ class ProductService {
     }
 
     List getAllMembersProduct(def product) {
-        def team = product.teams?.asList()?.first()?:null
+        def teams = product.teams?.asList()
+        def team = teams ? teams.first() : null
         def productOwners = product.productOwners
-        def scrumMasters = team.scrumMasters
         def members = []
         def is = grailsApplication.mainContext.getBean('org.icescrum.core.taglib.ScrumTagLib')
 
-        team?.members?.each{
-            def role = Authority.MEMBER
-            if (scrumMasters*.id?.contains(it.id) && productOwners*.id?.contains(it.id)){
-                role = Authority.PO_AND_SM
+        if (team) {
+            def scrumMasters = team.scrumMasters
+            team.members?.each {
+                def role = Authority.MEMBER
+                if (scrumMasters*.id?.contains(it.id) && productOwners*.id?.contains(it.id)) {
+                    role = Authority.PO_AND_SM
+                } else if (scrumMasters*.id?.contains(it.id)) {
+                    role = Authority.SCRUMMASTER
+                } else if (productOwners*.id?.contains(it.id)) {
+                    role = Authority.PRODUCTOWNER
+                }
+                members.add([name: it.firstName + ' ' + it.lastName,
+                        activity: it.preferences.activity ?: '&nbsp;',
+                        id: it.id,
+                        avatar: is.avatar(user: it, link: true),
+                        role: role])
             }
-            else if(scrumMasters*.id?.contains(it.id)){
-                role = Authority.SCRUMMASTER
-            }
-            else if(productOwners*.id?.contains(it.id)){
-                role = Authority.PRODUCTOWNER
-            }
-            members.add([name: it.firstName+' '+it.lastName,
-                         activity:it.preferences.activity?:'&nbsp;',
-                         id: it.id,
-                         avatar:is.avatar(user:it,link:true),
-                         role: role])
         }
 
         productOwners?.each{
