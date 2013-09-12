@@ -207,6 +207,7 @@ class TaskService {
             throw new RuntimeException()
         }
         task.sprint.lastUpdated = new Date()
+        task.sprint.save()
         clicheService.createOrUpdateDailyTasksCliche(sprint)
         if (task.state != Task.STATE_DONE) {
             publishEvent(new IceScrumTaskEvent(task, this.class, user, IceScrumTaskEvent.EVENT_UPDATED))
