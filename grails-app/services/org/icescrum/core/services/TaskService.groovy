@@ -40,14 +40,12 @@ import org.icescrum.core.support.ApplicationSupport
 @Transactional
 class TaskService {
 
-
-    static transactional = true
-
     def clicheService
     def springSecurityService
     def securityService
 
-    private boolean checkEstimation(Task task) {
+    @Transactional(readOnly = true)
+    private static boolean checkEstimation(Task task) {
         // Check if the estimation is numeric
         if (task.estimation) {
             try {
