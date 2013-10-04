@@ -129,6 +129,10 @@ class Product extends TimeBox implements Serializable, Attachmentable {
         return name.compareTo(obj.name);
     }
 
+    def getMembersOnly() {
+        firstTeam ? firstTeam.members : []
+    }
+
     def getAllUsers() {
         def users = []
         this.teams?.each {
