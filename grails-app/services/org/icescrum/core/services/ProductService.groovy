@@ -652,8 +652,7 @@ class ProductService {
     }
 
     List getAllMembersProduct(def product) {
-        def teams = product.teams?.asList()
-        def team = teams ? teams.first() : null
+        def team = product.firstTeam
         def productOwners = product.productOwners
         def members = []
         def is = grailsApplication.mainContext.getBean('org.icescrum.core.taglib.ScrumTagLib')
