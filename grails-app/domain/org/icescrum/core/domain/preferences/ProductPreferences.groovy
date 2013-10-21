@@ -73,4 +73,37 @@ class ProductPreferences implements Serializable{
         cache true
         table 'icescrum2_product_preferences'
     }
+
+    def beforeInsert() {
+        if(!hidden) {
+            hidden = true
+            println "------------------------------"
+            println "PRIVATE PROJECT DEBUG"
+            println "Date: " + new Date()
+            println "New public project"
+            println "The project will be private (hardcoded)"
+            println "------------------------------"
+        }
+    }
+
+    def beforeUpdate() {
+        if (!hidden) {
+            println "------------------------------"
+            println "PRIVATE PROJECT DEBUG"
+            println "Date: " + new Date()
+            try {
+                println "New value for private: $hidden"
+                println "Previous value for private: " + getPersistentValue('hidden')
+                println "Dirty properties: $dirtyPropertyNames"
+                println "Product id: $product.id"
+                println "Product: $product.pkey"
+                throw new RuntimeException()
+            } catch(RuntimeException re) {
+                re.printStackTrace()
+            }
+            hidden = true
+            println "The project is still private (hardcoded)"
+            println "------------------------------"
+        }
+    }
 }
