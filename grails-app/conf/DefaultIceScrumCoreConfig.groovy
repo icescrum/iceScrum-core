@@ -61,7 +61,8 @@ icescrum {
             spaceClass = Product
             config = { product -> [key:product.pkey, path:'p'] }
             params = { product -> [product:product.id] }
-            indexScrumOS = { product, user, securityService, springSecurityService ->
+            indexScrumOS = { productSpace, user, securityService, springSecurityService ->
+                def product = productSpace.object
                 if (product?.preferences?.hidden && !securityService.inProduct(product, springSecurityService.authentication) && !securityService.stakeHolder(product,springSecurityService.authentication,false)){
                     forward(action:springSecurityService.isLoggedIn() ? 'error403' : 'error401',controller:'errors')
                     return
