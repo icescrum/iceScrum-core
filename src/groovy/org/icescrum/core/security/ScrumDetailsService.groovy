@@ -44,7 +44,12 @@ class ScrumDetailsService extends GormUserDetailsService {
 
         User.withTransaction { status ->
             def user = User.findWhere((conf.userLookup.usernamePropertyName): username, accountExternal:false)
-            if (!user) {
+
+            //Will be valid only on reauthenticate context
+            if (!user && grailsApplication.mainContext['ldapUserDetailsMapper']?.isEnabled()){
+                user = User.findWhere((conf.userLookup.usernamePropertyName): username, accountExternal:true)
+            }
+            if (!user){
                 log.warn "User not found: $username"
                 throw new UsernameNotFoundException('User not found', username)
             }
@@ -63,5 +68,4 @@ class ScrumDetailsService extends GormUserDetailsService {
     UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         loadUserByUsername username, true
     }
-
 }
