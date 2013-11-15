@@ -357,7 +357,7 @@ class ScrumTagLib {
 
     def generateAcceptanceTestTemplate = {
         def i18n = { g.message(code:"is.acceptanceTest.template.$it") }
-        def highlight = { '_' + it + '_' }
+        def highlight = { '_*' + it + '*_' }
         out << ['given', 'when', 'then'].collect {
             highlight(i18n(it)) + " "
         }.join("\n")
