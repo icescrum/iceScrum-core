@@ -49,6 +49,15 @@ class UserPreferencesMigration {
             }
             dropColumn(tableName:"icescrum2_user_preferences", columnName:"timezone")
         }
+
+        changeSet(id:'user_update_en_to_us', author:'vbarrier', filePath:filePath) {
+            preConditions(onFail:"MARK_RAN"){
+                not {
+                    dbms(type:'oracle')
+                }
+            }
+            sql('UPDATE icescrum2_user_preferences set language = \'en_US\' WHERE language = \'en\'')
+        }
     }
 
     static def getFilePath(){

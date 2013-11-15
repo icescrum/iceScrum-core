@@ -82,6 +82,11 @@ class BacklogElementMigration {
             sql('UPDATE acceptance_test SET state = 1 WHERE state IS NULL')
         }
         changeSet(id:'add_acceptance_test_state_non_nullable', author:'vbarrier', filePath:filePath) {
+            preConditions(onFail:"MARK_RAN"){
+                not {
+                    dbms(type:'oracle')
+                }
+            }
             addNotNullConstraint(tableName:"acceptance_test", columnName:'state', columnDataType:'INTEGER')
         }
     }

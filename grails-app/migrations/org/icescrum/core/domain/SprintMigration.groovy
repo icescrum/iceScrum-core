@@ -62,9 +62,19 @@ class SprintMigration {
             sql('DELETE FROM icescrum2_availability WHERE sprint_id IN (' + SELECT_FANTOM_SPRINTS + ')')
         }
         changeSet(id:'remove_fantom_sprint_timebox', author:'vbarrier', filePath:filePath) {
+            preConditions(onFail:"MARK_RAN"){
+                not{
+                    dbms(type:'oracle')
+                }
+            }
             sql('DELETE FROM icescrum2_timebox WHERE id IN (SELECT * FROM (' + SELECT_FANTOM_SPRINTS + ') AS TEMP)')
         }
         changeSet(id:'remove_fantom_sprint_sprints', author:'vbarrier', filePath:filePath) {
+            preConditions(onFail:"MARK_RAN"){
+                not{
+                    dbms(type:'oracle')
+                }
+            }
             sql('''
                 DELETE FROM icescrum2_sprint
                 WHERE icescrum2_sprint.state = 1
