@@ -31,7 +31,9 @@ class MarkItUpTagLib {
         if (!attrs.value) {
             content = body()
         }
-        content = content.trim()
+        if (attrs.remove("notrim") != "true") {
+            content = content.trim()
+        }
 
         def txtParams = [
                 id: attrs.id,
@@ -39,6 +41,10 @@ class MarkItUpTagLib {
                 value: content,
                 style: "${attrs.height ? 'height:' + attrs.height + 'px;' : 'height:100px;'}"
         ]
+
+        if (attrs.class) {
+            txtParams["class"] = attrs.class
+        }
 
         out << textArea(txtParams)
 
