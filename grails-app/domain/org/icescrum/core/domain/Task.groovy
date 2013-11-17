@@ -284,6 +284,24 @@ class Task extends BacklogElement implements Serializable {
                    AND r.parentProduct.id = :pid """, [pid: pid])
     }
 
+    static List<User> getAllCreatorsInProduct(Long pid) {
+        User.executeQuery(
+                """SELECT DISTINCT t.creator
+                   FROM org.icescrum.core.domain.Task as t, org.icescrum.core.domain.Sprint as s, org.icescrum.core.domain.Release as r
+                   WHERE t.backlog = s
+                   AND s.parentRelease = r
+                   AND r.parentProduct.id = :pid """, [pid: pid])
+    }
+
+    static List<User> getAllResponsiblesInProduct(Long pid) {
+        User.executeQuery(
+                """SELECT DISTINCT t.responsible
+                   FROM org.icescrum.core.domain.Task as t, org.icescrum.core.domain.Sprint as s, org.icescrum.core.domain.Release as r
+                   WHERE t.backlog = s
+                   AND s.parentRelease = r
+                   AND r.parentProduct.id = :pid """, [pid: pid])
+    }
+
     static int findNextUId(Long pid) {
         (executeQuery(
                 """SELECT MAX(t.uid)
