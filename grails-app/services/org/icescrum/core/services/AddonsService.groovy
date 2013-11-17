@@ -1,5 +1,9 @@
 package org.icescrum.core.services
 
+import org.icescrum.core.domain.Actor
+import org.icescrum.core.domain.Feature
+import org.icescrum.core.domain.Release
+import org.icescrum.core.domain.Story
 import org.icescrum.core.event.IceScrumProductEvent
 import org.springframework.context.ApplicationListener
 import org.icescrum.core.domain.Product
@@ -24,11 +28,12 @@ class AddonsService implements ApplicationListener<IceScrumProductEvent> {
     }
 
     void synchronisedDataImport(IceScrumProductEvent e){
-        addTags((Product) e.source, e.xml)
-        addDependsOn((Product) e.source, e.xml)
-        addComments((Product) e.source, e.xml)
-        addActivities((Product) e.source, e.xml)
-        addAttachments((Product) e.source, e.xml, e.importPath)
+        Product p = (Product) e.source
+        addTags(p, e.xml)
+        addDependsOn(p, e.xml)
+        addComments(p, e.xml)
+        addActivities(p, e.xml)
+        addAttachments(p, e.xml, e.importPath)
     }
 
     void addTags(Product p, def root) {
@@ -40,17 +45,17 @@ class AddonsService implements ApplicationListener<IceScrumProductEvent> {
             if (element.tags.text()){
                 switch(element.name()){
                     case 'story':
-                        elemt = p.stories?.find { it.uid == element.@uid.text().toInteger() } ?: null
+                        elemt = Story.findByBacklogAndUid(p, element.@uid.text().toInteger())?:null
                         break
                     case 'actor':
-                        elemt = p.actors?.find { it.uid == element.@uid.text().toInteger() } ?: null
+                        elemt = Actor.findByBacklogAndUid(p, element.@uid.text().toInteger())?:null
                         break
                     case 'task':
                         tasksCache = tasksCache ?: Task.getAllInProduct(p.id)
                         elemt = tasksCache?.find { it.uid == element.@uid.text().toInteger() } ?: null
                         break
                     case 'feature':
-                        elemt = p.features?.find { it.uid == element.@uid.text().toInteger() } ?: null
+                        elemt = Feature.findByBacklogAndUid(p, element.@uid.text().toInteger())?:null
                         break
                 }
             }
@@ -67,8 +72,8 @@ class AddonsService implements ApplicationListener<IceScrumProductEvent> {
             log.debug("start import dependsOn")
         root.'**'.findAll{ it.name() == "story" }.each{ element ->
             if (!element.dependsOn?.@uid?.isEmpty() && p) {
-                def dependsOn = p.stories.find { it.uid == element.dependsOn.@uid.text().toInteger() } ?: null
-                def story = p.stories?.find { it.uid == element.@uid.text().toInteger() } ?: null
+                def dependsOn = Story.findByBacklogAndUid(p, element.dependsOn.@uid.text().toInteger())
+                def story = Story.findByBacklogAndUid(p, element.@uid.text().toInteger())
                 if (dependsOn) {
                     story.dependsOn = dependsOn
                     dependsOn.lastUpdated = new Date()
@@ -85,6 +90,7 @@ class AddonsService implements ApplicationListener<IceScrumProductEvent> {
     void addAttachments(Product p, def root, File importPath){
         def defaultU = p.productOwners.first()
         def tasksCache = []
+        def sprintsCache = []
         if (log.debugEnabled)
             log.debug("start import files")
         root.'**'.findAll{ it.name() in ["story","actor","task","feature", "release", "sprint", "product"] }.each{ element ->
@@ -92,23 +98,24 @@ class AddonsService implements ApplicationListener<IceScrumProductEvent> {
             if (element.attachments.attachment.text()){
                 switch(element.name()){
                     case 'story':
-                        elemt = p.stories?.find { it.uid == element.@uid.text().toInteger() } ?: null
+                        elemt = Story.findByBacklogAndUid(p, element.@uid.text().toInteger())?:null
                         break
                     case 'actor':
-                        elemt = p.actors?.find { it.uid == element.@uid.text().toInteger() } ?: null
+                        elemt = Actor.findByBacklogAndUid(p, element.@uid.text().toInteger())?:null
                         break
                     case 'task':
                         tasksCache = tasksCache ?: Task.getAllInProduct(p.id)
                         elemt = tasksCache?.find { it.uid == element.@uid.text().toInteger() } ?: null
                         break
                     case 'feature':
-                        elemt = p.features?.find { it.uid == element.@uid.text().toInteger() } ?: null
+                        elemt = Feature.findByBacklogAndUid(p, element.@uid.text().toInteger())?:null
                         break
                     case 'release':
-                        elemt = p.releases?.find { it.orderNumber == element.orderNumber.text().toInteger() } ?: null
+                        elemt = Release.findByParentProductAndOrderNumber(p, element.orderNumber.text().toInteger())?:null
                         break
                     case 'sprint':
-                        elemt = p.sprints?.find {
+                        sprintsCache = sprintsCache ?: Release.findAllByParentProduct(p)*.sprints.flatten()
+                        elemt = sprintsCache.find {
                             it.orderNumber == element.orderNumber.text().toInteger() && it.startDate.format(('yyyy-MM-dd HH:mm:ss')) == element.startDate.text()
                         } ?: null
                         break
@@ -149,7 +156,7 @@ class AddonsService implements ApplicationListener<IceScrumProductEvent> {
         root.'**'.findAll{ it.name() == "story" }.each{ story ->
             def s = null
             if (story.comments.comment.text()){
-                s = p.stories?.find { it.uid == story.@uid.text().toInteger() } ?: null
+                s = Story.findByBacklogAndUid(p, story.@uid.text().toInteger())?:null
             }
             if (s){
                 story.comments.comment.each{ comment ->
@@ -166,6 +173,28 @@ class AddonsService implements ApplicationListener<IceScrumProductEvent> {
                 }
             }
         }
+        def tasksCache = []
+        root.'**'.findAll{ it.name() == "task" }.each{ task ->
+            def t = null
+            if (task.comments.comment.text()){
+                tasksCache = tasksCache ?: Task.getAllInProduct(p.id)
+                t = tasksCache?.find { it.uid == task.@uid.text().toInteger() } ?: null
+            }
+            if (t){
+                task.comments.comment.each{ comment ->
+                    def u = root.'**'.find{ it.id.text() == comment.posterId.text() &&  it.@uid.text() }
+                    if(u){
+                        u = User.findByUid(u.@uid.text())
+                    }else if(defaultU){
+                        u = defaultU
+                    }
+                    addComment(t,
+                            u,
+                            comment.body.text(),
+                            new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(comment.dateCreated.text()))
+                }
+            }
+        }
         if (log.debugEnabled)
             log.debug("end import comments")
     }
@@ -177,7 +206,7 @@ class AddonsService implements ApplicationListener<IceScrumProductEvent> {
         root.'**'.findAll{ it.name() == "story" }.each{ story ->
             def s = null
             if (story.activities.activity.text()){
-                s = p.stories?.find { it.uid == story.@uid.text().toInteger() } ?: null
+                s = Story.findByBacklogAndUid(p, story.@uid.text().toInteger())?:null
             }
             if (s){
                 story.activities.activity.each{ activity ->
