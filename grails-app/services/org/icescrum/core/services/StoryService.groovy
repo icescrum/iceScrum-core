@@ -1056,13 +1056,14 @@ class StoryService {
                     doneDate: doneDate,
                     type: story.type.text().toInteger(),
                     executionFrequency: story.executionFrequency.text().toInteger(),
-                    textAs: story.textAs.text(),
-                    textICan: story.textICan.text(),
-                    textTo: story.textTo.text(),
                     affectVersion: story.affectVersion.text(),
                     uid: story.@uid.text()?.isEmpty() ? story.@id.text().toInteger() : story.@uid.text().toInteger(),
                     origin: story.origin.text()
             )
+
+            if (story.textAs || story.textICan || story.textTo) {
+                migrateTemplatesOnStory(story.textAs.text().trim(), story.textICan.text().trim(), story.textTo.text().trim(), s)
+            }
 
             if (!story.feature?.@uid?.isEmpty() && p) {
                 def f = p.features.find { it.uid == story.feature.@uid.text().toInteger() } ?: null
@@ -1131,4 +1132,26 @@ class StoryService {
         }
     }
 
+    private void migrateTemplatesOnStory(oldAs, oldIcan, oldTo, story) {
+        def storyTemplateContent = [as: oldAs, ican: oldIcan, to: oldTo]
+        if (storyTemplateContent.values().any { it }) {
+            def storyTemplate = generateTemplate(storyTemplateContent)
+            if (!story.description) {
+                story.description = storyTemplate
+            } else if ((storyTemplate.size() + story.description.size()) < 3000) {
+                story.description += ("\n" + storyTemplate)
+            } else if (!story.notes) {
+                story.notes = storyTemplate
+            } else if ((storyTemplate.size() + story.notes.size()) < 5000) {
+                story.notes += ("\n" + storyTemplate)
+            }
+        }
+    }
+
+    def generateTemplate = { Map fields = [:] ->
+        def i18n = { g.message(code: "is.story.template.$it") }
+        ['as', 'ican', 'to'].collect {
+            i18n(it) + " " + (fields ? (fields[it] ?: '') : '')
+        }.join("\n")
+    }
 }
