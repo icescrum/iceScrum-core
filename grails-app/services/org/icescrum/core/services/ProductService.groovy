@@ -585,8 +585,16 @@ class ProductService {
             }
         }
         if(raiseEvent && product) {
-            publishEvent(new IceScrumUserEvent(user, product, this.class, (User) springSecurityService.currentUser, IceScrumUserEvent.EVENT_REMOVED_FROM_PRODUCT))
+            if (product){
+                publishEvent(new IceScrumUserEvent(user, product, this.class, (User) springSecurityService.currentUser, IceScrumUserEvent.EVENT_REMOVED_FROM_PRODUCT))
+            } else {
+                team?.products?.each{
+                    publishEvent(new IceScrumUserEvent(user, product, this.class, (User) springSecurityService.currentUser, IceScrumUserEvent.EVENT_REMOVED_FROM_PRODUCT))
+                }
+            }
         }
+
+
     }
 
     void addRole(Product product, Team team, User user, int role, boolean broadcast = true, boolean raiseEvent = true) {
@@ -630,7 +638,13 @@ class ProductService {
             }
         }
         if(raiseEvent && product) {
-            publishEvent(new IceScrumUserEvent(user, product, role, this.class, (User) springSecurityService.currentUser, IceScrumUserEvent.EVENT_ADDED_TO_PRODUCT))
+            if (product){
+                publishEvent(new IceScrumUserEvent(user, product, role, this.class, (User) springSecurityService.currentUser, IceScrumUserEvent.EVENT_ADDED_TO_PRODUCT))
+            } else {
+                team?.products?.each{
+                    publishEvent(new IceScrumUserEvent(user, it, role, this.class, (User) springSecurityService.currentUser, IceScrumUserEvent.EVENT_ADDED_TO_PRODUCT))
+                }
+            }
         }
     }
 
