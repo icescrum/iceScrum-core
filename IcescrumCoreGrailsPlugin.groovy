@@ -678,7 +678,7 @@ class IcescrumCoreGrailsPlugin {
             source.metaClass.returnError = { attrs ->
                 if (attrs.exception){
 
-                    if (delegate.log.debugEnabled){
+                    if (delegate.log.debugEnabled && !attrs.object?.hasErrors()){
                         delegate.log.debug(attrs.exception)
                         delegate.log.debug(attrs.exception.cause)
                         attrs.exception.stackTrace.each {
@@ -687,7 +687,7 @@ class IcescrumCoreGrailsPlugin {
                     }
 
                     if (attrs.object && attrs.exception instanceof RuntimeException){
-                        if (!delegate.log.debugEnabled && delegate.log.errorEnabled){
+                        if (!delegate.log.debugEnabled && delegate.log.errorEnabled && !attrs.object?.hasErrors()){
                             delegate.log.error(attrs.exception)
                             delegate.log.error(attrs.exception.cause)
                             attrs.exception.stackTrace.each {
@@ -954,7 +954,7 @@ class IcescrumCoreGrailsPlugin {
         }
 
         source.metaClass.withSprint = { def id = 'id', Closure c ->
-            def sprint = (Sprint)Sprint.getInProduct(params.long('product'), (id instanceof String ? params."$id".toLong() : id) ).list()
+            def sprint = (Sprint)Sprint.getInProduct(params.long('product'), (id instanceof String ? params."$id"?.toLong() : id) ).list()
             if (sprint) {
                 try {
                     c.call sprint
