@@ -66,9 +66,6 @@ class Story extends BacklogElement implements Cloneable, Serializable {
     int rank = 0
     int state = Story.STATE_SUGGESTED
     int value = 0
-    String textAs
-    String textICan
-    String textTo
     String affectVersion
     Story dependsOn
 
@@ -100,9 +97,6 @@ class Story extends BacklogElement implements Cloneable, Serializable {
     }
 
     static constraints = {
-        textAs(maxSize: 500, nullable: true)
-        textICan(maxSize: 1000, nullable: true)
-        textTo(maxSize: 1000, nullable: true)
         suggestedDate(nullable: true)
         acceptedDate(nullable: true)
         estimatedDate(nullable: true)
@@ -131,9 +125,6 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                     eq 'uid', termInteger.toInteger()
                 } else{
                     ilike 'name', term
-                    ilike 'textAs', term
-                    ilike 'textICan', term
-                    ilike 'textTo', term
                     ilike 'description', term
                     ilike 'notes', term
                     ilike 'affectVersion', term
@@ -589,9 +580,6 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                             eq 'uid', options.term.toInteger()
                         }else{
                             ilike 'name', '%'+options.term+'%'
-                            ilike 'textAs', '%'+options.term+'%'
-                            ilike 'textICan', '%'+options.term+'%'
-                            ilike 'textTo', '%'+options.term+'%'
                             ilike 'description', '%'+options.term+'%'
                             ilike 'notes', '%'+options.term+'%'
                         }

@@ -31,6 +31,7 @@ import org.codehaus.groovy.grails.scaffolding.view.ScaffoldingViewResolver
 import org.icescrum.atmosphere.IceScrumAtmosphereEventListener
 import org.icescrum.core.cors.CorsFilter
 import org.icescrum.core.domain.AcceptanceTest
+import org.icescrum.core.services.StoryService
 import org.icescrum.core.utils.JSONIceScrumDomainClassMarshaller
 import org.icescrum.plugins.attachmentable.domain.Attachment
 import org.icescrum.plugins.attachmentable.services.AttachmentableService
@@ -68,6 +69,8 @@ import org.icescrum.plugins.attachmentable.interfaces.AttachmentException
 import org.codehaus.groovy.grails.plugins.jasper.JasperReportDef
 import org.icescrum.core.domain.User
 import org.codehaus.groovy.grails.plugins.jasper.JasperExportFormat
+import org.springframework.transaction.support.TransactionCallback
+import org.springframework.transaction.support.TransactionTemplate
 import org.springframework.web.context.request.RequestContextHolder
 import org.springframework.web.servlet.support.RequestContextUtils as RCU
 import grails.plugins.springsecurity.SpringSecurityService
@@ -311,6 +314,14 @@ class IcescrumCoreGrailsPlugin {
         application.serviceClasses.each {
             addBroadcastMethods(it, application)
         }
+
+        // Old school because no GORM Static API at the point where it is called
+        def transactionManager = ctx.getBean('transactionManager')
+        def migrateTemplates = {
+            StoryService storyService = ctx.getBean('storyService')
+            storyService.migrateTemplatesInDb()
+        }
+        new TransactionTemplate(transactionManager).execute(migrateTemplates as TransactionCallback)
     }
 
     def doWithApplicationContext = { applicationContext ->

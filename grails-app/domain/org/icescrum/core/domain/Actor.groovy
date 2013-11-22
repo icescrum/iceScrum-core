@@ -198,4 +198,9 @@ class Actor extends BacklogElement implements Serializable, Comparable<Actor> {
         def searchOptions = [actor: [:]]
         searchByTermOrTag(productId, searchOptions, term)
     }
+
+    static findAllByProductAndText(Product product, String text) {
+        // TODO implement logic to extract actor and associate it
+        []
+    }
 }

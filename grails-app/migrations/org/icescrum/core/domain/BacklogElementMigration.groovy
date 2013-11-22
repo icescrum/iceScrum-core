@@ -73,6 +73,33 @@ class BacklogElementMigration {
             }
             dropNotNullConstraint(tableName:"icescrum2_story", columnName:"origin", columnDataType:'VARCHAR(255)')
         }
+        changeSet(id:'story_remove_as', author:'vbarrier', filePath:filePath) {
+            preConditions(onFail:"MARK_RAN"){
+                not{
+                    dbms(type:'oracle')
+                }
+                columnExists(tableName:"icescrum2_story", columnName:"text_as")
+            }
+            dropColumn(tableName:"icescrum2_story", columnName:"text_as")
+        }
+        changeSet(id:'story_remove_ican', author:'vbarrier', filePath:filePath) {
+            preConditions(onFail:"MARK_RAN"){
+                not{
+                    dbms(type:'oracle')
+                }
+                columnExists(tableName:"icescrum2_story", columnName:"textican")
+            }
+            dropColumn(tableName:"icescrum2_story", columnName:"textican")
+        }
+        changeSet(id:'story_remove_to', author:'vbarrier', filePath:filePath) {
+            preConditions(onFail:"MARK_RAN"){
+                not{
+                    dbms(type:'oracle')
+                }
+                columnExists(tableName:"icescrum2_story", columnName:"text_to")
+            }
+            dropColumn(tableName:"icescrum2_story", columnName:"text_to")
+        }
 
         // Acceptance tests states
         changeSet(id:'add_acceptance_test_state_success_on_done_stories', author:'vbarrier', filePath:filePath) {

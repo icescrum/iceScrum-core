@@ -30,6 +30,8 @@ import grails.util.GrailsNameUtils
 import org.apache.commons.io.FileUtils
 import org.grails.comments.Comment
 import org.grails.comments.CommentLink
+import org.hibernate.Hibernate
+import org.hibernate.exception.SQLGrammarException
 import org.icescrum.plugins.attachmentable.domain.Attachment
 
 import java.text.SimpleDateFormat
@@ -50,6 +52,8 @@ class StoryService {
     def securityService
     def acceptanceTestService
     def notificationEmailService
+    def sessionFactory
+    def messageSource
 
     def g = new org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib()
 
@@ -64,11 +68,9 @@ class StoryService {
         story.backlog = product
         story.creator = u
 
-        if (story.textAs != '') {
-            def actor = Actor.findByBacklogAndName(product, story.textAs)
-            if (actor) {
-                actor.addToStories(story)
-            }
+        // TODO implement logic (here and findAllby...)
+        if (story.description) {
+            def actors = Actor.findAllByProductAndText(product, story.description)
         }
 
         story.uid = Story.findNextUId(product.id)
@@ -190,15 +192,10 @@ class StoryService {
 
     @PreAuthorize('(productOwner(#story.backlog) or scrumMaster()) and !archivedProduct(#story.backlog)')
     void update(Story story, Sprint sp = null) {
-        if (story.textAs != '' && story.actor?.name != story.textAs) {
-            def actor = Actor.findByBacklogAndName(story.backlog, story.textAs)
-            if (actor) {
-                actor.addToStories(story)
-            } else if(story.actor) {
-                story.actor.removeFromStories(story)
-            }
-        } else if (story.textAs == '' && story.actor) {
-            story.actor.removeFromStories(story)
+        // TODO implement logic (here and findAllby...)
+        // take into account actor addition and removal
+        if (story.description) {
+            def actors = Actor.findAllByProductAndText(product, story.description)
         }
 
         if (!sp && !story.parentSprint && (story.state == Story.STATE_ACCEPTED || story.state == Story.STATE_ESTIMATED)) {
@@ -677,7 +674,7 @@ class StoryService {
 
             User user = (User) springSecurityService.currentUser
             def feature = new Feature(story.properties)
-            feature.description = (feature.description ?: '') + ' ' + getTemplateStory(story)
+            feature.description = (feature.description ?: '')
             feature.validate()
             def i = 1
             while (feature.hasErrors()) {
@@ -733,7 +730,7 @@ class StoryService {
             def task = new Task(story.properties)
 
             task.state = Task.STATE_WAIT
-            task.description = (story.affectVersion ? g.message(code: 'is.story.affectVersion') + ': ' + story.affectVersion : '') + (task.description ?: '') + ' ' + getTemplateStory(story)
+            task.description = (story.affectVersion ? g.message(code: 'is.story.affectVersion') + ': ' + story.affectVersion : '') + (task.description ?: '')
 
             def sprint = (Sprint) Sprint.findCurrentSprint(product.id).list()
             if (!sprint)
@@ -784,21 +781,6 @@ class StoryService {
         resumeBufferedBroadcast(channel:'product-'+product.id)
         return tasks
     }
-
-    private String getTemplateStory(Story story) {
-        def textStory = ''
-        def tempTxt = [story.textAs, story.textICan, story.textTo]*.trim()
-        if (tempTxt != ['null', 'null', 'null'] && tempTxt != ['', '', ''] && tempTxt != [null, null, null]) {
-            textStory += g.message(code: 'is.story.template.as') + ' '
-            textStory += (story.actor?.name ?: story.textAs ?: '') + ', '
-            textStory += g.message(code: 'is.story.template.ican') + ' '
-            textStory += (story.textICan ?: '') + ' '
-            textStory += g.message(code: 'is.story.template.to') + ' '
-            textStory += (story.textTo ?: '')
-        }
-        textStory
-    }
-
 
     @PreAuthorize('inProduct(#story.backlog) and !archivedProduct(#story.backlog)')
     void done(Story story) {
@@ -962,9 +944,6 @@ class StoryService {
                     notes: story.notes,
                     dateCreated: new Date(),
                     type: story.type,
-                    textAs: story.textAs,
-                    textICan: story.textICan,
-                    textTo: story.textTo,
                     backlog: product,
                     affectVersion: story.affectVersion,
                     origin: story.name,
@@ -1062,7 +1041,8 @@ class StoryService {
             )
 
             if (story.textAs || story.textICan || story.textTo) {
-                migrateTemplatesOnStory(story.textAs.text().trim(), story.textICan.text().trim(), story.textTo.text().trim(), s)
+                def i18n = { g.message(code: "is.story.template." + it) }
+                migrateTemplatesOnStory(story.textAs.text().trim(), story.textICan.text().trim(), story.textTo.text().trim(), s, i18n)
             }
 
             if (!story.feature?.@uid?.isEmpty() && p) {
@@ -1132,10 +1112,50 @@ class StoryService {
         }
     }
 
-    private void migrateTemplatesOnStory(oldAs, oldIcan, oldTo, story) {
+    void migrateTemplatesInDb(){
+        try {
+            if (!System.properties['icescrum.oracle']){
+                def session = sessionFactory.getCurrentSession()
+                def storiesToMigrate = session.createSQLQuery("""SELECT id, text_as, textican, text_to
+                                                                 FROM icescrum2_story
+                                                                 WHERE text_as IS NOT NULL OR textican IS NOT NULL OR text_to IS NOT NULL""")
+                        .addScalar("id", Hibernate.LONG)
+                        .addScalar("text_as", Hibernate.STRING)
+                        .addScalar("textican", Hibernate.STRING)
+                        .addScalar("text_to", Hibernate.STRING)
+                        .list()
+                if (storiesToMigrate){
+                    if (log.debugEnabled) {
+                        log.debug("Old story templates to migrate: " + storiesToMigrate.size())
+                    }
+                    def (iId, iAs, iIcan, iTo) = 0..3
+                    def i18n = { messageSource.getMessage("is.story.template." + it, null, null, new Locale("en")) }
+                    storiesToMigrate.each { storyToMigrate ->
+                        // Old school because no GORM Static API at the point where it is called in IcescrumCoreGrailsPlugin
+                        Story story = (Story) session.get(Story.class, storyToMigrate[iId])
+                        migrateTemplatesOnStory(storyToMigrate[iAs], storyToMigrate[iIcan], storyToMigrate[iTo], story, i18n)
+                        session.save(story)
+                    }
+                    if (log.debugEnabled) {
+                        log.debug("Old story templates migrated")
+                    }
+                }
+            }
+        } catch (SQLGrammarException e){
+            if (log.debugEnabled) {
+                log.debug("No old story template to migrate")
+            }
+        }
+        // TODO catch other exception
+        // After this programmatic migration, the liquibase migration will delete the template dedicated fields
+        // consequently, all templates may be lost if we go one after an error
+        // thus we may consider preventing the server start if this programmatic has migration has failed
+    }
+
+    private void migrateTemplatesOnStory(oldAs, oldIcan, oldTo, story, i18n) {
         def storyTemplateContent = [as: oldAs, ican: oldIcan, to: oldTo]
         if (storyTemplateContent.values().any { it }) {
-            def storyTemplate = generateTemplate(storyTemplateContent)
+            def storyTemplate = generateTemplateWithContent(storyTemplateContent, i18n)
             if (!story.description) {
                 story.description = storyTemplate
             } else if ((storyTemplate.size() + story.description.size()) < 3000) {
@@ -1144,14 +1164,17 @@ class StoryService {
                 story.notes = storyTemplate
             } else if ((storyTemplate.size() + story.notes.size()) < 5000) {
                 story.notes += ("\n" + storyTemplate)
+            } else {
+                if (log.debugEnabled) {
+                    log.debug("Unable to migrate template: notes and description are full. STORY: $story.uid-$story.name TEMPLATE: $storyTemplate")
+                }
             }
         }
     }
 
-    def generateTemplate = { Map fields = [:] ->
-        def i18n = { g.message(code: "is.story.template.$it") }
+    private generateTemplateWithContent = { Map fields, i18n ->
         ['as', 'ican', 'to'].collect {
-            i18n(it) + " " + (fields ? (fields[it] ?: '') : '')
+            i18n(it) + " " + (fields[it] ?: '')
         }.join("\n")
     }
 }

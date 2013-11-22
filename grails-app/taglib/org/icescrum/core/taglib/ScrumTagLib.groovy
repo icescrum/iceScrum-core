@@ -32,7 +32,7 @@ class ScrumTagLib {
 
     static namespace = 'is'
 
-    static returnObjectForTags = ['storyTemplate']
+    static returnObjectForTags = ['storyDescription']
 
     def postit = { attrs, body ->
         def params = attrs
@@ -315,50 +315,19 @@ class ScrumTagLib {
         out << g.link(params, body())
     }
 
-    def textTemplate = { attrs, body ->
-        pageScope.textTemplate = [
-                id: attrs.id,
-                title: attrs.title,
-                rows: [],
-                disabled: attrs.disabled,
-                label: attrs.label,
-                checked: attrs.checked != true && attrs.checked != 'true'
-        ]
-        body()
-        out << g.render(template: '/components/textTemplate', plugin: 'icescrum-core', model: pageScope.textTemplate)
-    }
-
-    def textTemplateRow = { attrs, body ->
-        pageScope.textTemplate.rows << [
-                title: attrs.title,
-                content: body()
-        ]
-    }
-
-    def storyTemplate = { attrs ->
+    def storyDescription = { attrs ->
         assert attrs.story
-
-        def textStory = attrs.story.description ? attrs.story.description + ' \n ' : ""
-        def tempTxt = [attrs.story.textAs, attrs.story.textICan, attrs.story.textTo]*.trim()
-        if (tempTxt != ['null', 'null', 'null'] && tempTxt != ['', '', ''] && tempTxt != [null, null, null]) {
-            textStory += message(code: 'is.story.template.as') + ' '
-            textStory += (attrs.story.actor?.name ?: attrs.story.textAs ?: '') + ', '
-            textStory += message(code: 'is.story.template.ican') + ' '
-            textStory += (attrs.story.textICan ?: '') + ' '
-            textStory += message(code: 'is.story.template.to') + ' '
-            textStory += (attrs.story.textTo ?: '')
-        }
-        textStory = textStory.encodeAsHTML()
-        if (attrs.displayBR)
-            return textStory.encodeAsNL2BR()
-        else
-            return textStory
+        def storyDescription = attrs.story.description ? attrs.story.description.encodeAsHTML() : ""
+        attrs.displayBR ? storyDescription.encodeAsNL2BR() : storyDescription
     }
 
     def generateStoryTemplate = {
         def i18n = { g.message(code: "is.story.template." + it) }
+        def div = { "<div>" + it + "</div>" }
+        // this doesn't work for firefox which uses <br></br> to delimit lines
+        // it seems that IE would rather use <p></p>
         out << ['as', 'ican', 'to'].collect {
-            i18n(it) + " "
+            div(i18n(it)) + " "
         }.join("\n")
     }
 
