@@ -192,6 +192,8 @@ class StoryService {
 
     @PreAuthorize('(productOwner(#story.backlog) or scrumMaster()) and !archivedProduct(#story.backlog)')
     void update(Story story, Sprint sp = null) {
+        def product = story.backlog
+
         // TODO implement logic (here and findAllby...)
         // take into account actor addition and removal
         if (story.description) {
@@ -219,7 +221,7 @@ class StoryService {
         User u = (User) springSecurityService.currentUser
 
         story.addActivity(u, Activity.CODE_UPDATE, story.name)
-        broadcast(function: 'update', message: story, channel:'product-'+story.backlog.id)
+        broadcast(function: 'update', message: story, channel:'product-'+product.id)
         publishEvent(new IceScrumStoryEvent(story, this.class, u, IceScrumStoryEvent.EVENT_UPDATED))
     }
 
