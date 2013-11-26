@@ -992,16 +992,11 @@ class FormTagLib {
                 id: attrs.id,
                 disabled: !UtilsWebComponents.enabled(attrs) ?: false,
                 active: attrs.active ?: null,
-                animated: attrs.animated ?: null,
-                autoHeight: attrs.autoHeight ?: true,
-                clearStyle: attrs.clearStyle ?: false,
+                heightStyle: attrs.heightStyle ?: 'content',
                 collapsible: attrs.collapsible ?: false,
                 event: attrs.event ?: null,
-                fillSpace: attrs.fillSpace ?: false,
                 header: attrs.header ?: null,
-                icons: attrs.icons ?: null,
-                navigation: attrs.navigation ?: false,
-                navigationFilter: attrs.navigationFilter ?: null
+                icons: attrs.icons ?: null
         ]
 
         out << "<div id='${attrs.id}'>"
@@ -1011,14 +1006,14 @@ class FormTagLib {
         params.remove('id')
 
         def jqCode = "\$('#${attrs.id}').accordion({"
-        jqCode += params.findAll {k, v -> v != null}.collect {k, v -> "$k:$v"}.join(',')
+        jqCode += params.findAll {k, v -> v != null}.collect {k, v -> v instanceof String ? "$k:'$v'" : "$k:$v"}.join(',')
         jqCode += "});"
         out << jq.jquery(null, jqCode);
     }
 
     def accordionSection = {attrs, body ->
         assert attrs.title
-
+        // <a href="#" is no longer required as of jquery-ui 1.9 but the iceScrum style relies on it
         out << "<h3><a href='#'>${message(code: attrs.title)}</a></h3>"
         out << "<div>"
         out << body()
