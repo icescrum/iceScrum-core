@@ -192,31 +192,12 @@ class FormTagLib {
             return
         }
 
-        def selectOptions = [
-                container: UtilsWebComponents.wrap(attr: (attrs.container), doubleQuote: true),
-                style: UtilsWebComponents.wrap(attr: (attrs.styleSelect), doubleQuote: true),
-                maxHeight: attrs.maxHeight ?: null,
-                width: attrs.width ?: null,
-                transferClasses: attrs.transferClasses ?: true,
-                change: 'function(event, ui) {' + attrs.change + '}'
-        ]
-
-        def opts = selectOptions.findAll {k, v -> v != null}.collect {k, v -> " $k:$v" }.join(',')
-        attrs.remove('container');
-        attrs.remove('styleSelect');
-        attrs.remove('maxHeight');
-        attrs.remove('width');
-        attrs.remove('change');
-        def jqCode = ''
-
-        if (attrs.disabled == null || attrs.disabled == 'false' || attrs.disabled == false || attrs.disabled == 'disabled') {
-            jqCode += " \$('select[name=\"${attrs.name}\"]').selectmenu({$opts});"
-            out << jq.jquery(null, {jqCode})
-        } else {
-            attrs.disabled = true
+        def noSelection = attrs.remove('noSelection')
+        if (noSelection){
+            attrs.'data-placeholder' = noSelection.entrySet().iterator().next().value
+            attrs.'data-allow-clear' = true
+            attrs.'data-width' = "element"
         }
-
-
         def messageSource = grailsAttributes.getApplicationContext().getBean("messageSource")
         def locale = RCU.getLocale(request)
         def writer = out
@@ -235,10 +216,7 @@ class FormTagLib {
             value = value.toString()
         }
         def valueMessagePrefix = attrs.remove('valueMessagePrefix')
-        def noSelection = attrs.remove('noSelection')
-        if (noSelection != null) {
-            noSelection = noSelection.entrySet().iterator().next()
-        }
+
         def disabled = attrs.remove('disabled')
         if ((disabled && Boolean.valueOf(disabled)) || disabled == 'disabled') {
             attrs.disabled = 'disabled'
@@ -252,7 +230,7 @@ class FormTagLib {
         writer.println()
 
         if (noSelection) {
-            renderNoSelectionOptionImpl(writer, noSelection.key, noSelection.value, value)
+            renderNoSelectionOptionImpl(writer, "", "", value)
             writer.println()
         }
 
@@ -656,7 +634,7 @@ class FormTagLib {
             attrs."class" += " field-noseparator"
         out << "<p class=\"${attrs."class"}\" ${attrs.style ? 'style=\"'+attrs.style+'\"' : ''}>"
         out << "<label for=\"${attrs."for"}\">${message(code: attrs.label)}${attrs.optional ? '<span class="optional"> (' + message(code: 'is.optional') + ')</span>' : ''}${attrs.help ? '<span class="help" title="' + attrs.help + '"> (?)</span>' : ''}</label>"
-        out << "<span class=\"selectmenu\">" + body() + "</span>"
+        out << "<span class=\"select\">" + body() + "</span>"
         out << "</p>"
     }
 
