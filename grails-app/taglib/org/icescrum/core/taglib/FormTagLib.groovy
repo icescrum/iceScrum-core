@@ -330,6 +330,10 @@ class FormTagLib {
 
         attrs."class" = attrs."class" ? attrs."class" + ' input' : 'input'
 
+        if (attrs.autofocus != null) {
+            attrs."class" += " input-focus"
+        }
+
         def typedAttrs = attrs.typed ?: null
         attrs.remove('typed')
 
