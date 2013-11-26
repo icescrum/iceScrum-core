@@ -107,7 +107,7 @@ class FormTagLib {
         if (renderItem){
            autoCode += """ \$('#${id}').data("ui-autocomplete")._renderItem = function( ul, item ) {
 			    return \$( '<li></li>' )
-				        .data( "item.autocomplete", item )
+				        .data( "ui-autocomplete-item", item )
 				        .append( " ${renderItem} " )
 				        .appendTo( ul );
             };
