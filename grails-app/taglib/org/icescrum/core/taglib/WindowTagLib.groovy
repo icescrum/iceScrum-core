@@ -21,6 +21,7 @@
  * Damien Vitrac (damien@oocube.com)
  * Manuarii Stein (manuarii.stein@icescrum.com)
  * Stephane Maldini (vbarrier@kagilum.com)
+ * Nicolas Noullet (nnoullet@kagilum.com)
  */
 
 package org.icescrum.core.taglib
@@ -249,10 +250,8 @@ class WindowTagLib {
                 modal: attrs.modal ?: true,
                 position: attrs.position ?: "'top'",
                 resizable: attrs.resizable ?: false,
-                stack: attrs.stack ?: true,
                 title: attrs.title ? "\'${attrs.title}\'" : null,
                 width: attrs.width ?: 300,
-                zindex: attrs.zindex ?: 1000,
                 close: """function(ev, ui) { if(ev.keyCode && ev.keyCode === \$.ui.keyCode.ESCAPE){ ${attrs.cancel ? function2 : ''} } """ + (attrs.onClose ? attrs.onClose + ';' : '') + " \$(this).remove(); \$('.box-window').focus();}",
                 buttons: attrs.buttons ? "{" + attrs.buttons + "}" : null
         ]
