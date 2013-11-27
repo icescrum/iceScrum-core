@@ -198,6 +198,14 @@ class FormTagLib {
             attrs.'data-allow-clear' = true
             attrs.'data-width' = "element"
         }
+
+        if (attrs.width) {
+            attrs.'data-width' = attrs.remove('width')
+        }
+
+        if (attrs.'data-minimum-results-for-search' == null) {
+            attrs.'data-minimum-results-for-search' = '6'
+        }
         def messageSource = grailsAttributes.getApplicationContext().getBean("messageSource")
         def locale = RCU.getLocale(request)
         def writer = out
