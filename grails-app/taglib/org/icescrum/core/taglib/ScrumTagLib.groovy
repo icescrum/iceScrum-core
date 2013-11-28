@@ -323,12 +323,7 @@ class ScrumTagLib {
 
     def generateStoryTemplate = {
         def i18n = { g.message(code: "is.story.template." + it) }
-        def div = { "<div>" + it + "</div>" }
-        // this doesn't work for firefox which uses <br></br> to delimit lines
-        // it seems that IE would rather use <p></p>
-        out << ['as', 'ican', 'to'].collect {
-            div(i18n(it)) + " "
-        }.join("\n")
+        out << ['as', 'ican', 'to'].collect { i18n(it) + " "}.join("\n")
     }
 
     def generateAcceptanceTestTemplate = {
