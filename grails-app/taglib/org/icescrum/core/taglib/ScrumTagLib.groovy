@@ -20,6 +20,7 @@
  * Vincent Barrier (vbarrier@kagilum.com)
  * Damien Vitrac (damien@oocube.com)
  * Manuarii Stein (manuarii.stein@icescrum.com)
+ * Nicolas Noullet (nnoullet@kagilum.com)
  */
 package org.icescrum.core.taglib
 
@@ -316,8 +317,11 @@ class ScrumTagLib {
     }
 
     def storyDescription = { attrs ->
-        assert attrs.story
-        def storyDescription = attrs.story.description ? attrs.story.description.encodeAsHTML() : ""
+        def storyDescription = ""
+        if (attrs.story?.description) {
+            storyDescription = attrs.story.description.replaceAll(/A\[.+?-(.*?)\]/) { matched, capture1 -> capture1 }
+            storyDescription = storyDescription.encodeAsHTML()
+        }
         attrs.displayBR ? storyDescription.encodeAsNL2BR() : storyDescription
     }
 
