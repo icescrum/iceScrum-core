@@ -82,6 +82,16 @@ class Actor extends BacklogElement implements Serializable, Comparable<Actor> {
             }
             uniqueResult = true
         }
+
+        getInProductByUid {p, id ->
+            backlog {
+                eq 'id', p
+            }
+            and {
+                eq 'uid', id
+            }
+            uniqueResult = true
+        }
     }
 
     @Override
@@ -197,10 +207,5 @@ class Actor extends BacklogElement implements Serializable, Comparable<Actor> {
     static searchAllByTermOrTag(productId, term) {
         def searchOptions = [actor: [:]]
         searchByTermOrTag(productId, searchOptions, term)
-    }
-
-    static findAllByProductAndText(Product product, String text) {
-        // TODO implement logic to extract actor and associate it
-        []
     }
 }

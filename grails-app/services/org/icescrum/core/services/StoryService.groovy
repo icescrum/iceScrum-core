@@ -68,10 +68,7 @@ class StoryService {
         story.backlog = product
         story.creator = u
 
-        // TODO implement logic (here and findAllby...)
-        if (story.description) {
-            def actors = Actor.findAllByProductAndText(product, story.description)
-        }
+        manageActors(story, product)
 
         story.uid = Story.findNextUId(product.id)
         if(!story.suggestedDate)
@@ -194,11 +191,7 @@ class StoryService {
     void update(Story story, Sprint sp = null) {
         def product = story.backlog
 
-        // TODO implement logic (here and findAllby...)
-        // take into account actor addition and removal
-        if (story.description) {
-            def actors = Actor.findAllByProductAndText(product, story.description)
-        }
+        manageActors(story, product)
 
         if (!sp && !story.parentSprint && (story.state == Story.STATE_ACCEPTED || story.state == Story.STATE_ESTIMATED)) {
             if (story.effort != null) {
@@ -1178,5 +1171,23 @@ class StoryService {
         ['as', 'ican', 'to'].collect {
             i18n(it) + " " + (fields[it] ?: '')
         }.join("\n")
+    }
+
+    private void manageActors(story, product) {
+        if (story.actor) {
+            story.actor.removeFromStories(story)
+        }
+        if (story.description) {
+            def actorIdMatcher = story.description =~ /A\[(.+?)-.*?\]/
+            if (actorIdMatcher) {
+                def idString = actorIdMatcher[0][1]
+                if (idString.isInteger()) {
+                    def actor = Actor.getInProductByUid(product.id, idString.toInteger()).list()
+                    if (actor) {
+                        actor.addToStories(story)
+                    }
+                }
+            }
+        }
     }
 }
