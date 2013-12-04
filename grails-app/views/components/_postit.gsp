@@ -79,7 +79,7 @@
 
         %{--Estimation--}%
             <g:if test="${miniValue != null}">
-                <span class=" opacity-70 mini-value ${editableEstimation ? 'editable' : ''}" ${miniValueTitle ? 'title="'+miniValueTitle+'"' : ''}>${miniValue}</span>
+                <span data-width="48" class=" opacity-70 mini-value ${editableEstimation ? 'editable' : ''}" ${miniValueTitle ? 'title="'+miniValueTitle+'"' : ''}>${miniValue}</span>
             </g:if>
         %{--State label--}%
             <span class="text-state"><is:truncated encodedHTML="true" size="16">${stateText}</is:truncated></span>
