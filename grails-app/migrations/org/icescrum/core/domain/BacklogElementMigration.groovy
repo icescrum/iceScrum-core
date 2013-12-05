@@ -73,31 +73,18 @@ class BacklogElementMigration {
             }
             dropNotNullConstraint(tableName:"icescrum2_story", columnName:"origin", columnDataType:'VARCHAR(255)')
         }
-        changeSet(id:'story_remove_as', author:'vbarrier', filePath:filePath) {
+        changeSet(id:'story_remove_template', author:'vbarrier', filePath:filePath) {
             preConditions(onFail:"MARK_RAN"){
                 not{
                     dbms(type:'oracle')
                 }
                 columnExists(tableName:"icescrum2_story", columnName:"text_as")
+                columnExists(tableName:"icescrum2_story", columnName:"textican")
+                columnExists(tableName:"icescrum2_story", columnName:"text_to")
+                sqlCheck("SELECT count(*) FROM icescrum2_story WHERE text_as IS NOT NULL OR textican IS NOT NULL OR text_to IS NOT NULL",expectedResult:'0')
             }
             dropColumn(tableName:"icescrum2_story", columnName:"text_as")
-        }
-        changeSet(id:'story_remove_ican', author:'vbarrier', filePath:filePath) {
-            preConditions(onFail:"MARK_RAN"){
-                not{
-                    dbms(type:'oracle')
-                }
-                columnExists(tableName:"icescrum2_story", columnName:"textican")
-            }
             dropColumn(tableName:"icescrum2_story", columnName:"textican")
-        }
-        changeSet(id:'story_remove_to', author:'vbarrier', filePath:filePath) {
-            preConditions(onFail:"MARK_RAN"){
-                not{
-                    dbms(type:'oracle')
-                }
-                columnExists(tableName:"icescrum2_story", columnName:"text_to")
-            }
             dropColumn(tableName:"icescrum2_story", columnName:"text_to")
         }
 

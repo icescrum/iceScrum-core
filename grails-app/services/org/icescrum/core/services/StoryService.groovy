@@ -1131,6 +1131,8 @@ class StoryService {
                         migrateTemplatesOnStory(storyToMigrate[iAs], storyToMigrate[iIcan], storyToMigrate[iTo], story, i18n)
                         session.save(story)
                     }
+                    def removeOldTemplates = session.createSQLQuery("UPDATE icescrum2_story SET text_as = NULL, textican = NULL, text_to = NULL");
+                    removeOldTemplates.executeUpdate()
                     if (log.debugEnabled) {
                         log.debug("Old story templates migrated")
                     }
@@ -1141,10 +1143,6 @@ class StoryService {
                 log.debug("No old story template to migrate")
             }
         }
-        // TODO catch other exception
-        // After this programmatic migration, the liquibase migration will delete the template dedicated fields
-        // consequently, all templates may be lost if we go one after an error
-        // thus we may consider preventing the server start if this programmatic has migration has failed
     }
 
     private void migrateTemplatesOnStory(oldAs, oldIcan, oldTo, story, i18n) {
@@ -1160,8 +1158,11 @@ class StoryService {
             } else if ((storyTemplate.size() + story.notes.size()) < 5000) {
                 story.notes += ("\n" + storyTemplate)
             } else {
+                def templateError = "Unable to migrate template: notes and description are full. STORY: $story.uid-$story.name TEMPLATE: $storyTemplate"
                 if (log.debugEnabled) {
-                    log.debug("Unable to migrate template: notes and description are full. STORY: $story.uid-$story.name TEMPLATE: $storyTemplate")
+                    log.debug(templateError)
+                } else {
+                    println templateError
                 }
             }
         }
