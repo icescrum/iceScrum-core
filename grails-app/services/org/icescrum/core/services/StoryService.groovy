@@ -613,11 +613,6 @@ class StoryService {
         return rank
     }
 
-    @PreAuthorize('productOwner(#story.backlog) and !archivedProduct(#story.backlog)')
-    def acceptToBacklog(Story story) {
-        return acceptToBacklog([story])
-    }
-
     @PreAuthorize('productOwner(#stories[0].backlog) and !archivedProduct(#stories[0].backlog)')
     def acceptToBacklog(List<Story> stories) {
         def storiesA = []
@@ -651,6 +646,32 @@ class StoryService {
         }
         resumeBufferedBroadcast(channel:'product-'+product.id)
         return storiesA
+    }
+
+    @PreAuthorize('productOwner(#stories[0].backlog) and !archivedProduct(#stories[0].backlog)')
+    void returnToSandbox(List<Story> stories) {
+        Product product = (Product)stories[0].backlog
+        bufferBroadcast(channel:'product-'+product.id)
+        stories.each { story ->
+            if (!(story.state in [Story.STATE_ESTIMATED, Story.STATE_ACCEPTED]))
+                throw new IllegalStateException('is.story.error.not.in.backlog')
+
+            resetRank(story)
+            story.rank = 0
+            story.state = Story.STATE_SUGGESTED
+            story.acceptedDate = null
+            story.estimatedDate = null
+
+            if (!story.save(flush: true))
+                throw new RuntimeException()
+
+            User u = (User) springSecurityService.currentUser
+
+            story.addActivity(u, 'returnToSandbox', story.name)
+            broadcast(function: 'returnToSandbox', message: story, channel:'product-'+story.backlog.id)
+            publishEvent(new IceScrumStoryEvent(story, this.class, u, IceScrumStoryEvent.EVENT_RETURNTOSANDBOX))
+        }
+        resumeBufferedBroadcast(channel:'product-'+product.id)
     }
 
     @PreAuthorize('productOwner(#story.backlog) and !archivedProduct(#story.backlog)')

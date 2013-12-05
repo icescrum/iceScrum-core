@@ -27,6 +27,7 @@ import org.icescrum.core.domain.Story
 
 class IceScrumStoryEvent extends IceScrumEvent {
 
+    static final String EVENT_RETURNTOSANDBOX = 'returnToSandbox'
     static final String EVENT_SUGGESTED = 'Suggested'
     static final String EVENT_ACCEPTED = 'Accepted'
     static final String EVENT_ESTIMATED = 'Estimated'
