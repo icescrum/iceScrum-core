@@ -161,6 +161,13 @@ class TaskService {
             // TODO add check : if SM or PO, always allow
             if (force || (task.responsible && task.responsible.id.equals(user.id)) || task.creator.id.equals(user.id) || securityService.scrumMaster(null, springSecurityService.authentication)) {
 
+                // Task moved from "to do" to another column
+                if (task.state >= Task.STATE_BUSY && !task.inProgressDate) {
+                    task.inProgressDate = new Date()
+                    task.initial = task.estimation
+                    task.blocked = false
+                }
+
                 if (task.state == Task.STATE_DONE) {
                     done(task, user, product)
                 } else if (task.doneDate) {
@@ -178,13 +185,6 @@ class TaskService {
                     }
                     task.state = Task.STATE_DONE
                     done(task, user, product)
-                }
-
-                // Task moved from "to do" to another column
-                if (task.state >= Task.STATE_BUSY && !task.inProgressDate) {
-                    task.inProgressDate = new Date()
-                    task.initial = task.estimation
-                    task.blocked = false
                 }
 
                 if (task.isDirty('blocked') && task.blocked) {
