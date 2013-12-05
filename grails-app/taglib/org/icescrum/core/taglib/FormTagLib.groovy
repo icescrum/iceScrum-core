@@ -203,16 +203,12 @@ class FormTagLib {
             attrs.'data-width' = attrs.remove('width')
         }
 
-        if (attrs.'data-minimum-results-for-search' == null) {
-            attrs.'data-minimum-results-for-search' = '6'
-        }
         def messageSource = grailsAttributes.getApplicationContext().getBean("messageSource")
         def locale = RCU.getLocale(request)
         def writer = out
         attrs.id = attrs.id ? attrs.id : attrs.name
         def from = attrs.remove('from')
         def keys = attrs.remove('keys')
-        def icons = attrs.remove('icons')
         def optionKey = attrs.remove('optionKey')
         def optionValue = attrs.remove('optionValue')
         def ids = attrs.remove('optionId')
@@ -269,10 +265,6 @@ class FormTagLib {
                 else {
                     keyValue = el
                     writeValueAndCheckIfSelected(keyValue, value, writer)
-                }
-                if (icons) {
-                    def iconValue = icons[i]
-                    writer << ' class="' + iconValue + '" '
                 }
                 if (ids) {
                     def idValue = ids[i]
