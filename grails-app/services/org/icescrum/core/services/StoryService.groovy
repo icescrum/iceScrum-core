@@ -1147,6 +1147,10 @@ class StoryService {
 
     private void migrateTemplatesOnStory(oldAs, oldIcan, oldTo, story, i18n) {
         def storyTemplateContent = [as: oldAs, ican: oldIcan, to: oldTo]
+        if (story.actor) {
+            def actor = story.actor
+            storyTemplateContent.as = oldAs.replaceAll(actor.name, 'A[' + actor.uid + '-' + actor.name + ']')
+        }
         if (storyTemplateContent.values().any { it }) {
             def storyTemplate = generateTemplateWithContent(storyTemplateContent, i18n)
             if (!story.description) {
