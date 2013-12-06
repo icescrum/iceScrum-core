@@ -1056,11 +1056,6 @@ class StoryService {
                     origin: story.origin.text()
             )
 
-            if (story.textAs || story.textICan || story.textTo) {
-                def i18n = { g.message(code: "is.story.template." + it) }
-                migrateTemplatesOnStory(story.textAs.text().trim(), story.textICan.text().trim(), story.textTo.text().trim(), s, i18n)
-            }
-
             if (!story.feature?.@uid?.isEmpty() && p) {
                 def f = p.features.find { it.uid == story.feature.@uid.text().toInteger() } ?: null
                 if (f) {
@@ -1083,6 +1078,11 @@ class StoryService {
                 if (a) {
                     a.addToStories(s)
                 }
+            }
+
+            if (story.textAs || story.textICan || story.textTo) {
+                def i18n = { g.message(code: "is.story.template." + it) }
+                migrateTemplatesOnStory(story.textAs.text().trim(), story.textICan.text().trim(), story.textTo.text().trim(), s, i18n)
             }
 
             if (p) {
