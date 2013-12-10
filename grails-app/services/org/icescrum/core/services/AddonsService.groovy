@@ -23,6 +23,8 @@ class AddonsService implements ApplicationListener<IceScrumProductEvent> {
     @Override
     void onApplicationEvent(IceScrumProductEvent e) {
         if (e.type == IceScrumProductEvent.EVENT_IMPORTED){
+            //Wait a small very small time to let hibernate do its job... well
+            Thread.sleep(500);
             synchronisedDataImport(e)
         }
     }
