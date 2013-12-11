@@ -207,24 +207,24 @@ class WindowTagLib {
             attrs.title = message(code: attrs.title)
         }
 
-        def function = "\$('#${attrs.id} form').submit();"
+        def function = "jQuery('#${attrs.id} form').submit();"
         if (attrs.valid && attrs.valid.action) {
             function = remoteFunction(
                     action: attrs.valid.action,
                     controller: attrs.valid.controller,
-                    onSuccess: "${attrs.valid.onSuccess ? attrs.valid.onSuccess + ';' + '\$(\'#'+attrs.id+'\').dialog(\'close\');' : '\$(\'#'+attrs.id+'\').dialog(\'close\');'}  ",
+                    onSuccess: "${attrs.valid.onSuccess ? attrs.valid.onSuccess + ';' + 'jQuery(\'#'+attrs.id+'\').dialog(\'close\');' : 'jQuery(\'#'+attrs.id+'\').dialog(\'close\');'}  ",
                     before: attrs.valid.before,
                     id: attrs.valid.id,
                     update: attrs.valid.update,
-                    params: "${attrs.valid.params ? attrs.valid.params + '+\'&\'+' : ''}jQuery('#'${attrs.id}' form:first').serialize()")
+                    params: "${attrs.valid.params ? attrs.valid.params + '+\'&\'+' : ''}jQuery('#${attrs.id} form:first').serialize()")
         }
 
-        def function2 = "\$(this).dialog('close');"
+        def function2 = "jQuery(this).dialog('close');"
         if (attrs.cancel) {
             function2 = remoteFunction(
                     action: attrs.cancel.action,
                     controller: attrs.cancel.controller,
-                    onSuccess: "${attrs.cancel.onSuccess ? attrs.cancel.onSuccess + ';' : ''} \$('#${attrs.id}').dialog('close'); ",
+                    onSuccess: "${attrs.cancel.onSuccess ? attrs.cancel.onSuccess + ';' : ''} jQuery('#${attrs.id}').dialog('close'); ",
                     before: attrs.cancel.before,
                     id: attrs.cancel.id,
                     update: attrs.cancel.update,
@@ -253,11 +253,11 @@ class WindowTagLib {
                 resizable: attrs.resizable ?: false,
                 title: attrs.title ? "\'${attrs.title}\'" : null,
                 width: attrs.width ?: 300,
-                close: """function(ev, ui) { if(ev.keyCode && ev.keyCode === \$.ui.keyCode.ESCAPE){ ${attrs.cancel ? function2 : ''} } """ + (attrs.onClose ? attrs.onClose + ';' : '') + " \$(this).remove(); \$('.box-window').focus();}",
+                close: """function(ev, ui) { if(ev.keyCode && ev.keyCode === jQuery.ui.keyCode.ESCAPE){ ${attrs.cancel ? function2 : ''} } """ + (attrs.onClose ? attrs.onClose + ';' : '') + " jQuery(this).remove(); jQuery('.box-window').focus();}",
                 buttons: attrs.buttons ? "{" + attrs.buttons + "}" : null
         ]
 
-        def dialogCode = "\$('#${attrs.id}').dialog({"
+        def dialogCode = "jQuery('#${attrs.id}').dialog({"
 
         if (attrs.onSuccess) {
             dialogCode += "${attrs.onSuccess};"
