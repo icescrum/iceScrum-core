@@ -21,6 +21,8 @@
 
 package org.icescrum.core.domain.preferences
 
+import grails.util.Metadata
+
 class UserPreferencesMigration {
 
     static migration = {
@@ -57,6 +59,46 @@ class UserPreferencesMigration {
                 }
             }
             sql('UPDATE icescrum2_user_preferences set language = \'en_US\' WHERE language = \'en\'')
+        }
+        changeSet(id:'user_preferences_constraint_displayWhatsNew', author:'vbarrier', filePath:filePath) {
+            preConditions(onFail:"MARK_RAN"){
+                not{
+                    or {
+                        dbms(type:'mssql')
+                        dbms(type:'oracle')
+                    }
+                }
+            }
+            sql('UPDATE icescrum2_user_preferences set display_whats_new = false WHERE display_whats_new is NULL')
+            addNotNullConstraint(tableName:"icescrum2_user_preferences",columnName:'display_whats_new',columnDataType:'BOOLEAN')
+        }
+        changeSet(id:'user_preferences_constraint_displayWhatsNew_mssql', author:'vbarrier', filePath:filePath) {
+            preConditions(onFail:"MARK_RAN"){
+                dbms(type:'mssql')
+            }
+            sql('UPDATE icescrum2_user_preferences set display_whats_new = 0 WHERE display_whats_new is NULL')
+            addNotNullConstraint(tableName:"icescrum2_user_preferences",columnName:'display_whats_new',columnDataType:'BIT')
+        }
+
+        def version = Metadata.current['app.version'].replaceAll(' ','').replaceAll('#','')
+        changeSet(id:'user_preferences_reset_displayWhatsNew_'+version, author:'vbarrier', filePath:filePath) {
+            preConditions(onFail:"MARK_RAN"){
+                not{
+                    or {
+                        dbms(type:'mssql')
+                        dbms(type:'oracle')
+                    }
+                }
+            }
+            sql('UPDATE icescrum2_user_preferences set display_whats_new = true WHERE display_whats_new = false')
+            addNotNullConstraint(tableName:"icescrum2_user_preferences",columnName:'display_whats_new',columnDataType:'BOOLEAN')
+        }
+        changeSet(id:'user_preferences_reset_displayWhatsNew_mssql_'+version, author:'vbarrier', filePath:filePath) {
+            preConditions(onFail:"MARK_RAN"){
+                dbms(type:'mssql')
+            }
+            sql('UPDATE icescrum2_user_preferences set display_whats_new = 1 WHERE display_whats_new = 0')
+            addNotNullConstraint(tableName:"icescrum2_user_preferences",columnName:'display_whats_new',columnDataType:'BIT')
         }
     }
 

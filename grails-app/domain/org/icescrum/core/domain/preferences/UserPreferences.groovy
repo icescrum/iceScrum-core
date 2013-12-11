@@ -39,6 +39,7 @@ class UserPreferences implements Serializable{
     String filterTask = "allTasks"
     String lastProductOpened
     String emailsSettingsData //[onStory:['pkey','pkey2'...],onUrgentTask:['pkey','pkey2'...],autoFollow['pkey','pkey2'...]]
+    boolean displayWhatsNew = false
 
     boolean hideDoneState = false
 

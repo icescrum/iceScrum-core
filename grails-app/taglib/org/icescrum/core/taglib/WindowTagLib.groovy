@@ -181,7 +181,8 @@ class WindowTagLib {
     }
 
     def dialog = { attrs, body ->
-        out << "<div id='dialog'>${body()}</div>"
+        attrs.id = attrs.id ?: 'dialog'
+        out << "<div id='${attrs.id}'>${body()}</div>"
         out << dialogMethod(attrs)
     }
 
@@ -206,16 +207,16 @@ class WindowTagLib {
             attrs.title = message(code: attrs.title)
         }
 
-        def function = "\$('#dialog form').submit();"
+        def function = "\$('#${attrs.id} form').submit();"
         if (attrs.valid && attrs.valid.action) {
             function = remoteFunction(
                     action: attrs.valid.action,
                     controller: attrs.valid.controller,
-                    onSuccess: "${attrs.valid.onSuccess ? attrs.valid.onSuccess + ';' + '\$(\'#dialog\').dialog(\'close\');' : '\$(\'#dialog\').dialog(\'close\');'}  ",
+                    onSuccess: "${attrs.valid.onSuccess ? attrs.valid.onSuccess + ';' + '\$(\'#'+attrs.id+'\').dialog(\'close\');' : '\$(\'#'+attrs.id+'\').dialog(\'close\');'}  ",
                     before: attrs.valid.before,
                     id: attrs.valid.id,
                     update: attrs.valid.update,
-                    params: "${attrs.valid.params ? attrs.valid.params + '+\'&\'+' : ''}jQuery('#dialog form:first').serialize()")
+                    params: "${attrs.valid.params ? attrs.valid.params + '+\'&\'+' : ''}jQuery('#'${attrs.id}' form:first').serialize()")
         }
 
         def function2 = "\$(this).dialog('close');"
@@ -223,11 +224,11 @@ class WindowTagLib {
             function2 = remoteFunction(
                     action: attrs.cancel.action,
                     controller: attrs.cancel.controller,
-                    onSuccess: "${attrs.cancel.onSuccess ? attrs.cancel.onSuccess + ';' : ''} \$('#dialog').dialog('close'); ",
+                    onSuccess: "${attrs.cancel.onSuccess ? attrs.cancel.onSuccess + ';' : ''} \$('#${attrs.id}').dialog('close'); ",
                     before: attrs.cancel.before,
                     id: attrs.cancel.id,
                     update: attrs.cancel.update,
-                    params: "${attrs.cancel.params ? attrs.cancel.params + '+\'&\'+' : ''}jQuery('#dialog form:first').serialize()")
+                    params: "${attrs.cancel.params ? attrs.cancel.params + '+\'&\'+' : ''}jQuery('#${attrs.id} form:first').serialize()")
         }
 
         def buttonOk = message(code: "is.button.update")
@@ -256,7 +257,7 @@ class WindowTagLib {
                 buttons: attrs.buttons ? "{" + attrs.buttons + "}" : null
         ]
 
-        def dialogCode = "\$('#dialog').dialog({"
+        def dialogCode = "\$('#${attrs.id}').dialog({"
 
         if (attrs.onSuccess) {
             dialogCode += "${attrs.onSuccess};"
