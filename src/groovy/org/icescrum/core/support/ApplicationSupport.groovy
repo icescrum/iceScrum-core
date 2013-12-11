@@ -45,6 +45,11 @@ class ApplicationSupport {
         return Metadata.current['app.version']?.contains('Pro') ? true : false
     }
 
+    public static String getNormalisedVersion(){
+        def version = Metadata.current['app.version']
+        return version.substring(0, version.indexOf(" ") > 0 ? version.indexOf(" ")  : version.length()).toLowerCase().replaceAll('#','')
+    }
+
     static public checkInitialConfig = { def config ->
         //check if Tomcat version is compatible
         try{
