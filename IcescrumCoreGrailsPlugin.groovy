@@ -110,7 +110,7 @@ class IcescrumCoreGrailsPlugin {
     ]
 
     def observe = ['controllers']
-    def loadAfter = ['controllers', 'feeds', 'springcache','hibernate']
+    def loadAfter = ['controllers', 'feeds', 'springcache', 'hibernate']
     def loadBefore = ['autobase']
 
     // TODO Fill in these fields
@@ -315,17 +315,13 @@ class IcescrumCoreGrailsPlugin {
         application.serviceClasses.each {
             addBroadcastMethods(it, application)
         }
-        log.debug("## START MIGRATE TEMPLATES ##")
         // Old school because no GORM Static API at the point where it is called
         def transactionManager = ctx.getBean('transactionManager')
-        log.debug("transactionManager loaded: ${transactionManager}")
         def migrateTemplates = {
             StoryService storyService = ctx.getBean('storyService')
-            log.debug("storyService loaded: ${storyService}")
             storyService.migrateTemplatesInDb()
         }
         new TransactionTemplate(transactionManager).execute(migrateTemplates as TransactionCallback)
-        log.debug("## END MIGRATE TEMPLATES ##")
     }
 
     def doWithApplicationContext = { applicationContext ->
