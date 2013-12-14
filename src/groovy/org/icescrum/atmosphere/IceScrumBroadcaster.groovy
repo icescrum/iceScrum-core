@@ -2,9 +2,10 @@ package org.icescrum.atmosphere
 
 import org.atmosphere.cpr.AtmosphereConfig
 import org.atmosphere.cpr.DefaultBroadcaster
+import org.atmosphere.util.AbstractBroadcasterProxy
 import org.icescrum.core.domain.Product
 
-class IceScrumBroadcaster extends DefaultBroadcaster {
+class IceScrumBroadcaster extends AbstractBroadcasterProxy {
 
     String pkey
     String pname
@@ -14,8 +15,9 @@ class IceScrumBroadcaster extends DefaultBroadcaster {
         initValues()
     }
 
+
     IceScrumBroadcaster(String name, AtmosphereConfig config) {
-        super(name, config)
+        super(name, new URI("http://localhost:6379"), config)
         initValues()
     }
 
@@ -35,5 +37,15 @@ class IceScrumBroadcaster extends DefaultBroadcaster {
             pkey = ""
             pname = "Global"
         }
+    }
+
+    @Override
+    void incomingBroadcast() {
+        //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    void outgoingBroadcast(Object o) {
+        //To change body of implemented methods use File | Settings | File Templates.
     }
 }
