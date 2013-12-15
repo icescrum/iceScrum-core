@@ -57,7 +57,7 @@ class IceScrumAtmosphereEventListener implements AtmosphereResourceEventListener
 
         channel = channel?.toString()
         if (channel) {
-            IceScrumBroadcaster broadcaster = (IceScrumBroadcaster)BroadcasterFactory.default.lookup(channel, true)
+            def broadcaster = BroadcasterFactory.default.lookup(channel, true)
             broadcaster.addAtmosphereResource(event.resource)
             if (log.isDebugEnabled()) {
                 log.debug("add user ${user.username} with UUID ${event.resource.uuid()} to broadcaster: ${channel}")
