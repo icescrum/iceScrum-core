@@ -40,7 +40,7 @@ icescrum {
                           'org.atmosphere.cpr.broadcaster.maxProcessingThreads': 5,
                           'org.atmosphere.cpr.broadcaster.maxAsyncWriteThreads': 5,
                           'org.atmosphere.cpr.AtmosphereInterceptor' : 'org.atmosphere.interceptor.OnDisconnectInterceptor,org.atmosphere.interceptor.JavaScriptProtocol',
-                          'org.atmosphere.cpr.broadcasterClass' : 'org.icescrum.atmosphere.IceScrumBroadcaster',
+                          'org.atmosphere.cpr.broadcasterClass' : System.getProperty("icescrum.broadcaster")?:'org.icescrum.atmosphere.IceScrumBroadcaster',
                           'org.atmosphere.cpr.broadcasterLifeCyclePolicy': 'EMPTY_DESTROY',
                           'org.atmosphere.cpr.broadcastFilterClasses': 'org.atmosphere.client.TrackMessageSizeFilter']
             urlPattern = '/stream/app'
@@ -50,10 +50,6 @@ icescrum {
             atmosphereDotXml = {
                 'atmosphere-handler'('context-root': icescrum.push.mainChannel, 'class-name': 'org.icescrum.atmosphere.IceScrumAtmosphereHandler')
             }
-        }
-        redis {
-            enable = false
-            host = "http://localhost:6379"
         }
     }
     spaces {
