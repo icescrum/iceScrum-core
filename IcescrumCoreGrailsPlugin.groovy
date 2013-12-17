@@ -595,9 +595,9 @@ class IcescrumCoreGrailsPlugin {
                             batch.each {
                                 Set<AtmosphereResource> resources = uuid ? broadcaster.atmosphereResources?.findAll{ AtmosphereResource r -> r.uuid() !=  uuid} : null
                                 if(resources){
-                                    broadcaster?.broadcast((it as JSON).toString(), resources)
+                                    broadcaster.broadcast((it as JSON).toString(), resources)
                                 } else if (!uuid) {
-                                    broadcaster?.broadcast((it as JSON).toString())
+                                    broadcaster.broadcast((it as JSON).toString())
                                 }
                             }
                         }catch(Exception e){
@@ -649,9 +649,9 @@ class IcescrumCoreGrailsPlugin {
                             }
                             Set<AtmosphereResource> resources = uuid ? broadcaster.atmosphereResources?.findAll{ AtmosphereResource r -> r.uuid() !=  uuid} : null
                             if(resources){
-                                broadcaster?.broadcast((message as JSON).toString(), resources)
+                                broadcaster.broadcast((message as JSON).toString(), resources)
                             } else if (!uuid) {
-                                broadcaster?.broadcast((message as JSON).toString())
+                                broadcaster.broadcast((message as JSON).toString())
                             }
                         }catch(Exception e){
                             log.error("Error when broadcasting, message: ${e.getMessage()}", e)
