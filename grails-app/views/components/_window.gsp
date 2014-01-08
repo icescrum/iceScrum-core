@@ -18,68 +18,61 @@
   --}%
 
 %{-- tabindex to active shortcuts on div --}%
-<div id="${type}-id-${id}" class="box-${type}${sortable ? '-sortable' : ''} box" tabindex="0">
-
-%{-- Headbar --}%
-<g:if test="${titleBarActions?.maximizeable}">
-    <div id="${type}-title-bar-${id}" class="box-title resizable">
-</g:if>
-<g:elseif test="${titleBarActions?.windowable}">
-    <div id="${type}-title-bar-${id}" class="box-title resizable">
-</g:elseif>
-<g:else>
-    <div id="${type}-title-bar-${id}" class="box-title">
-</g:else>
-
-<span class="start"></span>
-
-<p class="content"><span class='title'>${title}</span><span class="details"></span></p>
-
-<span class="end"></span>
-
-%{-- Title bar content options --}%
-<g:if test="${hasTitleBarContent}">
-    <ul id="${type}-title-bar-content-${id}" class="box-title-content">
-        ${titleBarContent}
-    </ul>
-</g:if>
-
-%{-- Title bar naivgation actions --}%
-<ul id="${type}-button-${id}" class="box-title-buttons">
-    <g:if test="${help}">
-        <is:helpButton id="${type}-help-${id}" text="${message(code:'?')}">
-            ${message(code: help)}
-        </is:helpButton>
+<div id="${type}-id-${id}"
+     class="is-${type} box-${type}${sortable ? '-sortable' : ''} box"
+     tabindex="0"
+    <g:if test="${type == 'window'}">
+        data-fullScreen="${windowActions?.fullScreen?:false}" data-widgetable="${windowActions?.widgetable?:false}" data-title="${projectName ?: 'iceScrum'} - ${title.encodeAsJavaScript()}"
     </g:if>
-    <g:if test="${titleBarActions?.widgetable}">
-        <li>
-            <span class="${type}-minimize minimize" alt="Minimize"></span>
-        </li>
-    </g:if>
-    <g:if test="${titleBarActions?.maximizeable}">
-        <li>
-            <span class="${type}-maxicon maxicon" alt="Expand"></span>
-        </li>
-    </g:if>
-    <g:if test="${titleBarActions?.windowable}">
-        <li>
-            <span class="${type}-maxicon minimize" alt="Expand"></span>
-        </li>
-    </g:if>
-    <g:if test="${titleBarActions?.closeable}">
-        <li>
-            <span class="${type}-close close" alt="Close"></span>
-        </li>
-    </g:if>
-</ul>
-
-</div>
+    <g:else>
+        data-windowable="${windowActions?.windowable?:false}" data-closeable="${windowActions?.closeable?:false}" data-resizable-options='${resizable ? resizable as JSON :false}'
+    </g:else>
+>
 
 %{-- Toolbar --}%
-<g:if test="${hasToolbar}">
+<g:if test="${toolbar}">
     <div class="box-navigation">
-        <ul id='${type}-toolbar'>
-            ${toolbar}
+        <ul class='${type}-toolbar'>
+            <g:if test="${type == 'widget'}">
+                <li class="title">${title}</li>
+            </g:if>
+            ${toolbar instanceof Boolean ? '' : toolbar ?: ''}
+        </ul>
+        <ul class='${type}-actions'>
+            <g:if test="${windowActions?.help}">
+                <li>
+                    <a class="ui-icon-help ui-icon" title="${message(code:'is.ui.window.help')}" href="${createLink(controller:'scrumOS',action:'help',params:[window:id])}" data-ajax="true"></a>
+                </li>
+            </g:if>
+            <g:if test="${windowActions?.printable}">
+                <li>
+                    <a class="ui-icon-print ui-icon"
+                       title="${message(code:'is.ui.window.print')}"
+                       data-ajax="true"
+                       data-shortcut="ctrl+p"
+                       href="${createLink(controller:id,action:'print', params:[product:params.product?:null, format:'PDF'])}"></a>
+                </li>
+            </g:if>
+            <g:if test="${windowActions?.widgetable}">
+                <li>
+                    <a class="${type}-minimize ui-icon-transferthick-e-w ui-icon" title="${message(code:'is.ui.window.widgetable')}"></a>
+                </li>
+            </g:if>
+            <g:if test="${windowActions?.windowable}">
+                <li>
+                    <a class="${type}-window ui-icon-transferthick-e-w ui-icon" title="${message(code:'is.ui.window.windowable')}"></a>
+                </li>
+            </g:if>
+            <g:if test="${windowActions?.maximizeable}">
+                <li>
+                    <a class="${type}-maximize ui-icon-arrowthick-2-ne-sw ui-icon" title="${message(code:'is.ui.window.fullscreen')}"></a>
+                </li>
+            </g:if>
+            <g:if test="${windowActions?.closeable}">
+                <li>
+                    <a class="${type}-close ui-icon-close ui-icon" title="${message(code:'is.ui.window.closeable')}"></a>
+                </li>
+            </g:if>
         </ul>
     </div>
 </g:if>
@@ -91,27 +84,8 @@
 </div>
 
 <g:if test="${type == 'window'}">
-    <div id="right" class="right-resizable" data-resizable="true" data-grid="400" data-max-width="400" data-empty-hide="${right ? "false" : "true"}">
+    <div id="right" class="right-resizable" data-resizable="true" data-event-on-width="600" data-min-width="400" data-empty-hide="${right ? "false" : "true"}">
         ${right}
     </div>
 </g:if>
-
-%{-- Status bar --}%
-<g:if test="${hasStatusbar}">
-    <div id="${type}-status-bar-${id}" class="status-bar nav clearfix">
-        ${statusBar}
-    </div>
-</g:if>
-
-
 </div>
-<jq:jquery>
-    <g:if test="${type == 'window'}">
-        $("#${type}-id-${id}").isWindow({maximizeable:${titleBarActions?.maximizeable},widgetable:${titleBarActions?.widgetable},closeable:${titleBarActions?.closeable}});
-        document.title = "${spaceName ?: 'iceScrum'} - ${title.encodeAsJavaScript()}";
-        $("#${type}-id-${id}").focus();
-    </g:if>
-    <g:if test="${type == 'widget'}">
-        jQuery("#${type}-id-${id}").isWidget({ windowable:${titleBarActions?.windowable},closeable:${titleBarActions?.closeable}, resizable:${resizable ? resizable as JSON : 'false'}});
-    </g:if>
-</jq:jquery>

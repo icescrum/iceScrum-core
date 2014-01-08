@@ -54,37 +54,27 @@ class WindowTagLib {
         def includeParams = ['windowType':type]
         params.each{ if (!(it.key in ["controller", "action"])) { includeParams << it} }
         def windowContent
-            if (attrs.init){
-                def result = includeContent([controller: windowId, action: attrs.init, params:includeParams])
-                if (result.contentType == 'application/json;charset=utf-8'){
-                    response.setStatus(400)
-                    response.setContentType(result.contentType)
-                    out << result.content
-                    return
-                }else{
-                    windowContent = result.content
-                }
-            }
-            else {
-                windowContent = body()
-            }
-
-        // Check for toolbar existence
-        def titleBarContent = ''
-        if (attrs.hasTitleBarContent) {
-            if (attrs.type == 'widget') {
-                titleBarContent = include(controller: windowId, action: 'titleBarContentWidget', params: includeParams)
-            } else {
-                titleBarContent = include(controller: windowId, action: 'titleBarContent', params: includeParams)
+        if (attrs.init){
+            def result = includeContent([controller: windowId, action: attrs.init, params:includeParams])
+            if (result.contentType == 'application/json;charset=utf-8'){
+                response.setStatus(400)
+                response.setContentType(result.contentType)
+                out << result.content
+                return
+            }else{
+                windowContent = result.content
             }
         }
+        else {
+            windowContent = body()
+        }
+
         // Check for toolbar existence
-        def toolbarContent = ''
-        if (attrs.hasToolbar) {
+        if (attrs.toolbar) {
             if (attrs.type == 'widget') {
-                toolbarContent = include(controller: windowId, action: 'toolbarWidget', params: includeParams)
+                attrs.toolbar = include(controller: windowId, action: 'toolbarWidget', params: includeParams) ?: true
             } else {
-                toolbarContent = include(controller: windowId, action: 'toolbar', params: includeParams)
+                attrs.toolbar = include(controller: windowId, action: 'toolbar', params: includeParams) ?: true
             }
         }
         // Check for right content
@@ -108,22 +98,18 @@ class WindowTagLib {
                 spaceName: attrs.spaceName,
                 type: type,
                 title: attrs.title ?: null,
-                help: attrs.help ?: null,
-                titleBarActions: attrs.titleBarActions ?: [
+                windowActions: attrs.windowActions ?: [
+                        help: attrs.help ?: null,
                         widgetable: attrs.widgetable ? true : false,
-                        closeable: attrs.closeable ?: false,
-                        maximizeable: attrs.maximizeable ?: false
+                        fullScreen: attrs.fullScreen ?: false,
+                        printable:attrs.printable
                 ],
                 id: windowId,
-                hasToolbar: attrs.hasToolbar,
-                hasStatusbar: attrs.hasStatusbar,
-                hasTitleBarContent: attrs.hasTitleBarContent,
-                toolbar: toolbarContent,
-                titleBarContent: titleBarContent,
+                toolbar: attrs.toolbar,
+                resizable: attrs.resizable ?: false,
+                sortable: attrs.sortable ?: false,
                 right:right,
                 contentClass: attrs.contentClass,
-                sortable: attrs.sortable ?: false,
-                resizable: attrs.resizable ?: false,
                 windowContent: windowContent
         ]
         if (windowContent && !webRequest?.params?.returnError){
@@ -166,15 +152,15 @@ class WindowTagLib {
         def params = [
                 type: 'widget',
                 title: attrs.title,
-                titleBarActions: [
+                windowActions: [
+                        help: attrs.help ?: null,
                         closeable: attrs.closeable ?: false,
                         windowable: attrs.windowable ?: false
                 ],
                 window: attrs.id,
                 sortable: attrs.sortable,
                 resizable: attrs.resizable?:false,
-                hasStatusbar: false,
-                hasToolbar: attrs.hasToolbar,
+                toolbar: attrs.toolbar,
                 init: attrs.init
         ]
         out << is.window(params, {})

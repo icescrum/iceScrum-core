@@ -30,12 +30,11 @@ class WindowDefinition {
 
     String init = 'index'
     String title = ''
-    boolean titleBarContent = false
     boolean right = false
     boolean toolbar = true
-    boolean closeable = true
+    boolean printable = true
+    boolean fullScreen = true
     def help = null
-    boolean maximizeable = true
     Closure before = null
 
     void init(String init) {
@@ -46,20 +45,12 @@ class WindowDefinition {
         this.title = title
     }
 
-    void titleBarContent(boolean titleBarContent) {
-        this.titleBarContent = titleBarContent
-    }
-
     void right(boolean right) {
         this.right = right
     }
 
     void toolbar(boolean toolbar) {
         this.toolbar = toolbar
-    }
-
-    void closeable(boolean closeable) {
-        this.closeable = closeable
     }
 
     void help(String help) {
@@ -70,8 +61,12 @@ class WindowDefinition {
         this.before = before
     }
 
-    void maximizeable(boolean maximizeable) {
-        this.maximizeable = maximizeable
+    void fullScreen(boolean fullScreen) {
+        this.fullScreen = fullScreen
+    }
+
+    void printable(boolean printable) {
+        this.printable = printable
     }
 
     def methodMissing(String name, args) {
