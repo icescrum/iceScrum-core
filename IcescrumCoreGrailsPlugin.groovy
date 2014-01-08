@@ -18,6 +18,7 @@
 * Authors:
 *
 * Vincent Barrier (vbarrier@kagilum.com)
+* Nicolas Noullet (nnoullet@kagilum.com)
 */
 
 import grails.converters.JSON
@@ -304,7 +305,7 @@ class IcescrumCoreGrailsPlugin {
             addBroadcastMethods(it, application)
             addErrorMethod(it)
             addWithObjectsMethods(it)
-            addRenderRESTMethod(it)
+            addRenderMarshallMethod(it)
             addJasperMethod(it, springSecurityService, jasperService)
 
             if (it.logicalPropertyName in controllersWithDownloadAndPreview){
@@ -338,6 +339,12 @@ class IcescrumCoreGrailsPlugin {
         XML.createNamedConfig('rest'){
             it.registerObjectMarshaller(new XMLIceScrumDomainClassMarshaller(false, properties), 2)
         }
+
+        properties = application.config?.icescrum?.rightMarshaller
+        JSON.createNamedConfig('right'){
+            it.registerObjectMarshaller(new JSONIceScrumDomainClassMarshaller(false, false, properties),3)
+        }
+
         applicationContext.bootStrapService.start()
     }
 
@@ -376,7 +383,7 @@ class IcescrumCoreGrailsPlugin {
 
                 addErrorMethod(event.source)
                 addWithObjectsMethods(event.source)
-                addRenderRESTMethod(event.source)
+                addRenderMarshallMethod(event.source)
 
                 SpringSecurityService springSecurityService = event.ctx.getBean('springSecurityService')
                 JasperService jasperService = event.ctx.getBean('jasperService')
@@ -749,7 +756,7 @@ class IcescrumCoreGrailsPlugin {
             }
         }
 
-        private addRenderRESTMethod(source) {
+        private addRenderMarshallMethod(source) {
             source.metaClass.renderRESTJSON = { attrs ->
                 JSON.use('rest'){
                     render (status: attrs.status?:200, contentType: 'application/json', text: attrs.text as JSON)
@@ -758,6 +765,11 @@ class IcescrumCoreGrailsPlugin {
             source.metaClass.renderRESTXML = { attrs ->
                 XML.use('rest'){
                     render(status: attrs.status?:200, contentType: 'application/xml', text: attrs.text as XML)
+                }
+            }
+            source.metaClass.renderRightJSON = { attrs ->
+                JSON.use('right'){
+                    render (status: attrs.status?:200, contentType: 'application/json', text: attrs.text as JSON)
                 }
             }
         }
