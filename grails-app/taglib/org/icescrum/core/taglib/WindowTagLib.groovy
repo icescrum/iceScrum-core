@@ -400,7 +400,6 @@ class WindowTagLib {
                         id: 'menu-report' + "${attrs.id ?: ''}",
                         alt: attrs.text,
                         icon: 'print',
-                        separator: attrs.separator?:false,
                         text: attrs.text
                 ],
                 formatsLinks

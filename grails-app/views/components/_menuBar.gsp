@@ -21,7 +21,7 @@
 - Damien vitrac (damien@oocube.com)
   --}%
   <g:each in="${menuElements}" var="menuElement" status="index">
-    <is:menuElement separator="${index == 0}" title="${menuElement.title}" draggable="true" id="${menuElement.id}" widgetable="${menuElement.widgetable}"/>
+    <is:menuElement title="${menuElement.title}" draggable="true" id="${menuElement.id}" widgetable="${menuElement.widgetable}"/>
     <is:shortcut key="ctrl+shift+${menuElement.position}" callback="\$(\$('#navigation .menubar')[${menuElement.position.toInteger() - 1}]).click();"/>
   </g:each>
   <sec:ifLoggedIn>
@@ -60,7 +60,6 @@
         },
         start:function(event, ui) {
             ui.helper.css('cursor','move');
-            ui.helper.removeClass('separator');
             $('#menubar-list-button').css('visibility','visible');
           },
         update:function(event,ui){
@@ -68,8 +67,6 @@
               return;
             }else{
               ${is.changeRank(selector: ".navigation-content .menubar", controller: "user", action: "changeMenuOrder", params:[product:params?.product?:null])}
-            $(".navigation-content .menubar.separator").removeClass("separator");
-            $(".navigation-content .menubar:first").addClass("separator");
         }
       },
     receive:function(event,ui){

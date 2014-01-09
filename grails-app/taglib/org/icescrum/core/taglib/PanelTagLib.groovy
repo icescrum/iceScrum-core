@@ -159,7 +159,7 @@ class PanelTagLib {
             if (attrs.icon)
                 paramsIcon.icon = attrs.icon
 
-            out << "<li class='navigation-item ${ attrs.separator ? 'separator' : ''}' id='${attrs.id}-navigation-item'>"
+            out << "<li class='navigation-item id='${attrs.id}-navigation-item'>"
             out << "<div class='dropmenu ${attrs.remove('classDropmenu')?:''}' id='${attrs.id}-list' data-dropmenu='true'>"
 
             def str = attrs.text
