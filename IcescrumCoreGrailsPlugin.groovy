@@ -395,7 +395,14 @@ class IcescrumCoreGrailsPlugin {
         def mc = clazz.metaClass
         def dynamicActions = [
                 getExportFormats: { ->
-                    return null
+                    def exportFormats = ctx.getBean('uiDefinitionService').getDefinitionById(controllerName).exportFormats
+                    if (exportFormats instanceof Closure){
+                        exportFormats.delegate = delegate
+                        exportFormats.resolveStrategy = Closure.DELEGATE_FIRST
+                        exportFormats = exportFormats()
+                    }
+                    entry.hook(id:"${controllerName}-getExportFormats", model:[exportFormats:exportFormats])
+                    return exportFormats
                 },
 
                 toolbar: {->

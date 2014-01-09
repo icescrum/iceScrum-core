@@ -36,6 +36,7 @@ class UiDefinition {
     WindowDefinition window
     def shortcuts
     def options = [:]
+    def exportFormats = []
 
     UiDefinition(String id, boolean disabled) {
         this.id = id
