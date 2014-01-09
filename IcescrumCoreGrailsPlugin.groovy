@@ -394,9 +394,13 @@ class IcescrumCoreGrailsPlugin {
     private addUIControllerMethods(clazz, ApplicationContext ctx, pluginName) {
         def mc = clazz.metaClass
         def dynamicActions = [
+                getExportFormats: { ->
+                    return null
+                },
+
                 toolbar: {->
                     try {
-                        render(plugin: pluginName, template: "window/toolbar", model: [id: controllerName])
+                        render(plugin: pluginName, template: "window/toolbar", model: [id: controllerName, exportFormats:getExportFormats()])
                     } catch (Exception e) {
                         render('')
                         log.debug(e.getMessage())

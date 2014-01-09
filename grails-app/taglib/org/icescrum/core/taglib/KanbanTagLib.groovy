@@ -47,7 +47,11 @@ class KanbanTagLib {
                         filter: UtilsWebComponents.wrap(attr: (attrs.selectable.filter), doubleQuote: true),
                         cancel: UtilsWebComponents.wrap(attrs.selectable.cancel),
                         selected: "function(event,ui){${attrs.selectable.selected}}",
-                        stop: attrs.selectable.stop,
+                        stop: "function(event,ui){ if(\$(event.target).find('.ui-selected').length > 0){ " +
+                                "\$('.on-selectable-${attrs.id}').removeClass('on-selectable-disabled').off('click.disabled'); " +
+                            "} else { " +
+                                "\$('.on-selectable-${attrs.id}').addClass('on-selectable-disabled').on('click.disabled',function(){return false}); }" +
+                            "}"
                 ]
                 opts = selectableOptions.findAll {k, v -> v}.collect {k, v -> " $k:$v" }.join(',')
             }
