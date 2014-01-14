@@ -79,12 +79,12 @@
 
 %{-- Content --}%
 <div id="${type}-content-${id}"
-     class="box-content ${type}-content ${hasStatusbar ? type + '-content-statusbar' : ''} ${!hasToolbar ? type + '-content-without-toolbar' : ''}" style="${resizable ? 'overflow-x:hidden; overflow-y:auto;' : ''}">
+     class="box-content ${type}-content ${!toolbar ? type + '-content-without-toolbar' : ''}" style="${resizable ? 'overflow-x:hidden; overflow-y:auto;' : ''}">
     ${windowContent}
 </div>
 
 <g:if test="${type == 'window'}">
-    <div id="right" class="right-resizable" data-resizable="true" data-containment="parent" data-event-on-width="600" data-min-width="400" data-empty-hide="${right ? "false" : "true"}">
+    <div id="right" class="right-resizable ${!toolbar ? type + '-right-without-toolbar' : ''}"" data-resizable="true" data-containment="parent" data-event-on-width="600" data-min-width="400" data-empty-hide="${right ? "false" : "true"}">
         ${right}
     </div>
 </g:if>

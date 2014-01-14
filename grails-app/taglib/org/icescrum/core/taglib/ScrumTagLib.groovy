@@ -35,6 +35,30 @@ class ScrumTagLib {
 
     static returnObjectForTags = ['storyDescription']
 
+    //New tags
+    def generateStoryTemplate = {
+        def i18n = { g.message(code: "is.story.template." + it) }
+        out << ['as', 'ican', 'to'].collect { i18n(it) + " "}.join("\n")
+    }
+
+    def generateAcceptanceTestTemplate = {
+        def i18n = { g.message(code:"is.acceptanceTest.template.$it") }
+        def highlight = { '_*' + it + '*_' }
+        out << ['given', 'when', 'then'].collect {
+            highlight(i18n(it)) + " "
+        }.join("\n")
+    }
+
+    def storyDescription = { attrs ->
+        def storyDescription = ""
+        if (attrs.story?.description) {
+            storyDescription = attrs.story.description.replaceAll(/A\[.+?-(.*?)\]/) { matched, capture1 -> capture1 }
+            storyDescription = storyDescription.encodeAsHTML()
+        }
+        attrs.displayBR ? storyDescription.encodeAsNL2BR() : storyDescription
+    }
+    //end new tags
+
     def postit = { attrs, body ->
         def params = attrs
 
@@ -318,28 +342,6 @@ class ScrumTagLib {
         params.remove('id')
         params.remove('params')
         out << g.link(params, body())
-    }
-
-    def storyDescription = { attrs ->
-        def storyDescription = ""
-        if (attrs.story?.description) {
-            storyDescription = attrs.story.description.replaceAll(/A\[.+?-(.*?)\]/) { matched, capture1 -> capture1 }
-            storyDescription = storyDescription.encodeAsHTML()
-        }
-        attrs.displayBR ? storyDescription.encodeAsNL2BR() : storyDescription
-    }
-
-    def generateStoryTemplate = {
-        def i18n = { g.message(code: "is.story.template." + it) }
-        out << ['as', 'ican', 'to'].collect { i18n(it) + " "}.join("\n")
-    }
-
-    def generateAcceptanceTestTemplate = {
-        def i18n = { g.message(code:"is.acceptanceTest.template.$it") }
-        def highlight = { '_*' + it + '*_' }
-        out << ['given', 'when', 'then'].collect {
-            highlight(i18n(it)) + " "
-        }.join("\n")
     }
 
     def avatar = { attrs, body ->
