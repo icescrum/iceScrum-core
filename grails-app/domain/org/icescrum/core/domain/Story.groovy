@@ -576,9 +576,15 @@ class Story extends BacklogElement implements Cloneable, Serializable {
             if (options.term || options.story){
                 if (options.term) {
                     or {
-                        if (options.term?.isInteger()){
+                        if (options.term instanceof List){
+                            options.term.each{
+                                ilike 'name', '%'+it+'%'
+                                ilike 'description', '%'+it+'%'
+                                ilike 'notes', '%'+it+'%'
+                            }
+                        } else if (options.term?.isInteger()){
                             eq 'uid', options.term.toInteger()
-                        }else{
+                        } else {
                             ilike 'name', '%'+options.term+'%'
                             ilike 'description', '%'+options.term+'%'
                             ilike 'notes', '%'+options.term+'%'
@@ -642,7 +648,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                 criteria.call()
             }
         } else if(options.term || options.story != null) {
-            stories = Story.createCriteria().list {
+            stories = Story.createCriteria().list(options.list?:[:]) {
                 criteria.delegate = delegate
                 criteria.call()
             }
