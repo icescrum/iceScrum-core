@@ -307,6 +307,13 @@ class FormTagLib {
         writer << '</select>'
     }
 
+    def options = { attrs ->
+        attrs.values.each { key, value ->
+            out << "<option value='$key'>$value</option>"
+            out.println()
+        }
+    }
+
     def typed = { attrs ->
 
         if (attrs.onlyletters) {
