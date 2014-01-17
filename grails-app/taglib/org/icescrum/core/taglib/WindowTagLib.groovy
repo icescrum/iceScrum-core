@@ -68,18 +68,11 @@ class WindowTagLib {
         }
 
         // Check for toolbar existence
-        if (attrs.toolbar) {
-            if (attrs.type == 'widget') {
-                attrs.toolbar = include(controller: windowId, action: 'toolbarWidget', params: includeParams) ?: true
-            } else {
-                attrs.toolbar = include(controller: windowId, action: 'toolbar', params: includeParams) ?: true
-            }
-        }
+        attrs.toolbar = attrs.toolbar ? include(controller: windowId, action: attrs.type == 'widget' ? 'toolbarWidget' : 'toolbar', params: includeParams) : true
 
         // Check for right content
-        if (attrs.right) {
-            attrs.right = include(controller: windowId, action: 'right', params: includeParams)
-        }
+        attrs.right = attrs.right ? include(controller: windowId, action: 'right', params: includeParams) : null
+
 
         // Check for shortcuts
         if (attrs.shortcuts) {
