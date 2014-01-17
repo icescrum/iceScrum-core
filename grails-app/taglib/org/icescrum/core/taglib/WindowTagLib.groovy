@@ -36,7 +36,6 @@ import org.codehaus.groovy.grails.web.util.WebUtils
 class WindowTagLib {
     static namespace = 'is'
 
-    def uiDefinitionService
     def springSecurityService
     def grailsApplication
     def securityService
@@ -46,13 +45,12 @@ class WindowTagLib {
      * The attribute "id" is obligatory
      */
     def window = { attrs, body ->
-
         def windowId = attrs.window ?: controllerName
-        def type = attrs.type ?: 'window'
+        attrs.type = attrs.type ?: 'window'
+        def includeParams = ['type':attrs.type]
+        params.each{ if (!(it.key in ["controller", "action"])) { includeParams << it} }
 
         // Check for content window
-        def includeParams = ['windowType':type]
-        params.each{ if (!(it.key in ["controller", "action"])) { includeParams << it} }
         def windowContent
         if (attrs.init){
             def result = includeContent([controller: windowId, action: attrs.init, params:includeParams])
@@ -77,12 +75,13 @@ class WindowTagLib {
                 attrs.toolbar = include(controller: windowId, action: 'toolbar', params: includeParams) ?: true
             }
         }
+
         // Check for right content
-        def right = ''
-        if (attrs.hasRight) {
-            right = include(controller: windowId, action: 'right', params: includeParams)
+        if (attrs.right) {
+            attrs.right = include(controller: windowId, action: 'right', params: includeParams)
         }
 
+        // Check for shortcuts
         if (attrs.shortcuts) {
             attrs.help = attrs.help ?: ""
             attrs.help += "<span class='help-shortcut-title'>${message(code: 'is.ui.shortcut.title')}</span>"
@@ -96,7 +95,7 @@ class WindowTagLib {
 
         def params = [
                 spaceName: attrs.spaceName,
-                type: type,
+                type: attrs.type,
                 title: attrs.title ?: null,
                 windowActions: attrs.windowActions ?: [
                         help: attrs.help ?: null,
@@ -108,7 +107,7 @@ class WindowTagLib {
                 toolbar: attrs.toolbar,
                 resizable: attrs.resizable ?: false,
                 sortable: attrs.sortable ?: false,
-                right:right,
+                right:attrs.right,
                 contentClass: attrs.contentClass,
                 windowContent: windowContent
         ]
@@ -166,6 +165,7 @@ class WindowTagLib {
         out << is.window(params, {})
     }
 
+    //TODO refactor
     def dialog = { attrs, body ->
         attrs.id = attrs.id ?: 'dialog'
         out << "<div id='${attrs.id}'>${body()}</div>"
@@ -349,61 +349,6 @@ class WindowTagLib {
       });"""
         out << g.render(template: '/components/dropHelper', plugin: 'icescrum-core', model: [id: attrs.id, description: message(code: attrs.description)])
         out << jq.jquery(null, jqCode)
-    }
-
-    /**
-     *
-     */
-    def helpButton = { attrs, body ->
-        assert attrs.id
-        out << "<li class='navigation-item'>"
-        out << "<div class='dropmenu window-help' id='${attrs.id}-list' data-dropmenu='true' data-top='15'>"
-        out << "<span class='help'>" + attrs.text + "</span>"
-        out << """<div class="dropmenu-content ui-corner-all content-help">
-            ${body()}
-          </div>"""
-        out << "</div>"
-        out << '</li>'
-    }
-
-    /**
-     * Generate a drop menu that allow to choose a format for the report generation
-     */
-    def reportPanel = { attrs, body ->
-        assert attrs.action
-
-        def targetedFormats
-        def supportedFormats = JasperExportFormat.collect { it.extension.toUpperCase() }
-
-        switch (attrs.formats) {
-            case 'ALL':
-                targetedFormats = supportedFormats
-                break
-            case 'MSOFFICE':
-                targetedFormats = ['DOCX', 'PPTX', 'XLS', 'XLSX']
-                break
-            case 'OPENOFFICE':
-                targetedFormats = ['ODT', 'ODS']
-                break
-            default:
-                targetedFormats = attrs.formats ?: ['PDF']
-                break
-        }
-        def formatsLinks = '<ul><li class="first">' + targetedFormats.findAll {
-            (it instanceof Collection && it[0] in supportedFormats) || (it in supportedFormats)
-        }.asList().unique().collect {
-            '<div style="display:inline-block" class="file-icon ' + (it instanceof Collection ? it[0] : it).toLowerCase() + '-format"> <a href="'+(g.createLink(action: attrs.action,controller: attrs.controller ?: controllerName, params:[format:it instanceof Collection ? it[0] : it, product:params.product]))+(attrs.params ? '&'+attrs.params : '')+'" data-ajax="true"> '+(it instanceof Collection ? it[1] : it) + '</a></div>'
-        }.join('</li><li>') + '</li></ul>'
-
-        out << is.panelButton(
-                [
-                        id: 'menu-report' + "${attrs.id ?: ''}",
-                        alt: attrs.text,
-                        icon: 'print',
-                        text: attrs.text
-                ],
-                formatsLinks
-        )
     }
 
     def includeContent(attrs) {
