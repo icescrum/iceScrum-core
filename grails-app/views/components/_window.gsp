@@ -85,7 +85,12 @@
 
 <g:if test="${type == 'window'}">
     <div id="right" class="right-resizable ${!toolbar ? type + '-right-without-toolbar' : ''}" data-resizable="true" data-containment="parent" data-event-on-width="600" data-min-width="400" data-empty-hide="${right ? "false" : "true"}">
-        ${right}
+        <div id="view-properties" data-accordion="true" data-collapsible="true">
+            <h3><a href="#">${title}</a></h3>
+            ${right}
+        </div>
+        <div id="contextual-properties" data-accordion="true" data-height-style="fill">
+        </div>
     </div>
 </g:if>
 </div>
