@@ -157,7 +157,7 @@ class ScrumTagLib {
                     scroll: attrs.draggable.scroll ?: true
             ]
             def opts = draggableOptions.findAll {k, v -> v}.collect {k, v -> " $k:$v" }.join(',')
-            jqCode += " \$('#backlog-layout-${attrs.id} > ${attrs.draggable.selector ?: 'div'}').liveDraggable({$opts}); "
+            //jqCode += " \$('#backlog-layout-${attrs.id} > ${attrs.draggable.selector ?: 'div'}').liveDraggable({$opts}); "
         }
 
         // Droppable options
@@ -169,12 +169,12 @@ class ScrumTagLib {
                     accept: UtilsWebComponents.wrap(attrs.droppable.accept)
             ]
             def opts = droppableOptions.findAll {k, v -> v}.collect {k, v -> " $k:$v"}.join(',')
-            jqCode += " \$('#backlog-layout-${attrs.id} > ${attrs.droppable.selector ?: 'div'}').liveDroppable({$opts});"
+            //jqCode += " \$('#backlog-layout-${attrs.id} > ${attrs.droppable.selector ?: 'div'}').liveDroppable({$opts});"
         }
 
         if (attrs.editable != null && UtilsWebComponents.rendered(attrs.editable) && !request.readOnly) {
             attrs.editable.wrap = false
-            jqCode += is.editable(attrs.editable);
+            //jqCode += is.editable(attrs.editable);
         }
 
         // Wrapper

@@ -22,15 +22,19 @@
      class="is-${type} box-${type}${sortable ? '-sortable' : ''} box"
      tabindex="0"
     <g:if test="${type == 'window'}">
-        data-fullScreen="${windowActions?.fullScreen?:false}" data-widgetable="${windowActions?.widgetable?:false}" data-title="${projectName ?: 'iceScrum'} - ${title.encodeAsJavaScript()}"
+        data-is-full-screen="${windowActions?.fullScreen?:false}"
+        data-is-widgetable="${windowActions?.widgetable?:false}"
+        data-is-title="${projectName ?: 'iceScrum'} - ${title.encodeAsJavaScript()}"
     </g:if>
     <g:else>
-        data-windowable="${windowActions?.windowable?:false}" data-closeable="${windowActions?.closeable?:false}" data-resizable-options='${resizable ? resizable as JSON :false}'
+        data-is-windowable="${windowActions?.windowable?:false}"
+        data-is-closeable="${windowActions?.closeable?:false}"
+        data-is-resizable-options='${resizable ? resizable as JSON :false}'
     </g:else>
 >
 
 %{-- Toolbar --}%
-<g:if test="${toolbar}">
+<g:if test="${toolbar != false}">
     <div class="box-navigation">
         <ul class='${type}-toolbar'>
             <g:if test="${type == 'widget'}">
@@ -49,7 +53,8 @@
                     <a class="ui-icon-print ui-icon"
                        title="${message(code:'is.ui.window.print')}"
                        data-ajax="true"
-                       data-shortcut="ctrl+p"
+                       data-is-shortcut
+                       data-is-shortcut-key="ctrl+p"
                        href="${createLink(controller:id,action:'print', params:[product:params.product?:null, format:'PDF'])}"></a>
                 </li>
             </g:if>
@@ -84,12 +89,22 @@
 </div>
 
 <g:if test="${type == 'window' && right != null}">
-    <div id="right" class="right-resizable ${!toolbar ? type + '-right-without-toolbar' : ''}" data-resizable="true" data-containment="parent" data-event-on-width="600" data-min-width="400" data-empty-hide="${right ? false : true}">
-        <div id="view-properties" data-accordion="true" data-collapsible="true">
+    <div id="right" class="${!toolbar ? type + '-right-without-toolbar' : ''}"
+         data-ui-resizable-panel
+         data-ui-resizable-panel-right="true"
+         data-ui-resizable-panel-containment="parent"
+         data-ui-resizable-panel-event-on-width="600"
+         data-ui-resizable-panel-min-width="400"
+         data-ui-resizable-panel-empty-hide="${right ? false : true}">
+        <div id="view-properties"
+             data-ui-accordion
+             data-ui-accordion-collapsible="true">
             <h3><a href="#">${title}</a></h3>
             ${right}
         </div>
-        <div id="contextual-properties" data-accordion="true" data-height-style="fill">
+        <div id="contextual-properties"
+             data-ui-accordion
+             data-ui-accordion-height-style="fill">
         </div>
     </div>
 </g:if>
