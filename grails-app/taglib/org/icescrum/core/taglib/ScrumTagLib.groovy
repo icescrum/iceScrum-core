@@ -329,9 +329,6 @@ class ScrumTagLib {
         }
 
         def fragment = attrs.controller + (attrs.action ? '/' + attrs.action : '') + (attrs.id ? '/' + attrs.id : '') + (attrs.params ? '/?' : '') + attrs.params.collect {it -> it.key + "=" + it.value}.join("&")
-
-        //def fragment = g.createLink(controller: attrs.controller, action: attrs.action?:null, id: attrs.id, params: attrs.params) - (request.contextPath+'/')
-
         out << g.createLink(controller: space == 'team' ? 'team' : 'scrumOS', action: 'index', params: spaceParams, absolute: attrs.absolute ?: false, base: attrs.base ?: null) + '#' + fragment
     }
 

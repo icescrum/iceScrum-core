@@ -83,19 +83,6 @@
             </g:if>
         %{--State label--}%
             <span class="text-state"><is:truncated encodedHTML="true" size="16">${stateText}</is:truncated></span>
-
-            <g:if test="${menu?.rendered != null ? menu.rendered : menu ? true : false}">
-                <div class="dropmenu-action">
-                    <div data-dropmenu="true" class="dropmenu" data-top="13" data-offset="0" data-noWindows="false" id="menu-postit-${menu.id}">
-                        <span class="dropmenu-arrow">!</span>
-                        <div class="dropmenu-content ui-corner-all">
-                            <ul class="small">
-                                <g:render template="${menu.template}" model="${menu.params}"/>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </g:if>
         </div>
 
     </div>
