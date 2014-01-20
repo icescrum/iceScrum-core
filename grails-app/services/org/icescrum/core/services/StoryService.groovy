@@ -674,11 +674,6 @@ class StoryService {
         resumeBufferedBroadcast(channel:'product-'+product.id)
     }
 
-    @PreAuthorize('productOwner(#story.backlog) and !archivedProduct(#story.backlog)')
-    def acceptToFeature(Story story) {
-        return acceptToFeature([story])
-    }
-
     @PreAuthorize('productOwner(#stories[0].backlog) and !archivedProduct(#stories[0].backlog)')
     def acceptToFeature(List<Story> stories) {
         def features = []
@@ -726,11 +721,6 @@ class StoryService {
         }
         resumeBufferedBroadcast(channel:'product-'+product.id)
         return features
-    }
-
-    @PreAuthorize('productOwner(#story.backlog) and !archivedProduct(#story.backlog)')
-    def acceptToUrgentTask(Story story) {
-        return acceptToUrgentTask([story])
     }
 
     @PreAuthorize('productOwner(#stories[0].backlog) and !archivedProduct(#stories[0].backlog)')
@@ -940,11 +930,6 @@ class StoryService {
         broadcast(function: 'dissociated', message: story, channel:'product-'+story.backlog.id)
         User u = (User) springSecurityService.currentUser
         publishEvent(new IceScrumStoryEvent(story, this.class, u, IceScrumStoryEvent.EVENT_FEATURE_DISSOCIATED))
-    }
-
-    @PreAuthorize('inProduct(#story.backlog) and !archivedProduct(#story.backlog)')
-    def copy(Story story) {
-        copy([story])
     }
 
     @PreAuthorize('inProduct(#stories[0].backlog) and !archivedProduct(#stories[0].backlog)')

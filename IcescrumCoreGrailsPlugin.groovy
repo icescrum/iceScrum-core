@@ -1039,8 +1039,7 @@ class IcescrumCoreGrailsPlugin {
         }
 
         source.metaClass.withProduct = { String id = 'product', Closure c ->
-            def pid = params."$id"?.decodeProductKey()
-            Product product = Product.get(pid?.toLong())
+            Product product = Product.get(params."$id"?.toLong())
             if (product) {
                 try {
                     c.call product
