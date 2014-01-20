@@ -661,6 +661,7 @@ class StoryService {
             story.state = Story.STATE_SUGGESTED
             story.acceptedDate = null
             story.estimatedDate = null
+            story.effort = null
 
             if (!story.save(flush: true))
                 throw new RuntimeException()
