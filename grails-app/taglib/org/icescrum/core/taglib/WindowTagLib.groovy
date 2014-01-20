@@ -288,18 +288,6 @@ class WindowTagLib {
         return jq.jquery(null, dialogCode)
     }
 
-    /**
-     * Display an spinner on ajax call on the selected div id
-     */
-    def spinner = {attrs ->
-        out << jq.jquery(attrs, """
-    jQuery(document).ajaxSend(function() { jQuery.icescrum.loading(); jQuery(document.body).css('cursor','progress'); });
-    jQuery(document).ajaxError(function(data) { jQuery.icescrum.loadingError(); jQuery(document.body).css('cursor','default'); });
-    jQuery(document).ajaxComplete(function(e,xhr,settings){  jQuery.icescrum.loading(false); if(xhr.status == 403){ $attrs.on403;}else if(xhr.status == 401){ $attrs.on401; }else if(xhr.status == 400){ $attrs.on400; }else if(xhr.status == 500){ $attrs.on500; } });
-    jQuery(document).ajaxStop(function() { jQuery.icescrum.loading(false); jQuery(document.body).css('cursor','default'); });
-    """)
-    }
-
     def shortcut = {attrs ->
         if (request.readOnly){
             return
