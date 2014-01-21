@@ -32,7 +32,9 @@
         data-is-resizable-options='${resizable ? resizable as JSON :false}'
     </g:else>
 >
-
+<g:if test="${type == 'widget'}">
+    <span class="mini-width-icon ui-icon ui-icon-arrowthick-1-n"></span>
+</g:if>
 %{-- Toolbar --}%
 <g:if test="${toolbar != false}">
     <div class="box-navigation">
@@ -95,6 +97,7 @@
          data-ui-resizable-panel-containment="parent"
          data-ui-resizable-panel-event-on-width="600"
          data-ui-resizable-panel-min-width="400"
+         data-ui-resizable-panel-mini-width="38"
          data-ui-resizable-panel-empty-hide="${right ? false : true}">
         <div id="view-properties"
              data-ui-accordion
