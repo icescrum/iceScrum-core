@@ -65,6 +65,21 @@ class AcceptanceTest implements Fluxiable, Serializable {
                    AND at.parentStory.backlog.id = :pid """, [id: id, pid: productId]).first()
     }
 
+    static List<AcceptanceTest> getAllInProduct(productId) {
+        executeQuery(
+                """SELECT at
+                   FROM org.icescrum.core.domain.AcceptanceTest as at
+                   WHERE at.parentStory.backlog.id = :pid """, [pid: productId])
+    }
+
+    static List<AcceptanceTest> getAllInStory(productId, storyId) {
+        executeQuery(
+                """SELECT at
+                   FROM org.icescrum.core.domain.AcceptanceTest as at
+                   WHERE at.parentStory.backlog.id = :pid
+                   AND at.parentStory.id = :sid """, [sid: storyId, pid: productId])
+    }
+
     def beforeDelete() {
         withNewSession {
             publishEvent(new IceScrumAcceptanceTestEvent(this, this.class, User.get(SCH.context?.authentication?.principal?.id), IceScrumAcceptanceTestEvent.EVENT_BEFORE_DELETE, true))
