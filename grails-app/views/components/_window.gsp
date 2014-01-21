@@ -33,7 +33,7 @@
     </g:else>
 >
 <g:if test="${type == 'widget'}">
-    <span class="mini-width-icon ui-icon ui-icon-arrowthick-1-n"></span>
+    <span class="mini-width-icon ui-icon ui-icon-arrowthick-1-n" title="${title}"></span>
 </g:if>
 %{-- Toolbar --}%
 <g:if test="${toolbar != false}">
