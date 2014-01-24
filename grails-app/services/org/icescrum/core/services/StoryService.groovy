@@ -187,42 +187,88 @@ class StoryService {
         delete([story], history, reason)
     }
 
-    @PreAuthorize('(productOwner(#story.backlog) or scrumMaster()) and !archivedProduct(#story.backlog)')
-    void update(Story story, Sprint sp = null) {
-        def product = story.backlog
+    @PreAuthorize('isAuthenticated() and !archivedProduct(#story.backlog)')
+    void update(Story story, Map props) {
 
-        manageActors(story, product)
+        // The order can be really important... Some method calls will update other properties as a side effect
+        // So the checks done on these properties can lead to inconsistent results depending on the order
+        // The former method called where done as transitions in a state machine, this is broken by the monolithic update method
 
-        if (!sp && !story.parentSprint && (story.state == Story.STATE_ACCEPTED || story.state == Story.STATE_ESTIMATED)) {
-            if (story.effort != null) {
-                story.state = Story.STATE_ESTIMATED
-                story.estimatedDate = new Date()
-            }
+        if (props.effort != null) {
+            estimate(story, props.effort)
+        }
+        if (props.dependsOn != null) {
+            dependsOn(story, props.dependsOn)
+        } else if (props.containsKey('dependsOn') && story.dependsOn) {
+            notDependsOn(story)
+        }
+        if (props.sprint != null) {
+            plan(props.sprint, story)
+        } else if (props.containsKey('sprint') && story.parentSprint) {
+            unPlan(story)
+        }
+
+        if (story.parentSprint == null && (story.state in [Story.STATE_ACCEPTED, Story.STATE_ESTIMATED])) {
             if (story.effort == null) {
                 story.state = Story.STATE_ACCEPTED
                 story.estimatedDate = null
+            } else {
+                story.state = Story.STATE_ESTIMATED
+                story.estimatedDate = new Date()
             }
-        } else if (story.parentSprint && story.parentSprint.state == Sprint.STATE_WAIT) {
+        } else if (story.parentSprint != null && story.parentSprint.state == Sprint.STATE_WAIT) {
             story.parentSprint.capacity = (Double) story.parentSprint.getTotalEffort()
         }
 
-        story.affectVersion = (story.type == Story.TYPE_DEFECT ? story.affectVersion : null)
+        if (story.type != Story.TYPE_DEFECT) {
+            story.affectVersion = null
+        }
 
-        if (!story.save())
-            throw new RuntimeException()
+        if (story.state <= Story.STATE_SUGGESTED && story.rank != 0) {
+            story.rank = 0
+        } else if (props.rank != null) {
+            rank(story, props.rank)
+        }
 
-        User u = (User) springSecurityService.currentUser
+        def product = story.backlog
+        manageActors(story, product)
+
+        def dirtyProperties = story.dirtyPropertyNames
+
+        if (!story.save()) {
+            throw new RuntimeException(story.errors?.toString())
+        }
+
+        def u = (User) springSecurityService.currentUser
+
+        // Specific push / event management may be replaced by:
+        // - for the push : a single update function
+        // - for the events : the list of dirtyProperties provided in the event so the listeners can discriminate
+        // We may even consider adding the activities automatically, which is just the recording of the events in the DB
+        // Problem : service methods called here currently make their own push / event
+        // this breaks the atomicity (I guess that events spawn in new threads can't be reverted?)
+        // a solution would be making the push / event optional (according to a parameter)
+        // or even more, make them private and replace their external usages by calls to "update"
+        // security annotations will probably don't work on private methods (do they even work here when calling methods of the same bean ?)
+        // thus the security would have to be done programmatically
+        if ('feature' in dirtyProperties) {
+            def function, event
+            if (story.feature == null) {
+                function = 'dissociated'
+                event = IceScrumStoryEvent.EVENT_FEATURE_DISSOCIATED
+            } else {
+                function = 'associated'
+                event = IceScrumStoryEvent.EVENT_FEATURE_ASSOCIATED
+            }
+            broadcast(function: function, message: story, channel:'product-'+product.id)
+            publishEvent(new IceScrumStoryEvent(story, this.class, u, event))
+        }
 
         story.addActivity(u, Activity.CODE_UPDATE, story.name)
         broadcast(function: 'update', message: story, channel:'product-'+product.id)
         publishEvent(new IceScrumStoryEvent(story, this.class, u, IceScrumStoryEvent.EVENT_UPDATED))
     }
 
-    /**
-     * Estimate a story (set the effort value)
-     * @param story
-     * @param estimation
-     */
     @PreAuthorize('(teamMember(#story.backlog) or scrumMaster(#story.backlog)) and !archivedProduct(#story.backlog)')
     void estimate(Story story, estimation) {
         def oldState = story.state
@@ -261,12 +307,6 @@ class StoryService {
         }
     }
 
-    /**
-     * Associate a story in a sprint
-     * @param sprint The targeted sprint
-     * @param story The story to associate
-     * @param user The user performing the action
-     */
     @PreAuthorize('(productOwner(#sprint.parentProduct) or scrumMaster(#sprint.parentProduct)) and !archivedProduct(#sprint.parentProduct)')
     void plan(Sprint sprint, Story story) {
         if (story.dependsOn){
@@ -346,12 +386,7 @@ class StoryService {
             publishEvent(new IceScrumStoryEvent(story, this.class, user, IceScrumStoryEvent.EVENT_PLANNED))
     }
 
-    /**
-     * UnPlan the specified backlog item from the specified sprint
-     * @param _sprint
-     * @param story
-     * @return
-     */
+    @PreAuthorize('(productOwner(#story.backlog) or scrumMaster(#story.backlog)) and !archivedProduct(#story.backlog)')
     void unPlan(Story story, Boolean fullUnPlan = true) {
 
         def sprint = story.parentSprint
@@ -400,11 +435,7 @@ class StoryService {
         publishEvent(new IceScrumStoryEvent(story, this.class, (User) springSecurityService.currentUser, IceScrumStoryEvent.EVENT_UNPLANNED))
     }
 
-    /**
-     * UnPlan all stories from t odo sprints
-     * @param spList
-     * @param state (optional) If this argument is specified, dissociate only the sprint with the specified state
-     */
+    // TODO check rights
     def unPlanAll(Collection<Sprint> sprintList, Integer sprintState = null) {
         sprintList.sort  { sprint1, sprint2 -> sprint2.orderNumber <=> sprint1.orderNumber }
         def product = sprintList.first().parentProduct
@@ -428,6 +459,7 @@ class StoryService {
         return storiesUnPlanned
     }
 
+    // TODO check rights
     def autoPlan(Release release, Double capacity) {
         int nbPoints = 0
         int nbSprint = 0
@@ -478,6 +510,7 @@ class StoryService {
         return plannedStories
     }
 
+    // TODO check rights
     void setRank(Story story, int rank) {
         def stories = null
         if (story.state == Story.STATE_ACCEPTED || story.state == Story.STATE_ESTIMATED)
@@ -501,6 +534,7 @@ class StoryService {
         cleanRanks(stories)
     }
 
+    // TODO check rights
     void cleanRanks(stories){
         stories.sort{ it.rank }
         int i = 0
@@ -521,6 +555,7 @@ class StoryService {
         }
     }
 
+    // TODO check rights
     void resetRank(Story story) {
         def stories = null
         if (story.state == Story.STATE_ACCEPTED || story.state == Story.STATE_ESTIMATED)
@@ -537,15 +572,16 @@ class StoryService {
     }
 
     @PreAuthorize('(productOwner(#story.backlog) or scrumMaster(#story.backlog))  and !archivedProduct(#story.backlog)')
-    boolean rank(Story story, int rank) {
+    void rank(Story story, int rank) {
 
         rank = checkRankDependencies(story, rank)
         if ((story.dependsOn || story.dependences ) && story.rank == rank) {
-            return true
+            return
         }
 
-        if (story.state in [Story.STATE_SUGGESTED, Story.STATE_DONE])
-            return false
+        if (story.state in [Story.STATE_SUGGESTED, Story.STATE_DONE]) {
+            throw new IllegalStateException(g.message(code: 'is.story.rank.error').toString())
+        }
 
         def stories = null
 
@@ -579,7 +615,9 @@ class StoryService {
         cleanRanks(stories)
 
         broadcast(function: 'update', message: story, channel:'product-'+story.backlog.id)
-        return story.save() ? true : false
+        if (!story.save()) {
+            throw new RuntimeException(g.message(code: 'is.story.rank.error').toString())
+        }
     }
 
     private int checkRankDependencies(story, rank){
@@ -884,16 +922,7 @@ class StoryService {
         resumeBufferedBroadcast(channel:'product-'+product.id)
     }
 
-    void associateFeature(Feature feature, Story story) {
-        feature.addToStories(story)
-        if (!feature.save(flush:true))
-            throw new RuntimeException()
-
-        broadcast(function: 'associated', message: story, channel:'product-'+story.backlog.id)
-        User u = (User) springSecurityService.currentUser
-        publishEvent(new IceScrumStoryEvent(story, this.class, u, IceScrumStoryEvent.EVENT_FEATURE_ASSOCIATED))
-    }
-
+    // TODO check rights
     void notDependsOn(Story story) {
         def oldDepends = story.dependsOn
         story.dependsOn = null
@@ -906,6 +935,7 @@ class StoryService {
         publishEvent(new IceScrumStoryEvent(story, this.class, u, IceScrumStoryEvent.EVENT_NOT_DEPENDS_ON))
     }
 
+    // TODO check rights
     void dependsOn(Story story, Story dependsOn) {
 
         if (story.dependsOn){
@@ -920,17 +950,6 @@ class StoryService {
         broadcast(function: 'dependsOn', message: dependsOn, channel:'product-'+story.backlog.id)
         User u = (User) springSecurityService.currentUser
         publishEvent(new IceScrumStoryEvent(story, this.class, u, IceScrumStoryEvent.EVENT_DEPENDS_ON))
-    }
-
-    void dissociateFeature(Story story) {
-        def feature = story.feature
-        feature.removeFromStories(story)
-        if (!feature.save(flush:true))
-            throw new RuntimeException()
-
-        broadcast(function: 'dissociated', message: story, channel:'product-'+story.backlog.id)
-        User u = (User) springSecurityService.currentUser
-        publishEvent(new IceScrumStoryEvent(story, this.class, u, IceScrumStoryEvent.EVENT_FEATURE_DISSOCIATED))
     }
 
     @PreAuthorize('inProduct(#stories[0].backlog) and !archivedProduct(#stories[0].backlog)')

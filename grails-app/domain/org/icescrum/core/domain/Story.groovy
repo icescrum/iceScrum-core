@@ -104,7 +104,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
         inProgressDate(nullable: true)
         doneDate(nullable: true)
         parentSprint(nullable: true)
-        feature(nullable: true)
+        feature(nullable: true, validator: { val, obj -> val == null || val.backlog == obj.backlog }) // TODO custom message
         actor(nullable: true)
         affectVersion(nullable: true)
         effort(nullable: true)
@@ -741,5 +741,9 @@ class Story extends BacklogElement implements Cloneable, Serializable {
 
     Integer countAcceptanceTests() {
         countTestsByState().values().sum()
+    }
+
+    Boolean canUpdate(isProductOwner, currentUser) {
+        return isProductOwner || ((state == STATE_SUGGESTED && currentUser == creator))
     }
 }

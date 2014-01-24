@@ -38,9 +38,6 @@ class SprintService {
 
     static transactional = true
 
-    /**
-     * Declarations
-     */
     def clicheService
     def taskService
     def storyService
@@ -64,11 +61,7 @@ class SprintService {
         broadcast(function: 'add', message: sprint, channel:'product-'+sprint.parentProduct.id)
     }
 
-    /**
-     * Update a sprint
-     * @param sprint
-     * @param uCurrent
-     */
+    // TODO check rights
     void update(Sprint sprint, Date startDate, Date endDate, def checkIntegrity = true, boolean updateRelease = true) {
 
         Date oldStartDate = sprint.startDate
@@ -129,11 +122,7 @@ class SprintService {
         broadcast(function: 'update', message: sprint, channel:'product-'+sprint.parentProduct.id)
     }
 
-    /**
-     * Delete a sprint from the database
-     * All its stories are dissociated before actual deletion.
-     * @param sprint
-     */
+    // TODO check rights
     def delete(Sprint sprint) {
         // Cannot delete a INPROGRESS or DONE sprint
         if (sprint.state >= Sprint.STATE_INPROGRESS)
@@ -162,7 +151,7 @@ class SprintService {
         return deletedSprints
     }
 
-
+    // TODO check rights
     def generateSprints(Release release, Date startDate = null) {
         if (release.state == Release.STATE_DONE)
             throw new IllegalStateException('is.sprint.error.release.done')
@@ -217,12 +206,7 @@ class SprintService {
         return sprints
     }
 
-    /**
-     * Sprint activation
-     * @param _sprint
-     * @param uCurrent
-     * @param pb
-     */
+    // TODO check rights
     void activate(Sprint sprint) {
         // Release of the sprint is not the activated release
         if (sprint.parentRelease.state != Release.STATE_INPROGRESS)
@@ -288,6 +272,7 @@ class SprintService {
         broadcast(function: 'activate', message: sprint, channel:'product-'+sprint.parentProduct.id)
     }
 
+    // TODO check rights
     void close(Sprint sprint) {
         // The sprint must be in the state "INPROGRESS"
         if (sprint.state != Sprint.STATE_INPROGRESS)
@@ -341,6 +326,7 @@ class SprintService {
 
     }
 
+    // TODO check rights
     void updateDoneDefinition(Sprint sprint) {
         if (!sprint.save()) {
             throw new RuntimeException()
@@ -349,6 +335,7 @@ class SprintService {
         broadcast(function: 'doneDefinition', message: sprint, channel:'product-'+sprint.parentProduct.id)
     }
 
+    // TODO check rights
     void updateRetrospective(Sprint sprint) {
         if (!sprint.save()) {
             throw new RuntimeException()
@@ -357,6 +344,7 @@ class SprintService {
         broadcast(function: 'retrospective', message: sprint, channel:'product-'+sprint.parentProduct.id)
     }
 
+    // TODO check rights
     def sprintBurndownRemainingValues(Sprint sprint) {
         def values = []
         def lastDaycliche = sprint.activationDate
@@ -394,6 +382,7 @@ class SprintService {
         return values
     }
 
+    // TODO check rights
     def sprintBurnupTasksValues(Sprint sprint) {
         def values = []
         def lastDaycliche = sprint.activationDate
@@ -430,6 +419,7 @@ class SprintService {
         return values
     }
 
+    // TODO check rights
     def sprintBurnupStoriesValues(Sprint sprint) {
         def values = []
         def lastDaycliche = sprint.activationDate
@@ -471,6 +461,7 @@ class SprintService {
         return values
     }
 
+    // TODO check rights
     def copyRecurrentTasksFromPreviousSprint(Sprint sprint) {
         if (sprint.orderNumber == 1 && sprint.parentRelease.orderNumber == 1) {
             throw new IllegalStateException('is.sprint.copyRecurrentTasks.error.no.sprint.before')
