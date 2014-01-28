@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010 iceScrum Technologies.
+ * Copyright (c) 2014 Kagilum SAS.
  *
  * This file is part of iceScrum.
  *
@@ -18,16 +18,10 @@
  * Authors:
  *
  * Vincent Barrier (vbarrier@kagilum.com)
- * Damien Vitrac (damien@oocube.com)
- * Manuarii Stein (manuarii.stein@icescrum.com)
- * Stephane Maldini (vbarrier@kagilum.com)
  * Nicolas Noullet (nnoullet@kagilum.com)
  */
 
 package org.icescrum.core.taglib
-
-import org.codehaus.groovy.grails.plugins.jasper.JasperExportFormat
-import org.icescrum.components.UtilsWebComponents
 import org.codehaus.groovy.grails.web.servlet.GrailsApplicationAttributes
 import org.codehaus.groovy.grails.web.metaclass.ControllerDynamicMethods
 import org.codehaus.groovy.grails.web.mapping.ForwardUrlMappingInfo
@@ -158,136 +152,7 @@ class WindowTagLib {
         out << is.window(params, {})
     }
 
-    //TODO refactor
-    def dialog = { attrs, body ->
-        attrs.id = attrs.id ?: 'dialog'
-        out << "<div id='${attrs.id}'>${body()}</div>"
-        out << dialogMethod(attrs)
-    }
-
-    private dialogMethod(attrs) {
-
-        if (!UtilsWebComponents.rendered(attrs)) {
-            return
-        }
-
-        def space = params.product ? 'product' : (params.team ? 'team' : null)
-        if (space && !attrs.noprefix) {
-            if (!attrs.params) {
-                attrs.params = [(space): params.long(space)]
-            } else if (Map.isAssignableFrom(attrs.params.getClass())) {
-                attrs.params << [(space): params.long(space)]
-            } else {
-                attrs.params = "'product=${params.long('product')}&'+" + attrs.params
-            }
-        }
-
-        if (attrs.title) {
-            attrs.title = message(code: attrs.title)
-        }
-
-        def function = "jQuery('#${attrs.id} form').submit();"
-        if (attrs.valid && attrs.valid.action) {
-            function = remoteFunction(
-                    action: attrs.valid.action,
-                    controller: attrs.valid.controller,
-                    onSuccess: "${attrs.valid.onSuccess ? attrs.valid.onSuccess + ';' + 'jQuery(\'#'+attrs.id+'\').dialog(\'close\');' : 'jQuery(\'#'+attrs.id+'\').dialog(\'close\');'}  ",
-                    before: attrs.valid.before,
-                    id: attrs.valid.id,
-                    update: attrs.valid.update,
-                    params: "${attrs.valid.params ? attrs.valid.params + '+\'&\'+' : ''}jQuery('#${attrs.id} form:first').serialize()")
-        }
-
-        def function2 = "jQuery(this).dialog('close');"
-        if (attrs.cancel) {
-            function2 = remoteFunction(
-                    action: attrs.cancel.action,
-                    controller: attrs.cancel.controller,
-                    onSuccess: "${attrs.cancel.onSuccess ? attrs.cancel.onSuccess + ';' : ''} jQuery('#${attrs.id}').dialog('close'); ",
-                    before: attrs.cancel.before,
-                    id: attrs.cancel.id,
-                    update: attrs.cancel.update,
-                    params: "${attrs.cancel.params ? attrs.cancel.params + '+\'&\'+' : ''}jQuery('#${attrs.id} form:first').serialize()")
-        }
-
-        def buttonOk = message(code: "is.button.update")
-        if (attrs.valid?.button) {
-            buttonOk = message(code: attrs.valid.button)
-        }
-
-        def params = [
-                closeOnEscape: attrs.closeOnEscape ?: true,
-                closeText: attrs.closeText ?: "\'${message(code: 'is.dialog.close')}\'",
-                dialogClass: attrs.className ?: null,
-                draggable: attrs.draggable ?: false,
-                height: attrs.height ?: null,
-                hide: attrs.hideEffect ?: null,
-                show: attrs.showEffect ?: null,
-                maxHeight: attrs.maxHeight ?: null,
-                maxWidth: attrs.maxWidth ?: null,
-                minHeight: attrs.minHeight ?: null,
-                minWidth: attrs.minWidth ?: null,
-                modal: attrs.modal ?: true,
-                position: attrs.position ?: "'top'",
-                resizable: attrs.resizable ?: false,
-                title: attrs.title ? "\'${attrs.title}\'" : null,
-                width: attrs.width ?: 300,
-                close: """function(ev, ui) { if(ev.keyCode && ev.keyCode === jQuery.ui.keyCode.ESCAPE){ ${attrs.cancel ? function2 : ''} } """ + (attrs.onClose ? attrs.onClose + ';' : '') + " jQuery(this).remove(); jQuery('.box-window').focus();}",
-                buttons: attrs.buttons ? "{" + attrs.buttons + "}" : null
-        ]
-
-        def dialogCode = "jQuery('#${attrs.id}').dialog({"
-
-        if (attrs.onSuccess) {
-            dialogCode += "${attrs.onSuccess};"
-        }
-
-        if (attrs.valid || attrs.cancel) {
-            params.buttons = "{'${message(code: "is.button.cancel")}': function(){${function2}},'${buttonOk}': function(){${function}}}"
-        }
-        attrs.remove('valid')
-        attrs.remove('cancel')
-
-        attrs.withTitlebar = attrs.withTitlebar ? attrs.withTitlebar.toBoolean() : false
-
-        if (!attrs.withTitlebar) {
-            if(attrs.dialogClass) {
-                attrs.dialogClass += " no-titlebar"
-            } else {
-                attrs.dialogClass = "no-titlebar"
-            }
-        }
-        dialogCode += "dialogClass: '${attrs.dialogClass}',"
-
-        attrs.remove('withTitlebar')
-
-        dialogCode += params.findAll {k, v -> v != null}.collect {k, v -> "$k:$v"}.join(',')
-
-        params.each {key, value ->
-            attrs.remove(key)
-        }
-        attrs.remove('onSuccess')
-
-        dialogCode += "});"
-
-        if (attrs.focusable == null || attrs.focusable) {
-            attrs.remove('focusable')
-            dialogCode += "jQuery(\'.ui-dialog-buttonpane button:eq(1)\').focus();"
-        } else {
-            dialogCode += "jQuery(\'.ui-dialog-buttonpane button:eq(0)\').blur();"
-        }
-
-
-
-        if (attrs.onOpen) {
-            dialogCode += attrs.onOpen
-        }
-
-        attrs.remove('onOpen');
-
-        return jq.jquery(null, dialogCode)
-    }
-
+    //TODO Remove when no reference left
     def shortcut = {attrs ->
         if (request.readOnly){
             return
@@ -305,30 +170,6 @@ class WindowTagLib {
         def escapedKey = attrs.key.replace('+', '').replace('.', '')
         def jqCode = "jQuery(${attrs.listenOn}).unbind('${attrs.scope}.${escapedKey}');"
         jqCode += "jQuery(${attrs.listenOn}).bind('${attrs.scope}.${escapedKey}','${attrs.key}',function(e){${attrs.callback}e.preventDefault();});"
-        out << jq.jquery(null, jqCode)
-    }
-
-    /**
-     * Implements the drag & drop import feature
-     */
-    def dropImport = { attrs, body ->
-        if (request.readOnly){
-            return
-        }
-        assert attrs.id
-        def jqCode = """jQuery('#window-content-${attrs.id}').dnd({
-        dropHelper:'#${attrs.id}-drophelper',
-        drop:function(event){
-          var dt = event.dataTransfer;
-          ${
-            remoteFunction(controller: attrs.controller ?: controllerName,
-                    action: attrs.action ?: 'dropImport',
-                    params: "'product=${params.product}&data='+dt.text()",
-                    onSuccess: attrs.success)
-        }
-        }
-      });"""
-        out << g.render(template: '/components/dropHelper', plugin: 'icescrum-core', model: [id: attrs.id, description: message(code: attrs.description)])
         out << jq.jquery(null, jqCode)
     }
 

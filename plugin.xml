@@ -44,7 +44,6 @@
     <resource>org.icescrum.core.services.AddonsService</resource>
     <resource>org.icescrum.core.services.BootStrapService</resource>
     <resource>org.icescrum.core.services.ClicheService</resource>
-    <resource>org.icescrum.core.services.DropImportService</resource>
     <resource>org.icescrum.core.services.FeatureService</resource>
     <resource>org.icescrum.core.services.NotificationEmailService</resource>
     <resource>org.icescrum.core.services.ProductService</resource>

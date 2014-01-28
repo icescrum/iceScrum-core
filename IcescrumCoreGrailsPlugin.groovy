@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2010 iceScrum Technologies / 2011 Kagilum SAS
+* Copyright (c) 2011 Kagilum SAS
 *
 * This file is part of iceScrum.
 *
