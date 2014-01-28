@@ -68,7 +68,7 @@ class WindowTagLib {
         }
 
         // Check for toolbar existence
-        attrs.toolbar = attrs.toolbar ? include(controller: windowId, action: attrs.type == 'widget' ? 'toolbarWidget' : 'toolbar', params: includeParams) : true
+        attrs.toolbar = attrs.toolbar ? include(controller: windowId, action: attrs.type == 'widget' ? 'toolbarWidget' : 'toolbar', params: includeParams) : attrs.toolbar != false
 
         // Check for right content
         attrs.right = attrs.right ? include(controller: windowId, action: 'right', params: includeParams) : null

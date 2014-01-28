@@ -182,11 +182,6 @@ class StoryService {
         resumeBufferedBroadcast(channel:'product-'+product.id)
     }
 
-    @PreAuthorize('!archivedProduct(#story.backlog)')
-    void delete(Story story, boolean history = true, def reason = null) {
-        delete([story], history, reason)
-    }
-
     @PreAuthorize('isAuthenticated() and !archivedProduct(#story.backlog)')
     void update(Story story, Map props) {
 
@@ -194,6 +189,14 @@ class StoryService {
         // So the checks done on these properties can lead to inconsistent results depending on the order
         // The former method called where done as transitions in a state machine, this is broken by the monolithic update method
 
+        if (props.state != null) {
+            if (props.state == Story.STATE_ACCEPTED && story.state == Story.STATE_SUGGESTED){
+                acceptToBacklog([story])
+            } else if (props.state == Story.STATE_SUGGESTED && story.state > Story.STATE_ACCEPTED){
+                returnToSandbox([story])
+            }
+        }
+        //Estimate story
         if (props.effort != null) {
             estimate(story, props.effort)
         }
@@ -620,37 +623,6 @@ class StoryService {
         }
     }
 
-    private int checkRankDependencies(story, rank){
-        if (story.dependsOn){
-            if (story.state in [Story.STATE_ACCEPTED, Story.STATE_ESTIMATED]){
-                if (rank <= story.dependsOn.rank){
-                    rank = story.dependsOn.rank + 1
-                }
-            }
-            else if (story.dependsOn.parentSprint == story.parentSprint){
-                if (rank <= story.dependsOn.rank){
-                    rank = story.dependsOn.rank + 1
-                }
-            }
-        }
-
-        if (story.dependences){
-            if (story.state in [Story.STATE_ACCEPTED, Story.STATE_ESTIMATED]){
-                def highestRank = story.dependences.findAll{ it.state in [Story.STATE_ACCEPTED, Story.STATE_ESTIMATED]}?.collect{it.rank}?.min()
-                if (highestRank && highestRank <= rank){
-                    rank = highestRank - 1
-                }
-            }
-            else if (story.state > Story.STATE_ESTIMATED){
-                def highestRank = story.dependences.findAll{ it.parentSprint == story.parentSprint }?.collect{it.rank}?.min()
-                if (highestRank && highestRank <= rank){
-                    rank = highestRank - 1
-                }
-            }
-        }
-        return rank
-    }
-
     @PreAuthorize('productOwner(#stories[0].backlog) and !archivedProduct(#stories[0].backlog)')
     def acceptToBacklog(List<Story> stories) {
         def storiesA = []
@@ -751,8 +723,7 @@ class StoryService {
             }
 
             feature.tags = story.tags
-
-            this.delete(story, false)
+            delete([story], false)
             features << feature
 
             feature.addActivity(user, 'acceptAs', feature.name)
@@ -819,7 +790,7 @@ class StoryService {
             task.tags = story.tags
 
             tasks << task
-            this.delete(story, false)
+            delete([story], false)
 
             publishEvent(new IceScrumStoryEvent(task, this.class, (User) springSecurityService.currentUser, IceScrumStoryEvent.EVENT_ACCEPTED_AS_TASK))
         }
@@ -1198,8 +1169,8 @@ class StoryService {
         }
     }
 
-    private generateTemplateWithContent = { Map fields, i18n ->
-        ['as', 'ican', 'to'].collect {
+    private String generateTemplateWithContent(Map fields, i18n) {
+        return ['as', 'ican', 'to'].collect {
             i18n(it) + " " + (fields[it] ?: '')
         }.join("\n")
     }
@@ -1220,5 +1191,36 @@ class StoryService {
                 }
             }
         }
+    }
+
+    private int checkRankDependencies(story, rank){
+        if (story.dependsOn){
+            if (story.state in [Story.STATE_ACCEPTED, Story.STATE_ESTIMATED]){
+                if (rank <= story.dependsOn.rank){
+                    rank = story.dependsOn.rank + 1
+                }
+            }
+            else if (story.dependsOn.parentSprint == story.parentSprint){
+                if (rank <= story.dependsOn.rank){
+                    rank = story.dependsOn.rank + 1
+                }
+            }
+        }
+
+        if (story.dependences){
+            if (story.state in [Story.STATE_ACCEPTED, Story.STATE_ESTIMATED]){
+                def highestRank = story.dependences.findAll{ it.state in [Story.STATE_ACCEPTED, Story.STATE_ESTIMATED]}?.collect{it.rank}?.min()
+                if (highestRank && highestRank <= rank){
+                    rank = highestRank - 1
+                }
+            }
+            else if (story.state > Story.STATE_ESTIMATED){
+                def highestRank = story.dependences.findAll{ it.parentSprint == story.parentSprint }?.collect{it.rank}?.min()
+                if (highestRank && highestRank <= rank){
+                    rank = highestRank - 1
+                }
+            }
+        }
+        return rank
     }
 }

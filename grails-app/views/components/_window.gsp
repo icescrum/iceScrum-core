@@ -24,7 +24,7 @@
     <g:if test="${type == 'window'}">
         data-is-full-screen="${windowActions?.fullScreen?:false}"
         data-is-widgetable="${windowActions?.widgetable?:false}"
-        data-is-title="${projectName ?: 'iceScrum'} - ${title.encodeAsJavaScript()}"
+        data-is-title="${spaceName ?: 'iceScrum'} - ${title.encodeAsJavaScript()}"
     </g:if>
     <g:else>
         data-is-windowable="${windowActions?.windowable?:false}"
