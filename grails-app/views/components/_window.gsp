@@ -56,7 +56,7 @@
                        title="${message(code:'is.ui.window.print')}"
                        data-ajax="true"
                        data-is-shortcut
-                       data-is-shortcut-key="ctrl+p"
+                       data-is-shortcut-key="p"
                        href="${createLink(controller:id,action:'print', params:[product:params.product?:null, format:'PDF'])}"></a>
                 </li>
             </g:if>

@@ -439,8 +439,8 @@ class FormTagLib {
         ]
         out << "<span id='${attrs.elementId}'></span>"
         def progressOptions = '{' + param.findAll {k, v -> v != null}.collect {k, v -> " $k:$v"}.join(',') + '}'
-        def progressCode = "\$('#${attrs.elementId}').progress(${progressOptions});"
-        out << jq.jquery(null, progressCode)
+        //def progressCode = "\$('#${attrs.elementId}').progress(${progressOptions});"
+        //out << jq.jquery(null, progressCode)
     }
 
     def attachedFiles = { attrs ->
