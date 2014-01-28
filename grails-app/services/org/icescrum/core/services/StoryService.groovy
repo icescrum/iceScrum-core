@@ -234,9 +234,12 @@ class StoryService {
         }
 
         def product = story.backlog
-        manageActors(story, product)
 
         def dirtyProperties = story.dirtyPropertyNames
+
+        if(dirtyProperties?.contains('description')){
+            manageActors(story, product)
+        }
 
         if (!story.save()) {
             throw new RuntimeException(story.errors?.toString())
@@ -1176,20 +1179,22 @@ class StoryService {
     }
 
     private void manageActors(story, product) {
-        if (story.actor) {
-            story.actor.removeFromStories(story)
-        }
         if (story.description) {
             def actorIdMatcher = story.description =~ /A\[(.+?)-.*?\]/
             if (actorIdMatcher) {
                 def idString = actorIdMatcher[0][1]
                 if (idString.isInteger()) {
-                    def actor = Actor.getInProductByUid(product.id, idString.toInteger()).list()
-                    if (actor) {
-                        actor.addToStories(story)
+                    def actor = product.actors.find{ it.uid == idString.toInteger() }
+                    if (story.actor != actor){
+                        story.actor?.removeFromStories(story)
+                        if (actor){
+                            actor.addToStories(story)
+                        }
                     }
                 }
             }
+        } else if (story.actor) {
+            story.actor.removeFromStories(story)
         }
     }
 
