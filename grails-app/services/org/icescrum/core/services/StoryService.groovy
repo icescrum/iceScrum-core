@@ -32,6 +32,9 @@ import org.grails.comments.Comment
 import org.grails.comments.CommentLink
 import org.hibernate.Hibernate
 import org.hibernate.exception.SQLGrammarException
+import org.icescrum.core.event.IceScrumEventPushlisher
+import org.icescrum.core.event.IceScrumSynchronousEvent
+import org.icescrum.core.event.IceScrumSynchronousEvent.EventType
 import org.icescrum.plugins.attachmentable.domain.Attachment
 
 import java.text.SimpleDateFormat
@@ -43,7 +46,7 @@ import org.icescrum.core.domain.AcceptanceTest.AcceptanceTestState
 
 import org.icescrum.core.support.ApplicationSupport
 
-class StoryService {
+class StoryService extends IceScrumEventPushlisher {
     def taskService
     def springSecurityService
     def clicheService
@@ -95,6 +98,9 @@ class StoryService {
             }.each {
                 story.addFollower(it)
             }
+
+            executeListeners(new IceScrumSynchronousEvent(EventType.CREATE, story))
+            // TODO clean this stuff (create a listener, update the notificationEmailService...)
             story.addActivity(u, Activity.CODE_SAVE, story.name)
             broadcast(function: 'add', message: story, channel:'product-'+product.id)
 
@@ -134,11 +140,13 @@ class StoryService {
                 }
             }
             //precedence on the story
-            if (story.dependsOn)
+            if (story.dependsOn) {
                 notDependsOn(story)
+            }
 
-            if (story.state >= Story.STATE_PLANNED)
-               throw new IllegalStateException('is.story.error.not.deleted.state')
+            if (story.state >= Story.STATE_PLANNED) {
+                throw new IllegalStateException('is.story.error.not.deleted.state')
+            }
 
             if (!springSecurityService.isLoggedIn()){
                 throw new IllegalAccessException()
@@ -148,8 +156,9 @@ class StoryService {
                 throw new IllegalAccessException()
             }
             story.removeAllAttachments()
-            if (story.state != Story.STATE_SUGGESTED)
+            if (story.state != Story.STATE_SUGGESTED) {
                 resetRank(story)
+            }
 
             def id = story.id
             story.deleteComments()
@@ -177,6 +186,8 @@ class StoryService {
             product.removeFromStories(story)
             product.save()
 
+            executeListeners(new IceScrumSynchronousEvent(EventType.DELETE, story))
+            // TODO create listener for broadcast
             broadcast(function: 'delete', message: [class: story.class, id: id, state: story.state], channel:'product-'+product.id)
         }
         resumeBufferedBroadcast(channel:'product-'+product.id)
@@ -185,10 +196,6 @@ class StoryService {
     @PreAuthorize('isAuthenticated() and !archivedProduct(#story.backlog)')
     void update(Story story, Map props) {
 
-        // The order can be really important... Some method calls will update other properties as a side effect
-        // So the checks done on these properties can lead to inconsistent results depending on the order
-        // The former method called where done as transitions in a state machine, this is broken by the monolithic update method
-
         if (props.state != null) {
             if (props.state == Story.STATE_ACCEPTED && story.state == Story.STATE_SUGGESTED){
                 acceptToBacklog([story])
@@ -196,14 +203,8 @@ class StoryService {
                 returnToSandbox([story])
             }
         }
-        //Estimate story
         if (props.effort != null) {
             estimate(story, props.effort)
-        }
-        if (props.dependsOn != null) {
-            dependsOn(story, props.dependsOn)
-        } else if (props.containsKey('dependsOn') && story.dependsOn) {
-            notDependsOn(story)
         }
         if (props.sprint != null) {
             plan(props.sprint, story)
@@ -235,44 +236,19 @@ class StoryService {
 
         def product = story.backlog
 
-        def dirtyProperties = story.dirtyPropertyNames
-
-        if(dirtyProperties?.contains('description')){
+        if (story.isDirty('description')) {
             manageActors(story, product)
         }
 
+        // TODO The following can be extracted to be reused in other places
+        def dirtyProperties = [:]
+        story.dirtyPropertyNames.each {
+            dirtyProperties[it] = story.getPersistentValue(it)
+        }
         if (!story.save()) {
             throw new RuntimeException(story.errors?.toString())
         }
-
-        def u = (User) springSecurityService.currentUser
-
-        // Specific push / event management may be replaced by:
-        // - for the push : a single update function
-        // - for the events : the list of dirtyProperties provided in the event so the listeners can discriminate
-        // We may even consider adding the activities automatically, which is just the recording of the events in the DB
-        // Problem : service methods called here currently make their own push / event
-        // this breaks the atomicity (I guess that events spawn in new threads can't be reverted?)
-        // a solution would be making the push / event optional (according to a parameter)
-        // or even more, make them private and replace their external usages by calls to "update"
-        // security annotations will probably don't work on private methods (do they even work here when calling methods of the same bean ?)
-        // thus the security would have to be done programmatically
-        if ('feature' in dirtyProperties) {
-            def function, event
-            if (story.feature == null) {
-                function = 'dissociated'
-                event = IceScrumStoryEvent.EVENT_FEATURE_DISSOCIATED
-            } else {
-                function = 'associated'
-                event = IceScrumStoryEvent.EVENT_FEATURE_ASSOCIATED
-            }
-            broadcast(function: function, message: story, channel:'product-'+product.id)
-            publishEvent(new IceScrumStoryEvent(story, this.class, u, event))
-        }
-
-        story.addActivity(u, Activity.CODE_UPDATE, story.name)
-        broadcast(function: 'update', message: story, channel:'product-'+product.id)
-        publishEvent(new IceScrumStoryEvent(story, this.class, u, IceScrumStoryEvent.EVENT_UPDATED))
+        executeListeners(new IceScrumSynchronousEvent(EventType.UPDATE, story, dirtyProperties))
     }
 
     @PreAuthorize('(teamMember(#story.backlog) or scrumMaster(#story.backlog)) and !archivedProduct(#story.backlog)')
@@ -683,7 +659,7 @@ class StoryService {
 
             story.addActivity(u, 'returnToSandbox', story.name)
             broadcast(function: 'returnToSandbox', message: story, channel:'product-'+story.backlog.id)
-            publishEvent(new IceScrumStoryEvent(story, this.class, u, IceScrumStoryEvent.EVENT_RETURNTOSANDBOX))
+            publishEvent(new IceScrumStoryEvent(story, this.class, u, IceScrumStoryEvent.EVENT_UPDATED))
         }
         resumeBufferedBroadcast(channel:'product-'+product.id)
     }
@@ -897,33 +873,15 @@ class StoryService {
     }
 
     // TODO check rights
-    void notDependsOn(Story story) {
+    private notDependsOn(Story story) {
         def oldDepends = story.dependsOn
         story.dependsOn = null
         oldDepends.lastUpdated = new Date()
         oldDepends.save()
 
         broadcast(function: 'update', message: story, channel:'product-'+story.backlog.id)
-        broadcast(function: 'notDependsOn', message: oldDepends, channel:'product-'+story.backlog.id)
         User u = (User) springSecurityService.currentUser
-        publishEvent(new IceScrumStoryEvent(story, this.class, u, IceScrumStoryEvent.EVENT_NOT_DEPENDS_ON))
-    }
-
-    // TODO check rights
-    void dependsOn(Story story, Story dependsOn) {
-
-        if (story.dependsOn){
-            notDependsOn(story)
-        }
-        story.dependsOn = dependsOn
-
-        dependsOn.lastUpdated = new Date()
-        dependsOn.save()
-
-        broadcast(function: 'update', message: story, channel:'product-'+story.backlog.id)
-        broadcast(function: 'dependsOn', message: dependsOn, channel:'product-'+story.backlog.id)
-        User u = (User) springSecurityService.currentUser
-        publishEvent(new IceScrumStoryEvent(story, this.class, u, IceScrumStoryEvent.EVENT_DEPENDS_ON))
+        publishEvent(new IceScrumStoryEvent(story, this.class, u, IceScrumStoryEvent.EVENT_UPDATED))
     }
 
     @PreAuthorize('inProduct(#stories[0].backlog) and !archivedProduct(#stories[0].backlog)')

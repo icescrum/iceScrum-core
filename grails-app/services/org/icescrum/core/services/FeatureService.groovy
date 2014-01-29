@@ -71,7 +71,7 @@ class FeatureService {
         feature.stories?.each{
             it.feature = null
             it.save()
-            broadcast(function: 'dissociated', message: it, channel:'product-'+product.id)
+            broadcast(function: 'update', message: it, channel:'product-'+product.id)
         }
 
 

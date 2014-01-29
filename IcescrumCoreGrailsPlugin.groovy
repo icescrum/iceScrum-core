@@ -32,6 +32,8 @@ import org.codehaus.groovy.grails.scaffolding.view.ScaffoldingViewResolver
 import org.icescrum.atmosphere.IceScrumAtmosphereEventListener
 import org.icescrum.core.cors.CorsFilter
 import org.icescrum.core.domain.AcceptanceTest
+import org.icescrum.core.event.IceScrumEventPushlisher
+import org.icescrum.core.event.IceScrumListener
 import org.icescrum.core.services.StoryService
 import org.icescrum.core.utils.JSONIceScrumDomainClassMarshaller
 import org.icescrum.plugins.attachmentable.domain.Attachment
@@ -87,6 +89,7 @@ import org.icescrum.core.support.ApplicationSupport
 import pl.burningice.plugins.image.BurningImageService
 
 import javax.servlet.http.HttpServletResponse
+import java.lang.reflect.Method
 import java.util.concurrent.ConcurrentHashMap
 
 class IcescrumCoreGrailsPlugin {
@@ -315,6 +318,7 @@ class IcescrumCoreGrailsPlugin {
 
         application.serviceClasses.each {
             addBroadcastMethods(it, application)
+            addListenerSupport(it, ctx)
         }
         // Old school because no GORM Static API at the point where it is called
         def transactionManager = ctx.getBean('transactionManager')
@@ -1093,6 +1097,21 @@ class IcescrumCoreGrailsPlugin {
                 'filter-mapping'{
                     'filter-name'('cors-headers')
                     'url-pattern'(pattern)
+                }
+            }
+        }
+    }
+
+    private addListenerSupport(serviceGrailsClass, ctx) {
+        serviceGrailsClass.clazz.declaredMethods.each { Method method ->
+            IceScrumListener listener = method.getAnnotation(IceScrumListener)
+            if (listener) {
+                def listenerService = ctx.getBean(serviceGrailsClass.propertyName)
+                def publisherService = ctx.getBean(listener.domain() + 'Service')
+                if (publisherService && publisherService instanceof IceScrumEventPushlisher) {
+                    publisherService.registerListener(listener.eventType()) { object, dirtyProperties ->
+                        listenerService."$method.name"(object, dirtyProperties)
+                    }
                 }
             }
         }

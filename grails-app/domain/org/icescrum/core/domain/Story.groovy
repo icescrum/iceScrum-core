@@ -109,7 +109,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
         affectVersion(nullable: true)
         effort(nullable: true)
         creator(nullable: true) // in case of a user deletion, the story can remain without owner
-        dependsOn(nullable: true)
+        dependsOn(nullable: true, validator: { val, obj -> val == null || val.backlog == obj.backlog }) // TODO custom message
         origin(nullable: true)
     }
 
@@ -552,7 +552,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
     }
 
     def onAddAttachment = { Attachment a ->
-        publishEvent new IceScrumStoryEvent(this, a, this.class, (User)a.poster, IceScrumStoryEvent.EVENT_FILE_ATTACHED_ADDED)
+        publishEvent new IceScrumStoryEvent(this, this.class, (User)a.poster, IceScrumStoryEvent.EVENT_UPDATED)
     }
 
     def beforeDelete() {
