@@ -45,6 +45,30 @@ class FormTagLib {
     def grailsApplication
     def grailsAttributes
 
+    static returnObjectForTags = ['languages']
+
+    def languages = { attrs ->
+        List locales = []
+        def i18n
+        if (grailsApplication.warDeployed) {
+            i18n = grailsAttributes.getApplicationContext().getResource("WEB-INF/grails-app/i18n/").getFile().toString()
+        } else {
+            i18n = "$BuildSettingsHolder.settings.baseDir/grails-app/i18n"
+        }
+        //Default language
+        locales << new Locale("en")
+        new File(i18n).eachFile {
+            def arr = it.name.split("[_.]")
+            if (arr[1] != 'svn' && arr[1] != 'properties' && arr[0].startsWith('messages'))
+                locales << (arr.length > 3 ? new Locale(arr[1], arr[2]) : arr.length > 2 ? new Locale(arr[1]) : new Locale(""))
+        }
+        def returnLocales = [:]
+        locales.collect{  it ->
+            returnLocales[it.language] = it.getDisplayName(it).capitalize()
+        }
+        return returnLocales
+    }
+
     def autoCompleteSkin = {attrs, body ->
         assert attrs.id
 
@@ -141,31 +165,6 @@ class FormTagLib {
 
         out << is.shortcut(key: "ctrl+f", callback: "jQuery('#search-ui').mouseover();", scope: controller)
         out << is.shortcut(key: "esc", callback: "jQuery('#search-ui').mouseout();", scope: controller, listenOn: "'#$elementId'")
-    }
-
-    /**
-     * Generate a selectbox with the locales available in iceScrum
-     */
-    def localeSelecter = {attrs ->
-        List locales = []
-        def i18n
-        if (grailsApplication.warDeployed) {
-            i18n = grailsAttributes.getApplicationContext().getResource("WEB-INF/grails-app/i18n/").getFile().toString()
-        } else {
-            i18n = "$BuildSettingsHolder.settings.baseDir/grails-app/i18n"
-        }
-        //Default language
-        locales << new Locale("en")
-        new File(i18n).eachFile {
-            def arr = it.name.split("[_.]")
-            if (arr[1] != 'svn' && arr[1] != 'properties' && arr[0].startsWith('messages'))
-                locales << (arr.length > 3 ? new Locale(arr[1], arr[2]) : arr.length > 2 ? new Locale(arr[1]) : new Locale(""))
-        }
-
-        attrs.from = locales
-        attrs.value = attrs.value ?: RCU.getLocale(request)
-        attrs.optionValue = {"${it.getDisplayName(it).capitalize()}"}
-        out << is.select(attrs)
     }
 
     def localeTimeZone = { attrs ->
