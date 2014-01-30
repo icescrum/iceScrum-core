@@ -34,5 +34,5 @@ import org.icescrum.core.event.IceScrumSynchronousEvent.EventType
 @Target(ElementType.METHOD)
 @interface IceScrumListener {
     String domain()
-    EventType eventType()
+    EventType eventType() default EventType.UGLY_HACK_BECAUSE_ANNOTATION_CANT_BE_NULL
 }

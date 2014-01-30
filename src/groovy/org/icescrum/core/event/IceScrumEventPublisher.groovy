@@ -40,12 +40,15 @@ abstract class IceScrumEventPublisher {
         listeners.add(listener)
     }
 
-    // This removes the oldest occurrence of the listener (identified by its reference)
-    synchronized void unregisterListener(EventType eventType, Closure listener) {
-        listenersByEventType[eventType]?.remove(listener)
+    synchronized void registerListener(Closure listener) {
+        EventType.values().each { EventType type ->
+            if (type != EventType.UGLY_HACK_BECAUSE_ANNOTATION_CANT_BE_NULL) {
+                registerListener(type, listener)
+            }
+        }
     }
 
-    synchronized void executeListeners(IceScrumSynchronousEvent event) {
-        listenersByEventType[event.type]?.each { it(event.object, event.dirtyProperties) }
+    synchronized void publishSynchronousEvent(IceScrumSynchronousEvent event) {
+        listenersByEventType[event.type]?.each { it(event) }
     }
 }

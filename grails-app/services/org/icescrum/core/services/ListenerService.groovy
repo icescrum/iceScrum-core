@@ -27,6 +27,7 @@ import grails.plugin.fluxiable.Activity
 import org.icescrum.core.domain.Story
 import org.icescrum.core.domain.User
 import org.icescrum.core.event.IceScrumListener
+import org.icescrum.core.event.IceScrumSynchronousEvent
 import org.icescrum.core.event.IceScrumSynchronousEvent.EventType
 
 class ListenerService {
@@ -34,7 +35,9 @@ class ListenerService {
     def springSecurityService
 
     @IceScrumListener(domain='story', eventType=EventType.CREATE)
-    void storyCreate(Story story, Map dirtyProperties) {
+    void storyCreate(IceScrumSynchronousEvent event) {
+        Story story = event.object
+        log.debug("the story $story.name has been created")
         def product = story.backlog
         def u = (User) springSecurityService.currentUser
         story.addActivity(u, Activity.CODE_SAVE, story.name)
@@ -42,7 +45,10 @@ class ListenerService {
     }
 
     @IceScrumListener(domain='story', eventType=EventType.UPDATE)
-    void storyUpdate(Story story, Map dirtyProperties) {
+    void storyUpdate(IceScrumSynchronousEvent event) {
+        Story story = event.object
+        log.debug("the story $story.name has been updated")
+        Map dirtyProperties = event.dirtyProperties
         if (dirtyProperties) {
             def product = story.backlog
             ['feature', 'dependsOn'].each { property ->
@@ -66,7 +72,9 @@ class ListenerService {
     }
 
     @IceScrumListener(domain='story', eventType=EventType.DELETE)
-    void storyDelete(Story story, Map dirtyProperties) {
+    void storyDelete(IceScrumSynchronousEvent event) {
+        Story story = event.object
+        log.debug("the story $story.name has been deleted")
         def product = story.backlog
         broadcast(function: 'delete', message: [class: story.class, id: story.id, state: story.state], channel:'product-'+product.id)
     }

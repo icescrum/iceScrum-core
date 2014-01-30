@@ -263,7 +263,7 @@ class SprintService {
 
         bufferBroadcast(channel:'product-'+sprint.parentProduct.id)
         sprint.stories.each {
-            broadcast(function: 'inProgress', message: it, channel:'product-'+sprint.parentProduct.id)
+            broadcast(function: 'update', message: it, channel:'product-'+sprint.parentProduct.id)
             publishEvent(new IceScrumStoryEvent(it, this.class, (User) springSecurityService.currentUser, IceScrumStoryEvent.EVENT_INPROGRESS))
         }
         resumeBufferedBroadcast(channel:'product-'+sprint.parentProduct.id)

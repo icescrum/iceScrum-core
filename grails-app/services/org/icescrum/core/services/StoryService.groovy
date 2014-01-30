@@ -97,7 +97,7 @@ class StoryService extends IceScrumEventPublisher {
             }.each {
                 story.addFollower(it)
             }
-            executeListeners(new IceScrumSynchronousEvent(EventType.CREATE, story))
+            publishSynchronousEvent(new IceScrumSynchronousEvent(EventType.CREATE, story))
         } else {
             throw new RuntimeException()
         }
@@ -105,8 +105,8 @@ class StoryService extends IceScrumEventPublisher {
 
     @PreAuthorize('!archivedProduct(#stories[0].backlog)')
     void delete(Collection<Story> stories, history = true, reason = null) {
-        def product = stories[0].backlog
-        stories.each { story ->
+            def product = stories[0].backlog
+            stories.each { story ->
 
             if (story.actor){
                 story.actor.removeFromStories(story)
@@ -170,7 +170,7 @@ class StoryService extends IceScrumEventPublisher {
             product.removeFromStories(story)
             product.save()
 
-            executeListeners(new IceScrumSynchronousEvent(EventType.DELETE, story))
+            publishSynchronousEvent(new IceScrumSynchronousEvent(EventType.DELETE, story))
         }
     }
 
@@ -229,12 +229,12 @@ class StoryService extends IceScrumEventPublisher {
         if (!story.save()) {
             throw new RuntimeException(story.errors?.toString())
         }
-        executeListeners(new IceScrumSynchronousEvent(EventType.UPDATE, story, dirtyProperties))
+        publishSynchronousEvent(new IceScrumSynchronousEvent(EventType.UPDATE, story, dirtyProperties))
     }
 
+    // TODO check if security works for private methods
     @PreAuthorize('(teamMember(#story.backlog) or scrumMaster(#story.backlog)) and !archivedProduct(#story.backlog)')
-    void estimate(Story story, estimation) {
-        def oldState = story.state
+    private void estimate(Story story, estimation) {
         if (story.state < Story.STATE_ACCEPTED || story.state == Story.STATE_DONE)
             throw new IllegalStateException()
         if (!(estimation instanceof Number) && (estimation instanceof String && !estimation.isNumber())) {
@@ -250,28 +250,17 @@ class StoryService extends IceScrumEventPublisher {
         if (story.parentSprint && story.parentSprint.state == Sprint.STATE_WAIT) {
             story.parentSprint.capacity = (Double) story.parentSprint.getTotalEffort()
         }
-        if (!story.save())
-            throw new RuntimeException()
-
-        User u = (User) springSecurityService.currentUser
-        story.addActivity(u, Activity.CODE_UPDATE, story.name)
-
-        broadcast(function: 'estimate', message: story, channel:'product-'+story.backlog.id)
-        if (oldState != story.state && story.state == Story.STATE_ESTIMATED)
-            publishEvent(new IceScrumStoryEvent(story, this.class, u, IceScrumStoryEvent.EVENT_ESTIMATED))
-        else if (oldState != story.state && story.state == Story.STATE_ACCEPTED)
-            publishEvent(new IceScrumStoryEvent(story, this.class, u, IceScrumStoryEvent.EVENT_ACCEPTED))
     }
 
     @PreAuthorize('(productOwner(#sprint.parentProduct) or scrumMaster(#sprint.parentProduct)) and !archivedProduct(#sprint.parentProduct)')
-    void plan(Sprint sprint, Collection<Story> stories) {
+    private void plan(Sprint sprint, Collection<Story> stories) {
         stories.each {
             this.plan(sprint, it)
         }
     }
 
     @PreAuthorize('(productOwner(#sprint.parentProduct) or scrumMaster(#sprint.parentProduct)) and !archivedProduct(#sprint.parentProduct)')
-    void plan(Sprint sprint, Story story) {
+    private void plan(Sprint sprint, Story story) {
         if (story.dependsOn){
             if (story.dependsOn.state < Story.STATE_PLANNED){
                 throw new IllegalStateException(g.message(code:'is.story.error.dependsOn.notPlanned',args: [story.name, story.dependsOn.name]).toString())
@@ -350,17 +339,20 @@ class StoryService extends IceScrumEventPublisher {
     }
 
     @PreAuthorize('(productOwner(#story.backlog) or scrumMaster(#story.backlog)) and !archivedProduct(#story.backlog)')
-    void unPlan(Story story, Boolean fullUnPlan = true) {
+    private void unPlan(Story story, Boolean fullUnPlan = true) {
 
         def sprint = story.parentSprint
-        if (!sprint)
+        if (!sprint) {
             throw new RuntimeException('is.story.error.not.associated')
+        }
 
-        if (story.state == Story.STATE_DONE)
+        if (story.state == Story.STATE_DONE) {
             throw new IllegalStateException('is.sprint.error.dissociate.story.done')
+        }
 
-        if (fullUnPlan && story.dependences?.find{it.state > Story.STATE_ESTIMATED})
+        if (fullUnPlan && story.dependences?.find{it.state > Story.STATE_ESTIMATED}) {
             throw new RuntimeException(g.message(code:'is.story.error.dependences.dissociate',args: [story.name, story.dependences.find{it.state > Story.STATE_ESTIMATED}.name]).toString())
+        }
 
         resetRank(story)
 
@@ -369,8 +361,9 @@ class StoryService extends IceScrumEventPublisher {
 
         User u = (User) springSecurityService.currentUser
 
-        if (sprint.state == Sprint.STATE_WAIT)
+        if (sprint.state == Sprint.STATE_WAIT) {
             sprint.capacity =  (Double)sprint.getTotalEffort()?:0
+        }
 
         def tasks = story.tasks.asList()
         tasks.each { Task task ->
@@ -394,7 +387,6 @@ class StoryService extends IceScrumEventPublisher {
             throw new RuntimeException()
 
         broadcast(function: 'update', message: sprint, channel:'product-'+story.backlog.id)
-        broadcast(function: 'unPlan', message: story, channel:'product-'+story.backlog.id)
         publishEvent(new IceScrumStoryEvent(story, this.class, (User) springSecurityService.currentUser, IceScrumStoryEvent.EVENT_UNPLANNED))
     }
 
@@ -474,7 +466,7 @@ class StoryService extends IceScrumEventPublisher {
     }
 
     // TODO check rights
-    void setRank(Story story, int rank) {
+    private void setRank(Story story, int rank) {
         def stories = null
         if (story.state == Story.STATE_ACCEPTED || story.state == Story.STATE_ESTIMATED)
             stories = story.backlog.stories.findAll{it.state == Story.STATE_ESTIMATED || it.state == Story.STATE_ACCEPTED}.asList().sort{it.rank}
@@ -498,7 +490,7 @@ class StoryService extends IceScrumEventPublisher {
     }
 
     // TODO check rights
-    void cleanRanks(stories){
+    private void cleanRanks(stories){
         stories.sort{ it.rank }
         int i = 0
         def error = false
@@ -519,7 +511,7 @@ class StoryService extends IceScrumEventPublisher {
     }
 
     // TODO check rights
-    void resetRank(Story story) {
+    private void resetRank(Story story) {
         def stories = null
         if (story.state == Story.STATE_ACCEPTED || story.state == Story.STATE_ESTIMATED)
             stories = story.backlog.stories.findAll{it.state == Story.STATE_ESTIMATED || it.state == Story.STATE_ACCEPTED}.asList().sort{it.rank}
@@ -535,7 +527,7 @@ class StoryService extends IceScrumEventPublisher {
     }
 
     @PreAuthorize('(productOwner(#story.backlog) or scrumMaster(#story.backlog))  and !archivedProduct(#story.backlog)')
-    void rank(Story story, int rank) {
+    private void rank(Story story, int rank) {
 
         rank = checkRankDependencies(story, rank)
         if ((story.dependsOn || story.dependences ) && story.rank == rank) {
@@ -772,7 +764,6 @@ class StoryService extends IceScrumEventPublisher {
             if (story.parentSprint.state != Sprint.STATE_INPROGRESS) {
                 throw new IllegalStateException('is.sprint.error.declareAsDone.state.not.inProgress')
             }
-
             if (story.state != Story.STATE_INPROGRESS) {
                 throw new IllegalStateException('is.story.error.declareAsDone.state.not.inProgress')
             }
@@ -785,12 +776,13 @@ class StoryService extends IceScrumEventPublisher {
             story.parentSprint.velocity += story.effort
 
 
-            if (!story.save())
+            if (!story.save()) {
                 throw new RuntimeException()
+            }
 
             User u = (User) springSecurityService.currentUser
 
-            broadcast(function: 'done', message: story, channel:'product-'+product.id)
+            broadcast(function: 'update', message: story, channel:'product-'+product.id)
             story.addActivity(u, 'done', story.name)
             publishEvent(new IceScrumStoryEvent(story, this.class, u, IceScrumStoryEvent.EVENT_DONE))
 
@@ -807,8 +799,9 @@ class StoryService extends IceScrumEventPublisher {
                 }
             }
         }
-        if (stories)
+        if (stories) {
             clicheService.createOrUpdateDailyTasksCliche(stories[0]?.parentSprint)
+        }
         resumeBufferedBroadcast(channel:'product-'+product.id)
     }
 
@@ -845,7 +838,7 @@ class StoryService extends IceScrumEventPublisher {
             User u = (User) springSecurityService.currentUser
 
             story.addActivity(u, 'unDone', story.name)
-            broadcast(function: 'unDone', message: story, channel:'product-'+product.id)
+            broadcast(function: 'update', message: story, channel:'product-'+product.id)
             publishEvent(new IceScrumStoryEvent(story, this.class, u, IceScrumStoryEvent.EVENT_UNDONE))
         }
         if (stories)
@@ -902,7 +895,6 @@ class StoryService extends IceScrumEventPublisher {
             }
             save(copiedStory, (Product) story.backlog, (User) springSecurityService.currentUser)
 
-            //copy attachments
             story.attachments?.each{ Attachment a ->
                 def currentFile = attachmentableService.getFile(a)
                 def newFile = File.createTempFile(a.name, a.ext)
@@ -910,15 +902,12 @@ class StoryService extends IceScrumEventPublisher {
                 copiedStory.addAttachment(a.poster, newFile, a.name+(a.ext? '.'+a.ext :''))
             }
 
-            //copy comments
             story.comments?.each{ Comment c ->
                 copiedStory.addComment(c.poster, c.body)
             }
 
-            //copy tags
             copiedStory.tags = story.tags
 
-            //copy acceptanceTests
             story.acceptanceTests?.each{
                 acceptanceTestService.save(new AcceptanceTest(name:it.name, description:it.description), copiedStory, (User) springSecurityService.currentUser)
             }
@@ -1150,7 +1139,6 @@ class StoryService extends IceScrumEventPublisher {
                 }
             }
         }
-
         if (story.dependences){
             if (story.state in [Story.STATE_ACCEPTED, Story.STATE_ESTIMATED]){
                 def highestRank = story.dependences.findAll{ it.state in [Story.STATE_ACCEPTED, Story.STATE_ESTIMATED]}?.collect{it.rank}?.min()

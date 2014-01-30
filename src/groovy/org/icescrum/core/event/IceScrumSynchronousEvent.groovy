@@ -26,6 +26,7 @@ package org.icescrum.core.event
 class IceScrumSynchronousEvent {
 
     enum EventType {
+        UGLY_HACK_BECAUSE_ANNOTATION_CANT_BE_NULL,
         CREATE,
         UPDATE,
         DELETE

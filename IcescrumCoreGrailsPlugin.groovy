@@ -34,6 +34,7 @@ import org.icescrum.core.cors.CorsFilter
 import org.icescrum.core.domain.AcceptanceTest
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumListener
+import org.icescrum.core.event.IceScrumSynchronousEvent
 import org.icescrum.core.services.StoryService
 import org.icescrum.core.utils.JSONIceScrumDomainClassMarshaller
 import org.icescrum.plugins.attachmentable.domain.Attachment
@@ -1109,8 +1110,15 @@ class IcescrumCoreGrailsPlugin {
                 def listenerService = ctx.getBean(serviceGrailsClass.propertyName)
                 def publisherService = ctx.getBean(listener.domain() + 'Service')
                 if (publisherService && publisherService instanceof IceScrumEventPublisher) {
-                    publisherService.registerListener(listener.eventType()) { object, dirtyProperties ->
-                        listenerService."$method.name"(object, dirtyProperties)
+                    def listenerClosure = { event ->
+                        listenerService."$method.name"(event)
+                    }
+                    if (listener.eventType() == IceScrumSynchronousEvent.EventType.UGLY_HACK_BECAUSE_ANNOTATION_CANT_BE_NULL) {
+                        println 'Add listener on all ' + listener.domain() + ' events: ' + serviceGrailsClass.propertyName + '.' + method.name
+                        publisherService.registerListener(listenerClosure)
+                    } else {
+                        println 'Add listener on ' + listener.domain() + ' ' + listener.eventType().toString() + ' events: ' + serviceGrailsClass.propertyName + '.' + method.name
+                        publisherService.registerListener(listener.eventType(), listenerClosure)
                     }
                 }
             }
