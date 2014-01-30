@@ -28,11 +28,9 @@ import java.lang.annotation.Retention
 import java.lang.annotation.RetentionPolicy
 import java.lang.annotation.Target
 
-import org.icescrum.core.event.IceScrumSynchronousEvent.EventType
-
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 @interface IceScrumListener {
     String domain()
-    EventType eventType() default EventType.UGLY_HACK_BECAUSE_ANNOTATION_CANT_BE_NULL
+    IceScrumEventType eventType() default IceScrumEventType.UGLY_HACK_BECAUSE_ANNOTATION_CANT_BE_NULL
 }

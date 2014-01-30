@@ -23,13 +23,11 @@
  */
 package org.icescrum.core.event
 
-import org.icescrum.core.event.IceScrumSynchronousEvent.EventType
-
 abstract class IceScrumEventPublisher {
 
-    private Map<EventType, List<Closure>> listenersByEventType = [:]
+    private Map<IceScrumEventType, List<Closure>> listenersByEventType = [:]
 
-    synchronized void registerListener(EventType eventType, Closure listener) {
+    synchronized void registerListener(IceScrumEventType eventType, Closure listener) {
         def listeners = listenersByEventType[eventType]
         if (listeners == null) {
             def emptyListeners = []
@@ -41,14 +39,14 @@ abstract class IceScrumEventPublisher {
     }
 
     synchronized void registerListener(Closure listener) {
-        EventType.values().each { EventType type ->
-            if (type != EventType.UGLY_HACK_BECAUSE_ANNOTATION_CANT_BE_NULL) {
+        IceScrumEventType.values().each { IceScrumEventType type ->
+            if (type != IceScrumEventType.UGLY_HACK_BECAUSE_ANNOTATION_CANT_BE_NULL) {
                 registerListener(type, listener)
             }
         }
     }
 
-    synchronized void publishSynchronousEvent(IceScrumSynchronousEvent event) {
-        listenersByEventType[event.type]?.each { it(event) }
+    synchronized void publishSynchronousEvent(IceScrumEventType type, object, Map dirtyProperties = [:]) {
+        listenersByEventType[type]?.each { it(type, object, dirtyProperties) }
     }
 }

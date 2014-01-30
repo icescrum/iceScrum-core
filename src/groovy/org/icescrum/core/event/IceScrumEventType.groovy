@@ -23,22 +23,9 @@
  */
 package org.icescrum.core.event
 
-class IceScrumSynchronousEvent {
-
-    enum EventType {
-        UGLY_HACK_BECAUSE_ANNOTATION_CANT_BE_NULL,
-        CREATE,
-        UPDATE,
-        DELETE
-    }
-
-    EventType type
-    Map dirtyProperties
-    def object
-
-    IceScrumSynchronousEvent(EventType type, object, Map dirtyProperties = [:]) {
-        this.type = type
-        this.object = object
-        this.dirtyProperties = dirtyProperties
-    }
+enum IceScrumEventType {
+    UGLY_HACK_BECAUSE_ANNOTATION_CANT_BE_NULL,
+    CREATE,
+    UPDATE,
+    DELETE
 }

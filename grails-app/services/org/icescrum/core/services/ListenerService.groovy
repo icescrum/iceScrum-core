@@ -27,16 +27,14 @@ import grails.plugin.fluxiable.Activity
 import org.icescrum.core.domain.Story
 import org.icescrum.core.domain.User
 import org.icescrum.core.event.IceScrumListener
-import org.icescrum.core.event.IceScrumSynchronousEvent
-import org.icescrum.core.event.IceScrumSynchronousEvent.EventType
+import org.icescrum.core.event.IceScrumEventType
 
 class ListenerService {
 
     def springSecurityService
 
-    @IceScrumListener(domain='story', eventType=EventType.CREATE)
-    void storyCreate(IceScrumSynchronousEvent event) {
-        Story story = event.object
+    @IceScrumListener(domain='story', eventType=IceScrumEventType.CREATE)
+    void storyCreate(Story story, Map dirtyProperties) {
         log.debug("the story $story.name has been created")
         def product = story.backlog
         def u = (User) springSecurityService.currentUser
@@ -44,11 +42,9 @@ class ListenerService {
         broadcast(function: 'add', message: story, channel:'product-'+product.id)
     }
 
-    @IceScrumListener(domain='story', eventType=EventType.UPDATE)
-    void storyUpdate(IceScrumSynchronousEvent event) {
-        Story story = event.object
+    @IceScrumListener(domain='story', eventType=IceScrumEventType.UPDATE)
+    void storyUpdate(Story story, Map dirtyProperties) {
         log.debug("the story $story.name has been updated")
-        Map dirtyProperties = event.dirtyProperties
         if (dirtyProperties) {
             def product = story.backlog
             ['feature', 'dependsOn'].each { property ->
@@ -71,9 +67,8 @@ class ListenerService {
         }
     }
 
-    @IceScrumListener(domain='story', eventType=EventType.DELETE)
-    void storyDelete(IceScrumSynchronousEvent event) {
-        Story story = event.object
+    @IceScrumListener(domain='story', eventType=IceScrumEventType.DELETE)
+    void storyDelete(Story story, Map dirtyProperties) {
         log.debug("the story $story.name has been deleted")
         def product = story.backlog
         broadcast(function: 'delete', message: [class: story.class, id: story.id, state: story.state], channel:'product-'+product.id)

@@ -33,8 +33,7 @@ import org.grails.comments.CommentLink
 import org.hibernate.Hibernate
 import org.hibernate.exception.SQLGrammarException
 import org.icescrum.core.event.IceScrumEventPublisher
-import org.icescrum.core.event.IceScrumSynchronousEvent
-import org.icescrum.core.event.IceScrumSynchronousEvent.EventType
+import org.icescrum.core.event.IceScrumEventType
 import org.icescrum.plugins.attachmentable.domain.Attachment
 
 import java.text.SimpleDateFormat
@@ -97,7 +96,7 @@ class StoryService extends IceScrumEventPublisher {
             }.each {
                 story.addFollower(it)
             }
-            publishSynchronousEvent(new IceScrumSynchronousEvent(EventType.CREATE, story))
+            publishSynchronousEvent(IceScrumEventType.CREATE, story)
         } else {
             throw new RuntimeException()
         }
@@ -170,7 +169,7 @@ class StoryService extends IceScrumEventPublisher {
             product.removeFromStories(story)
             product.save()
 
-            publishSynchronousEvent(new IceScrumSynchronousEvent(EventType.DELETE, story))
+            publishSynchronousEvent(IceScrumEventType.DELETE, story)
         }
     }
 
@@ -229,7 +228,7 @@ class StoryService extends IceScrumEventPublisher {
         if (!story.save()) {
             throw new RuntimeException(story.errors?.toString())
         }
-        publishSynchronousEvent(new IceScrumSynchronousEvent(EventType.UPDATE, story, dirtyProperties))
+        publishSynchronousEvent(IceScrumEventType.UPDATE, story, dirtyProperties)
     }
 
     // TODO check if security works for private methods
