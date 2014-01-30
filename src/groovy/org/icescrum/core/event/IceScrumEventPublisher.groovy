@@ -25,11 +25,11 @@ package org.icescrum.core.event
 
 import org.icescrum.core.event.IceScrumSynchronousEvent.EventType
 
-abstract class IceScrumEventPushlisher {
+abstract class IceScrumEventPublisher {
 
     private Map<EventType, List<Closure>> listenersByEventType = [:]
 
-    synchronized registerListener(EventType eventType, Closure listener) {
+    synchronized void registerListener(EventType eventType, Closure listener) {
         def listeners = listenersByEventType[eventType]
         if (listeners == null) {
             def emptyListeners = []
@@ -41,11 +41,11 @@ abstract class IceScrumEventPushlisher {
     }
 
     // This removes the oldest occurrence of the listener (identified by its reference)
-    synchronized unregisterListener(EventType eventType, Closure listener) {
+    synchronized void unregisterListener(EventType eventType, Closure listener) {
         listenersByEventType[eventType]?.remove(listener)
     }
 
-    synchronized executeListeners(IceScrumSynchronousEvent event) {
+    synchronized void executeListeners(IceScrumSynchronousEvent event) {
         listenersByEventType[event.type]?.each { it(event.object, event.dirtyProperties) }
     }
 }

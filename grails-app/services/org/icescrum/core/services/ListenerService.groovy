@@ -33,38 +33,41 @@ class ListenerService {
 
     def springSecurityService
 
+    @IceScrumListener(domain='story', eventType=EventType.CREATE)
+    void storyCreate(Story story, Map dirtyProperties) {
+        def product = story.backlog
+        def u = (User) springSecurityService.currentUser
+        story.addActivity(u, Activity.CODE_SAVE, story.name)
+        broadcast(function: 'add', message: story, channel:'product-'+product.id)
+    }
+
     @IceScrumListener(domain='story', eventType=EventType.UPDATE)
-    def storyUpdate(Story story, Map dirtyProperties) {
+    void storyUpdate(Story story, Map dirtyProperties) {
         if (dirtyProperties) {
             def product = story.backlog
-            if (dirtyProperties.containsKey('feature')) {
-                def oldFeature = dirtyProperties.feature
-                def newFeature = story.feature
-                if (oldFeature != null) {
-                    oldFeature.lastUpdated = new Date()
-                    // should rather be a call to feature service update
-                    broadcast(function: 'update', message: oldFeature, channel:'product-'+product.id)
-                }
-                if (newFeature != null) {
-                    newFeature.lastUpdated = new Date()
-                    broadcast(function: 'update', message: newFeature, channel:'product-'+product.id)
-                }
-            }
-            if (dirtyProperties.containsKey('dependsOn')) {
-                def oldDependsOn = dirtyProperties.dependsOn
-                def newDependsOn = story.dependsOn
-                if (oldDependsOn != null) {
-                    oldDependsOn.lastUpdated = new Date()
-                    broadcast(function: 'update', message: oldDependsOn, channel:'product-'+product.id)
-                }
-                if (newDependsOn != null) {
-                    newDependsOn.lastUpdated = new Date()
-                    broadcast(function: 'update', message: newDependsOn, channel:'product-'+product.id)
+            ['feature', 'dependsOn'].each { property ->
+                if (dirtyProperties.containsKey(property)) {
+                    def oldProperty = dirtyProperties[property]
+                    def newProperty = story."$property"
+                    if (oldProperty != null) {
+                        oldProperty.lastUpdated = new Date()
+                        broadcast(function: 'update', message: oldProperty, channel:'product-'+product.id)
+                    }
+                    if (newProperty != null) {
+                        newProperty.lastUpdated = new Date()
+                        broadcast(function: 'update', message: newProperty, channel:'product-'+product.id)
+                    }
                 }
             }
             def u = (User) springSecurityService.currentUser
             story.addActivity(u, Activity.CODE_UPDATE, story.name)
             broadcast(function: 'update', message: story, channel:'product-'+product.id)
         }
+    }
+
+    @IceScrumListener(domain='story', eventType=EventType.DELETE)
+    void storyDelete(Story story, Map dirtyProperties) {
+        def product = story.backlog
+        broadcast(function: 'delete', message: [class: story.class, id: story.id, state: story.state], channel:'product-'+product.id)
     }
 }

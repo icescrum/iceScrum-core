@@ -32,7 +32,7 @@ import org.grails.comments.Comment
 import org.grails.comments.CommentLink
 import org.hibernate.Hibernate
 import org.hibernate.exception.SQLGrammarException
-import org.icescrum.core.event.IceScrumEventPushlisher
+import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumSynchronousEvent
 import org.icescrum.core.event.IceScrumSynchronousEvent.EventType
 import org.icescrum.plugins.attachmentable.domain.Attachment
@@ -46,7 +46,7 @@ import org.icescrum.core.domain.AcceptanceTest.AcceptanceTestState
 
 import org.icescrum.core.support.ApplicationSupport
 
-class StoryService extends IceScrumEventPushlisher {
+class StoryService extends IceScrumEventPublisher {
     def taskService
     def springSecurityService
     def clicheService
@@ -92,27 +92,12 @@ class StoryService extends IceScrumEventPushlisher {
         if (story.save()) {
             product.addToStories(story)
             story.addFollower(u)
-            //Add users who want to autoFollow
             product.allUsers.findAll {
                 u.id != it.id && product.pkey in it.preferences.emailsSettings.autoFollow
             }.each {
                 story.addFollower(it)
             }
-
             executeListeners(new IceScrumSynchronousEvent(EventType.CREATE, story))
-            // TODO clean this stuff (create a listener, update the notificationEmailService...)
-            story.addActivity(u, Activity.CODE_SAVE, story.name)
-            broadcast(function: 'add', message: story, channel:'product-'+product.id)
-
-            if (story.effort > 0){
-                publishEvent(new IceScrumStoryEvent(story, this.class, u, IceScrumStoryEvent.EVENT_ESTIMATED))
-            } else if (story.acceptedDate){
-                publishEvent(new IceScrumStoryEvent(story, this.class, u, IceScrumStoryEvent.EVENT_ACCEPTED))
-            } else {
-                publishEvent(new IceScrumStoryEvent(story, this.class, u, IceScrumStoryEvent.EVENT_SUGGESTED))
-            }
-            publishEvent(new IceScrumStoryEvent(story, this.class, u, IceScrumStoryEvent.EVENT_CREATED))
-
         } else {
             throw new RuntimeException()
         }
@@ -121,7 +106,6 @@ class StoryService extends IceScrumEventPushlisher {
     @PreAuthorize('!archivedProduct(#stories[0].backlog)')
     void delete(Collection<Story> stories, history = true, reason = null) {
         def product = stories[0].backlog
-        bufferBroadcast(channel:'product-'+product.id)
         stories.each { story ->
 
             if (story.actor){
@@ -187,10 +171,7 @@ class StoryService extends IceScrumEventPushlisher {
             product.save()
 
             executeListeners(new IceScrumSynchronousEvent(EventType.DELETE, story))
-            // TODO create listener for broadcast
-            broadcast(function: 'delete', message: [class: story.class, id: id, state: story.state], channel:'product-'+product.id)
         }
-        resumeBufferedBroadcast(channel:'product-'+product.id)
     }
 
     @PreAuthorize('isAuthenticated() and !archivedProduct(#story.backlog)')

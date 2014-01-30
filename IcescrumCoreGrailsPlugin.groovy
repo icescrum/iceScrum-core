@@ -32,7 +32,7 @@ import org.codehaus.groovy.grails.scaffolding.view.ScaffoldingViewResolver
 import org.icescrum.atmosphere.IceScrumAtmosphereEventListener
 import org.icescrum.core.cors.CorsFilter
 import org.icescrum.core.domain.AcceptanceTest
-import org.icescrum.core.event.IceScrumEventPushlisher
+import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumListener
 import org.icescrum.core.services.StoryService
 import org.icescrum.core.utils.JSONIceScrumDomainClassMarshaller
@@ -1108,7 +1108,7 @@ class IcescrumCoreGrailsPlugin {
             if (listener) {
                 def listenerService = ctx.getBean(serviceGrailsClass.propertyName)
                 def publisherService = ctx.getBean(listener.domain() + 'Service')
-                if (publisherService && publisherService instanceof IceScrumEventPushlisher) {
+                if (publisherService && publisherService instanceof IceScrumEventPublisher) {
                     publisherService.registerListener(listener.eventType()) { object, dirtyProperties ->
                         listenerService."$method.name"(object, dirtyProperties)
                     }
