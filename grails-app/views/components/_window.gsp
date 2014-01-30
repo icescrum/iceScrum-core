@@ -107,6 +107,8 @@
         </div>
         <div id="contextual-properties"
              data-ui-accordion
+             data-ui-accordion-fixhv="true"
+             data-ui-accordion-animate="false"
              data-ui-accordion-height-style="fill">
         </div>
     </div>
