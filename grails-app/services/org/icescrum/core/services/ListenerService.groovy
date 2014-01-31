@@ -68,9 +68,9 @@ class ListenerService {
     }
 
     @IceScrumListener(domain='story', eventType=IceScrumEventType.DELETE)
-    void storyDelete(Story story, Map dirtyProperties) {
+    void storyDelete(Story story, Map properties) {
         log.debug("the story $story.name has been deleted")
-        def product = story.backlog
-        broadcast(function: 'delete', message: [class: story.class, id: story.id, state: story.state], channel:'product-'+product.id)
+        def product = properties.backlog
+        broadcast(function: 'delete', message: [class: story.class, id: properties.id, state: properties.state], channel:'product-'+product.id)
     }
 }

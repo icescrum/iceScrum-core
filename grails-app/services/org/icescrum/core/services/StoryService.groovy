@@ -28,6 +28,7 @@ package org.icescrum.core.services
 import grails.plugin.fluxiable.Activity
 import grails.util.GrailsNameUtils
 import org.apache.commons.io.FileUtils
+import org.codehaus.groovy.grails.commons.DefaultGrailsDomainClass
 import org.grails.comments.Comment
 import org.grails.comments.CommentLink
 import org.hibernate.Hibernate
@@ -160,16 +161,24 @@ class StoryService extends IceScrumEventPublisher {
             }
 
             story.removeLinkByFollow(id)
-            story.delete()
 
-            product.attach() // required because the product is no longer in hibernate session (don't know why...)
+            def dirtyProperties = [:]
+            new DefaultGrailsDomainClass(Story).persistentProperties.each { property ->
+                def name = property.name
+                dirtyProperties[name] = story.properties[name]
+            }
+            dirtyProperties.id = story.id
+
+            story.delete()
+            // product.attach() is it still required ?
             if (history) {
                 product.addActivity(springSecurityService.currentUser, Activity.CODE_DELETE, story.name)
             }
             product.removeFromStories(story)
             product.save()
-
-            publishSynchronousEvent(IceScrumEventType.DELETE, story)
+            // Be careful, events may be pushed event if the delete fails
+            // Because the flush didn't occur yet
+            publishSynchronousEvent(IceScrumEventType.DELETE, story, dirtyProperties)
         }
     }
 
