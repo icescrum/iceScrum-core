@@ -136,7 +136,7 @@ class Actor extends BacklogElement implements Serializable, Comparable<Actor> {
         final int prime = 31
         int result = 1
         result = prime * result + ((backlog == null) ? 0 : backlog.hashCode())
-        result = prime * result + name.hashCode()
+        result = prime * result + (name ? name.hashCode() : 0)
         return result
     }
 
