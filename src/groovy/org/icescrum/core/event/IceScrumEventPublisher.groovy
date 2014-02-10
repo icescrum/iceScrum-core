@@ -23,6 +23,8 @@
  */
 package org.icescrum.core.event
 
+import org.codehaus.groovy.grails.commons.DefaultGrailsDomainClass
+
 abstract class IceScrumEventPublisher {
 
     private Map<IceScrumEventType, List<Closure>> listenersByEventType = [:]
@@ -48,5 +50,21 @@ abstract class IceScrumEventPublisher {
 
     synchronized void publishSynchronousEvent(IceScrumEventType type, object, Map dirtyProperties = [:]) {
         listenersByEventType[type]?.each { it(type, object, dirtyProperties) }
+    }
+
+    static Map dirtyProperties(IceScrumEventType type, object) {
+        def dirtyProperties = [:]
+        if (type == IceScrumEventType.UPDATE) {
+            object.dirtyPropertyNames.each {
+                dirtyProperties[it] = object.getPersistentValue(it)
+            }
+        } else if (type == IceScrumEventType.DELETE) {
+            new DefaultGrailsDomainClass(object.class).persistentProperties.each { property ->
+                def name = property.name
+                dirtyProperties[name] = object.properties[name]
+            }
+            dirtyProperties.id = object.id
+        }
+        return dirtyProperties
     }
 }

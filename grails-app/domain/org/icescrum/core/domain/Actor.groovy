@@ -26,9 +26,6 @@
 
 package org.icescrum.core.domain
 
-import org.icescrum.core.event.IceScrumActorEvent
-import org.icescrum.core.event.IceScrumEvent
-import org.springframework.security.core.context.SecurityContextHolder as SCH
 
 class Actor extends BacklogElement implements Serializable, Comparable<Actor> {
 
@@ -142,18 +139,6 @@ class Actor extends BacklogElement implements Serializable, Comparable<Actor> {
 
     int compareTo(Actor cr) {
         return name.compareTo(cr.name)
-    }
-
-    def beforeDelete() {
-        withNewSession {
-            publishEvent(new IceScrumActorEvent(this, this.class, User.get(SCH.context?.authentication?.principal?.id), IceScrumEvent.EVENT_BEFORE_DELETE, true))
-        }
-    }
-
-    def afterDelete() {
-        withNewSession {
-            publishEvent(new IceScrumActorEvent(this, this.class, User.get(SCH.context?.authentication?.principal?.id), IceScrumEvent.EVENT_AFTER_DELETE, true))
-        }
     }
 
     static search(product, options){

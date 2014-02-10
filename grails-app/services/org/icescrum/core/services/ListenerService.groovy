@@ -24,6 +24,7 @@
 package org.icescrum.core.services
 
 import grails.plugin.fluxiable.Activity
+import org.icescrum.core.domain.Actor
 import org.icescrum.core.domain.Story
 import org.icescrum.core.domain.User
 import org.icescrum.core.event.IceScrumListener
@@ -33,16 +34,15 @@ class ListenerService {
 
     def springSecurityService
 
-    @IceScrumListener(domain='story', eventType=IceScrumEventType.CREATE)
+    @IceScrumListener(domain = 'story', eventType = IceScrumEventType.CREATE)
     void storyCreate(Story story, Map dirtyProperties) {
         log.debug("the story $story.name has been created")
-        def product = story.backlog
         def u = (User) springSecurityService.currentUser
         story.addActivity(u, Activity.CODE_SAVE, story.name)
-        broadcast(function: 'add', message: story, channel:'product-'+product.id)
+        broadcast(function: 'add', message: story, channel: 'product-' + story.backlog.id)
     }
 
-    @IceScrumListener(domain='story', eventType=IceScrumEventType.UPDATE)
+    @IceScrumListener(domain = 'story', eventType = IceScrumEventType.UPDATE)
     void storyUpdate(Story story, Map dirtyProperties) {
         log.debug("the story $story.name has been updated")
         if (dirtyProperties) {
@@ -53,24 +53,41 @@ class ListenerService {
                     def newProperty = story."$property"
                     if (oldProperty != null) {
                         oldProperty.lastUpdated = new Date()
-                        broadcast(function: 'update', message: oldProperty, channel:'product-'+product.id)
+                        broadcast(function: 'update', message: oldProperty, channel: 'product-' + product.id)
                     }
                     if (newProperty != null) {
                         newProperty.lastUpdated = new Date()
-                        broadcast(function: 'update', message: newProperty, channel:'product-'+product.id)
+                        broadcast(function: 'update', message: newProperty, channel: 'product-' + product.id)
                     }
                 }
             }
             def u = (User) springSecurityService.currentUser
             story.addActivity(u, Activity.CODE_UPDATE, story.name)
-            broadcast(function: 'update', message: story, channel:'product-'+product.id)
+            broadcast(function: 'update', message: story, channel: 'product-' + product.id)
         }
     }
 
-    @IceScrumListener(domain='story', eventType=IceScrumEventType.DELETE)
-    void storyDelete(Story story, Map properties) {
-        log.debug("the story $story.name has been deleted")
-        def product = properties.backlog
-        broadcast(function: 'delete', message: [class: story.class, id: properties.id, state: properties.state], channel:'product-'+product.id)
+    @IceScrumListener(domain = 'story', eventType = IceScrumEventType.DELETE)
+    void storyDelete(Story story, Map dirtyProperties) {
+        log.debug("the story $dirtyProperties.name has been deleted")
+        broadcast(function: 'delete', message: [class: story.class, id: dirtyProperties.id, state: dirtyProperties.state], channel: 'product-' + dirtyProperties.backlog.id)
+    }
+
+    @IceScrumListener(domain = 'actor', eventType = IceScrumEventType.CREATE)
+    void actorCreate(Actor actor, Map dirtyProperties) {
+        log.debug("the actor $actor.name has been created")
+        broadcast(function: 'add', message: actor, channel: 'product-' + actor.backlog.id)
+    }
+
+    @IceScrumListener(domain = 'actor', eventType = IceScrumEventType.UPDATE)
+    void actorUpdate(Actor actor, Map dirtyProperties) {
+        log.debug("the actor $actor.name has been updated")
+        broadcast(function: 'update', message: actor, channel: 'product-' + actor.backlog.id)
+    }
+
+    @IceScrumListener(domain = 'actor', eventType = IceScrumEventType.DELETE)
+    void actorDelete(Actor actor, Map dirtyProperties) {
+        log.debug("the actor $dirtyProperties.name has been deleted")
+        broadcast(function: 'delete', message: [class: actor.class, id: dirtyProperties.id], channel: 'product-' + dirtyProperties.backlog.id)
     }
 }

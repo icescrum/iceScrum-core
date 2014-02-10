@@ -24,6 +24,7 @@
 import grails.converters.JSON
 import grails.converters.XML
 import grails.util.GrailsNameUtils
+import org.apache.commons.io.FilenameUtils
 import org.atmosphere.cpr.AtmosphereResource
 import org.atmosphere.cpr.BroadcasterFactory
 import org.atmosphere.cpr.HeaderConfig
@@ -519,6 +520,7 @@ class IcescrumCoreGrailsPlugin {
             clazz.registerMapping(actionName)
         }
 
+        // TODO remove
         mc.manageAttachments = { attachmentable, keptAttachments, addedAttachments ->
             def needPush = false
             if (!keptAttachments && attachmentable.attachments.size() > 0) {
@@ -556,6 +558,55 @@ class IcescrumCoreGrailsPlugin {
                 broadcast(function: 'replaceAll', message: newAttachments, channel:'product-'+params.product)
             }
             return newAttachments
+        }
+
+        // TODO rename
+        mc.manageAttachmentsNew = { item ->
+            if (request.method == 'POST'){
+                def upfile = params.file ?: request.getFile('file')
+                def filename = FilenameUtils.getBaseName(upfile.originalFilename?:upfile.name)
+                def ext = FilenameUtils.getExtension(upfile.originalFilename?:upfile.name)
+                def tmpF = null
+                if(upfile.originalFilename){
+                    tmpF = session.createTempFile(filename, '.' + ext)
+                    request.getFile("file").transferTo(tmpF)
+                }
+                item.addAttachment(springSecurityService.currentUser, tmpF?: upfile, upfile.originalFilename?:upfile.name)
+                def attachment = item.attachments.first()
+                render(status:200, contentType: 'application/json', text:[
+                        id:attachment.id,
+                        filename:attachment.inputName,
+                        ext:ext,
+                        size:attachment.length,
+                        provider:attachment.provider?:''] as JSON)
+            } else if(request.method == 'DELETE'){
+                def attachment = item.attachments?.find{ it.id == params.long('attachment.id') }
+                if (attachment){
+                    item.removeAttachment(attachment)
+                    render(status:200)
+                }
+            } else if(request.method == 'GET'){
+                def attachment = item.attachments?.find{ it.id == params.long('attachment.id') }
+                if (attachment) {
+                    if (attachment.url){
+                        redirect(url: "${attachment.url}")
+                        return
+                    }else{
+                        File file = attachmentableService.getFile(attachment)
+
+                        if (file.exists()) {
+                            String filename = attachment.filename
+                            ['Content-disposition': "attachment;filename=\"$filename\"",'Cache-Control': 'private','Pragma': ''].each {k, v ->
+                                response.setHeader(k, v)
+                            }
+                            response.contentType = attachment.contentType
+                            response.outputStream << file.newInputStream()
+                            return
+                        }
+                    }
+                }
+                response.status = HttpServletResponse.SC_NOT_FOUND
+            }
         }
     }
 

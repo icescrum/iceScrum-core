@@ -24,51 +24,53 @@
 
 package org.icescrum.core.services
 
+import org.icescrum.core.event.IceScrumEventPublisher
+import org.icescrum.core.event.IceScrumEventType
+
 import java.text.SimpleDateFormat
 import org.icescrum.core.domain.Actor
 import org.icescrum.core.domain.Product
-import org.icescrum.core.domain.User
-import org.icescrum.core.event.IceScrumActorEvent
-import org.icescrum.core.event.IceScrumEvent
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.transaction.annotation.Transactional
 
-class ActorService {
+class ActorService extends IceScrumEventPublisher {
 
-    static transactional = true
     def springSecurityService
 
     @PreAuthorize('productOwner(#p) and !archivedProduct(#p)')
-    void save(Actor act, Product p) {
-        act.name = act.name?.trim()
-        act.uid = Actor.findNextUId(p.id)
-        act.backlog = p
-        p.addToActors(act)
-        if (!act.save(flush: true))
+    void save(Actor actor, Product p) {
+        actor.name = actor.name?.trim()
+        actor.uid = Actor.findNextUId(p.id)
+        actor.backlog = p
+        p.addToActors(actor)
+        if (!actor.save(flush: true)) {
             throw new RuntimeException()
-        broadcast(function: 'add', message: act, channel:'product-'+p.id)
-        publishEvent(new IceScrumActorEvent(act, this.class, (User) springSecurityService.currentUser, IceScrumEvent.EVENT_CREATED))
+        }
+        publishSynchronousEvent(IceScrumEventType.CREATE, actor)
     }
 
-    @PreAuthorize('productOwner(#act.backlog) and !archivedProduct(#act.backlog)')
-    void delete(Actor act) {
-        Product p = (Product)act.backlog
-        def id = act.id
-        def stillHasPbi = p.stories.any {it.actor?.id == act.id}
-        if (stillHasPbi)
+    @PreAuthorize('productOwner(#actor.backlog) and !archivedProduct(#actor.backlog)')
+    void delete(Actor actor) {
+        Product product = (Product) actor.backlog
+        def stillHasPbi = product.stories.any { it.actor?.id == actor.id }
+        if (stillHasPbi) {
             throw new RuntimeException('is.actor.error.still.hasStories')
-        p.removeFromActors(act)
-        broadcast(function: 'delete', message: [class: act.class, id: id], channel:'product-'+p.id)
+        }
+        def eventType = IceScrumEventType.DELETE
+        def dirtyProperties = dirtyProperties(eventType, actor)
+        product.removeFromActors(actor)
+        publishSynchronousEvent(eventType, actor, dirtyProperties)
     }
 
-    @PreAuthorize('productOwner(#act.backlog) and !archivedProduct(#act.backlog)')
-    void update(Actor act) {
-        act.name = act.name?.trim()
-        if (!act.save(flush: true))
+    @PreAuthorize('productOwner(#actor.backlog) and !archivedProduct(#actor.backlog)')
+    void update(Actor actor) {
+        actor.name = actor.name?.trim()
+        def eventType = IceScrumEventType.UPDATE
+        def dirtyProperties = dirtyProperties(eventType, actor)
+        if (!actor.save(flush: true)) {
             throw new RuntimeException()
-
-        broadcast(function: 'update', message: act, channel:'product-'+act.backlog.id)
-        publishEvent(new IceScrumActorEvent(act, this.class, (User) springSecurityService.currentUser, IceScrumEvent.EVENT_UPDATED))
+        }
+        publishSynchronousEvent(eventType, actor, dirtyProperties)
     }
 
     @Transactional(readOnly = true)
