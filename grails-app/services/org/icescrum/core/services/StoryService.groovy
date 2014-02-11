@@ -28,7 +28,6 @@ package org.icescrum.core.services
 import grails.plugin.fluxiable.Activity
 import grails.util.GrailsNameUtils
 import org.apache.commons.io.FileUtils
-import org.codehaus.groovy.grails.commons.DefaultGrailsDomainClass
 import org.grails.comments.Comment
 import org.grails.comments.CommentLink
 import org.hibernate.Hibernate
@@ -147,9 +146,7 @@ class StoryService extends IceScrumEventPublisher {
             def id = story.id
             story.deleteComments()
 
-            //give why you delete a story
             story.description = reason ?: null
-            //Send an email synchronously
             if (history) {
                 try{
                     notificationEmailService.sendAlertCUD(story, (User)springSecurityService.currentUser, IceScrumStoryEvent.EVENT_BEFORE_DELETE)
@@ -162,13 +159,8 @@ class StoryService extends IceScrumEventPublisher {
 
             story.removeLinkByFollow(id)
 
-            def dirtyProperties = [:]
-            new DefaultGrailsDomainClass(Story).persistentProperties.each { property ->
-                def name = property.name
-                dirtyProperties[name] = story.properties[name]
-            }
-            dirtyProperties.id = story.id
-
+            def eventType = IceScrumEventType.DELETE
+            def dirtyProperties = dirtyProperties(eventType, story)
             story.delete()
             // product.attach() is it still required ?
             if (history) {
@@ -176,28 +168,43 @@ class StoryService extends IceScrumEventPublisher {
             }
             product.removeFromStories(story)
             product.save()
-            // Be careful, events may be pushed event if the delete fails
-            // Because the flush didn't occur yet
-            publishSynchronousEvent(IceScrumEventType.DELETE, story, dirtyProperties)
+            // Be careful, events may be pushed event if the delete fails because the flush didn't occur yet
+            publishSynchronousEvent(eventType, story, dirtyProperties)
         }
     }
 
     @PreAuthorize('isAuthenticated() and !archivedProduct(#story.backlog)')
     void update(Story story, Map props) {
 
-        if (props.state != null) {
-            if (props.state == Story.STATE_ACCEPTED && story.state == Story.STATE_SUGGESTED){
+        if (props.state != null && props.state != story.state) {
+            if (props.state == Story.STATE_ACCEPTED) {
                 acceptToBacklog([story])
-            } else if (props.state == Story.STATE_SUGGESTED && story.state > Story.STATE_ACCEPTED){
+            } else if (props.state == Story.STATE_SUGGESTED) {
                 returnToSandbox([story])
             }
         }
-        if (props.effort != null) {
-            estimate(story, props.effort)
+        if (props.effort != null && props.effort != story.effort) {
+            // TODO check TM or SM
+            if (story.state < Story.STATE_ACCEPTED || story.state == Story.STATE_DONE)
+                throw new IllegalStateException()
+            if (!(props.effort instanceof Number) && (props.effort instanceof String && !props.effort.isNumber())) {
+                story.state = Story.STATE_ACCEPTED
+                story.effort = null
+                story.estimatedDate = null
+            } else {
+                if (story.state == Story.STATE_ACCEPTED) {
+                    story.state = Story.STATE_ESTIMATED
+                }
+                story.effort = props.effort.toInteger()
+                story.estimatedDate = new Date()
+            }
+            if (story.parentSprint && story.parentSprint.state == Sprint.STATE_WAIT) {
+                story.parentSprint.capacity = (Double) story.parentSprint.getTotalEffort()
+            }
         }
-        if (props.sprint != null) {
-            plan(props.sprint, story)
-        } else if (props.containsKey('sprint') && story.parentSprint) {
+        if (props.parentSprint != null) {
+            plan(props.parentSprint, story)
+        } else if (props.containsKey('parentSprint') && story.parentSprint) {
             unPlan(story)
         }
 
@@ -229,37 +236,15 @@ class StoryService extends IceScrumEventPublisher {
             manageActors(story, product)
         }
 
-        // TODO The following can be extracted to be reused in other places
-        def dirtyProperties = [:]
-        story.dirtyPropertyNames.each {
-            dirtyProperties[it] = story.getPersistentValue(it)
-        }
+        def eventType = IceScrumEventType.UPDATE
+        def dirtyProperties = dirtyProperties(eventType, story)
         if (!story.save()) {
             throw new RuntimeException(story.errors?.toString())
         }
-        publishSynchronousEvent(IceScrumEventType.UPDATE, story, dirtyProperties)
+        publishSynchronousEvent(eventType, story, dirtyProperties)
     }
 
-    // TODO check if security works for private methods
-    @PreAuthorize('(teamMember(#story.backlog) or scrumMaster(#story.backlog)) and !archivedProduct(#story.backlog)')
-    private void estimate(Story story, estimation) {
-        if (story.state < Story.STATE_ACCEPTED || story.state == Story.STATE_DONE)
-            throw new IllegalStateException()
-        if (!(estimation instanceof Number) && (estimation instanceof String && !estimation.isNumber())) {
-            story.state = Story.STATE_ACCEPTED
-            story.effort = null
-            story.estimatedDate = null
-        } else {
-            if (story.state == Story.STATE_ACCEPTED)
-                story.state = Story.STATE_ESTIMATED
-            story.effort = estimation.toInteger()
-            story.estimatedDate = new Date()
-        }
-        if (story.parentSprint && story.parentSprint.state == Sprint.STATE_WAIT) {
-            story.parentSprint.capacity = (Double) story.parentSprint.getTotalEffort()
-        }
-    }
-
+    // TODO check rights
     @PreAuthorize('(productOwner(#sprint.parentProduct) or scrumMaster(#sprint.parentProduct)) and !archivedProduct(#sprint.parentProduct)')
     private void plan(Sprint sprint, Collection<Story> stories) {
         stories.each {
@@ -267,6 +252,7 @@ class StoryService extends IceScrumEventPublisher {
         }
     }
 
+    // TODO check rights
     @PreAuthorize('(productOwner(#sprint.parentProduct) or scrumMaster(#sprint.parentProduct)) and !archivedProduct(#sprint.parentProduct)')
     private void plan(Sprint sprint, Story story) {
         if (story.dependsOn){
@@ -534,6 +520,7 @@ class StoryService extends IceScrumEventPublisher {
         }
     }
 
+    // TODO check rights
     @PreAuthorize('(productOwner(#story.backlog) or scrumMaster(#story.backlog))  and !archivedProduct(#story.backlog)')
     private void rank(Story story, int rank) {
 

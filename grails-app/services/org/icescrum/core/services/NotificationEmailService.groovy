@@ -50,6 +50,7 @@ class NotificationEmailService implements ApplicationListener<IceScrumEvent> {
     static transactional = false
 
     void onApplicationEvent(IceScrumEvent e) {
+/*
         try {
             if (e instanceof IceScrumStoryEvent && e.type != IceScrumStoryEvent.EVENT_BEFORE_DELETE && e.type in IceScrumStoryEvent.EVENT_CUD ) {
                 sendAlertCUD((Story) e.source, (User) e.doneBy, e.type)
@@ -65,6 +66,7 @@ class NotificationEmailService implements ApplicationListener<IceScrumEvent> {
         } catch (Exception expt) {
             if (log.debugEnabled) expt.printStackTrace()
         }
+*/
 
     }
 
