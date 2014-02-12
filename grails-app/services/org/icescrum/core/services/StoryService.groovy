@@ -159,8 +159,7 @@ class StoryService extends IceScrumEventPublisher {
 
             story.removeLinkByFollow(id)
 
-            def eventType = IceScrumEventType.DELETE
-            def dirtyProperties = dirtyProperties(eventType, story)
+            def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_DELETE, story)
             story.delete()
             // product.attach() is it still required ?
             if (history) {
@@ -169,7 +168,7 @@ class StoryService extends IceScrumEventPublisher {
             product.removeFromStories(story)
             product.save()
             // Be careful, events may be pushed event if the delete fails because the flush didn't occur yet
-            publishSynchronousEvent(eventType, story, dirtyProperties)
+            publishSynchronousEvent(IceScrumEventType.DELETE, story, dirtyProperties)
         }
     }
 
@@ -236,12 +235,11 @@ class StoryService extends IceScrumEventPublisher {
             manageActors(story, product)
         }
 
-        def eventType = IceScrumEventType.UPDATE
-        def dirtyProperties = dirtyProperties(eventType, story)
+        def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_UPDATE, story)
         if (!story.save()) {
             throw new RuntimeException(story.errors?.toString())
         }
-        publishSynchronousEvent(eventType, story, dirtyProperties)
+        publishSynchronousEvent(IceScrumEventType.UPDATE, story, dirtyProperties)
     }
 
     // TODO check rights

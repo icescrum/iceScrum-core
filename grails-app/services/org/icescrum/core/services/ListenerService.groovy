@@ -90,4 +90,10 @@ class ListenerService {
         log.debug("the actor $dirtyProperties.name has been deleted")
         broadcast(function: 'delete', message: [class: actor.class, id: dirtyProperties.id], channel: 'product-' + dirtyProperties.backlog.id)
     }
+
+    @IceScrumListener(domains = ['actor', 'story'], eventType = IceScrumEventType.BEFORE_DELETE)
+    void backlogElementBeforeDelete(object, Map dirtyProperties) {
+        log.debug("the ${object.class} $object.name will be deleted")
+        object.removeAllAttachments()
+    }
 }

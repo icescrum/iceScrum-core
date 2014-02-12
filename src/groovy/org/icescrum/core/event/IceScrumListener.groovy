@@ -31,6 +31,7 @@ import java.lang.annotation.Target
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 @interface IceScrumListener {
-    String domain()
+    String[] domains() default []
+    String domain() default ''
     IceScrumEventType eventType() default IceScrumEventType.UGLY_HACK_BECAUSE_ANNOTATION_CANT_BE_NULL
 }

@@ -555,18 +555,6 @@ class Story extends BacklogElement implements Cloneable, Serializable {
         publishEvent new IceScrumStoryEvent(this, this.class, (User)a.poster, IceScrumStoryEvent.EVENT_UPDATED)
     }
 
-    def beforeDelete() {
-        withNewSession {
-            publishEvent(new IceScrumStoryEvent(this, this.class, User.get(SCH.context?.authentication?.principal?.id), IceScrumEvent.EVENT_BEFORE_DELETE, true))
-        }
-    }
-
-    def afterDelete() {
-        withNewSession {
-            publishEvent(new IceScrumStoryEvent(this, this.class, User.get(SCH.context?.authentication?.principal?.id), IceScrumEvent.EVENT_AFTER_DELETE, true))
-        }
-    }
-
     static search(product, options){
         List<Story> stories = []
         def criteria = {

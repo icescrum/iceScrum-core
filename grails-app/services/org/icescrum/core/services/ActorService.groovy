@@ -56,21 +56,19 @@ class ActorService extends IceScrumEventPublisher {
         if (stillHasPbi) {
             throw new RuntimeException('is.actor.error.still.hasStories')
         }
-        def eventType = IceScrumEventType.DELETE
-        def dirtyProperties = dirtyProperties(eventType, actor)
+        def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_DELETE, actor)
         product.removeFromActors(actor)
-        publishSynchronousEvent(eventType, actor, dirtyProperties)
+        publishSynchronousEvent(IceScrumEventType.DELETE, actor, dirtyProperties)
     }
 
     @PreAuthorize('productOwner(#actor.backlog) and !archivedProduct(#actor.backlog)')
     void update(Actor actor) {
         actor.name = actor.name?.trim()
-        def eventType = IceScrumEventType.UPDATE
-        def dirtyProperties = dirtyProperties(eventType, actor)
+        def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_UPDATE, actor)
         if (!actor.save(flush: true)) {
             throw new RuntimeException()
         }
-        publishSynchronousEvent(eventType, actor, dirtyProperties)
+        publishSynchronousEvent(IceScrumEventType.UPDATE, actor, dirtyProperties)
     }
 
     @Transactional(readOnly = true)

@@ -73,12 +73,6 @@ abstract class BacklogElement implements Fluxiable, Attachmentable, Commentable,
         publishEvent new IceScrumBacklogElementEvent(this, c, this.class, (User)c.poster, IceScrumBacklogElementEvent.EVENT_COMMENT_ADDED)
     }
 
-    def beforeDelete = {
-        withNewSession {
-            this.removeAllAttachments()
-        }
-    }
-
     static boolean hasTagKeyword(String term) {
         term.startsWith(TAG_KEYWORD)
     }

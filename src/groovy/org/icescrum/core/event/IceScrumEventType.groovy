@@ -26,6 +26,8 @@ package org.icescrum.core.event
 enum IceScrumEventType {
     UGLY_HACK_BECAUSE_ANNOTATION_CANT_BE_NULL,
     CREATE,
+    BEFORE_UPDATE,
     UPDATE,
+    BEFORE_DELETE,
     DELETE
 }

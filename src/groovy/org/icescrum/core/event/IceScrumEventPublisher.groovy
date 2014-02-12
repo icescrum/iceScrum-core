@@ -48,17 +48,19 @@ abstract class IceScrumEventPublisher {
         }
     }
 
-    synchronized void publishSynchronousEvent(IceScrumEventType type, object, Map dirtyProperties = [:]) {
+    synchronized Map publishSynchronousEvent(IceScrumEventType type, object, Map dirtyProperties = extractDirtyProperties(type, object)) {
+        println "Publishing event $type on ${object.class} with properties $dirtyProperties"
         listenersByEventType[type]?.each { it(type, object, dirtyProperties) }
+        return dirtyProperties
     }
 
-    static Map dirtyProperties(IceScrumEventType type, object) {
+    private static Map extractDirtyProperties(IceScrumEventType type, object) {
         def dirtyProperties = [:]
-        if (type == IceScrumEventType.UPDATE) {
+        if (type == IceScrumEventType.BEFORE_UPDATE) {
             object.dirtyPropertyNames.each {
                 dirtyProperties[it] = object.getPersistentValue(it)
             }
-        } else if (type == IceScrumEventType.DELETE) {
+        } else if (type == IceScrumEventType.BEFORE_DELETE) {
             new DefaultGrailsDomainClass(object.class).persistentProperties.each { property ->
                 def name = property.name
                 dirtyProperties[name] = object.properties[name]
