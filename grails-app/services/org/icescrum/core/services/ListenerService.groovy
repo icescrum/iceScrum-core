@@ -47,7 +47,7 @@ class ListenerService {
         log.debug("the story $story.name has been updated")
         if (dirtyProperties) {
             def product = story.backlog
-            ['feature', 'dependsOn'].each { property ->
+            ['feature', 'dependsOn', 'actor'].each { property ->
                 if (dirtyProperties.containsKey(property)) {
                     def oldProperty = dirtyProperties[property]
                     def newProperty = story."$property"

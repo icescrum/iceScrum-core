@@ -1100,19 +1100,20 @@ class StoryService extends IceScrumEventPublisher {
     }
 
     private void manageActors(story, product) {
+        def newActor
         if (story.description) {
             def actorIdMatcher = story.description =~ /A\[(.+?)-.*?\]/
             if (actorIdMatcher) {
                 def idString = actorIdMatcher[0][1]
                 if (idString.isInteger()) {
-                    def actor = product.actors.find{ it.uid == idString.toInteger() }
-                    if (story.actor != actor){
-                        story.actor?.removeFromStories(story)
-                        if (actor){
-                            actor.addToStories(story)
-                        }
-                    }
+                    newActor = product.actors.find{ it.uid == idString.toInteger() }
                 }
+            }
+        }
+        if (newActor) {
+            if (story.actor != newActor) {
+                story.actor?.removeFromStories(story)
+                newActor.addToStories(story)
             }
         } else if (story.actor) {
             story.actor.removeFromStories(story)
