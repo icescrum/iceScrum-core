@@ -49,7 +49,7 @@ abstract class IceScrumEventPublisher {
     }
 
     synchronized Map publishSynchronousEvent(IceScrumEventType type, object, Map dirtyProperties = extractDirtyProperties(type, object)) {
-        println "Publishing event $type on ${object.class} with properties $dirtyProperties"
+        println "Publishing event $type on ${object.class} with dirty properties old values $dirtyProperties"
         listenersByEventType[type]?.each { it(type, object, dirtyProperties) }
         return dirtyProperties
     }
