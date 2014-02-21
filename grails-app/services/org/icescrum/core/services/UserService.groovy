@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010 iceScrum Technologies.
+ * Copyright (c) 2014 Kagilum SAS.
  *
  * This file is part of iceScrum.
  *
@@ -18,31 +18,23 @@
  * Authors:
  *
  * Vincent Barrier (vbarrier@kagilum.com)
- * Stéphane Maldini (stephane.maldini@icescrum.com)
- * Manuarii Stein (manuarii.stein@icescrum.com)
  * Nicolas Noullet (nnoullet@kagilum.com)
  */
 
 package org.icescrum.core.services
 
+import org.codehaus.groovy.grails.commons.DefaultGrailsDomainClass
 import org.icescrum.core.domain.User
+import org.icescrum.core.event.IceScrumEventPublisher
+import org.icescrum.core.event.IceScrumEventType
 import org.springframework.security.access.prepost.PreAuthorize
-
 import org.icescrum.core.domain.preferences.UserPreferences
-
 import org.springframework.transaction.annotation.Transactional
-
 import org.apache.commons.io.FilenameUtils
 import org.icescrum.core.utils.ImageConvert
-import org.icescrum.core.event.IceScrumEvent
-import org.icescrum.core.event.IceScrumUserEvent
 import org.icescrum.core.support.ApplicationSupport
 
-/**
- * The UserService class monitor the operations on the User domain requested by the web layer.
- * It acts as a "Facade" between the UI and the domain operations
- */
-class UserService {
+class UserService extends IceScrumEventPublisher {
 
     def grailsApplication
     def springSecurityService
@@ -51,48 +43,77 @@ class UserService {
 
     static transactional = true
 
-    void save(User _user) {
-        if(_user.password.trim().length() == 0) {
-            throw new RuntimeException('user.password.blank')
-        }
-        _user.password = springSecurityService.encodePassword(_user.password)
-        if (!_user.save())
+    void save(User user) {
+
+        if (!user.validate()){
             throw new RuntimeException()
-        publishEvent(new IceScrumUserEvent(_user, this.class, _user, IceScrumEvent.EVENT_CREATED))
+        }
+
+        user.password = springSecurityService.encodePassword(user.password)
+
+        if (!user.save()) {
+            throw new RuntimeException()
+        }
+
+        publishSynchronousEvent(IceScrumEventType.CREATE, user)
     }
 
-    void update(User _user, String pwd = null, String avatarPath = null, boolean scale = true) {
-        if (pwd)
-            _user.password = springSecurityService.encodePassword(pwd)
+    void update(User user, Map props) {
 
+        if (props.pwd){
+            user.password = springSecurityService.encodePassword(props.pwd)
+        }
+        if (props.preferences){
+            user.preferences.emailsSettings = props.emailsSettings
+        }
         try {
-            if (avatarPath) {
-                if (FilenameUtils.getExtension(avatarPath) != 'png') {
-                    def oldAvatarPath = avatarPath
-                    def newAvatarPath = avatarPath.replace(FilenameUtils.getExtension(avatarPath), 'png')
+            if (props.avatar) {
+                if (FilenameUtils.getExtension(props.avatar) != 'png') {
+                    def oldAvatarPath = props.avatar
+                    def newAvatarPath = props.avatar.replace(FilenameUtils.getExtension(props.avatar), 'png')
                     ImageConvert.convertToPNG(oldAvatarPath, newAvatarPath)
-                    avatarPath = newAvatarPath
+                    props.avatar = newAvatarPath
                 }
-                burningImageService.doWith(avatarPath, grailsApplication.config.icescrum.images.users.dir).execute(_user.id.toString(), {
-                    if (scale)
+                burningImageService.doWith(props.avatar, grailsApplication.config.icescrum.images.users.dir).execute(user.id.toString(), {
+                    if (props.scale)
                         it.scaleAccurate(40, 40)
                 })
+            } else if(props.containsKey('avatar') && props.avatar == null) {
+                def oldAvatar = new File(grailsApplication.config.icescrum.images.users.dir + user.id + '.png')
+                if (oldAvatar.exists())
+                    oldAvatar.delete()
+
             }
         }
         catch (RuntimeException e) {
             if (log.debugEnabled) e.printStackTrace()
             throw new RuntimeException('is.convert.image.error')
         }
-        _user.lastUpdated = new Date()
-        if (!_user.save(flush: true))
-            throw new RuntimeException()
-        publishEvent(new IceScrumUserEvent(_user, this.class, _user, IceScrumEvent.EVENT_UPDATED))
+
+        user.lastUpdated = new Date()
+
+        // TODO The following can be extracted to be reused in other places
+        def dirtyProperties = [:]
+        user.dirtyPropertyNames.each {
+            dirtyProperties[it] = user.getPersistentValue(it)
+        }
+        if (!user.save()) {
+            throw new RuntimeException(user.errors?.toString())
+        }
+        publishSynchronousEvent(IceScrumEventType.UPDATE, user, dirtyProperties)
     }
 
     @PreAuthorize("ROLE_ADMIN")
-    boolean delete(User _user) {
+    boolean delete(User user) {
         try {
-            _user.delete()
+            def dirtyProperties = [:]
+            new DefaultGrailsDomainClass(User).persistentProperties.each { property ->
+                def name = property.name
+                dirtyProperties[name] = user.properties[name]
+            }
+            dirtyProperties.id = user.id
+            user.delete()
+            publishSynchronousEvent(IceScrumEventType.DELETE, user)
             return true
         } catch (Exception e) {
             return false
@@ -104,39 +125,31 @@ class UserService {
         Random rand = new Random(System.currentTimeMillis())
         def passChars = (0..10).collect { pool[rand.nextInt(pool.size())] }
         def password = passChars.join('')
-        user.password = springSecurityService.encodePassword(password)
-        if (!user.save()) {
-            throw new RuntimeException('is.user.error.reset.password')
-        }
+        update(user, [pwd:password])
         notificationEmailService.sendNewPassword(user, password)
     }
 
 
-    @PreAuthorize("ROLE_ADMIN")
-    List<User> getUsersList() {
-        return User.list()
-    }
-
-    void changeMenuOrder(User _u, String id, String position, boolean hidden) {
+    void menuBar(User user, String id, String position, boolean hidden) {
         def currentMenu
         if (hidden) {
-            currentMenu = _u.preferences.menuHidden
+            currentMenu = user.preferences.menuHidden
             if (!currentMenu.containsKey(id)) {
                 currentMenu.put(id, (currentMenu.size() + 1).toString())
-                if (_u.preferences.menu.containsKey(id)) {
-                    this.changeMenuOrder(_u, id, _u.preferences.menuHidden.size().toString(), true)
+                if (user.preferences.menu.containsKey(id)) {
+                    this.menuBar(user, id, user.preferences.menuHidden.size().toString(), true)
                 }
-                _u.preferences.menu.remove(id)
+                user.preferences.menu.remove(id)
             }
         }
         else {
-            currentMenu = _u.preferences.menu
+            currentMenu = user.preferences.menu
             if (!currentMenu.containsKey(id)) {
                 currentMenu.put(id, (currentMenu.size() + 1).toString())
-                if (_u.preferences.menuHidden.containsKey(id)) {
-                    this.changeMenuOrder(_u, id, _u.preferences.menuHidden.size().toString(), true)
+                if (user.preferences.menuHidden.containsKey(id)) {
+                    this.menuBar(user, id, user.preferences.menuHidden.size().toString(), true)
                 }
-                _u.preferences.menuHidden.remove(id)
+                user.preferences.menuHidden.remove(id)
             }
         }
         def from = currentMenu.get(id)?.toInteger()
@@ -166,8 +179,8 @@ class UserService {
                 }
             }
         }
-        _u.lastUpdated = new Date()
-        if (!_u.save()) {
+        user.lastUpdated = new Date()
+        if (!user.save()) {
             throw new RuntimeException()
         }
     }

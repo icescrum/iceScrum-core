@@ -868,7 +868,6 @@ class StoryService extends IceScrumEventPublisher {
                     affectVersion: story.affectVersion,
                     origin: story.name,
                     feature: story.feature,
-                    actor: story.actor,
                     executionFrequency: story.executionFrequency
             )
 
