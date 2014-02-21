@@ -23,7 +23,6 @@
 
 package org.icescrum.core.services
 
-import org.codehaus.groovy.grails.commons.DefaultGrailsDomainClass
 import org.icescrum.core.domain.User
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
@@ -44,17 +43,13 @@ class UserService extends IceScrumEventPublisher {
     static transactional = true
 
     void save(User user) {
-
         if (!user.validate()){
             throw new RuntimeException()
         }
-
         user.password = springSecurityService.encodePassword(user.password)
-
         if (!user.save()) {
             throw new RuntimeException()
         }
-
         publishSynchronousEvent(IceScrumEventType.CREATE, user)
     }
 
@@ -92,11 +87,7 @@ class UserService extends IceScrumEventPublisher {
 
         user.lastUpdated = new Date()
 
-        // TODO The following can be extracted to be reused in other places
-        def dirtyProperties = [:]
-        user.dirtyPropertyNames.each {
-            dirtyProperties[it] = user.getPersistentValue(it)
-        }
+        def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_UPDATE, user)
         if (!user.save()) {
             throw new RuntimeException(user.errors?.toString())
         }
@@ -106,14 +97,9 @@ class UserService extends IceScrumEventPublisher {
     @PreAuthorize("ROLE_ADMIN")
     boolean delete(User user) {
         try {
-            def dirtyProperties = [:]
-            new DefaultGrailsDomainClass(User).persistentProperties.each { property ->
-                def name = property.name
-                dirtyProperties[name] = user.properties[name]
-            }
-            dirtyProperties.id = user.id
+            def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_DELETE, user)
             user.delete()
-            publishSynchronousEvent(IceScrumEventType.DELETE, user)
+            publishSynchronousEvent(IceScrumEventType.DELETE, user, dirtyProperties)
             return true
         } catch (Exception e) {
             return false
