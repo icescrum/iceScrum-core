@@ -307,7 +307,14 @@ class FormTagLib {
     }
 
     def options = { attrs ->
-        attrs.values.each { key, value ->
+        def valueMap
+        if (attrs.values instanceof List) {
+            valueMap = [:]
+            attrs.values.each { valueMap[it] = it }
+        } else {
+            valueMap = attrs.values
+        }
+        valueMap.each { key, value ->
             out << "<option value='$key'>$value</option>"
             out.println()
         }
