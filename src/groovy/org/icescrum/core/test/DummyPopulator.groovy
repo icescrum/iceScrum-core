@@ -154,9 +154,10 @@ class DummyPopulator {
             def _storyCount = 0
             def s
             def createStory = {state ->
+                def _act = _storyCount % 5 == 0 ? actor4 : _storyCount % 4 == 0 ? actor : _storyCount % 3 == 0 ? actor3 : actor
                 s = new Story(backlog: p,
                         feature: _storyCount % 4 == 0 ? feature : _storyCount % 3 == 0 ? feature3 : feature2,
-                        actor:_storyCount % 5 == 0 ? actor4 : _storyCount % 4 == 0 ? actor : _storyCount % 3 == 0 ? actor3 : actor2,
+                        actor:_act,
                         name: "A story $_storyCount",
                         effort: 5,
                         uid: _storyCount + 1,
@@ -167,8 +168,8 @@ class DummyPopulator {
                         state: state,
                         creator: ua,
                         rank: _storyCount++,
-                        description: 'As a user, I can do something awesome',
-                        notes: '<b>Un texte en gras</b> hahaha ! <em>et en italique</em>'
+                        description: "As a A[${_act.id}-${_act.name}], I can do something awesome",
+                        notes: '*Un texte en gras* hahaha ! _et en italique_'
                 ).save()
 
                 if (s.state == Story.STATE_ACCEPTED || s.state == Story.STATE_SUGGESTED){

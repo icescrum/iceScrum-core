@@ -205,7 +205,13 @@ class SecurityService {
                     product = parseCurrentRequestProduct(request)
             }else if (product in Product) {
                 p = product
-                product = product.id
+
+                //start ugly fix kludge! avoids GRAILS-4453
+                product.cliches.count()
+                product.sprints*.tasks?.count()
+                //end ugly fix kludge! avoids GRAILS-4453
+
+            product = product.id
             }
             if (product) {
                 return springcacheService.doWithCache(CACHE_ARCHIVEDPRODUCT, new CacheKeyBuilder().append(product).append(getProductLastUpdated(product)).toCacheKey()) {
