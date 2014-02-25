@@ -129,18 +129,17 @@ class Product extends TimeBox implements Serializable, Attachmentable {
         return name.compareTo(obj.name);
     }
 
-    def getMembersOnly() {
-        firstTeam ? firstTeam.members : []
-    }
-
     def getAllUsers() {
         def users = []
         this.teams?.each {
-            if (it.members)
+            if (it.members) {
                 users.addAll(it.members)
+            }
         }
-        if (this.productOwners)
-            users.addAll(this.productOwners)
+        def pos = this.getProductOwners() // Do not use this.productOwners because it refers to the private attribute rather than the getter
+        if (pos) {
+            users.addAll(pos)
+        }
         return users.asList().unique()
     }
 
