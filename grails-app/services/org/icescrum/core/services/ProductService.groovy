@@ -526,11 +526,11 @@ class ProductService {
     @PreAuthorize('owner(#p)')
     def delete(Product p) {
         def id = p.id
+        p.allUsers.each{ it.preferences.removeEmailsSettings(p.pkey) } // must be before unsecure to have POs
         securityService.unsecureDomain p
         UserPreferences.findAllByLastProductOpened(p.pkey)?.each {
             it.lastProductOpened = null
         }
-        p.allUsers.each{ it.preferences.removeEmailsSettings(p.pkey) }
         p.teams.each{
             it.removeFromProducts(p)
         }
