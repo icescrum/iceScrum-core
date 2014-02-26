@@ -53,13 +53,15 @@ class ProductService {
 
     @PreAuthorize('isAuthenticated()')
     void save(Product product, productOwners, stakeHolders) {
+
+        // TODO replace with domain validation constaints
         if (!product.endDate == null)
             throw new IllegalStateException("is.product.error.no.endDate")
         if (product.startDate > product.endDate)
             throw new IllegalStateException('is.product.error.startDate')
         if (product.startDate == product.endDate)
             throw new IllegalStateException('is.product.error.duration')
-        if (!product.planningPokerGameType in [0, 1])
+        if (!(product.planningPokerGameType in [0, 1]))
             throw new IllegalStateException("is.product.error.no.estimationSuite")
 
         product.orderNumber = (Product.count() ?: 0) + 1
@@ -85,13 +87,14 @@ class ProductService {
 
     @PreAuthorize('isAuthenticated()')
     void saveImport(Product product, String name, String importPath) {
+        // TODO replace with domain validation constaints
         if (!product.endDate == null)
             throw new IllegalStateException("is.product.error.no.endDate")
         if (product.startDate > product.endDate)
             throw new IllegalStateException('is.product.error.startDate')
         if (product.startDate == product.endDate)
             throw new IllegalStateException('is.product.error.duration')
-        if (!product.planningPokerGameType in [0, 1])
+        if (!(product.planningPokerGameType in [0, 1]))
             throw new IllegalStateException("is.product.error.no.estimationSuite")
         product.orderNumber = (Product.count() ?: 0) + 1
 
@@ -186,7 +189,8 @@ class ProductService {
         if (!product.name?.trim()) {
             throw new IllegalStateException("is.product.error.no.name")
         }
-        if (!product.planningPokerGameType in [0, 1]) {
+        // TODO replace with domain validation constaints
+        if (!(product.planningPokerGameType in [0, 1])) {
             throw new IllegalStateException("is.product.error.no.estimationSuite")
         }
 
