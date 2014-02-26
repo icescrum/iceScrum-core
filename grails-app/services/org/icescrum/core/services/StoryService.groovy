@@ -661,9 +661,6 @@ class StoryService {
             story.state = Story.STATE_SUGGESTED
             story.acceptedDate = null
             story.estimatedDate = null
-            if (!story.origin && story.effort != null) {
-                story.origin = g.message(code: 'is.ui.backlog') + " ($story.effort " + g.message(code: 'is.ui.sprintPlan.points') + ')'
-            }
             story.effort = null
 
             if (!story.save(flush: true))
