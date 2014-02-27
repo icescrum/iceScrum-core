@@ -24,6 +24,7 @@
 
 package org.icescrum.core.test
 
+import org.icescrum.core.domain.AcceptanceTest
 import org.springframework.security.core.context.SecurityContextHolder as SCH
 
 import org.codehaus.groovy.grails.commons.ApplicationHolder
@@ -299,6 +300,37 @@ class DummyPopulator {
                 it.rank = index
                 it.save()
             }
+
+            p.stories.findAll { it.state == Story.STATE_SUGGESTED }.asList() [0..3].eachWithIndex{ Story it, index ->
+                def acceptanceTest = new AcceptanceTest(name: "at $it.state $index", description: "desc $it.state $index", creator: ua, parentStory: it)
+                acceptanceTest.save()
+                if (index % 2 == 0) {
+                    def acceptanceTest2 = new AcceptanceTest(name: "at2 $it.state $index", description: "desc2 $it.state $index", creator: ua, parentStory: it)
+                    acceptanceTest2.save()
+                }
+            }
+            p.stories.findAll { it.state == Story.STATE_ACCEPTED }.asList() [0..3].eachWithIndex{ Story it, index ->
+                def acceptanceTest = new AcceptanceTest(name: "at $it.state $index", description: "desc $it.state $index", creator: ua, parentStory: it)
+                acceptanceTest.save()
+                if (index % 2 == 0) {
+                    def acceptanceTest2 = new AcceptanceTest(name: "at2 $it.state $index", description: "desc2 $it.state $index", creator: ua, parentStory: it)
+                    acceptanceTest2.save()
+                }
+                it.save()
+            }
+            p.stories.findAll { it.state == Story.STATE_INPROGRESS }.asList() [0..3].eachWithIndex{ Story it, index ->
+                def acceptanceTest = new AcceptanceTest(name: "at $it.state $index", description: "desc $it.state $index", creator: ua, parentStory: it, state: AcceptanceTest.AcceptanceTestState.SUCCESS.id)
+                acceptanceTest.save()
+                if (index % 2 == 0) {
+                    def acceptanceTest2 = new AcceptanceTest(name: "at2 $it.state $index", description: "desc2 $it.state $index", creator: ua, parentStory: it, state: AcceptanceTest.AcceptanceTestState.FAILED.id)
+                    acceptanceTest2.save()
+                }
+                if (index % 3 == 0) {
+                    def acceptanceTest3 = new AcceptanceTest(name: "at3 $it.state $index", description: "desc3 $it.state $index", creator: ua, parentStory: it, state: AcceptanceTest.AcceptanceTestState.TOCHECK.id)
+                    acceptanceTest3.save()
+                }
+            }
+
         }
 
         sessionFactory.currentSession.flush()

@@ -58,11 +58,12 @@ class AcceptanceTest implements Fluxiable, Serializable {
     }
 
     static AcceptanceTest getInProduct(productId, id) {
-        executeQuery(
+        def results = executeQuery(
                 """SELECT at
                    FROM org.icescrum.core.domain.AcceptanceTest as at
                    WHERE at.id = :id
-                   AND at.parentStory.backlog.id = :pid """, [id: id, pid: productId]).first()
+                   AND at.parentStory.backlog.id = :pid """, [id: id, pid: productId])
+        results ? results.first() : null
     }
 
     static List<AcceptanceTest> getAllInProduct(productId) {
