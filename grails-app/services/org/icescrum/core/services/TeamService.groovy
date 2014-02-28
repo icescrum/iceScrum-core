@@ -34,16 +34,13 @@ import org.springframework.transaction.annotation.Transactional
 import org.icescrum.core.event.IceScrumEvent
 import org.icescrum.core.event.IceScrumTeamEvent
 import org.icescrum.core.event.IceScrumProductEvent
-import grails.plugins.springsecurity.Secured
 import org.icescrum.core.support.ApplicationSupport
 
+@Transactional
 class TeamService {
-
-    static transactional = true
 
     def springSecurityService
     def securityService
-    def springcacheService
     def g = new org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib()
 
     void save(Team team, List members, List scrumMasters) {

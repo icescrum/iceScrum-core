@@ -33,6 +33,7 @@ import org.icescrum.core.domain.Product
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.transaction.annotation.Transactional
 
+@Transactional
 class ActorService extends IceScrumEventPublisher {
 
     def springSecurityService

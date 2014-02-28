@@ -33,14 +33,13 @@ import org.apache.commons.io.FilenameUtils
 import org.icescrum.core.utils.ImageConvert
 import org.icescrum.core.support.ApplicationSupport
 
+@Transactional
 class UserService extends IceScrumEventPublisher {
 
     def grailsApplication
     def springSecurityService
     def burningImageService
     def notificationEmailService
-
-    static transactional = true
 
     void save(User user) {
         if (!user.validate()){

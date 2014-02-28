@@ -45,6 +45,7 @@ import org.icescrum.core.domain.AcceptanceTest.AcceptanceTestState
 
 import org.icescrum.core.support.ApplicationSupport
 
+@Transactional
 class StoryService extends IceScrumEventPublisher {
     def taskService
     def springSecurityService
@@ -58,8 +59,6 @@ class StoryService extends IceScrumEventPublisher {
     def messageSource
 
     def g = new org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib()
-
-    static transactional = true
 
     @PreAuthorize('!archivedProduct(#product)')
     void save(Story story, Product product, User u, Sprint s = null) {

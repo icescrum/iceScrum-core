@@ -41,6 +41,7 @@ import org.icescrum.core.domain.preferences.UserPreferences
 
 import org.icescrum.core.event.IceScrumUserEvent
 
+@Transactional
 class ProductService {
 
     def springSecurityService
@@ -48,8 +49,6 @@ class ProductService {
     def teamService
     def actorService
     def grailsApplication
-
-    static transactional = true
 
     @PreAuthorize('isAuthenticated()')
     void save(Product product, productOwners, stakeHolders) {

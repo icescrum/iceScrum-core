@@ -36,11 +36,8 @@ import org.icescrum.core.domain.Sprint
 import org.icescrum.core.domain.Task
 import org.icescrum.core.domain.TimeBox
 
+@Transactional
 class ClicheService {
-
-    static transactional = true
-
-    def springcacheService
 
     void save(Cliche b, TimeBox t) {
         t.addToCliches(b)

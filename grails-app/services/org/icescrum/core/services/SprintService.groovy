@@ -34,9 +34,8 @@ import org.springframework.transaction.annotation.Transactional
 import org.icescrum.core.domain.*
 import org.icescrum.core.support.ApplicationSupport
 
+@Transactional
 class SprintService {
-
-    static transactional = true
 
     def clicheService
     def taskService

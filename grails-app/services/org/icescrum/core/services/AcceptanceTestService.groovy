@@ -29,10 +29,10 @@ import org.icescrum.core.domain.Story
 import org.icescrum.core.domain.User
 import org.icescrum.core.domain.Product
 import org.icescrum.core.event.IceScrumAcceptanceTestEvent
+import org.springframework.transaction.annotation.Transactional
 
+@Transactional
 class AcceptanceTestService {
-
-    static transactional = true
 
     def springSecurityService
 

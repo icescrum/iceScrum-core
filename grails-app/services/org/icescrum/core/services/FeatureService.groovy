@@ -32,6 +32,7 @@ import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.transaction.annotation.Transactional
 import org.icescrum.core.domain.*
 
+@Transactional
 class FeatureService extends IceScrumEventPublisher {
 
     def springSecurityService
