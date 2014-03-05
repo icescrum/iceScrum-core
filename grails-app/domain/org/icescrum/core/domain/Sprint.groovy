@@ -320,8 +320,8 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
         return this.parentRelease.parentProduct
     }
 
-    Integer getTotalEffort() {
-        return (Integer) this.stories.sum { it.effort }
+    BigDecimal getTotalEffort() {
+        return (BigDecimal) this.stories.sum { it.effort }
     }
 
     def afterInsert(){

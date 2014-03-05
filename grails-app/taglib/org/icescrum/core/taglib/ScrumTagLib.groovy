@@ -28,12 +28,13 @@ import org.icescrum.components.UtilsWebComponents
 import org.icescrum.core.domain.Product
 import org.icescrum.core.support.ApplicationSupport
 
+import java.text.DecimalFormat
 
 class ScrumTagLib {
 
     static namespace = 'is'
 
-    static returnObjectForTags = ['storyDescription']
+    static returnObjectForTags = ['storyDescription', 'storyEffort']
 
     def postit = { attrs, body ->
         def params = attrs
@@ -323,6 +324,10 @@ class ScrumTagLib {
             storyDescription = storyDescription.encodeAsHTML()
         }
         attrs.displayBR ? storyDescription.encodeAsNL2BR() : storyDescription
+    }
+
+    def storyEffort = { attrs ->
+        attrs.effort >= 0 ? new DecimalFormat("#.##").format(attrs.effort) : '?'
     }
 
     def generateStoryTemplate = {

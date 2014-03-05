@@ -226,16 +226,29 @@ class StoryService {
     @PreAuthorize('(teamMember(#story.backlog) or scrumMaster(#story.backlog)) and !archivedProduct(#story.backlog)')
     void estimate(Story story, estimation) {
         def oldState = story.state
-        if (story.state < Story.STATE_ACCEPTED || story.state == Story.STATE_DONE)
-            throw new IllegalStateException()
+        if (estimation instanceof String) {
+            estimation = estimation.replaceAll(',', '.')
+        }
+        if (story.state < Story.STATE_ACCEPTED || story.state == Story.STATE_DONE) {
+            throw new IllegalStateException(g.message(code: 'is.story.error.estimated'))
+        }
         if (!(estimation instanceof Number) && (estimation instanceof String && !estimation.isNumber())) {
-            story.state = Story.STATE_ACCEPTED
-            story.effort = null
-            story.estimatedDate = null
+            if (story.state == Story.STATE_ESTIMATED) {
+                story.state = Story.STATE_ACCEPTED
+                story.effort = null
+                story.estimatedDate = null
+            } else {
+                throw new IllegalStateException(g.message(code: 'is.story.error.estimate.required'))
+            }
         } else {
-            if (story.state == Story.STATE_ACCEPTED)
+            def effort = estimation.toBigDecimal()
+            if (effort < 0 || effort > 999.99) {
+                throw new IllegalArgumentException(g.message(code: 'is.story.error.estimate.outofbound'))
+            }
+            if (story.state == Story.STATE_ACCEPTED) {
                 story.state = Story.STATE_ESTIMATED
-            story.effort = estimation.toInteger()
+            }
+            story.effort = effort
             story.estimatedDate = new Date()
         }
         if (story.parentSprint && story.parentSprint.state == Sprint.STATE_WAIT) {
@@ -1040,7 +1053,7 @@ class StoryService {
                     description: story.description.text(),
                     notes: story.notes.text(),
                     creationDate: new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(story.creationDate.text()),
-                    effort: story.effort.text().isEmpty() ? null : story.effort.text().toInteger(),
+                    effort: story.effort.text().isEmpty() ? null : story.effort.text().toBigDecimal(),
                     value: story.value.text().isEmpty() ? null : story.value.text().toInteger(),
                     rank: story.rank.text().toInteger(),
                     state: story.state.text().toInteger(),

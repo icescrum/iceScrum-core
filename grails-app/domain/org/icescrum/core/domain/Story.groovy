@@ -62,7 +62,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
     Date inProgressDate
     Date doneDate
     String origin
-    Integer effort = null
+    BigDecimal effort = null
     int rank = 0
     int state = Story.STATE_SUGGESTED
     int value = 0
@@ -94,6 +94,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
         table 'icescrum2_story'
         tasks cascade: 'all'
         acceptanceTests sort: 'uid'
+        effort precision: 5, scale: 2
     }
 
     static constraints = {
@@ -623,8 +624,8 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                         eq 'id', options.story.dependsOn.toLong()
                     }
                 }
-                if (options.story?.effort?.isInteger()){
-                    eq 'effort', options.story.effort.toInteger()
+                if (options.story?.effort?.isBigDecimal()){
+                    eq 'effort', options.story.effort.toBigDecimal()
                 }
                 if (options.story?.affectedVersion){
                     eq 'affectVersion', options.story.affectedVersion

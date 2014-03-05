@@ -103,6 +103,10 @@ class BacklogElementMigration {
             }
             addNotNullConstraint(tableName:"acceptance_test", columnName:'state', columnDataType:'INTEGER')
         }
+
+        changeSet(id:'story_effort_from_integer_to_numeric', author:'vbarrier', filePath:filePath) {
+            modifyDataType(tableName:"icescrum2_story", columnName:'effort', newDataType:'NUMERIC(5,2)')
+        }
     }
 
     static def getFilePath(){

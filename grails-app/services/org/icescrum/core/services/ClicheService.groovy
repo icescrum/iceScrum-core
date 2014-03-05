@@ -288,8 +288,8 @@ class ClicheService {
 
         int storiesDone = 0
         int storiesInProgress = 0
-        int totalPointsStories = 0
-        int pointsDoneStories = 0
+        def totalPointsStories = 0
+        def pointsDoneStories = 0
         s.stories.each { storyd ->
             switch (storyd.state) {
                 case Story.STATE_DONE:
