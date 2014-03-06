@@ -252,12 +252,12 @@ class ProductService {
                 def xmlRoot = new XmlSlurper().parseText(cliche.data)
                 if (xmlRoot) {
 
-                    def a = xmlRoot."${Cliche.PRODUCT_BACKLOG_POINTS}".toInteger()
-                    def b = xmlRoot."${Cliche.PRODUCT_REMAINING_POINTS}".toInteger()
+                    def a = xmlRoot."${Cliche.PRODUCT_BACKLOG_POINTS}".toBigDecimal()
+                    def b = xmlRoot."${Cliche.PRODUCT_REMAINING_POINTS}".toBigDecimal()
                     def c = a - b
 
                     values << [
-                            all: xmlRoot."${Cliche.PRODUCT_BACKLOG_POINTS}".toInteger(),
+                            all: xmlRoot."${Cliche.PRODUCT_BACKLOG_POINTS}".toBigDecimal(),
                             done: c,
                             label: xmlRoot."${Cliche.SPRINT_ID}".toString()
                     ]
@@ -276,9 +276,9 @@ class ProductService {
                 if (xmlRoot) {
                     def sprintEntry = [
                             label: xmlRoot."${Cliche.SPRINT_ID}".toString(),
-                            userstories: xmlRoot."${Cliche.FUNCTIONAL_STORY_PRODUCT_REMAINING_POINTS}".toInteger(),
-                            technicalstories: xmlRoot."${Cliche.TECHNICAL_STORY_PRODUCT_REMAINING_POINTS}".toInteger(),
-                            defectstories: xmlRoot."${Cliche.DEFECT_STORY_PRODUCT_REMAINING_POINTS}".toInteger()
+                            userstories: xmlRoot."${Cliche.FUNCTIONAL_STORY_PRODUCT_REMAINING_POINTS}".toBigDecimal(),
+                            technicalstories: xmlRoot."${Cliche.TECHNICAL_STORY_PRODUCT_REMAINING_POINTS}".toBigDecimal(),
+                            defectstories: xmlRoot."${Cliche.DEFECT_STORY_PRODUCT_REMAINING_POINTS}".toBigDecimal()
                     ]
                     sprintEntry << computeLabelsForSprintEntry(sprintEntry)
                     values << sprintEntry
@@ -296,9 +296,9 @@ class ProductService {
                 def xmlRoot = new XmlSlurper().parseText(cliche.data)
                 if (xmlRoot) {
                     def sprintEntry = [
-                            userstories: xmlRoot."${Cliche.FUNCTIONAL_STORY_VELOCITY}".toInteger(),
-                            defectstories: xmlRoot."${Cliche.DEFECT_STORY_VELOCITY}".toInteger(),
-                            technicalstories: xmlRoot."${Cliche.TECHNICAL_STORY_VELOCITY}".toInteger(),
+                            userstories: xmlRoot."${Cliche.FUNCTIONAL_STORY_VELOCITY}".toBigDecimal(),
+                            defectstories: xmlRoot."${Cliche.DEFECT_STORY_VELOCITY}".toBigDecimal(),
+                            technicalstories: xmlRoot."${Cliche.TECHNICAL_STORY_VELOCITY}".toBigDecimal(),
                             label: xmlRoot."${Cliche.SPRINT_ID}".toString()
                     ]
                     sprintEntry << computeLabelsForSprintEntry(sprintEntry)
@@ -318,13 +318,13 @@ class ProductService {
                 def xmlRoot = new XmlSlurper().parseText(cliche.data)
                 if (xmlRoot) {
                     if (cliche.type == Cliche.TYPE_ACTIVATION) {
-                        capacity = xmlRoot."${Cliche.SPRINT_CAPACITY}".toInteger()
+                        capacity = xmlRoot."${Cliche.SPRINT_CAPACITY}".toBigDecimal()
                         label = xmlRoot."${Cliche.SPRINT_ID}".toString()
                     }
                     if (cliche.type == Cliche.TYPE_CLOSE) {
                         values << [
                                 capacity: capacity,
-                                velocity: xmlRoot."${Cliche.SPRINT_VELOCITY}".toInteger(),
+                                velocity: xmlRoot."${Cliche.SPRINT_VELOCITY}".toBigDecimal(),
                                 label: label
                         ]
 

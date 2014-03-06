@@ -34,7 +34,7 @@ class ScrumTagLib {
 
     static namespace = 'is'
 
-    static returnObjectForTags = ['storyDescription', 'storyEffort']
+    static returnObjectForTags = ['storyDescription', 'storyEffort', 'sprintPoints']
 
     def postit = { attrs, body ->
         def params = attrs
@@ -328,6 +328,10 @@ class ScrumTagLib {
 
     def storyEffort = { attrs ->
         attrs.effort >= 0 ? new DecimalFormat("#.##").format(attrs.effort) : '?'
+    }
+
+    def sprintPoints = { attrs ->
+        attrs.points != null ? new DecimalFormat("#.##").format(attrs.points) : ""
     }
 
     def generateStoryTemplate = {

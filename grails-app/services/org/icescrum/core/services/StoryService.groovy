@@ -442,7 +442,7 @@ class StoryService {
     }
 
     def autoPlan(Release release, Double capacity) {
-        int nbPoints = 0
+        def nbPoints = 0
         int nbSprint = 0
         def product = release.parentProduct
         def sprints = release.sprints.findAll { it.state == Sprint.STATE_WAIT }.sort { it.orderNumber }.asList()
