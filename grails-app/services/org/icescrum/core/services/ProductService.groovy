@@ -584,7 +584,7 @@ class ProductService {
                 }
             }
         }
-        if(raiseEvent && product) {
+        if(raiseEvent) {
             if (product){
                 publishEvent(new IceScrumUserEvent(user, product, this.class, (User) springSecurityService.currentUser, IceScrumUserEvent.EVENT_REMOVED_FROM_PRODUCT))
             } else {
@@ -637,7 +637,7 @@ class ProductService {
                 }
             }
         }
-        if(raiseEvent && product) {
+        if(raiseEvent) {
             if (product){
                 publishEvent(new IceScrumUserEvent(user, product, role, this.class, (User) springSecurityService.currentUser, IceScrumUserEvent.EVENT_ADDED_TO_PRODUCT))
             } else {
