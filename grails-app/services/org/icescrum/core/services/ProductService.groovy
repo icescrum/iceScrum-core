@@ -589,7 +589,7 @@ class ProductService {
                 publishEvent(new IceScrumUserEvent(user, product, this.class, (User) springSecurityService.currentUser, IceScrumUserEvent.EVENT_REMOVED_FROM_PRODUCT))
             } else {
                 team?.products?.each{
-                    publishEvent(new IceScrumUserEvent(user, product, this.class, (User) springSecurityService.currentUser, IceScrumUserEvent.EVENT_REMOVED_FROM_PRODUCT))
+                    publishEvent(new IceScrumUserEvent(user, it, this.class, (User) springSecurityService.currentUser, IceScrumUserEvent.EVENT_REMOVED_FROM_PRODUCT))
                 }
             }
         }
