@@ -572,8 +572,15 @@ class ProductService {
                 removeStakeHolder(it,user)
             }
         }
+        // Remove email settings only if it's not a role update (remove -> add)
         if (broadcast || raiseEvent) {
-            user.preferences.removeEmailsSettings(product.pkey) // Remove email settings only if it's not a role update (remove -> add)
+            if (product) {
+                user.preferences.removeEmailsSettings(product.pkey)
+            } else {
+                team?.products?.each {
+                    user.preferences.removeEmailsSettings(it.pkey)
+                }
+            }
         }
         if (broadcast){
             if (product){
@@ -593,8 +600,6 @@ class ProductService {
                 }
             }
         }
-
-
     }
 
     void addRole(Product product, Team team, User user, int role, boolean broadcast = true, boolean raiseEvent = true) {
@@ -615,7 +620,13 @@ class ProductService {
                 }
                 break
             case Authority.STAKEHOLDER:
-                addStakeHolder(product,user)
+                if (product) {
+                    addStakeHolder(product, user)
+                } else {
+                    team?.products?.each {
+                        addStakeHolder(it, user)
+                    }
+                }
                 break
             case Authority.PO_AND_SM:
                 teamService.addScrumMaster(team,user)
