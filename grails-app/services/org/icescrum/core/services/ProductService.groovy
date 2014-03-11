@@ -575,8 +575,15 @@ class ProductService {
                 removeStakeHolder(it,user)
             }
         }
+        // Remove email settings only if it's not a role update (remove -> add)
         if (broadcast || raiseEvent) {
-            user.preferences.removeEmailsSettings(product.pkey) // Remove email settings only if it's not a role update (remove -> add)
+            if (product) {
+                user.preferences.removeEmailsSettings(product.pkey)
+            } else {
+                team?.products?.each {
+                    user.preferences.removeEmailsSettings(it.pkey)
+                }
+            }
         }
         if (broadcast){
             if (product){
@@ -587,17 +594,15 @@ class ProductService {
                 }
             }
         }
-        if(raiseEvent && product) {
+        if(raiseEvent) {
             if (product){
                 publishEvent(new IceScrumUserEvent(user, product, this.class, (User) springSecurityService.currentUser, IceScrumUserEvent.EVENT_REMOVED_FROM_PRODUCT))
             } else {
                 team?.products?.each{
-                    publishEvent(new IceScrumUserEvent(user, product, this.class, (User) springSecurityService.currentUser, IceScrumUserEvent.EVENT_REMOVED_FROM_PRODUCT))
+                    publishEvent(new IceScrumUserEvent(user, it, this.class, (User) springSecurityService.currentUser, IceScrumUserEvent.EVENT_REMOVED_FROM_PRODUCT))
                 }
             }
         }
-
-
     }
 
     void addRole(Product product, Team team, User user, int role, boolean broadcast = true, boolean raiseEvent = true) {
@@ -618,7 +623,13 @@ class ProductService {
                 }
                 break
             case Authority.STAKEHOLDER:
-                addStakeHolder(product,user)
+                if (product) {
+                    addStakeHolder(product, user)
+                } else {
+                    team?.products?.each {
+                        addStakeHolder(it, user)
+                    }
+                }
                 break
             case Authority.PO_AND_SM:
                 teamService.addScrumMaster(team,user)
@@ -640,7 +651,7 @@ class ProductService {
                 }
             }
         }
-        if(raiseEvent && product) {
+        if(raiseEvent) {
             if (product){
                 publishEvent(new IceScrumUserEvent(user, product, role, this.class, (User) springSecurityService.currentUser, IceScrumUserEvent.EVENT_ADDED_TO_PRODUCT))
             } else {
