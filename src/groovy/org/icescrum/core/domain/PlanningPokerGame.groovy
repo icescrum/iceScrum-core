@@ -26,6 +26,7 @@ package org.icescrum.core.domain
 class PlanningPokerGame {
   static final Integer INTEGER_SUITE = 0;
   static final Integer FIBO_SUITE = 1;
+  static final Integer CUSTOM_SUITE = 2
   static final int SPECIALCARD_UNKNOW_NUMBER = -2;
   static final int SPECIALCARD_HALF_NUMBER = -3;
 

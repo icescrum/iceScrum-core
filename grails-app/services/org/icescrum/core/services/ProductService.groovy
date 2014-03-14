@@ -60,7 +60,7 @@ class ProductService {
             throw new IllegalStateException('is.product.error.startDate')
         if (product.startDate == product.endDate)
             throw new IllegalStateException('is.product.error.duration')
-        if (!(product.planningPokerGameType in [0, 1]))
+        if (!(product.planningPokerGameType in [PlanningPokerGame.INTEGER_SUITE, PlanningPokerGame.FIBO_SUITE, PlanningPokerGame.CUSTOM_SUITE]))
             throw new IllegalStateException("is.product.error.no.estimationSuite")
 
         product.orderNumber = (Product.count() ?: 0) + 1
@@ -93,7 +93,7 @@ class ProductService {
             throw new IllegalStateException('is.product.error.startDate')
         if (product.startDate == product.endDate)
             throw new IllegalStateException('is.product.error.duration')
-        if (!(product.planningPokerGameType in [0, 1]))
+        if (!(product.planningPokerGameType in [PlanningPokerGame.INTEGER_SUITE, PlanningPokerGame.FIBO_SUITE, PlanningPokerGame.CUSTOM_SUITE]))
             throw new IllegalStateException("is.product.error.no.estimationSuite")
         product.orderNumber = (Product.count() ?: 0) + 1
 
@@ -189,7 +189,7 @@ class ProductService {
             throw new IllegalStateException("is.product.error.no.name")
         }
         // TODO replace with domain validation constaints
-        if (!(product.planningPokerGameType in [0, 1])) {
+        if (!(product.planningPokerGameType in [PlanningPokerGame.INTEGER_SUITE, PlanningPokerGame.FIBO_SUITE, PlanningPokerGame.CUSTOM_SUITE])) {
             throw new IllegalStateException("is.product.error.no.estimationSuite")
         }
 
@@ -255,12 +255,12 @@ class ProductService {
                 def xmlRoot = new XmlSlurper().parseText(cliche.data)
                 if (xmlRoot) {
 
-                    def a = xmlRoot."${Cliche.PRODUCT_BACKLOG_POINTS}".toInteger()
-                    def b = xmlRoot."${Cliche.PRODUCT_REMAINING_POINTS}".toInteger()
+                    def a = xmlRoot."${Cliche.PRODUCT_BACKLOG_POINTS}".toBigDecimal()
+                    def b = xmlRoot."${Cliche.PRODUCT_REMAINING_POINTS}".toBigDecimal()
                     def c = a - b
 
                     values << [
-                            all: xmlRoot."${Cliche.PRODUCT_BACKLOG_POINTS}".toInteger(),
+                            all: xmlRoot."${Cliche.PRODUCT_BACKLOG_POINTS}".toBigDecimal(),
                             done: c,
                             label: xmlRoot."${Cliche.SPRINT_ID}".toString()
                     ]
@@ -279,9 +279,9 @@ class ProductService {
                 if (xmlRoot) {
                     def sprintEntry = [
                             label: xmlRoot."${Cliche.SPRINT_ID}".toString(),
-                            userstories: xmlRoot."${Cliche.FUNCTIONAL_STORY_PRODUCT_REMAINING_POINTS}".toInteger(),
-                            technicalstories: xmlRoot."${Cliche.TECHNICAL_STORY_PRODUCT_REMAINING_POINTS}".toInteger(),
-                            defectstories: xmlRoot."${Cliche.DEFECT_STORY_PRODUCT_REMAINING_POINTS}".toInteger()
+                            userstories: xmlRoot."${Cliche.FUNCTIONAL_STORY_PRODUCT_REMAINING_POINTS}".toBigDecimal(),
+                            technicalstories: xmlRoot."${Cliche.TECHNICAL_STORY_PRODUCT_REMAINING_POINTS}".toBigDecimal(),
+                            defectstories: xmlRoot."${Cliche.DEFECT_STORY_PRODUCT_REMAINING_POINTS}".toBigDecimal()
                     ]
                     sprintEntry << computeLabelsForSprintEntry(sprintEntry)
                     values << sprintEntry
@@ -299,9 +299,9 @@ class ProductService {
                 def xmlRoot = new XmlSlurper().parseText(cliche.data)
                 if (xmlRoot) {
                     def sprintEntry = [
-                            userstories: xmlRoot."${Cliche.FUNCTIONAL_STORY_VELOCITY}".toInteger(),
-                            defectstories: xmlRoot."${Cliche.DEFECT_STORY_VELOCITY}".toInteger(),
-                            technicalstories: xmlRoot."${Cliche.TECHNICAL_STORY_VELOCITY}".toInteger(),
+                            userstories: xmlRoot."${Cliche.FUNCTIONAL_STORY_VELOCITY}".toBigDecimal(),
+                            defectstories: xmlRoot."${Cliche.DEFECT_STORY_VELOCITY}".toBigDecimal(),
+                            technicalstories: xmlRoot."${Cliche.TECHNICAL_STORY_VELOCITY}".toBigDecimal(),
                             label: xmlRoot."${Cliche.SPRINT_ID}".toString()
                     ]
                     sprintEntry << computeLabelsForSprintEntry(sprintEntry)
@@ -321,13 +321,13 @@ class ProductService {
                 def xmlRoot = new XmlSlurper().parseText(cliche.data)
                 if (xmlRoot) {
                     if (cliche.type == Cliche.TYPE_ACTIVATION) {
-                        capacity = xmlRoot."${Cliche.SPRINT_CAPACITY}".toInteger()
+                        capacity = xmlRoot."${Cliche.SPRINT_CAPACITY}".toBigDecimal()
                         label = xmlRoot."${Cliche.SPRINT_ID}".toString()
                     }
                     if (cliche.type == Cliche.TYPE_CLOSE) {
                         values << [
                                 capacity: capacity,
-                                velocity: xmlRoot."${Cliche.SPRINT_VELOCITY}".toInteger(),
+                                velocity: xmlRoot."${Cliche.SPRINT_VELOCITY}".toBigDecimal(),
                                 label: label
                         ]
 
@@ -368,7 +368,8 @@ class ProductService {
                     dateCreated: product.dateCreated.text() ? new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(product.dateCreated.text()) : new Date(),
                     lastUpdated: product.lastUpdated.text() ? new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(product.lastUpdated.text()) : new Date(),
                     startDate: new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(product.startDate.text()),
-                    endDate: new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(product.endDate.text())
+                    endDate: new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(product.endDate.text()),
+                    planningPokerGameType: product.planningPokerGameType.text().toInteger()
             )
             p.preferences = new ProductPreferences(
                     hidden: product.preferences.hidden.text().toBoolean(),

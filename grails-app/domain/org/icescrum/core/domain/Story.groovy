@@ -62,7 +62,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
     Date inProgressDate
     Date doneDate
     String origin
-    Integer effort = null
+    BigDecimal effort = null
     int rank = 0
     int state = Story.STATE_SUGGESTED
     int value = 0
@@ -94,6 +94,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
         table 'icescrum2_story'
         tasks cascade: 'all'
         acceptanceTests sort: 'uid'
+        effort precision: 5, scale: 2
     }
 
     static constraints = {
@@ -104,12 +105,12 @@ class Story extends BacklogElement implements Cloneable, Serializable {
         inProgressDate(nullable: true)
         doneDate(nullable: true)
         parentSprint(nullable: true)
-        feature(nullable: true, validator: { val, obj -> val == null || val.backlog == obj.backlog }) // TODO custom message
+        feature(nullable: true, validator: { newFeature, story -> newFeature == null || newFeature.backlog == story.backlog }) // TODO custom message
         actor(nullable: true)
         affectVersion(nullable: true)
-        effort(nullable: true)
+        effort(nullable: true, validator: { newEffort, obj -> newEffort == null || (newEffort >= 0 && newEffort < 1000) }) // TODO custom message
         creator(nullable: true) // in case of a user deletion, the story can remain without owner
-        dependsOn(nullable: true, validator: { val, obj -> val == null || val.backlog == obj.backlog }) // TODO custom message
+        dependsOn(nullable: true, validator: { newDependsOn, story -> newDependsOn == null || newDependsOn.backlog == story.backlog }) // TODO custom message
         origin(nullable: true)
     }
 
@@ -621,8 +622,8 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                         eq 'id', options.story.dependsOn.toLong()
                     }
                 }
-                if (options.story?.effort?.isInteger()){
-                    eq 'effort', options.story.effort.toInteger()
+                if (options.story?.effort?.isBigDecimal()){
+                    eq 'effort', options.story.effort.toBigDecimal()
                 }
                 if (options.story?.affectedVersion){
                     eq 'affectVersion', options.story.affectedVersion
