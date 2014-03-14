@@ -428,26 +428,16 @@ class StoryService extends IceScrumEventPublisher {
 
     // TODO check rights
     private void setRank(Story story, int rank) {
-        def stories = null
-        if (story.state == Story.STATE_ACCEPTED || story.state == Story.STATE_ESTIMATED)
-            stories = story.backlog.stories.findAll{it.state == Story.STATE_ESTIMATED || it.state == Story.STATE_ACCEPTED}.asList().sort{it.rank}
-        else if (story.state == Story.STATE_PLANNED || story.state == Story.STATE_INPROGRESS || story.state == Story.STATE_DONE) {
-            stories = story.parentSprint?.stories?.asList()?.sort{ it.rank }
-        }
-
+        def backlogStates = [Story.STATE_ACCEPTED, Story.STATE_ESTIMATED]
+        def stories = (story.state in backlogStates) ? story.backlog.stories.findAll { it.state in backlogStates } : story.parentSprint?.stories
         rank = checkRankDependencies(story, rank)
-
-        stories?.each {
-            if (it.rank >= rank) {
-                it.rank++
-                it.save()
-            }
+        def sortedStories = stories?.asList()?.sort { it.rank }
+        sortedStories?.findAll { it.rank >= rank }?.each {
+            it.rank++
+            it.save()
         }
         story.rank = rank
-        if (!story.save())
-            throw new RuntimeException()
-
-        cleanRanks(stories)
+        cleanRanks(sortedStories)
     }
 
     // TODO check rights
@@ -473,14 +463,10 @@ class StoryService extends IceScrumEventPublisher {
 
     // TODO check rights
     private void resetRank(Story story) {
-        def stories = null
-        if (story.state == Story.STATE_ACCEPTED || story.state == Story.STATE_ESTIMATED)
-            stories = story.backlog.stories.findAll{it.state == Story.STATE_ESTIMATED || it.state == Story.STATE_ACCEPTED}.asList().sort{it.rank}
-        else if (story.state == Story.STATE_PLANNED || story.state == Story.STATE_INPROGRESS || story.state == Story.STATE_DONE) {
-            stories = story.parentSprint?.stories?.asList()?.sort{ it.rank }
-        }
-        stories.each {
-            if (it.rank > story.rank) {
+        def backlogStates = [Story.STATE_ACCEPTED, Story.STATE_ESTIMATED]
+        def stories = (story.state in backlogStates) ? story.backlog.stories.findAll { it.state in backlogStates } : story.parentSprint?.stories
+        if (stories) {
+            stories.asList().findAll { it.rank > story.rank }.sort{ it.rank }.each {
                 it.rank--
                 it.save()
             }
@@ -495,41 +481,33 @@ class StoryService extends IceScrumEventPublisher {
         if ((story.dependsOn || story.dependences ) && story.rank == rank) {
             return
         }
-
         if (story.state in [Story.STATE_SUGGESTED, Story.STATE_DONE]) {
             throw new IllegalStateException(g.message(code: 'is.story.rank.error').toString())
         }
-
         def stories = null
-
-        if (story.state == Story.STATE_ACCEPTED || story.state == Story.STATE_ESTIMATED)
-            stories = story.backlog.stories.findAll{it.state == Story.STATE_ESTIMATED || it.state == Story.STATE_ACCEPTED}.asList().sort{it.rank}
-        else if (story.state == Story.STATE_PLANNED || story.state == Story.STATE_INPROGRESS) {
-            stories = story.parentSprint.stories.asList().sort{ it.rank }
-            def maxRankInProgress = stories.findAll {it.state != Story.STATE_DONE}?.size()
+        def backlogStates = [Story.STATE_ACCEPTED, Story.STATE_ESTIMATED]
+        if (story.state in backlogStates) {
+            stories = story.backlog.stories.findAll { it.state in backlogStates }
+        } else if (story.state == Story.STATE_PLANNED || story.state == Story.STATE_INPROGRESS) {
+            stories = story.parentSprint.stories
+            def maxRankInProgress = stories.findAll { it.state != Story.STATE_DONE }.size()
             if (story.state == Story.STATE_INPROGRESS && rank > maxRankInProgress) {
                 rank = maxRankInProgress
             }
         }
 
-        if (story.rank > rank) {
-            stories.each {it ->
-                if (it.rank >= rank && it.rank <= story.rank && it != story) {
-                    it.rank = it.rank + 1
-                    it.save()
-                }
-            }
-        } else {
-            stories.each {it ->
-                if (it.rank <= rank && it.rank >= story.rank && it != story) {
-                    it.rank = it.rank - 1
-                    it.save()
-                }
-            }
+        def sortedStories = stories.asList().sort { it.rank }
+
+        Range affectedRange = story.rank..rank
+        int delta = affectedRange.isReverse() ? 1 : -1
+        sortedStories.findAll { it != story && it.rank in affectedRange }.each {
+            it.rank += delta
+            it.save() // consider push
         }
+
         story.rank = rank
 
-        cleanRanks(stories)
+        cleanRanks(sortedStories)
     }
 
     @PreAuthorize('productOwner(#stories[0].backlog) and !archivedProduct(#stories[0].backlog)')
