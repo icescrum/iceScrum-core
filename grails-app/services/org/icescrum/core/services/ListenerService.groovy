@@ -126,4 +126,9 @@ class ListenerService {
         log.debug("the item of ${object.class} and name $object.name will be deleted")
         object.removeAllAttachments()
     }
+
+    @IceScrumListener(domains = ['actor', 'story', 'feature'], eventType = IceScrumEventType.BEFORE_UPDATE)
+    void invalidCacheBeforeUpdate(object, Map dirtyProperties) {
+        object.lastUpdated = new Date()
+    }
 }
