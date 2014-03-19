@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010 iceScrum Technologies.
+ * Copyright (c) 2014 Kagilum SAS.
  *
  * This file is part of iceScrum.
  *
@@ -18,8 +18,6 @@
  * Authors:
  *
  * Vincent Barrier (vbarrier@kagilum.com)
- * Damien Vitrac (damien@oocube.com)
- * Manuarii Stein (manuarii.stein@icescrum.com)
  * Nicolas Noullet (nnoullet@kagilum.com)
  */
 package org.icescrum.core.taglib
@@ -31,9 +29,10 @@ import org.icescrum.core.support.ApplicationSupport
 
 class ScrumTagLib {
 
-    static namespace = 'is'
+    def springSecurityService
 
-    static returnObjectForTags = ['storyDescription']
+    static namespace = 'is'
+    static returnObjectForTags = ['storyDescription', 'avatar']
 
     //New tags
     def generateStoryTemplate = { attrs ->
@@ -57,6 +56,29 @@ class ScrumTagLib {
             storyDescription = storyDescription.encodeAsHTML()
         }
         attrs.displayBR ? storyDescription.encodeAsNL2BR() : storyDescription
+    }
+
+    def avatar = { attrs, body ->
+        def user = attrs.user ?: springSecurityService.currentUser ?: null
+        def defaultAvatar = createLink(uri: '/images/avatars/avatar.png')
+        //user is logged try to determine custom avatar
+        if (user){
+            def avatar = new File(grailsApplication.config.icescrum.images.users.dir + user.id + '.png')
+            //custom avatar exist return it
+            if (avatar.exists()) {
+                return createLink(controller: 'user', action: 'avatar', id: user.id) + (attrs.nocache ? '?nocache=' + new Date().getTime() : '')
+            }
+            //gravatar is enable ? try to get custom avatar from there
+            else if (ApplicationSupport.booleanValue(grailsApplication.config.icescrum.gravatar?.enable)){
+                def hash = attrs.user.email.encodeAsMD5()
+                def gravatarBaseUrl =  ApplicationSupport.booleanValue(grailsApplication.config.icescrum.gravatar?.secure)  ? "https://secure.gravatar.com/avatar/" : "http://gravatar.com/avatar/"
+                gravatarUrl = "$gravatarBaseUrl$hash"
+                gravatarUrl += dgu.matches(/404|mm|identicon|monsterid|wavatar|retro|http.*/) ? "?d=${defaultAvatar}&s=40" : ''
+                return gravatarUrl
+            }
+        }
+        //other case default avatar
+        return defaultAvatar
     }
     //end new tags
 
@@ -340,48 +362,5 @@ class ScrumTagLib {
         params.remove('id')
         params.remove('params')
         out << g.link(params, body())
-    }
-
-    def avatar = { attrs, body ->
-        assert attrs.user
-        if (ApplicationSupport.booleanValue(grailsApplication.config.icescrum.gravatar?.enable)){
-            def hash = attrs.user.email.encodeAsMD5()
-            def dgu = createLink(uri: '/' + is.currentThemeImage()) + "avatars/avatar.png"
-            def gravatarBaseUrl
-
-            if (ApplicationSupport.booleanValue(grailsApplication.config.icescrum.gravatar?.secure))
-                gravatarBaseUrl = "https://secure.gravatar.com/avatar/"
-            else
-                gravatarBaseUrl = "http://gravatar.com/avatar/"
-
-            String gravatarUrl = "$gravatarBaseUrl$hash"
-            gravatarUrl += dgu.matches(/404|mm|identicon|monsterid|wavatar|retro|http.*/) ? "?d=${dgu}&s=40" : ''
-            if (attrs.link){
-                out << gravatarUrl
-            }else {
-                out << "<img src='$gravatarUrl' height='40' width='40' class='avatar avatar-user-${attrs.user.id} ${attrs."class" ? attrs."class" : ''}' title='${message(code: "is.user.avatar")}' alt='${message(code: "is.user.avatar")}'/>"
-            }
-        }
-        else {
-            def avat = new File(grailsApplication.config.icescrum.images.users.dir + attrs.user.id + '.png')
-            if (avat.exists()) {
-                if (attrs.link){
-                    out << createLink(controller: 'user', action: 'avatar', id: attrs.user.id) + (attrs.nocache ? '?nocache=' + new Date().getTime() : '')
-                }else{
-                    out << "<img src='${createLink(controller: 'user', action: 'avatar', id: attrs.user.id)}${attrs.nocache ? '?nocache=' + new Date().getTime() : ''}' ${attrs.elementId ? 'id=\'' + attrs.elementId + '\'' : ''} class='avatar avatar-user-${attrs.user.id} ${attrs."class" ? attrs."class" : ''}' title='${message(code: "is.user.avatar")}' alt='${message(code: "is.user.avatar")}'/>"
-                }
-            } else {
-                if (attrs.link){
-                    out <<  "${grailsApplication.config.grails.serverURL}/${is.currentThemeImage()}avatars/avatar.png"
-                }else{
-                    out << r.img(
-                            id: attrs.elementId ?: '',
-                            uri: "/${is.currentThemeImage()}avatars/avatar.png",
-                            class: "avatar avatar-user-${attrs.user.id} ${attrs."class" ? attrs."class" : ''}",
-                            title: message(code: "is.user.avatar")
-                    )
-                }
-            }
-        }
     }
 }

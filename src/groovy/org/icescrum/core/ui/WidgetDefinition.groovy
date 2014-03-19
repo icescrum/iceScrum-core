@@ -45,6 +45,10 @@ class WidgetDefinition {
         this.title = title
     }
 
+    void icon(String icon) {
+        this.icon = icon
+    }
+
     void titleBarContent(boolean titleBarContent) {
         this.titleBarContent = titleBarContent
     }

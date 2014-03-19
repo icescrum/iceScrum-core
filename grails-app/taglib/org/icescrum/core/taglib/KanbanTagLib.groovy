@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010 iceScrum Technologies.
+ * Copyright (c) 2014 Kagilum SAS.
  *
  * This file is part of iceScrum.
  *
@@ -18,8 +18,7 @@
  * Authors:
  *
  * Vincent Barrier (vbarrier@kagilum.com)
- * Damien Vitrac (damien@oocube.com)
- * Manuarii Stein (manuarii.stein@icescrum.com)
+ * Nicolas Noullet (nnoullet@kagilum.com)
  */
 
 package org.icescrum.core.taglib
@@ -103,7 +102,7 @@ class KanbanTagLib {
                     accept: UtilsWebComponents.wrap(attrs.droppable.accept)
             ]
             opts = droppableOptions.findAll {k, v -> v}.collect {k, v -> " $k:$v"}.join(',')
-            jqCode += " \$('${attrs.droppable.selector}').liveDroppable({$opts});"
+            //jqCode += " \$('${attrs.droppable.selector}').liveDroppable({$opts});"
 
         }
         out << jq.jquery(null, jqCode);

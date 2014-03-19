@@ -41,8 +41,10 @@ class WindowTagLib {
     def window = { attrs, body ->
         def windowId = attrs.window ?: controllerName
         attrs.type = attrs.type ?: 'window'
-        def includeParams = ['type':attrs.type]
+        def includeParams = [:]
+
         params.each{ if (!(it.key in ["controller", "action"])) { includeParams << it} }
+        attrs.each{ if (!(it.key in ["controller", "action"])) { includeParams << it} }
 
         // Check for content window
         def windowContent
@@ -62,7 +64,7 @@ class WindowTagLib {
         }
 
         // Check for toolbar existence
-        attrs.toolbar = attrs.toolbar ? include(controller: windowId, action: attrs.type == 'widget' ? 'toolbarWidget' : 'toolbar', params: includeParams) : attrs.toolbar != false
+        attrs.toolbar = attrs.type == 'widget' && attrs.toolbar ? include(controller: windowId, action: 'toolbarWidget', params: includeParams) : false
 
         // Check for right content
         attrs.right = attrs.right ? include(controller: windowId, action: 'right', params: includeParams) : null
@@ -84,6 +86,7 @@ class WindowTagLib {
                 spaceName: attrs.spaceName,
                 type: attrs.type,
                 title: attrs.title ?: null,
+                icon: attrs.icon ?: null,
                 windowActions: attrs.windowActions ?: [
                         help: attrs.help ?: null,
                         widgetable: attrs.widgetable ? true : false,
@@ -99,10 +102,11 @@ class WindowTagLib {
                 windowContent: windowContent
         ]
         if (windowContent && !webRequest?.params?.returnError){
-            out << g.render(template: '/components/window', plugin: 'icescrum-core', model: params)
+            out << g.render(template: '/components/' + attrs.type, plugin: 'icescrum-core', model: params)
         }
     }
 
+    //TODO remove
     def buttonNavigation = { attrs, body ->
         attrs."class" = attrs."class" ? attrs."class" : ""
         attrs."class" += attrs.button ? attrs.button : " button-n"
@@ -138,6 +142,7 @@ class WindowTagLib {
         def params = [
                 type: 'widget',
                 title: attrs.title,
+                icon: attrs.icon,
                 windowActions: [
                         help: attrs.help ?: null,
                         closeable: attrs.closeable ?: false,
@@ -171,6 +176,47 @@ class WindowTagLib {
         def jqCode = "jQuery(${attrs.listenOn}).unbind('${attrs.scope}.${escapedKey}');"
         jqCode += "jQuery(${attrs.listenOn}).bind('${attrs.scope}.${escapedKey}','${attrs.key}',function(e){${attrs.callback}e.preventDefault();});"
         out << jq.jquery(null, jqCode)
+    }
+
+    def modal = { attrs, body ->
+        out << """
+            <div class="modal fade" data-ui-dialog tabindex="-1" role="dialog" aria-labelledby="modal${attrs.name}" aria-hidden="true">
+                <div class="modal-dialog modal-${attrs.size}">
+                <div class="modal-content">"""
+        if (attrs.form){
+            out << "<form role='form' method='${attrs.form.method?:"POST"}' action='${attrs.form.action}' data-ajax data-ajax-success='${attrs.form.success?:null}'>"
+        }
+        out << """  <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h4 class="modal-title" id="modal${attrs.name}">${attrs.title}</h4>
+                    </div>
+                    <div class="modal-body">
+                        ${body()}"""
+        if (attrs.form) {
+            out << '<div class="alert alert-danger"></div>'
+        }
+        out << """ </div>
+                    <div class="modal-footer">"""
+        if (attrs.button){
+            attrs.button.each{ button ->
+                out << "<button type='${button.type?:'button'}' " +
+                                "${button.shortcut? 'data-ui-tooltip-container="body" data-toggle="tooltip" title="'+button.shortcut.title+' ('+button.shortcut.key+')" data-is-shortcut data-is-shortcut-on=".modal" data-is-shortcut-key="'+button.shortcut.key+'"' : ''} " +
+                                "class='btn btn-${button.color?:'primary'} ${button.class?:''}'>${button.text}</button>"
+            }
+        }
+        out << """  <button type="button" class="btn btn-default" data-ui-tooltip-container="body" data-toggle="tooltip" title="${message(code:'is.dialog.close')} (ESCAPE)" data-dismiss="modal">${message(code:'is.dialog.close')}</button>"""
+        if (attrs.form){
+            out << "<button type='submit' class='btn btn-primary'>${attrs.form.submit}</button>"
+        }
+        out << """  </div>"""
+        if (attrs.form){
+            out << "</form>"
+        }
+        out << """
+                </div>
+                </div>
+            </div>
+        """
     }
 
     def includeContent(attrs) {

@@ -400,25 +400,6 @@ class IcescrumCoreGrailsPlugin {
     private addUIControllerMethods(clazz, ApplicationContext ctx, pluginName) {
         def mc = clazz.metaClass
         def dynamicActions = [
-                getExportFormats: { ->
-                    def exportFormats = ctx.getBean('uiDefinitionService').getDefinitionById(controllerName).exportFormats
-                    if (exportFormats instanceof Closure){
-                        exportFormats.delegate = delegate
-                        exportFormats.resolveStrategy = Closure.DELEGATE_FIRST
-                        exportFormats = exportFormats()
-                    }
-                    entry.hook(id:"${controllerName}-getExportFormats", model:[exportFormats:exportFormats])
-                    return exportFormats
-                },
-
-                toolbar: {->
-                    try {
-                        render(plugin: pluginName, template: "window/toolbar", model: [id: controllerName, exportFormats:getExportFormats()])
-                    } catch (Exception e) {
-                        render('')
-                        log.debug(e.getMessage())
-                    }
-                },
                 toolbarWidget: {->
                     try {
                         render(plugin: pluginName, template: "widget/toolbar", model: [id: controllerName])
@@ -573,6 +554,8 @@ class IcescrumCoreGrailsPlugin {
                 }
                 item.addAttachment(springSecurityService.currentUser, tmpF?: upfile, upfile.originalFilename?:upfile.name)
                 def attachment = item.attachments.first()
+                //invalid cache
+                item.lastUpdated = new Date()
                 render(status:200, contentType: 'application/json', text:[
                         id:attachment.id,
                         filename:attachment.inputName,
@@ -583,6 +566,8 @@ class IcescrumCoreGrailsPlugin {
                 def attachment = item.attachments?.find{ it.id == params.long('attachment.id') }
                 if (attachment){
                     item.removeAttachment(attachment)
+                    //invalid cache
+                    item.lastUpdated = new Date()
                     render(status:200)
                 }
             } else if(request.method == 'GET'){

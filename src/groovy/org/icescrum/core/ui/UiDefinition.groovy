@@ -31,10 +31,10 @@ class UiDefinition {
     boolean disabled
     String id
     String space = "product"
+    String icon = ''
     MenuBarDefinition menuBar
     WidgetDefinition widget
     WindowDefinition window
-    def shortcuts
     def options = [:]
     def exportFormats = []
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010 iceScrum Technologies.
+ * Copyright (c) 2014 Kagilum SAS.
  *
  * This file is part of iceScrum.
  *
@@ -18,8 +18,6 @@
  * Authors:
  *
  * Vincent Barrier (vbarrier@kagilum.com)
- * Damien Vitrac (damien@oocube.com)
- * Manuarii Stein (manuarii.stein@icescrum.com)
  * Nicolas Noullet (nnoullet@kagilum.com)
  */
 
@@ -69,6 +67,21 @@ class FormTagLib {
         return returnLocales
     }
 
+    def options = { attrs ->
+        def valueMap
+        if (attrs.values instanceof List) {
+            valueMap = [:]
+            attrs.values.each { valueMap[it] = it }
+        } else {
+            valueMap = attrs.values
+        }
+        valueMap.each { key, value ->
+            out << "<option value='$key'>$value</option>"
+            out.println()
+        }
+    }
+
+    //todo remove
     def autoCompleteSkin = {attrs, body ->
         assert attrs.id
 
@@ -141,6 +154,7 @@ class FormTagLib {
         out << is.input(attrs, body())
     }
 
+    //todo remove
     def autoCompleteSearch = { attrs, body ->
         def elementId = attrs.remove('elementId')
         def update = attrs.remove('update')
@@ -306,20 +320,6 @@ class FormTagLib {
         writer << '</select>'
     }
 
-    def options = { attrs ->
-        def valueMap
-        if (attrs.values instanceof List) {
-            valueMap = [:]
-            attrs.values.each { valueMap[it] = it }
-        } else {
-            valueMap = attrs.values
-        }
-        valueMap.each { key, value ->
-            out << "<option value='$key'>$value</option>"
-            out.println()
-        }
-    }
-
     def typed = { attrs ->
 
         if (attrs.onlyletters) {
@@ -338,6 +338,7 @@ class FormTagLib {
         out << jqCode
     }
 
+    //todo remove
     def input = {attrs, body ->
         assert attrs.id
 
@@ -371,6 +372,7 @@ class FormTagLib {
         out << jq.jquery(null, jqCode)
     }
 
+    //todo remove
     def multiFilesUpload = {attrs ->
         assert attrs.name
         assert attrs.progress
@@ -424,159 +426,6 @@ class FormTagLib {
     }
 
 
-    def progressBar = { attrs ->
-        assert attrs.elementId
-
-        def param = [
-                animated: attrs.animated ?: null,
-                timer: attrs.timer ?: 500,
-                label: attrs.label ? '\'' + attrs.label.encodeAsJavaScript() + '\'' : null,
-                showOnCreate: attrs.showOnCreate ?: null,
-                className: attrs.className ? '\'' + attrs.className + '\'' : null,
-                url: '\'' + attrs.url + '\'',
-                startOn: attrs.startOn ? '\'' + attrs.startOn + '\'' : null,
-                startOnWhen: attrs.startOnWhen ? '\'' + attrs.startOnWhen + '\'' : null,
-                onComplete: attrs.onComplete ? 'function(ui,data){' + attrs.onComplete + '}' : null,
-                iframe: attrs.iframe ?: null,
-                iframeSrc: attrs.iframeSrc ? '\'' + attrs.iframeSrc + '\'' : null,
-                startValue: attrs.startValue ?: 0,
-                params: attrs.params ?: null,
-                timerID: attrs.timerID ?: null
-        ]
-        out << "<span id='${attrs.elementId}'></span>"
-        def progressOptions = '{' + param.findAll {k, v -> v != null}.collect {k, v -> " $k:$v"}.join(',') + '}'
-        //def progressCode = "\$('#${attrs.elementId}').progress(${progressOptions});"
-        //out << jq.jquery(null, progressCode)
-    }
-
-    def attachedFiles = { attrs ->
-        assert attrs.bean
-
-        attrs.bean?.attachments?.sort{ it.contentType?.contains('image/') }?.reverse()?.each { attachment ->
-
-            if (attachment.previewable && attrs.preview){
-                out << """
-                  <div class="is-multifiles-checkbox" id="file-${attachment.id}">
-                        <div class="is-multifiles-filename" style="display:inline-block; float:left; margin:5px;">
-                          <a target="_blank" href="${g.createLink(controller:attrs.controller?:controllerName, action:'download', id: attachment.id, params: attrs.params)}">
-                            <img style="border:1px solid #666;" src="${g.createLink(controller:attrs.controller?:controllerName, action:'preview', id: attachment.id, params: attrs.params)}" title="${attachment.filename} ${attachment.provider? ' - ('+ attachment.provider + ' / ' + attachment.poster.firstName +' '+ attachment.poster.lastName + ')' : '' } "/>
-                          </a>
-                        </div>
-                  </div>"""
-            }else{
-                out << """
-                  <div class="is-multifiles-checkbox" id="file-${attachment.id}" style="clear:both;">
-                        <div class="is-multifiles-filename file-icon ${attachment.ext?.toLowerCase()}-format" style="display: inline-block; margin-left: 0px; ${attrs.width ? 'width:' + attrs.width + 'px;' : ''}">
-                          <a ${attachment.url ? 'target="_blank"' : ''} href="${g.createLink(controller:attrs.controller?:controllerName, action: 'download', id: attachment.id, params: attrs.params)}"><span title="${attachment.filename} ${attachment.provider? ' - ('+ attachment.provider + ' / ' + attachment.poster.firstName +' '+ attachment.poster.lastName + ')' : '' } ">${is.truncated(size: attrs.size ?: 23) {attachment.filename}}</span></a>
-                        </div>
-                  </div>"""
-            }
-            if (attrs.deletable) {
-                out << jq.jquery(null, "\$('#file-${attachment.id}').checkBoxFile('${GrailsClassUtils.getShortName(attrs.bean.class).toLowerCase()}.${attrs.name}',${attachment.id});")
-            }
-        }
-    }
-
-    def radio = {attrs, body ->
-        assert attrs.id
-
-        def from
-        if (!attrs.from) {
-            from = [(message(code: 'is.yes')): 1, (message(code: 'is.no')): 0]
-            if (attrs.value)
-                attrs.value = 1
-            else
-                attrs.value = 0
-        } else {
-            from = attrs.from
-        }
-        attrs.remove('from')
-        out << "<span id='${attrs.id}' class='radio'>"
-        from.eachWithIndex {key, value, index ->
-            def checked = false
-            if (value == attrs.value) checked = true
-            out << "<span class='${attrs.id}-${index}'>${key}</span>"
-            out << g.radio(onClick: attrs.onClick ?: '', name: attrs.name, value: value, checked: checked, id: "${attrs.id}-${index}")
-            out << jq.jquery(null, "\$('input:radio[id=\"${attrs.id}-${index}\"]').checkBox();")
-        }
-        out << "</span>"
-
-    }
-
-    def checkbox = {attrs, body ->
-        out << "<span class='radio'>"
-        out << g.checkBox(onClick: attrs.onClick ?: '', name: attrs.name, value: attrs.value, "class": "checkbox", checked: attrs.checked)
-        out << attrs.label.encodeAsHTML()
-        out << jq.jquery(null, "\$('.checkbox').checkBox();")
-        out << "</span>"
-
-    }
-
-    def area = {attrs, body ->
-        assert attrs.id
-
-        def classe = ''
-        def classes = "area${attrs.rich ? '-rich' : ''}"
-        def isMedium = (attrs.remove("medium") == "true")
-        def isLarge = (attrs.remove("large") == "true")
-
-        if (isMedium)
-            classes = "area-medium"
-
-        if (isLarge)
-            classes = "area-large"
-
-        if (isMedium || isLarge)
-            classe = "area"
-
-        def jqCode = ""
-
-        if (!attrs.rich) {
-            jqCode += "\$('#${attrs.id}-field').input({className:\"${classe}\"});"
-        }
-
-        out << "<span class=\"${classe} ${classes}\" id=\"${attrs.id}-field\" style=\"${attrs.width ? 'width:' + attrs.width : ''}\">"
-        if (attrs.rich) {
-            if (attrs.rich.disabled) {
-                if (attrs.rich.fillWidth) {
-                    jqCode += "jQuery('#${attrs.id}-field').width(jQuery('#${attrs.id}-field').parent().width() - ${attrs.rich.margin ?: 0});"
-                }
-                out << wikitext.renderHtml(markup: "Textile", {attrs.value?.replace('<!--', '')})
-            }
-            else {
-                attrs.rich.id = attrs.id
-                attrs.rich.name = attrs.name
-                out << markitup.editor(attrs.rich, {attrs.value})
-            }
-        } else {
-            out << textArea(attrs, body())
-        }
-        out << "</span>"
-        out << jq.jquery(null, jqCode)
-    }
-
-    def password = {attrs, body ->
-        attrs."class" = attrs."class" ? attrs."class" +" input" : "input"
-        out << "<span id=\"${attrs.id}-field\" class=\"${attrs.remove("class")}\">"
-        out << "<span class=\"start\"></span>"
-        out << "<span class=\"content\">"
-        out << passwordField(attrs, body())
-        out << "</span>"
-        out << "<span class=\"end\"></span>"
-        out << "</span>"
-        out << jq.jquery(null, "\$('#${attrs["id"]}-field').input();")
-    }
-
-    def boxTile = {attrs, body ->
-        out << "<div class=\"box-title\">"
-        out << "<span class=\"start\"></span>"
-        out << "<p class=\"content\">"
-        out << body()
-        out << "</p>"
-        out << "<span class=\"end\"></span>"
-        out << "</div>"
-    }
-
     def color = {attrs, body ->
         assert attrs.id
 
@@ -595,104 +444,19 @@ class FormTagLib {
         out << jq.jquery(null, "\$('#${attrs["id"]}-field').input();")
     }
 
-    def fieldInput = {attrs, body ->
-        attrs."class" = attrs."class" ? attrs."class" + ' field-input clearfix' : 'field-input clearfix'
-        attrs.help = attrs.help ? message(code:attrs.help, default:null) : null
-        if (attrs.remove("noborder") == "true")
-            attrs."class" += " field-noseparator"
-        out << "<p class=\"${attrs."class"}\" ${attrs.style ? 'style=\"' + attrs.style + '\"' : ''} ${attrs.id ? 'id=\"' + attrs.id + '\"' : ''}>"
-        out << "<label for=\"${attrs."for"}\">${message(code: attrs.label)}${attrs.optional ? '<span class="optional"> (' + message(code: 'is.optional') + ')</span>' : ''}${attrs.help ? '<span class="help" title="' + attrs.help + '"> (?)</span>' : ''}</label>"
-        out << body()
-        out << "</p>"
-    }
-
-    def fieldFile = {attrs, body ->
-        if (!ApplicationSupport.booleanValue(grailsApplication.config.icescrum.attachments.enable)) {
-            return
-        }
-        attrs."class" = attrs."class" ? attrs."class" + ' field-input clearfix' : 'field-input clearfix'
-        attrs.help = attrs.help ? message(code:attrs.help, default:null) : null
-        if (attrs.remove("noborder") == "true")
-            attrs."class" += " field-noseparator"
-        out << "<div class=\"${attrs."class"}\">"
-        out << "<label for=\"${attrs."for"}\">${message(code: attrs.label)}${attrs.optional ? '<span class="optional"> (' + message(code: 'is.optional') + ')</span>' : ''}${attrs.help ? '<span class="help" title="' + attrs.help + '"> (?)</span>' : ''}</label>"
-        out << body()
-        out << "</div>"
-    }
-
-    def fieldRadio = {attrs, body ->
-        if (!UtilsWebComponents.rendered(attrs)) {
-            return
-        }
-        attrs."class" = attrs."class" ? attrs."class" + ' field-input clearfix' : 'field-input clearfix'
-        attrs.help = attrs.help ? message(code:attrs.help, default:null) : null
-        if (attrs.remove("noborder") == "true")
-            attrs."class" += " field-noseparator"
-        out << "<p class=\"${attrs."class"}\">"
-        out << "<label for=\"${attrs."for"}\">${message(code: attrs.label)}${attrs.optional ? '<span class="optional"> (' + message(code: 'is.optional') + ')</span>' : ''}${attrs.help ? '<span class="help" title="' + attrs.help + '"> (?)</span>' : ''}</label>"
-        out << body()
-        out << "</p>"
-    }
-
+    //todo remove
     def fieldDatePicker = {attrs, body ->
         if (attrs."for") attrs."for" = "datepicker-" + attrs."for"
         out << is.fieldInput(attrs, body)
     }
 
+    //todo remove
     def fieldTimePicker = {attrs, body ->
         if (attrs."for") attrs."for" = "timepicker-" + attrs."for"
         out << is.fieldInput(attrs, body)
     }
 
-    def fieldSelect = {attrs, body ->
-        attrs."class" = attrs."class" ? attrs."class" + ' field-select clearfix' : "field-select clearfix"
-        attrs.help = attrs.help ? message(code:attrs.help, default:null) : null
-        if (attrs.remove("noborder") == "true")
-            attrs."class" += " field-noseparator"
-        out << "<p class=\"${attrs."class"}\" ${attrs.style ? 'style=\"'+attrs.style+'\"' : ''}>"
-        out << "<label for=\"${attrs."for"}\">${message(code: attrs.label)}${attrs.optional ? '<span class="optional"> (' + message(code: 'is.optional') + ')</span>' : ''}${attrs.help ? '<span class="help" title="' + attrs.help + '"> (?)</span>' : ''}</label>"
-        out << "<span class=\"select\">" + body() + "</span>"
-        out << "</p>"
-    }
-
-    def fieldList = {attrs, body ->
-        attrs."class" = attrs."class" ? attrs."class" + ' field-list clearfix' : "field-list clearfix"
-        attrs.help = attrs.help ? message(code:attrs.help, default:null) : null
-        if (attrs.remove("noborder") == "true")
-            attrs."class" += " field-noseparator"
-        out << "<p class=\"${attrs."class"}\">"
-        out << "<label for=\"${attrs."for"}\">${message(code: attrs.label)}${attrs.optional ? '<span class="optional"> (' + message(code: 'is.optional') + ')</span>' : ''}${attrs.help ? '<span class="help" title="' + attrs.help + '"> (?)</span>' : ''}</label>"
-        out << body()
-        out << "</p>"
-    }
-
-    def list = {attrs, body ->
-        out << "<span class=\"list\">" + g.select(attrs, body()) + "</span>"
-    }
-
-
-    def fieldCheckbox = {attrs, body ->
-        attrs."class" = attrs."class" ? attrs."class" + ' field-checkbox clearfix' : "field-checkbox clearfix"
-        attrs.help = attrs.help ? message(code:attrs.help, default:null) : null
-        if (attrs.remove("noborder") == "true")
-            attrs."class" += " field-noseparator"
-        out << "<p class=\"${attrs."class"}\">"
-        out << "<label for=\"${attrs."for"}\">${message(code: attrs.label)}${attrs.optional ? '<span class="optional"> (' + message(code: 'is.optional') + ')</span>' : ''}${attrs.help ? '<span class="help" title="' + attrs.help + '"> (?)</span>' : ''}</label>"
-        out << "<span class=\"checkbox\">" + body() + "</span>"
-        out << "</p>"
-    }
-
-    def fieldArea = {attrs, body ->
-        attrs."class" = attrs."class" ? attrs."class" + ' field-area clearfix' : "field-area clearfix"
-        attrs.help = attrs.help ? message(code:attrs.help, default:null) : null
-        if (attrs.remove("noborder") == "true")
-            attrs."class" += " field-noseparator"
-        out << "<p class=\"${attrs."class"}\">"
-        out << "<label for=\"${attrs."for"}\">${message(code: attrs.label)}${attrs.optional ? '<span class="optional"> (' + message(code: 'is.optional') + ')</span>' : ''}${attrs.help ? '<span class="help" title="' + attrs.help + '"> (?)</span>' : ''}</label>"
-        out << body()
-        out << "</p>"
-    }
-
+    //todo remove
     def fieldColor = {attrs, body ->
         attrs."class" = attrs."class" ? attrs."class" + ' field-color clearfix' : "field-color clearfix"
         attrs.help = attrs.help ? message(code:attrs.help, default:null) : null
@@ -704,65 +468,7 @@ class FormTagLib {
         out << "</p>"
     }
 
-    def fieldset = {attrs, body ->
-        if (attrs.title) {
-            attrs.title = message(code: attrs.title)
-        }
-        if (attrs.description) {
-            attrs.description = message(code: attrs.description)
-        }
-
-        def content = body()
-        if (content.trim() == '') {
-            return
-        }
-
-        attrs."class" = attrs."class" ? attrs."class" + ' panel ui-corner-all' : "panel ui-corner-all"
-        if (attrs.remove('nolegend'))
-            attrs."class" += " panel-nolegend"
-        out << "<div ${attrs.id ? 'id=\"' + attrs.id + '\"' : ''} class=\"${attrs."class"}\" ${attrs.description ? 'description=\"' + attrs.description + '\"' : ''}>"
-        if (attrs.title) {
-            out << "<h3 class=\"panel-title\">${attrs.title}</h3>"
-        }
-        out << content
-        out << "</div>"
-    }
-
-    def buttonBar = {attrs, body ->
-        if (!attrs.id)
-            attrs.id = 'button-bar'
-
-        pageScope.parent = "true"
-        pageScope.leftButtonBar = ""
-
-        def content = body()
-
-        out << "<div class=\"field-buttons\" id=\"${attrs.id}\">"
-        out << "<table cellpadding=\"0\" cellspacing=\"0\" border=\"0\">"
-        out << "<tr>"
-        out << "<td class=\"left-buttons\" width=\"50%\">${pageScope.leftButtonBar?:'&nbsp;'}</td>"
-        out <<  content
-        out << "<td width=\"50%\">&nbsp;</td>"
-        out << "</tr>"
-        out << "</table>"
-        out << "</div>"
-    }
-
-    def leftButtonBar = {attrs, body ->
-        pageScope.leftButtonBar = body()?:null
-    }
-
-    def fieldInformation = {attrs, body ->
-        attrs."class" = attrs."class" ? attrs."class" + ' field-information' : "field-information"
-        if (attrs.remove("nobordertop") == "true")
-            attrs."class" += " field-information-nobordertop"
-        out << "<${attrs.div ? 'div' : 'p'} class=\"${attrs."class"}\">${body()}</${attrs.div ? 'div' : 'p'}>"
-    }
-
-    def buttonBarItem = {attrs, body ->
-        out << "<td>" + body() + "</td>"
-    }
-
+    //todo remove
     def button = {attrs, body ->
         def content
         def str = ""
@@ -829,6 +535,7 @@ class FormTagLib {
         out << str
     }
 
+    //todo remove
     def browser = {attrs, body ->
         out << g.render(template: '/components/browser', plugin: 'icescrum-core', model: [
                 actionButton: body(),
@@ -843,63 +550,7 @@ class FormTagLib {
         ])
     }
 
-    def editable = { attrs, body ->
-
-        if (!UtilsWebComponents.rendered(attrs) || request.readOnly) {
-            return
-        }
-
-        attrs.onExit = attrs.onExit ?: 'submit'
-        attrs.type = attrs.type ?: 'text'
-        def finder = ""
-        def data = "return value;"
-
-        if (attrs.type == 'text') {
-            finder = "\$(original).find('input').val()"
-            if (attrs.typed) {
-                attrs.typed.elementId = attrs.on
-                data = is.typed(attrs.typed) + ' ' + data;
-            }
-        }
-        else if (attrs.type == 'textarea') {
-            finder = "\$(original).find('textarea').val()"
-        }
-        else if (attrs.type == 'datepicker') {
-            finder = "\$(original).find('textarea').val()"
-        }
-        else if (attrs.type == 'richarea') {
-            finder = "\$(original).find('textarea').val()"
-        }
-        else if (attrs.type == 'selectui') {
-            finder = "\$(original).find('select').children('option:selected').text()"
-            data = "return {${attrs.values},'selected':value};"
-        }
-
-        else if (attrs.type == 'select') {
-            finder = "\$(original).find('select').children('option:selected').text()"
-            data = "return {${attrs.values},'selected':value};"
-        }
-
-        def jqCode = """ jQuery('${attrs.on}').liveEditable('${createLink(action: attrs.action, controller: attrs.controller, params: attrs.params)}',{
-                        type:'${attrs.type}',
-                        select: ${attrs.highlight ?: false},
-                        name: '${attrs.name?:'value'}',
-                        data : function(value, settings) {${attrs.before ?: ''} ${data}},
-                        onsubmit:function(settings, original){ if (${finder} == original.revert) {original.reset(); ${attrs.cancel ?: ''} return false;}},
-                        submitdata : function(value, settings) {return {'id':${attrs.findId}}},
-                        callback:function(value, settings) { ${attrs.callback ?: ''} return value;},
-                        onreset:function(settings, original){ ${attrs.cancel ?: ''}},
-                        ajaxoptions:${attrs.ajaxoptions?:null},
-                        onblur:'${attrs.onExit}'
-                    });"""
-
-        if (attrs.wrap) {
-            out << jq.jquery(null, jqCode)
-        } else {
-            out << jqCode
-        }
-    }
-
+    //todo remove
     def datePicker = { attrs, body ->
         def jqCode = ''
         def wrapDateFormat = {value ->
@@ -951,6 +602,7 @@ class FormTagLib {
         out << jq.jquery(null, jqCode)
     }
 
+    //todo remove
     def timePicker = { attrs, body ->
 
         assert attrs.id
@@ -996,41 +648,6 @@ class FormTagLib {
         if (attrs.disabled && (attrs.disabled == 'true' || attrs.disabled == true))
             jqCode += "\$('#timepicker-${attrs.id}').timepicker('disable');"
         out << jq.jquery(null, jqCode)
-    }
-
-    def accordion = { attrs, body ->
-        assert attrs.id
-
-        def params = [
-                id: attrs.id,
-                disabled: !UtilsWebComponents.enabled(attrs) ?: false,
-                active: attrs.active ?: null,
-                heightStyle: attrs.heightStyle ?: 'content',
-                collapsible: attrs.collapsible ?: false,
-                event: attrs.event ?: null,
-                header: attrs.header ?: null,
-                icons: attrs.icons ?: null
-        ]
-
-        out << "<div id='${attrs.id}'>"
-        out << body()
-        out << "</div>"
-
-        params.remove('id')
-
-        def jqCode = "\$('#${attrs.id}').accordion({"
-        jqCode += params.findAll {k, v -> v != null}.collect {k, v -> v instanceof String ? "$k:'$v'" : "$k:$v"}.join(',')
-        jqCode += "});"
-        out << jq.jquery(null, jqCode);
-    }
-
-    def accordionSection = {attrs, body ->
-        assert attrs.title
-        // <a href="#" is no longer required as of jquery-ui 1.9 but the iceScrum style relies on it
-        out << "<h3><a href='#'>${message(code: attrs.title)}</a></h3>"
-        out << "<div>"
-        out << body()
-        out << "</div>"
     }
 
     /**
@@ -1086,60 +703,5 @@ class FormTagLib {
         if (selected) {
             writer << 'selected="selected" '
         }
-    }
-
-    def sortable = { attrs ->
-        if (!UtilsWebComponents.rendered(attrs)) {
-            return
-        }
-        def sortableOptions = [
-                placeholder: UtilsWebComponents.wrap(attr: attrs.placeholder, doubleQuote: true),
-                revert: UtilsWebComponents.wrap(attr: attrs.revert, doubleQuote: true),
-                items: UtilsWebComponents.wrap(attr: attrs.items, doubleQuote: true),
-                handle: UtilsWebComponents.wrap(attr: attrs.handle, doubleQuote: true),
-                containment: attrs.containment ? UtilsWebComponents.wrap(attr: attrs.containment, doubleQuote: true) : null,
-                start: "function(event,ui){${attrs.start}}",
-                stop: "function(event,ui){${attrs.stop}}",
-                update: "function(event,ui){${attrs.update}}",
-                over: "function(event,ui){${attrs.over}}",
-                change: "function(event,ui){${attrs.change}}",
-                receive: "function(event,ui){" + attrs.receive + "}",
-                cancel: UtilsWebComponents.wrap(attrs.cancel),
-                connectWith: UtilsWebComponents.wrap(attrs.connectWith),
-                disabled: attrs.disabled
-        ]
-        def opts = sortableOptions.findAll {k, v -> v != null}.collect {k, v ->" $k:$v" }.join(',')
-
-        def jqCode
-        if (attrs.live) {
-
-            jqCode = """jQuery.icescrum.liveSortable = function(){
-                            jQuery('${attrs.on}').each(function(){
-                                if (!jQuery(this).data('init')) {
-                                    jQuery(this).data('init', true).sortable({${opts}});
-                                }
-                            });
-                        };
-                        jQuery.icescrum.liveSortable();"""
-
-        } else {
-            jqCode = "jQuery('${attrs.on}').sortable({${opts}});"
-        }
-        if (attrs.wrap) {
-            out << jq.jquery(null, jqCode)
-        } else {
-            out << jqCode
-        }
-    }
-
-    def droppable = { attrs ->
-        def droppableOptions = [
-                drop: attrs.drop ? "function(event, ui) {${attrs.drop}}" : null,
-                hoverClass: UtilsWebComponents.wrap(attrs.hoverClass),
-                activeClass: UtilsWebComponents.wrap(attrs.activeClass),
-                accept: UtilsWebComponents.wrap(attrs.accept)
-        ]
-        def opts = droppableOptions.findAll {k, v -> v}.collect {k, v -> " $k:$v"}.join(',')
-        out << " \$('${attrs.on}').liveDroppable({$opts});"
     }
 }

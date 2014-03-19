@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010 iceScrum Technologies.
+ * Copyright (c) 2014 Kagilum SAS.
  *
  * This file is part of iceScrum.
  *
@@ -18,6 +18,7 @@
  * Authors:
  *
  * Vincent Barrier (vbarrier@kagilum.com)
+ * Nicolas Noullet (nnoullet@kagilum.com)
  */
 
 
@@ -63,16 +64,18 @@ grails.project.dependency.resolution = {
     }
 
     plugins {
-        compile ':taggable:1.0.1'
-        compile 'org.icescrum:fluxiable:0.3.2'
-        compile ':burning-image:0.5.1'
-        compile 'org.icescrum:icescrum-attachmentable:0.4.8'
         compile 'spring:spring-security-core:1.2.7.3'
         compile 'spring:spring-security-acl:1.1.1'
+        compile 'org.icescrum:fluxiable:0.3.2'
+        compile 'org.icescrum:icescrum-attachmentable:0.4.8'
         compile 'org.icescrum:commentable:1.3'
+        compile ":hibernate:1.3.9"
         compile ':followable:0.3'
+        compile ':taggable:1.0.1'
         compile ':autobase:1.0.0.0'
+        compile ':burning-image:0.5.1'
         compile ':jdbc-pool:1.0.9.3'
+        //todo remove
         compile ':spring-events:1.2'
         compile ':springcache:1.3.1'
         compile ':mail:1.0.1'
@@ -80,6 +83,6 @@ grails.project.dependency.resolution = {
         compile ':maven-publisher:0.8.1'
         compile ':rollback-on-exception:0.1'
         compile ':wikitext:0.1.2'
-        compile ':hibernate:1.3.9'
+        compile ":feeds:1.5"
     }
 }
