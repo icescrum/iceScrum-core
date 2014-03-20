@@ -85,7 +85,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
     ]
 
     static transients = [
-            'todo', 'dependences', 'deliveredVersion', 'testState', 'testStateEnum'
+            'todo', 'dependences', 'deliveredVersion', 'testState', 'testStateEnum', 'activity'
     ]
 
     static mapping = {
@@ -111,6 +111,26 @@ class Story extends BacklogElement implements Cloneable, Serializable {
         creator(nullable: true) // in case of a user deletion, the story can remain without owner
         dependsOn(nullable: true, validator: { newDependsOn, story -> newDependsOn == null || newDependsOn.backlog == story.backlog }) // TODO custom message
         origin(nullable: true)
+    }
+
+    def getActivity(){
+        def summary = this.comments + this.activities.findAll{ it.code != 'comment' } + this.tasks*.activities.flatten().findAll{ it.code != 'comment' } + this.acceptanceTests*.activities.flatten()
+        return summary.sort { it.dateCreated }
+    }
+
+    def getDependences(){
+        //start ugly fix kludge! avoids GRAILS-4453
+        backlog.features*.stories?.count()
+        //end ugly fix kludge! avoids GRAILS-4453
+        return Story.findAllByDependsOn(this,[cache:true,sort:"state",order:"asc"])
+    }
+
+    def getDeliveredVersion(){
+        return this.state == STATE_DONE ? this.parentSprint.deliveredVersion ?: null : null
+    }
+
+    int getTestState() {
+        getTestStateEnum().id
     }
 
     static namedQueries = {
@@ -543,18 +563,6 @@ class Story extends BacklogElement implements Cloneable, Serializable {
         return true
     }
 
-    def getDependences(){
-        //start ugly fix kludge! avoids GRAILS-4453
-        backlog.features*.stories?.count()
-        //end ugly fix kludge! avoids GRAILS-4453
-
-        return Story.findAllByDependsOn(this,[cache:true,sort:"state",order:"asc"])
-    }
-
-    def getDeliveredVersion(){
-        return this.state == STATE_DONE ? this.parentSprint.deliveredVersion ?: null : null
-    }
-
     def onAddAttachment = { Attachment a ->
         publishEvent new IceScrumStoryEvent(this, this.class, (User)a.poster, IceScrumStoryEvent.EVENT_UPDATED)
     }
@@ -696,11 +704,6 @@ class Story extends BacklogElement implements Cloneable, Serializable {
         String toString() { "is.story.teststate." + name().toLowerCase() }
     }
 
-    int getTestState() {
-        getTestStateEnum().id
-    }
-
-
     TestState getTestStateEnum() {
         Map testsByStateCount = countTestsByState()
         if (testsByStateCount.size() == 0) {
@@ -729,10 +732,6 @@ class Story extends BacklogElement implements Cloneable, Serializable {
             }
             countByState
         }
-    }
-
-    Integer countAcceptanceTests() {
-        countTestsByState().values().sum()
     }
 
     Boolean canUpdate(isProductOwner, currentUser) {
