@@ -108,7 +108,7 @@ class StoryService {
             publishEvent(new IceScrumStoryEvent(story, this.class, u, IceScrumStoryEvent.EVENT_CREATED))
 
         } else {
-            throw new RuntimeException()
+            throw new RuntimeException(story.errors?.toString())
         }
     }
 
@@ -648,7 +648,7 @@ class StoryService {
             }
 
             if (!story.save(flush: true))
-                throw new RuntimeException()
+                throw new RuntimeException(story.errors?.toString())
 
             User u = (User) springSecurityService.currentUser
             storiesA << story
