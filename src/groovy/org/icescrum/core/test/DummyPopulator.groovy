@@ -263,9 +263,11 @@ class DummyPopulator {
                     sp.tasks.findAll{it.type == Task.TYPE_RECURRENT}.eachWithIndex { it, index ->
                         if (index > 0 && index < 8){
                             it.state = Task.STATE_BUSY
+                            it.inProgressDate = new Date()
                         }
                         if (index == 8){
                             it.state = Task.STATE_DONE
+                            it.doneDate = new Date()
                         }
                         it.save()
                     };
@@ -273,20 +275,23 @@ class DummyPopulator {
                     sp.tasks.findAll{it.type == Task.TYPE_URGENT}.eachWithIndex { it, index ->
                         if (index > 0 && index < 8){
                             it.state = Task.STATE_BUSY
+                            it.inProgressDate = new Date()
                         }
                         if (index == 8){
                             it.state = Task.STATE_DONE
+                            it.doneDate = new Date()
                         }
                         it.save()
                     };
 
                     sp.tasks.eachWithIndex{ it, index ->
-                        if (index == 0){
+                        if (index == 0) {
                             it.state = Task.STATE_DONE
-                        }
-                        else if (index % 2 == 0){
+                            it.inProgressDate = new Date()
+                            it.doneDate = new Date()
+                        } else if (index % 2 == 0) {
                             it.state = Task.STATE_BUSY
-
+                            it.inProgressDate = new Date()
                         }
                         it.save()
                     }
