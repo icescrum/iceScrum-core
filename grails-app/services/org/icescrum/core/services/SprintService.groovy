@@ -446,8 +446,8 @@ class SprintService {
                         values << [
                                 storiesDone: xmlRoot."${Cliche.STORIES_DONE}".toInteger(),
                                 stories: xmlRoot."${Cliche.TOTAL_STORIES}".toInteger(),
-                                pointsDone: xmlRoot."${Cliche.STORIES_POINTS_DONE}"?.toString()?.isInteger() ? xmlRoot."${Cliche.STORIES_POINTS_DONE}".toInteger() :0,
-                                totalPoints: xmlRoot."${Cliche.STORIES_TOTAL_POINTS}"?.toString()?.isInteger() ? xmlRoot."${Cliche.STORIES_TOTAL_POINTS}".toInteger() :0,
+                                pointsDone: xmlRoot."${Cliche.STORIES_POINTS_DONE}"?.toString()?.isBigDecimal() ? xmlRoot."${Cliche.STORIES_POINTS_DONE}".toBigDecimal() :0,
+                                totalPoints: xmlRoot."${Cliche.STORIES_TOTAL_POINTS}"?.toString()?.isBigDecimal() ? xmlRoot."${Cliche.STORIES_TOTAL_POINTS}".toBigDecimal() :0,
                                 label: "${g.formatDate(date: lastDaycliche, formatName: 'is.date.format.short')}"
                         ]
                 }
