@@ -104,53 +104,43 @@ class StoryService extends IceScrumEventPublisher {
 
     @PreAuthorize('!archivedProduct(#stories[0].backlog)')
     void delete(Collection<Story> stories, history = true, reason = null) {
-            def product = stories[0].backlog
-            stories.each { story ->
-
+        def product = stories[0].backlog
+        stories.each { story ->
+            if (story.state >= Story.STATE_PLANNED) {
+                throw new IllegalStateException('is.story.error.not.deleted.state')
+            }
+            if (!springSecurityService.isLoggedIn()){
+                throw new IllegalAccessException()
+            }
+            if (!(story.creator.id == springSecurityService.currentUser?.id) && !securityService.productOwner(product.id, springSecurityService.authentication)) {
+                throw new IllegalAccessException()
+            }
             if (story.actor){
                 story.actor.removeFromStories(story)
             }
-
             if (story.feature){
                 story.feature.removeFromStories(story)
             }
-
-            //dependences on the story
             def dependences = story.dependences
             if (dependences){
                 dependences.each{
                     notDependsOn(it)
                 }
             }
-            //precedence on the story
             if (story.dependsOn) {
                 notDependsOn(story)
-            }
-
-            if (story.state >= Story.STATE_PLANNED) {
-                throw new IllegalStateException('is.story.error.not.deleted.state')
-            }
-
-            if (!springSecurityService.isLoggedIn()){
-                throw new IllegalAccessException()
-            }
-
-            if (!(story.creator.id == springSecurityService.currentUser?.id) && !securityService.productOwner(product.id, springSecurityService.authentication)) {
-                throw new IllegalAccessException()
             }
             story.removeAllAttachments()
             if (story.state != Story.STATE_SUGGESTED) {
                 resetRank(story)
             }
-
             def id = story.id
             story.deleteComments()
-
             story.description = reason ?: null
             if (history) {
                 try{
-                    notificationEmailService.sendAlertCUD(story, (User)springSecurityService.currentUser, IceScrumStoryEvent.EVENT_BEFORE_DELETE)
-                }catch(Exception e){
+                    notificationEmailService.sendAlertCUD(story, (User)springSecurityService.currentUser, IceScrumEventType.BEFORE_DELETE)
+                } catch(Exception e){
                     if(log.debugEnabled){
                         log.debug(e.getMessage())
                     }
@@ -288,8 +278,8 @@ class StoryService extends IceScrumEventPublisher {
             def autoCreateTaskOnEmptyStory = sprint.parentRelease.parentProduct.preferences.autoCreateTaskOnEmptyStory
             if (autoCreateTaskOnEmptyStory)
                 if (autoCreateTaskOnEmptyStory && !story.tasks) {
-                    def emptyTask = new Task(name: story.name, state: Task.STATE_WAIT, description: story.description)
-                    taskService.saveStoryTask(emptyTask, story, user)
+                    def emptyTask = new Task(name: story.name, state: Task.STATE_WAIT, description: story.description, parentStory: story)
+                    taskService.save(emptyTask, user)
                 }
             clicheService.createOrUpdateDailyTasksCliche(sprint)
         } else {
@@ -335,7 +325,8 @@ class StoryService extends IceScrumEventPublisher {
         tasks.each { Task task ->
             if (task.state == Task.STATE_DONE) {
                 task.doneDate = null
-                taskService.update(task, u, false, Task.TYPE_URGENT)
+                task.type = Task.TYPE_URGENT
+                taskService.update(task, u)
             } else if (fullUnPlan) {
                 taskService.delete(task, u)
             } else {
@@ -466,7 +457,7 @@ class StoryService extends IceScrumEventPublisher {
         def backlogStates = [Story.STATE_ACCEPTED, Story.STATE_ESTIMATED]
         def stories = (story.state in backlogStates) ? story.backlog.stories.findAll { it.state in backlogStates } : story.parentSprint?.stories
         if (stories) {
-            stories.asList().findAll { it.rank > story.rank }.sort{ it.rank }.each {
+            stories.asList().findAll { it.rank > story.rank }.each {
                 it.rank--
                 it.save()
             }
@@ -631,13 +622,15 @@ class StoryService extends IceScrumEventPublisher {
                 throw new IllegalStateException('is.story.error.not.state.suggested')
 
             def task = new Task(story.properties)
-
+            task.type = Task.TYPE_URGENT
             task.state = Task.STATE_WAIT
             task.description = (story.affectVersion ? g.message(code: 'is.story.affectVersion') + ': ' + story.affectVersion : '') + (task.description ?: '')
 
             def sprint = (Sprint) Sprint.findCurrentSprint(product.id).list()
-            if (!sprint)
+            if (!sprint) {
                 throw new IllegalStateException('is.story.error.not.acceptedAsUrgentTask')
+            }
+            task.backlog = sprint
 
             task.validate()
             def i = 1
@@ -654,10 +647,10 @@ class StoryService extends IceScrumEventPublisher {
                 }
             }
 
-            if (story.feature)
+            if (story.feature) {
                 task.color = story.feature.color
-
-            taskService.saveUrgentTask(task, sprint, story.creator)
+            }
+            taskService.save(task, story.creator)
 
             story.followers?.each{
                 task.addFollower(it)

@@ -29,9 +29,6 @@
 package org.icescrum.core.domain
 
 import grails.util.GrailsNameUtils
-import org.icescrum.core.event.IceScrumEvent
-import org.icescrum.core.event.IceScrumTaskEvent
-import org.springframework.security.core.context.SecurityContextHolder as SCH
 
 class Task extends BacklogElement implements Serializable {
 
@@ -76,16 +73,17 @@ class Task extends BacklogElement implements Serializable {
     }
 
     static constraints = {
-        estimation nullable: true
+        estimation nullable: true, validator: { newEffort, task -> newEffort == null || newEffort >= 0 } // TODO custom message
         initial nullable: true
         responsible nullable: true
         impediment nullable: true
-        parentStory nullable: true
-        type nullable: true
+        parentStory nullable: true, validator: { newParentStory, task -> newParentStory == null || newParentStory.parentSprint == task.backlog }
+        type nullable: true, validator: { newType, task -> task.parentStory == null ? newType in [TYPE_URGENT, TYPE_RECURRENT] : newType == null }
         doneDate nullable: true
         inProgressDate nullable: true
         name unique: 'parentStory'
         color nullable: true
+        blocked validator: { newBlocked, task -> !newBlocked || task.backlog.state == Sprint.STATE_INPROGRESS }
     }
 
     static namedQueries = {
@@ -351,12 +349,6 @@ class Task extends BacklogElement implements Serializable {
         return true
     }
 
-    def beforeDelete() {
-        withNewSession {
-            publishEvent(new IceScrumTaskEvent(this, this.class, User.get(SCH.context?.authentication?.principal?.id), IceScrumEvent.EVENT_BEFORE_DELETE, true))
-        }
-    }
-
     Sprint getSprint(){
         if (this.getBacklog()?.id)
             return (Sprint)this.getBacklog()
@@ -365,12 +357,6 @@ class Task extends BacklogElement implements Serializable {
 
     Product getParentProduct(){
         return this.sprint?.parentProduct
-    }
-
-    def afterDelete() {
-        withNewSession {
-            publishEvent(new IceScrumTaskEvent(this, this.class, User.get(SCH.context?.authentication?.principal?.id), IceScrumEvent.EVENT_AFTER_DELETE, true))
-        }
     }
 
     static search(product, options){

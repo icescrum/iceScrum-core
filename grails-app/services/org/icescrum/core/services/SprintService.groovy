@@ -231,8 +231,8 @@ class SprintService {
             it.state = Story.STATE_INPROGRESS
             it.inProgressDate = new Date()
             if (autoCreateTaskOnEmptyStory && it.tasks?.size() == 0) {
-                def emptyTask = new Task(name: it.name, state: Task.STATE_WAIT, description: it.description, backlog: sprint)
-                taskService.saveStoryTask(emptyTask, it, (User) springSecurityService.currentUser)
+                def emptyTask = new Task(name: it.name, state: Task.STATE_WAIT, description: it.description, backlog: sprint, parentStory: it)
+                taskService.save(emptyTask, (User) springSecurityService.currentUser)
             }
             it.save()
         }
@@ -492,7 +492,7 @@ class SprintService {
             tmp.participants = null
             tmp.inProgressDate = null
             tmp.doneDate = null
-            taskService.save(tmp, sprint, it.creator)
+            taskService.save(tmp, it.creator)
             copiedTasks << tmp
         }
         return copiedTasks

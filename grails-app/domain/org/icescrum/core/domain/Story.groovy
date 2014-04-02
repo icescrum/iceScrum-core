@@ -107,7 +107,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
         feature(nullable: true, validator: { newFeature, story -> newFeature == null || newFeature.backlog == story.backlog }) // TODO custom message
         actor(nullable: true)
         affectVersion(nullable: true)
-        effort(nullable: true, validator: { newEffort, obj -> newEffort == null || (newEffort >= 0 && newEffort < 1000) }) // TODO custom message
+        effort(nullable: true, validator: { newEffort, story -> newEffort == null || (newEffort >= 0 && newEffort < 1000) }) // TODO custom message
         creator(nullable: true) // in case of a user deletion, the story can remain without owner
         dependsOn(nullable: true, validator: { newDependsOn, story -> newDependsOn == null || newDependsOn.backlog == story.backlog }) // TODO custom message
         origin(nullable: true)

@@ -27,6 +27,7 @@ import grails.plugin.fluxiable.Activity
 import org.icescrum.core.domain.Actor
 import org.icescrum.core.domain.Feature
 import org.icescrum.core.domain.Story
+import org.icescrum.core.domain.Task
 import org.icescrum.core.domain.User
 import org.icescrum.core.event.IceScrumListener
 import org.icescrum.core.event.IceScrumEventType
@@ -62,8 +63,8 @@ class ListenerService {
                     }
                 }
             }
-            def u = (User) springSecurityService.currentUser
-            story.addActivity(u, Activity.CODE_UPDATE, story.name)
+            def user = (User) springSecurityService.currentUser
+            story.addActivity(user, Activity.CODE_UPDATE, story.name)
             broadcast(function: 'update', message: story, channel: 'product-' + product.id)
         }
     }
@@ -121,14 +122,36 @@ class ListenerService {
         broadcast(function: 'delete', message: [class: feature.class, id: dirtyProperties.id], channel: 'product-' + productId)
     }
 
-    @IceScrumListener(domains = ['actor', 'story', 'feature'], eventType = IceScrumEventType.BEFORE_DELETE)
+    @IceScrumListener(domains = ['actor', 'story', 'feature', 'task'], eventType = IceScrumEventType.BEFORE_DELETE)
     void backlogElementBeforeDelete(object, Map dirtyProperties) {
         log.debug("the item of ${object.class} and name $object.name will be deleted")
         object.removeAllAttachments()
     }
 
-    @IceScrumListener(domains = ['actor', 'story', 'feature'], eventType = IceScrumEventType.BEFORE_UPDATE)
+    @IceScrumListener(domains = ['actor', 'story', 'feature', 'task'], eventType = IceScrumEventType.BEFORE_UPDATE)
     void invalidCacheBeforeUpdate(object, Map dirtyProperties) {
         object.lastUpdated = new Date()
+    }
+
+    @IceScrumListener(domain = 'task', eventType = IceScrumEventType.CREATE)
+    void taskCreate(Task task, Map dirtyProperties) {
+        log.debug("the task $task.name ($task.id) has been created")
+        def user = (User) springSecurityService.currentUser
+        task.addActivity(user, 'taskSave', task.name)
+        broadcast(function: 'add', message: task, channel: 'product-' + task.backlog.id)
+    }
+
+    @IceScrumListener(domain = 'task', eventType = IceScrumEventType.UPDATE)
+    void taskUpdate(Task task, Map dirtyProperties) {
+        log.debug("the task $task.name ($task.id) has been updated")
+        def productId = task.backlog.parentProduct.id
+        broadcast(function: 'update', message: task, channel: 'product-' + productId)
+    }
+
+    @IceScrumListener(domain = 'task', eventType = IceScrumEventType.DELETE)
+    void taskDelete(Task task, Map dirtyProperties) {
+        log.debug("the task $dirtyProperties.name ($dirtyProperties.id) has been deleted")
+        def productId = dirtyProperties.backlog.parentProduct.id
+        broadcast(function: 'delete', message: [class: task.class, id: dirtyProperties.id], channel: 'product-' + productId)
     }
 }
