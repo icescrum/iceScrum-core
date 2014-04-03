@@ -138,20 +138,21 @@ class ListenerService {
         log.debug("the task $task.name ($task.id) has been created")
         def user = (User) springSecurityService.currentUser
         task.addActivity(user, 'taskSave', task.name)
-        broadcast(function: 'add', message: task, channel: 'product-' + task.backlog.id)
+        def productId = task.backlog ? task.backlog.id : task.parentStory.backlog.id
+        broadcast(function: 'add', message: task, channel: 'product-' + productId)
     }
 
     @IceScrumListener(domain = 'task', eventType = IceScrumEventType.UPDATE)
     void taskUpdate(Task task, Map dirtyProperties) {
         log.debug("the task $task.name ($task.id) has been updated")
-        def productId = task.backlog.parentProduct.id
+        def productId = task.backlog ? task.backlog.id : task.parentStory.backlog.id
         broadcast(function: 'update', message: task, channel: 'product-' + productId)
     }
 
     @IceScrumListener(domain = 'task', eventType = IceScrumEventType.DELETE)
     void taskDelete(Task task, Map dirtyProperties) {
         log.debug("the task $dirtyProperties.name ($dirtyProperties.id) has been deleted")
-        def productId = dirtyProperties.backlog.parentProduct.id
+        def productId = task.backlog ? task.backlog.id : task.parentStory.backlog.id
         broadcast(function: 'delete', message: [class: task.class, id: dirtyProperties.id], channel: 'product-' + productId)
     }
 }

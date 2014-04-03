@@ -21,8 +21,9 @@
  */
 package org.icescrum.core.utils
 
-import grails.converters.JSON;
-
+import grails.converters.JSON
+import grails.plugins.wikitext.WikiTextTagLib
+import org.codehaus.groovy.grails.commons.GrailsApplication;
 import org.codehaus.groovy.grails.commons.GrailsClassUtils;
 import org.codehaus.groovy.grails.commons.GrailsDomainClass;
 import org.codehaus.groovy.grails.commons.GrailsDomainClassProperty;
@@ -42,7 +43,16 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
 
     private ProxyHandler proxyHandler;
     private Map propertiesMap;
+    private WikiTextTagLib textileRenderer;
     private boolean includeClass;
+
+    public JSONIceScrumDomainClassMarshaller(boolean includeVersion, boolean includeClass, Map propertiesMap, WikiTextTagLib textileRenderer) {
+        super(includeVersion)
+        this.proxyHandler = new DefaultProxyHandler()
+        this.propertiesMap = propertiesMap;
+        this.includeClass = includeClass;
+        this.textileRenderer = textileRenderer;
+    }
 
     public JSONIceScrumDomainClassMarshaller(boolean includeVersion, boolean includeClass, Map propertiesMap) {
         super(includeVersion)
@@ -172,6 +182,14 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
             if (value.properties."${it}" != null) {
                 writer.key(it);
                 json.convertAnother(value.properties."${it}");
+            }
+        }
+        if (textileRenderer && propertiesMap."${configName}"?.textile){
+            propertiesMap."${configName}"?.textile?.each {
+                if (value.properties."${it}" != null) {
+                    writer.key(it+"_html");
+                    json.convertAnother(textileRenderer.renderHtml([markup: "Textile"], value.properties."${it}"));
+                }
             }
         }
         propertiesMap."${configName}"?.includeShort?.each {

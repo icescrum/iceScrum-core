@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010 iceScrum Technologies.
+ * Copyright (c) 2014 Kagilum.
  *
  * This file is part of iceScrum.
  *
@@ -18,8 +18,6 @@
  * Authors:
  *
  * Vincent Barrier (vbarrier@kagilum.com)
- * Stéphane Maldini (stephane.maldini@icescrum.com)
- * Manuarii Stein (manuarii.stein@icescrum.com)
  * Nicolas Noullet (nnoullet@kagilum.com)
  */
 
@@ -43,16 +41,16 @@ class TaskService extends IceScrumEventPublisher {
     def springSecurityService
     def securityService
 
-    @PreAuthorize('inProduct(#task.backlog.parentProduct) and !archivedProduct(#task.backlog.parentProduct)')
+    @PreAuthorize('(inProduct(#task.backlog?.parentProduct) or inProduct(#task.parentStory?.parentProduct)) and (!archivedProduct(#task.backlog?.parentProduct) or !archivedProduct(#task.parentStory?.parentProduct))')
     void save(Task task, User user) {
         Sprint sprint = task.backlog
-        if (!task.id && sprint.state == Sprint.STATE_DONE){
+        if (!task.id && sprint?.state == Sprint.STATE_DONE){
             throw new IllegalStateException('is.task.error.not.saved')
         }
         if (task.estimation == 0 && task.state != Task.STATE_DONE) {
             task.estimation = null
         }
-        Product product = sprint.parentProduct
+        Product product = sprint ? sprint.parentProduct : (Product)task.parentStory.backlog
         if (product.preferences.assignOnCreateTask) {
             task.responsible = user
         }
@@ -62,7 +60,9 @@ class TaskService extends IceScrumEventPublisher {
         if (!task.save(flush:true)) {
             throw new RuntimeException()
         }
-        clicheService.createOrUpdateDailyTasksCliche(sprint)
+        if (sprint){
+            clicheService.createOrUpdateDailyTasksCliche(sprint)
+        }
         publishSynchronousEvent(IceScrumEventType.CREATE, task)
     }
 

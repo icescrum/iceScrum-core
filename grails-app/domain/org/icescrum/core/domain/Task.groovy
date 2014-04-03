@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010 iceScrum Technologies.
+ * Copyright (c) 2014 Kagilum SAS.
  *
  * This file is part of iceScrum.
  *
@@ -18,8 +18,6 @@
  * Authors:
  *
  * Vincent Barrier (vbarrier@kagilum.com)
- * Stéphane Maldini (stephane.maldini@icescrum.com)
- * Manuarii Stein (manuarii.stein@icescrum.com)
  * Nicolas Noullet (nnoullet@kagilum.com)
  * Jeroen Broekhuizen (Jeroen.Broekhuizen@quintiq.com)
  */
@@ -54,10 +52,10 @@ class Task extends BacklogElement implements Serializable {
     int state = Task.STATE_WAIT
 
     static belongsTo = [
-            responsible: User,
             creator: User,
-            impediment: Impediment,
+            responsible: User,
             parentStory: Story,
+            impediment: Impediment
     ]
 
     static hasMany = [participants: User]
@@ -67,23 +65,24 @@ class Task extends BacklogElement implements Serializable {
     static mapping = {
         cache true
         table 'icescrum2_task'
-        parentStory index: 't_name_index'
-        name index: 't_name_index'
         participants cache: true
+        name index: 't_name_index'
+        parentStory index: 't_name_index'
     }
 
     static constraints = {
-        estimation nullable: true, validator: { newEffort, task -> newEffort == null || newEffort >= 0 } // TODO custom message
-        initial nullable: true
-        responsible nullable: true
-        impediment nullable: true
-        parentStory nullable: true, validator: { newParentStory, task -> newParentStory == null || newParentStory.parentSprint == task.backlog }
         type nullable: true, validator: { newType, task -> task.parentStory == null ? newType in [TYPE_URGENT, TYPE_RECURRENT] : newType == null }
-        doneDate nullable: true
-        inProgressDate nullable: true
-        name unique: 'parentStory'
         color nullable: true
         blocked validator: { newBlocked, task -> !newBlocked || task.backlog.state == Sprint.STATE_INPROGRESS }
+        initial nullable: true
+        backlog nullable: true
+        doneDate nullable: true
+        estimation nullable: true, validator: { newEffort, task -> newEffort == null || newEffort >= 0 }
+        impediment nullable: true
+        name unique: 'parentStory'
+        responsible nullable: true
+        parentStory nullable: true, validator: { newParentStory, task -> newParentStory == null || newParentStory.parentSprint == task.backlog }
+        inProgressDate nullable: true
     }
 
     static namedQueries = {

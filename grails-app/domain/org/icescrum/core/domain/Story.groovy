@@ -25,10 +25,10 @@
 
 package org.icescrum.core.domain
 
-import org.icescrum.core.event.IceScrumEvent
-import org.icescrum.core.event.IceScrumStoryEvent
+import org.codehaus.groovy.grails.commons.ApplicationHolder
+import org.icescrum.core.event.IceScrumEventType
+import org.icescrum.core.services.StoryService
 import org.icescrum.plugins.attachmentable.domain.Attachment
-import org.springframework.security.core.context.SecurityContextHolder as SCH
 import grails.util.GrailsNameUtils
 import org.icescrum.core.domain.AcceptanceTest.AcceptanceTestState
 
@@ -561,10 +561,6 @@ class Story extends BacklogElement implements Cloneable, Serializable {
         } else if (!state.equals(other.state))
             return false
         return true
-    }
-
-    def onAddAttachment = { Attachment a ->
-        publishEvent new IceScrumStoryEvent(this, this.class, (User)a.poster, IceScrumStoryEvent.EVENT_UPDATED)
     }
 
     static search(product, options){

@@ -23,6 +23,7 @@
 
 import grails.converters.JSON
 import grails.converters.XML
+import grails.plugins.wikitext.WikiTextTagLib
 import grails.util.GrailsNameUtils
 import org.apache.commons.io.FilenameUtils
 import org.atmosphere.cpr.AtmosphereResource
@@ -70,7 +71,6 @@ import org.icescrum.core.domain.Sprint
 import org.icescrum.core.domain.Actor
 import org.icescrum.core.domain.Release
 import org.icescrum.core.domain.Task
-import org.icescrum.plugins.attachmentable.interfaces.AttachmentException
 import org.codehaus.groovy.grails.plugins.jasper.JasperReportDef
 import org.icescrum.core.domain.User
 import org.codehaus.groovy.grails.plugins.jasper.JasperExportFormat
@@ -333,10 +333,13 @@ class IcescrumCoreGrailsPlugin {
 
     def doWithApplicationContext = { applicationContext ->
         //For iceScrum internal
-        def properties = application.config?.icescrum?.marshaller
-        JSON.registerObjectMarshaller(new JSONIceScrumDomainClassMarshaller(true, true, properties), 1)
+        Map properties = application.config?.icescrum?.marshaller
+        WikiTextTagLib textileRenderer = (WikiTextTagLib)application.mainContext["grails.plugins.wikitext.WikiTextTagLib"]
+        JSON.registerObjectMarshaller(new JSONIceScrumDomainClassMarshaller(false, true, properties, textileRenderer), 1)
+
         XML.registerObjectMarshaller(new XMLIceScrumDomainClassMarshaller(true, properties), 1)
 
+        //TODO should be removed and merged with marshaller
         properties = application.config?.icescrum?.restMarshaller
         //For rest API
         JSON.createNamedConfig('rest'){
@@ -500,99 +503,6 @@ class IcescrumCoreGrailsPlugin {
             }
             clazz.registerMapping(actionName)
         }
-
-        // TODO remove
-        mc.manageAttachments = { attachmentable, keptAttachments, addedAttachments ->
-            def needPush = false
-            if (!keptAttachments && attachmentable.attachments.size() > 0) {
-                attachmentable.removeAllAttachments()
-                needPush = true
-            } else {
-                attachmentable.attachments.each { attachment ->
-                    if (!keptAttachments.contains(attachment.id.toString())) {
-                        attachmentable.removeAttachment(attachment)
-                    }
-                    needPush = true
-                }
-            }
-            def uploadedFiles = []
-            addedAttachments.each { attachment ->
-                def parts = attachment.split(":")
-                if (parts[0].contains('http')) {
-                    uploadedFiles << [url: parts[0] +':'+ parts[1], filename: parts[2], length: parts[3], provider:parts[4]]
-                } else {
-                    if (session.uploadedFiles && session.uploadedFiles[parts[0]]) {
-                        uploadedFiles << [file: new File((String) session.uploadedFiles[parts[0]]), filename: parts[1]]
-                    }
-                }
-            }
-            session.uploadedFiles = null
-            def currentUser = (User) springSecurityService.currentUser
-            if (uploadedFiles){
-                attachmentable.addAttachments(currentUser, uploadedFiles)
-                needPush = true
-            }
-            def attachmentableClass = GrailsNameUtils.getShortName(attachmentable.class).toLowerCase()
-            def newAttachments = [class:'attachments', attachmentable: [class:attachmentableClass, id: attachmentable.id], controllerName:controllerName, attachments:attachmentable.attachments]
-            if (needPush){
-                attachmentable.lastUpdated = new Date()
-                broadcast(function: 'replaceAll', message: newAttachments, channel:'product-'+params.product)
-            }
-            return newAttachments
-        }
-
-        // TODO rename
-        mc.manageAttachmentsNew = { item ->
-            if (request.method == 'POST'){
-                def upfile = params.file ?: request.getFile('file')
-                def filename = FilenameUtils.getBaseName(upfile.originalFilename?:upfile.name)
-                def ext = FilenameUtils.getExtension(upfile.originalFilename?:upfile.name)
-                def tmpF = null
-                if(upfile.originalFilename){
-                    tmpF = session.createTempFile(filename, '.' + ext)
-                    request.getFile("file").transferTo(tmpF)
-                }
-                item.addAttachment(springSecurityService.currentUser, tmpF?: upfile, upfile.originalFilename?:upfile.name)
-                def attachment = item.attachments.first()
-                //invalid cache
-                item.lastUpdated = new Date()
-                render(status:200, contentType: 'application/json', text:[
-                        id:attachment.id,
-                        filename:attachment.inputName,
-                        ext:ext,
-                        size:attachment.length,
-                        provider:attachment.provider?:''] as JSON)
-            } else if(request.method == 'DELETE'){
-                def attachment = item.attachments?.find{ it.id == params.long('attachment.id') }
-                if (attachment){
-                    item.removeAttachment(attachment)
-                    //invalid cache
-                    item.lastUpdated = new Date()
-                    render(status:200)
-                }
-            } else if(request.method == 'GET'){
-                def attachment = item.attachments?.find{ it.id == params.long('attachment.id') }
-                if (attachment) {
-                    if (attachment.url){
-                        redirect(url: "${attachment.url}")
-                        return
-                    }else{
-                        File file = attachmentableService.getFile(attachment)
-
-                        if (file.exists()) {
-                            String filename = attachment.filename
-                            ['Content-disposition': "attachment;filename=\"$filename\"",'Cache-Control': 'private','Pragma': ''].each {k, v ->
-                                response.setHeader(k, v)
-                            }
-                            response.contentType = attachment.contentType
-                            response.outputStream << file.newInputStream()
-                            return
-                        }
-                    }
-                }
-                response.status = HttpServletResponse.SC_NOT_FOUND
-            }
-        }
     }
 
     def bufferBroadcast = new ConcurrentHashMap<String, ArrayList<String>>()
@@ -740,64 +650,26 @@ class IcescrumCoreGrailsPlugin {
 
     private addErrorMethod(source) {
         source.metaClass.returnError = { attrs ->
-            if (attrs.exception){
+            def error = attrs.object?.hasErrors() ? attrs.object.errors.allErrors.collect { [code: "${controllerName}.${it.field}",text:message(error:it)] } :
+                    attrs.text ? [error:attrs.text] : attrs.exception?.getMessage() ? [error:attrs.exception.getMessage()] : 'An error as occured'
 
-                if (delegate.log.debugEnabled && !attrs.object?.hasErrors()){
-                    delegate.log.debug(attrs.exception)
-                    delegate.log.debug(attrs.exception.cause)
-                    attrs.exception.stackTrace.each {
-                        delegate.log.debug(it)
-                    }
+            if (delegate.log.debugEnabled && !attrs.object?.hasErrors() && attrs.exception) {
+                delegate.log.debug(attrs.exception)
+                delegate.log.debug(attrs.exception.cause)
+                attrs.exception.stackTrace.each {
+                    delegate.log.debug(it)
                 }
-
-                if (attrs.object && attrs.exception instanceof RuntimeException){
-                    if (!delegate.log.debugEnabled && delegate.log.errorEnabled && !attrs.object?.hasErrors()){
-                        delegate.log.error(attrs.exception)
-                        delegate.log.error(attrs.exception.cause)
-                        attrs.exception.stackTrace.each {
-                            delegate.log.error(it)
-                        }
-                    }
-
-                    withFormat {
-                        html { render(status: 400, contentType: 'application/json', text: [notice: [text: renderErrors(bean: attrs.object)]] as JSON) }
-                        json {
-                            JSON.use('rest'){
-                                render(status: 400, contentType: 'application/json', text: is.renderErrors(bean: attrs.object, as:'json'))
-                            }
-                        }
-                        xml  {
-                            XML.use('rest'){
-                                render(status: 400, contentType: 'application/xml', text: is.renderErrors(bean: attrs.object, as:'xml'))
-                            }
-                        }
-                    }
-                }else if(attrs.text){
-                    withFormat {
-                        html { render(status: 400, contentType: 'application/json', text: [notice: [text:attrs.text?:'error']] as JSON) }
-                        json { renderRESTJSON(text:[error: attrs.text?:'error'], status:400) }
-                        xml  { renderRESTXML(text:[error: attrs.text?:'error'], status:400) }
-                    }
-                }else{
-                    if (!delegate.log.debugEnabled && delegate.log.errorEnabled && attrs.exception){
-                        delegate.log.error(attrs.exception)
-                        delegate.log.error(attrs.exception.cause)
-                        attrs.exception.stackTrace.each {
-                            delegate.log.error(it)
-                        }
-                    }
-                    withFormat {
-                        html { render(status: 400, contentType: 'application/json', text: [notice: [text: message(code: attrs.exception.getMessage())]] as JSON) }
-                        json { renderRESTJSON(text:[error: message(code: attrs.exception.getMessage())], status:400) }
-                        xml  { renderRESTXML(text:[error: message(code: attrs.exception.getMessage())], status:400) }
-                    }
+            }else if (!delegate.log.debugEnabled && delegate.log.errorEnabled && !attrs.object?.hasErrors() && attrs.exception){
+                delegate.log.error(attrs.exception)
+                delegate.log.error(attrs.exception.cause)
+                attrs.exception.stackTrace.each {
+                    delegate.log.error(it)
                 }
-            }else{
-                withFormat {
-                    html { render(status: 400, contentType: 'application/json', text: [notice: [text:attrs.text?:'error']] as JSON) }
-                    json { renderRESTJSON(text:[error: attrs.text?:'error'], status:400) }
-                    xml  { renderRESTXML(text:[error: attrs.text?:'error'], status:400) }
-                }
+            }
+            withFormat {
+                html { render(status: 400, contentType: 'application/json', text:error as JSON) }
+                json { renderRESTJSON(text:error, status:400) }
+                xml  { renderRESTXML(text:error, status:400) }
             }
         }
     }
@@ -852,15 +724,10 @@ class IcescrumCoreGrailsPlugin {
             if (feature) {
                 try {
                     c.call feature
-                } catch (AttachmentException e) {
-                    returnError(exception: e)
                 } catch (IllegalStateException e) {
                     returnError(exception: e)
                 } catch (RuntimeException e) {
-                    if (feature.errors.errorCount)
-                        returnError(object: feature, exception: e)
-                    else
-                        returnError(exception: e)
+                    returnError(object: feature, exception: e)
                 }
             } else {
                 returnError(text: message(code: 'is.feature.error.not.exist'))
@@ -875,7 +742,11 @@ class IcescrumCoreGrailsPlugin {
                 } catch (IllegalStateException e) {
                     returnError(exception: e)
                 } catch (RuntimeException e) {
-                    returnError(exception: e)
+                    if (features.size() == 1){
+                        returnError(exception: e, object:features[0])
+                    } else {
+                        returnError(exception: e)
+                    }
                 }
             } else {
                 returnError(text: message(code: 'is.feature.error.not.exist'))
@@ -887,15 +758,10 @@ class IcescrumCoreGrailsPlugin {
             if (actor) {
                 try {
                     c.call actor
-                } catch (AttachmentException e) {
-                    returnError(exception: e)
                 } catch (IllegalStateException e) {
                     returnError(exception: e)
                 } catch (RuntimeException e) {
-                    if (actor.errors.errorCount)
-                        returnError(object: actor, exception: e)
-                    else
-                        returnError(exception: e)
+                    returnError(object: actor, exception: e)
                 }
             } else {
                 returnError(text: message(code: 'is.actor.error.not.exist'))
@@ -910,7 +776,11 @@ class IcescrumCoreGrailsPlugin {
                 } catch (IllegalStateException e) {
                     returnError(exception: e)
                 } catch (RuntimeException e) {
-                    returnError(exception: e)
+                    if (actors.size() == 1){
+                        returnError(exception: e, object:actors[0])
+                    } else {
+                        returnError(exception: e)
+                    }
                 }
             } else {
                 returnError(text: message(code: 'is.actor.error.not.exist'))
@@ -927,15 +797,10 @@ class IcescrumCoreGrailsPlugin {
             if (story) {
                 try {
                     c.call story
-                } catch (AttachmentException e) {
-                    returnError(exception: e)
                 } catch (IllegalStateException e) {
                     returnError(exception: e)
                 } catch (RuntimeException e) {
-                    if (story.errors.errorCount)
-                        returnError(object: story, exception: e)
-                    else
-                        returnError(exception: e)
+                    returnError(object: story, exception: e)
                 }
             } else {
                 returnError(text: message(code: 'is.story.error.not.exist'))
@@ -950,7 +815,11 @@ class IcescrumCoreGrailsPlugin {
                 } catch (IllegalStateException e) {
                     returnError(exception: e)
                 } catch (RuntimeException e) {
-                    returnError(exception: e)
+                    if (stories.size() == 1){
+                        returnError(exception: e, object:stories[0])
+                    } else {
+                        returnError(exception: e)
+                    }
                 }
             } else {
                 returnError(text: message(code: 'is.story.error.not.exist'))
@@ -962,15 +831,10 @@ class IcescrumCoreGrailsPlugin {
             if (acceptanceTest) {
                 try {
                     c.call acceptanceTest
-                } catch (AttachmentException e) {
-                    returnError(exception: e)
                 } catch (IllegalStateException e) {
                     returnError(exception: e)
                 } catch (RuntimeException e) {
-                    if (acceptanceTest.errors.errorCount)
-                        returnError(object: acceptanceTest, exception: e)
-                    else
-                        returnError(exception: e)
+                    returnError(object: acceptanceTest, exception: e)
                 }
             } else {
                 returnError(text: message(code: 'is.acceptanceTest.error.not.exist'))
@@ -986,15 +850,10 @@ class IcescrumCoreGrailsPlugin {
             if (task) {
                 try {
                     c.call task
-                } catch (AttachmentException e) {
-                    returnError(object: task, exception: e)
                 } catch (IllegalStateException e) {
                     returnError(exception: e)
                 } catch (RuntimeException e) {
-                    if (task.errors)
-                        returnError(object: task, exception: e)
-                    else
-                        returnError(exception: e)
+                    returnError(object: task, exception: e)
                 }
             } else {
                 returnError(text: message(code: 'is.task.error.not.exist'))
@@ -1010,7 +869,11 @@ class IcescrumCoreGrailsPlugin {
                 } catch (IllegalStateException e) {
                     returnError(exception: e)
                 } catch (RuntimeException e) {
-                    returnError(exception: e)
+                    if (tasks.size() == 1){
+                        returnError(exception: e, object:tasks[0])
+                    } else {
+                        returnError(exception: e)
+                    }
                 }
             } else {
                 returnError(text: message(code: 'is.tasks.error.not.exist'))
@@ -1024,15 +887,8 @@ class IcescrumCoreGrailsPlugin {
                     c.call sprint
                 } catch (IllegalStateException ise) {
                     returnError(text: message(code: ise.getMessage()))
-                } catch (AttachmentException e) {
-                    returnError(object: sprint, exception: e)
-                } catch (IllegalStateException e) {
-                    returnError(exception: e)
                 } catch (RuntimeException e) {
-                    if (sprint.errors.errorCount)
-                        returnError(object: sprint, exception: e)
-                    else
-                        returnError(exception: e)
+                    returnError(object: sprint, exception: e)
                 }
             } else {
                 returnError(text: message(code: 'is.sprint.error.not.exist'))
@@ -1044,15 +900,10 @@ class IcescrumCoreGrailsPlugin {
             if (release) {
                 try {
                     c.call release
-                } catch (AttachmentException e) {
-                    returnError(object: release, exception: e)
                 } catch (IllegalStateException e) {
                     returnError(exception: e)
                 } catch (RuntimeException e) {
-                    if (release.errors.errorCount)
-                        returnError(object: release, exception: e)
-                    else
-                        returnError(exception: e)
+                    returnError(object: release, exception: e)
                 }
             } else {
                 returnError(text: message(code: 'is.release.error.not.exist'))
@@ -1065,14 +916,9 @@ class IcescrumCoreGrailsPlugin {
                 try {
                     c.call user
                 } catch (IllegalStateException e) {
-                    user.discard()
                     returnError(exception: e)
                 } catch (RuntimeException e) {
-                    user.discard()
-                    if (user.errors.errorCount)
-                        returnError(object: user, exception: e)
-                    else
-                        returnError(exception: e)
+                    returnError(object: user, exception: e)
                 }
             } else {
                 returnError(text: message(code: 'is.user.error.not.exist'))
@@ -1085,10 +931,7 @@ class IcescrumCoreGrailsPlugin {
                 try {
                     c.call product
                 }catch (RuntimeException e) {
-                    if (product.errors.errorCount)
-                        returnError(object: product, exception: e)
-                    else
-                        returnError(exception: e)
+                    returnError(object: product, exception: e)
                 }
             } else {
                 returnError(text: message(code: 'is.product.error.not.exist'))
