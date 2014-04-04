@@ -24,8 +24,6 @@
 import grails.converters.JSON
 import grails.converters.XML
 import grails.plugins.wikitext.WikiTextTagLib
-import grails.util.GrailsNameUtils
-import org.apache.commons.io.FilenameUtils
 import org.atmosphere.cpr.AtmosphereResource
 import org.atmosphere.cpr.BroadcasterFactory
 import org.atmosphere.cpr.HeaderConfig
@@ -651,7 +649,7 @@ class IcescrumCoreGrailsPlugin {
     private addErrorMethod(source) {
         source.metaClass.returnError = { attrs ->
             def error = attrs.object?.hasErrors() ? attrs.object.errors.allErrors.collect { [code: "${controllerName}.${it.field}",text:message(error:it)] } :
-                    attrs.text ? [error:attrs.text] : attrs.exception?.getMessage() ? [error:attrs.exception.getMessage()] : 'An error as occured'
+                    attrs.text ? [error:attrs.text] : attrs.exception?.getMessage() ? [error:attrs.exception.getMessage()] : [error: 'An error has occured']
 
             if (delegate.log.debugEnabled && !attrs.object?.hasErrors() && attrs.exception) {
                 delegate.log.debug(attrs.exception)
