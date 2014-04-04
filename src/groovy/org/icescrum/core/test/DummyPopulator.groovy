@@ -169,7 +169,7 @@ class DummyPopulator {
                         state: state,
                         creator: ua,
                         rank: _storyCount++,
-                        description: "As a A[${_act.id}-${_act.name}], I can do something awesome",
+                        description: "As a A[${_act.uid}-${_act.name}], I can do something awesome",
                         notes: '*Un texte en gras* hahaha ! _et en italique_'
                 ).save()
 
