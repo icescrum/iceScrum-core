@@ -152,7 +152,7 @@ class ListenerService {
     @IceScrumListener(domain = 'task', eventType = IceScrumEventType.DELETE)
     void taskDelete(Task task, Map dirtyProperties) {
         log.debug("the task $dirtyProperties.name ($dirtyProperties.id) has been deleted")
-        def productId = task.backlog ? task.backlog.id : task.parentStory.backlog.id
+        def productId = dirtyProperties.backlog ? dirtyProperties.backlog.id : dirtyProperties.parentStory.backlog.id
         broadcast(function: 'delete', message: [class: task.class, id: dirtyProperties.id], channel: 'product-' + productId)
     }
 }
