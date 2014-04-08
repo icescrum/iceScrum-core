@@ -49,7 +49,7 @@ abstract class IceScrumEventPublisher {
     }
 
     synchronized Map publishSynchronousEvent(IceScrumEventType type, object, Map dirtyProperties = extractDirtyProperties(type, object)) {
-        println "Publishing event $type on ${object.class} with dirty properties old values $dirtyProperties"
+        logEvent(type, object, dirtyProperties)
         listenersByEventType[type]?.each { it(type, object, dirtyProperties) }
         return dirtyProperties
     }
@@ -68,5 +68,18 @@ abstract class IceScrumEventPublisher {
             dirtyProperties.id = object.id
         }
         return dirtyProperties
+    }
+
+    private static void logEvent(IceScrumEventType type, object, Map dirtyProperties) {
+        def id = object.id ?: dirtyProperties.id
+        println "$type ${object.class.toString().split('\\.').last()} $id"
+        if (type == IceScrumEventType.UPDATE) {
+            dirtyProperties.each { dirtyProperty, oldValue ->
+                def newValue = object."$dirtyProperty"
+                if (newValue != oldValue) {
+                    println "-- $dirtyProperty: \t" + oldValue + "\t-> " + newValue
+                }
+            }
+        }
     }
 }

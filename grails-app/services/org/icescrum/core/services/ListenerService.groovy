@@ -26,6 +26,7 @@ package org.icescrum.core.services
 import grails.plugin.fluxiable.Activity
 import org.icescrum.core.domain.Actor
 import org.icescrum.core.domain.Feature
+import org.icescrum.core.domain.Sprint
 import org.icescrum.core.domain.Story
 import org.icescrum.core.domain.Task
 import org.icescrum.core.domain.User
@@ -36,9 +37,10 @@ class ListenerService {
 
     def springSecurityService
 
+    // SPECIFIC LISTENERS
+
     @IceScrumListener(domain = 'story', eventType = IceScrumEventType.CREATE)
     void storyCreate(Story story, Map dirtyProperties) {
-        log.debug("the story $story.name ($story.id) has been created")
         def u = (User) springSecurityService.currentUser
         story.addActivity(u, Activity.CODE_SAVE, story.name)
         broadcast(function: 'add', message: story, channel: 'product-' + story.backlog.id)
@@ -46,7 +48,6 @@ class ListenerService {
 
     @IceScrumListener(domain = 'story', eventType = IceScrumEventType.UPDATE)
     void storyUpdate(Story story, Map dirtyProperties) {
-        log.debug("the story $story.name ($story.id) has been updated")
         if (dirtyProperties) {
             def product = story.backlog
             ['feature', 'dependsOn', 'actor'].each { property ->
@@ -71,38 +72,32 @@ class ListenerService {
 
     @IceScrumListener(domain = 'story', eventType = IceScrumEventType.DELETE)
     void storyDelete(Story story, Map dirtyProperties) {
-        log.debug("the story $dirtyProperties.name ($dirtyProperties.id) has been deleted")
         broadcast(function: 'delete', message: [class: story.class, id: dirtyProperties.id, state: dirtyProperties.state], channel: 'product-' + dirtyProperties.backlog.id)
     }
 
     @IceScrumListener(domain = 'actor', eventType = IceScrumEventType.CREATE)
     void actorCreate(Actor actor, Map dirtyProperties) {
-        log.debug("the actor $actor.name ($actor.id) has been created")
         broadcast(function: 'add', message: actor, channel: 'product-' + actor.backlog.id)
     }
 
     @IceScrumListener(domain = 'actor', eventType = IceScrumEventType.UPDATE)
     void actorUpdate(Actor actor, Map dirtyProperties) {
-        log.debug("the actor $actor.name ($actor.id) has been updated")
         broadcast(function: 'update', message: actor, channel: 'product-' + actor.backlog.id)
     }
 
     @IceScrumListener(domain = 'actor', eventType = IceScrumEventType.DELETE)
     void actorDelete(Actor actor, Map dirtyProperties) {
-        log.debug("the actor $dirtyProperties.name ($dirtyProperties.id) has been deleted")
         broadcast(function: 'delete', message: [class: actor.class, id: dirtyProperties.id], channel: 'product-' + dirtyProperties.backlog.id)
     }
 
 
     @IceScrumListener(domain = 'feature', eventType = IceScrumEventType.CREATE)
     void featureCreate(Feature feature, Map dirtyProperties) {
-        log.debug("the feature $feature.name ($feature.id) has been created")
         broadcast(function: 'add', message: feature, channel: 'product-' + feature.backlog.id)
     }
 
     @IceScrumListener(domain = 'feature', eventType = IceScrumEventType.UPDATE)
     void featureUpdate(Feature feature, Map dirtyProperties) {
-        log.debug("the feature $feature.name ($feature.id) has been updated")
         def productId = feature.backlog.id
         if(dirtyProperties.containsKey('color')) {
             feature.stories.each { story ->
@@ -114,7 +109,6 @@ class ListenerService {
 
     @IceScrumListener(domain = 'feature', eventType = IceScrumEventType.DELETE)
     void featureDelete(Feature feature, Map dirtyProperties) {
-        log.debug("the feature $dirtyProperties.name ($dirtyProperties.id) has been deleted")
         def productId = dirtyProperties.backlog.id
         dirtyProperties.stories.each { story ->
             broadcast(function: 'update', message: story, channel: 'product-' + productId)
@@ -122,20 +116,8 @@ class ListenerService {
         broadcast(function: 'delete', message: [class: feature.class, id: dirtyProperties.id], channel: 'product-' + productId)
     }
 
-    @IceScrumListener(domains = ['actor', 'story', 'feature', 'task'], eventType = IceScrumEventType.BEFORE_DELETE)
-    void backlogElementBeforeDelete(object, Map dirtyProperties) {
-        log.debug("the item of ${object.class} and name $object.name will be deleted")
-        object.removeAllAttachments()
-    }
-
-    @IceScrumListener(domains = ['actor', 'story', 'feature', 'task'], eventType = IceScrumEventType.BEFORE_UPDATE)
-    void invalidCacheBeforeUpdate(object, Map dirtyProperties) {
-        object.lastUpdated = new Date()
-    }
-
     @IceScrumListener(domain = 'task', eventType = IceScrumEventType.CREATE)
     void taskCreate(Task task, Map dirtyProperties) {
-        log.debug("the task $task.name ($task.id) has been created")
         def user = (User) springSecurityService.currentUser
         task.addActivity(user, 'taskSave', task.name)
         def productId = task.backlog ? task.backlog.id : task.parentStory.backlog.id
@@ -144,15 +126,40 @@ class ListenerService {
 
     @IceScrumListener(domain = 'task', eventType = IceScrumEventType.UPDATE)
     void taskUpdate(Task task, Map dirtyProperties) {
-        log.debug("the task $task.name ($task.id) has been updated")
         def productId = task.backlog ? task.backlog.id : task.parentStory.backlog.id
         broadcast(function: 'update', message: task, channel: 'product-' + productId)
     }
 
     @IceScrumListener(domain = 'task', eventType = IceScrumEventType.DELETE)
     void taskDelete(Task task, Map dirtyProperties) {
-        log.debug("the task $dirtyProperties.name ($dirtyProperties.id) has been deleted")
         def productId = dirtyProperties.backlog ? dirtyProperties.backlog.id : dirtyProperties.parentStory.backlog.id
         broadcast(function: 'delete', message: [class: task.class, id: dirtyProperties.id], channel: 'product-' + productId)
+    }
+
+    @IceScrumListener(domain = 'sprint', eventType = IceScrumEventType.CREATE)
+    void sprintCreate(Sprint sprint, Map dirtyProperties) {
+        broadcast(function: 'add', message: sprint, channel: 'product-' + sprint.parentProduct.id)
+    }
+
+    @IceScrumListener(domain = 'sprint', eventType = IceScrumEventType.UPDATE)
+    void sprintUpdate(Sprint sprint, Map dirtyProperties) {
+        broadcast(function: 'update', message: sprint, channel: 'product-' + sprint.parentProduct.id)
+    }
+
+    @IceScrumListener(domain = 'sprint', eventType = IceScrumEventType.DELETE)
+    void sprintDelete(Sprint sprint, Map dirtyProperties) {
+        broadcast(function: 'delete', message: [class: sprint.class, id: dirtyProperties.id], channel: 'product-' + dirtyProperties.parentRelease.parentProduct.id)
+    }
+
+    // SHARED LISTENERS
+
+    @IceScrumListener(domains = ['actor', 'story', 'feature', 'task', 'sprint'], eventType = IceScrumEventType.BEFORE_DELETE)
+    void backlogElementBeforeDelete(object, Map dirtyProperties) {
+        object.removeAllAttachments()
+    }
+
+    @IceScrumListener(domains = ['actor', 'story', 'feature', 'task', 'sprint'], eventType = IceScrumEventType.BEFORE_UPDATE)
+    void invalidCacheBeforeUpdate(object, Map dirtyProperties) {
+        object.lastUpdated = new Date()
     }
 }
