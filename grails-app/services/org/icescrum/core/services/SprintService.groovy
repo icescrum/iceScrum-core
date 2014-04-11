@@ -59,11 +59,7 @@ class SprintService extends IceScrumEventPublisher {
     }
 
     // TODO check rights
-    void update(Sprint sprint, Date startDate, Date endDate, def checkIntegrity = true, boolean updateRelease = true) {
-
-        if (!sprint.validate() && updateRelease) {
-            throw new RuntimeException()
-        }
+    void update(Sprint sprint, Date startDate = null, Date endDate = null, def checkIntegrity = true, boolean updateRelease = true) {
 
         if (checkIntegrity) {
             if (sprint.state == Sprint.STATE_DONE) {
@@ -74,29 +70,25 @@ class SprintService extends IceScrumEventPublisher {
             }
         }
 
-        def nextSprint = sprint.parentRelease.sprints?.find { it.orderNumber == sprint.orderNumber + 1 }
-        // If the end date has changed and overlap the next sprint start date,
-        // the sprints coming after are shifted
-        if (sprint.endDate != endDate && nextSprint && endDate >= nextSprint.startDate) {
-            def deltaDays = (endDate - nextSprint.startDate) + 1
-            if (nextSprint) {
-                if (nextSprint.endDate + deltaDays <= sprint.parentRelease.endDate) {
-                    update(nextSprint, nextSprint.startDate + deltaDays, nextSprint.endDate + deltaDays, false)
-                } else {
-                    // If we have reached the release end date, we try to reduce de the sprint's duration if possible
-                    // if not, the sprint is deleted and the stories that were planned are dissociated and return in the backlog
-                    if (nextSprint.startDate + deltaDays >= sprint.parentRelease.endDate) {
-                        delete(nextSprint)
-                        // The delete method should automatically dissociate and delete the following sprints, so we can break out the loop
+        if (startDate && endDate) {
+            def nextSprint = sprint.parentRelease.sprints?.find { it.orderNumber == sprint.orderNumber + 1 }
+            if (sprint.endDate != endDate && nextSprint && endDate >= nextSprint.startDate) {
+                if (nextSprint) {
+                    def deltaDays = (endDate - nextSprint.startDate) + 1
+                    if (nextSprint.endDate + deltaDays <= sprint.parentRelease.endDate) {
+                        update(nextSprint, nextSprint.startDate + deltaDays, nextSprint.endDate + deltaDays, false)
                     } else {
-                        update(nextSprint, nextSprint.startDate + deltaDays, sprint.parentRelease.endDate, false, updateRelease)
+                        if (nextSprint.startDate + deltaDays >= sprint.parentRelease.endDate) {
+                            delete(nextSprint)
+                        } else {
+                            update(nextSprint, nextSprint.startDate + deltaDays, sprint.parentRelease.endDate, false, updateRelease)
+                        }
                     }
                 }
             }
+            sprint.startDate = startDate
+            sprint.endDate = endDate
         }
-
-        sprint.startDate = startDate
-        sprint.endDate = endDate
 
         def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_UPDATE, sprint)
         if (updateRelease) {
@@ -306,24 +298,6 @@ class SprintService extends IceScrumEventPublisher {
         resumeBufferedBroadcast(channel: 'product-' + sprint.parentProduct.id)
         publishEvent(new IceScrumSprintEvent(sprint, this.class, (User) springSecurityService.currentUser, IceScrumSprintEvent.EVENT_CLOSED))
 
-    }
-
-    // TODO check rights
-    void updateDoneDefinition(Sprint sprint) {
-        if (!sprint.save()) {
-            throw new RuntimeException()
-        }
-        publishEvent(new IceScrumSprintEvent(sprint, this.class, (User) springSecurityService.currentUser, IceScrumSprintEvent.EVENT_UPDATED_DONE_DEFINITION))
-        broadcast(function: 'doneDefinition', message: sprint, channel: 'product-' + sprint.parentProduct.id)
-    }
-
-    // TODO check rights
-    void updateRetrospective(Sprint sprint) {
-        if (!sprint.save()) {
-            throw new RuntimeException()
-        }
-        publishEvent(new IceScrumSprintEvent(sprint, this.class, (User) springSecurityService.currentUser, IceScrumSprintEvent.EVENT_UPDATED_RETROSPECTIVE))
-        broadcast(function: 'retrospective', message: sprint, channel: 'product-' + sprint.parentProduct.id)
     }
 
     // TODO check rights

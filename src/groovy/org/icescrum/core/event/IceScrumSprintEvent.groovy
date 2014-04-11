@@ -15,8 +15,6 @@ class IceScrumSprintEvent extends IceScrumEvent {
 
     static final String EVENT_ACTIVATED = 'Activated'
     static final String EVENT_CLOSED = 'Closed'
-    static final String EVENT_UPDATED_DONE_DEFINITION = 'UpdatedDoneDefinition'
-    static final String EVENT_UPDATED_RETROSPECTIVE = 'UpdatedRetrospective'
 
     Date oldStartDate
     Date oldEndDate

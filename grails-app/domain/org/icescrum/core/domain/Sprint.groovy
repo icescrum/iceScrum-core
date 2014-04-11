@@ -67,7 +67,7 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
     ]
 
     static transients = [
-            'recurrentTasks', 'urgentTasks', 'hasNextSprint', 'parentReleaseId', 'activable', 'effectiveEndDate', 'effectiveStartDate', 'totalRemaining', 'parentProduct', 'totalEffort'
+            'recurrentTasks', 'urgentTasks', 'hasNextSprint', 'parentReleaseId', 'activable', 'effectiveEndDate', 'effectiveStartDate', 'totalRemaining', 'parentProduct', 'totalEffort', 'previousSprint'
     ]
 
     static namedQueries = {
@@ -281,6 +281,14 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
 
     def getParentReleaseId() {
         return parentRelease.id
+    }
+
+    def getPreviousSprint() {
+        if (orderNumber == 1 && parentRelease.orderNumber == 1) {
+            throw new RuntimeException() // TODO error message 'is.sprint.error.doneDefinition.no.previous'
+        }
+        def previousOrderNumber = orderNumber > 1 ? orderNumber - 1 : parentRelease.sprints.size()
+        return findByParentReleaseAndOrderNumber(parentRelease, previousOrderNumber)
     }
 
     def getActivable() {
