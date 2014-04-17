@@ -75,9 +75,13 @@ abstract class IceScrumEventPublisher {
         println "$type ${object.class.toString().split('\\.').last()} $id"
         if (type == IceScrumEventType.UPDATE) {
             dirtyProperties.each { dirtyProperty, oldValue ->
-                def newValue = object."$dirtyProperty"
-                if (newValue != oldValue) {
-                    println "-- $dirtyProperty: \t" + oldValue + "\t-> " + newValue
+                if (object.hasProperty("$dirtyProperty")){
+                    def newValue = object."$dirtyProperty"
+                    if (newValue != oldValue) {
+                        println "-- $dirtyProperty: \t" + oldValue + "\t-> " + newValue
+                    }
+                } else {
+                    println "-- $dirtyProperty: \t" + oldValue + "\t-> "
                 }
             }
         }
