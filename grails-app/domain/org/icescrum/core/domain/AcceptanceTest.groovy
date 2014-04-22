@@ -23,8 +23,6 @@
 package org.icescrum.core.domain
 
 import grails.plugin.fluxiable.Fluxiable
-import org.icescrum.core.event.IceScrumAcceptanceTestEvent
-import org.springframework.security.core.context.SecurityContextHolder as SCH
 
 class AcceptanceTest implements Fluxiable, Serializable {
 
@@ -79,18 +77,6 @@ class AcceptanceTest implements Fluxiable, Serializable {
                    FROM org.icescrum.core.domain.AcceptanceTest as at
                    WHERE at.parentStory.backlog.id = :pid
                    AND at.parentStory.id = :sid """, [sid: storyId, pid: productId])
-    }
-
-    def beforeDelete() {
-        withNewSession {
-            publishEvent(new IceScrumAcceptanceTestEvent(this, this.class, User.get(SCH.context?.authentication?.principal?.id), IceScrumAcceptanceTestEvent.EVENT_BEFORE_DELETE, true))
-        }
-    }
-
-    def afterDelete() {
-        withNewSession {
-            publishEvent(new IceScrumAcceptanceTestEvent(this, this.class, User.get(SCH.context?.authentication?.principal?.id), IceScrumAcceptanceTestEvent.EVENT_AFTER_DELETE, true))
-        }
     }
 
     @Override

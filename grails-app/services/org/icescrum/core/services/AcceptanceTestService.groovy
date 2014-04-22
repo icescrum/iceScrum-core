@@ -22,78 +22,53 @@
  */
 package org.icescrum.core.services
 
+import org.codehaus.groovy.grails.commons.ApplicationHolder
 import org.icescrum.core.domain.AcceptanceTest
 import org.icescrum.core.domain.AcceptanceTest.AcceptanceTestState
+import org.icescrum.core.event.IceScrumEventPublisher
+import org.icescrum.core.event.IceScrumEventType
 import org.springframework.security.access.prepost.PreAuthorize
 import org.icescrum.core.domain.Story
 import org.icescrum.core.domain.User
 import org.icescrum.core.domain.Product
-import org.icescrum.core.event.IceScrumAcceptanceTestEvent
 import org.springframework.transaction.annotation.Transactional
 
 @Transactional
-class AcceptanceTestService {
+class AcceptanceTestService extends IceScrumEventPublisher {
 
     def springSecurityService
 
     @PreAuthorize('inProduct(#parentStory.backlog) and !archivedProduct(#parentStory.backlog)')
     void save(AcceptanceTest acceptanceTest, Story parentStory, User user) {
-
         acceptanceTest.creator = user
         acceptanceTest.uid = AcceptanceTest.findNextUId(parentStory.backlog.id)
         acceptanceTest.parentStory = parentStory
-        parentStory.lastUpdated = new Date()
-
         if (!acceptanceTest.save()) {
             throw new RuntimeException()
         }
-
-        acceptanceTest.addActivity(user, 'acceptanceTestSave', acceptanceTest.name)
-        publishEvent(new IceScrumAcceptanceTestEvent(acceptanceTest, this.class, user, IceScrumAcceptanceTestEvent.EVENT_CREATED))
-
-        def channel = 'product-' + parentStory.backlog.id
-        bufferBroadcast(channel:channel)
-        broadcast(function: 'add', message: acceptanceTest, channel: channel)
-        broadcast(function: 'update', message: parentStory, channel: channel)
-        resumeBufferedBroadcast(channel:channel)
+        publishSynchronousEvent(IceScrumEventType.CREATE, acceptanceTest)
+        def storyService = (StoryService) ApplicationHolder.application.mainContext.getBean('storyService');
+        storyService.update(parentStory)
     }
 
     //TODO Fix security on this
     //@PreAuthorize('inProduct(#acceptanceTest.parentProduct) and !archivedProduct(#acceptanceTest.parentProduct)')
-    void update(AcceptanceTest acceptanceTest, User user, boolean stateChanged) {
-
-        def parentStory = acceptanceTest.parentStory
-        parentStory.lastUpdated = new Date()
-
+    void update(AcceptanceTest acceptanceTest) {
+        def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_UPDATE, acceptanceTest)
         if (!acceptanceTest.save()) {
             throw new RuntimeException()
         }
-
-        def activityType = 'acceptanceTest' + (stateChanged ? acceptanceTest.stateEnum.name().toLowerCase().capitalize() : 'Update')
-        acceptanceTest.addActivity(user, activityType, acceptanceTest.name)
-        publishEvent(new IceScrumAcceptanceTestEvent(acceptanceTest, this.class, user, IceScrumAcceptanceTestEvent.EVENT_UPDATED))
-
-        def channel = 'product-' + parentStory.backlog.id
-        bufferBroadcast(channel:channel)
-        broadcast(function: 'update', message: acceptanceTest, channel: channel)
-        broadcast(function: 'update', message: parentStory, channel: channel)
-        resumeBufferedBroadcast(channel:channel)
+        publishSynchronousEvent(IceScrumEventType.UPDATE, acceptanceTest, dirtyProperties)
+        def storyService = (StoryService) ApplicationHolder.application.mainContext.getBean('storyService');
+        storyService.update(acceptanceTest.parentStory)
     }
 
     @PreAuthorize('inProduct(#acceptanceTest.parentProduct) and !archivedProduct(#acceptanceTest.parentProduct)')
     void delete(AcceptanceTest acceptanceTest) {
-
-        def parentStory = acceptanceTest.parentStory
-        parentStory.removeFromAcceptanceTests(acceptanceTest)
+        def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_DELETE, acceptanceTest)
+        acceptanceTest.parentStory.removeFromAcceptanceTests(acceptanceTest)
         acceptanceTest.delete()
-
-        parentStory.addActivity(springSecurityService.currentUser, 'acceptanceTestDelete', acceptanceTest.name)
-
-        def channel = 'product-' + parentStory.backlog.id
-        bufferBroadcast(channel:channel)
-        broadcast(function: 'delete', message: [class: acceptanceTest.class, id: acceptanceTest.id, parentStory: [id: parentStory.id]], channel: channel)
-        broadcast(function: 'update', message: parentStory, channel: channel)
-        resumeBufferedBroadcast(channel:channel)
+        publishSynchronousEvent(IceScrumEventType.DELETE, acceptanceTest, dirtyProperties)
     }
 
     def unMarshall(def acceptanceTest, Product product, Story story) {
