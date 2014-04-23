@@ -43,6 +43,9 @@ class TaskService extends IceScrumEventPublisher {
 
     @PreAuthorize('(inProduct(#task.backlog?.parentProduct) or inProduct(#task.parentStory?.parentProduct)) and (!archivedProduct(#task.backlog?.parentProduct) or !archivedProduct(#task.parentStory?.parentProduct))')
     void save(Task task, User user) {
+        if (task.parentStory?.parentSprint && !task.backlog) {
+            task.backlog = task.parentStory.parentSprint
+        }
         Sprint sprint = task.backlog
         if (!task.id && sprint?.state == Sprint.STATE_DONE){
             throw new IllegalStateException('is.task.error.not.saved')

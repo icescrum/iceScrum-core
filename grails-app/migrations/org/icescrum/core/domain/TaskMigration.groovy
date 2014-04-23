@@ -51,6 +51,9 @@ class TaskMigration {
             }
         }
 
+        changeSet(id:'remove_task_backlog_non_nullable', author:'vbarrier', filePath:filePath) {
+            dropNotNullConstraint(tableName:"icescrum2_task", columnName:'backlog_id', columnDataType:'BIGINT')
+        }
     }
 
     static def getFilePath(){
