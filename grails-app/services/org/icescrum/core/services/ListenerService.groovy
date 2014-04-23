@@ -153,6 +153,21 @@ class ListenerService {
         broadcast(function: 'delete', message: [class: sprint.class, id: dirtyProperties.id], channel: 'product-' + dirtyProperties.parentRelease.parentProduct.id)
     }
 
+    @IceScrumListener(domain = 'release', eventType = IceScrumEventType.CREATE)
+    void releaseCreate(Release release, Map dirtyProperties) {
+        broadcast(function: 'add', message: release, channel: 'product-' + release.parentProduct.id)
+    }
+
+    @IceScrumListener(domain = 'release', eventType = IceScrumEventType.UPDATE)
+    void releaseUpdate(Release release, Map dirtyProperties) {
+        broadcast(function: 'update', message: release, channel: 'product-' + release.parentProduct.id)
+    }
+
+    @IceScrumListener(domain = 'release', eventType = IceScrumEventType.DELETE)
+    void releaseDelete(Release release, Map dirtyProperties) {
+        broadcast(function: 'delete', message: [class: release.class, id: dirtyProperties.id], channel: 'product-' + dirtyProperties.parentProduct.id)
+    }
+
     @IceScrumListener(domain = 'acceptanceTest', eventType = IceScrumEventType.CREATE)
     void acceptanceTestCreate(AcceptanceTest acceptanceTest, Map dirtyProperties) {
         def user = (User) springSecurityService.currentUser
@@ -177,12 +192,12 @@ class ListenerService {
 
     // SHARED LISTENERS
 
-    @IceScrumListener(domains = ['actor', 'story', 'feature', 'task', 'sprint'], eventType = IceScrumEventType.BEFORE_DELETE)
+    @IceScrumListener(domains = ['actor', 'story', 'feature', 'task', 'sprint', 'release'], eventType = IceScrumEventType.BEFORE_DELETE)
     void backlogElementBeforeDelete(object, Map dirtyProperties) {
         object.removeAllAttachments()
     }
 
-    @IceScrumListener(domains = ['actor', 'story', 'feature', 'task', 'sprint', 'acceptanceTest'], eventType = IceScrumEventType.BEFORE_UPDATE)
+    @IceScrumListener(domains = ['actor', 'story', 'feature', 'task', 'sprint', 'release', 'acceptanceTest'], eventType = IceScrumEventType.BEFORE_UPDATE)
     void invalidCacheBeforeUpdate(object, Map dirtyProperties) {
         object.lastUpdated = new Date()
     }

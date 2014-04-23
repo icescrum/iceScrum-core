@@ -25,10 +25,7 @@
 
 package org.icescrum.core.domain
 
-import org.icescrum.core.event.IceScrumReleaseEvent
-import org.icescrum.core.event.IceScrumEvent
 import org.icescrum.plugins.attachmentable.interfaces.Attachmentable
-import org.springframework.security.core.context.SecurityContextHolder as SCH
 
 import java.sql.Timestamp
 
@@ -42,7 +39,6 @@ class Release extends TimeBox implements Cloneable, Attachmentable {
     static final int STATE_DONE = 3
 
     int state = Release.STATE_WAIT
-    Double releaseVelocity = 0d
     String vision = "" // Beware of distinct, it won't work in MSSQL since this attribute is TEXT
     String name = "R"
     SortedSet<Sprint> sprints
@@ -53,7 +49,7 @@ class Release extends TimeBox implements Cloneable, Attachmentable {
 
     static mappedBy = [sprints: 'parentRelease',features: 'parentRelease']
 
-    static transients = ['firstDate','closable','activable']
+    static transients = ['firstDate', 'closable', 'activable', 'meanVelocity', 'nextRelease']
 
     static mapping = {
         cache true
@@ -199,15 +195,11 @@ class Release extends TimeBox implements Cloneable, Attachmentable {
         return false
     }
 
-    def beforeDelete() {
-        withNewSession {
-            publishEvent(new IceScrumReleaseEvent(this, this.class, User.get(SCH.context?.authentication?.principal?.id), IceScrumEvent.EVENT_BEFORE_DELETE, true))
-        }
+    Release getNextRelease() {
+        return parentProduct.releases.findAll { it.orderNumber > orderNumber }?.min { it.orderNumber }
     }
 
-    def afterDelete() {
-        withNewSession {
-            publishEvent(new IceScrumReleaseEvent(this, this.class, User.get(SCH.context?.authentication?.principal?.id), IceScrumEvent.EVENT_AFTER_DELETE, true))
-        }
+    Integer getMeanVelocity() {
+        return sprints ? (sprints.sum { it.velocity.toBigDecimal() } / sprints.size()) : 0
     }
 }

@@ -24,21 +24,19 @@
 
 package org.icescrum.core.services
 
+import org.icescrum.core.event.IceScrumEventPublisher
+import org.icescrum.core.event.IceScrumEventType
+
 import java.text.SimpleDateFormat
 import org.codehaus.groovy.grails.commons.ApplicationHolder
-import org.icescrum.core.event.IceScrumEvent
-import org.icescrum.core.event.IceScrumReleaseEvent
 import org.icescrum.core.support.ProgressSupport
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.transaction.annotation.Transactional
 import org.icescrum.core.domain.*
 
 @Transactional
-class ReleaseService {
+class ReleaseService extends IceScrumEventPublisher {
 
-    final static long DAY = 1000 * 60 * 60 * 24
-
-    def productService
     def storyService
     def clicheService
     def springSecurityService
@@ -48,39 +46,33 @@ class ReleaseService {
     void save(Release release, Product product) {
         release.parentProduct = product
         release.state = Release.STATE_WAIT
-        // If this is the first release of the product, it is automatically activated
         if (product.releases?.size() <= 0 || product.releases == null) {
             release.state = Release.STATE_INPROGRESS
         }
         release.orderNumber = (product.releases?.size() ?: 0) + 1
-        if (!release.save(flush: true))
+        if (!release.save(flush: true)) {
             throw new RuntimeException()
+        }
         product.addToReleases(release)
         product.endDate = release.endDate
-
-        broadcast(function: 'add', message: release, channel:'product-'+product.id)
-        publishEvent(new IceScrumReleaseEvent(release, this.class, (User) springSecurityService.currentUser, IceScrumEvent.EVENT_CREATED))
+        publishSynchronousEvent(IceScrumEventType.CREATE, release)
     }
 
     @PreAuthorize('(productOwner(#release.parentProduct) or scrumMaster(#release.parentProduct)) and !archivedProduct(#release.parentProduct)')
-    void update(Release release, Date startDate = null, Date endDate = null) {
-
-        if (release.state == Release.STATE_DONE){
+    void update(Release release, Date startDate = null, Date endDate = null, boolean checkIntegrity = true) {
+        if (checkIntegrity && release.state == Release.STATE_DONE) {
             throw new IllegalStateException('is.release.error.update.state.done')
         }
-
         startDate = startDate ?: release.startDate
         endDate = endDate ?: release.endDate
-
-        def nextRelease = release.parentProduct.releases.findAll { it.orderNumber > release.orderNumber } ?.min { it.orderNumber }
+        def nextRelease = release.nextRelease
         if (nextRelease && nextRelease.startDate <= endDate) {
             def nextStartDate = endDate + 1
             if (nextStartDate >= nextRelease.endDate) {
                 throw new IllegalStateException('is.release.error.endDate.after.next.release')
             }
-            update(nextRelease, nextStartDate)  // updating the next release will update the next ones
+            update(nextRelease, nextStartDate) // cascade the update of next releases recursively
         }
-
         if (!release.sprints.isEmpty()) {
             def sprintService = (SprintService) ApplicationHolder.application.mainContext.getBean('sprintService');
             def firstSprint = release.sprints.min { it.startDate }
@@ -90,11 +82,11 @@ class ReleaseService {
                 }
                 sprintService.update(firstSprint, startDate, (startDate + firstSprint.duration - 1), false, false)
             }
-            def outOfBoundsSprints = release.sprints.findAll {it.startDate >= endDate}
+            def outOfBoundsSprints = release.sprints.findAll { it.startDate >= endDate }
             if (outOfBoundsSprints) {
-                sprintService.delete(outOfBoundsSprints.min { it.startDate }) // deleting the first will delete the next ones
+                sprintService.delete(outOfBoundsSprints.min { it.startDate })
             }
-            def overlappingSprint = release.sprints.find {it.endDate.after(endDate)}
+            def overlappingSprint = release.sprints.find { it.endDate.after(endDate) }
             if (overlappingSprint) {
                 if (overlappingSprint.state >= Sprint.STATE_INPROGRESS) {
                     throw new IllegalStateException('is.release.error.endDate.before.inprogress.sprint')
@@ -102,101 +94,72 @@ class ReleaseService {
                 sprintService.update(overlappingSprint, overlappingSprint.startDate, endDate, false, false)
             }
         }
-
-        release.startDate = startDate
-        release.endDate = endDate
-
-        if (!release.save(flush: true))
-            throw new RuntimeException()
-
-        broadcast(function: 'update', message: release, channel:'product-'+release.parentProduct.id)
-        publishEvent(new IceScrumReleaseEvent(release, this.class, (User) springSecurityService.currentUser, IceScrumEvent.EVENT_UPDATED))
-    }
-
-    void updateVision(Release release) {
-        if (!release.save()) {
+        if (startDate != release.startDate) {
+            release.startDate = startDate
+        }
+        if (endDate != release.endDate) {
+            release.endDate = endDate
+            if (release.orderNumber == release.parentProduct.releases.size()) {
+                release.parentProduct.endDate = endDate
+            }
+        }
+        def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_UPDATE, release)
+        if (!release.save(flush: true)) {
             throw new RuntimeException()
         }
-        broadcast(function: 'vision', message: release, channel:'product-'+release.parentProduct.id)
-        publishEvent(new IceScrumReleaseEvent(release, this.class, (User) springSecurityService.currentUser, IceScrumReleaseEvent.EVENT_UPDATED_VISION))
+        publishSynchronousEvent(IceScrumEventType.UPDATE, release, dirtyProperties)
     }
 
     @PreAuthorize('(productOwner(#release.parentProduct) or scrumMaster(#release.parentProduct)) and !archivedProduct(#release.parentProduct)')
     void activate(Release release) {
-
-        if (release.state != Release.STATE_WAIT)
+        if (release.state != Release.STATE_WAIT) {
             throw new IllegalStateException('is.release.error.not.state.wait')
-
+        }
         def product = release.parentProduct
-
-        if (product.releases.find{it.state == Release.STATE_INPROGRESS})
+        if (product.releases.find { it.state == Release.STATE_INPROGRESS }) {
             throw new IllegalStateException('is.release.error.already.active')
-
-        def lastRelease = product.releases.findAll{it.state == Release.STATE_DONE}.max{ it.orderNumber }
-        if ( lastRelease.orderNumber + 1 != release.orderNumber)
+        }
+        def lastRelease = product.releases.findAll { it.state == Release.STATE_DONE }.max { it.orderNumber }
+        if (lastRelease.orderNumber + 1 != release.orderNumber) {
             throw new IllegalStateException('is.release.error.not.next')
-
+        }
         release.state = Release.STATE_INPROGRESS
-        if (!release.save())
-            throw new RuntimeException()
-
-        broadcast(function: 'activate', message: release, channel:'product-'+release.parentProduct.id)
-        publishEvent(new IceScrumReleaseEvent(release, this.class, (User) springSecurityService.currentUser, IceScrumReleaseEvent.EVENT_ACTIVATED))
+        update(release)
     }
 
     @PreAuthorize('(productOwner(#release.parentProduct) or scrumMaster(#release.parentProduct)) and !archivedProduct(#release.parentProduct)')
     void close(Release release) {
-        if (release.state != Release.STATE_INPROGRESS)
+        if (release.state != Release.STATE_INPROGRESS) {
             throw new IllegalStateException('is.release.error.not.state.wait')
-
-        def product = release.parentProduct
-
-        release.state = Release.STATE_DONE
-
-        def velocity = release.sprints.sum { it.velocity }
-        velocity = release.sprints ? (velocity / release.sprints.size()) : 0
-        release.releaseVelocity = velocity.toDouble()
-
-        def lastDate = release.sprints ? release.sprints.asList().last().endDate : new Date()
-        release.endDate = lastDate
-
-        if (release.orderNumber == product.releases.size()) {
-            product.endDate = lastDate
         }
-
-        if (!release.save())
-            throw new RuntimeException()
-
-        broadcast(function: 'close', message: release, channel:'product-'+release.parentProduct.id)
-        publishEvent(new IceScrumReleaseEvent(release, this.class, (User) springSecurityService.currentUser, IceScrumReleaseEvent.EVENT_CLOSED))
+        release.state = Release.STATE_DONE
+        def lastSprintEndDate = release.sprints ? release.sprints.asList().last().endDate : new Date()
+        update(release, null, lastSprintEndDate, false)
     }
 
     @PreAuthorize('(productOwner(#release.parentProduct) or scrumMaster(#release.parentProduct)) and !archivedProduct(#release.parentProduct)')
     void delete(Release release) {
-        def product = release.parentProduct
-        if (release.state == Release.STATE_INPROGRESS || release.state == Release.STATE_DONE)
+        if (release.state >= Release.STATE_INPROGRESS) {
             throw new IllegalStateException("is.release.error.not.deleted")
-
-        def nextReleases = product.releases.findAll { it.orderNumber > release.orderNumber }
-        release.removeAllAttachments()
+        }
+        def nextRelease = release.nextRelease
+        if (nextRelease) {
+            delete(nextRelease) // cascade the deletion of next releases recursively
+        }
+        def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_DELETE, release)
         if (release.sprints) {
             storyService.unPlanAll(release.sprints)
         }
+        release.features?.each { release.removeFromFeatures(it) }
+        def product = release.parentProduct
         product.removeFromReleases(release)
-        release.features?.each{release.removeFromFeatures(it) }
-        nextReleases.each {
-            if (it.sprints) {
-                storyService.unPlanAll(it.sprints)
-            }
-            product.removeFromReleases((Release) it)
-            it.features?.each{ feature -> release.removeFromFeatures(feature) }
-            broadcast(function: 'delete', message: [class: it.class, id: it.id], channel:'product-'+product.id)
+        if (product.releases) {
+            product.endDate = product.releases*.endDate.max()
         }
-        def lastRelease = product.releases?.min {it.orderNumber}
-        product.endDate = lastRelease?.endDate ?: null
-        lastRelease?.lastUpdated = new Date()
-        lastRelease?.save()
-        broadcast(function: 'delete', message: [class: release.class, id: release.id], channel:'product-'+product.id)
+        if (!product.save(flush: true)) {
+            throw new RuntimeException()
+        }
+        publishSynchronousEvent(IceScrumEventType.DELETE, release, dirtyProperties)
     }
 
     def releaseBurndownValues(Release release) {
@@ -241,7 +204,6 @@ class ReleaseService {
         try {
             def r = new Release(
                     state: release.state.text().toInteger(),
-                    releaseVelocity: (release.releaseVelocity.text().isNumber()) ? release.releaseVelocity.text().toDouble() : 0,
                     name: release.name.text(),
                     dateCreated: release.dateCreated.text() ? new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(release.dateCreated.text()) : new Date(),
                     lastUpdated: release.lastUpdated.text() ? new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(release.lastUpdated.text()) : new Date(),
