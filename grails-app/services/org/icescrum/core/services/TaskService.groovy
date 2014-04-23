@@ -82,7 +82,7 @@ class TaskService extends IceScrumEventPublisher {
         if (sprint.state == Sprint.STATE_DONE) {
             throw new IllegalStateException('is.sprint.error.state.not.inProgress')
         }
-        def product = sprint.parentProduct
+        Product product = sprint ? sprint.parentProduct : (Product)task.parentStory.backlog
         if (task.type == Task.TYPE_URGENT
                 && task.state == Task.STATE_BUSY
                 && product.preferences.limitUrgentTasks != 0
@@ -150,7 +150,7 @@ class TaskService extends IceScrumEventPublisher {
     @PreAuthorize('inProduct(#task.parentProduct) and !archivedProduct(#task.parentProduct)')
     void delete(Task task, User user) {
         def sprint = task.backlog
-        def product = sprint.parentProduct
+        Product product = sprint ? sprint.parentProduct : (Product)task.parentStory.backlog
         boolean scrumMaster = securityService.scrumMaster(null, springSecurityService.authentication)
         boolean productOwner = securityService.productOwner(product, springSecurityService.authentication)
         if (task.state == Task.STATE_DONE && !scrumMaster && !productOwner) {
