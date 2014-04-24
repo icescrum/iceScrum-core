@@ -46,7 +46,7 @@ class TaskService extends IceScrumEventPublisher {
         if (task.parentStory?.parentSprint && !task.backlog) {
             task.backlog = task.parentStory.parentSprint
         }
-        Sprint sprint = task.backlog
+        Sprint sprint = task.sprint
         if (!task.id && sprint?.state == Sprint.STATE_DONE){
             throw new IllegalStateException('is.task.error.not.saved')
         }
@@ -78,8 +78,8 @@ class TaskService extends IceScrumEventPublisher {
         if (props.rank != null) {
             rank(task, props.rank)
         }
-        def sprint = (Sprint) task.backlog
-        if (sprint.state == Sprint.STATE_DONE) {
+        def sprint = task.sprint
+        if (sprint?.state == Sprint.STATE_DONE) {
             throw new IllegalStateException('is.sprint.error.state.not.inProgress')
         }
         Product product = sprint ? sprint.parentProduct : (Product)task.parentStory.backlog
@@ -126,10 +126,12 @@ class TaskService extends IceScrumEventPublisher {
         if (!task.save(flush: true)) {
             throw new RuntimeException(task.errors?.toString())
         }
+        if (task.sprint){
+            task.sprint.lastUpdated = new Date()
+            task.sprint.save()
+            clicheService.createOrUpdateDailyTasksCliche(sprint)
+        }
         publishSynchronousEvent(IceScrumEventType.UPDATE, task, dirtyProperties)
-        task.sprint.lastUpdated = new Date()
-        task.sprint.save()
-        clicheService.createOrUpdateDailyTasksCliche(sprint)
     }
 
     private done(Task task, User user, Product product) {
@@ -149,30 +151,35 @@ class TaskService extends IceScrumEventPublisher {
 
     @PreAuthorize('inProduct(#task.parentProduct) and !archivedProduct(#task.parentProduct)')
     void delete(Task task, User user) {
-        def sprint = task.backlog
-        Product product = sprint ? sprint.parentProduct : (Product)task.parentStory.backlog
+        Product product = task.sprint ? task.sprint.parentProduct : (Product)task.parentStory.backlog
         boolean scrumMaster = securityService.scrumMaster(null, springSecurityService.authentication)
         boolean productOwner = securityService.productOwner(product, springSecurityService.authentication)
         if (task.state == Task.STATE_DONE && !scrumMaster && !productOwner) {
             throw new IllegalStateException('is.task.error.delete.not.scrumMaster')
         }
         if (task.responsible && task.responsible.id.equals(user.id) || task.creator.id.equals(user.id) || productOwner || scrumMaster) {
-            if (task.parentStory) {
-                task.parentStory.addActivity(user, 'taskDelete', task.name)
-                task.parentStory.removeFromTasks(task)
-            }
             resetRank(task)
             def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_DELETE, task)
-            sprint.removeFromTasks(task)
-            sprint.save()
+            if (task.parentStory) {
+                dirtyProperties.parentStory = task.parentStory
+                task.parentStory.addActivity(user, 'taskDelete', task.name)
+                task.parentStory.removeFromTasks(task)
+
+            }
+            if(task.sprint){
+                dirtyProperties.backlog = task.sprint
+                task.sprint.removeFromTasks(task)
+                task.sprint.save()
+                clicheService.createOrUpdateDailyTasksCliche(task.sprint)
+            }
+            task.delete()
             publishSynchronousEvent(IceScrumEventType.DELETE, task, dirtyProperties)
-            clicheService.createOrUpdateDailyTasksCliche((Sprint) sprint)
         }
     }
 
     @PreAuthorize('inProduct(#task.parentProduct) and !archivedProduct(#task.parentProduct)')
     def copy(Task task, User user, def clonedState = Task.STATE_WAIT) {
-        if (task.backlog.state == Sprint.STATE_DONE) {
+        if (task.sprint?.state == Sprint.STATE_DONE) {
             throw new IllegalStateException('is.task.error.copy.done')
         }
         def clonedTask = new Task(
@@ -206,14 +213,13 @@ class TaskService extends IceScrumEventPublisher {
             }
         }
         save(clonedTask, user)
-        clicheService.createOrUpdateDailyTasksCliche((Sprint) task.backlog)
+        clicheService.createOrUpdateDailyTasksCliche(task.sprint)
         return clonedTask
     }
 
     private void state(Task task, Integer newState, User user) {
-        def sprint = (Sprint) task.backlog
-        def product = sprint.parentRelease.parentProduct
-        if (sprint.state != Sprint.STATE_INPROGRESS && newState >= Task.STATE_BUSY) {
+        def product = task.parentStory ? task.parentStory.backlog : task.sprint.parentRelease.parentProduct
+        if (task.sprint?.state != Sprint.STATE_INPROGRESS && newState >= Task.STATE_BUSY) {
             throw new IllegalStateException('is.sprint.error.state.not.inProgress')
         }
         if (task.state == Task.STATE_DONE && task.doneDate && newState == Task.STATE_DONE) {
