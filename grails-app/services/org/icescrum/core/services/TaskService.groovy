@@ -47,23 +47,23 @@ class TaskService extends IceScrumEventPublisher {
             task.backlog = task.parentStory.parentSprint
         }
         Sprint sprint = task.sprint
-        if (!task.id && sprint?.state == Sprint.STATE_DONE){
+        if (!task.id && sprint?.state == Sprint.STATE_DONE) {
             throw new IllegalStateException('is.task.error.not.saved')
         }
         if (task.estimation == 0 && task.state != Task.STATE_DONE) {
             task.estimation = null
         }
-        Product product = sprint ? sprint.parentProduct : (Product)task.parentStory.backlog
+        Product product = sprint ? sprint.parentProduct : (Product) task.parentStory.backlog
         if (product.preferences.assignOnCreateTask) {
             task.responsible = user
         }
         task.creator = user
         task.rank = Task.countByParentStoryAndType(task.parentStory, task.type) + 1
         task.uid = Task.findNextUId(product.id)
-        if (!task.save(flush:true)) {
+        if (!task.save(flush: true)) {
             throw new RuntimeException()
         }
-        if (sprint){
+        if (sprint) {
             clicheService.createOrUpdateDailyTasksCliche(sprint)
         }
         publishSynchronousEvent(IceScrumEventType.CREATE, task)
@@ -82,11 +82,11 @@ class TaskService extends IceScrumEventPublisher {
         if (sprint?.state == Sprint.STATE_DONE) {
             throw new IllegalStateException('is.sprint.error.state.not.inProgress')
         }
-        Product product = sprint ? sprint.parentProduct : (Product)task.parentStory.backlog
+        Product product = sprint ? sprint.parentProduct : (Product) task.parentStory.backlog
         if (task.type == Task.TYPE_URGENT
                 && task.state == Task.STATE_BUSY
                 && product.preferences.limitUrgentTasks != 0
-                && product.preferences.limitUrgentTasks >= sprint.tasks?.findAll {it.type == Task.TYPE_URGENT && it.state == Task.STATE_BUSY && it.id != task.id }?.size()) {
+                && product.preferences.limitUrgentTasks >= sprint.tasks?.findAll { it.type == Task.TYPE_URGENT && it.state == Task.STATE_BUSY && it.id != task.id }?.size()) {
             throw new IllegalStateException('is.task.error.limitTasksUrgent')
         }
         if (!(task.state == Task.STATE_DONE && task.doneDate)) {
@@ -126,7 +126,7 @@ class TaskService extends IceScrumEventPublisher {
         if (!task.save(flush: true)) {
             throw new RuntimeException(task.errors?.toString())
         }
-        if (task.sprint){
+        if (task.sprint) {
             task.sprint.lastUpdated = new Date()
             task.sprint.save()
             clicheService.createOrUpdateDailyTasksCliche(sprint)
@@ -151,7 +151,8 @@ class TaskService extends IceScrumEventPublisher {
 
     @PreAuthorize('inProduct(#task.parentProduct) and !archivedProduct(#task.parentProduct)')
     void delete(Task task, User user) {
-        Product product = task.sprint ? task.sprint.parentProduct : (Product)task.parentStory.backlog
+        def sprint = task.sprint
+        Product product = sprint ? sprint.parentProduct : (Product) task.parentStory.backlog
         boolean scrumMaster = securityService.scrumMaster(null, springSecurityService.authentication)
         boolean productOwner = securityService.productOwner(product, springSecurityService.authentication)
         if (task.state == Task.STATE_DONE && !scrumMaster && !productOwner) {
@@ -166,11 +167,11 @@ class TaskService extends IceScrumEventPublisher {
                 task.parentStory.removeFromTasks(task)
 
             }
-            if(task.sprint){
-                dirtyProperties.backlog = task.sprint
-                task.sprint.removeFromTasks(task)
-                task.sprint.save()
-                clicheService.createOrUpdateDailyTasksCliche(task.sprint)
+            if (task.sprint) {
+                dirtyProperties.backlog = sprint
+                sprint.removeFromTasks(task)
+                sprint.save()
+                clicheService.createOrUpdateDailyTasksCliche(sprint)
             }
             task.delete()
             publishSynchronousEvent(IceScrumEventType.DELETE, task, dirtyProperties)
@@ -208,7 +209,7 @@ class TaskService extends IceScrumEventPublisher {
             } else if (clonedTask.errors.getFieldError('name')?.defaultMessage?.contains("maximum size")) {
                 clonedTask.name = clonedTask.name[0..20]
                 clonedTask.validate()
-            }else {
+            } else {
                 throw new RuntimeException()
             }
         }
@@ -299,9 +300,9 @@ class TaskService extends IceScrumEventPublisher {
             if (p) {
                 def u
                 if (!task.creator?.@uid?.isEmpty()) {
-                    u = ((User) p.getAllUsers().find { it.uid == task.creator.@uid.text() } ) ?: null
+                    u = ((User) p.getAllUsers().find { it.uid == task.creator.@uid.text() }) ?: null
                 } else {
-                    u = ApplicationSupport.findUserUIDOldXMl(task,'creator',p.getAllUsers())
+                    u = ApplicationSupport.findUserUIDOldXMl(task, 'creator', p.getAllUsers())
                 }
                 if (u) {
                     t.creator = u
@@ -312,9 +313,9 @@ class TaskService extends IceScrumEventPublisher {
             if ((!task.responsible?.@uid?.isEmpty() || !task.responsible?.@id?.isEmpty()) && p) {
                 def u
                 if (!task.responsible?.@uid?.isEmpty()) {
-                    u = ((User) p.getAllUsers().find { it.uid == task.responsible.@uid.text() } ) ?: null
+                    u = ((User) p.getAllUsers().find { it.uid == task.responsible.@uid.text() }) ?: null
                 } else {
-                    u = ApplicationSupport.findUserUIDOldXMl(task,'responsible',p.getAllUsers())
+                    u = ApplicationSupport.findUserUIDOldXMl(task, 'responsible', p.getAllUsers())
                 }
                 if (u) {
                     t.responsible = u
