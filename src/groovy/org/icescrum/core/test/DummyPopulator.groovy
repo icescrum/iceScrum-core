@@ -161,6 +161,14 @@ class DummyPopulator {
             rankStories(product)
             // Tasks and sprint progression
             int nextTaskUid = 1
+            product.stories.findAll { it.state < Story.STATE_PLANNED }.eachWithIndex { Story story, int i ->
+                if (i % 4 == 0) {
+                    (i % 7).times {
+                        story.addToTasks(new Task(uid: nextTaskUid, type: null, estimation: 3, name: "task ${it} story : ${story.id}", creator: usera, responsible: usera, parentStory: story, creationDate: new Date()))
+                    }
+                    story.save()
+                }
+            }
             release1.sprints.findAll { it.orderNumber < 8 }.each { sprint ->
                 sprint.stories.each { story ->
                     (sprint.orderNumber - 1).times {
