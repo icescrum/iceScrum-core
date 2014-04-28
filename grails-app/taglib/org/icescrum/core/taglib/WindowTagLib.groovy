@@ -179,15 +179,12 @@ class WindowTagLib {
     }
 
     def modal = { attrs, body ->
-        out << """
-            <div class="modal fade" data-ui-dialog tabindex="-1" role="dialog" aria-labelledby="modal${attrs.name}" aria-hidden="true">
-                <div class="modal-dialog modal-${attrs.size}">
-                <div class="modal-content">"""
+        out << """<div class="modal-content">"""
         if (attrs.form){
-            out << "<form role='form' method='${attrs.form.method?:"POST"}' action='${attrs.form.action}' data-ajax data-ajax-success='${attrs.form.success?:null}'>"
+            out << "<form role='form' ng-submit='${attrs.form}' ${attrs.autoFillFix?'form-autofill-fix':''}>"
         }
         out << """  <div class="modal-header">
-                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <button type="button" class="close" ng-click="cancel()" aria-hidden="true">&times;</button>
                         <h4 class="modal-title" id="modal${attrs.name}">${attrs.title}</h4>
                     </div>
                     <div class="modal-body">
@@ -200,23 +197,19 @@ class WindowTagLib {
         if (attrs.button){
             attrs.button.each{ button ->
                 out << "<button type='${button.type?:'button'}' " +
-                                "${button.shortcut? 'data-ui-tooltip-container="body" data-toggle="tooltip" title="'+button.shortcut.title+' ('+button.shortcut.key+')" data-is-shortcut data-is-shortcut-on=".modal" data-is-shortcut-key="'+button.shortcut.key+'"' : ''} " +
+                                "${button.shortcut? 'tooltip-append-to-body="true" tooltip="'+button.shortcut.title+' ('+button.shortcut.key+')" data-is-shortcut data-is-shortcut-on=".modal" data-is-shortcut-key="'+button.shortcut.key+'"' : ''} " +
                                 "class='btn btn-${button.color?:'primary'} ${button.class?:''}'>${button.text}</button>"
             }
         }
-        out << """  <button type="button" class="btn btn-default" data-ui-tooltip-container="body" data-toggle="tooltip" title="${message(code:'is.dialog.close')} (ESCAPE)" data-dismiss="modal">${message(code:'is.dialog.close')}</button>"""
-        if (attrs.form){
-            out << "<button type='submit' class='btn btn-primary'>${attrs.form.submit}</button>"
+        out << """  <button type="button" class="btn btn-default" tooltip-append-to-body="true" tooltip="${message(code:'is.dialog.close')} (ESCAPE)" ng-click="cancel()">${message(code:'is.dialog.close')}</button>"""
+        if (attrs.submitButton){
+            out << "<button type='submit' class='btn btn-primary'>${attrs.submitButton}</button>"
         }
         out << """  </div>"""
         if (attrs.form){
             out << "</form>"
         }
-        out << """
-                </div>
-                </div>
-            </div>
-        """
+        out << """ </div>"""
     }
 
     def includeContent(attrs) {

@@ -35,7 +35,7 @@
             <div id="view-properties">
                 ${right}
             </div>
-            <div id="contextual-properties">
+            <div id="contextual-properties" ui-view>
             </div>
         </div>
     </g:if>
