@@ -102,10 +102,18 @@ class StoryService extends IceScrumEventPublisher {
         }
     }
 
+    // TODO replace stories by a single one and call the service in a loop in story controller
     @PreAuthorize('!archivedProduct(#stories[0].backlog)')
-    void delete(Collection<Story> stories, history = true, reason = null) {
+    void delete(Collection<Story> stories, newObject = null, reason = null) {
         def product = stories[0].backlog
         stories.each { story ->
+            def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_DELETE, story)
+            // Custom properties
+            dirtyProperties.followers = story.followers
+            if (newObject) {
+                dirtyProperties.newObject = newObject
+            }
+
             if (story.state >= Story.STATE_PLANNED) {
                 throw new IllegalStateException('is.story.error.not.deleted.state')
             }
@@ -137,22 +145,10 @@ class StoryService extends IceScrumEventPublisher {
             def id = story.id
             story.deleteComments()
             story.description = reason ?: null
-            if (history) {
-                try{
-                    notificationEmailService.sendAlertCUD(story, (User)springSecurityService.currentUser, IceScrumEventType.BEFORE_DELETE)
-                } catch(Exception e){
-                    if(log.debugEnabled){
-                        log.debug(e.getMessage())
-                    }
-                }
-            }
-
             story.removeLinkByFollow(id)
 
-            def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_DELETE, story)
             story.delete()
-            // product.attach() is it still required ?
-            if (history) {
+            if (!newObject) {
                 product.addActivity(springSecurityService.currentUser, Activity.CODE_DELETE, story.name)
             }
             product.removeFromStories(story)
@@ -163,13 +159,16 @@ class StoryService extends IceScrumEventPublisher {
     }
 
     @PreAuthorize('isAuthenticated() and !archivedProduct(#story.backlog)')
-    void update(Story story, Map props) {
+    void update(Story story, Map props = [:]) {
 
         if (props.state != null && props.state != story.state) {
             if (props.state == Story.STATE_ACCEPTED) {
                 acceptToBacklog([story])
             } else if (props.state == Story.STATE_SUGGESTED) {
                 returnToSandbox([story])
+            } else if (props.state == Story.STATE_INPROGRESS) {
+                story.state = Story.STATE_INPROGRESS
+                story.inProgressDate = new Date()
             }
         }
         if (props.effort != null) {
@@ -225,17 +224,15 @@ class StoryService extends IceScrumEventPublisher {
         publishSynchronousEvent(IceScrumEventType.UPDATE, story, dirtyProperties)
     }
 
-    // TODO check rights
     @PreAuthorize('(productOwner(#sprint.parentProduct) or scrumMaster(#sprint.parentProduct)) and !archivedProduct(#sprint.parentProduct)')
-    private void plan(Sprint sprint, Collection<Story> stories) {
+    public void plan(Sprint sprint, Collection<Story> stories) {
         stories.each {
             this.plan(sprint, it)
         }
     }
 
-    // TODO check rights
     @PreAuthorize('(productOwner(#sprint.parentProduct) or scrumMaster(#sprint.parentProduct)) and !archivedProduct(#sprint.parentProduct)')
-    private void plan(Sprint sprint, Story story) {
+    public void plan(Sprint sprint, Story story) {
         if (story.dependsOn){
             if (story.dependsOn.state < Story.STATE_PLANNED){
                 throw new IllegalStateException(g.message(code:'is.story.error.dependsOn.notPlanned',args: [story.name, story.dependsOn.name]).toString())
@@ -298,7 +295,7 @@ class StoryService extends IceScrumEventPublisher {
     }
 
     @PreAuthorize('(productOwner(#story.backlog) or scrumMaster(#story.backlog)) and !archivedProduct(#story.backlog)')
-    private void unPlan(Story story, Boolean fullUnPlan = true) {
+    public void unPlan(Story story, Boolean fullUnPlan = true) {
 
         def sprint = story.parentSprint
         if (!sprint) {
@@ -601,7 +598,7 @@ class StoryService extends IceScrumEventPublisher {
             }
 
             feature.tags = story.tags
-            delete([story], false)
+            delete([story], feature)
             features << feature
 
             feature.addActivity(user, 'acceptAs', feature.name)
@@ -670,7 +667,7 @@ class StoryService extends IceScrumEventPublisher {
             task.tags = story.tags
 
             tasks << task
-            delete([story], false)
+            delete([story], task)
 
             publishEvent(new IceScrumStoryEvent(task, this.class, (User) springSecurityService.currentUser, IceScrumStoryEvent.EVENT_ACCEPTED_AS_TASK))
         }
@@ -708,22 +705,22 @@ class StoryService extends IceScrumEventPublisher {
                 throw new RuntimeException()
             }
 
-            User u = (User) springSecurityService.currentUser
+            User user = (User) springSecurityService.currentUser
 
             broadcast(function: 'update', message: story, channel:'product-'+product.id)
-            story.addActivity(u, 'done', story.name)
-            publishEvent(new IceScrumStoryEvent(story, this.class, u, IceScrumStoryEvent.EVENT_DONE))
+            story.addActivity(user, 'done', story.name)
+            publishEvent(new IceScrumStoryEvent(story, this.class, user, IceScrumStoryEvent.EVENT_DONE))
 
             // Set all tasks to done (and story estimation to 0)
             story.tasks?.findAll{ it.state != Task.STATE_DONE }?.each { t ->
                 t.estimation = 0
-                taskService.update(t, u)
+                taskService.update(t, user)
             }
 
             story.acceptanceTests.each { AcceptanceTest acceptanceTest ->
                 if (acceptanceTest.stateEnum != AcceptanceTestState.SUCCESS) {
                     acceptanceTest.stateEnum = AcceptanceTestState.SUCCESS
-                    acceptanceTestService.update(acceptanceTest, u, true)
+                    acceptanceTestService.update(acceptanceTest)
                 }
             }
         }

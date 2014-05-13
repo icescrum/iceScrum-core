@@ -27,8 +27,6 @@
 package org.icescrum.core.domain
 
 import grails.plugin.fluxiable.Fluxiable
-import org.grails.comments.Comment
-import org.icescrum.core.event.IceScrumBacklogElementEvent
 import org.icescrum.plugins.attachmentable.interfaces.Attachmentable
 import org.grails.comments.Commentable
 import org.grails.followable.Followable
@@ -67,10 +65,6 @@ abstract class BacklogElement implements Fluxiable, Attachmentable, Commentable,
         name index: 'be_name_index'
         tablePerHierarchy false
         backlog lazy: true
-    }
-
-    def onAddComment = { Comment c ->
-        publishEvent new IceScrumBacklogElementEvent(this, c, this.class, (User)c.poster, IceScrumBacklogElementEvent.EVENT_COMMENT_ADDED)
     }
 
     static boolean hasTagKeyword(String term) {

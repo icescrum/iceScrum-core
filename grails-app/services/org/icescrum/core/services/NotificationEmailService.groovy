@@ -24,191 +24,214 @@ package org.icescrum.core.services
 import org.icescrum.core.domain.Product
 import org.icescrum.core.domain.Sprint
 import org.icescrum.core.domain.Task
-import org.icescrum.core.event.IceScrumBacklogElementEvent
-import org.icescrum.core.event.IceScrumTaskEvent
-import org.springframework.context.ApplicationListener
-import org.icescrum.core.event.IceScrumStoryEvent
+import org.icescrum.core.event.IceScrumEventType
+import org.icescrum.core.event.IceScrumListener
 import org.icescrum.core.domain.Story
 import org.grails.comments.Comment
 import org.icescrum.core.domain.BacklogElement
 import org.icescrum.core.domain.User
 import org.springframework.web.context.request.RequestContextHolder as RCH
-import org.icescrum.core.event.IceScrumEvent
 import org.icescrum.core.domain.Feature
 import org.icescrum.core.support.ApplicationSupport
 import org.eclipse.mylyn.wikitext.core.util.ServiceLocator
 import org.eclipse.mylyn.wikitext.core.parser.builder.HtmlDocumentBuilder
 import org.eclipse.mylyn.wikitext.core.parser.MarkupParser
 
-
-class NotificationEmailService implements ApplicationListener<IceScrumEvent> {
+class NotificationEmailService {
 
     def mailService
     def grailsApplication
     def messageSource
+    def springSecurityService
 
-    static transactional = false
+    static EVENT_LABELS = [(IceScrumEventType.CREATE): 'Created', (IceScrumEventType.UPDATE): 'Updated', (IceScrumEventType.DELETE): 'Deleted']
 
-    void onApplicationEvent(IceScrumEvent e) {
-/*
+    @IceScrumListener(domain = 'story')
+    void storyCUD(IceScrumEventType type, Story story, Map dirtyProperties) {
         try {
-            if (e instanceof IceScrumStoryEvent && e.type != IceScrumStoryEvent.EVENT_BEFORE_DELETE && e.type in IceScrumStoryEvent.EVENT_CUD ) {
-                sendAlertCUD((Story) e.source, (User) e.doneBy, e.type)
-            } else if (e instanceof IceScrumStoryEvent && e.type in IceScrumStoryEvent.EVENT_STATE_LIST) {
-                sendAlertState((Story) e.source, (User) e.doneBy, e.type)
-            } else if (e instanceof IceScrumBacklogElementEvent && e.source instanceof Story && e.type in IceScrumBacklogElementEvent.EVENT_COMMENT_LIST) {
-                sendAlertComment((Story) e.source, (User) e.doneBy, e.type, e.comment)
-            } else if (e instanceof IceScrumStoryEvent && e.type in IceScrumStoryEvent.EVENT_ACCEPTED_AS_LIST) {
-                sendAlertAcceptedAs((BacklogElement) e.source, (User) e.doneBy, e.type)
-            } else if (e instanceof IceScrumTaskEvent && e.type in IceScrumTaskEvent.EVENT_CREATED && ((Task )e.source).type == Task.TYPE_URGENT && ((Task )e.source).sprint.state == Sprint.STATE_INPROGRESS){
-                sendAlertNewUrgentTask((Task) e.source, (User) e.doneBy, e.type)
+            def user = (User) springSecurityService.currentUser
+            switch (type) {
+                case IceScrumEventType.CREATE:
+                    sendAlertCUD(story, user, type)
+                    break
+                case IceScrumEventType.UPDATE:
+                    if (dirtyProperties.containsKey('state')) { // TODO make it work (here the state isn't considered dirty, probably already flushed before)
+                        sendAlertState(story, user, type)
+                    } else if (dirtyProperties.containsKey('addedComment')) {
+                        sendAlertCommentAdded(story, dirtyProperties.addedComment)
+                    } else if (dirtyProperties.containsKey('updatedComment')) {
+                        sendAlertCommentUpdated(story)
+                    } else {
+                        sendAlertCUD(story, user, type)
+                    }
+                    break
+                case IceScrumEventType.DELETE:
+                    if (dirtyProperties.containsKey('newObject')) {
+                        sendAlertAcceptedAs(dirtyProperties.newObject, user, )
+                    } else {
+                        sendAlertCUD(dirtyProperties, user, type)
+                    }
             }
-        } catch (Exception expt) {
-            if (log.debugEnabled) expt.printStackTrace()
+        } catch (Exception e) {
+            if (log.debugEnabled) {
+                e.printStackTrace()
+            }
         }
-*/
-
     }
 
-    void sendAlertCUD(Story story, User user, String type) {
+    @IceScrumListener(domain = 'task', eventType = IceScrumEventType.CREATE)
+    void taskCreate(Task task, Map dirtyProperties) {
+        if (task.type == Task.TYPE_URGENT && task.sprint.state == Sprint.STATE_INPROGRESS) {
+            try {
+                sendAlertNewUrgentTask(task, (User) springSecurityService.currentUser) }
+            catch (Exception e) {
+                if (log.debugEnabled) {
+                    e.printStackTrace()
+                }
+            }
+        }
+    }
 
+    void sendAlertCUD(story, User user, IceScrumEventType type) {
         if (!ApplicationSupport.booleanValue(grailsApplication.config.icescrum.alerts.enable)) {
             return
         }
-
-        Product product = (Product)story.backlog
+        Product product = (Product) story.backlog
         def subjectArgs = [product.name, story.name]
-        def permalink = grailsApplication.config.grails.serverURL + '/p/' + product.pkey + '-' + story.uid
-        def projectLink = grailsApplication.config.grails.serverURL + '/p/' + product.pkey + '#project'
-        def event = (IceScrumEvent.EVENT_CREATED == type) ? 'Created' : (IceScrumEvent.EVENT_UPDATED == type ? 'Updated' : 'Deleted')
-
-        def listTo = (type == IceScrumEvent.EVENT_CREATED) ? receiversByLocale(product.allUsers, user.id, [type:'onStory',pkey:product.pkey]) : receiversByLocale(story.followers, user.id)
+        def baseUrl = grailsApplication.config.grails.serverURL + '/p/' + product.pkey
+        def permalink = baseUrl + '-' + story.uid
+        def projectLink = baseUrl + '#project'
+        def eventLabel = EVENT_LABELS[type]
+        def description = type == IceScrumEventType.DELETE ? story.description?:"" : null
+        def listTo = (type == IceScrumEventType.CREATE) ? receiversByLocale(product.allUsers, user.id, [type:'onStory',pkey:product.pkey]) : receiversByLocale(story.followers, user.id)
         listTo?.each { locale, group ->
             if (log.debugEnabled) {
-                log.debug "Send email, event:${type} to : ${group*.email.toArray()} with locale : ${locale}"
+                log.debug "Send email, event:$eventLabel to : ${group*.email.toArray()} with locale : ${locale}"
             }
             send([
                     emails: group*.email.toArray(),
-                    subject: grailsApplication.config.icescrum.alerts.subject_prefix + getMessage('is.template.email.story.' + event.toLowerCase() + '.subject', (Locale) locale, subjectArgs),
-                    view: '/emails-templates/story' + event,
-                    model: [locale: locale, storyName: story.name, permalink: permalink, linkName: product.name, link: projectLink, description:IceScrumEvent.EVENT_BEFORE_DELETE ? story.description?:"" : null]
+                    subject: grailsApplication.config.icescrum.alerts.subject_prefix + getMessage('is.template.email.story.' + eventLabel.toLowerCase() + '.subject', (Locale) locale, subjectArgs),
+                    view: '/emails-templates/story' + eventLabel,
+                    model: [locale: locale, storyName: story.name, permalink: permalink, linkName: product.name, link: projectLink, description: description]
             ])
         }
     }
 
-    private void sendAlertNewUrgentTask(Task task, User user, String type) {
-
+    private void sendAlertNewUrgentTask(Task task, User user) {
         if (!ApplicationSupport.booleanValue(grailsApplication.config.icescrum.alerts.enable)) {
             return
         }
         Product product = task.parentProduct
         def subjectArgs = [product.name, task.name]
-        def permalink = grailsApplication.config.grails.serverURL + '/p/' + product.pkey + '-T' + task.uid
-        def projectLink = grailsApplication.config.grails.serverURL + '/p/' + product.pkey + '#project'
-
+        def baseUrl = grailsApplication.config.grails.serverURL + '/p/' + product.pkey
+        def permalink = baseUrl + '-T' + task.uid
+        def projectLink = baseUrl + '#project'
         def listTo = receiversByLocale(product.allUsers, user.id, [type:'onUrgentTask',pkey:product.pkey])
         listTo?.each { locale, group ->
             if (log.debugEnabled) {
-                log.debug "Send email, event:${type} to : ${group*.email.toArray()} with locale : ${locale}"
+                log.debug "Send email, event urgent task created to : ${group*.email.toArray()} with locale : ${locale}"
             }
             send([
                     emails: group*.email.toArray(),
                     subject: grailsApplication.config.icescrum.alerts.subject_prefix + getMessage('is.template.email.task.created.subject', (Locale) locale, subjectArgs),
                     view: '/emails-templates/taskCreated',
-                    model: [locale: locale, taskName: task.name, permalink: permalink, linkName: product.name, link: projectLink, description:IceScrumEvent.EVENT_BEFORE_DELETE ? task.description?:null : null]
+                    model: [locale: locale, taskName: task.name, permalink: permalink, linkName: product.name, link: projectLink, description: task.description]
             ])
         }
     }
 
-    private void sendAlertState(Story story, User user, String type) {
-
+    private void sendAlertState(Story story, User user, IceScrumEventType type) {
         if (!ApplicationSupport.booleanValue(grailsApplication.config.icescrum.alerts.enable)) {
             return
         }
-
-        def subjectArgs = [story.backlog.name, story.name]
-        def permalink = grailsApplication.config.grails.serverURL + '/p/' + story.backlog.pkey + '-' + story.uid
-        def projectLink = grailsApplication.config.grails.serverURL + '/p/' + story.backlog.pkey + '#project'
-
+        def product = story.backlog
+        def subjectArgs = [product.name, story.name]
+        def baseUrl = grailsApplication.config.grails.serverURL + '/p/' + product.pkey
+        def permalink = baseUrl + '-' + story.uid
+        def projectLink = baseUrl + '#project'
+        def eventLabel = EVENT_LABELS[type]
         def listTo = receiversByLocale(story.followers, user.id)
         listTo?.each { locale, group ->
             if (log.debugEnabled) {
-                log.debug "Send email, event:${type} to : ${group*.email.toArray()} with locale : ${locale}"
+                log.debug "Send email, event:$eventLabel to : ${group*.email.toArray()} with locale : ${locale}"
             }
             send([
                     emails: group*.email.toArray(),
                     subject: grailsApplication.config.icescrum.alerts.subject_prefix + getMessage('is.template.email.story.changedState.subject', (Locale) locale, subjectArgs),
                     view: '/emails-templates/storyChangedState',
-                    model: [state: getMessage('is.template.email.story.changedState.' + type.toLowerCase(), (Locale) locale), locale: locale, storyName: story.name, permalink: permalink, linkName: story.backlog.name, link: projectLink]
+                    model: [state: getMessage('is.template.email.story.changedState.' + eventLabel.toLowerCase(), (Locale) locale), locale: locale, storyName: story.name, permalink: permalink, linkName: product.name, link: projectLink]
             ])
         }
-
     }
 
-    private void sendAlertComment(Story story, User user, String type, Comment comment) {
-
+    void sendAlertCommentAdded(Story story, Comment comment) {
         if (!ApplicationSupport.booleanValue(grailsApplication.config.icescrum.alerts.enable)) {
             return
         }
-
-        def subjectArgs = [story.backlog.name, story.name]
-        def permalink = grailsApplication.config.grails.serverURL + '/p/' + story.backlog.pkey + '-' + story.uid
-        def projectLink = grailsApplication.config.grails.serverURL + '/p/' + story.backlog.pkey + '#project'
-
-        if (type == IceScrumBacklogElementEvent.EVENT_COMMENT_ADDED) {
-
-            StringWriter text = new StringWriter()
-            HtmlDocumentBuilder builder = new HtmlDocumentBuilder(text)
-            builder.emitAsDocument = false
-            MarkupParser parser = new MarkupParser()
-            parser.markupLanguage = ServiceLocator.instance.getMarkupLanguage('Textile')
-            parser.builder = builder
-            parser.parse(comment.body).encodeAsHTML()
-
-            def listTo = receiversByLocale(story.followers, user.id)
-            listTo?.each { locale, group ->
-                if (log.debugEnabled) {
-                    log.debug "Send email, event:${type} to : ${group*.email.toArray()} with locale : ${locale}"
-                }
-                send([
-                        emails: group*.email.toArray(),
-                        subject: grailsApplication.config.icescrum.alerts.subject_prefix + getMessage('is.template.email.story.commented.subject', (Locale) locale, subjectArgs),
-                        view: '/emails-templates/storyCommented',
-                        model: [by: comment.poster.firstName + " " + comment.poster.lastName, comment: text, locale: locale, storyName: story.name, permalink: permalink, linkName: story.backlog.name, link: projectLink]
-                ])
+        def user = springSecurityService.currentUser
+        def product = story.backlog
+        def subjectArgs = [product.name, story.name]
+        def baseUrl = grailsApplication.config.grails.serverURL + '/p/' + product.pkey
+        def permalink = baseUrl + '-' + story.uid
+        def projectLink = baseUrl + '#project'
+        StringWriter text = new StringWriter()
+        HtmlDocumentBuilder builder = new HtmlDocumentBuilder(text)
+        builder.emitAsDocument = false
+        MarkupParser parser = new MarkupParser()
+        parser.markupLanguage = ServiceLocator.instance.getMarkupLanguage('Textile')
+        parser.builder = builder
+        parser.parse(comment.body).encodeAsHTML()
+        def listTo = receiversByLocale(story.followers, user.id)
+        listTo?.each { locale, group ->
+            if (log.debugEnabled) {
+                log.debug "Send email, event: comment added to : ${group*.email.toArray()} with locale : ${locale}"
             }
-        } else if (type == IceScrumBacklogElementEvent.EVENT_COMMENT_UPDATED) {
-            def listTo = receiversByLocale(story.followers, user.id)
-            listTo?.each { locale, group ->
-                if (log.debugEnabled) {
-                    log.debug "Send email, event:${type} to : ${group*.email.toArray()} with locale : ${locale}"
-                }
-                send([
-                        emails: group*.email.toArray(),
-                        subject: grailsApplication.config.icescrum.alerts.subject_prefix + getMessage('is.template.email.story.commentEdited.subject', (Locale) locale, subjectArgs),
-                        view: '/emails-templates/storyCommentEdited',
-                        model: [by: user.firstName + " " + user.lastName, locale: locale, storyName: story.name, permalink: permalink, linkName: story.backlog.name, link: projectLink]
-                ])
-            }
+            send([
+                    emails: group*.email.toArray(),
+                    subject: grailsApplication.config.icescrum.alerts.subject_prefix + getMessage('is.template.email.story.commented.subject', (Locale) locale, subjectArgs),
+                    view: '/emails-templates/storyCommented',
+                    model: [by: comment.poster.firstName + " " + comment.poster.lastName, comment: text, locale: locale, storyName: story.name, permalink: permalink, linkName: product.name, link: projectLink]
+            ])
         }
     }
 
-    private void sendAlertAcceptedAs(BacklogElement element, User user, String type) {
-
+    void sendAlertCommentUpdated(Story story) {
         if (!ApplicationSupport.booleanValue(grailsApplication.config.icescrum.alerts.enable)) {
             return
         }
+        def user = springSecurityService.currentUser
+        def product = story.backlog
+        def subjectArgs = [product.name, story.name]
+        def baseUrl = grailsApplication.config.grails.serverURL + '/p/' + product.pkey
+        def permalink = baseUrl + '-' + story.uid
+        def projectLink = baseUrl + '#project'
+        def listTo = receiversByLocale(story.followers, user.id)
+        listTo?.each { locale, group ->
+            if (log.debugEnabled) {
+                log.debug "Send email, event: comment updated to : ${group*.email.toArray()} with locale : ${locale}"
+            }
+            send([
+                    emails: group*.email.toArray(),
+                    subject: grailsApplication.config.icescrum.alerts.subject_prefix + getMessage('is.template.email.story.commentEdited.subject', (Locale) locale, subjectArgs),
+                    view: '/emails-templates/storyCommentEdited',
+                    model: [by: user.firstName + " " + user.lastName, locale: locale, storyName: story.name, permalink: permalink, linkName: product.name, link: projectLink]
+            ])
+        }
+    }
 
+    private void sendAlertAcceptedAs(BacklogElement element, User user) {
+        if (!ApplicationSupport.booleanValue(grailsApplication.config.icescrum.alerts.enable)) {
+            return
+        }
         def product = element instanceof Feature ? element.backlog : element.backlog.parentRelease.parentProduct
         def subjectArgs = [product.name, element.name]
         def projectLink = grailsApplication.config.grails.serverURL + '/p/' + product.pkey + '#project'
-
         def listTo = receiversByLocale(element.followers, user.id)
         listTo?.each { locale, group ->
             def acceptedAs = getMessage(element instanceof Feature ? 'is.feature' : 'is.task', (Locale) locale)
             subjectArgs << acceptedAs
             if (log.debugEnabled) {
-                log.debug "Send email, event:${type} to : ${group*.email.toArray()} with locale : ${locale}"
+                log.debug "Send email, event: accepted as to : ${group*.email.toArray()} with locale : ${locale}"
             }
             send([
                     emails: group*.email.toArray(),
@@ -234,14 +257,13 @@ class NotificationEmailService implements ApplicationListener<IceScrumEvent> {
     }
 
     void send(def options) {
-
         assert options.emails || options.to || options.cc
         assert options.view
         assert options.subject
-
-        if (grailsApplication.config.icescrum.alerts.emailPerAccount && options.emails){
-            options.emails.each{ def toEmail ->
+        if (grailsApplication.config.icescrum.alerts.emailPerAccount && options.emails) {
+            options.emails.each { toEmail ->
                 mailService.sendMail {
+                    async true
                     if (options.from)
                         from options.from
                     to toEmail
@@ -253,9 +275,10 @@ class NotificationEmailService implements ApplicationListener<IceScrumEvent> {
                     )
                 }
             }
-        }else{
+        } else {
             options.bcc = options.emails?:options.bcc
             mailService.sendMail {
+                async true
                 if (options.from)
                     from options.from
                 if (options.to)
@@ -274,7 +297,7 @@ class NotificationEmailService implements ApplicationListener<IceScrumEvent> {
         }
     }
 
-    String getMessage(String code, Locale locale, args = null, String defaultCode = null) {
+    private String getMessage(String code, Locale locale, args = null, String defaultCode = null) {
         return messageSource.getMessage(code, args ? args.toArray() : null, defaultCode ?: code, locale)
     }
 

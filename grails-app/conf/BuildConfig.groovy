@@ -78,7 +78,7 @@ grails.project.dependency.resolution = {
         //todo remove
         compile ':spring-events:1.2'
         compile ':springcache:1.3.1'
-        compile ':mail:1.0.1'
+        compile ':mail:1.0.4' // it seems that greater versions don't work with grail 1.3.9
         compile ':jasper:1.6.1'
         compile ':maven-publisher:0.8.1'
         compile ':rollback-on-exception:0.1'
