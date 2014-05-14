@@ -200,6 +200,7 @@ class Release extends TimeBox implements Cloneable, Attachmentable {
     }
 
     Integer getMeanVelocity() {
-        return sprints ? (sprints.sum { it.velocity.toBigDecimal() } / sprints.size()) : 0
+        def doneSprints = sprints.findAll { it.state == Sprint.STATE_DONE }
+        return doneSprints ? ((Integer) doneSprints.sum { it.velocity.toBigDecimal() }).intdiv(doneSprints.size()) : 0
     }
 }

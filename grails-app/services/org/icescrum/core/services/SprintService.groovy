@@ -28,8 +28,6 @@ import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
 
 import java.text.SimpleDateFormat
-import org.icescrum.core.event.IceScrumSprintEvent
-import org.icescrum.core.event.IceScrumStoryEvent
 import org.icescrum.core.utils.ServicesUtils
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.transaction.annotation.Transactional
@@ -58,14 +56,14 @@ class SprintService extends IceScrumEventPublisher {
         publishSynchronousEvent(IceScrumEventType.CREATE, sprint)
     }
 
-    // TODO check rights
+    @PreAuthorize('(productOwner(#sprint.parentRelease.parentProduct) or scrumMaster(#sprint.parentRelease.parentProduct)) and !archivedProduct(#sprint.parentRelease.parentProduct)')
     void update(Sprint sprint, Date startDate = null, Date endDate = null, def checkIntegrity = true, boolean updateRelease = true) {
 
         if (checkIntegrity) {
             if (sprint.state == Sprint.STATE_DONE) {
                 throw new IllegalStateException('is.sprint.error.update.done')
             }
-            if (sprint.state == Sprint.STATE_INPROGRESS && sprint.startDate != startDate) {
+            if (sprint.state == Sprint.STATE_INPROGRESS && startDate && sprint.startDate != startDate) {
                 throw new IllegalStateException('is.sprint.error.update.startdate.inprogress')
             }
         }
@@ -102,7 +100,7 @@ class SprintService extends IceScrumEventPublisher {
         publishSynchronousEvent(IceScrumEventType.UPDATE, sprint, dirtyProperties)
     }
 
-    // TODO check rights
+    @PreAuthorize('(productOwner(#sprint.parentRelease.parentProduct) or scrumMaster(#sprint.parentRelease.parentProduct)) and !archivedProduct(#sprint.parentRelease.parentProduct)')
     void delete(Sprint sprint) {
         if (sprint.state >= Sprint.STATE_INPROGRESS) {
             throw new IllegalStateException('is.sprint.error.delete.inprogress')
@@ -112,192 +110,96 @@ class SprintService extends IceScrumEventPublisher {
         if (nextSprints) {
             delete(nextSprints.first()) // cascades the delete recursively
         }
-        storyService.unPlanAll([sprint])
         def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_DELETE, sprint)
+        storyService.unPlanAll([sprint])
         release.removeFromSprints(sprint)
         release.save()
         publishSynchronousEvent(IceScrumEventType.DELETE, sprint, dirtyProperties)
     }
 
-    // TODO check rights
-    def generateSprints(Release release, Date startDate = null) {
+    @PreAuthorize('(productOwner(#release.parentProduct) or scrumMaster(#release.parentProduct)) and !archivedProduct(#release.parentProduct)')
+    def generateSprints(Release release, Date startDate = release.startDate) {
         if (release.state == Release.STATE_DONE) {
             throw new IllegalStateException('is.sprint.error.release.done')
         }
-
-        int daysBySprint = release.parentProduct.preferences.estimatedSprintsDuration
-        Date firstDate
-        Date lastDate = release.endDate
-        int nbSprint = 0
-        long day = (24 * 60 * 60 * 1000)
-
-        firstDate = startDate ?: new Date(release.startDate.time)
-        if (release.sprints?.size() >= 1) {
-            // Search for the last sprint end date
-            release.sprints.each { s ->
-                if (s.endDate.after(firstDate))
-                    firstDate.time = s.endDate.time
-                if (s.orderNumber > nbSprint)
-                    nbSprint = s.orderNumber
-            }
-            firstDate.time += day
+        if (release.sprints) {
+            startDate = release.sprints*.endDate.max() + 1
         }
-
-        Date lastDateMidnight = ApplicationSupport.getMidnightTime(lastDate)
-        Date firstDateMidnight = ApplicationSupport.getMidnightTime(firstDate)
-        int totalDays = (int) ((lastDateMidnight.time - firstDateMidnight.time) / day) + 1
-        int nbSprints = Math.floor(totalDays / daysBySprint)
-        if (nbSprints == 0) {
+        int freeDays = ApplicationSupport.getMidnightTime(release.endDate) - ApplicationSupport.getMidnightTime(startDate) + 1
+        int sprintDuration = release.parentProduct.preferences.estimatedSprintsDuration
+        int nbNewSprints = Math.floor(freeDays / sprintDuration)
+        if (nbNewSprints == 0) {
             throw new IllegalStateException('is.release.sprints.not.enough.time')
         }
-
-        def sprints = []
-        for (int i = 0; i < nbSprints; i++) {
-            Date endDate = new Date(firstDate.time + (day * (daysBySprint - 1)))
-
-            def newSprint = new Sprint(
-                    orderNumber: (++nbSprint),
-                    goal: 'Generated Sprint',
-                    startDate: (Date) firstDate.clone(),
-                    endDate: endDate
-            )
-
-            release.addToSprints(newSprint)
-
-            if (!newSprint.save()) {
-                throw new RuntimeException()
-            }
-
-            firstDate.time = endDate.time + day
-            sprints << newSprint
+        def newSprints = []
+        nbNewSprints.times {
+            Date endDate = startDate + sprintDuration - 1
+            def newSprint = new Sprint(goal: 'Generated Sprint', startDate: startDate, endDate: endDate)
+            save(newSprint, release)
+            newSprints << newSprint
+            startDate = endDate + 1
         }
-
-        broadcast(function: 'add', message: [class: Sprint.class, sprints: sprints], channel: 'product-' + release.parentProduct.id)
-        return sprints
+        return newSprints
     }
 
-    // TODO check rights
+    @PreAuthorize('(productOwner(#sprint.parentRelease.parentProduct) or scrumMaster(#sprint.parentRelease.parentProduct)) and !archivedProduct(#sprint.parentRelease.parentProduct)')
     void activate(Sprint sprint) {
-        // Release of the sprint is not the activated release
         if (sprint.parentRelease.state != Release.STATE_INPROGRESS) {
             throw new IllegalStateException('is.sprint.error.activate.release.not.inprogress')
         }
-
-        // If there is a sprint opened before, throw an workflow error
-        int lastSprintClosed = -1
-        Sprint s = sprint.parentRelease.sprints.find {
-            if (it.state == Sprint.STATE_DONE)
-                lastSprintClosed = it.orderNumber
-            it.state == Sprint.STATE_INPROGRESS
-        }
-        if (s) {
-            throw new IllegalStateException('is.sprint.error.activate.other.inprogress')
-        }
-
-        // There is (in the release) sprints before 'sprint' which are not closed
-        if (sprint.orderNumber != 1 && sprint.orderNumber > lastSprintClosed + 1) {
-            throw new IllegalStateException('is.sprint.error.activate.previous.not.closed')
-        }
-
-        def autoCreateTaskOnEmptyStory = sprint.parentRelease.parentProduct.preferences.autoCreateTaskOnEmptyStory
-
-        sprint.stories?.each {
-            it.state = Story.STATE_INPROGRESS
-            it.inProgressDate = new Date()
-            if (autoCreateTaskOnEmptyStory && it.tasks?.size() == 0) {
-                def emptyTask = new Task(name: it.name, state: Task.STATE_WAIT, description: it.description, backlog: sprint, parentStory: it)
-                taskService.save(emptyTask, (User) springSecurityService.currentUser)
+        sprint.parentRelease.sprints.each {
+            if (it.state == Sprint.STATE_INPROGRESS) {
+                throw new IllegalStateException('is.sprint.error.activate.other.inprogress')
+            } else if (it.orderNumber < sprint.orderNumber && it.state < Sprint.STATE_DONE) {
+                throw new IllegalStateException('is.sprint.error.activate.previous.not.closed')
             }
-            it.save()
         }
-
+        def autoCreateTaskOnEmptyStory = sprint.parentRelease.parentProduct.preferences.autoCreateTaskOnEmptyStory
+        sprint.stories?.each { Story story ->
+            storyService.update(story, [state: Story.STATE_INPROGRESS])
+            if (autoCreateTaskOnEmptyStory && story.tasks?.size() == 0) {
+                def newTask = new Task(name: story.name, description: story.description, backlog: sprint, parentStory: story)
+                taskService.save(newTask, (User) springSecurityService.currentUser)
+            }
+        }
         sprint.state = Sprint.STATE_INPROGRESS
         sprint.activationDate = new Date()
-
-        sprint.parentRelease.lastUpdated = new Date()
-        sprint.parentRelease.parentProduct.lastUpdated = new Date()
-
-        //retrieve last done definition if no done definition in the current sprint
-        if (sprint.orderNumber != 1 && !sprint.doneDefinition) {
-            def previousSprint = Sprint.findByOrderNumberAndParentRelease(sprint.orderNumber - 1, sprint.parentRelease)
-            if (previousSprint.doneDefinition) {
-                sprint.doneDefinition = previousSprint.doneDefinition
-            }
+        if (sprint.previousSprint?.doneDefinition && !sprint.doneDefinition) {
+            sprint.doneDefinition = sprint.previousSprint.doneDefinition
         }
-
         sprint.initialRemainingTime = sprint.totalRemaining
-
-        if (!sprint.save()) {
-            throw new RuntimeException()
-        }
-
+        update(sprint)
         clicheService.createSprintCliche(sprint, new Date(), Cliche.TYPE_ACTIVATION)
         clicheService.createOrUpdateDailyTasksCliche(sprint)
-
-        bufferBroadcast(channel: 'product-' + sprint.parentProduct.id)
-        sprint.stories.each {
-            broadcast(function: 'update', message: it, channel: 'product-' + sprint.parentProduct.id)
-            publishEvent(new IceScrumStoryEvent(it, this.class, (User) springSecurityService.currentUser, IceScrumStoryEvent.EVENT_INPROGRESS))
-        }
-        resumeBufferedBroadcast(channel: 'product-' + sprint.parentProduct.id)
-
-        publishEvent(new IceScrumSprintEvent(sprint, this.class, (User) springSecurityService.currentUser, IceScrumSprintEvent.EVENT_ACTIVATED))
-        broadcast(function: 'activate', message: sprint, channel: 'product-' + sprint.parentProduct.id)
     }
 
-    // TODO check rights
+    @PreAuthorize('(productOwner(#sprint.parentRelease.parentProduct) or scrumMaster(#sprint.parentRelease.parentProduct)) and !archivedProduct(#sprint.parentRelease.parentProduct)')
     void close(Sprint sprint) {
-        // The sprint must be in the state "INPROGRESS"
         if (sprint.state != Sprint.STATE_INPROGRESS) {
             throw new IllegalStateException('is.sprint.error.close.not.inprogress')
         }
-
-        Double sum = (Double) sprint.stories?.sum { pbi ->
-            if (pbi.state == Story.STATE_DONE)
-                pbi.effort.doubleValue()
-            else
-                0
-        } ?: 0
-        bufferBroadcast(channel: 'product-' + sprint.parentProduct.id)
-        def nextSprint = Sprint.findByParentReleaseAndOrderNumber(sprint.parentRelease, sprint.orderNumber + 1) ?: Sprint.findByParentReleaseAndOrderNumber(Release.findByOrderNumberAndParentProduct(sprint.parentRelease.orderNumber + 1, sprint.parentProduct), 1)
+        def nextSprint = sprint.nextSprint
         if (nextSprint) {
-            //Move not finished urgent task to next sprint
-            sprint.tasks?.findAll { it.type == Task.TYPE_URGENT && it.state != Task.STATE_DONE }?.each {
-                it.backlog = nextSprint
-                it.state = Task.STATE_WAIT
-                it.inProgressDate = null
-                if (!it.save()) {
-                    throw new RuntimeException()
-                }
-                broadcast(function: 'update', message: it, channel: 'product-' + sprint.parentProduct.id)
+            sprint.tasks.findAll { it.type == Task.TYPE_URGENT && it.state != Task.STATE_DONE }?.each { Task task ->
+                task.backlog = nextSprint
+                task.state = Task.STATE_WAIT
+                taskService.update(task, springSecurityService.currentUser)
             }
-            storyService.plan(nextSprint, sprint.stories.findAll { it.state != Story.STATE_DONE })
+            def notDoneStories = sprint.stories.findAll { it.state != Story.STATE_DONE }
+            storyService.plan(nextSprint, notDoneStories)
         } else {
             storyService.unPlanAll([sprint])
         }
-
-        sprint.velocity = sum
+        def doneStories = sprint.stories.findAll { it.state == Story.STATE_DONE }
+        sprint.velocity = (Double) doneStories*.effort.sum() ?: 0
         sprint.state = Sprint.STATE_DONE
         sprint.closeDate = new Date()
-
-        sprint.parentRelease.lastUpdated = new Date()
-        sprint.parentRelease.parentProduct.lastUpdated = new Date()
-
-        sprint.tasks?.findAll { it.type == Task.TYPE_URGENT || it.type == Task.TYPE_RECURRENT }?.each {
+        sprint.tasks.findAll { it.type == Task.TYPE_URGENT || it.type == Task.TYPE_RECURRENT }?.each {
             it.lastUpdated = new Date()
         }
-
-        if (!sprint.save(flush: true)) {
-            throw new RuntimeException()
-        }
-
+        update(sprint, null, null, false)
         clicheService.createSprintCliche(sprint.refresh(), new Date(), Cliche.TYPE_CLOSE)
         clicheService.createOrUpdateDailyTasksCliche(sprint)
-
-        broadcast(function: 'close', message: sprint, channel: 'product-' + sprint.parentProduct.id)
-        resumeBufferedBroadcast(channel: 'product-' + sprint.parentProduct.id)
-        publishEvent(new IceScrumSprintEvent(sprint, this.class, (User) springSecurityService.currentUser, IceScrumSprintEvent.EVENT_CLOSED))
-
     }
 
     // TODO check rights

@@ -27,10 +27,7 @@
 
 package org.icescrum.core.domain
 
-import org.icescrum.core.event.IceScrumSprintEvent
-import org.icescrum.core.event.IceScrumEvent
 import org.icescrum.plugins.attachmentable.interfaces.Attachmentable
-import org.springframework.security.core.context.SecurityContextHolder as SCH
 
 
 class Sprint extends TimeBox implements Serializable, Attachmentable {
@@ -67,7 +64,7 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
     ]
 
     static transients = [
-            'recurrentTasks', 'urgentTasks', 'hasNextSprint', 'parentReleaseId', 'activable', 'effectiveEndDate', 'effectiveStartDate', 'totalRemaining', 'parentProduct', 'totalEffort', 'previousSprint'
+            'recurrentTasks', 'urgentTasks', 'hasNextSprint', 'parentReleaseId', 'activable', 'effectiveEndDate', 'effectiveStartDate', 'totalRemaining', 'parentProduct', 'totalEffort', 'previousSprint', 'nextSprint'
     ]
 
     static namedQueries = {
@@ -112,18 +109,6 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
             }
             maxResults(1)
             order("orderNumber", "asc")
-        }
-
-        findHasNextSprint {rid, sOrderNumber ->
-            parentRelease {
-                eq 'id', rid
-            }
-            and {
-                eq 'orderNumber', (sOrderNumber + 1)
-            }
-            projections {
-                rowCount()
-            }
         }
 
         findCurrentOrLastSprint {p ->
@@ -268,27 +253,31 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
         return tasks?.findAll { it.type == Task.TYPE_URGENT }
     }
 
-    def getHasNextSprint() {
-        if (Sprint.findHasNextSprint(parentRelease.id, orderNumber).list()[0]){
-            return true
-        }
-        def nextRelease = Release.findByOrderNumberAndParentProduct(parentRelease.orderNumber + 1, parentRelease.parentProduct)
-        if (nextRelease && Sprint.findHasNextSprint(nextRelease.id, 0).list()[0]){
-            return true
-        }
-        return false
+    boolean getHasNextSprint() {
+        return nextSprint != null
     }
 
     def getParentReleaseId() {
         return parentRelease.id
     }
 
-    def getPreviousSprint() {
+    Sprint getPreviousSprint() {
         if (orderNumber == 1 && parentRelease.orderNumber == 1) {
-            throw new RuntimeException() // TODO error message 'is.sprint.error.doneDefinition.no.previous'
+            return null
+        } else {
+            def previousSprintOrderNumber = orderNumber > 1 ? orderNumber - 1 : parentRelease.sprints.size()
+            return Sprint.findByParentReleaseAndOrderNumber(parentRelease, previousSprintOrderNumber)
         }
-        def previousOrderNumber = orderNumber > 1 ? orderNumber - 1 : parentRelease.sprints.size()
-        return findByParentReleaseAndOrderNumber(parentRelease, previousOrderNumber)
+    }
+
+    Sprint getNextSprint() {
+        def nextSprintSameRelease = Sprint.findByParentReleaseAndOrderNumber(parentRelease, orderNumber + 1)
+        if (nextSprintSameRelease) {
+            return nextSprintSameRelease
+        } else {
+            def nextRelease = Release.findByOrderNumberAndParentProduct(parentRelease.orderNumber + 1, parentProduct)
+            return nextRelease ? Sprint.findByParentReleaseAndOrderNumber(nextRelease, 1) : null
+        }
     }
 
     def getActivable() {
@@ -330,23 +319,5 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
 
     BigDecimal getTotalEffort() {
         return (BigDecimal) (this.stories.sum { it.effort } ?: 0)
-    }
-
-    def afterInsert(){
-        withNewSession {
-            publishEvent(new IceScrumSprintEvent(this, this.class, User.get(SCH.context?.authentication?.principal?.id), IceScrumEvent.EVENT_CREATED, true))
-        }
-    }
-
-    def beforeDelete() {
-        withNewSession {
-            publishEvent(new IceScrumSprintEvent(this, this.class, User.get(SCH.context?.authentication?.principal?.id), IceScrumEvent.EVENT_BEFORE_DELETE, true))
-        }
-    }
-
-    def afterDelete() {
-        withNewSession {
-            publishEvent(new IceScrumSprintEvent(this, this.class, User.get(SCH.context?.authentication?.principal?.id), IceScrumEvent.EVENT_AFTER_DELETE, true))
-        }
     }
 }
