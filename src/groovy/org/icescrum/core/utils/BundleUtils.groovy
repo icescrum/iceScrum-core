@@ -93,17 +93,6 @@ class BundleUtils {
             (Sprint.STATE_DONE): 'is.sprint.state.done'
     ]
 
-    static colorsSelect = [
-            'blue': 'is.postit.color.blue',
-            'green': 'is.postit.color.green',
-            'red': 'is.postit.color.red',
-            'orange': 'is.postit.color.orange',
-            'violet': 'is.postit.color.violet',
-            'gray': 'is.postit.color.gray',
-            'pink': 'is.postit.color.pink',
-            'bluelight': 'is.postit.color.bluelight'
-    ]
-
     static taskColorsSelect = [
             'yellow': 'is.postit.color.yellow',
             'blue': 'is.postit.color.blue',
