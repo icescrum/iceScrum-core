@@ -27,7 +27,7 @@
 </g:if>
     %{-- Content --}%
     <div id="window-content-${id}" class="window-content ${right != null ? 'col-md-7 col-lg-8' : ''} scrollable">
-    <g:if test="${right != null}">
+    <g:if test="${toolbar != false && right != null}">
         <nav fixed="#window-content-${id}" class="navbar navbar-toolbar navbar-default" role="navigation">
             <div class="container-fluid">
                 <div class="btn-toolbar" id="${controllerName}-toolbar" role="toolbar">
