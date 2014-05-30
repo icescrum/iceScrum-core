@@ -25,6 +25,7 @@ package org.icescrum.core.taglib
 import org.codehaus.groovy.grails.web.servlet.GrailsApplicationAttributes
 import org.codehaus.groovy.grails.web.metaclass.ControllerDynamicMethods
 import org.codehaus.groovy.grails.web.mapping.ForwardUrlMappingInfo
+import org.codehaus.groovy.grails.web.servlet.mvc.exceptions.ControllerExecutionException
 import org.codehaus.groovy.grails.web.util.WebUtils
 
 class WindowTagLib {
@@ -64,11 +65,7 @@ class WindowTagLib {
         }
 
         // Check for toolbar existence
-        attrs.toolbar = attrs.type == 'widget' && attrs.toolbar ? include(controller: windowId, action: 'toolbarWidget', params: includeParams) : false
-
-        // Check for right content
-        attrs.right = attrs.right ? include(controller: windowId, action: 'right', params: includeParams) : null
-
+        attrs.toolbar =  attrs.toolbar ? include(controller: windowId, action: attrs.type == 'widget' ? 'toolbarWidget' : 'toolbar', params: includeParams) : false
 
         // Check for shortcuts
         if (attrs.shortcuts) {

@@ -22,24 +22,31 @@
      data-is-full-screen="${windowActions?.fullScreen?:false}"
      data-is-widgetable="${windowActions?.widgetable?:false}"
      data-is-title="${spaceName ?: 'iceScrum'} - ${title.encodeAsJavaScript()}">
-<g:if test="${right != null}">
+<g:if test="${right}">
     <div class="clearfix">
 </g:if>
     %{-- Content --}%
-    <div id="window-content-${id}" class="window-content ${right != null ? 'col-md-7 col-lg-8' : ''} well scrollable">
-        ${windowContent}
-    </div>
-
+    <div id="window-content-${id}" class="window-content ${right != null ? 'col-md-7 col-lg-8' : ''} scrollable">
     <g:if test="${right != null}">
-        <div id="right" class="col-md-5 col-lg-4 scrollable well">
-            <div id="view-properties">
-                ${right}
+        <nav fixed="#window-content-${id}" class="navbar navbar-toolbar navbar-default" role="navigation">
+            <div class="container-fluid">
+                <div class="btn-toolbar" id="${controllerName}-toolbar" role="toolbar">
+                    ${toolbar}
+                </div>
             </div>
+        </nav>
+    </g:if>
+    <div class="content">
+            ${windowContent}
+        </div>
+    </div>
+    <g:if test="${right}">
+        <div id="right" class="col-md-5 col-lg-4 scrollable well">
             <div id="contextual-properties" ui-view>
             </div>
         </div>
     </g:if>
-    <g:if test="${right != null}">
-        </div>
-    </g:if>
+<g:if test="${right}">
+    </div>
+</g:if>
 </div>

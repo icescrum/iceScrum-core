@@ -110,8 +110,8 @@ class DummyPopulator {
             sprintService.generateSprints(release1)
             // Features
             def feature = new Feature(uid: 1, name: 'La feature', value: 1, description: 'Une feature', backlog: product, rank: 1).save()
-            def feature2 = new Feature(uid: 2, name: 'La feature 2', value: 1, description: 'Une feature', backlog: product, rank: 2, color: 'pink').save()
-            def feature3 = new Feature(uid: 3, name: 'La feature 3', value: 1, description: 'Une feature', backlog: product, rank: 3, color: 'orange').save()
+            def feature2 = new Feature(uid: 2, name: 'La feature 2', value: 1, description: 'Une feature', backlog: product, rank: 2, color: '#e778ff').save()
+            def feature3 = new Feature(uid: 3, name: 'La feature 3', value: 1, description: 'Une feature', backlog: product, rank: 3, color: '#c3ed39').save()
             // Actors
             def actor = new Actor(uid: 1, name: 'ScrumMaster', description: 'Un ScrumMaster', backlog: product).save()
             def actor2 = new Actor(uid: 2, name: 'ProductOwner', description: 'Un ProductOwner', backlog: product).save()
@@ -126,7 +126,7 @@ class DummyPopulator {
                 def story = new Story(backlog: product,
                         feature: _storyCount % 4 == 0 ? feature : _storyCount % 3 == 0 ? feature3 : feature2,
                         actor: _act,
-                        name: "A story $_storyCount",
+                        name: "A story $_storyCount with something awesome inside very awesome !!",
                         effort: 5,
                         uid: _storyCount + 1,
                         type: _storyCount % 6 == 0 ? Story.TYPE_TECHNICAL_STORY : _storyCount % 4 == 0 ? Story.TYPE_DEFECT : Story.TYPE_USER_STORY,
@@ -136,7 +136,7 @@ class DummyPopulator {
                         state: state,
                         creator: usera,
                         rank: _storyCount++,
-                        description: "As a A[${_act.uid}-${_act.name}], I can do something awesome",
+                        description: "As a A[${_act.uid}-${_act.name}], I can do something awesome, I can do something awesome, I can do something awesome, I can do something awesome, I can do something awesome, I can do something awesome, I can do something awesome, I can do something awesome,I can do something awesome",
                         notes: '*Un texte en gras* hahaha ! _et en italique_'
                 ).save()
                 if (story.state < Story.STATE_ESTIMATED) {

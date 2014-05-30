@@ -409,6 +409,14 @@ class IcescrumCoreGrailsPlugin {
                         log.debug(e.getMessage())
                     }
                 },
+                toolbar: {->
+                    try {
+                        render(plugin: pluginName, template: "window/toolbar", model: [id: controllerName])
+                    } catch (Exception e) {
+                        render('')
+                        log.debug(e.getMessage())
+                    }
+                },
                 titleBarContent: {
                     try {
                         render(plugin: pluginName, template: "window/titleBarContent", model: [id: controllerName])
