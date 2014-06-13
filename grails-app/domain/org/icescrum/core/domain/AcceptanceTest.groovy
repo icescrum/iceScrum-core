@@ -118,6 +118,13 @@ class AcceptanceTest implements Fluxiable, Serializable {
         final Integer id
         static AcceptanceTestState byId(Integer id) { values().find { AcceptanceTestState stateEnum -> stateEnum.id == id } }
         static boolean exists(Integer id) { values().id.contains(id) }
+        static Map asMap() {
+            Map entries = [:]
+            values().each {
+                entries[it.id] = it.toString()
+            }
+            entries
+        }
         private AcceptanceTestState(Integer id) { this.id = id }
         String toString() { "is.acceptanceTest.state." + name().toLowerCase() }
     }
