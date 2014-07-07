@@ -482,7 +482,7 @@ class SprintService {
         if (sprint.orderNumber > 1){
             lastsprint = Sprint.findByParentReleaseAndOrderNumber(sprint.parentRelease, sprint.orderNumber - 1)
         }else{
-            def previousRelease = Release.findByParentProductAndOrderNumber(sprint.parentProduct, sprint.parentRelease.orderNumber + 1)
+            def previousRelease = Release.findByParentProductAndOrderNumber(sprint.parentProduct, sprint.parentRelease.orderNumber - 1)
             lastsprint = Sprint.findByParentReleaseAndOrderNumber(previousRelease, previousRelease.sprints.size())
         }
         def tasks = lastsprint.tasks.findAll {it.type == Task.TYPE_RECURRENT}
