@@ -262,11 +262,12 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
     }
 
     Sprint getPreviousSprint() {
-        if (orderNumber == 1 && parentRelease.orderNumber == 1) {
-            return null
+        def previousSprintSameRelease = Sprint.findByParentReleaseAndOrderNumber(parentRelease, orderNumber - 1)
+        if (previousSprintSameRelease) {
+            return previousSprintSameRelease
         } else {
-            def previousSprintOrderNumber = orderNumber > 1 ? orderNumber - 1 : parentRelease.sprints.size()
-            return Sprint.findByParentReleaseAndOrderNumber(parentRelease, previousSprintOrderNumber)
+            def previousRelease = parentRelease.previousRelease
+            Sprint.findByParentReleaseAndOrderNumber(previousRelease, previousRelease.sprints.size())
         }
     }
 
@@ -275,7 +276,7 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
         if (nextSprintSameRelease) {
             return nextSprintSameRelease
         } else {
-            def nextRelease = Release.findByOrderNumberAndParentProduct(parentRelease.orderNumber + 1, parentProduct)
+            def nextRelease = parentRelease.nextRelease
             return nextRelease ? Sprint.findByParentReleaseAndOrderNumber(nextRelease, 1) : null
         }
     }

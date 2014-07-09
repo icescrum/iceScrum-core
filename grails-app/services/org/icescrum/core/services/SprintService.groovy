@@ -331,14 +331,8 @@ class SprintService extends IceScrumEventPublisher {
         if (sprint.state == Sprint.STATE_DONE) {
             throw new IllegalStateException('is.sprint.copyRecurrentTasks.error.sprint.done')
         }
-        def lastsprint
-        if (sprint.orderNumber > 1) {
-            lastsprint = Sprint.findByParentReleaseAndOrderNumber(sprint.parentRelease, sprint.orderNumber - 1)
-        } else {
-            def previousRelease = Release.findByOrderNumber(sprint.parentRelease.orderNumber - 1)
-            lastsprint = Sprint.findByParentReleaseAndOrderNumber(previousRelease, previousRelease.sprints.size())
-        }
-        def tasks = lastsprint.tasks.findAll { it.type == Task.TYPE_RECURRENT }
+        def previousSprint = sprint.previousSprint
+        def tasks = previousSprint.tasks.findAll { it.type == Task.TYPE_RECURRENT }
         if (!tasks) {
             throw new IllegalStateException('is.sprint.copyRecurrentTasks.error.no.recurrent.tasks')
         }
