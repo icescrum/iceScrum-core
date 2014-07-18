@@ -25,10 +25,6 @@
 
 package org.icescrum.core.domain
 
-import org.codehaus.groovy.grails.commons.ApplicationHolder
-import org.icescrum.core.event.IceScrumEventType
-import org.icescrum.core.services.StoryService
-import org.icescrum.plugins.attachmentable.domain.Attachment
 import grails.util.GrailsNameUtils
 import org.icescrum.core.domain.AcceptanceTest.AcceptanceTestState
 
