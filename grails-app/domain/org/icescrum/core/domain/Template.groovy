@@ -23,7 +23,7 @@
 
 package org.icescrum.core.domain
 
-class Template {
+class Template implements Serializable {
 
     String name
     String itemClass
