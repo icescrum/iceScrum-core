@@ -176,12 +176,12 @@ class WindowTagLib {
     }
 
     def modal = { attrs, body ->
-        out << """<div class="modal-content">"""
+        out << """<div class="modal-content ${attrs['class']}">"""
         if (attrs.form){
             out << "<form role='form' ng-submit='${attrs.form}' ${attrs.autoFillFix?'form-autofill-fix':''}>"
         }
         out << """  <div class="modal-header">
-                        <button type="button" class="close" ng-click="cancel()" aria-hidden="true">&times;</button>
+                        <button type="button" class="close" ng-click="\$dismiss()" aria-hidden="true">&times;</button>
                         <h4 class="modal-title" id="modal${attrs.name}">${attrs.title}</h4>
                     </div>
                     <div class="modal-body">
@@ -189,21 +189,24 @@ class WindowTagLib {
         if (attrs.form) {
             out << '<div class="alert alert-danger"></div>'
         }
-        out << """ </div>
-                    <div class="modal-footer">"""
-        if (attrs.button){
-            attrs.button.each{ button ->
-                out << "<button type='${button.type?:'button'}' " +
-                                "${button.shortcut? 'tooltip-append-to-body="true" tooltip="'+button.shortcut.title+' ('+button.shortcut.key+')" data-is-shortcut data-is-shortcut-on=".modal" data-is-shortcut-key="'+button.shortcut.key+'"' : ''} " +
-                                "class='btn btn-${button.color?:'primary'} ${button.class?:''}'>${button.text}</button>"
+        out << "</div>"
+        if (attrs.footer != false) {
+            out << """<div class="modal-footer">"""
+            if (attrs.button) {
+                attrs.button.each { button ->
+                    out << "<button type='${button.type ?: 'button'}' " +
+                            "class='btn btn-${button.color ?: 'primary'} ${button.class ?: ''}'>${button.text}</button>"
+                }
             }
+            out << """  <button type="button" class="btn btn-default" tooltip-append-to-body="true" tooltip="${
+                message(code: 'is.dialog.close')
+            } (ESCAPE)" ng-click="\$close()">${message(code: 'is.dialog.close')}</button>"""
+            if (attrs.submitButton) {
+                out << "<button type='submit' class='btn btn-primary'>${attrs.submitButton}</button>"
+            }
+            out << """  </div>"""
         }
-        out << """  <button type="button" class="btn btn-default" tooltip-append-to-body="true" tooltip="${message(code:'is.dialog.close')} (ESCAPE)" ng-click="cancel()">${message(code:'is.dialog.close')}</button>"""
-        if (attrs.submitButton){
-            out << "<button type='submit' class='btn btn-primary'>${attrs.submitButton}</button>"
-        }
-        out << """  </div>"""
-        if (attrs.form){
+        if (attrs.form) {
             out << "</form>"
         }
         out << """ </div>"""
