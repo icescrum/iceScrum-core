@@ -25,7 +25,6 @@ package org.icescrum.core.taglib
 import org.codehaus.groovy.grails.web.servlet.GrailsApplicationAttributes
 import org.codehaus.groovy.grails.web.metaclass.ControllerDynamicMethods
 import org.codehaus.groovy.grails.web.mapping.ForwardUrlMappingInfo
-import org.codehaus.groovy.grails.web.servlet.mvc.exceptions.ControllerExecutionException
 import org.codehaus.groovy.grails.web.util.WebUtils
 
 class WindowTagLib {
@@ -198,9 +197,8 @@ class WindowTagLib {
                             "class='btn btn-${button.color ?: 'primary'} ${button.class ?: ''}'>${button.text}</button>"
                 }
             }
-            out << """  <button type="button" class="btn btn-default" tooltip-append-to-body="true" tooltip="${
-                message(code: 'is.dialog.close')
-            } (ESCAPE)" ng-click="\$close()">${message(code: 'is.dialog.close')}</button>"""
+            def closeButton = attrs.closeButton ?: message(code: 'is.dialog.close')
+            out << """  <button type="button" class="btn btn-default" tooltip-append-to-body="true" tooltip="$closeButton (ESCAPE)" ng-click="\$close()">$closeButton</button>"""
             if (attrs.submitButton) {
                 out << "<button type='submit' class='btn btn-primary'>${attrs.submitButton}</button>"
             }

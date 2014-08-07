@@ -814,7 +814,8 @@ class IcescrumCoreGrailsPlugin {
         }
 
         source.metaClass.withStories = { String id = 'id', Closure c ->
-            List<Story> stories = params.list(id) ? Story.getAll(params.list(id)) : null
+            def ids = params[id]?.contains(',') ? params[id].split(',')*.toLong() : params.list(id)
+            List<Story> stories = ids ? Story.getAll(ids) : null
             if (stories) {
                 try {
                     c.call stories

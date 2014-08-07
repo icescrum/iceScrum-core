@@ -54,27 +54,27 @@ class StoryService extends IceScrumEventPublisher {
     def attachmentableService
     def securityService
     def acceptanceTestService
-    def notificationEmailService
     def sessionFactory
     def messageSource
 
     def g = new org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib()
 
     @PreAuthorize('!archivedProduct(#product)')
-    void save(Story story, Product product, User u, Sprint s = null) {
+    void save(Story story, Product product, User user) {
 
         if (!story.effort) {
             story.effort = null
         }
 
         story.backlog = product
-        story.creator = u
+        story.creator = user
 
         manageActors(story, product)
 
         story.uid = Story.findNextUId(product.id)
-        if(!story.suggestedDate)
+        if(!story.suggestedDate) {
             story.suggestedDate = new Date()
+        }
 
         if (story.effort > 0) {
             story.state = Story.STATE_ESTIMATED
@@ -87,15 +87,14 @@ class StoryService extends IceScrumEventPublisher {
         }
 
         story.affectVersion = (story.type == Story.TYPE_DEFECT ? story.affectVersion : null)
-
+        story.addToFollowers(user)
+        product.allUsers.findAll {
+            user.id != it.id && product.pkey in it.preferences.emailsSettings.autoFollow
+        }.each {
+            story.addToFollowers(user)
+        }
         if (story.save()) {
             product.addToStories(story)
-            story.addFollower(u)
-            product.allUsers.findAll {
-                u.id != it.id && product.pkey in it.preferences.emailsSettings.autoFollow
-            }.each {
-                story.addFollower(it)
-            }
             publishSynchronousEvent(IceScrumEventType.CREATE, story)
         } else {
             throw new RuntimeException(story.errors?.toString())
@@ -109,7 +108,6 @@ class StoryService extends IceScrumEventPublisher {
         stories.each { story ->
             def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_DELETE, story)
             // Custom properties
-            dirtyProperties.followers = story.followers
             if (newObject) {
                 dirtyProperties.newObject = newObject
             }
@@ -142,10 +140,8 @@ class StoryService extends IceScrumEventPublisher {
             if (story.state != Story.STATE_SUGGESTED) {
                 resetRank(story)
             }
-            def id = story.id
             story.deleteComments()
             story.description = reason ?: null
-            story.removeLinkByFollow(id)
 
             story.delete()
             if (!newObject) {
@@ -589,10 +585,6 @@ class StoryService extends IceScrumEventPublisher {
 
             featureService.save(feature, (Product) story.backlog)
 
-            story.followers?.each{
-                feature.addFollower(it)
-            }
-
             story.attachments.each { attachment ->
                 feature.addAttachment(story.creator, attachmentableService.getFile(attachment), attachment.filename)
             }
@@ -648,10 +640,6 @@ class StoryService extends IceScrumEventPublisher {
                 task.color = story.feature.color
             }
             taskService.save(task, story.creator)
-
-            story.followers?.each{
-                task.addFollower(it)
-            }
 
             story.attachments.each { attachment ->
                 task.addAttachment(story.creator, attachmentableService.getFile(attachment), attachment.filename)

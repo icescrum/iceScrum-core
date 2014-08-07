@@ -70,7 +70,6 @@ grails.project.dependency.resolution = {
         compile 'org.icescrum:icescrum-attachmentable:0.4.8'
         compile 'org.icescrum:commentable:1.3'
         compile ":hibernate:1.3.9"
-        compile ':followable:0.3'
         compile ':taggable:1.0.1'
         compile ':autobase:1.0.0.0'
         compile ':burning-image:0.5.1'

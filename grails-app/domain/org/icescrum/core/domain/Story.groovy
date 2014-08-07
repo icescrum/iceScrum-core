@@ -25,7 +25,9 @@
 
 package org.icescrum.core.domain
 
+import grails.plugins.springsecurity.SpringSecurityService
 import grails.util.GrailsNameUtils
+import org.codehaus.groovy.grails.commons.ApplicationHolder
 import org.icescrum.core.domain.AcceptanceTest.AcceptanceTestState
 
 
@@ -73,7 +75,8 @@ class Story extends BacklogElement implements Cloneable, Serializable {
     static hasMany = [
             tasks: Task,
             acceptanceTests: AcceptanceTest,
-            likers: User
+            likers: User,
+            followers: User,
     ]
 
     static mappedBy = [
@@ -81,7 +84,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
     ]
 
     static transients = [
-            'todo', 'dependences', 'deliveredVersion', 'testState', 'testStateEnum', 'activity'
+            'todo', 'dependences', 'deliveredVersion', 'testState', 'testStateEnum', 'activity', 'liked', 'followed'
     ]
 
     static mapping = {
@@ -127,6 +130,16 @@ class Story extends BacklogElement implements Cloneable, Serializable {
 
     int getTestState() {
         getTestStateEnum().id
+    }
+
+    boolean getLiked() {
+        def springSecurityService = (SpringSecurityService) ApplicationHolder.application.mainContext.getBean('springSecurityService')
+        return likers ? likers.contains(springSecurityService.currentUser) : false
+    }
+
+    boolean getFollowed() {
+        def springSecurityService = (SpringSecurityService) ApplicationHolder.application.mainContext.getBean('springSecurityService')
+        return followers ? followers.contains(springSecurityService.currentUser) : false
     }
 
     static namedQueries = {
