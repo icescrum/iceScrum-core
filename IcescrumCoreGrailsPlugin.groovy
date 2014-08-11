@@ -741,7 +741,8 @@ class IcescrumCoreGrailsPlugin {
         }
 
         source.metaClass.withFeatures = { String id = 'id', Closure c ->
-            List<Feature> features = Feature.getAll(params.list(id))
+            def ids = params[id]?.contains(',') ? params[id].split(',')*.toLong() : params.list(id)
+            List<Feature> features = ids ? Feature.getAll(ids) : null
             if (features) {
                 try {
                     c.call features
@@ -775,7 +776,8 @@ class IcescrumCoreGrailsPlugin {
         }
 
         source.metaClass.withActors = { String id = 'id', Closure c ->
-            List<Actor> actors = Actor.getAll(params.list(id))
+            def ids = params[id]?.contains(',') ? params[id].split(',')*.toLong() : params.list(id)
+            List<Actor> actors = ids ? Actor.getAll(ids) : null
             if (actors) {
                 try {
                     c.call actors

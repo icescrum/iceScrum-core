@@ -203,7 +203,7 @@ class StoryService extends IceScrumEventPublisher {
 
         if (story.state <= Story.STATE_SUGGESTED && story.rank != 0) {
             story.rank = 0
-        } else if (props.rank != null) {
+        } else if (props.rank != null && props.rank != story.rank) {
             rank(story, props.rank)
         }
 
