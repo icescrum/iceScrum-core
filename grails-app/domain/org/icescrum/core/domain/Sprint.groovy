@@ -267,7 +267,7 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
             return previousSprintSameRelease
         } else {
             def previousRelease = parentRelease.previousRelease
-            Sprint.findByParentReleaseAndOrderNumber(previousRelease, previousRelease.sprints.size())
+            Sprint.findByParentReleaseAndOrderNumber(previousRelease, previousRelease?.sprints?.size())
         }
     }
 
