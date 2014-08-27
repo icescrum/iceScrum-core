@@ -26,7 +26,7 @@
     <div class="clearfix">
 </g:if>
     %{-- Content --}%
-    <div id="window-content-${id}" class="window-content ${right != null ? 'col-md-7 col-lg-8' : ''} scrollable">
+    <div id="window-content-${id}" class="window-content ${right != null ? 'with-right' : ''}">
     <g:if test="${toolbar != false && right != null}">
         <nav fixed="#window-content-${id}" class="navbar navbar-toolbar navbar-default" role="navigation">
             <div class="container-fluid">
@@ -41,7 +41,7 @@
         </div>
     </div>
     <g:if test="${right}">
-        <div id="right" class="col-md-5 col-lg-4 scrollable well">
+        <div id="right">
             <div id="contextual-properties" ui-view>
             </div>
         </div>
