@@ -67,7 +67,7 @@ class NotificationEmailService {
                     break
                 case IceScrumEventType.DELETE:
                     if (dirtyProperties.containsKey('newObject')) {
-                        sendAlertAcceptedAs(dirtyProperties.newObject, user, )
+                        sendAlertAcceptedAs(dirtyProperties.followers, dirtyProperties.newObject, user)
                     } else {
                         sendAlertCUD(dirtyProperties, user, type)
                     }
@@ -219,14 +219,14 @@ class NotificationEmailService {
         }
     }
 
-    private void sendAlertAcceptedAs(BacklogElement element, User user) {
+    private void sendAlertAcceptedAs(Collection<User> followers, BacklogElement element, User user) {
         if (!ApplicationSupport.booleanValue(grailsApplication.config.icescrum.alerts.enable)) {
             return
         }
         def product = element instanceof Feature ? element.backlog : element.backlog.parentRelease.parentProduct
         def subjectArgs = [product.name, element.name]
         def projectLink = grailsApplication.config.grails.serverURL + '/p/' + product.pkey + '#project'
-        def listTo = receiversByLocale(element.followers, user.id)
+        def listTo = receiversByLocale(followers, user.id)
         listTo?.each { locale, group ->
             def acceptedAs = getMessage(element instanceof Feature ? 'is.feature' : 'is.task', (Locale) locale)
             subjectArgs << acceptedAs
