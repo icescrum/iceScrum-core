@@ -23,7 +23,7 @@
      data-is-closeable="${windowActions?.closeable?:false}"
      data-is-resizable-options='${resizable ? resizable as JSON :false}'>
     <g:if test="${windowActions?.windowable}">
-        <a href="#${id}" class="hidden sidebar-button text-right" title="${title}" data-toggle="tooltip" data-placement="right" data-container="body">
+        <a href="#${id}" class="hidden sidebar-button text-right" tooltip="${title}" tooltip-placement="right" tooltip-append-to-body="true">
             <span class="text-warning ${icon}"></span>
             <g:if test="${tplBadge}">
                 <br/>
