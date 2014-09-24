@@ -747,6 +747,7 @@ class StoryService {
         return acceptToUrgentTask([story])
     }
 
+    @Transactional
     @PreAuthorize('productOwner(#stories[0].backlog) and !archivedProduct(#stories[0].backlog)')
     def acceptToUrgentTask(List<Story> stories) {
         def tasks = []

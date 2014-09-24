@@ -91,22 +91,19 @@ class User implements Serializable, Attachmentable {
                         "WHERE t.id = :t) ", [uid: SCH.context.authentication.principal?.id, t: id, term: "%$term%"], params ?: [:])
     }
 
-    static namedQueries = {
-
-        findUsersLike {term, excludeCurrentUser = true ->
-        if (excludeCurrentUser) {
-            ne('id', SCH.context.authentication.principal?.id)
-        }
-            or {
-                ilike("username", "%$term%")
-                ilike("lastName", "%$term%")
-                ilike("firstName", "%$term%")
-                maxResults(8)
-                order("username", "asc")
-            }
-        }
+    static findUsersLike(exCurrentUser, term, params){
+        executeQuery("SELECT DISTINCT u " +
+                "FROM org.icescrum.core.domain.User as u " +
+                "WHERE ${exCurrentUser ? 'u.id != '+SCH.context.authentication.principal?.id+' and ' : ''}" +
+                "( lower(u.email) like lower(:term) " +
+                "or lower(u.username) like lower(:term) " +
+                "or lower(u.firstName) like lower(:term) " +
+                "or lower(u.lastName) like lower(:term) " +
+                "or lower(concat(u.firstName,' ', u.lastName)) like lower(:term)" +
+                "or lower(concat(u.lastName,' ', u.firstName)) like lower(:term)) " +
+                "ORDER BY u.username ASC",
+                [term: "%$term%"], params ?: [:])
     }
-
 
     Set<Authority> getAuthorities() {
         UserAuthority.findAllByUser(this).collect { it.authority } as Set

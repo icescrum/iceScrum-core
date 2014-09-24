@@ -74,7 +74,7 @@ class ProductService {
                     addRole(product, null, productOwner, Authority.PRODUCTOWNER)
             }
         }
-        if (stakeHolders){
+        if (stakeHolders && product.preferences.hidden){
             for(stakeHolder in User.getAll(stakeHolders*.toLong())){
                 if (stakeHolder)
                     addRole(product, null, stakeHolder, Authority.STAKEHOLDER)
