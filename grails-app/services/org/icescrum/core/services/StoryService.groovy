@@ -61,31 +61,26 @@ class StoryService extends IceScrumEventPublisher {
 
     @PreAuthorize('!archivedProduct(#product)')
     void save(Story story, Product product, User user) {
-
         if (!story.effort) {
             story.effort = null
         }
-
         story.backlog = product
         story.creator = user
-
         manageActors(story, product)
-
         story.uid = Story.findNextUId(product.id)
-        if(!story.suggestedDate) {
+        if (!story.suggestedDate) {
             story.suggestedDate = new Date()
         }
-
         if (story.effort > 0) {
             story.state = Story.STATE_ESTIMATED
-            if(!story.estimatedDate)
+            if (!story.estimatedDate) {
                 story.estimatedDate = new Date()
+            }
         } else if (story.acceptedDate) {
             story.state = Story.STATE_ACCEPTED
         } else {
             story.state = Story.STATE_SUGGESTED
         }
-
         story.affectVersion = (story.type == Story.TYPE_DEFECT ? story.affectVersion : null)
         story.addToFollowers(user)
         product.allUsers.findAll {
@@ -93,7 +88,8 @@ class StoryService extends IceScrumEventPublisher {
         }.each {
             story.addToFollowers(user)
         }
-        if (story.save()) {
+        if (story.save(flush: true)) {
+            story.refresh() // required to initialize collections to empty list
             product.addToStories(story)
             publishSynchronousEvent(IceScrumEventType.CREATE, story)
         } else {
@@ -566,7 +562,9 @@ class StoryService extends IceScrumEventPublisher {
                 throw new IllegalStateException('is.story.error.not.state.suggested')
 
             User user = (User) springSecurityService.currentUser
-            def feature = new Feature(story.properties)
+            def storyProperties = [:] << story.properties
+            storyProperties.remove('type')
+            def feature = new Feature(storyProperties)
             feature.description = (feature.description ?: '')
             feature.validate()
             def i = 1

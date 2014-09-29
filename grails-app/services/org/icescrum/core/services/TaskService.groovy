@@ -57,6 +57,7 @@ class TaskService extends IceScrumEventPublisher {
         if (product.preferences.assignOnCreateTask) {
             task.responsible = user
         }
+        task.parentProduct = product
         task.creator = user
         task.rank = Task.countByParentStoryAndType(task.parentStory, task.type) + 1
         task.uid = Task.findNextUId(product.id)
@@ -82,7 +83,7 @@ class TaskService extends IceScrumEventPublisher {
         if (sprint?.state == Sprint.STATE_DONE) {
             throw new IllegalStateException('is.sprint.error.state.not.inProgress')
         }
-        Product product = sprint ? sprint.parentProduct : (Product) task.parentStory.backlog
+        Product product = task.parentProduct
         if (task.type == Task.TYPE_URGENT
                 && task.state == Task.STATE_BUSY
                 && product.preferences.limitUrgentTasks != 0
@@ -97,7 +98,7 @@ class TaskService extends IceScrumEventPublisher {
                     task.blocked = false
                 }
                 if (task.state == Task.STATE_DONE) {
-                    done(task, user, product)
+                    done(task, user)
                 } else if (task.doneDate) {
                     def story = task.type ? null : Story.get(task.parentStory?.id)
                     if (story && story.state == Story.STATE_DONE) {
@@ -112,7 +113,7 @@ class TaskService extends IceScrumEventPublisher {
                         task.responsible = user
                     }
                     task.state = Task.STATE_DONE
-                    done(task, user, product)
+                    done(task, user)
                 }
                 if (task.state < Task.STATE_BUSY && task.inProgressDate) {
                     task.inProgressDate = null
@@ -134,12 +135,12 @@ class TaskService extends IceScrumEventPublisher {
         publishSynchronousEvent(IceScrumEventType.UPDATE, task, dirtyProperties)
     }
 
-    private done(Task task, User user, Product product) {
+    private done(Task task, User user) {
         task.estimation = 0
         task.blocked = false
         task.doneDate = new Date()
         def story = task.type ? null : Story.get(task.parentStory?.id)
-        if (story && product.preferences.autoDoneStory && !story.tasks.any { it.state != Task.STATE_DONE } && story.state != Story.STATE_DONE) {
+        if (story && task.parentProduct.preferences.autoDoneStory && !story.tasks.any { it.state != Task.STATE_DONE } && story.state != Story.STATE_DONE) {
             ApplicationContext ctx = (ApplicationContext) ApplicationHolder.getApplication().getMainContext();
             StoryService service = (StoryService) ctx.getBean("storyService");
             service.done(story)
@@ -152,9 +153,8 @@ class TaskService extends IceScrumEventPublisher {
     @PreAuthorize('inProduct(#task.parentProduct) and !archivedProduct(#task.parentProduct)')
     void delete(Task task, User user) {
         def sprint = task.sprint
-        Product product = sprint ? sprint.parentProduct : (Product) task.parentStory.backlog
         boolean scrumMaster = securityService.scrumMaster(null, springSecurityService.authentication)
-        boolean productOwner = securityService.productOwner(product, springSecurityService.authentication)
+        boolean productOwner = securityService.productOwner(task.parentProduct, springSecurityService.authentication)
         if (task.state == Task.STATE_DONE && !scrumMaster && !productOwner) {
             throw new IllegalStateException('is.task.error.delete.not.scrumMaster')
         }
@@ -219,7 +219,7 @@ class TaskService extends IceScrumEventPublisher {
     }
 
     private void state(Task task, Integer newState, User user) {
-        def product = task.parentStory ? task.parentStory.backlog : task.sprint.parentRelease.parentProduct
+        def product = task.parentProduct
         if (task.sprint?.state != Sprint.STATE_INPROGRESS && newState >= Task.STATE_BUSY) {
             throw new IllegalStateException('is.sprint.error.state.not.inProgress')
         }

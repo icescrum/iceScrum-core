@@ -61,23 +61,14 @@ class ScrumTagLib {
     def avatar = { attrs, body ->
         def user = attrs.user ?: springSecurityService.currentUser ?: null
         def defaultAvatar = createLink(uri: '/images/avatars/avatar.png')
-        //user is logged try to determine custom avatar
         if (user){
             def avatar = new File(grailsApplication.config.icescrum.images.users.dir + user.id + '.png')
-            //custom avatar exist return it
             if (avatar.exists()) {
                 return createLink(controller: 'user', action: 'avatar', id: user.id) + (attrs.nocache ? '?nocache=' + new Date().getTime() : '')
-            }
-            //gravatar is enable ? try to get custom avatar from there
-            else if (ApplicationSupport.booleanValue(grailsApplication.config.icescrum.gravatar?.enable)){
-                def hash = attrs.user.email.encodeAsMD5()
-                def gravatarBaseUrl =  ApplicationSupport.booleanValue(grailsApplication.config.icescrum.gravatar?.secure)  ? "https://secure.gravatar.com/avatar/" : "http://gravatar.com/avatar/"
-                gravatarUrl = "$gravatarBaseUrl$hash"
-                gravatarUrl += dgu.matches(/404|mm|identicon|monsterid|wavatar|retro|http.*/) ? "?d=${defaultAvatar}&s=40" : ''
-                return gravatarUrl
+            } else if (ApplicationSupport.booleanValue(grailsApplication.config.icescrum.gravatar?.enable)){
+                return "https://secure.gravatar.com/avatar/" + user.email.encodeAsMD5()
             }
         }
-        //other case default avatar
         return defaultAvatar
     }
     //end new tags

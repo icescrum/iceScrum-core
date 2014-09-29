@@ -18,6 +18,7 @@
  * Authors:
  *
  * Vincent Barrier (vbarrier@kagilum.com)
+ * Nicolas Noullet (nnoullet@kagilum.com)
  */
 package org.icescrum.core.utils
 
@@ -159,11 +160,14 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
                             if (referenceObject instanceof Collection) {
                                 Collection o = (Collection) referenceObject
                                 writer.key(property.getName()+"_count").value(o.size())
-                                /*writer.array()
+                                writer.key(property.getName())
+                                writer.array()
                                 for (Object el: o) {
-                                    asShortObject(el, json, referencedIdProperty, referencedDomainClass)
+                                    writer.object()
+                                    writer.key("id").value(extractValue(el, referencedIdProperty))
+                                    writer.endObject()
                                 }
-                                writer.endArray()*/
+                                writer.endArray()
                             }
                             else if (referenceObject instanceof Map) {
                                 writer.key(property.getName())

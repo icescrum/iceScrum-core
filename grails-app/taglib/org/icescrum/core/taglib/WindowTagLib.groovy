@@ -176,8 +176,10 @@ class WindowTagLib {
 
     def modal = { attrs, body ->
         out << """<div class="modal-content ${attrs['class']}">"""
+        def name = attrs.name ? "name='$attrs.name'" : ''
+        def validation = attrs.validate ? 'show-validation' : ''
         if (attrs.form){
-            out << "<form role='form' ng-submit='${attrs.form}' ${attrs.autoFillFix?'form-autofill-fix':''}>"
+            out << "<form role='form' no-validation $validation $name ng-submit='${attrs.form}' ${attrs.autoFillFix?'form-autofill-fix':''}>"
         }
         out << """  <div class="modal-header">
                         <button type="button" class="close" ng-click="\$dismiss()" aria-hidden="true">&times;</button>

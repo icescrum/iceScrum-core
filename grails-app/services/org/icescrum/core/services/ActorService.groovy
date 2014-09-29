@@ -18,6 +18,7 @@
  * Authors:
  *
  * Vincent Barrier (vbarrier@kagilum.com)
+ * Nicolas Noullet (nnoullet@kagilum.com)
  * Stéphane Maldini (stephane.maldini@icescrum.com)
  * Manuarii Stein (manuarii.stein@icescrum.com)
  */
@@ -47,6 +48,7 @@ class ActorService extends IceScrumEventPublisher {
         if (!actor.save(flush: true)) {
             throw new RuntimeException()
         }
+        actor.refresh() // required to initialize collections to empty list
         publishSynchronousEvent(IceScrumEventType.CREATE, actor)
     }
 

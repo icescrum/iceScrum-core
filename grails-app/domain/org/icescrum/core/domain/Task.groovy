@@ -39,7 +39,7 @@ class Task extends BacklogElement implements Serializable {
     static final int TYPE_URGENT = 11
 
     String color = "yellow"
-	
+
     Integer type
     Float estimation
     Float initial
@@ -55,12 +55,13 @@ class Task extends BacklogElement implements Serializable {
             creator: User,
             responsible: User,
             parentStory: Story,
+            parentProduct: Product,
             impediment: Impediment
     ]
 
     static hasMany = [participants: User]
 
-    static transients = ['sprint', 'parentProduct']
+    static transients = ['sprint']
 
     static mapping = {
         cache true
@@ -82,6 +83,7 @@ class Task extends BacklogElement implements Serializable {
         name unique: 'parentStory'
         responsible nullable: true
         parentStory nullable: true, validator: { newParentStory, task -> newParentStory == null || newParentStory.parentSprint == task.backlog }
+        parentProduct validator: { newParentProduct, task -> newParentProduct == task.backlog?.parentProduct || newParentProduct == task.parentStory?.backlog }
         inProgressDate nullable: true
     }
 
@@ -202,7 +204,7 @@ class Task extends BacklogElement implements Serializable {
                 eq 'id', s
             }
             responsible {
-                    eq 'id', u
+                eq 'id', u
             }
         }
 
@@ -233,151 +235,56 @@ class Task extends BacklogElement implements Serializable {
     }
 
     static Task getInProduct(Long pid, Long id) {
-        executeQuery(
-                """SELECT DISTINCT t
-                   FROM org.icescrum.core.domain.Task as t, org.icescrum.core.domain.Sprint as s, org.icescrum.core.domain.Story as st, org.icescrum.core.domain.Release as r
-                   WHERE
-                   (
-                        (
-                            t.backlog = s
-                            AND s.parentRelease = r
-                            AND r.parentProduct.id = :pid
-                        )
-                        OR (
-                            t.parentStory = st
-                            AND st.backlog.id = :pid
-                        )
-                   )
-                   AND t.id IN (:id) """, [pid: pid, id:id], [max:1])[0]
+        executeQuery("""SELECT t
+                        FROM org.icescrum.core.domain.Task as t
+                        WHERE t.parentProduct.id = :pid
+                        AND t.id = :id""", [pid: pid, id:id], [max:1])[0]
     }
 
     static Task getInProductByUid(Long pid, int uid) {
-        executeQuery(
-                """SELECT DISTINCT t
-                   FROM org.icescrum.core.domain.Task as t, org.icescrum.core.domain.Sprint as s, org.icescrum.core.domain.Story as st, org.icescrum.core.domain.Release as r
-                   WHERE
-                   (
-                        (
-                            t.backlog = s
-                            AND s.parentRelease = r
-                            AND r.parentProduct.id = :pid
-                        )
-                        OR (
-                            t.parentStory = st
-                            AND st.backlog.id = :pid
-                        )
-                   )
-                   AND t.uid IN (:uid) """, [pid: pid, uid:uid], [max:1])[0]
+        executeQuery("""SELECT t
+                        FROM org.icescrum.core.domain.Task as t
+                        WHERE t.parentProduct.id = :pid
+                        AND t.uid = :uid""", [pid: pid, uid:uid], [max:1])[0]
     }
 
     static List<Task> getAllInProduct(Long pid, List id) {
-        executeQuery(
-                """SELECT DISTINCT t
-                   FROM org.icescrum.core.domain.Task as t, org.icescrum.core.domain.Sprint as s, org.icescrum.core.domain.Story as st, org.icescrum.core.domain.Release as r
-                   WHERE
-                   (
-                        (
-                            t.backlog = s
-                            AND s.parentRelease = r
-                            AND r.parentProduct.id = :pid
-                        )
-                        OR (
-                            t.parentStory = st
-                            AND st.backlog.id = :pid
-                        )
-                   )
-                   AND t.id IN (:id) """, [pid: pid, id:id])
+        executeQuery("""SELECT t
+                        FROM org.icescrum.core.domain.Task as t
+                        WHERE t.parentProduct.id = :pid
+                        AND t.id IN (:id) """, [pid: pid, id:id])
     }
 
     static List<Task> getAllInProductUID(Long pid, List uid) {
-        executeQuery(
-                """SELECT DISTINCT t
-                   FROM org.icescrum.core.domain.Task as t, org.icescrum.core.domain.Sprint as s, org.icescrum.core.domain.Story as st, org.icescrum.core.domain.Release as r
-                   WHERE
-                   (
-                        (
-                            t.backlog = s
-                            AND s.parentRelease = r
-                            AND r.parentProduct.id = :pid
-                        )
-                        OR (
-                            t.parentStory = st
-                            AND st.backlog.id = :pid
-                        )
-                   )
-                   AND t.uid IN (:uid) """, [pid: pid, uid:uid])
+        executeQuery("""SELECT t
+                        FROM org.icescrum.core.domain.Task as t
+                        WHERE t.parentProduct.id = :pid
+                        AND t.uid IN (:uid)""", [pid: pid, uid:uid])
     }
 
     static List<Task> getAllInProduct(Long pid) {
-        executeQuery(
-                """SELECT DISTINCT t
-                   FROM org.icescrum.core.domain.Task as t, org.icescrum.core.domain.Sprint as s, org.icescrum.core.domain.Story as st, org.icescrum.core.domain.Release as r
-                   WHERE
-                   (
-                        (
-                            t.backlog = s
-                            AND s.parentRelease = r
-                            AND r.parentProduct.id = :pid
-                        )
-                        OR (
-                            t.parentStory = st
-                            AND st.backlog.id = :pid
-                        )
-                   ) """, [pid: pid])
+        executeQuery("""SELECT t
+                        FROM org.icescrum.core.domain.Task as t
+                        WHERE t.parentProduct.id = :pid""", [pid: pid])
     }
 
     static List<User> getAllCreatorsInProduct(Long pid) {
-        User.executeQuery(
-                """SELECT DISTINCT t.creator
-                   FROM org.icescrum.core.domain.Task as t, org.icescrum.core.domain.Sprint as s, org.icescrum.core.domain.Story as st, org.icescrum.core.domain.Release as r
-                   WHERE
-                   (
-                        (
-                            t.backlog = s
-                            AND s.parentRelease = r
-                            AND r.parentProduct.id = :pid
-                        )
-                        OR (
-                            t.parentStory = st
-                            AND st.backlog.id = :pid
-                        )
-                   ) """, [pid: pid])
+        User.executeQuery("""SELECT DISTINCT t.creator
+                             FROM org.icescrum.core.domain.Task as t
+                             WHERE t.parentProduct.id = :pid""", [pid: pid])
     }
 
     static List<User> getAllResponsiblesInProduct(Long pid) {
-        User.executeQuery(
-                """SELECT DISTINCT t.responsible
-                   FROM org.icescrum.core.domain.Task as t, org.icescrum.core.domain.Sprint as s, org.icescrum.core.domain.Story as st, org.icescrum.core.domain.Release as r
-                   WHERE
-                   (
-                        (
-                            t.backlog = s
-                            AND s.parentRelease = r
-                            AND r.parentProduct.id = :pid
-                        )
-                        OR (
-                            t.parentStory = st
-                            AND st.backlog.id = :pid
-                        )
-                   ) """, [pid: pid])
+        User.executeQuery("""SELECT DISTINCT t.responsible
+                             FROM org.icescrum.core.domain.Task as t
+                             WHERE t.parentProduct.id = :pid""", [pid: pid])
     }
 
     static int findNextUId(Long pid) {
         (executeQuery(
                 """SELECT MAX(t.uid)
-                   FROM org.icescrum.core.domain.Task as t, org.icescrum.core.domain.Sprint as s, org.icescrum.core.domain.Story as st, org.icescrum.core.domain.Release as r
-                   WHERE
-                   (
-                        (
-                            t.backlog = s
-                            AND s.parentRelease = r
-                            AND r.parentProduct.id = :pid
-                        )
-                        OR (
-                            t.parentStory = st
-                            AND st.backlog.id = :pid
-                        )
-                   ) """, [pid: pid])[0]?:0) + 1
+                   FROM org.icescrum.core.domain.Task as t
+                   WHERE t.parentProduct.id = :pid""", [pid: pid])[0]?:0) + 1
     }
 
     static findLastUpdatedComment(def element) {
@@ -424,10 +331,6 @@ class Task extends BacklogElement implements Serializable {
         if (this.getBacklog()?.id)
             return (Sprint)this.getBacklog()
         return null
-    }
-
-    Product getParentProduct(){
-        return this.sprint?.parentProduct
     }
 
     static search(product, options){

@@ -18,6 +18,7 @@
  * Authors:
  *
  * Vincent Barrier (vbarrier@kagilum.com)
+ * Nicolas Noullet (nnoullet@kagilum.com)
  * Stéphane Maldini (stephane.maldini@icescrum.com)
  */
 
@@ -164,7 +165,7 @@ class DummyPopulator {
             product.stories.findAll { it.state < Story.STATE_PLANNED }.eachWithIndex { Story story, int i ->
                 if (i % 4 == 0) {
                     (i % 7).times {
-                        story.addToTasks(new Task(uid: nextTaskUid, type: null, estimation: 3, name: "task ${it} story : ${story.id}", creator: usera, responsible: usera, parentStory: story, creationDate: new Date()))
+                        story.addToTasks(new Task(parentProduct: product, uid: nextTaskUid, type: null, estimation: 3, name: "task ${it} story : ${story.id}", creator: usera, responsible: usera, parentStory: story, creationDate: new Date()))
                     }
                     story.save()
                 }
@@ -172,18 +173,18 @@ class DummyPopulator {
             release1.sprints.findAll { it.orderNumber < 8 }.each { sprint ->
                 sprint.stories.each { story ->
                     (sprint.orderNumber - 1).times {
-                        def task = new Task(uid: nextTaskUid, rank: it + 1, type: null, estimation: 3, name: "task ${it} story : ${story.id}", creator: usera, responsible: usera, parentStory: story, backlog: sprint, creationDate: new Date())
+                        def task = new Task(parentProduct: product, uid: nextTaskUid, rank: it + 1, type: null, estimation: 3, name: "task ${it} story : ${story.id}", creator: usera, responsible: usera, parentStory: story, backlog: sprint, creationDate: new Date())
                         story.addToTasks(task)
                         sprint.addToTasks(task)
                         nextTaskUid++
                     }
                 }
                 20.times {
-                    def task = new Task(uid: nextTaskUid, type: Task.TYPE_RECURRENT, estimation: 5, name: "task recurrent ${it} ${sprint.id}", creator: usera, responsible: usera, parentStory: null, backlog: sprint, creationDate: new Date())
+                    def task = new Task(parentProduct: product, uid: nextTaskUid, type: Task.TYPE_RECURRENT, estimation: 5, name: "task recurrent ${it} ${sprint.id}", creator: usera, responsible: usera, parentStory: null, backlog: sprint, creationDate: new Date())
                     sprint.addToTasks(task)
                     task.save()
                     nextTaskUid++
-                    def task2 = new Task(uid: nextTaskUid, type: Task.TYPE_URGENT, estimation: 4, name: "task urgent ${it} ${sprint.id}", creator: usera, responsible: usera, parentStory: null, backlog: sprint, creationDate: new Date())
+                    def task2 = new Task(parentProduct: product, uid: nextTaskUid, type: Task.TYPE_URGENT, estimation: 4, name: "task urgent ${it} ${sprint.id}", creator: usera, responsible: usera, parentStory: null, backlog: sprint, creationDate: new Date())
                     sprint.addToTasks(task2)
                     task2.save()
                     nextTaskUid++

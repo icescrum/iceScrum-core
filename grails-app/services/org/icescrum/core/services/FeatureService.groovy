@@ -55,9 +55,10 @@ class FeatureService extends IceScrumEventPublisher {
         feature.uid = Feature.findNextUId(product.id)
         feature.backlog = product
         product.addToFeatures(feature)
-        if (!feature.save()) {
+        if (!feature.save(flush: true)) {
             throw new RuntimeException()
         }
+        feature.refresh() // required to initialize collections to empty list
         publishSynchronousEvent(IceScrumEventType.CREATE, feature)
     }
 

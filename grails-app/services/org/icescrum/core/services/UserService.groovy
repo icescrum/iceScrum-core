@@ -57,7 +57,7 @@ class UserService extends IceScrumEventPublisher {
         if (props.pwd){
             user.password = springSecurityService.encodePassword(props.pwd)
         }
-        if (props.preferences){
+        if (props.emailsSettings){
             user.preferences.emailsSettings = props.emailsSettings
         }
         try {
