@@ -27,10 +27,10 @@ import org.springframework.web.context.request.RequestContextHolder as RCH
 
 import grails.plugin.springcache.key.CacheKeyBuilder
 import org.codehaus.groovy.grails.orm.hibernate.cfg.GrailsHibernateUtil
-import org.codehaus.groovy.grails.plugins.springsecurity.SpringSecurityUtils
-import org.codehaus.groovy.grails.plugins.springsecurity.acl.AclClass
-import org.codehaus.groovy.grails.plugins.springsecurity.acl.AclObjectIdentity
-import org.codehaus.groovy.grails.plugins.springsecurity.acl.AclSid
+import grails.plugin.springsecurity.SpringSecurityUtils
+import grails.plugin.springsecurity.acl.AclClass
+import grails.plugin.springsecurity.acl.AclObjectIdentity
+import grails.plugin.springsecurity.acl.AclSid
 import org.icescrum.core.domain.Product
 import org.icescrum.core.domain.Team
 import org.icescrum.core.domain.User

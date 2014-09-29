@@ -32,8 +32,6 @@ import java.sql.Timestamp
 
 class Release extends TimeBox implements Cloneable, Attachmentable {
 
-    static final long serialVersionUID = -8505932836642777504L
-
     static final int STATE_WAIT = 1
     static final int STATE_INPROGRESS = 2
     static final int STATE_DONE = 3

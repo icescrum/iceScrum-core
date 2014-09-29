@@ -25,13 +25,13 @@
 package org.icescrum.core.security;
 
 
-import org.codehaus.groovy.grails.plugins.springsecurity.GormUserDetailsService
+import grails.plugin.springsecurity.userdetails.GormUserDetailsService
 
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.security.core.userdetails.UsernameNotFoundException
 import org.springframework.security.core.GrantedAuthority
 
-import org.codehaus.groovy.grails.plugins.springsecurity.SpringSecurityUtils
+import grails.plugin.springsecurity.SpringSecurityUtils
 import org.springframework.security.core.authority.GrantedAuthorityImpl
 import org.icescrum.core.domain.security.Authority
 

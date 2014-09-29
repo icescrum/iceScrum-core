@@ -44,7 +44,7 @@ import org.icescrum.core.domain.Story
 import org.icescrum.core.domain.Task
 import org.icescrum.core.domain.Team
 import org.icescrum.core.domain.User
-import org.codehaus.groovy.grails.plugins.springsecurity.GrailsUser
+import grails.plugin.springsecurity.userdetails.GrailsUser
 import org.icescrum.core.domain.Actor
 
 class DummyPopulator {

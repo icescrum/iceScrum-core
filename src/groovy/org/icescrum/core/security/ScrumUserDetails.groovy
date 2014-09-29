@@ -22,7 +22,7 @@
 
 package org.icescrum.core.security
 
-import org.codehaus.groovy.grails.plugins.springsecurity.GrailsUser
+import grails.plugin.springsecurity.userdetails.GrailsUser
 import org.springframework.security.core.GrantedAuthority
 
 class ScrumUserDetails extends GrailsUser {

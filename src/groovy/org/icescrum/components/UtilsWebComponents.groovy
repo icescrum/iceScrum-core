@@ -22,7 +22,7 @@
  */
 
 package org.icescrum.components
-import org.codehaus.groovy.grails.plugins.springsecurity.SpringSecurityUtils
+import grails.plugin.springsecurity.SpringSecurityUtils
 
 public final class UtilsWebComponents {
   /**
@@ -33,7 +33,7 @@ public final class UtilsWebComponents {
    * @return
    */
   final static IS_ALLOWED = {true}
-  final static sec = new grails.plugins.springsecurity.SecurityTagLib()
+  final static sec = new grails.plugin.springsecurity.SecurityTagLib()
 
 
   public static boolean rendered(attrs) {

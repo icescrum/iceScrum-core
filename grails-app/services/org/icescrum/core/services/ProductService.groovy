@@ -36,7 +36,7 @@ import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.transaction.annotation.Transactional
 import org.icescrum.core.domain.*
 import org.icescrum.core.support.ApplicationSupport
-import org.codehaus.groovy.grails.plugins.springsecurity.SpringSecurityUtils
+import grails.plugin.springsecurity.SpringSecurityUtils
 import org.icescrum.core.domain.preferences.UserPreferences
 
 import org.icescrum.core.event.IceScrumUserEvent

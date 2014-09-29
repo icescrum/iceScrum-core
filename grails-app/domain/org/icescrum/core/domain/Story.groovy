@@ -25,7 +25,7 @@
 
 package org.icescrum.core.domain
 
-import grails.plugins.springsecurity.SpringSecurityService
+import grails.plugin.springsecurity.SpringSecurityService
 import grails.util.GrailsNameUtils
 import org.codehaus.groovy.grails.commons.ApplicationHolder
 import org.icescrum.core.domain.AcceptanceTest.AcceptanceTestState

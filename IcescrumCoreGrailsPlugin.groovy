@@ -76,7 +76,7 @@ import org.springframework.transaction.support.TransactionCallback
 import org.springframework.transaction.support.TransactionTemplate
 import org.springframework.web.context.request.RequestContextHolder
 import org.springframework.web.servlet.support.RequestContextUtils as RCU
-import grails.plugins.springsecurity.SpringSecurityService
+import grails.plugin.springsecurity.SpringSecurityService
 import org.codehaus.groovy.grails.plugins.jasper.JasperService
 import org.icescrum.core.support.ProgressSupport
 import org.icescrum.core.services.UiDefinitionService

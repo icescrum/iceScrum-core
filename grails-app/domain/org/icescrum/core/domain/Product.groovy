@@ -33,13 +33,11 @@ import org.icescrum.plugins.attachmentable.interfaces.Attachmentable
 import org.springframework.security.acls.model.NotFoundException
 import org.springframework.security.core.context.SecurityContextHolder as SCH
 import org.codehaus.groovy.grails.commons.ApplicationHolder
-import org.grails.plugins.springsecurity.service.acl.AclUtilService
+import grails.plugin.springsecurity.acl.AclUtilService
 import org.springframework.security.acls.domain.BasePermission
 import org.springframework.security.acls.model.Acl
 
 class Product extends TimeBox implements Serializable, Attachmentable {
-
-    static final long serialVersionUID = -8854429090297032383L
 
     int planningPokerGameType = PlanningPokerGame.FIBO_SUITE
     String name = ""
@@ -181,10 +179,10 @@ class Product extends TimeBox implements Serializable, Attachmentable {
 
                 + "( p IN ( SELECT DISTINCT p "+
                 "From org.icescrum.core.domain.Product as p, "+
-                "org.codehaus.groovy.grails.plugins.springsecurity.acl.AclClass as ac, "+
-                "org.codehaus.groovy.grails.plugins.springsecurity.acl.AclObjectIdentity as ai, "+
-                "org.codehaus.groovy.grails.plugins.springsecurity.acl.AclSid as acl, "+
-                "org.codehaus.groovy.grails.plugins.springsecurity.acl.AclEntry as ae "+
+                "grails.plugin.springsecurity.acl.AclClass as ac, "+
+                "grails.plugin.springsecurity.acl.AclObjectIdentity as ai, "+
+                "grails.plugin.springsecurity.acl.AclSid as acl, "+
+                "grails.plugin.springsecurity.acl.AclEntry as ae "+
                 "where "+
                 "ac.className = 'org.icescrum.core.domain.Product' "+
                 "AND ai.aclClass = ac.id "+
@@ -210,10 +208,10 @@ class Product extends TimeBox implements Serializable, Attachmentable {
                         "WHERE m.id = :uid) ) )" +
                         "or ( p.name LIKE :term AND p.id IN ( SELECT DISTINCT p.id "+
                         "From org.icescrum.core.domain.Product as p, "+
-                        "org.codehaus.groovy.grails.plugins.springsecurity.acl.AclClass as ac, "+
-                        "org.codehaus.groovy.grails.plugins.springsecurity.acl.AclObjectIdentity as ai, "+
-                        "org.codehaus.groovy.grails.plugins.springsecurity.acl.AclSid as acl, "+
-                        "org.codehaus.groovy.grails.plugins.springsecurity.acl.AclEntry as ae "+
+                        "grails.plugin.springsecurity.acl.AclClass as ac, "+
+                        "grails.plugin.springsecurity.acl.AclObjectIdentity as ai, "+
+                        "grails.plugin.springsecurity.acl.AclSid as acl, "+
+                        "grails.plugin.springsecurity.acl.AclEntry as ae "+
                         "where "+
                         "ac.className = 'org.icescrum.core.domain.Product' "+
                         "AND ai.aclClass = ac.id "+
@@ -239,10 +237,10 @@ class Product extends TimeBox implements Serializable, Attachmentable {
                         "WHERE m.id = :uid) ) )" +
                         "or ( p.name LIKE :term AND p.id IN ( SELECT DISTINCT p.id "+
                         "From org.icescrum.core.domain.Product as p, "+
-                        "org.codehaus.groovy.grails.plugins.springsecurity.acl.AclClass as ac, "+
-                        "org.codehaus.groovy.grails.plugins.springsecurity.acl.AclObjectIdentity as ai, "+
-                        "org.codehaus.groovy.grails.plugins.springsecurity.acl.AclSid as acl, "+
-                        "org.codehaus.groovy.grails.plugins.springsecurity.acl.AclEntry as ae "+
+                        "grails.plugin.springsecurity.acl.AclClass as ac, "+
+                        "grails.plugin.springsecurity.acl.AclObjectIdentity as ai, "+
+                        "grails.plugin.springsecurity.acl.AclSid as acl, "+
+                        "grails.plugin.springsecurity.acl.AclEntry as ae "+
                         "where "+
                         "ac.className = 'org.icescrum.core.domain.Product' "+
                         "AND ai.aclClass = ac.id "+

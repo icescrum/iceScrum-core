@@ -23,10 +23,10 @@
 package org.icescrum.core.support
 
 import org.springframework.security.core.context.SecurityContextHolder as SCH
-import org.codehaus.groovy.grails.plugins.springsecurity.SecurityRequestHolder as SRH
+import grails.plugin.springsecurity.web.SecurityRequestHolder as SRH
 
 import org.codehaus.groovy.grails.commons.ApplicationHolder
-import org.codehaus.groovy.grails.plugins.springsecurity.GrailsUser
+import grails.plugin.springsecurity.userdetails.GrailsUser
 import org.icescrum.core.domain.User
 import org.icescrum.core.domain.preferences.UserPreferences
 

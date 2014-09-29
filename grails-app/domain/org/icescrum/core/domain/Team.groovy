@@ -31,7 +31,7 @@ import org.icescrum.core.event.IceScrumEvent
 import org.springframework.security.acls.domain.BasePermission
 import org.springframework.security.core.context.SecurityContextHolder as SCH
 import org.codehaus.groovy.grails.commons.ApplicationHolder
-import org.grails.plugins.springsecurity.service.acl.AclUtilService
+import grails.plugin.springsecurity.acl.AclUtilService
 
 class Team implements Serializable, Comparable {
 
@@ -111,9 +111,9 @@ class Team implements Serializable, Comparable {
     static findAllByOwner(String user, params) {
         executeQuery("SELECT DISTINCT t "+
                         "From org.icescrum.core.domain.Team as t, "+
-                        "org.codehaus.groovy.grails.plugins.springsecurity.acl.AclClass as ac, "+
-                        "org.codehaus.groovy.grails.plugins.springsecurity.acl.AclObjectIdentity as ai, "+
-                        "org.codehaus.groovy.grails.plugins.springsecurity.acl.AclSid as acl "+
+                        "grails.plugin.springsecurity.acl.AclClass as ac, "+
+                        "grails.plugin.springsecurity.acl.AclObjectIdentity as ai, "+
+                        "grails.plugin.springsecurity.acl.AclSid as acl "+
                         "where "+
                         "ac.className = 'org.icescrum.core.domain.Team' "+
                         "AND ai.aclClass = ac.id "+
@@ -125,9 +125,9 @@ class Team implements Serializable, Comparable {
     static countByOwner(String user, params) {
         executeQuery("SELECT DISTINCT COUNT(t.id) "+
                         "From org.icescrum.core.domain.Team as t, "+
-                        "org.codehaus.groovy.grails.plugins.springsecurity.acl.AclClass as ac, "+
-                        "org.codehaus.groovy.grails.plugins.springsecurity.acl.AclObjectIdentity as ai, "+
-                        "org.codehaus.groovy.grails.plugins.springsecurity.acl.AclSid as acl "+
+                        "grails.plugin.springsecurity.acl.AclClass as ac, "+
+                        "grails.plugin.springsecurity.acl.AclObjectIdentity as ai, "+
+                        "grails.plugin.springsecurity.acl.AclSid as acl "+
                         "where "+
                         "ac.className = 'org.icescrum.core.domain.Team' "+
                         "AND ai.aclClass = ac.id "+
@@ -139,10 +139,10 @@ class Team implements Serializable, Comparable {
     static findAllByRole(String user, List<BasePermission> permission, params) {
         executeQuery("SELECT DISTINCT t "+
                         "From org.icescrum.core.domain.Team as t, "+
-                        "org.codehaus.groovy.grails.plugins.springsecurity.acl.AclClass as ac, "+
-                        "org.codehaus.groovy.grails.plugins.springsecurity.acl.AclObjectIdentity as ai, "+
-                        "org.codehaus.groovy.grails.plugins.springsecurity.acl.AclSid as acl, "+
-                        "org.codehaus.groovy.grails.plugins.springsecurity.acl.AclEntry as ae "+
+                        "grails.plugin.springsecurity.acl.AclClass as ac, "+
+                        "grails.plugin.springsecurity.acl.AclObjectIdentity as ai, "+
+                        "grails.plugin.springsecurity.acl.AclSid as acl, "+
+                        "grails.plugin.springsecurity.acl.AclEntry as ae "+
                         "where "+
                         "ac.className = 'org.icescrum.core.domain.Team' "+
                         "AND ai.aclClass = ac.id "+

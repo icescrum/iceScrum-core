@@ -60,28 +60,27 @@ grails.project.dependency.resolution = {
         compile('org.atmosphere:atmosphere-runtime:1.0.15'){
             excludes 'slf4j-api', 'atmosphere-ping'
         }
-        runtime('org.apache.geronimo.specs:geronimo-servlet_3.0_spec:1.0')
     }
 
     plugins {
-        compile 'spring:spring-security-core:1.2.7.3'
-        compile 'spring:spring-security-acl:1.1.1'
+        compile ':spring-security-core:2.0-RC4'
+        compile ':spring-security-acl:2.0-RC1'
         compile 'org.icescrum:fluxiable:0.3.2'
         compile 'org.icescrum:icescrum-attachmentable:0.4.8'
         compile 'org.icescrum:commentable:1.3'
-        compile ":hibernate:1.3.9"
         compile ':taggable:1.0.1'
-        compile ':autobase:1.0.0.0'
+//        compile ':autobase:1.0.0.0'
         compile ':burning-image:0.5.1'
-        compile ':jdbc-pool:1.0.9.3'
-        //todo remove
-        compile ':spring-events:1.2'
-        compile ':springcache:1.3.1'
-        compile ':mail:1.0.4' // it seems that greater versions don't work with grail 1.3.9
-        compile ':jasper:1.6.1'
-        compile ':maven-publisher:0.8.1'
+        compile ':jdbc-pool:7.0.47'
+        compile ':cache:1.1.7'
+        compile ':mail:1.0.7'
+        compile ':spring-events:1.2'// TODO Remove
+        compile ':jasper:1.10.0'
         compile ':rollback-on-exception:0.1'
         compile ':wikitext:0.1.2'
         compile ":feeds:1.5"
+        runtime(":hibernate:3.6.10.17") { // TODO switch to :hibernate4:4.3.5.5
+            export = false
+        }
     }
 }
