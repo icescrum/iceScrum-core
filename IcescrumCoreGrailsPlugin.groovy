@@ -44,8 +44,6 @@ import org.icescrum.plugins.attachmentable.services.AttachmentableService
 import org.springframework.context.ApplicationContext
 import org.codehaus.groovy.grails.commons.GrailsApplication
 import grails.util.Environment
-import org.springframework.cache.ehcache.EhCacheManagerFactoryBean
-//import grails.plugin.springcache.web.key.WebContentKeyGenerator
 import org.icescrum.cache.LocaleKeyGenerator
 import org.icescrum.cache.ISKeyGeneratorHelper
 import org.icescrum.cache.UserKeyGenerator
@@ -88,8 +86,6 @@ import org.icescrum.core.domain.Product
 import org.icescrum.core.event.IceScrumApplicationEventMulticaster
 import org.icescrum.core.utils.XMLIceScrumDomainClassMarshaller
 import org.icescrum.core.support.ApplicationSupport
-
-import org.codehaus.groovy.grails.context.support.PluginAwareResourceBundleMessageSource
 
 import javax.servlet.http.HttpServletResponse
 import java.lang.reflect.Method
