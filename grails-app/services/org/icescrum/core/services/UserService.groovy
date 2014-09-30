@@ -23,6 +23,7 @@
 
 package org.icescrum.core.services
 
+import org.apache.commons.io.FileUtils
 import org.icescrum.core.domain.User
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
@@ -38,7 +39,7 @@ class UserService extends IceScrumEventPublisher {
 
     def grailsApplication
     def springSecurityService
-    def burningImageService
+    def hdImageService
     def notificationEmailService
 
     void save(User user) {
@@ -61,6 +62,7 @@ class UserService extends IceScrumEventPublisher {
             user.preferences.emailsSettings = props.emailsSettings
         }
         try {
+            def path = "${grailsApplication.config.icescrum.images.users.dir}${user.id}.png"
             if (props.avatar) {
                 if (FilenameUtils.getExtension(props.avatar) != 'png') {
                     def oldAvatarPath = props.avatar
@@ -68,12 +70,15 @@ class UserService extends IceScrumEventPublisher {
                     ImageConvert.convertToPNG(oldAvatarPath, newAvatarPath)
                     props.avatar = newAvatarPath
                 }
-                burningImageService.doWith(props.avatar, grailsApplication.config.icescrum.images.users.dir).execute(user.id.toString(), {
-                    if (props.scale)
-                        it.scaleAccurate(40, 40)
-                })
+                if(props.scale){
+                    def avatar = new File(path)
+                    avatar.setBytes(hdImageService.scale(props.avatar, 40, 40))
+                } else {
+                    FileUtils.moveFile(new File((String)props.avatar), new File(path))
+                }
+
             } else if(props.containsKey('avatar') && props.avatar == null) {
-                def oldAvatar = new File(grailsApplication.config.icescrum.images.users.dir + user.id + '.png')
+                def oldAvatar = new File(path)
                 if (oldAvatar.exists())
                     oldAvatar.delete()
 

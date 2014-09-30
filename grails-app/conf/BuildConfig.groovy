@@ -68,8 +68,8 @@ grails.project.dependency.resolution = {
 
         //TODO remove org.icescrum when grails team will have update plugin
         compile 'org.icescrum:spring-security-acl:2.0-RC1'
-        compile ':burning-image:0.5.1'
 
+        compile ":hd-image-utils:1.1"
         compile 'org.icescrum:fluxiable:0.3.2'
         compile 'org.icescrum:icescrum-attachmentable:1.0'
         compile 'org.icescrum:commentable:1.3'

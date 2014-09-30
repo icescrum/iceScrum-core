@@ -21,6 +21,8 @@
 * Nicolas Noullet (nnoullet@kagilum.com)
 */
 
+
+import com.quirklabs.hdimageutils.HdImageService
 import grails.converters.JSON
 import grails.converters.XML
 import grails.plugins.wikitext.WikiTextTagLib
@@ -86,7 +88,6 @@ import org.icescrum.core.domain.Product
 import org.icescrum.core.event.IceScrumApplicationEventMulticaster
 import org.icescrum.core.utils.XMLIceScrumDomainClassMarshaller
 import org.icescrum.core.support.ApplicationSupport
-import pl.burningice.plugins.image.BurningImageService
 
 import org.codehaus.groovy.grails.context.support.PluginAwareResourceBundleMessageSource
 import org.icescrum.i18n.IceScrumMessageSource
@@ -303,7 +304,7 @@ class IcescrumCoreGrailsPlugin {
     def doWithDynamicMethods = { ctx ->
         // Manually match the UIController classes
         SpringSecurityService springSecurityService = ctx.getBean('springSecurityService')
-        BurningImageService burningImageService = ctx.getBean('burningImageService')
+        HdImageService hdImageService = ctx.getBean('hdImageService')
         AttachmentableService attachmentableService = ctx.getBean('attachmentableService')
         JasperService jasperService = ctx.getBean('jasperService')
         UiDefinitionService uiDefinitionService = ctx.getBean('uiDefinitionService')
@@ -321,7 +322,7 @@ class IcescrumCoreGrailsPlugin {
             addJasperMethod(it, springSecurityService, jasperService)
 
             if (it.logicalPropertyName in controllersWithDownloadAndPreview){
-                addDownloadAndPreviewMethods(it, attachmentableService, burningImageService)
+                addDownloadAndPreviewMethods(it, attachmentableService, hdImageService)
             }
         }
 
@@ -377,7 +378,7 @@ class IcescrumCoreGrailsPlugin {
         else if (application.isArtefactOfType(ControllerArtefactHandler.TYPE, event.source))
         {
             def controller = application.getControllerClass(event.source?.name)
-            BurningImageService burningImageService = event.ctx.getBean('burningImageService')
+            HdImageService hdImageService = event.ctx.getBean('hdImageService')
             AttachmentableService attachmentableService = event.ctx.getBean('attachmentableService')
 
             if(uiDefinitionService.hasDefinition(controller.logicalPropertyName)) {
@@ -385,7 +386,7 @@ class IcescrumCoreGrailsPlugin {
                 def plugin = controller.hasProperty('pluginName') ? controller.getPropertyValue('pluginName') : null
                 addUIControllerMethods(controller, application.mainContext, plugin)
                 if (controller.logicalPropertyName in controllersWithDownloadAndPreview){
-                    addDownloadAndPreviewMethods(controller, attachmentableService, burningImageService)
+                    addDownloadAndPreviewMethods(controller, attachmentableService, hdImageService)
                 }
             }
             if (application.isControllerClass(event.source)) {
@@ -464,7 +465,7 @@ class IcescrumCoreGrailsPlugin {
         }
     }
 
-    private addDownloadAndPreviewMethods(clazz, attachmentableService, burningImageService){
+    private addDownloadAndPreviewMethods(clazz, attachmentableService, hdImageService){
         def mc = clazz.metaClass
         def dynamicActions = [
             download : { ->
@@ -496,10 +497,7 @@ class IcescrumCoreGrailsPlugin {
                 File file = attachmentableService.getFile(attachment)
                 def thumbnail = new File(file.parentFile.absolutePath+File.separator+attachment.id+'-thumbnail.'+(attachment.ext?.toLowerCase() != 'gif'? attachment.ext :'jpg'))
                 if (!thumbnail.exists()){
-                    burningImageService.doWith(file.absolutePath, file.parentFile.absolutePath)
-                    .execute (attachment.id+'-thumbnail', {
-                       it.scaleApproximate(100, 100)
-                    })
+                    thumbnail.setBytes(hdImageService.scale(file.absolutePath, 40, 40))
                 }
                 if (thumbnail.exists()){
                     response.contentType = attachment.contentType
