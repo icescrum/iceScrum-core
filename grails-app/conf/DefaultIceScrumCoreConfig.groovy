@@ -1,5 +1,4 @@
 import org.icescrum.core.domain.Product
-import org.springframework.cache.ehcache.EhCacheFactoryBean
 
 /*
 * Copyright (c) 2011 Kagilum.
@@ -70,20 +69,5 @@ icescrum {
                 }
             }
         }
-    }
-}
-
-springcache {
-    autoCreate = { _cacheName, isCacheConfig, beanBuilder ->
-        beanBuilder.beans {
-            "$_cacheName"(EhCacheFactoryBean) { bean ->
-                bean.parent = ref("springcacheDefaultCache", true)
-                cacheName = _cacheName
-                isCacheConfig?.each {
-                    bean.setPropertyValue it.key, it.value
-                }
-            }
-        }
-        beanBuilder.createApplicationContext()
     }
 }
