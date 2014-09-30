@@ -1,5 +1,6 @@
 package org.icescrum
 
+import grails.util.Holders
 import groovy.xml.MarkupBuilder
 import groovy.xml.StreamingMarkupBuilder
 
@@ -10,9 +11,9 @@ import groovy.xml.StreamingMarkupBuilder
 class ConfigurationHelper {
 
     def buildConfiguration(basedir) {
-        def config = ConfigurationHolder.config
+        def config = Holders.config
         // Generate the atmosphere.xml file in META-INF folder?
-        def atmosphereDotXmlClosure = config.icescrum.push.handlers.atmosphereDotXml
+        def atmosphereDotXmlClosure = config?.icescrum?.push?.handlers?.atmosphereDotXml
         if (atmosphereDotXmlClosure) {
             def writer = new FileWriter("$basedir/web-app/META-INF/atmosphere.xml")
             def xh = new MarkupBuilder(writer)
