@@ -21,6 +21,7 @@
  */
 package org.icescrum.core.utils
 
+import org.codehaus.groovy.grails.commons.GrailsApplication
 import org.codehaus.groovy.grails.web.converters.marshaller.xml.DomainClassMarshaller
 import grails.util.GrailsNameUtils
 import org.codehaus.groovy.grails.web.converters.ConverterUtil
@@ -41,8 +42,8 @@ public class XMLIceScrumDomainClassMarshaller extends DomainClassMarshaller {
     private Map propertiesMap
     private boolean includeVersion
 
-    public XMLIceScrumDomainClassMarshaller(boolean includeVersion, Map propertiesMap) {
-        super(includeVersion)
+    public XMLIceScrumDomainClassMarshaller(GrailsApplication grailsApplication, boolean includeVersion, Map propertiesMap) {
+        super(includeVersion, grailsApplication)
         this.includeVersion = includeVersion
         this.proxyHandler = new DefaultProxyHandler()
         this.propertiesMap = propertiesMap

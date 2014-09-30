@@ -24,6 +24,7 @@ package org.icescrum.core.utils
 
 import grails.converters.JSON
 import grails.plugins.wikitext.WikiTextTagLib
+import org.codehaus.groovy.grails.commons.GrailsApplication
 import org.codehaus.groovy.grails.commons.GrailsClassUtils
 import org.codehaus.groovy.grails.commons.GrailsDomainClass
 import org.codehaus.groovy.grails.commons.GrailsDomainClassProperty
@@ -45,16 +46,16 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
     private WikiTextTagLib textileRenderer
     private boolean includeClass
 
-    public JSONIceScrumDomainClassMarshaller(boolean includeVersion, boolean includeClass, Map propertiesMap, WikiTextTagLib textileRenderer) {
-        super(includeVersion)
+    public JSONIceScrumDomainClassMarshaller(GrailsApplication grailsApplication, boolean includeVersion, boolean includeClass, Map propertiesMap, WikiTextTagLib textileRenderer) {
+        super(includeVersion, grailsApplication)
         this.proxyHandler = new DefaultProxyHandler()
         this.propertiesMap = propertiesMap
         this.includeClass = includeClass
         this.textileRenderer = textileRenderer
     }
 
-    public JSONIceScrumDomainClassMarshaller(boolean includeVersion, boolean includeClass, Map propertiesMap) {
-        super(includeVersion)
+    public JSONIceScrumDomainClassMarshaller(GrailsApplication grailsApplication, boolean includeVersion, boolean includeClass, Map propertiesMap) {
+        super(includeVersion, grailsApplication)
         this.proxyHandler = new DefaultProxyHandler()
         this.propertiesMap = propertiesMap
         this.includeClass = includeClass

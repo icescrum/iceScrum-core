@@ -206,18 +206,18 @@ class IcescrumCoreGrailsPlugin {
         //For iceScrum internal
         Map properties = application.config?.icescrum?.marshaller
         WikiTextTagLib textileRenderer = (WikiTextTagLib)application.mainContext["grails.plugins.wikitext.WikiTextTagLib"]
-        JSON.registerObjectMarshaller(new JSONIceScrumDomainClassMarshaller(false, true, properties, textileRenderer), 1)
+        JSON.registerObjectMarshaller(new JSONIceScrumDomainClassMarshaller(application, false, true, properties, textileRenderer), 1)
 
-        XML.registerObjectMarshaller(new XMLIceScrumDomainClassMarshaller(true, properties), 1)
+        XML.registerObjectMarshaller(new XMLIceScrumDomainClassMarshaller(application, true, properties), 1)
 
         //TODO should be removed and merged with marshaller
         properties = application.config?.icescrum?.restMarshaller
         //For rest API
         JSON.createNamedConfig('rest'){
-            it.registerObjectMarshaller(new JSONIceScrumDomainClassMarshaller(false, false, properties),2)
+            it.registerObjectMarshaller(new JSONIceScrumDomainClassMarshaller(application, false, false, properties),2)
         }
         XML.createNamedConfig('rest'){
-            it.registerObjectMarshaller(new XMLIceScrumDomainClassMarshaller(false, properties), 2)
+            it.registerObjectMarshaller(new XMLIceScrumDomainClassMarshaller(application, false, properties), 2)
         }
         applicationContext.bootStrapService.start()
     }
