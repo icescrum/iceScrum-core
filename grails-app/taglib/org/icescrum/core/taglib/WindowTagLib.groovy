@@ -22,6 +22,8 @@
  */
 
 package org.icescrum.core.taglib
+
+import org.codehaus.groovy.grails.web.mapping.UrlMappingUtils
 import org.codehaus.groovy.grails.web.servlet.GrailsApplicationAttributes
 import org.codehaus.groovy.grails.web.metaclass.ControllerDynamicMethods
 import org.codehaus.groovy.grails.web.mapping.ForwardUrlMappingInfo
@@ -225,7 +227,7 @@ class WindowTagLib {
                                                     view: attrs.view,
                                                     id: attrs.id,
                                                     params: attrs.params)
-            return WebUtils.includeForUrlMappingInfo(request, response, mapping, attrs.model ?: [:])
+            return UrlMappingUtils.includeForUrlMappingInfo(request, response, mapping, attrs.model ?: [:])
         }
     }
 }

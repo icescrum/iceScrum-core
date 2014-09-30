@@ -53,7 +53,7 @@ class Release extends TimeBox implements Cloneable, Attachmentable {
         cache true
         table 'icescrum2_release'
         vision type: 'text'
-        sprints cascade: 'all-delete-orphan', sort: 'id', cache: true
+        sprints cascade: 'all-delete-orphan', cache: true
         name index: 'rel_name_index'
     }
 

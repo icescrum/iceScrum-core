@@ -118,9 +118,6 @@ class Story extends BacklogElement implements Cloneable, Serializable {
     }
 
     def getDependences(){
-        //start ugly fix kludge! avoids GRAILS-4453
-        backlog.features*.stories?.count()
-        //end ugly fix kludge! avoids GRAILS-4453
         return Story.findAllByDependsOn(this,[cache:true,sort:"state",order:"asc"])
     }
 

@@ -82,7 +82,7 @@ grails.project.dependency.resolution = {
         compile ':rollback-on-exception:0.1'
         compile ':wikitext:0.1.2'
         compile ":feeds:1.5"
-        runtime(":hibernate:3.6.10.17") { // TODO switch to :hibernate4:4.3.5.5
+        runtime(":hibernate4:4.3.5.5") { // TODO switch to :hibernate4:4.3.5.5
             export = false
         }
     }

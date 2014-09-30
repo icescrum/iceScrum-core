@@ -21,10 +21,11 @@
  */
 package org.icescrum.core.utils
 
+import grails.util.Holders
+import org.codehaus.groovy.grails.commons.DomainClassArtefactHandler
 import org.codehaus.groovy.grails.commons.GrailsApplication
 import org.codehaus.groovy.grails.web.converters.marshaller.xml.DomainClassMarshaller
 import grails.util.GrailsNameUtils
-import org.codehaus.groovy.grails.web.converters.ConverterUtil
 import org.codehaus.groovy.grails.support.proxy.DefaultProxyHandler
 import org.codehaus.groovy.grails.support.proxy.ProxyHandler
 import org.codehaus.groovy.grails.web.converters.exceptions.ConverterException
@@ -51,12 +52,12 @@ public class XMLIceScrumDomainClassMarshaller extends DomainClassMarshaller {
 
     public boolean supports(Object object) {
         def configName = GrailsNameUtils.getShortName(object.getClass()).toLowerCase()
-        return (ConverterUtil.isDomainClass(object.getClass()) && propertiesMap."${configName}" != null)
+        return (DomainClassArtefactHandler.isDomainClass(object.getClass()) && propertiesMap."${configName}" != null)
     }
 
     public void marshalObject(Object value, XML xml) throws ConverterException {
         Class clazz = value.getClass()
-        GrailsDomainClass domainClass = ConverterUtil.getDomainClass(clazz.getName())
+        GrailsDomainClass domainClass = Holders.grailsApplication.getDomainClass(clazz.getName())
         BeanWrapper beanWrapper = new BeanWrapperImpl(value)
         def configName = GrailsNameUtils.getShortName(clazz).toLowerCase()
 

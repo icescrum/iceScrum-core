@@ -24,11 +24,12 @@ package org.icescrum.core.utils
 
 import grails.converters.JSON
 import grails.plugins.wikitext.WikiTextTagLib
+import grails.util.Holders
+import org.codehaus.groovy.grails.commons.DomainClassArtefactHandler
 import org.codehaus.groovy.grails.commons.GrailsApplication
 import org.codehaus.groovy.grails.commons.GrailsClassUtils
 import org.codehaus.groovy.grails.commons.GrailsDomainClass
 import org.codehaus.groovy.grails.commons.GrailsDomainClassProperty
-import org.codehaus.groovy.grails.web.converters.ConverterUtil
 import org.codehaus.groovy.grails.web.converters.exceptions.ConverterException
 import org.codehaus.groovy.grails.web.json.JSONWriter
 import org.springframework.beans.BeanWrapper
@@ -63,14 +64,14 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
 
     public boolean supports(Object object) {
         def configName = GrailsNameUtils.getShortName(object.getClass()).toLowerCase()
-        return (ConverterUtil.isDomainClass(object.getClass()) && propertiesMap."${configName}" != null)
+        return (DomainClassArtefactHandler.isDomainClass(object.getClass()) && propertiesMap."${configName}" != null)
     }
 
     public void marshalObject(Object value, JSON json) throws ConverterException {
         JSONWriter writer = json.getWriter()
         value = proxyHandler.unwrapIfProxy(value)
         Class<?> clazz = value.getClass()
-        GrailsDomainClass domainClass = ConverterUtil.getDomainClass(clazz.getName())
+        GrailsDomainClass domainClass = Holders.grailsApplication.getDomainClass(clazz.getName())
         BeanWrapper beanWrapper = new BeanWrapperImpl(value)
         def configName = GrailsNameUtils.getShortName(clazz).toLowerCase()
 
@@ -213,7 +214,7 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
                 if (referenceObject instanceof Collection && referenceObject.size() > 0) {
                     writer.key(it)
                     referenceObject = new ArrayList((Collection) referenceObject)
-                    GrailsDomainClass referencedDomainClass = ConverterUtil.getDomainClass(referenceObject[0].getClass().getName())
+                    GrailsDomainClass referencedDomainClass = Holders.grailsApplication.getDomainClass(referenceObject[0].getClass().getName())
                     writer.array()
                     for (Object el: referenceObject) {
                         asShortObject(el, json,  referencedDomainClass.getIdentifier(), referencedDomainClass)
@@ -221,7 +222,7 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
                     writer.endArray()
                 } else if(!(referenceObject instanceof Collection)) {
                     writer.key(it)
-                    GrailsDomainClass referencedDomainClass = ConverterUtil.getDomainClass(referenceObject.getClass().getName())
+                    GrailsDomainClass referencedDomainClass = Holders.grailsApplication.getDomainClass(referenceObject.getClass().getName())
                     asShortObject(referenceObject, json, referencedDomainClass.getIdentifier(), referencedDomainClass)
                 }
             }

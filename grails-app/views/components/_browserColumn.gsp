@@ -22,7 +22,7 @@
       <is:link class="noline" remote="true" history="false" onSuccess="\$('#${name}-details').tabs('destroy');\$('#${name}-details').tabs();"
               update="${name}-details" controller="${controllerName}" action="${actionDetails}" params="[id:c.id]">
         <div class="browse-item">
-          <img src="${resource(dir: is.currentThemeImage(), file: 'choose/default.png')}" class="ico">
+          <img src="${asset.assetPath(src:'images/default.png')}" class="ico">
           <p><strong>${c.label}</strong></p>
           <p>${c.extra}</p>
         </div>

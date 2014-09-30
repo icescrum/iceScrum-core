@@ -203,10 +203,6 @@ class SecurityService {
             }
         } else if (product in Product) {
             p = product
-            //start ugly fix kludge! avoids GRAILS-4453
-            product.cliches.count()
-            product.sprints*.tasks?.count()
-            //end ugly fix kludge! avoids GRAILS-4453
             product = product.id
         }
         if (product) {

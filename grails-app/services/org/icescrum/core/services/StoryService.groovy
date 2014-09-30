@@ -32,6 +32,8 @@ import org.grails.comments.Comment
 import org.grails.comments.CommentLink
 import org.hibernate.Hibernate
 import org.hibernate.exception.SQLGrammarException
+import org.hibernate.type.LongType
+import org.hibernate.type.StringType
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
 import org.icescrum.plugins.attachmentable.domain.Attachment
@@ -952,10 +954,10 @@ class StoryService extends IceScrumEventPublisher {
                 def storiesToMigrate = session.createSQLQuery("""SELECT id, text_as, textican, text_to
                                                                  FROM icescrum2_story
                                                                  WHERE text_as IS NOT NULL OR textican IS NOT NULL OR text_to IS NOT NULL""")
-                        .addScalar("id", Hibernate.LONG)
-                        .addScalar("text_as", Hibernate.STRING)
-                        .addScalar("textican", Hibernate.STRING)
-                        .addScalar("text_to", Hibernate.STRING)
+                        .addScalar("id", LongType.INSTANCE)
+                        .addScalar("text_as", StringType.INSTANCE)
+                        .addScalar("textican", StringType.INSTANCE)
+                        .addScalar("text_to", StringType.INSTANCE)
                         .list()
                 if (storiesToMigrate){
                     if (log.debugEnabled) {
