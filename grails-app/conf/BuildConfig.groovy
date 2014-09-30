@@ -43,6 +43,7 @@ grails.project.dependency.resolution = {
         // from public Maven repositories
         //mavenLocal()
         mavenCentral()
+        mavenRepo "http://repo.spring.io/milestone"
         mavenRepo "https://oss.sonatype.org/content/repositories/snapshots/"
         mavenRepo "http://repo.icescrum.org/artifactory/plugins-release/"
         mavenRepo "http://repo.icescrum.org/artifactory/plugins-snapshot/"
