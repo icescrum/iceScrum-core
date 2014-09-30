@@ -29,7 +29,6 @@ import org.atmosphere.cpr.BroadcasterFactory
 import org.icescrum.core.security.AuthorityManager
 import org.icescrum.core.support.ApplicationSupport
 import org.icescrum.core.test.DummyPopulator
-import org.codehaus.groovy.grails.commons.ApplicationHolder
 
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService

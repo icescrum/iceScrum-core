@@ -22,15 +22,15 @@
 package org.icescrum.atmosphere
 
 import grails.converters.JSON
+import grails.util.Holders
 import org.atmosphere.handler.AbstractReflectorAtmosphereHandler
 import org.atmosphere.cpr.*
-import org.codehaus.groovy.grails.commons.ApplicationHolder
 
 class IceScrumAtmosphereHandler extends AbstractReflectorAtmosphereHandler {
 
     @Override
     void onRequest(AtmosphereResource event) throws IOException {
-        def conf = ApplicationHolder.application.config.icescrum.push
+        def conf = Holders.grailsApplication.config.icescrum.push
         if (!conf.enable) {
             event.resume()
             return

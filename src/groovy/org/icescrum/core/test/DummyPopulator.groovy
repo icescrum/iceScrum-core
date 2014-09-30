@@ -25,11 +25,11 @@
 
 package org.icescrum.core.test
 
+import grails.util.Holders
 import org.icescrum.core.domain.AcceptanceTest
 import org.icescrum.core.domain.Sprint
 import org.springframework.security.core.context.SecurityContextHolder as SCH
 
-import org.codehaus.groovy.grails.commons.ApplicationHolder
 import org.icescrum.core.domain.preferences.ProductPreferences
 import org.icescrum.core.domain.preferences.TeamPreferences
 import org.icescrum.core.domain.preferences.UserPreferences
@@ -57,7 +57,7 @@ class DummyPopulator {
 
         println "Dummy Data loading...."
 
-        def app = ApplicationHolder.application
+        def app = Holders.grailsApplication
         def springSecurityService = app.mainContext.springSecurityService
         def securityService = app.mainContext.securityService
         def sessionFactory = app.mainContext.sessionFactory

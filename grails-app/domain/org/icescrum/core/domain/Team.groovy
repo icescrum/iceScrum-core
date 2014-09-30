@@ -24,13 +24,13 @@
 
 package org.icescrum.core.domain
 
+import grails.util.Holders
 import org.icescrum.core.services.SecurityService
 import org.icescrum.core.domain.preferences.TeamPreferences
 import org.icescrum.core.event.IceScrumTeamEvent
 import org.icescrum.core.event.IceScrumEvent
 import org.springframework.security.acls.domain.BasePermission
 import org.springframework.security.core.context.SecurityContextHolder as SCH
-import org.codehaus.groovy.grails.commons.ApplicationHolder
 import grails.plugin.springsecurity.acl.AclUtilService
 
 class Team implements Serializable, Comparable {
@@ -188,7 +188,7 @@ class Team implements Serializable, Comparable {
 
 
     def getScrumMasters() {
-        def aclUtilService = (AclUtilService) ApplicationHolder.application.mainContext.getBean('aclUtilService');
+        def aclUtilService = (AclUtilService) Holders.grailsApplication.mainContext.getBean('aclUtilService');
         if (this.scrumMasters) {
             this.scrumMasters
         } else if (this.id) {
@@ -204,7 +204,7 @@ class Team implements Serializable, Comparable {
     }
 
     def getOwner() {
-        def aclUtilService = (AclUtilService) ApplicationHolder.application.mainContext.getBean('aclUtilService');
+        def aclUtilService = (AclUtilService) Holders.grailsApplication.mainContext.getBean('aclUtilService');
         if (this.id) {
             def acl = aclUtilService.readAcl(this.getClass(), this.id)
             return User.findByUsername(acl.owner.principal,[cache: true])

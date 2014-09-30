@@ -25,12 +25,9 @@
 package org.icescrum.core.taglib
 
 import org.icescrum.components.UtilsWebComponents
-import org.codehaus.groovy.grails.commons.ApplicationHolder
-import grails.plugin.springcache.key.CacheKeyBuilder
 
 class EventlineTagLib {
     static namespace = 'is'
-    def springcacheService
 
     def eventline = { attrs, body ->
         pageScope.events = []

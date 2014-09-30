@@ -27,7 +27,7 @@ package org.icescrum.core.domain
 
 import grails.plugin.springsecurity.SpringSecurityService
 import grails.util.GrailsNameUtils
-import org.codehaus.groovy.grails.commons.ApplicationHolder
+import grails.util.Holders
 import org.icescrum.core.domain.AcceptanceTest.AcceptanceTestState
 
 
@@ -133,12 +133,12 @@ class Story extends BacklogElement implements Cloneable, Serializable {
     }
 
     boolean getLiked() {
-        def springSecurityService = (SpringSecurityService) ApplicationHolder.application.mainContext.getBean('springSecurityService')
+        def springSecurityService = (SpringSecurityService) Holders.grailsApplication.mainContext.getBean('springSecurityService')
         return likers ? likers.contains(springSecurityService.currentUser) : false
     }
 
     boolean getFollowed() {
-        def springSecurityService = (SpringSecurityService) ApplicationHolder.application.mainContext.getBean('springSecurityService')
+        def springSecurityService = (SpringSecurityService) Holders.grailsApplication.mainContext.getBean('springSecurityService')
         return followers ? followers.contains(springSecurityService.currentUser) : false
     }
 

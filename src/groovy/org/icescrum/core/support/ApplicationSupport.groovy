@@ -24,7 +24,7 @@
 package org.icescrum.core.support
 
 import grails.util.Environment
-import org.codehaus.groovy.grails.commons.ApplicationHolder
+import grails.util.Holders
 import groovyx.net.http.RESTClient
 import grails.util.Metadata
 import org.apache.commons.logging.LogFactory
@@ -134,7 +134,7 @@ class ApplicationSupport {
 
     static public createUUID = {
         if (log.debugEnabled) log.debug "Retrieving appID..."
-        def config = ApplicationHolder.application.config
+        def config = Holders.grailsApplication.config
         def filePath = config.icescrum.baseDir.toString() + File.separator + "appID.txt"
         def fileID = new File(filePath)
         def line = fileID.exists() ?  fileID.readLines()[0] : null
@@ -267,7 +267,7 @@ class ApplicationSupport {
     }
 
     public static getCurrentSpace(def params, def id = null){
-        def space = ApplicationHolder.application.config.icescrum.spaces.find{ id ? it.key == id : params."$it.key" }
+        def space = Holders.grailsApplication.config.icescrum.spaces.find{ id ? it.key == id : params."$it.key" }
         if (space){
             def object = space.value.spaceClass.get(params.long("$space.key"))
             return object ? [name:space.key,
@@ -293,7 +293,7 @@ class CheckerTimerTask extends TimerTask {
 
     @Override
     void run() {
-        def config = ApplicationHolder.application.config
+        def config = Holders.grailsApplication.config
         def configInterval = computeInterval(config.icescrum.check.interval?:1440)
         def http = new RESTClient(config.icescrum.check.url)
         http.client.params.setIntParameter( "http.connection.timeout", config.icescrum.check.timeout?:5000 )

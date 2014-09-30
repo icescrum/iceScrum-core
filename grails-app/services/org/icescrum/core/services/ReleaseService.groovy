@@ -24,11 +24,11 @@
 
 package org.icescrum.core.services
 
+import grails.util.Holders
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
 
 import java.text.SimpleDateFormat
-import org.codehaus.groovy.grails.commons.ApplicationHolder
 import org.icescrum.core.support.ProgressSupport
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.transaction.annotation.Transactional
@@ -74,7 +74,7 @@ class ReleaseService extends IceScrumEventPublisher {
             update(nextRelease, nextStartDate) // cascade the update of next releases recursively
         }
         if (!release.sprints.isEmpty()) {
-            def sprintService = (SprintService) ApplicationHolder.application.mainContext.getBean('sprintService');
+            def sprintService = (SprintService) .application.mainContext.getBean('sprintService');
             def firstSprint = release.sprints.min { it.startDate }
             if (firstSprint.startDate.before(startDate)) {
                 if (firstSprint.state >= Sprint.STATE_INPROGRESS) {
@@ -221,7 +221,7 @@ class ReleaseService extends IceScrumEventPublisher {
             }
 
             if (p) {
-                def sprintService = (SprintService) ApplicationHolder.application.mainContext.getBean('sprintService');
+                def sprintService = (SprintService) Holders.grailsApplication.mainContext.getBean('sprintService');
                 release.sprints.sprint.eachWithIndex { it, index ->
                     def s = sprintService.unMarshall(it, p)
                     r.addToSprints(s)

@@ -25,8 +25,9 @@
 
 package org.icescrum.core.services
 
+import grails.util.Holders
+
 import java.text.SimpleDateFormat
-import org.codehaus.groovy.grails.commons.ApplicationHolder
 import org.icescrum.core.domain.preferences.ProductPreferences
 import org.icescrum.core.domain.security.Authority
 import org.icescrum.core.event.IceScrumEvent
@@ -414,7 +415,7 @@ class ProductService {
                 if (!u) {
                     u = User.findByUsernameAndEmail(productOwner.username.text(), productOwner.email.text())
                     if (!u) {
-                        def userService = (UserService) ApplicationHolder.application.mainContext.getBean('userService');
+                        def userService = (UserService) Holders.grailsApplication.mainContext.getBean('userService');
                         u = userService.unMarshall(productOwner)
                     }
                 }
@@ -422,7 +423,7 @@ class ProductService {
             }
             p.productOwners = productOwnersList
 
-            def featureService = (FeatureService) ApplicationHolder.application.mainContext.getBean('featureService');
+            def featureService = (FeatureService) Holders.grailsApplication.mainContext.getBean('featureService');
             product.features.feature.eachWithIndex { it, index ->
                 def f = featureService.unMarshall(it)
                 p.addToFeatures(f)
@@ -435,7 +436,7 @@ class ProductService {
                 progress?.updateProgress((product.actors.actor.size() * (index + 1) / 100).toInteger(), g.message(code: 'is.parse', args: [g.message(code: 'is.actor')]))
             }
 
-            def storyService = (StoryService) ApplicationHolder.application.mainContext.getBean('storyService');
+            def storyService = (StoryService) Holders.grailsApplication.mainContext.getBean('storyService');
             product.stories.story.eachWithIndex { it, index ->
                 storyService.unMarshall(it, p)
                 progress?.updateProgress((product.stories.story.size() * (index + 1) / 100).toInteger(), g.message(code: 'is.parse', args: [g.message(code: 'is.story')]))
@@ -446,7 +447,7 @@ class ProductService {
                 it.rank = index + 1
             }
 
-            def releaseService = (ReleaseService) ApplicationHolder.application.mainContext.getBean('releaseService');
+            def releaseService = (ReleaseService) Holders.grailsApplication.mainContext.getBean('releaseService');
             product.releases.release.eachWithIndex { it, index ->
                 releaseService.unMarshall(it, p, progress)
                 progress?.updateProgress((product.releases.release.size() * (index + 1) / 100).toInteger(), g.message(code: 'is.parse', args: [g.message(code: 'is.release')]))

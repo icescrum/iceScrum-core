@@ -23,7 +23,7 @@
 
 package org.icescrum.core.services
 
-import org.codehaus.groovy.grails.commons.ApplicationHolder
+import grails.util.Holders
 import org.icescrum.core.domain.Product
 import org.icescrum.core.domain.Team
 import org.icescrum.core.domain.User
@@ -217,7 +217,7 @@ class TeamService {
                     allowNewMembers: team.preferences.allowNewMembers.text()?.toBoolean() ?: true
             )
 
-            def userService = (UserService) ApplicationHolder.application.mainContext.getBean('userService');
+            def userService = (UserService) Holders.grailsApplication.mainContext.getBean('userService');
             team.members.user.eachWithIndex {user, index ->
                 User u = userService.unMarshall(user)
                 if (!u.id) {

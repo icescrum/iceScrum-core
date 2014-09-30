@@ -24,12 +24,9 @@
 package org.icescrum.core.taglib
 
 import org.icescrum.components.UtilsWebComponents
-import grails.plugin.springcache.key.CacheKeyBuilder
-import org.codehaus.groovy.grails.commons.ApplicationHolder
 
 class KanbanTagLib {
     static namespace = 'is'
-    def springcacheService
 
     def kanban = {attrs, body ->
         pageScope.kanbanHeaders = []
