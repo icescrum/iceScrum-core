@@ -44,25 +44,6 @@ import org.icescrum.plugins.attachmentable.services.AttachmentableService
 import org.springframework.context.ApplicationContext
 import org.codehaus.groovy.grails.commons.GrailsApplication
 import grails.util.Environment
-import org.icescrum.cache.LocaleKeyGenerator
-import org.icescrum.cache.ISKeyGeneratorHelper
-import org.icescrum.cache.UserKeyGenerator
-import org.icescrum.cache.RoleKeyGenerator
-import org.icescrum.cache.ProjectUserKeyGenerator
-import org.icescrum.cache.StoryKeyGenerator
-import org.icescrum.cache.ActorKeyGenerator
-import org.icescrum.cache.FeatureKeyGenerator
-import org.icescrum.cache.TaskKeyGenerator
-import org.icescrum.cache.ReleasesKeyGenerator
-import org.icescrum.cache.ReleasesRoleKeyGenerator
-import org.icescrum.cache.FeaturesKeyGenerator
-import org.icescrum.cache.SprintKeyGenerator
-import org.icescrum.cache.TasksKeyGenerator
-import org.icescrum.cache.ActorsKeyGenerator
-import org.icescrum.cache.StoriesKeyGenerator
-import org.icescrum.cache.ProjectKeyGenerator
-import org.icescrum.cache.ReleaseKeyGenerator
-import org.icescrum.cache.TeamKeyGenerator
 import org.icescrum.core.domain.Story
 import org.icescrum.core.domain.Feature
 import org.icescrum.core.domain.Sprint
@@ -164,106 +145,6 @@ class IcescrumCoreGrailsPlugin {
 
     def doWithSpring = {
         mergeConfig(application)
-
-        iSKeyGeneratorHelper(ISKeyGeneratorHelper){
-            springSecurityService = ref('springSecurityService')
-            securityService = ref('securityService')
-        }
-
-        localeKeyGenerator(LocaleKeyGenerator) {
-            iSKeyGeneratorHelper = ref('iSKeyGeneratorHelper')
-            contentType = true
-        }
-
-        userKeyGenerator(UserKeyGenerator) {
-            iSKeyGeneratorHelper = ref('iSKeyGeneratorHelper')
-            contentType = true
-        }
-
-        roleKeyGenerator(RoleKeyGenerator) {
-            iSKeyGeneratorHelper = ref('iSKeyGeneratorHelper')
-            contentType = true
-        }
-
-        projectKeyGenerator(ProjectKeyGenerator){
-            iSKeyGeneratorHelper = ref('iSKeyGeneratorHelper')
-            contentType = true
-        }
-
-        teamKeyGenerator(TeamKeyGenerator){
-            iSKeyGeneratorHelper = ref('iSKeyGeneratorHelper')
-            contentType = true
-        }
-
-        projectUserKeyGenerator(ProjectUserKeyGenerator){
-            iSKeyGeneratorHelper = ref('iSKeyGeneratorHelper')
-            contentType = true
-        }
-
-        sprintKeyGenerator(SprintKeyGenerator){
-            iSKeyGeneratorHelper = ref('iSKeyGeneratorHelper')
-            contentType = true
-        }
-
-        releaseKeyGenerator(ReleaseKeyGenerator){
-            iSKeyGeneratorHelper = ref('iSKeyGeneratorHelper')
-            contentType = true
-        }
-
-        releasesKeyGenerator(ReleasesKeyGenerator){
-            iSKeyGeneratorHelper = ref('iSKeyGeneratorHelper')
-            contentType = true
-        }
-
-        releasesRoleKeyGenerator(ReleasesRoleKeyGenerator){
-            iSKeyGeneratorHelper = ref('iSKeyGeneratorHelper')
-            contentType = true
-        }
-
-        storyKeyGenerator(StoryKeyGenerator) {
-            iSKeyGeneratorHelper = ref('iSKeyGeneratorHelper')
-            contentType = true
-        }
-
-        storiesKeyGenerator(StoriesKeyGenerator) {
-            iSKeyGeneratorHelper = ref('iSKeyGeneratorHelper')
-            contentType = true
-        }
-
-
-        actorKeyGenerator(ActorKeyGenerator) {
-            iSKeyGeneratorHelper = ref('iSKeyGeneratorHelper')
-            contentType = true
-        }
-
-        actorsKeyGenerator(ActorsKeyGenerator) {
-            iSKeyGeneratorHelper = ref('iSKeyGeneratorHelper')
-            contentType = true
-        }
-
-        featureKeyGenerator(FeatureKeyGenerator) {
-            iSKeyGeneratorHelper = ref('iSKeyGeneratorHelper')
-            contentType = true
-        }
-
-        featuresKeyGenerator(FeaturesKeyGenerator) {
-            iSKeyGeneratorHelper = ref('iSKeyGeneratorHelper')
-            contentType = true
-        }
-
-        taskKeyGenerator(TaskKeyGenerator) {
-            iSKeyGeneratorHelper = ref('iSKeyGeneratorHelper')
-            contentType = true
-        }
-
-        tasksKeyGenerator(TasksKeyGenerator) {
-            iSKeyGeneratorHelper = ref('iSKeyGeneratorHelper')
-            contentType = true
-        }
-
-        springcacheDefaultKeyGenerator(WebContentKeyGenerator){
-            contentType = true
-        }
 
         asyncApplicationEventMulticaster(IceScrumApplicationEventMulticaster) {
 			persistenceInterceptor = ref("persistenceInterceptor")
