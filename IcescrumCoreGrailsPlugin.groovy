@@ -45,7 +45,7 @@ import org.springframework.context.ApplicationContext
 import org.codehaus.groovy.grails.commons.GrailsApplication
 import grails.util.Environment
 import org.springframework.cache.ehcache.EhCacheManagerFactoryBean
-import grails.plugin.springcache.web.key.WebContentKeyGenerator
+//import grails.plugin.springcache.web.key.WebContentKeyGenerator
 import org.icescrum.cache.LocaleKeyGenerator
 import org.icescrum.cache.ISKeyGeneratorHelper
 import org.icescrum.cache.UserKeyGenerator
@@ -90,7 +90,6 @@ import org.icescrum.core.utils.XMLIceScrumDomainClassMarshaller
 import org.icescrum.core.support.ApplicationSupport
 
 import org.codehaus.groovy.grails.context.support.PluginAwareResourceBundleMessageSource
-import org.icescrum.i18n.IceScrumMessageSource
 
 import javax.servlet.http.HttpServletResponse
 import java.lang.reflect.Method
@@ -118,7 +117,7 @@ class IcescrumCoreGrailsPlugin {
     ]
 
     def observe = ['controllers']
-    def loadAfter = ['controllers', 'feeds', 'springcache', 'hibernate']
+    def loadAfter = ['controllers', 'feeds', 'cache', 'hibernate']
     def loadBefore = ['autobase']
 
     // TODO Fill in these fields
@@ -169,13 +168,6 @@ class IcescrumCoreGrailsPlugin {
 
     def doWithSpring = {
         mergeConfig(application)
-
-        if (application.config.springcache.configLocation){
-            springcacheCacheManager(EhCacheManagerFactoryBean) {
-                shared = false
-                configLocation = application.config.springcache.configLocation
-            }
-        }
 
         iSKeyGeneratorHelper(ISKeyGeneratorHelper){
             springSecurityService = ref('springSecurityService')
@@ -281,12 +273,6 @@ class IcescrumCoreGrailsPlugin {
 			persistenceInterceptor = ref("persistenceInterceptor")
             taskExecutor = java.util.concurrent.Executors.newCachedThreadPool()
 		}
-
-        def beanconf = springConfig.getBeanConfig('messageSource')
-        def beandef = beanconf ? beanconf.beanDefinition : springConfig.getBeanDefinition('messageSource')
-        if (beandef?.beanClassName == PluginAwareResourceBundleMessageSource.class.canonicalName) {
-            beandef.beanClassName = IceScrumMessageSource.class.canonicalName
-        }
 
         ApplicationSupport.createUUID()
         System.setProperty('lbdsl.home', "${application.config.icescrum.baseDir.toString()}${File.separator}lbdsl")
