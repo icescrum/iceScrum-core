@@ -52,21 +52,11 @@ class SecurityService {
     def grailsUrlMappingsHolder
     def grailsApplication
     def aclService
-    def cacheService
 
     static final String TEAM_ATTR = 'team_id'
     static final String TEAM_URL_ATTR = 'team'
     static final String PRODUCT_ATTR = 'product_id'
     static final String PRODUCT_URL_ATTR = 'product'
-
-    static final CACHE_TEAMMEMBER = 'teamMemberCache'
-    static final CACHE_PRODUCTOWNER = 'productOwnerCache'
-    static final CACHE_SCRUMMASTER = 'scrumMasterCache'
-    static final CACHE_STAKEHOLDER = 'stakeHolderCache'
-    static final CACHE_PRODUCTTEAM = 'productTeamCache'
-    static final CACHE_OPENPRODUCTTEAM = 'teamProductCache'
-    static final CACHE_OWNER = 'ownerCache'
-    static final CACHE_ARCHIVEDPRODUCT = 'archivedProductCache'
 
     static final productOwnerPermissions = [BasePermission.WRITE]
     static final stakeHolderPermissions = [BasePermission.READ]
@@ -172,8 +162,10 @@ class SecurityService {
                 product = product.id
             }
             if (product) {
-                authorized = cacheService.doWithCache(CACHE_PRODUCTTEAM, new StringBuilder().append(product).append(auth.principal.id).append(getUserLastUpdated(auth.principal.id)).toString()) {
-                    if (!p) p = Product.get(product)
+                def computeResult = {
+                    if (!p) {
+                        p = Product.get(product)
+                    }
                     if (!p || !auth) {
                         return false
                     }
@@ -183,6 +175,7 @@ class SecurityService {
                         }
                     }
                 }
+                authorized = computeResult()
             }
         }
         return authorized
@@ -205,12 +198,13 @@ class SecurityService {
             product = product.id
         }
         if (product) {
-            return cacheService.doWithCache(CACHE_ARCHIVEDPRODUCT, new StringBuilder().append(product).append(getProductLastUpdated(product)).toString()) {
+            def computeResult = {
                 if (!p) {
                     p = Product.get(product)
                 }
                 return p ? p.preferences.archived : false
             }
+            return computeResult()
         } else {
             return false
         }
@@ -224,10 +218,11 @@ class SecurityService {
     }
 
     Team openProductTeam(Long productId, Long principalId) {
-        return cacheService.doWithCache(CACHE_OPENPRODUCTTEAM, new StringBuilder().append(productId).append(principalId).append(getUserLastUpdated(principalId)).toString()) {
+        def computeResult = {
             def team = Team.productTeam(productId, principalId).list(max: 1)
             return team ? team[0] : null
         }
+        return computeResult()
     }
 
 
@@ -262,7 +257,7 @@ class SecurityService {
             if (SpringSecurityUtils.ifAnyGranted(Authority.ROLE_ADMIN)) {
                 return true
             }
-            return cacheService.doWithCache(CACHE_SCRUMMASTER, new StringBuilder().append(team).append(auth.principal.id).append(getUserLastUpdated(auth.principal.id)).toString()) {
+            def computeResult = {
                 if (!t) {
                     t = Team.get(team)
                 }
@@ -271,6 +266,7 @@ class SecurityService {
                 }
                 return aclUtilService.hasPermission(auth, GrailsHibernateUtil.unwrapIfProxy(t), SecurityService.scrumMasterPermissions)
             }
+            return computeResult()
         } else {
             return false
         }
@@ -312,7 +308,7 @@ class SecurityService {
             }
 
             def authkey = SpringSecurityUtils.ifAnyGranted(Authority.ROLE_VISITOR) ? auth.principal : auth.principal.id + getUserLastUpdated(auth.principal.id).toString() + controllerName ?: ''
-            return cacheService.doWithCache(CACHE_STAKEHOLDER, new StringBuilder().append(onlyPrivate).append(product).append(p.lastUpdated).append(authkey).toString()) {
+            def computeResult = {
                 //Owner always has an access to product... (even if not in team or PO)
                 if (springSecurityService.isLoggedIn()) {
                     if (p.owner?.id == auth.principal.id) return true
@@ -324,6 +320,7 @@ class SecurityService {
                     return access
                 }
             }
+            return computeResult()
         } else {
             return false
         }
@@ -360,7 +357,7 @@ class SecurityService {
             if (SpringSecurityUtils.ifAnyGranted(Authority.ROLE_ADMIN)) {
                 return true
             }
-            return cacheService.doWithCache(CACHE_PRODUCTOWNER, new StringBuilder().append(product).append(auth.principal.id).append(getUserLastUpdated(auth.principal.id)).toString()) {
+            def computeResult = {
                 if (!p) {
                     p = Product.get(product)
                 }
@@ -369,6 +366,7 @@ class SecurityService {
                 }
                 return aclUtilService.hasPermission(auth, GrailsHibernateUtil.unwrapIfProxy(p), SecurityService.productOwnerPermissions)
             }
+            return computeResult()
         } else {
             return false
         }
@@ -404,7 +402,7 @@ class SecurityService {
             if (SpringSecurityUtils.ifAnyGranted(Authority.ROLE_ADMIN)) {
                 return true
             }
-            return cacheService.doWithCache(CACHE_TEAMMEMBER, new StringBuilder().append(team).append(auth.principal.id).append(getUserLastUpdated(auth.principal.id)).toString()) {
+            def computeResult = {
                 if (!t) {
                     t = Team.get(team)
                 }
@@ -413,6 +411,7 @@ class SecurityService {
                 }
                 return aclUtilService.hasPermission(auth, GrailsHibernateUtil.unwrapIfProxy(t), SecurityService.teamMemberPermissions)
             }
+            return computeResult()
         } else {
             return false
         }
@@ -495,7 +494,7 @@ class SecurityService {
 
     boolean isOwner(domain, auth, domainClass, d = null) {
         if (domain && domainClass) {
-            return cacheService.doWithCache(CACHE_OWNER, new StringBuilder().append(domain).append(domainClass.class.name).append(auth.principal.id).append(getUserLastUpdated(auth.principal.id)).toString()) {
+            def computeResult = {
                 if (!d) {
                     d = domainClass.get(domain)
                 }
@@ -505,6 +504,7 @@ class SecurityService {
                 def acl = aclService.readAclById(objectIdentityRetrievalStrategy.getObjectIdentity(d))
                 return acl.owner == new PrincipalSid((Authentication) auth)
             }
+            return computeResult()
         } else {
             return false
         }

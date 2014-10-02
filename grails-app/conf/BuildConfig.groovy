@@ -75,7 +75,6 @@ grails.project.dependency.resolution = {
         compile 'org.icescrum:commentable:1.3'
         compile ':taggable:1.1.0'
         compile ':jdbc-pool:7.0.47'
-        compile ':cache:1.1.7'
         compile ':mail:1.0.7'
         compile ':spring-events:1.2'// TODO Remove
         compile ':jasper:1.10.0'
