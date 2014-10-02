@@ -52,6 +52,7 @@ class SecurityService {
     def grailsUrlMappingsHolder
     def grailsApplication
     def aclService
+    def cacheService
 
     static final String TEAM_ATTR = 'team_id'
     static final String TEAM_URL_ATTR = 'team'
@@ -171,8 +172,7 @@ class SecurityService {
                 product = product.id
             }
             if (product) {
-                // TODO cache springcacheService.doWithCache(CACHE_PRODUCTTEAM, new CacheKeyBuilder().append(product).append(auth.principal.id).append(getUserLastUpdated(auth.principal.id)).toCacheKey())
-                def doWithCache = {
+                authorized = cacheService.doWithCache(CACHE_PRODUCTTEAM, new StringBuilder().append(product).append(auth.principal.id).append(getUserLastUpdated(auth.principal.id)).toString()) {
                     if (!p) p = Product.get(product)
                     if (!p || !auth) {
                         return false
@@ -183,7 +183,6 @@ class SecurityService {
                         }
                     }
                 }
-                authorized = doWithCache()
             }
         }
         return authorized
@@ -206,16 +205,14 @@ class SecurityService {
             product = product.id
         }
         if (product) {
-            // TODO cache springcacheService.doWithCache(CACHE_ARCHIVEDPRODUCT, new CacheKeyBuilder().append(product).append(getProductLastUpdated(product)).toCacheKey())
-            def doWithCache = {
+            return cacheService.doWithCache(CACHE_ARCHIVEDPRODUCT, new StringBuilder().append(product).append(getProductLastUpdated(product)).toString()) {
                 if (!p) {
                     p = Product.get(product)
                 }
                 return p ? p.preferences.archived : false
             }
-            return doWithCache()
         } else {
-            return null
+            return false
         }
     }
 
@@ -227,12 +224,10 @@ class SecurityService {
     }
 
     Team openProductTeam(Long productId, Long principalId) {
-        // TODO cache springcacheService.doWithCache(CACHE_OPENPRODUCTTEAM, new CacheKeyBuilder().append(productId).append(principalId).append(getUserLastUpdated(principalId)).toCacheKey())
-        def doWithCache = {
+        return cacheService.doWithCache(CACHE_OPENPRODUCTTEAM, new StringBuilder().append(productId).append(principalId).append(getUserLastUpdated(principalId)).toString()) {
             def team = Team.productTeam(productId, principalId).list(max: 1)
             return team ? team[0] : null
         }
-        return doWithCache()
     }
 
 
@@ -267,8 +262,7 @@ class SecurityService {
             if (SpringSecurityUtils.ifAnyGranted(Authority.ROLE_ADMIN)) {
                 return true
             }
-            // TODO cache springcacheService.doWithCache(CACHE_SCRUMMASTER, new CacheKeyBuilder().append(team).append(auth.principal.id).append(getUserLastUpdated(auth.principal.id)).toCacheKey())
-            def doWithCache = {
+            return cacheService.doWithCache(CACHE_SCRUMMASTER, new StringBuilder().append(team).append(auth.principal.id).append(getUserLastUpdated(auth.principal.id)).toString()) {
                 if (!t) {
                     t = Team.get(team)
                 }
@@ -277,7 +271,6 @@ class SecurityService {
                 }
                 return aclUtilService.hasPermission(auth, GrailsHibernateUtil.unwrapIfProxy(t), SecurityService.scrumMasterPermissions)
             }
-            return doWithCache()
         } else {
             return false
         }
@@ -319,8 +312,7 @@ class SecurityService {
             }
 
             def authkey = SpringSecurityUtils.ifAnyGranted(Authority.ROLE_VISITOR) ? auth.principal : auth.principal.id + getUserLastUpdated(auth.principal.id).toString() + controllerName ?: ''
-            // TODO cache springcacheService.doWithCache(CACHE_STAKEHOLDER, new CacheKeyBuilder().append(onlyPrivate).append(product).append(p.lastUpdated).append(authkey).toCacheKey())
-            def doWithCache = {
+            return cacheService.doWithCache(CACHE_STAKEHOLDER, new StringBuilder().append(onlyPrivate).append(product).append(p.lastUpdated).append(authkey).toString()) {
                 //Owner always has an access to product... (even if not in team or PO)
                 if (springSecurityService.isLoggedIn()) {
                     if (p.owner?.id == auth.principal.id) return true
@@ -332,7 +324,6 @@ class SecurityService {
                     return access
                 }
             }
-            return doWithCache()
         } else {
             return false
         }
@@ -369,8 +360,7 @@ class SecurityService {
             if (SpringSecurityUtils.ifAnyGranted(Authority.ROLE_ADMIN)) {
                 return true
             }
-            // TODO cache springcacheService.doWithCache(CACHE_PRODUCTOWNER, new CacheKeyBuilder().append(product).append(auth.principal.id).append(getUserLastUpdated(auth.principal.id)).toCacheKey())
-            def doWithCache = {
+            return cacheService.doWithCache(CACHE_PRODUCTOWNER, new StringBuilder().append(product).append(auth.principal.id).append(getUserLastUpdated(auth.principal.id)).toString()) {
                 if (!p) {
                     p = Product.get(product)
                 }
@@ -379,7 +369,6 @@ class SecurityService {
                 }
                 return aclUtilService.hasPermission(auth, GrailsHibernateUtil.unwrapIfProxy(p), SecurityService.productOwnerPermissions)
             }
-            return doWithCache()
         } else {
             return false
         }
@@ -415,8 +404,7 @@ class SecurityService {
             if (SpringSecurityUtils.ifAnyGranted(Authority.ROLE_ADMIN)) {
                 return true
             }
-            // TODO cache springcacheService.doWithCache(CACHE_TEAMMEMBER, new CacheKeyBuilder().append(team).append(auth.principal.id).append(getUserLastUpdated(auth.principal.id)).toCacheKey()) {
-            def doWithCache = {
+            return cacheService.doWithCache(CACHE_TEAMMEMBER, new StringBuilder().append(team).append(auth.principal.id).append(getUserLastUpdated(auth.principal.id)).toString()) {
                 if (!t) {
                     t = Team.get(team)
                 }
@@ -425,7 +413,6 @@ class SecurityService {
                 }
                 return aclUtilService.hasPermission(auth, GrailsHibernateUtil.unwrapIfProxy(t), SecurityService.teamMemberPermissions)
             }
-            return doWithCache()
         } else {
             return false
         }
@@ -508,8 +495,7 @@ class SecurityService {
 
     boolean isOwner(domain, auth, domainClass, d = null) {
         if (domain && domainClass) {
-            // TODO cache springcacheService.doWithCache(CACHE_OWNER, new CacheKeyBuilder().append(domain).append(domainClass.class.name).append(auth.principal.id).append(getUserLastUpdated(auth.principal.id)).toCacheKey())
-            def doWithCache = {
+            return cacheService.doWithCache(CACHE_OWNER, new StringBuilder().append(domain).append(domainClass.class.name).append(auth.principal.id).append(getUserLastUpdated(auth.principal.id)).toString()) {
                 if (!d) {
                     d = domainClass.get(domain)
                 }
@@ -519,7 +505,6 @@ class SecurityService {
                 def acl = aclService.readAclById(objectIdentityRetrievalStrategy.getObjectIdentity(d))
                 return acl.owner == new PrincipalSid((Authentication) auth)
             }
-            return doWithCache()
         } else {
             return false
         }
