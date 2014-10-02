@@ -332,7 +332,7 @@ class Product extends TimeBox implements Serializable, Attachmentable {
                 log.debug(e.getMessage())
                 log.debug("fixing unsecured project ... admin user will be the owner")
             }
-            def securityService = (SecurityService) ApplicationHolder.application.mainContext.getBean('securityService')
+            def securityService = (SecurityService) Holders.grailsApplication.mainContext.getBean('securityService')
             securityService.secureDomain(this)
             securityService.changeOwner(User.findById(1),this)
             acl = aclUtilService.readAcl(this.getClass(), this.id)
