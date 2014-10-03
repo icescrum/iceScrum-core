@@ -162,7 +162,7 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
                             if (referenceObject instanceof Collection) {
                                 Collection o = (Collection) referenceObject
                                 writer.key(property.getName()+"_count").value(o.size())
-                                writer.key(property.getName())
+                                writer.key(property.getName()+"_ids")
                                 writer.array()
                                 for (Object el: o) {
                                     writer.object()
