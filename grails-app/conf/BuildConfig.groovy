@@ -80,7 +80,7 @@ grails.project.dependency.resolution = {
         compile ':jasper:1.10.0'
         compile ':rollback-on-exception:0.1'
         compile ':wikitext:0.1.2'
-        compile ":feeds:1.5"
+        compile ":feeds:1.6"
         runtime(":hibernate4:4.3.5.5") {
             export = false
         }

@@ -60,7 +60,7 @@ class ScrumTagLib {
 
     def avatar = { attrs, body ->
         def user = attrs.user ?: springSecurityService.currentUser ?: null
-        def defaultAvatar = createLink(uri: '/images/avatars/avatar.png')
+        def defaultAvatar = createLink(uri: '../grails-app/assets/images/avatars/avatar.png')
         if (user){
             def avatar = new File(grailsApplication.config.icescrum.images.users.dir + user.id + '.png')
             if (avatar.exists()) {
