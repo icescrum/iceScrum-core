@@ -67,18 +67,15 @@ class UserService extends IceScrumEventPublisher {
             if (props.avatar) {
                 def ext = FilenameUtils.getExtension(props.avatar)
                 if (ext != 'png') {
-                    def oldAvatarPath = props.avatar
-                    def newAvatarPath = ext ? props.avatar.replace(ext, 'png')   : (props.avatar . '.png')
-                    ImageConvert.convertToPNG(oldAvatarPath, newAvatarPath)
-                    props.avatar = newAvatarPath
+                    ImageConvert.convertToPNG(props.avatar, props.avatar . '.png')
+                    props.avatar = props.avatar . '.png'
                 }
+                def source = new File((String)props.avatar)
+                def dest = new File(path)
+                FileUtils.copyFile(source, dest)
                 if(props.scale){
                     def avatar = new File(path)
-                    avatar.setBytes(hdImageService.scale(props.avatar, 40, 40))
-                } else {
-                    def source = new File((String)props.avatar)
-                    def dest = new File(path)
-                    FileUtils.copyFile(source, dest)
+                    avatar.setBytes(hdImageService.scale(new FileInputStream(dest), 120, 120))
                 }
 
             } else if(props.containsKey('avatar') && props.avatar == null) {
