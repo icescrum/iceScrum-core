@@ -142,4 +142,48 @@ public final class UtilsWebComponents {
     }
     return allParams.join('&')
   }
+
+    public static def handleUpload = { def request, def params, def endOfUploadClosure ->
+        def chunkNumber  = params.int('flowChunkNumber') != null ? params.int('flowChunkNumber') : -1
+        def uploadInfo = getFileUploadInfo(params)
+        if (request.method == 'GET') {
+            if (uploadInfo.uploadedChunks.contains(new FileUploadInfo.ChunkNumber(chunkNumber))) {
+                if(uploadInfo.checkIfUploadFinished()){
+                    endOfUploadClosure(uploadInfo)
+                    FileUploadInfoStorage.instance.remove(uploadInfo)
+                }else {
+                    delegate.render(status:200)
+                }
+            } else {
+                delegate.render(status:404)
+            }
+        } else if(request.method == 'POST') {
+            RandomAccessFile raf = new RandomAccessFile(uploadInfo.filePath, "rw")
+            raf.seek((chunkNumber - 1) * uploadInfo.chunkSize)
+            def file = params.file ?: request.getFile('file')
+            raf.write(file.getBytes())
+            raf.close()
+            uploadInfo.uploadedChunks.add(new FileUploadInfo.ChunkNumber(chunkNumber))
+            if (uploadInfo.checkIfUploadFinished()) {
+                endOfUploadClosure(uploadInfo)
+                FileUploadInfoStorage.instance.remove(uploadInfo)
+            } else {
+                delegate.render(status:200)
+            }
+        }
+    }
+
+    private static FileUploadInfo getFileUploadInfo(def params) {
+
+        def info = ['chunkSize'          : (params.remove('flowChunkSize') ?: -1).toInteger(),
+                    'totalSize'          : (params.remove('flowTotalSize') ?: -1).toLong(),
+                    'totalChunks'        : params.int('flowTotalChunks'),
+                    'identifier'         : params.remove('flowIdentifier'),
+                    'filename'           : params.remove('flowFilename'),
+                    'relativePath'       : params.remove("flowRelativePath")]
+
+        def test = new File(System.getProperty("java.io.tmpdir"), (String)info.filename)
+        info.filePath = test.absolutePath + ".temp"
+        return FileUploadInfoStorage.instance.get(info)
+    }
 }

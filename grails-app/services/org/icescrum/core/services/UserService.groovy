@@ -23,6 +23,7 @@
 
 package org.icescrum.core.services
 
+import org.apache.commons.io.FileExistsException
 import org.apache.commons.io.FileUtils
 import org.icescrum.core.domain.User
 import org.icescrum.core.event.IceScrumEventPublisher
@@ -64,9 +65,10 @@ class UserService extends IceScrumEventPublisher {
         try {
             def path = "${grailsApplication.config.icescrum.images.users.dir}${user.id}.png"
             if (props.avatar) {
-                if (FilenameUtils.getExtension(props.avatar) != 'png') {
+                def ext = FilenameUtils.getExtension(props.avatar)
+                if (ext != 'png') {
                     def oldAvatarPath = props.avatar
-                    def newAvatarPath = props.avatar.replace(FilenameUtils.getExtension(props.avatar), 'png')
+                    def newAvatarPath = ext ? props.avatar.replace(ext, 'png')   : (props.avatar . '.png')
                     ImageConvert.convertToPNG(oldAvatarPath, newAvatarPath)
                     props.avatar = newAvatarPath
                 }
@@ -74,7 +76,9 @@ class UserService extends IceScrumEventPublisher {
                     def avatar = new File(path)
                     avatar.setBytes(hdImageService.scale(props.avatar, 40, 40))
                 } else {
-                    FileUtils.moveFile(new File((String)props.avatar), new File(path))
+                    def source = new File((String)props.avatar)
+                    def dest = new File(path)
+                    FileUtils.copyFile(source, dest)
                 }
 
             } else if(props.containsKey('avatar') && props.avatar == null) {
