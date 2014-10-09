@@ -83,6 +83,9 @@ class TaskService extends IceScrumEventPublisher {
         if (sprint?.state == Sprint.STATE_DONE) {
             throw new IllegalStateException('is.sprint.error.state.not.inProgress')
         }
+        if (sprint) {
+            task.type = null
+        }
         Product product = task.parentProduct
         if (task.type == Task.TYPE_URGENT
                 && task.state == Task.STATE_BUSY
