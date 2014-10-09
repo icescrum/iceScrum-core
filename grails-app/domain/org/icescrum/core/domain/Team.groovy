@@ -122,6 +122,20 @@ class Team implements Serializable, Comparable {
                         "AND t.id = ai.objectId", [sid: user], params ?: [:])
     }
 
+    static findAllByOwnerAndName(String user, String term, params) {
+        executeQuery("SELECT DISTINCT t "+
+                "From org.icescrum.core.domain.Team as t, "+
+                "grails.plugin.springsecurity.acl.AclClass as ac, "+
+                "grails.plugin.springsecurity.acl.AclObjectIdentity as ai, "+
+                "grails.plugin.springsecurity.acl.AclSid as acl "+
+                "where "+
+                "ac.className = 'org.icescrum.core.domain.Team' "+
+                "AND ai.aclClass = ac.id "+
+                "AND ai.owner.sid = :sid "+
+                "AND acl.id = ai.owner "+
+                "AND t.id = ai.objectId AND t.name LIKE :term", [sid: user, term: "%$term%"], params ?: [:])
+    }
+
     static countByOwner(String user, params) {
         executeQuery("SELECT DISTINCT COUNT(t.id) "+
                         "From org.icescrum.core.domain.Team as t, "+
