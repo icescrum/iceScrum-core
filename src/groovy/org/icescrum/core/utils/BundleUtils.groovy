@@ -25,6 +25,7 @@ package org.icescrum.core.utils
 
 import org.icescrum.core.domain.Actor
 import org.icescrum.core.domain.Feature
+import org.icescrum.core.domain.PlanningPokerGame
 import org.icescrum.core.domain.Story
 import org.icescrum.core.domain.Release
 import org.icescrum.core.domain.Sprint
@@ -129,6 +130,12 @@ class BundleUtils {
             (Authority.SCRUMMASTER): 'is.role.scrumMaster',
             (Authority.PRODUCTOWNER): 'is.role.productOwner',
             (Authority.PO_AND_SM): 'is.role.poAndSm'
+    ]
+
+    static planningPokerGameSuites = [
+            (PlanningPokerGame.FIBO_SUITE): 'is.estimationSuite.fibonacci',
+            (PlanningPokerGame.INTEGER_SUITE): 'is.estimationSuite.integer',
+            (PlanningPokerGame.CUSTOM_SUITE): 'is.estimationSuite.custom',
     ]
 
 }

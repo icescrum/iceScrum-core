@@ -60,22 +60,7 @@ class Release extends TimeBox implements Cloneable, Attachmentable {
     static constraints = {
         vision nullable: true
         name(blank: false, unique: 'parentProduct')
-        endDate(validator:{ val, obj ->
-            if (!val){
-                return ['blank']
-            }
-            if(val.before(obj.startDate)){
-                return ['before.startDate']
-            }
-            return true
-        })
         startDate(validator:{ val, obj ->
-            if (!val){
-                return ['blank']
-            }
-            if(val == obj.endDate){
-                return ['equals.endDate']
-            }
             if (val.before(obj.parentProduct.startDate)){
                 return ['before.productStartDate']
             }

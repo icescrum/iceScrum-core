@@ -95,7 +95,13 @@ class Product extends TimeBox implements Serializable, Attachmentable {
 
     static constraints = {
         name(blank: false, maxSize: 200, unique: true)
-        pkey(blank: false, maxSize: 10, matches: /\d*[A-Z][A-Z0-9]*/, unique: true)
+        pkey(blank: false, maxSize: 10, matches: /^[A-Z0-9]*$/, unique: true)   //TODO custom message
+        planningPokerGameType(validator:{ val, obj ->
+            if (!(val in [PlanningPokerGame.INTEGER_SUITE, PlanningPokerGame.FIBO_SUITE, PlanningPokerGame.CUSTOM_SUITE])){
+                return ['no.game']
+            }
+            return true
+        }) //TODO custom message
     }
 
     @Override

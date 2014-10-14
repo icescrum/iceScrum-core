@@ -31,7 +31,6 @@ import org.icescrum.core.domain.Sprint
 import org.springframework.security.core.context.SecurityContextHolder as SCH
 
 import org.icescrum.core.domain.preferences.ProductPreferences
-import org.icescrum.core.domain.preferences.TeamPreferences
 import org.icescrum.core.domain.preferences.UserPreferences
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.authority.AuthorityUtils
@@ -85,12 +84,13 @@ class DummyPopulator {
             product.pkey = 'TESTPROJ'
             def startDate = new Date().parse('yyyy-M-d', String.format('%tF', new Date()))
             product.startDate = startDate
+            product.endDate = startDate + 120
             product.preferences = new ProductPreferences()
             product.preferences.webservices = true
             product.save()
             securityService.secureDomain(product)
             // Teams and members
-            def team = new Team(name: 'testProj Team', preferences: new TeamPreferences()).addToProducts(product).addToMembers(usera).addToMembers(userz)
+            def team = new Team(name: 'testProj Team').addToProducts(product).addToMembers(usera).addToMembers(userz)
             team.save()
             securityService.secureDomain(team)
             securityService.createTeamMemberPermissions(userz, team)
@@ -98,7 +98,7 @@ class DummyPopulator {
             securityService.createScrumMasterPermissions(usera, team)
             securityService.changeOwner(usera, product)
             securityService.changeOwner(usera, team)
-            def team3 = new Team(name: 'empty Team3', preferences: new TeamPreferences()).addToMembers(userx)
+            def team3 = new Team(name: 'empty Team3').addToMembers(userx)
             team3.save()
             securityService.secureDomain(team3)
             securityService.createTeamMemberPermissions(userx, team3)

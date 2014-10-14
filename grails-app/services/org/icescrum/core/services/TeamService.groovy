@@ -27,7 +27,6 @@ import grails.util.Holders
 import org.icescrum.core.domain.Product
 import org.icescrum.core.domain.Team
 import org.icescrum.core.domain.User
-import org.icescrum.core.domain.preferences.TeamPreferences
 import org.icescrum.core.support.ProgressSupport
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.transaction.annotation.Transactional
@@ -41,7 +40,7 @@ class TeamService {
 
     def springSecurityService
     def securityService
-    def g = new org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib()
+    def grailsApplication
 
     void save(Team team, List members, List scrumMasters) {
         if (!team)
@@ -204,6 +203,7 @@ class TeamService {
 
     @Transactional(readOnly = true)
     def unMarshall(def team, Product p = null, ProgressSupport progress = null) {
+        def g = grailsApplication.mainContext.getBean('org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib')
         try {
             def existingTeam = true
             def t = new Team(
@@ -211,10 +211,6 @@ class TeamService {
                     velocity: (team.velocity.text().isNumber()) ? team.velocity.text().toInteger() : 0,
                     description: team.description.text(),
                     uid: team.@uid.text() ?: (team."${'name'}".text()).encodeAsMD5()
-            )
-
-            t.preferences = new TeamPreferences(
-                    allowNewMembers: team.preferences.allowNewMembers.text()?.toBoolean() ?: true
             )
 
             def userService = (UserService) Holders.grailsApplication.mainContext.getBean('userService');

@@ -55,14 +55,14 @@ class ProductService {
     void save(Product product, productOwners, stakeHolders) {
 
         // TODO replace with domain validation constaints
-        if (!product.endDate == null)
+        /*if (!product.endDate == null)
             throw new IllegalStateException("is.product.error.no.endDate")
         if (product.startDate > product.endDate)
             throw new IllegalStateException('is.product.error.startDate')
         if (product.startDate == product.endDate)
             throw new IllegalStateException('is.product.error.duration')
         if (!(product.planningPokerGameType in [PlanningPokerGame.INTEGER_SUITE, PlanningPokerGame.FIBO_SUITE, PlanningPokerGame.CUSTOM_SUITE]))
-            throw new IllegalStateException("is.product.error.no.estimationSuite")
+            throw new IllegalStateException("is.product.error.no.estimationSuite")*/
 
         product.orderNumber = (Product.count() ?: 0) + 1
 
@@ -87,15 +87,6 @@ class ProductService {
 
     @PreAuthorize('isAuthenticated()')
     void saveImport(Product product, String name, String importPath) {
-        // TODO replace with domain validation constaints
-        if (!product.endDate == null)
-            throw new IllegalStateException("is.product.error.no.endDate")
-        if (product.startDate > product.endDate)
-            throw new IllegalStateException('is.product.error.startDate')
-        if (product.startDate == product.endDate)
-            throw new IllegalStateException('is.product.error.duration')
-        if (!(product.planningPokerGameType in [PlanningPokerGame.INTEGER_SUITE, PlanningPokerGame.FIBO_SUITE, PlanningPokerGame.CUSTOM_SUITE]))
-            throw new IllegalStateException("is.product.error.no.estimationSuite")
         product.orderNumber = (Product.count() ?: 0) + 1
 
         if (product.erasableByUser && product.name == name) {
@@ -161,10 +152,7 @@ class ProductService {
 
     @PreAuthorize('owner(#product) and !archivedProduct(#product)')
     void addTeamsToProduct(Product product, teamIds) {
-        if (!product)
-            throw new IllegalStateException('Product must not be null')
-
-        if (!teamIds)
+         if (!teamIds)
             throw new IllegalStateException('Product must have at least one team')
 
         for (team in Team.getAll(teamIds*.toLong())) {
@@ -219,10 +207,6 @@ class ProductService {
 
         broadcast(function: 'update', message: product, channel:'product-'+product.id)
         publishEvent(new IceScrumProductEvent(product, this.class, (User) springSecurityService.currentUser, IceScrumEvent.EVENT_UPDATED))
-    }
-
-    Release getLastRelease(Product p) {
-        return p.releases?.max {s1, s2 -> s1.orderNumber <=> s2.orderNumber}
     }
 
     @PreAuthorize('stakeHolder(#product) or inProduct(#product)')
@@ -378,7 +362,6 @@ class ProductService {
                     assignOnCreateTask: product.preferences.assignOnCreateTask.text().toBoolean(),
                     autoCreateTaskOnEmptyStory: product.preferences.autoCreateTaskOnEmptyStory.text().toBoolean(),
                     autoDoneStory: product.preferences.autoDoneStory.text().toBoolean(),
-                    url: product.preferences.url?.text() ?: null,
                     noEstimation: product.preferences.noEstimation.text().toBoolean(),
                     limitUrgentTasks: product.preferences.limitUrgentTasks.text().toInteger(),
                     estimatedSprintsDuration: product.preferences.estimatedSprintsDuration.text().toInteger(),

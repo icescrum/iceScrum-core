@@ -47,8 +47,24 @@ class TimeBox implements Comparable<TimeBox>, Fluxiable, Serializable {
     ]
 
     static constraints = {
-        startDate(nullable: false)
-        endDate(nullable: true)
+        startDate(validator:{ val, obj ->
+            if(val == obj.endDate){
+                return ['equals.endDate']
+            }
+            if(val.after(obj.endDate)){
+                return ['after.endDate']
+            }
+            return true
+        })
+        endDate(validator:{ val, obj ->
+            if(val == obj.startDate){
+                return ['equals.startDate']
+            }
+            if(val.before(obj.startDate)){
+                return ['before.startDate']
+            }
+            return true
+        })
         goal(nullable: true)
         description(nullable: true)
     }

@@ -36,7 +36,6 @@ class ProductPreferences implements Serializable{
     boolean archived = false
     boolean hideWeekend = false
     boolean webservices = false
-    String url
     String timezone = TimeZone.default.ID
 
     //Planification
@@ -61,7 +60,6 @@ class ProductPreferences implements Serializable{
     String stakeHolderRestrictedViews
 
     static constraints = {
-        url(nullable: true, url: true)
         stakeHolderRestrictedViews(nullable: true)
     }
 
