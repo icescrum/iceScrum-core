@@ -54,16 +54,6 @@ class ProductService {
     @PreAuthorize('isAuthenticated()')
     void save(Product product, productOwners, stakeHolders) {
 
-        // TODO replace with domain validation constaints
-        /*if (!product.endDate == null)
-            throw new IllegalStateException("is.product.error.no.endDate")
-        if (product.startDate > product.endDate)
-            throw new IllegalStateException('is.product.error.startDate')
-        if (product.startDate == product.endDate)
-            throw new IllegalStateException('is.product.error.duration')
-        if (!(product.planningPokerGameType in [PlanningPokerGame.INTEGER_SUITE, PlanningPokerGame.FIBO_SUITE, PlanningPokerGame.CUSTOM_SUITE]))
-            throw new IllegalStateException("is.product.error.no.estimationSuite")*/
-
         product.orderNumber = (Product.count() ?: 0) + 1
 
         if (!product.save(flush: true))
@@ -176,10 +166,6 @@ class ProductService {
     void update(Product product, boolean hasHiddenChanged, String pkeyChanged) {
         if (!product.name?.trim()) {
             throw new IllegalStateException("is.product.error.no.name")
-        }
-        // TODO replace with domain validation constaints
-        if (!(product.planningPokerGameType in [PlanningPokerGame.INTEGER_SUITE, PlanningPokerGame.FIBO_SUITE, PlanningPokerGame.CUSTOM_SUITE])) {
-            throw new IllegalStateException("is.product.error.no.estimationSuite")
         }
 
         if (hasHiddenChanged && product.preferences.hidden && !ApplicationSupport.booleanValue(grailsApplication.config.icescrum.project.private.enable)
