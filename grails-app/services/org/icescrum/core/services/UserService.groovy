@@ -23,8 +23,8 @@
 
 package org.icescrum.core.services
 
-import org.apache.commons.io.FileExistsException
 import org.apache.commons.io.FileUtils
+import org.apache.commons.io.filefilter.WildcardFileFilter
 import org.icescrum.core.domain.User
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
@@ -32,7 +32,6 @@ import org.springframework.security.access.prepost.PreAuthorize
 import org.icescrum.core.domain.preferences.UserPreferences
 import org.springframework.transaction.annotation.Transactional
 import org.apache.commons.io.FilenameUtils
-import org.icescrum.core.utils.ImageConvert
 import org.icescrum.core.support.ApplicationSupport
 
 @Transactional
@@ -63,19 +62,21 @@ class UserService extends IceScrumEventPublisher {
             user.preferences.emailsSettings = props.emailsSettings
         }
         try {
-            def path = "${grailsApplication.config.icescrum.images.users.dir}${user.id}.png"
+            def ext = FilenameUtils.getExtension(props.avatar)
+            def path = "${grailsApplication.config.icescrum.images.users.dir}${user.id}.${ext}"
             if (props.avatar) {
-                def ext = FilenameUtils.getExtension(props.avatar)
-                if (ext != 'png') {
-                    ImageConvert.convertToPNG(props.avatar, props.avatar . '.png')
-                    props.avatar = props.avatar . '.png'
-                }
                 def source = new File((String)props.avatar)
                 def dest = new File(path)
                 FileUtils.copyFile(source, dest)
                 if(props.scale){
                     def avatar = new File(path)
                     avatar.setBytes(hdImageService.scale(new FileInputStream(dest), 120, 120))
+                }
+                def files = new File(grailsApplication.config.icescrum.images.users.dir.toString()).listFiles((FilenameFilter)new WildcardFileFilter("${user.id}.*"))
+                files.each {
+                    if(FilenameUtils.getExtension(it.path) != ext){
+                        it.delete()
+                    }
                 }
 
             } else if(props.containsKey('avatar') && props.avatar == null) {
