@@ -71,7 +71,7 @@ grails.project.dependency.resolution = {
 
         compile ":hd-image-utils:1.1"
         compile 'org.icescrum:fluxiable:0.3.2'
-        compile 'org.icescrum:icescrum-attachmentable:1.0'
+        compile 'org.icescrum:icescrum-attachmentable:1.0.1'
         compile 'org.icescrum:commentable:1.3'
         compile ':taggable:1.1.0'
         compile ':jdbc-pool:7.0.47'

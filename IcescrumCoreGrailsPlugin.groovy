@@ -30,7 +30,6 @@ import org.atmosphere.cpr.AtmosphereResource
 import org.atmosphere.cpr.BroadcasterFactory
 import org.atmosphere.cpr.HeaderConfig
 import org.codehaus.groovy.grails.commons.GrailsClassUtils
-import org.codehaus.groovy.grails.scaffolding.view.ScaffoldingViewResolver
 import org.icescrum.atmosphere.IceScrumAtmosphereEventListener
 import org.icescrum.core.cors.CorsFilter
 import org.icescrum.core.domain.AcceptanceTest
@@ -245,7 +244,6 @@ class IcescrumCoreGrailsPlugin {
             AttachmentableService attachmentableService = event.ctx.getBean('attachmentableService')
 
             if(uiDefinitionService.hasDefinition(controller.logicalPropertyName)) {
-                ScaffoldingViewResolver.clearViewCache()
                 def plugin = controller.hasProperty('pluginName') ? controller.getPropertyValue('pluginName') : null
                 addUIControllerMethods(controller, application.mainContext, plugin)
                 if (controller.logicalPropertyName in controllersWithDownloadAndPreview){
