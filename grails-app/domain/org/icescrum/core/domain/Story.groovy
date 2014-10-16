@@ -739,4 +739,76 @@ class Story extends BacklogElement implements Cloneable, Serializable {
     Boolean canUpdate(isProductOwner, currentUser) {
         return isProductOwner || ((state == STATE_SUGGESTED && currentUser == creator))
     }
+
+    def xml(builder){
+        builder.story(){
+            uid(this.uid)
+            type(this.type)
+            rank(this.rank)
+            state(this.state)
+            value(this.value)
+            effort(this.effort)
+            doneDate(this.doneDate)
+            plannedDate(this.plannedDate)
+            acceptedDate(this.acceptedDate)
+            creationDate(this.creationDate)
+            suggestedDate(this.suggestedDate)
+            estimatedDate(this.estimatedDate)
+            inProgressDate(this.inProgressDate)
+            executionFrequency(this.executionFrequency)
+
+            tags { builder.mkp.yieldUnescaped("<![CDATA[${this.tags}]]>") }
+            name { builder.mkp.yieldUnescaped("<![CDATA[${this.name}]]>") }
+            notes { builder.mkp.yieldUnescaped("<![CDATA[${this.notes?:''}]]>") }
+            description { builder.mkp.yieldUnescaped("<![CDATA[${this.description?:''}]]>") }
+
+            creator(uid:this.creator.uid)
+
+            if (this.feature){
+                feature(uid:this.feature.uid)
+            }
+            if (this.actor){
+                actor(uid:this.actor.uid)
+            }
+            if (dependsOn){
+                dependsOn(uid:this.dependsOn.uid)
+            }
+
+            comments(){
+                this.comments.each { _comment ->
+                    comment(){
+                        dateCreated(_comment.dateCreated)
+                        posterId(_comment.posterId)
+                        posterClass(_comment.posterClass)
+                        body { builder.mkp.yieldUnescaped("<![CDATA[${_comment.body}]]>") }
+                    }
+                }
+            }
+
+            activities(){
+                this.activities.each { _activity ->
+                    activity(){
+                        code(_activity.code)
+                        posterId(_activity.posterId)
+                        dateCreated(_activity.dateCreated)
+                        posterClass(_activity.posterClass)
+                        cachedLabel { builder.mkp.yieldUnescaped("<![CDATA[${_activity.cachedLabel}]]>") }
+                        cachedDescription { builder.mkp.yieldUnescaped("<![CDATA[${_activity.cachedDescription}]]>") }
+                    }
+                }
+            }
+
+            acceptanceTests(){
+                this.acceptanceTests.each { _acceptanceTest ->
+                    _acceptanceTest.xml(builder)
+                }
+            }
+
+            attachments(){
+                this.attachments.each { _att ->
+                    _att.xml(builder)
+                }
+            }
+        }
+    }
 }

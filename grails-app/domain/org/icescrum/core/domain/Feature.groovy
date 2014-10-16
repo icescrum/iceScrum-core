@@ -182,4 +182,31 @@ class Feature extends BacklogElement implements Serializable {
         searchByTermOrTag(productId, searchOptions, term)
     }
 
+    def xml(builder) {
+        builder.feature(){
+            uid(this.uid)
+            type(this.type)
+            rank(this.rank)
+            color(this.color)
+            value(this.value)
+            creationDate(this.creationDate)
+            tags { builder.mkp.yieldUnescaped("<![CDATA[${this.tags}]]>") }
+            name { builder.mkp.yieldUnescaped("<![CDATA[${this.name}]]>") }
+            notes { builder.mkp.yieldUnescaped("<![CDATA[${this.notes?:''}]]>") }
+            description { builder.mkp.yieldUnescaped("<![CDATA[${this.description?:''}]]>") }
+
+            stories(){
+                this.stories.each{ _story ->
+                    story(uid: _story.uid)
+                }
+            }
+
+            attachments(){
+                this.attachments.each { _att ->
+                    _att.xml(builder)
+                }
+            }
+        }
+    }
+
 }

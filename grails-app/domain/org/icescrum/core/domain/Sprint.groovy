@@ -311,4 +311,52 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
     BigDecimal getTotalEffort() {
         return (BigDecimal) (this.stories.sum { it.effort } ?: 0)
     }
+
+    def xml(builder){
+        builder.sprint(){
+            id(this.id)
+            state(this.state)
+            endDate(this.endDate)
+            velocity(this.velocity)
+            capacity(this.capacity)
+            closeDate(this.closeDate)
+            startDate(this.startDate)
+            orderNumber(this.orderNumber)
+            lastUpdated(this.lastUpdated)
+            dateCreated(this.dateCreated)
+            dailyWorkTime(this.dailyWorkTime)
+            activationDate(this.activationDate)
+            deliveredVersion(this.deliveredVersion)
+            initialRemainingTime(this.initialRemainingTime)
+
+            goal { builder.mkp.yieldUnescaped("<![CDATA[${this.goal?:''}]]>") }
+            description { builder.mkp.yieldUnescaped("<![CDATA[${this.description?:''}]]>") }
+            retrospective { builder.mkp.yieldUnescaped("<![CDATA[${this.retrospective?:''}]]>") }
+            doneDefinition { builder.mkp.yieldUnescaped("<![CDATA[${this.doneDefinition?:''}]]>") }
+
+            attachments(){
+                this.attachments.each { _att ->
+                    _att.xml(builder)
+                }
+            }
+
+            stories(){
+                this.stories.each{ _story ->
+                    _story.xml(builder)
+                }
+            }
+
+            tasks(){
+                this.tasks.each{ _task ->
+                    _task.xml(builder)
+                }
+            }
+
+            cliches(){
+                this.cliches.each{ _cliche ->
+                    _cliche.xml(builder)
+                }
+            }
+        }
+    }
 }

@@ -190,4 +190,44 @@ class Release extends TimeBox implements Cloneable, Attachmentable {
         def doneSprints = sprints.findAll { it.state == Sprint.STATE_DONE }
         return doneSprints ? ((Integer) doneSprints.sum { it.velocity.toBigDecimal() }).intdiv(doneSprints.size()) : 0
     }
+    
+    def xml(builder){
+        builder.release(){
+            id(this.id)
+            state(this.state)
+            endDate(this.endDate)
+            startDate(this.startDate)
+            orderNumber(this.orderNumber)
+            lastUpdated(this.lastUpdated)
+            dateCreated(this.dateCreated)
+            name { builder.mkp.yieldUnescaped("<![CDATA[${this.name}]]>") }
+            goal { builder.mkp.yieldUnescaped("<![CDATA[${this.goal?:''}]]>") }
+            vision { builder.mkp.yieldUnescaped("<![CDATA[${this.vision?:''}]]>") }
+            description { builder.mkp.yieldUnescaped("<![CDATA[${this.description?:''}]]>") }
+
+            sprints() {
+                this.sprints.each{ _sprint ->
+                    _sprint.xml(builder)
+                }
+            }
+
+            features(){
+                this.features.each{ _feature ->
+                    feature(uid: _feature.uid)
+                }
+            }
+
+            attachments(){
+                this.attachments.each { _att ->
+                    _att.xml(builder)
+                }
+            }
+
+            cliches(){
+                this.cliches.each{ _cliche ->
+                    _cliche.xml(builder)
+                }
+            }
+        }
+    }
 }

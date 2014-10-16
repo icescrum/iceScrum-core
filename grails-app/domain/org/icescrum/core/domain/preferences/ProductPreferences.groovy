@@ -71,4 +71,28 @@ class ProductPreferences implements Serializable{
         cache true
         table 'icescrum2_product_preferences'
     }
+    
+    def xml(builder){
+        builder.preferences(){
+            id(this.id)
+            hidden(this.hidden)
+            timezone(this.timezone)
+            hideWeekend(this.hideWeekend)
+            noEstimation(this.noEstimation)
+            autoDoneStory(this.autoDoneStory)
+            sprintReviewHour(this.sprintReviewHour)
+            dailyMeetingHour(this.dailyMeetingHour)
+            limitUrgentTasks(this.limitUrgentTasks)
+            assignOnBeginTask(this.assignOnBeginTask)
+            displayUrgentTasks(this.displayUrgentTasks)
+            assignOnCreateTask(this.assignOnCreateTask)
+            sprintPlanningHour(this.sprintPlanningHour)
+            releasePlanningHour(this.releasePlanningHour)
+            displayRecurrentTasks(this.displayRecurrentTasks)
+            sprintRetrospectiveHour(this.sprintRetrospectiveHour)
+            estimatedSprintsDuration(this.estimatedSprintsDuration)
+            autoCreateTaskOnEmptyStory(this.autoCreateTaskOnEmptyStory)
+            stakeHolderRestrictedViews(this.stakeHolderRestrictedViews)
+        }
+    }
 }

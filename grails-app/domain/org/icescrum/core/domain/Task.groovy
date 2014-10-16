@@ -403,4 +403,48 @@ class Task extends BacklogElement implements Serializable {
         def searchOptions = [task: [:]]
         searchByTermOrTag(product, searchOptions, term)
     }
+
+    def xml(builder){
+        builder.task(){
+            uid(this.uid)
+            type(this.type)
+            rank(this.rank)
+            color(this.color)
+            state(this.state)
+            blocked(this.blocked)
+            initial(this.initial)
+            doneDate(this.doneDate)
+            estimation(this.estimation)
+            creationDate(this.creationDate)
+            inProgressDate(this.inProgressDate)
+
+            creator(uid:this.creator.uid)
+
+            if (this.responsible){
+                responsible(uid:this.responsible.uid)
+            }
+
+            tags { builder.mkp.yieldUnescaped("<![CDATA[${this.tags}]]>") }
+            name { builder.mkp.yieldUnescaped("<![CDATA[${this.name}]]>") }
+            notes { builder.mkp.yieldUnescaped("<![CDATA[${this.notes?:''}]]>") }
+            description { builder.mkp.yieldUnescaped("<![CDATA[${this.description?:''}]]>") }
+
+            attachments(){
+                this.attachments.each { _att ->
+                    _att.xml(builder)
+                }
+            }
+
+            comments(){
+                this.comments.each { _comment ->
+                    comment(){
+                        dateCreated(_comment.dateCreated)
+                        posterId(_comment.posterId)
+                        posterClass(_comment.posterClass)
+                        body { builder.mkp.yieldUnescaped("<![CDATA[${_comment.body}]]>") }
+                    }
+                }
+            }
+        }
+    }
 }

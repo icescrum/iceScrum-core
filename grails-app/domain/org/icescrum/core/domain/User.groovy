@@ -91,10 +91,10 @@ class User implements Serializable, Attachmentable {
                         "WHERE t.id = :t) ", [uid: SCH.context.authentication.principal?.id, t: id, term: "%$term%"], params ?: [:])
     }
 
-    static findUsersLike(term, exCurrentUser, showDisabled, params){
+    static findUsersLike(term, exCurrentUser, showDisabled, params) {
         executeQuery("SELECT DISTINCT u " +
                 "FROM org.icescrum.core.domain.User as u " +
-                "WHERE ${showDisabled == false ? 'u.enabled == true and ' : ''} ${exCurrentUser ? 'u.id != '+SCH.context.authentication.principal?.id+' and ' : ''}" +
+                "WHERE ${showDisabled == false ? 'u.enabled == true and ' : ''} ${exCurrentUser ? 'u.id != ' + SCH.context.authentication.principal?.id + ' and ' : ''}" +
                 "( lower(u.email) like lower(:term) " +
                 "or lower(u.username) like lower(:term) " +
                 "or lower(u.firstName) like lower(:term) " +
@@ -135,9 +135,9 @@ class User implements Serializable, Attachmentable {
         return username.hashCode()
     }
 
-    def beforeValidate(){
+    def beforeValidate() {
         //Create uid before first save object
-        if (!this.id && !this.uid){
+        if (!this.id && !this.uid) {
             this.uid = (this.username + this.email).encodeAsMD5()
         }
     }
@@ -156,5 +156,30 @@ class User implements Serializable, Attachmentable {
 
     Locale getLocale() {
         new Locale(*preferences.language.split('_', 3))
+    }
+
+    def xml(builder) {
+        builder.user() {
+            uid(this.uid)
+            email(this.email)
+            enabled(this.enabled)
+            username(this.username)
+            password(this.password)
+            dateCreated(this.dateCreated)
+            accountLocked(this.accountLocked)
+            accountExpired(this.accountExpired)
+            passwordExpired(this.passwordExpired)
+            accountExternal(this.accountExternal)
+            lastName { builder.mkp.yieldUnescaped("<![CDATA[${this.lastName}]]>") }
+            firstName { builder.mkp.yieldUnescaped("<![CDATA[${this.firstName}]]>") }
+
+            preferences.xml(builder)
+
+            teams(){
+                this.teams.each { _team ->
+                    team(uid: _team.uid)
+                }
+            }
+        }
     }
 }

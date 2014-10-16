@@ -193,4 +193,31 @@ class Actor extends BacklogElement implements Serializable, Comparable<Actor> {
         def searchOptions = [actor: [:]]
         searchByTermOrTag(productId, searchOptions, term)
     }
+
+    def xml(def builder){
+        builder.actor(){
+            uid(this.uid)
+            instances(this.instances)
+            useFrequency(this.useFrequency)
+            creationDate(this.creationDate)
+            expertnessLevel(this.expertnessLevel)
+            tags { builder.mkp.yieldUnescaped("<![CDATA[${this.tags}]]>") }
+            name { builder.mkp.yieldUnescaped("<![CDATA[${this.name}]]>") }
+            notes { builder.mkp.yieldUnescaped("<![CDATA[${this.notes?:''}]]>") }
+            description { builder.mkp.yieldUnescaped("<![CDATA[${this.description?:''}]]>") }
+            satisfactionCriteria { builder.mkp.yieldUnescaped("<![CDATA[${this.satisfactionCriteria?:''}]]>") }
+
+            stories(){
+                this.stories.each{ _story ->
+                    story(uid: _story.uid)
+                }
+            }
+
+            attachments(){
+                this.attachments.each { _att ->
+                    _att.xml(builder)
+                }
+            }
+        }
+    }
 }

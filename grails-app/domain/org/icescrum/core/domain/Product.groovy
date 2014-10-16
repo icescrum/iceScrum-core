@@ -345,4 +345,56 @@ class Product extends TimeBox implements Serializable, Attachmentable {
         }
         return acl
     }
+    
+    def xml(builder) {
+        builder.product() {
+            id(this.id)
+            pkey(this.pkey)
+            endDate(this.endDate)
+            startDate(this.startDate)
+            lastUpdated(this.lastUpdated)
+            dateCreated(this.dateCreated)
+            planningPokerGameType(this.planningPokerGameType)
+            name { builder.mkp.yieldUnescaped("<![CDATA[${this.name}]]>") }
+            description { builder.mkp.yieldUnescaped("<![CDATA[${this.description?:''}]]>") }
+
+            this.preferences.xml(builder)
+
+            teams() {
+                this.teams.each { _team ->
+                    _team.xml(builder)
+                }
+            }
+
+            features(){
+                this.features.each{ _feature ->
+                    _feature.xml(builder)
+                }
+            }
+
+            productOwners(){
+                this.productOwners.each { _user ->
+                    _user.xml(builder)
+                }
+            }
+
+            stories(){
+                this.stories.findAll{ it.parentSprint == null }.each{ _story ->
+                    _story.xml(builder)
+                }
+            }
+
+            attachments(){
+                this.attachments.each { _att ->
+                    _att.xml(builder)
+                }
+            }
+
+            cliches(){
+                this.cliches.each{ _cliche ->
+                    _cliche.xml(builder)
+                }
+            }
+        }
+    }
 }

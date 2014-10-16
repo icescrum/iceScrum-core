@@ -136,4 +136,14 @@ class AcceptanceTest implements Fluxiable, Serializable {
     void setStateEnum(AcceptanceTestState stateEnum) {
         state = stateEnum.id
     }
+
+    def xml(builder){
+        builder.acceptanceTest(){
+            uid(this.uid)
+            state(this.state)
+            creator(uid:this.creator.uid)
+            name { builder.mkp.yieldUnescaped("<![CDATA[${this.name}]]>") }
+            description { builder.mkp.yieldUnescaped("<![CDATA[${this.description?:''}]]>") }
+        }
+    }
 }

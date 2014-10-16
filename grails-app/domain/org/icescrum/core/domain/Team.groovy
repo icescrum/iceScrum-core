@@ -243,4 +243,26 @@ class Team implements Serializable, Comparable {
     int compareTo(Object t) {
         return this.name?.compareTo(t.name)
     }
+
+    def xml(builder) {
+        builder.team() {
+            uid(this.uid)
+            velocity(this.velocity)
+            dateCreated(this.dateCreated)
+            name { builder.mkp.yieldUnescaped("<![CDATA[${this.name}]]>") }
+            description { builder.mkp.yieldUnescaped("<![CDATA[${this.description?:''}]]>") }
+
+            scrumMasters() {
+                this.scrumMasters.each { _user ->
+                    _user.xml(builder)
+                }
+            }
+
+            members() {
+                this.members.each { _user ->
+                    _user.xml(builder)
+                }
+            }
+        }
+    }
 }
