@@ -271,6 +271,13 @@ class DummyPopulator {
             story.rank = index + 1
             story.save()
         }
+
+        product.stories.findAll {
+            (it.state != Story.STATE_ACCEPTED) && (it.state != Story.STATE_ESTIMATED)
+        }.eachWithIndex { story, index ->
+            story.rank = 0
+            story.save()
+        }
     }
 
     private static void createAcceptanceTests(Product product, User user) {
