@@ -138,8 +138,7 @@ class AcceptanceTest implements Fluxiable, Serializable {
     }
 
     def xml(builder){
-        builder.acceptanceTest(){
-            uid(this.uid)
+        builder.acceptanceTest(uid:this.uid){
             state(this.state)
             creator(uid:this.creator.uid)
             name { builder.mkp.yieldUnescaped("<![CDATA[${this.name}]]>") }

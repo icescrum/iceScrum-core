@@ -91,8 +91,7 @@ class UserPreferences implements Serializable{
     }
 
     def xml = { builder ->
-        builder.preferences() {
-            id(this.id)
+        builder.preferences(id:this.id) {
             menu(this.menu)
             language(this.language)
             activity(this.activity)

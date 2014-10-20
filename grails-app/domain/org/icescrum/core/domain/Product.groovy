@@ -347,8 +347,7 @@ class Product extends TimeBox implements Serializable, Attachmentable {
     }
     
     def xml(builder) {
-        builder.product() {
-            id(this.id)
+        builder.product(id:this.id) {
             pkey(this.pkey)
             endDate(this.endDate)
             startDate(this.startDate)

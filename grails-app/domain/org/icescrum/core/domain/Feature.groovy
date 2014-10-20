@@ -183,8 +183,7 @@ class Feature extends BacklogElement implements Serializable {
     }
 
     def xml(builder) {
-        builder.feature(){
-            uid(this.uid)
+        builder.feature(uid:this.uid){
             type(this.type)
             rank(this.rank)
             color(this.color)

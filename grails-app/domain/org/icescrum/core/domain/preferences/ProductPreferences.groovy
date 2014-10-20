@@ -73,8 +73,7 @@ class ProductPreferences implements Serializable{
     }
     
     def xml(builder){
-        builder.preferences(){
-            id(this.id)
+        builder.preferences(id:this.id){
             hidden(this.hidden)
             timezone(this.timezone)
             hideWeekend(this.hideWeekend)

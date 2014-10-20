@@ -741,8 +741,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
     }
 
     def xml(builder){
-        builder.story(){
-            uid(this.uid)
+        builder.story(uid:this.uid){
             type(this.type)
             rank(this.rank)
             state(this.state)

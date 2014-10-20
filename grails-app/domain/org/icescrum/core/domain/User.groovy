@@ -159,8 +159,7 @@ class User implements Serializable, Attachmentable {
     }
 
     def xml(builder) {
-        builder.user() {
-            uid(this.uid)
+        builder.user(uid:this.uid) {
             email(this.email)
             enabled(this.enabled)
             username(this.username)

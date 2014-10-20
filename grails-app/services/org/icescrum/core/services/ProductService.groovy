@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010 iceScrum Technologies.
+ * Copyright (c) 2014 Kagilum SAS.
  *
  * This file is part of iceScrum.
  *
@@ -18,8 +18,6 @@
  * Authors:
  *
  * Vincent Barrier (vbarrier@kagilum.com)
- * Stéphane Maldini (stephane.maldini@icescrum.com)
- * Manuarii Stein (manuarii.stein@icescrum.com)
  * Nicolas Noullet (nnoullet@kagilum.com)
  */
 
@@ -76,10 +74,10 @@ class ProductService {
     }
 
     @PreAuthorize('isAuthenticated()')
-    void saveImport(Product product, String name, String importPath) {
+    void saveImport(Product product, String importPath, boolean erase) {
         product.orderNumber = (Product.count() ?: 0) + 1
 
-        if (product.erasableByUser && product.name == name) {
+        if (erase && Product.countByName(product.name)) {
             def p = Product.findByName(product.name)
             p.teams.each{ it.removeFromProducts(p) }
             securityService.unsecureDomain(p)
@@ -88,6 +86,12 @@ class ProductService {
 
         try {
             product.teams.each { t ->
+                //save users before team
+                t.members?.each {
+                    if (it.id == null)
+                        it.save()
+                }
+
                 if (t.id == null)
                     teamService.saveImport(t)
                 else {
@@ -130,11 +134,11 @@ class ProductService {
                 securityService.changeOwner(u, product)
             }
 
-            publishEvent(new IceScrumProductEvent(product, this.class, (User) springSecurityService.currentUser, IceScrumEvent.EVENT_CREATED))
+            /*publishEvent(new IceScrumProductEvent(product, this.class, (User) springSecurityService.currentUser, IceScrumEvent.EVENT_CREATED))
             if (importPath){
                 def event = new IceScrumProductEvent(product, new File(importPath), this.class, (User) springSecurityService.currentUser, IceScrumProductEvent.EVENT_IMPORTED)
                 publishEvent(event)
-            }
+            }*/
         } catch (Exception e) {
             throw new RuntimeException(e)
         }
@@ -411,7 +415,7 @@ class ProductService {
                 progress?.updateProgress((product.stories.story.size() * (index + 1) / 100).toInteger(), g.message(code: 'is.parse', args: [g.message(code: 'is.story')]))
             }
             // ensure rank for stories in backlog
-            def stories = p.stories.findAll {it.state == Story.STATE_ACCEPTED || it.state == Story.STATE_ESTIMATED}.sort({ a, b -> a.rank <=> b.rank } as Comparator)
+            def stories = p.stories.findAll {it.state == Story.STATE_ACCEPTED || it.state == Story.STATE_ESTIMATED}.sort{ a, b -> a.rank <=> b.rank }
             stories.eachWithIndex {it, index ->
                 it.rank = index + 1
             }
@@ -462,7 +466,8 @@ class ProductService {
 
             p = this.unMarshall(product, progress)
         } catch (RuntimeException e) {
-            if (log.debugEnabled) e.printStackTrace()
+            if (log.debugEnabled)
+                e.printStackTrace()
             progress?.progressError(g.message(code: 'is.parse.error', args: [g.message(code: 'is.product')]))
             return
         }
@@ -472,27 +477,89 @@ class ProductService {
 
     @PreAuthorize('isAuthenticated()')
     @Transactional(readOnly = true)
-    def validate(Product p, ProgressSupport progress = null) {
+    def validate(Product p, ProgressSupport progress = null, boolean erase = false) {
+        def changes = [:]
         def g = grailsApplication.mainContext.getBean('org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib')
         try {
             Product.withNewSession {
                 p.teams.eachWithIndex { team, index ->
                     team.validate()
+                    if (team.errors.errorCount == 1) {
+                        changes.team = [:]
+                        if(team.errors.fieldErrors[0]?.field == 'name'){
+                            changes.team.name = team.name
+                        } else {
+                            if (log.infoEnabled)
+                                log.info("Team validation error (${team.name}): " + team.errors)
+                            throw new RuntimeException()
+                        }
+                    } else if (team.errors.errorCount > 1) {
+                        if (log.infoEnabled)
+                            log.info("Team validation error (${team.name}): " + team.errors)
+                        throw new RuntimeException()
+                    }
                     progress?.updateProgress((p.teams.size() * (index + 1) / 100).toInteger(), g.message(code: 'is.validate', args: [g.message(code: 'is.team')]))
                     team.members.eachWithIndex { member, index2 ->
                         member.validate()
+                        if (member.errors.errorCount == 1) {
+                            changes.users = changes.users ?: [:]
+                            if(member.errors.fieldErrors[0]?.field == 'username'){
+                                changes.users."$member.uid" = member.username
+                            } else {
+                                if (log.infoEnabled)
+                                    log.info("User validation error (${member.username}): " + member.errors)
+                                throw new RuntimeException()
+                            }
+                        } else if (member.errors.errorCount > 1) {
+                            if (log.infoEnabled)
+                                log.info("User validation error (${member.username}): " + member.errors)
+                            throw new RuntimeException()
+                        }
                         progress?.updateProgress((team.members.size() * (index2 + 1) / 100).toInteger(), g.message(code: 'is.validate', args: [g.message(code: 'is.user')]))
                     }
                 }
                 p.productOwners?.eachWithIndex{ productOwner, index ->
                     productOwner.validate()
+                    if (productOwner.errors.errorCount == 1) {
+                        changes.users = changes.users ?: [:]
+                        if(productOwner.errors.fieldErrors[0]?.field == 'username' && !(productOwner.username in changes.users)){
+                            changes.users."$productOwner.uid" = productOwner.username
+                        } else {
+                            if (log.infoEnabled)
+                                log.info("User validation error (${productOwner.username}): " + productOwner.errors)
+                            throw new RuntimeException()
+                        }
+                    } else if (productOwner.errors.errorCount > 1) {
+                        if (log.infoEnabled)
+                            log.info("User validation error (${productOwner.username}): " + productOwner.errors)
+                        throw new RuntimeException()
+                    }
                     progress?.updateProgress((p.productOwners.size() * (index + 1) / 100).toInteger(), g.message(code: 'is.validate', args: [g.message(code: 'is.user')]))
                 }
                 p.validate()
+                if (p.errors.errorCount && p.errors.errorCount <= 2 && !erase) {
+                    changes.product = [:]
+                    p.errors.fieldErrors*.field.each{ field ->
+                        if(!(field in ['pkey', 'name'])){
+                            if (log.infoEnabled)
+                                log.info("Product validation error (${p.name}): " + p.errors)
+                            throw new RuntimeException()
+                        } else {
+                            changes.product[field] = p[field]
+                        }
+                    }
+                    changes.erasable = p.erasableByUser
+                } else if (p.errors.errorCount > 2) {
+                    if (log.infoEnabled)
+                        log.info("Product validation error (${p.name}): " + p.errors)
+                    throw new RuntimeException()
+                }
                 progress?.updateProgress(100, g.message(code: 'is.validate', args: [g.message(code: 'is.product')]))
+                return changes
             }
         } catch (Exception e) {
-            if (log.debugEnabled) e.printStackTrace()
+            if (log.debugEnabled)
+                e.printStackTrace()
             progress?.progressError(g.message(code: 'is.validate.error', args: [g.message(code: 'is.product')]))
         }
     }

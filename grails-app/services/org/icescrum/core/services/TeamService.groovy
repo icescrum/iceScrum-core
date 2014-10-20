@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010 iceScrum Technologies.
+ * Copyright (c) 2014 Kagilum SAS.
  *
  * This file is part of iceScrum.
  *
@@ -17,7 +17,8 @@
  *
  * Authors:
  *
- * Stéphane Maldini (stephane.maldini@icescrum.com)
+ * Vincent Barrier (vbarrier@kagilum.com)
+ * Nicolas Noullet (nnoullet@kagilum.com)
  */
 
 
@@ -154,8 +155,8 @@ class TeamService {
             throw new RuntimeException('is.team.error.not.saved')
         }
 
-        def scrumMasters = team.scrumMasters
         securityService.secureDomain(team)
+        def scrumMasters = team.scrumMasters
 
         def u = (User) springSecurityService.currentUser
         for (member in team.members) {
@@ -228,7 +229,10 @@ class TeamService {
                 progress?.updateProgress((team.members.user.size() * (index + 1) / 100).toInteger(), g.message(code: 'is.parse', args: [g.message(code: 'is.user')]))
             }
             def scrumMastersList = []
-            team.scrumMasters.scrumMaster.eachWithIndex {user, index ->
+
+            //fix between R6#x and R7
+            def sm = team.scrumMasters.scrumMaster ?: team.scrumMasters.user
+            sm.eachWithIndex {user, index ->
                 def u
                 if (!user.@uid?.isEmpty())
                     u = ((User) t.members.find { it.uid == user.@uid.text() } ) ?: null

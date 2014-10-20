@@ -405,8 +405,7 @@ class Task extends BacklogElement implements Serializable {
     }
 
     def xml(builder){
-        builder.task(){
-            uid(this.uid)
+        builder.task(uid:this.uid){
             type(this.type)
             rank(this.rank)
             color(this.color)

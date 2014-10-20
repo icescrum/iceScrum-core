@@ -152,7 +152,7 @@ class Cliche implements Serializable {
     }
 
     def xml(builder){
-        builder.cliche(){
+        builder.cliche(id:this.id){
             id(this.id)
             type(this.type)
             datePrise(this.datePrise)

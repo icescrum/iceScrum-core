@@ -313,8 +313,7 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
     }
 
     def xml(builder){
-        builder.sprint(){
-            id(this.id)
+        builder.sprint(id:this.id){
             state(this.state)
             endDate(this.endDate)
             velocity(this.velocity)

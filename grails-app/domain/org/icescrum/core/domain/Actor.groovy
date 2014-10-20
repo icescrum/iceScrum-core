@@ -195,7 +195,7 @@ class Actor extends BacklogElement implements Serializable, Comparable<Actor> {
     }
 
     def xml(def builder){
-        builder.actor(){
+        builder.actor(uid:this.uid){
             uid(this.uid)
             instances(this.instances)
             useFrequency(this.useFrequency)

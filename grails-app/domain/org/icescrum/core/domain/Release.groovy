@@ -192,8 +192,7 @@ class Release extends TimeBox implements Cloneable, Attachmentable {
     }
     
     def xml(builder){
-        builder.release(){
-            id(this.id)
+        builder.release(id:this.id){
             state(this.state)
             endDate(this.endDate)
             startDate(this.startDate)
