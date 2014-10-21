@@ -563,7 +563,7 @@ class IcescrumCoreGrailsPlugin {
 
     private void addJasperMethod(source, springSecurityService, jasperService){
         try {
-            source.metaClass.outputJasperReport = { String reportName, String format, def data, String outputName = null, def parameters = null ->
+            source.metaClass.renderReport = { String reportName, String format, def data, String outputName = null, def parameters = null ->
                 outputName = (outputName ? outputName.replaceAll("[^a-zA-Z\\s]", "").replaceAll(" ", "") + '-' + reportName : reportName) + '-' + (g.formatDate(formatName: 'is.date.file'))
                 if (!session.progress){
                      session.progress = new ProgressSupport()
@@ -580,11 +580,10 @@ class IcescrumCoreGrailsPlugin {
                                                     parameters: parameters,
                                                     fileFormat: JasperExportFormat.determineFileFormat(format))
 
-                response.setHeader("Content-disposition", "attachment; filename=" + outputName + "." + reportDef.fileFormat.extension)
-                response.contentType = reportDef.fileFormat.mimeTyp
                 response.characterEncoding = "UTF-8"
-                response.outputStream << jasperService.generateReport(reportDef).toByteArray()
+                response.setHeader("Content-disposition", "attachment; filename=" + outputName + "." + reportDef.fileFormat.extension)
                 session.progress?.completeProgress(message(code: 'is.report.complete'))
+                render(file: jasperService.generateReport(reportDef).toByteArray(), contentType: reportDef.fileFormat.mimeTyp)
             }
         } catch (Exception e) {
             if (log.debugEnabled) e.printStackTrace()
