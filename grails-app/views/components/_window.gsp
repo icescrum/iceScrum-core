@@ -17,11 +17,7 @@
   - along with iceScrum.  If not, see <http://www.gnu.org/licenses/>.
   --}%
 
-<div id="window-id-${id}"
-     tabindex="1"
-     data-is-full-screen="${windowActions?.fullScreen?:false}"
-     data-is-widgetable="${windowActions?.widgetable?:false}"
-     data-is-title="${spaceName ?: 'iceScrum'} - ${title.encodeAsJavaScript()}">
+<div id="window-id-${id}" tabindex="1">
 <g:if test="${right}">
     <div class="clearfix">
 </g:if>
