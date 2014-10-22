@@ -32,9 +32,7 @@
             </div>
         </nav>
     </g:if>
-    <div class="content">
-            ${windowContent}
-        </div>
+    ${windowContent}
     </div>
     <g:if test="${right}">
         <div id="right">
