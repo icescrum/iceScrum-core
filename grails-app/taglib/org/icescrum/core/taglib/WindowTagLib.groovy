@@ -181,7 +181,7 @@ class WindowTagLib {
         def name = attrs.name ? "name='$attrs.name'" : ''
         def validation = attrs.validate ? 'show-validation' : ''
         if (attrs.form){
-            out << "<form role='form' no-validation $validation $name ng-submit='${attrs.form}' ${attrs.autoFillFix?'form-autofill-fix':''}>"
+            out << "<form role='form' $validation $name ng-submit='${attrs.form}' ${attrs.autoFillFix?'form-autofill-fix':''} novalidate>"
         }
         out << """  <div class="modal-header">
                         <button type="button" class="close" ng-click="\$dismiss()" aria-hidden="true">&times;</button>
@@ -204,7 +204,7 @@ class WindowTagLib {
             def closeButton = attrs.closeButton ?: message(code: 'is.dialog.close')
             out << """  <button type="button" class="btn btn-default" tooltip-append-to-body="true" tooltip="$closeButton (ESCAPE)" ng-click="\$close()">$closeButton</button>"""
             if (attrs.submitButton) {
-                out << "<button type='submit' class='btn btn-primary'>${attrs.submitButton}</button>"
+                out << "<button type='submit' ${attrs.validate?'ng-disabled="'+attrs.name+'.$invalid"':''} class='btn btn-primary'>${attrs.submitButton}</button>"
             }
             out << """  </div>"""
         }
