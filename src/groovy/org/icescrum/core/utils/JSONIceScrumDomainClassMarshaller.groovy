@@ -77,7 +77,7 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
 
         writer.object()
 
-        if (this.includeClass){
+        if (this.includeClass) {
             writer.key("class").value(GrailsNameUtils.getShortName(domainClass.getClazz().getName()))
         }
 
@@ -94,87 +94,80 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
         List<GrailsDomainClassProperty> properties = domainClass.getPersistentProperties().toList()
 
         def excludes = []
-        if(propertiesMap.exclude)
+        if (propertiesMap.exclude) {
             excludes.addAll(propertiesMap.exclude)
-        if(propertiesMap."${configName}".exclude)
+        }
+        if (propertiesMap."${configName}".exclude) {
             excludes.addAll(propertiesMap."${configName}".exclude)
-        if(propertiesMap."${configName}"?.include)
+        }
+        if (propertiesMap."${configName}"?.include) {
             excludes.addAll(propertiesMap."${configName}".include)
-        if(propertiesMap."${configName}"?.includeShort)
-            excludes.addAll(propertiesMap."${configName}".includeShort)
-        properties.removeAll{ it.getName() in excludes }
+        }
+        properties.removeAll { it.getName() in excludes }
 
-        for (GrailsDomainClassProperty property: properties) {
+        for (GrailsDomainClassProperty property : properties) {
             if (!property.isAssociation()) {
                 // Write non-relation property
                 writer.key(property.getName())
                 Object val = beanWrapper.getPropertyValue(property.getName())
                 json.convertAnother(val)
-            }
-            else {
+            } else {
                 Object referenceObject = beanWrapper.getPropertyValue(property.getName())
                 if (isRenderDomainClassRelations()) {
                     writer.key(property.getName())
                     if (referenceObject == null) {
                         writer.value(null)
-                    }
-                    else {
+                    } else {
                         referenceObject = proxyHandler.unwrapIfProxy(referenceObject)
                         if (referenceObject instanceof SortedMap) {
                             referenceObject = new TreeMap((SortedMap) referenceObject)
-                        }
-                        else if (referenceObject instanceof SortedSet) {
+                        } else if (referenceObject instanceof SortedSet) {
                             referenceObject = new TreeSet((SortedSet) referenceObject)
-                        }
-                        else if (referenceObject instanceof Set) {
+                        } else if (referenceObject instanceof Set) {
                             referenceObject = new HashSet((Set) referenceObject)
-                        }
-                        else if (referenceObject instanceof Map) {
+                        } else if (referenceObject instanceof Map) {
                             referenceObject = new HashMap((Map) referenceObject)
-                        }
-                        else if (referenceObject instanceof Collection) {
+                        } else if (referenceObject instanceof Collection) {
                             referenceObject = new ArrayList((Collection) referenceObject)
                         }
                         json.convertAnother(referenceObject)
                     }
-                }
-                else {
+                } else {
                     if (referenceObject == null) {
                         writer.key(property.getName())
                         json.value(null)
-                    }
-                    else {
+                    } else {
                         GrailsDomainClass referencedDomainClass = property.getReferencedDomainClass()
 
                         // Embedded are now always fully rendered
                         if (referencedDomainClass == null || property.isEmbedded() || GrailsClassUtils.isJdk5Enum(property.getType())) {
                             writer.key(property.getName())
                             json.convertAnother(referenceObject)
-                        }
-                        else if (property.isOneToOne() || property.isManyToOne() || property.isEmbedded()) {
+                        } else if (property.isOneToOne() || property.isManyToOne() || property.isEmbedded()) {
                             writer.key(property.getName())
                             asShortObject(referenceObject, json, referencedDomainClass.getIdentifier(), referencedDomainClass)
-                        }
-                        else {
+                        } else {
                             GrailsDomainClassProperty referencedIdProperty = referencedDomainClass.getIdentifier()
                             @SuppressWarnings("unused")
                             String refPropertyName = referencedDomainClass.getPropertyName()
                             if (referenceObject instanceof Collection) {
                                 Collection o = (Collection) referenceObject
-                                writer.key(property.getName()+"_count").value(o.size())
-                                writer.key(property.getName()+"_ids")
-                                writer.array()
-                                for (Object el: o) {
-                                    writer.object()
-                                    writer.key("id").value(extractValue(el, referencedIdProperty))
-                                    writer.endObject()
+                                if (propertiesMap[configName]?.withIds?.contains(property.name)) {
+                                    writer.key(property.getName() + "_ids")
+                                    writer.array()
+                                    for (Object el : o) {
+                                        writer.object()
+                                        writer.key("id").value(extractValue(el, referencedIdProperty))
+                                        writer.endObject()
+                                    }
+                                    writer.endArray()
+                                } else {
+                                    writer.key(property.getName() + "_count").value(o.size())
                                 }
-                                writer.endArray()
-                            }
-                            else if (referenceObject instanceof Map) {
+                            } else if (referenceObject instanceof Map) {
                                 writer.key(property.getName())
                                 Map<Object, Object> map = (Map<Object, Object>) referenceObject
-                                for (Map.Entry<Object, Object> entry: map.entrySet()) {
+                                for (Map.Entry<Object, Object> entry : map.entrySet()) {
                                     String key = String.valueOf(entry.getKey())
                                     Object o = entry.getValue()
                                     writer.object()
@@ -189,41 +182,22 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
             }
         }
         propertiesMap."${configName}"?.include?.each {
-            if (value.properties."${it}" instanceof Collection) {
-                Collection o = (Collection) value.properties."${it}"
-                writer.key(it + "_count").value(o.size())
-                writer.key(it)
-                json.convertAnother(value.properties."${it}")
-            }
-            else if (value.properties."${it}" != null) {
-                writer.key(it)
-                json.convertAnother(value.properties."${it}")
+            if (value.properties."${it}" != null) {
+                writer.key(it);
+                json.convertAnother(value.properties."${it}");
             }
         }
-        if (textileRenderer && propertiesMap."${configName}"?.textile){
+        propertiesMap."${configName}"?.includeCount?.each {
+            if (value.properties."${it}" instanceof Collection) {
+                Collection o = value.properties."${it}"
+                writer.key(it + "_count").value(o.size())
+            }
+        }
+        if (textileRenderer && propertiesMap."${configName}"?.textile) {
             propertiesMap."${configName}"?.textile?.each {
                 if (value.properties."${it}" != null) {
-                    writer.key(it+"_html")
+                    writer.key(it + "_html")
                     json.convertAnother(textileRenderer.renderHtml([markup: "Textile"], value.properties."${it}"))
-                }
-            }
-        }
-        propertiesMap."${configName}"?.includeShort?.each {
-            if (value.properties."${it}" != null) {
-                def referenceObject = value.properties."${it}"
-                if (referenceObject instanceof Collection && referenceObject.size() > 0) {
-                    writer.key(it)
-                    referenceObject = new ArrayList((Collection) referenceObject)
-                    GrailsDomainClass referencedDomainClass = Holders.grailsApplication.getDomainClass(referenceObject[0].getClass().getName())
-                    writer.array()
-                    for (Object el: referenceObject) {
-                        asShortObject(el, json,  referencedDomainClass.getIdentifier(), referencedDomainClass)
-                    }
-                    writer.endArray()
-                } else if(!(referenceObject instanceof Collection)) {
-                    writer.key(it)
-                    GrailsDomainClass referencedDomainClass = Holders.grailsApplication.getDomainClass(referenceObject.getClass().getName())
-                    asShortObject(referenceObject, json, referencedDomainClass.getIdentifier(), referencedDomainClass)
                 }
             }
         }
@@ -241,14 +215,13 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
                 idValue = extractValue(refObj, idProperty)
             }
 
-        }
-        else {
+        } else {
             idValue = extractValue(refObj, idProperty)
         }
         JSONWriter writer = json.getWriter()
         writer.object()
 
-        if (this.includeClass){
+        if (this.includeClass) {
             writer.key("class").value(GrailsNameUtils.getShortName(referencedDomainClass.getName()))
         }
 
