@@ -25,7 +25,7 @@
 
 package org.icescrum.core.services
 
-import grails.plugin.fluxiable.Activity
+import org.icescrum.core.domain.Activity
 import grails.util.GrailsNameUtils
 import org.apache.commons.io.FileUtils
 import org.grails.comments.Comment
@@ -58,6 +58,7 @@ class StoryService extends IceScrumEventPublisher {
     def acceptanceTestService
     def sessionFactory
     def messageSource
+    def activityService
 
     def g = new org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib()
 
@@ -143,10 +144,10 @@ class StoryService extends IceScrumEventPublisher {
 
             story.delete()
             if (!newObject) {
-                product.addActivity(springSecurityService.currentUser, Activity.CODE_DELETE, story.name)
+                activityService.addActivity(product, springSecurityService.currentUser, Activity.CODE_DELETE, story.name)
             }
             product.removeFromStories(story)
-            product.save()
+            // product.save() TODO remove
             // Be careful, events may be pushed event if the delete fails because the flush didn't occur yet
             publishSynchronousEvent(IceScrumEventType.DELETE, story, dirtyProperties)
         }
@@ -519,7 +520,7 @@ class StoryService extends IceScrumEventPublisher {
             User u = (User) springSecurityService.currentUser
             storiesA << story
 
-            story.addActivity(u, 'acceptAs', story.name)
+            activityService.addActivity(story, u, 'acceptAs', story.name)
             broadcast(function: 'accept', message: story, channel:'product-'+story.backlog.id)
             publishEvent(new IceScrumStoryEvent(story, this.class, u, IceScrumStoryEvent.EVENT_ACCEPTED))
         }
@@ -547,7 +548,7 @@ class StoryService extends IceScrumEventPublisher {
 
             User u = (User) springSecurityService.currentUser
 
-            story.addActivity(u, 'returnToSandbox', story.name)
+            activityService.addActivity(story, u, 'returnToSandbox', story.name)
             broadcast(function: 'returnToSandbox', message: story, channel:'product-'+story.backlog.id)
             publishEvent(new IceScrumStoryEvent(story, this.class, u, IceScrumStoryEvent.EVENT_UPDATED))
         }
@@ -593,7 +594,7 @@ class StoryService extends IceScrumEventPublisher {
             delete([story], feature)
             features << feature
 
-            feature.addActivity(user, 'acceptAs', feature.name)
+            activityService.addActivity(feature, user, 'acceptAs', feature.name)
             publishEvent(new IceScrumStoryEvent(feature, this.class, user, IceScrumStoryEvent.EVENT_ACCEPTED_AS_FEATURE))
         }
         resumeBufferedBroadcast(channel:'product-'+product.id)
@@ -696,7 +697,7 @@ class StoryService extends IceScrumEventPublisher {
             User user = (User) springSecurityService.currentUser
 
             broadcast(function: 'update', message: story, channel:'product-'+product.id)
-            story.addActivity(user, 'done', story.name)
+            activityService.addActivity(story, user, 'done', story.name)
             publishEvent(new IceScrumStoryEvent(story, this.class, user, IceScrumStoryEvent.EVENT_DONE))
 
             // Set all tasks to done (and story estimation to 0)
@@ -750,7 +751,7 @@ class StoryService extends IceScrumEventPublisher {
 
             User u = (User) springSecurityService.currentUser
 
-            story.addActivity(u, 'unDone', story.name)
+            activityService.addActivity(story, u, 'unDone', story.name)
             broadcast(function: 'update', message: story, channel:'product-'+product.id)
             publishEvent(new IceScrumStoryEvent(story, this.class, u, IceScrumStoryEvent.EVENT_UNDONE))
         }

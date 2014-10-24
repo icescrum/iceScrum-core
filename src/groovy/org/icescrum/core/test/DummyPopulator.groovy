@@ -35,7 +35,7 @@ import org.icescrum.core.domain.preferences.UserPreferences
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.authority.AuthorityUtils
 
-import grails.plugin.fluxiable.Activity
+import org.icescrum.core.domain.Activity
 import org.icescrum.core.domain.Feature
 import org.icescrum.core.domain.Product
 import org.icescrum.core.domain.Release
@@ -147,7 +147,14 @@ class DummyPopulator {
                 if (story.state >= Story.STATE_ACCEPTED) {
                     story.acceptedDate = new Date()
                 }
-                story.addActivity(usera, state == Story.STATE_SUGGESTED ? Activity.CODE_SAVE : 'acceptAs', story.name)
+                def activity = new Activity(poster: usera,
+                                            parentRef: story.id,
+                                            parentType: 'story',
+                                            code: state == Story.STATE_SUGGESTED ? Activity.CODE_SAVE : 'acceptAs',
+                                            label: story.name)
+                activity.save()
+                story.addToActivities(activity)
+                return story
             }
             80.times {
                 product.addToStories(createStory(it % 5 == 0 ? Story.STATE_SUGGESTED : Story.STATE_ESTIMATED))

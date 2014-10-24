@@ -40,6 +40,7 @@ class TaskService extends IceScrumEventPublisher {
     def clicheService
     def springSecurityService
     def securityService
+    def activityService
 
     @PreAuthorize('(inProduct(#task.backlog?.parentProduct) or inProduct(#task.parentStory?.parentProduct)) and (!archivedProduct(#task.backlog?.parentProduct) or !archivedProduct(#task.parentStory?.parentProduct))')
     void save(Task task, User user) {
@@ -149,7 +150,7 @@ class TaskService extends IceScrumEventPublisher {
             service.done(story)
         }
         if (user) {
-            task.addActivity(user, 'taskFinish', task.name)
+            activityService.addActivity(task, user, 'taskFinish', task.name)
         }
     }
 
@@ -166,7 +167,7 @@ class TaskService extends IceScrumEventPublisher {
             def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_DELETE, task)
             if (task.parentStory) {
                 dirtyProperties.parentStory = task.parentStory
-                task.parentStory.addActivity(user, 'taskDelete', task.name)
+                activityService.addActivity(task.parentStory, user, 'taskDelete', task.name)
                 task.parentStory.removeFromTasks(task)
 
             }
@@ -241,9 +242,9 @@ class TaskService extends IceScrumEventPublisher {
                     || securityService.productOwner(product, springSecurityService.authentication)
                     || securityService.scrumMaster(null, springSecurityService.authentication)) {
                 if (newState == Task.STATE_BUSY && task.state != Task.STATE_BUSY) {
-                    task.addActivity(user, 'taskInprogress', task.name)
+                    activityService.addActivity(task, user, 'taskInprogress', task.name)
                 } else if (newState == Task.STATE_WAIT && task.state != Task.STATE_WAIT) {
-                    task.addActivity(user, 'taskWait', task.name)
+                    activityService.addActivity(task, user, 'taskWait', task.name)
                 }
                 task.state = newState
             }

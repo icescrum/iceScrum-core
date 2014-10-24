@@ -22,9 +22,7 @@
  */
 package org.icescrum.core.domain
 
-import grails.plugin.fluxiable.Fluxiable
-
-class AcceptanceTest implements Fluxiable, Serializable {
+class AcceptanceTest implements Serializable {
 
     String name
     String description
@@ -35,10 +33,14 @@ class AcceptanceTest implements Fluxiable, Serializable {
 
     int state = AcceptanceTestState.TOCHECK.id
 
+    SortedSet<Activity> activities
+
     static belongsTo = [
         creator: User,
         parentStory: Story
     ]
+
+    static hasMany = [activities: Activity]
 
     static constraints = {
         description(nullable: true, maxSize: 1000)

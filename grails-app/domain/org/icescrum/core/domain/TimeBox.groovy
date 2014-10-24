@@ -24,9 +24,7 @@
 
 package org.icescrum.core.domain
 
-import grails.plugin.fluxiable.Fluxiable
-
-class TimeBox implements Comparable<TimeBox>, Fluxiable, Serializable {
+class TimeBox implements Comparable<TimeBox>, Serializable {
 
     static final long serialVersionUID = -88023090297032383L
 
@@ -38,12 +36,15 @@ class TimeBox implements Comparable<TimeBox>, Fluxiable, Serializable {
     Date dateCreated
     Date lastUpdated
 
+    SortedSet<Activity> activities
+
     static hasMany = [
-            cliches: Cliche
+        cliches: Cliche,
+        activities: Activity
     ]
 
     static mappedBy = [
-            cliches: "parentTimeBox"
+        cliches: "parentTimeBox"
     ]
 
     static constraints = {

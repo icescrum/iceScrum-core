@@ -36,6 +36,7 @@ class ProductTeamsAndFluxiableMigration {
             sql('alter table icescrum2_product_teams add constraint FK_PRODUCT_TEAMS_TEAM foreign key (team_id) references icescrum2_team')
         }
 
+        // TODO check R7
         changeSet(id:'fluxiable_mssql', author:'vbarrier', filePath:filePath) {
             preConditions(onFail:"MARK_RAN"){
                 dbms(type:'mssql')

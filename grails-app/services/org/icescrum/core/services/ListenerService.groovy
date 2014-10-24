@@ -23,7 +23,7 @@
  */
 package org.icescrum.core.services
 
-import grails.plugin.fluxiable.Activity
+import org.icescrum.core.domain.Activity
 import org.icescrum.core.domain.AcceptanceTest
 import org.icescrum.core.domain.Actor
 import org.icescrum.core.domain.Feature
@@ -38,13 +38,14 @@ import org.icescrum.core.event.IceScrumEventType
 class ListenerService {
 
     def springSecurityService
+    def activityService
 
     // SPECIFIC LISTENERS
 
     @IceScrumListener(domain = 'story', eventType = IceScrumEventType.CREATE)
     void storyCreate(Story story, Map dirtyProperties) {
         def user = (User) springSecurityService.currentUser
-        story.addActivity(user, Activity.CODE_SAVE, story.name)
+        activityService.addActivity(story, user, Activity.CODE_SAVE, story.name)
         broadcast(function: 'add', message: story, channel: 'product-' + story.backlog.id)
     }
 
@@ -67,7 +68,7 @@ class ListenerService {
                 }
             }
             def user = (User) springSecurityService.currentUser
-            story.addActivity(user, Activity.CODE_UPDATE, story.name)
+            activityService.addActivity(story, user, Activity.CODE_UPDATE, story.name)
             broadcast(function: 'update', message: story, channel: 'product-' + product.id)
         }
     }
@@ -121,7 +122,7 @@ class ListenerService {
     @IceScrumListener(domain = 'task', eventType = IceScrumEventType.CREATE)
     void taskCreate(Task task, Map dirtyProperties) {
         def user = (User) springSecurityService.currentUser
-        task.addActivity(user, 'taskSave', task.name)
+        activityService.addActivity(task, user, 'taskSave', task.name)
         def productId = task.backlog ? task.backlog.id : task.parentStory.backlog.id
         broadcast(function: 'add', message: task, channel: 'product-' + productId)
     }
@@ -171,7 +172,7 @@ class ListenerService {
     @IceScrumListener(domain = 'acceptanceTest', eventType = IceScrumEventType.CREATE)
     void acceptanceTestCreate(AcceptanceTest acceptanceTest, Map dirtyProperties) {
         def user = (User) springSecurityService.currentUser
-        acceptanceTest.addActivity(user, 'acceptanceTestSave', acceptanceTest.name)
+        activityService.addActivity(acceptanceTest, user, 'acceptanceTestSave', acceptanceTest.name)
         broadcast(function: 'add', message: acceptanceTest, channel: 'product-' + acceptanceTest.parentProduct.id)
     }
 
@@ -179,14 +180,14 @@ class ListenerService {
     void acceptanceTestUpdate(AcceptanceTest acceptanceTest, Map dirtyProperties) {
         def user = (User) springSecurityService.currentUser
         def activityType = 'acceptanceTest' + (dirtyProperties.containsKey('state') ? acceptanceTest.stateEnum.name().toLowerCase().capitalize() : 'Update')
-        acceptanceTest.addActivity(user, activityType, acceptanceTest.name)
+        activityService.addActivity(acceptanceTest, user, activityType, acceptanceTest.name)
         broadcast(function: 'update', message: acceptanceTest, channel: 'product-' + acceptanceTest.parentProduct.id)
     }
 
     @IceScrumListener(domain = 'acceptanceTest', eventType = IceScrumEventType.DELETE)
     void acceptanceTestDelete(AcceptanceTest acceptanceTest, Map dirtyProperties) {
         def product = dirtyProperties.parentStory.backlog
-        dirtyProperties.parentStory.addActivity(springSecurityService.currentUser, 'acceptanceTestDelete', acceptanceTest.name)
+        activityService.addActivity(dirtyProperties.parentStory, springSecurityService.currentUser, 'acceptanceTestDelete', acceptanceTest.name)
         broadcast(function: 'delete', message: [class: acceptanceTest.class, id: dirtyProperties.id], channel: 'product-' + product.id)
     }
 

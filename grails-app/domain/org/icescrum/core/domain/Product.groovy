@@ -147,14 +147,13 @@ class Product extends TimeBox implements Serializable, Attachmentable {
         return users.asList().unique()
     }
 
-    static recentActivity(Product currentProductInstance) {
-        executeQuery("""SELECT act FROM grails.plugin.fluxiable.Activity as act
-                        WHERE act.id IN (SELECT DISTINCT a.activity.id """ +
-                                                "FROM grails.plugin.fluxiable.ActivityLink as a, org.icescrum.core.domain.Product as p " +
-                                                "WHERE a.type='product' " +
-                                                "and p.id=a.activityRef " +
-                                                "and p.id=:p )" +
-                            "ORDER BY act.dateCreated DESC", [p: currentProductInstance.id], [max: 15])
+    // TODO refactor using criteria on activities field
+    static recentActivity(Product product) {
+        executeQuery("""SELECT a
+                        FROM org.icescrum.core.domain.Activity as a
+                        WHERE a.parentType = 'product'
+                        AND a.parentRef = :p
+                        ORDER BY a.dateCreated DESC""", [p: product.id], [max: 15])
     }
 
     static allProductsByUser(long userid, params) {

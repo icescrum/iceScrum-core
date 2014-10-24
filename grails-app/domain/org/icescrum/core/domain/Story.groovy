@@ -478,30 +478,32 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                    AND p.id = :pid """, [pid: pid])[0]?:0) + 1
     }
 
-    static recentActivity(Product currentProductInstance) {
-        executeQuery("SELECT act FROM grails.plugin.fluxiable.Activity as act WHERE act.id IN (SELECT DISTINCT a.activity.id " +
-                "FROM grails.plugin.fluxiable.ActivityLink as a, org.icescrum.core.domain.Story as s " +
-                "WHERE a.type='story' " +
-                "and s.backlog=:p " +
-                "and s.id=a.activityRef " +
-                "and not (a.activity.code like 'task') )" +
-                "ORDER BY act.dateCreated DESC", [p: currentProductInstance], [max: 15])
+    // TODO refactor using criteria on activities field
+    static recentActivity(Product product) {
+        executeQuery("""SELECT a
+                        FROM org.icescrum.core.domain.Activity as a, org.icescrum.core.domain.Story as s
+                        WHERE a.parentType = 'story'
+                        AND a.parentRef = s.id
+                        AND NOT (a.code LIKE 'task')
+                        AND s.backlog = :p
+                        ORDER BY a.dateCreated DESC""", [p: product], [max: 15])
     }
 
+    // TODO refactor using criteria on activities field
     //Not working on ORACLE
     static recentActivity(User user) {
-        executeQuery("SELECT DISTINCT a.activity, s.backlog " +
-                "FROM grails.plugin.fluxiable.ActivityLink as a, org.icescrum.core.domain.Story as s " +
-                "WHERE a.type='story' " +
-                "and s.backlog.id in (SELECT DISTINCT p.id " +
-                                        "FROM org.icescrum.core.domain.Product as p INNER JOIN p.teams as t " +
-                                        "WHERE t.id in" +
-                                                "(SELECT DISTINCT t2.id FROM org.icescrum.core.domain.Team as t2 " +
-                                                "INNER JOIN t2.members as m " +
-                                                "WHERE m.id = :uid)) " +
-                "and s.id=a.activityRef " +
-                "and not (a.activity.code like 'task') " +
-                "ORDER BY a.activity.dateCreated DESC", [uid: user.id], [cache:true,max: 15])
+        executeQuery("""SELECT DISTINCT a, s.backlog
+                        FROM org.icescrum.core.domain.Activity as a, org.icescrum.core.domain.Story as s
+                        WHERE a.parentType = 'story'
+                        AND a.parentRef = s.id
+                        AND not (a.code LIKE 'task')
+                        AND s.backlog.id in (SELECT DISTINCT p.id
+                                             FROM org.icescrum.core.domain.Product as p INNER JOIN p.teams as t
+                                             WHERE t.id in (SELECT DISTINCT t2.id
+                                                            FROM org.icescrum.core.domain.Team as t2
+                                                            INNER JOIN t2.members as m
+                                                            WHERE m.id = :uid))
+                        ORDER BY a.dateCreated DESC""", [uid: user.id], [cache:true,max: 15])
     }
 
     static findLastUpdatedComment(def element) {
@@ -773,9 +775,9 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                 dependsOn(uid:this.dependsOn.uid)
             }
 
-            comments(){
+            comments() {
                 this.comments.each { _comment ->
-                    comment(){
+                    comment() {
                         dateCreated(_comment.dateCreated)
                         posterId(_comment.posterId)
                         posterClass(_comment.posterClass)
@@ -784,26 +786,25 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                 }
             }
 
-            activities(){
+            activities() {
                 this.activities.each { _activity ->
-                    activity(){
+                    activity() {
                         code(_activity.code)
-                        posterId(_activity.posterId)
+                        poster(uid: _activity.poster.uid)
                         dateCreated(_activity.dateCreated)
-                        posterClass(_activity.posterClass)
-                        cachedLabel { builder.mkp.yieldUnescaped("<![CDATA[${_activity.cachedLabel}]]>") }
-                        cachedDescription { builder.mkp.yieldUnescaped("<![CDATA[${_activity.cachedDescription}]]>") }
+                        label { builder.mkp.yieldUnescaped("<![CDATA[${_activity.label}]]>") }
+                        description { builder.mkp.yieldUnescaped("<![CDATA[${_activity.description}]]>") }
                     }
                 }
             }
 
-            acceptanceTests(){
+            acceptanceTests() {
                 this.acceptanceTests.each { _acceptanceTest ->
                     _acceptanceTest.xml(builder)
                 }
             }
 
-            attachments(){
+            attachments() {
                 this.attachments.each { _att ->
                     _att.xml(builder)
                 }

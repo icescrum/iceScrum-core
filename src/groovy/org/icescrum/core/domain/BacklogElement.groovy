@@ -1,11 +1,10 @@
 package org.icescrum.core.domain
 
-import grails.plugin.fluxiable.Fluxiable
 import org.icescrum.plugins.attachmentable.interfaces.Attachmentable
 import org.grails.comments.Commentable
 import org.grails.taggable.Taggable
 
-abstract class BacklogElement implements Fluxiable, Attachmentable, Commentable, Serializable, Taggable {
+abstract class BacklogElement implements Attachmentable, Commentable, Serializable, Taggable {
 
     static final long serialVersionUID = -6800252500987149051L
 
@@ -20,8 +19,11 @@ abstract class BacklogElement implements Fluxiable, Attachmentable, Commentable,
     int uid
 
     TimeBox backlog
+    SortedSet<Activity> activities
 
     static belongsTo = [backlog: TimeBox]
+
+    static hasMany = [activities: Activity]
 
     static constraints = {
         description(maxSize: 3000, nullable: true)
