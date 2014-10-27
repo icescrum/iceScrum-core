@@ -45,4 +45,11 @@ class ActivityService {
         item.addToActivities(activity)
         return activity
     }
+
+    void removeAllActivities(Object item) {
+        item.activities?.each { activity ->
+            item.removeFromActivities(activity);
+            activity.delete()
+        }
+    }
 }

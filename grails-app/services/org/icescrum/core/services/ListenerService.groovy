@@ -192,10 +192,11 @@ class ListenerService {
     }
 
     // SHARED LISTENERS
-
+    // TODO add product
     @IceScrumListener(domains = ['actor', 'story', 'feature', 'task', 'sprint', 'release'], eventType = IceScrumEventType.BEFORE_DELETE)
     void backlogElementBeforeDelete(object, Map dirtyProperties) {
         object.removeAllAttachments()
+        activityService.removeAllActivities(object)
     }
 
     @IceScrumListener(domains = ['actor', 'story', 'feature', 'task', 'sprint', 'release', 'acceptanceTest'], eventType = IceScrumEventType.BEFORE_UPDATE)
