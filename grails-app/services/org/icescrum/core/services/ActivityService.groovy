@@ -30,14 +30,14 @@ import grails.util.GrailsNameUtils
 
 class ActivityService {
 
-    Activity addActivity(Object item, User poster, String code, String label, String description = null, String beforeValue = null, String afterValue = null) {
+    Activity addActivity(Object item, User poster, String code, String label, String field = null, String beforeValue = null, String afterValue = null) {
         if (item.id == null) {
             throw new Exception("You must save the entity [${item}] before calling addActivity")
         }
         def itemClass = HibernateProxyHelper.getClassWithoutInitializingProxy(item)
         def itemType = GrailsNameUtils.getPropertyName(itemClass)
         def activity = new Activity(poster: poster, parentRef: item.id, parentType: itemType,
-                                    code: code, label: label, description: description, before: beforeValue, after: afterValue)
+                                    code: code, label: label, field:field, beforeValue: beforeValue, afterValue: afterValue)
         if (!activity.validate()) {
             throw new Exception("Cannot create activity for arguments [$poster, $code, $label], they are invalid.")
         }

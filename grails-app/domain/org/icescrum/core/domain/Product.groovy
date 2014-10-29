@@ -147,7 +147,6 @@ class Product extends TimeBox implements Serializable, Attachmentable {
         return users.asList().unique()
     }
 
-    // TODO refactor using criteria on activities field
     static recentActivity(Product product) {
         executeQuery("""SELECT a
                         FROM org.icescrum.core.domain.Activity as a

@@ -68,7 +68,16 @@ class ListenerService {
                 }
             }
             def user = (User) springSecurityService.currentUser
-            activityService.addActivity(story, user, Activity.CODE_UPDATE, story.name)
+            ['name', 'type'].each { property ->
+                if (dirtyProperties.containsKey(property)) {
+                    activityService.addActivity(story, user, Activity.CODE_UPDATE, story.name, property, dirtyProperties[property], story."$property")
+                }
+            }
+            ['notes', 'description'].each { property ->
+                if (dirtyProperties.containsKey(property)) {
+                    activityService.addActivity(story, user, Activity.CODE_UPDATE, story.name, property)
+                }
+            }
             broadcast(function: 'update', message: story, channel: 'product-' + product.id)
         }
     }

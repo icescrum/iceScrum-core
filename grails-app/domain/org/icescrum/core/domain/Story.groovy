@@ -113,8 +113,8 @@ class Story extends BacklogElement implements Cloneable, Serializable {
     }
 
     def getActivity(){
-        def summary = this.comments + this.activities.findAll{ it.code != 'comment' } + this.tasks*.activities.flatten().findAll{ it.code != 'comment' } + this.acceptanceTests*.activities.flatten()
-        return summary.sort { it.dateCreated }
+        def activities = this.activities + this.tasks*.activities.flatten() + this.acceptanceTests*.activities.flatten()
+        return activities.sort { a, b-> b.dateCreated <=> a.dateCreated }
     }
 
     def getDependences(){
@@ -478,7 +478,6 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                    AND p.id = :pid """, [pid: pid])[0]?:0) + 1
     }
 
-    // TODO refactor using criteria on activities field
     static recentActivity(Product product) {
         executeQuery("""SELECT a
                         FROM org.icescrum.core.domain.Activity as a, org.icescrum.core.domain.Story as s
@@ -489,7 +488,6 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                         ORDER BY a.dateCreated DESC""", [p: product], [max: 15])
     }
 
-    // TODO refactor using criteria on activities field
     //Not working on ORACLE
     static recentActivity(User user) {
         executeQuery("""SELECT DISTINCT a, s.backlog
@@ -793,7 +791,9 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                         poster(uid: _activity.poster.uid)
                         dateCreated(_activity.dateCreated)
                         label { builder.mkp.yieldUnescaped("<![CDATA[${_activity.label}]]>") }
-                        description { builder.mkp.yieldUnescaped("<![CDATA[${_activity.description}]]>") }
+                        field { _activity.field }
+                        beforeValue { builder.mkp.yieldUnescaped("<![CDATA[${_activity.beforeValue}]]>") }
+                        afterValue { builder.mkp.yieldUnescaped("<![CDATA[${_activity.afterValue}]]>") }
                     }
                 }
             }

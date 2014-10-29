@@ -33,7 +33,7 @@ class Activity implements Serializable, Comparable {
     Date lastUpdated
     String code
     String label
-    String description
+    String field
     String beforeValue
     String afterValue
     Long parentRef
@@ -44,7 +44,7 @@ class Activity implements Serializable, Comparable {
     static constraints = {
         code blank: false
         label blank: false
-        description nullable: true
+        field(nullable: true, validator: { newField, activity -> (activity.beforeValue == null && activity.afterValue == null) || newField != null }) // TODO custom message
         beforeValue nullable: true
         afterValue nullable: true
         parentType blank: false
@@ -52,7 +52,6 @@ class Activity implements Serializable, Comparable {
 
     static mapping = {
         label type: "text"
-        description type: "text"
         beforeValue type: "text" // TODO check if relevant
         afterValue type: "text" // TODO check if relevant
         cache true

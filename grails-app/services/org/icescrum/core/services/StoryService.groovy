@@ -175,6 +175,7 @@ class StoryService extends IceScrumEventPublisher {
                 if (story.state == Story.STATE_ACCEPTED) {
                     story.state = Story.STATE_ESTIMATED
                 }
+                activityService.addActivity(story, springSecurityService.currentUser, 'estimate', story.effort?.toString() ?: '', props.effort?.toString() ?: '')
                 story.effort = props.effort
                 story.estimatedDate = new Date()
             }
