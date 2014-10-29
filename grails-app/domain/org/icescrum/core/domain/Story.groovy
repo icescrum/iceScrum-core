@@ -28,6 +28,7 @@ package org.icescrum.core.domain
 import grails.plugin.springsecurity.SpringSecurityService
 import grails.util.GrailsNameUtils
 import grails.util.Holders
+import org.hibernate.ObjectNotFoundException
 import org.icescrum.core.domain.AcceptanceTest.AcceptanceTestState
 
 
@@ -468,6 +469,21 @@ class Story extends BacklogElement implements Cloneable, Serializable {
             }
             uniqueResult = true
         }
+    }
+
+    static Story withStory(long id){
+        Story story = get(id)
+        if (!story)
+            throw new ObjectNotFoundException(id,'Story')
+        return story
+    }
+
+    static List<Story> withStories(def params, def id = 'id'){
+        def ids = params[id]?.contains(',') ? params[id].split(',')*.toLong() : params.list(id)
+        List<Story> stories = ids ? Story.getAll(ids) : null
+        if (!stories)
+            throw new ObjectNotFoundException(ids,'Story')
+        return stories
     }
 
     static int findNextUId(Long pid) {

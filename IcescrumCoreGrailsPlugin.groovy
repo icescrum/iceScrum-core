@@ -662,46 +662,6 @@ class IcescrumCoreGrailsPlugin {
             }
         }
 
-        source.metaClass.withStory = { def id = 'id', def uid = false, Closure c ->
-            def story
-            if (uid)
-                story = (Story)Story.getInProductByUid(params.long('product'), (id instanceof String ? params."$id".toInteger() : id) ).list()
-            else
-                story = (Story)Story.getInProduct(params.long('product'), (id instanceof String ? params."$id".toLong() : id) ).list()
-
-            if (story) {
-                try {
-                    c.call story
-                } catch (IllegalStateException e) {
-                    returnError(exception: e)
-                } catch (RuntimeException e) {
-                    returnError(object: story, exception: e)
-                }
-            } else {
-                returnError(text: message(code: 'is.story.error.not.exist'))
-            }
-        }
-
-        source.metaClass.withStories = { String id = 'id', Closure c ->
-            def ids = params[id]?.contains(',') ? params[id].split(',')*.toLong() : params.list(id)
-            List<Story> stories = ids ? Story.getAll(ids) : null
-            if (stories) {
-                try {
-                    c.call stories
-                } catch (IllegalStateException e) {
-                    returnError(exception: e)
-                } catch (RuntimeException e) {
-                    if (stories.size() == 1){
-                        returnError(exception: e, object:stories[0])
-                    } else {
-                        returnError(exception: e)
-                    }
-                }
-            } else {
-                returnError(text: message(code: 'is.story.error.not.exist'))
-            }
-        }
-
         source.metaClass.withAcceptanceTest = { def id = 'id', Closure c ->
             def acceptanceTest = (AcceptanceTest) AcceptanceTest.getInProduct(params.long('product'), (id instanceof String ? params."$id".toLong() : id) )
             if (acceptanceTest) {
