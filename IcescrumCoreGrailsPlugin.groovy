@@ -592,40 +592,6 @@ class IcescrumCoreGrailsPlugin {
     }
 
     private addWithObjectsMethods (source) {
-        source.metaClass.withFeature = { def id = 'id', Closure c ->
-            def feature = (Feature)Feature.getInProduct(params.long('product'), (id instanceof String ? params."$id".toLong() : id) ).list()
-            if (feature) {
-                try {
-                    c.call feature
-                } catch (IllegalStateException e) {
-                    returnError(exception: e)
-                } catch (RuntimeException e) {
-                    returnError(object: feature, exception: e)
-                }
-            } else {
-                returnError(text: message(code: 'is.feature.error.not.exist'))
-            }
-        }
-
-        source.metaClass.withFeatures = { String id = 'id', Closure c ->
-            def ids = params[id]?.contains(',') ? params[id].split(',')*.toLong() : params.list(id)
-            List<Feature> features = ids ? Feature.getAll(ids) : null
-            if (features) {
-                try {
-                    c.call features
-                } catch (IllegalStateException e) {
-                    returnError(exception: e)
-                } catch (RuntimeException e) {
-                    if (features.size() == 1){
-                        returnError(exception: e, object:features[0])
-                    } else {
-                        returnError(exception: e)
-                    }
-                }
-            } else {
-                returnError(text: message(code: 'is.feature.error.not.exist'))
-            }
-        }
 
         source.metaClass.withAcceptanceTest = { def id = 'id', Closure c ->
             def acceptanceTest = (AcceptanceTest) AcceptanceTest.getInProduct(params.long('product'), (id instanceof String ? params."$id".toLong() : id) )

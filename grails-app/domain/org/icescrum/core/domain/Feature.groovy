@@ -27,6 +27,8 @@
 
 package org.icescrum.core.domain
 
+import org.hibernate.ObjectNotFoundException
+
 class Feature extends BacklogElement implements Serializable {
     static final long serialVersionUID = 7072515028109185168L
 
@@ -78,6 +80,21 @@ class Feature extends BacklogElement implements Serializable {
             }
             uniqueResult = true
         }
+    }
+
+    static Feature withFeature(long id){
+        Feature feature = get(id)
+        if (!feature)
+            throw new ObjectNotFoundException(id,'Feature')
+        return feature
+    }
+
+    static List<Feature> withFeatures(def params, def id = 'id'){
+        def ids = params[id]?.contains(',') ? params[id].split(',')*.toLong() : params.list(id)
+        List<Feature> features = ids ? Actor.getAll(ids) : null
+        if (!features)
+            throw new ObjectNotFoundException(ids,'Feature')
+        return features
     }
 
     int hashCode() {
