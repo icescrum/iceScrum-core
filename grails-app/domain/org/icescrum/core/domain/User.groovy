@@ -27,6 +27,7 @@
 
 package org.icescrum.core.domain
 
+import org.hibernate.ObjectNotFoundException
 import org.springframework.security.core.context.SecurityContextHolder as SCH
 import org.icescrum.plugins.attachmentable.interfaces.Attachmentable
 import org.icescrum.core.domain.preferences.UserPreferences
@@ -105,6 +106,12 @@ class User implements Serializable, Attachmentable {
                 [term: "%$term%"], params ?: [:])
     }
 
+    static User withUser(long id){
+        User user = get(id)
+        if (!user)
+            throw new ObjectNotFoundException(id,'User')
+        return user
+    }
 
     Set<Authority> getAuthorities() {
         UserAuthority.findAllByUser(this).collect { it.authority } as Set

@@ -676,21 +676,6 @@ class IcescrumCoreGrailsPlugin {
                 returnError(text: message(code: 'is.release.error.not.exist'))
             }
         }
-
-        source.metaClass.withUser = { String id = 'id', Closure c ->
-            User user = User.get(params."$id"?.toLong())
-            if (user) {
-                try {
-                    c.call user
-                } catch (IllegalStateException e) {
-                    returnError(exception: e)
-                } catch (RuntimeException e) {
-                    returnError(object: user, exception: e)
-                }
-            } else {
-                returnError(text: message(code: 'is.user.error.not.exist'))
-            }
-        }
     }
 
     private addCorsSupport(def xml, def config){
