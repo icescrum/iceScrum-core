@@ -47,9 +47,13 @@ class ActivityService {
     }
 
     void removeAllActivities(Object item) {
-        item.activities?.each { activity ->
-            item.removeFromActivities(activity);
-            activity.delete()
+        if (item.activities) {
+            def activitiesToDelete = []
+            activitiesToDelete.addAll(item.activities)
+            activitiesToDelete.each { activity ->
+                item.removeFromActivities(activity)
+                activity.delete()
+            }
         }
     }
 }
