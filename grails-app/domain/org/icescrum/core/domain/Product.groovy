@@ -26,6 +26,7 @@
 package org.icescrum.core.domain
 
 import grails.util.Holders
+import org.hibernate.ObjectNotFoundException
 import org.icescrum.core.domain.preferences.ProductPreferences
 import org.icescrum.core.services.SecurityService
 import org.icescrum.core.event.IceScrumEvent
@@ -254,6 +255,13 @@ class Product extends TimeBox implements Serializable, Attachmentable {
                         "AND ai.id = ae.aclObjectIdentity.id "+
                         "AND p.id = ai.objectId ) )"
                         , [term:term, sid: user?.username?:'', uid: user?.id?:0L, p:[BasePermission.WRITE,BasePermission.READ]*.mask ], params ?: [:])
+    }
+
+    static Product withProduct(long id){
+        Product product = get(id)
+        if (!product)
+            throw new ObjectNotFoundException(id,'Product')
+        return product
     }
 
     def getProductOwners() {

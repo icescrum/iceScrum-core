@@ -760,19 +760,6 @@ class IcescrumCoreGrailsPlugin {
                 returnError(text: message(code: 'is.user.error.not.exist'))
             }
         }
-
-        source.metaClass.withProduct = { String id = 'product', Closure c ->
-            Product product = Product.get(params."$id"?.toLong())
-            if (product) {
-                try {
-                    c.call product
-                }catch (RuntimeException e) {
-                    returnError(object: product, exception: e)
-                }
-            } else {
-                returnError(text: message(code: 'is.product.error.not.exist'))
-            }
-        }
     }
 
     private addCorsSupport(def xml, def config){
