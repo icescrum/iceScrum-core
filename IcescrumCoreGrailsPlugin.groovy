@@ -627,41 +627,6 @@ class IcescrumCoreGrailsPlugin {
             }
         }
 
-        source.metaClass.withActor = { def id = 'id', Closure c ->
-            def actor = (Actor)Actor.getInProduct(params.long('product'), (id instanceof String ? params."$id".toLong() : id) ).list()
-            if (actor) {
-                try {
-                    c.call actor
-                } catch (IllegalStateException e) {
-                    returnError(exception: e)
-                } catch (RuntimeException e) {
-                    returnError(object: actor, exception: e)
-                }
-            } else {
-                returnError(text: message(code: 'is.actor.error.not.exist'))
-            }
-        }
-
-        source.metaClass.withActors = { String id = 'id', Closure c ->
-            def ids = params[id]?.contains(',') ? params[id].split(',')*.toLong() : params.list(id)
-            List<Actor> actors = ids ? Actor.getAll(ids) : null
-            if (actors) {
-                try {
-                    c.call actors
-                } catch (IllegalStateException e) {
-                    returnError(exception: e)
-                } catch (RuntimeException e) {
-                    if (actors.size() == 1){
-                        returnError(exception: e, object:actors[0])
-                    } else {
-                        returnError(exception: e)
-                    }
-                }
-            } else {
-                returnError(text: message(code: 'is.actor.error.not.exist'))
-            }
-        }
-
         source.metaClass.withAcceptanceTest = { def id = 'id', Closure c ->
             def acceptanceTest = (AcceptanceTest) AcceptanceTest.getInProduct(params.long('product'), (id instanceof String ? params."$id".toLong() : id) )
             if (acceptanceTest) {

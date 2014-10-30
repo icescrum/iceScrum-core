@@ -26,6 +26,8 @@
 
 package org.icescrum.core.domain
 
+import org.hibernate.ObjectNotFoundException
+
 
 class Actor extends BacklogElement implements Serializable, Comparable<Actor> {
 
@@ -89,6 +91,21 @@ class Actor extends BacklogElement implements Serializable, Comparable<Actor> {
             }
             uniqueResult = true
         }
+    }
+
+    static Actor withActor(long id){
+        Actor actor = get(id)
+        if (!actor)
+            throw new ObjectNotFoundException(id,'Actor')
+        return actor
+    }
+
+    static List<Actor> withActors(def params, def id = 'id'){
+        def ids = params[id]?.contains(',') ? params[id].split(',')*.toLong() : params.list(id)
+        List<Actor> actors = ids ? Actor.getAll(ids) : null
+        if (!actors)
+            throw new ObjectNotFoundException(ids,'Actor')
+        return actors
     }
 
     @Override
