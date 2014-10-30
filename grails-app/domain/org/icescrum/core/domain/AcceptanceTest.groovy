@@ -22,6 +22,8 @@
  */
 package org.icescrum.core.domain
 
+import org.hibernate.ObjectNotFoundException
+
 class AcceptanceTest implements Serializable {
 
     String name
@@ -79,6 +81,13 @@ class AcceptanceTest implements Serializable {
                    FROM org.icescrum.core.domain.AcceptanceTest as at
                    WHERE at.parentStory.backlog.id = :pid
                    AND at.parentStory.id = :sid """, [sid: storyId, pid: productId])
+    }
+
+    static AcceptanceTest withAcceptanceTest(long id, long productId){
+        AcceptanceTest acceptanceTest = getInProduct(productId, id)
+        if (!acceptanceTest)
+            throw new ObjectNotFoundException(id,'AcceptanceTest')
+        return acceptanceTest
     }
 
     @Override

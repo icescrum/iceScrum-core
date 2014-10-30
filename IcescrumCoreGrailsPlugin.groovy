@@ -593,21 +593,6 @@ class IcescrumCoreGrailsPlugin {
 
     private addWithObjectsMethods (source) {
 
-        source.metaClass.withAcceptanceTest = { def id = 'id', Closure c ->
-            def acceptanceTest = (AcceptanceTest) AcceptanceTest.getInProduct(params.long('product'), (id instanceof String ? params."$id".toLong() : id) )
-            if (acceptanceTest) {
-                try {
-                    c.call acceptanceTest
-                } catch (IllegalStateException e) {
-                    returnError(exception: e)
-                } catch (RuntimeException e) {
-                    returnError(object: acceptanceTest, exception: e)
-                }
-            } else {
-                returnError(text: message(code: 'is.acceptanceTest.error.not.exist'))
-            }
-        }
-
         source.metaClass.withTask = { def id = 'id', def uid = false, Closure c ->
             def task
             if (uid)
