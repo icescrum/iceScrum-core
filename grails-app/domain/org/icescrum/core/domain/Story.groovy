@@ -472,7 +472,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
     }
 
     static Story withStory(long productId, long id){
-        Story story = getInProduct(productId, id)
+        Story story = (Story) getInProduct(productId, id).list()
         if (!story)
             throw new ObjectNotFoundException(id,'Story')
         return story

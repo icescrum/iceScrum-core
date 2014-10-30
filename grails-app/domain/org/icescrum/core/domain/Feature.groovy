@@ -83,7 +83,7 @@ class Feature extends BacklogElement implements Serializable {
     }
 
     static Feature withFeature(long productId, long id){
-        Feature feature = getInProduct(productId, id)
+        Feature feature = (Feature) getInProduct(productId, id).list()
         if (!feature)
             throw new ObjectNotFoundException(id,'Feature')
         return feature

@@ -94,7 +94,7 @@ class Actor extends BacklogElement implements Serializable, Comparable<Actor> {
     }
 
     static Actor withActor(long product, long id){
-        Actor actor = get(product, id)
+        Actor actor = (Actor) getInProduct(product, id).list()
         if (!actor)
             throw new ObjectNotFoundException(id,'Actor')
         return actor
