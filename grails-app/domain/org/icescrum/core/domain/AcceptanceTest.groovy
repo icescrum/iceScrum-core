@@ -83,7 +83,7 @@ class AcceptanceTest implements Serializable {
                    AND at.parentStory.id = :sid """, [sid: storyId, pid: productId])
     }
 
-    static AcceptanceTest withAcceptanceTest(long id, long productId){
+    static AcceptanceTest withAcceptanceTest(long productId, long id){
         AcceptanceTest acceptanceTest = getInProduct(productId, id)
         if (!acceptanceTest)
             throw new ObjectNotFoundException(id,'AcceptanceTest')

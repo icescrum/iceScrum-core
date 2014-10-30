@@ -471,8 +471,8 @@ class Story extends BacklogElement implements Cloneable, Serializable {
         }
     }
 
-    static Story withStory(long id){
-        Story story = get(id)
+    static Story withStory(long productId, long id){
+        Story story = getInProduct(productId, id)
         if (!story)
             throw new ObjectNotFoundException(id,'Story')
         return story
