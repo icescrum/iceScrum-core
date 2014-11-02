@@ -122,14 +122,14 @@ class UserService extends IceScrumEventPublisher {
     }
 
 
-    void menuBar(User user, String id, String position, boolean hidden) {
+    void menu(User user, String id, String position, boolean hidden) {
         def currentMenu
         if (hidden) {
             currentMenu = user.preferences.menuHidden
             if (!currentMenu.containsKey(id)) {
                 currentMenu.put(id, (currentMenu.size() + 1).toString())
                 if (user.preferences.menu.containsKey(id)) {
-                    this.menuBar(user, id, user.preferences.menuHidden.size().toString(), true)
+                    this.menu(user, id, user.preferences.menuHidden.size().toString(), true)
                 }
                 user.preferences.menu.remove(id)
             }
@@ -139,7 +139,7 @@ class UserService extends IceScrumEventPublisher {
             if (!currentMenu.containsKey(id)) {
                 currentMenu.put(id, (currentMenu.size() + 1).toString())
                 if (user.preferences.menuHidden.containsKey(id)) {
-                    this.menuBar(user, id, user.preferences.menuHidden.size().toString(), true)
+                    this.menu(user, id, user.preferences.menuHidden.size().toString(), true)
                 }
                 user.preferences.menuHidden.remove(id)
             }
