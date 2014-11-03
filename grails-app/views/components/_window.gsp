@@ -17,8 +17,8 @@
   - along with iceScrum.  If not, see <http://www.gnu.org/licenses/>.
   --}%
 
-<div id="window-id-${id}" class="${right != null ? 'with-right' : ''}" tabindex="1">
-    <div class="clearfix">
+<div id="window-id-${id}" tabindex="1">
+    <div class="clearfix ${right != null ? 'stacks two-stacks' : ''}">
         %{-- Content --}%
         <div id="window-content-${id}" class="window-content">
         <g:if test="${toolbar != false && right != null}">
@@ -36,9 +36,6 @@
             <div id="right">
                 <div id="contextual-properties" ui-view>
                 </div>
-            </div>
-            <div id="list">
-                ta race est la
             </div>
         </g:if>
     </div>
