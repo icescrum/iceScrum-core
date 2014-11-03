@@ -36,6 +36,7 @@
             <div class="details" ui-view="details">
             </div>
             <div class="details-list" ui-view="details-list"></div>
+            <div class="details-list-form" ui-view="details-list-form"></div>
         </g:if>
     </div>
 </div>
