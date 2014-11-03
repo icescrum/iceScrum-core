@@ -18,7 +18,7 @@
   --}%
 
 <div id="window-id-${id}" tabindex="1">
-    <div class="clearfix ${right != null ? 'stacks two-stacks' : ''}">
+    <div class="clearfix stacks" ng-class="{ 'three-stacks': $state.params.tabId, 'two-stacks': ($state.params.id && !$state.params.tabId)|| (!$state.params.id && !$state.params.tabId) }">
         %{-- Content --}%
         <div id="window-content-${id}" class="window-content">
         <g:if test="${toolbar != false && right != null}">
@@ -36,6 +36,12 @@
             <div id="right">
                 <div id="contextual-properties" ui-view>
                 </div>
+            </div>
+            <div>
+
+            </div>
+            <div>
+
             </div>
         </g:if>
     </div>
