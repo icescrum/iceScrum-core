@@ -30,19 +30,12 @@
                 </div>
             </nav>
         </g:if>
-        ${windowContent}
+            ${windowContent}
         </div>
         <g:if test="${right}">
-            <div id="right">
-                <div id="contextual-properties" ui-view>
-                </div>
+            <div class="details" ui-view="details">
             </div>
-            <div>
-
-            </div>
-            <div>
-
-            </div>
+            <div class="details-list" ui-view="details-list"></div>
         </g:if>
     </div>
 </div>
