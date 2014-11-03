@@ -17,30 +17,29 @@
   - along with iceScrum.  If not, see <http://www.gnu.org/licenses/>.
   --}%
 
-<div id="window-id-${id}" tabindex="1">
-<g:if test="${right}">
+<div id="window-id-${id}" class="${right != null ? 'with-right' : ''}" tabindex="1">
     <div class="clearfix">
-</g:if>
-    %{-- Content --}%
-    <div id="window-content-${id}" class="window-content ${right != null ? 'with-right' : ''}">
-    <g:if test="${toolbar != false && right != null}">
-        <nav fixed="#window-content-${id}" class="navbar navbar-toolbar navbar-default" role="navigation">
-            <div class="container-fluid">
-                <div class="btn-toolbar" id="${controllerName}-toolbar" role="toolbar">
-                    ${toolbar}
+        %{-- Content --}%
+        <div id="window-content-${id}" class="window-content">
+        <g:if test="${toolbar != false && right != null}">
+            <nav fixed="#window-content-${id}" class="navbar navbar-toolbar navbar-default" role="navigation">
+                <div class="container-fluid">
+                    <div class="btn-toolbar" id="${controllerName}-toolbar" role="toolbar">
+                        ${toolbar}
+                    </div>
+                </div>
+            </nav>
+        </g:if>
+        ${windowContent}
+        </div>
+        <g:if test="${right}">
+            <div id="right">
+                <div id="contextual-properties" ui-view>
                 </div>
             </div>
-        </nav>
-    </g:if>
-    ${windowContent}
-    </div>
-    <g:if test="${right}">
-        <div id="right">
-            <div id="contextual-properties" ui-view>
+            <div id="list">
+                ta race est la
             </div>
-        </div>
-    </g:if>
-<g:if test="${right}">
+        </g:if>
     </div>
-</g:if>
 </div>
