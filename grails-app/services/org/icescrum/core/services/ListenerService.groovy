@@ -70,7 +70,12 @@ class ListenerService {
             def user = (User) springSecurityService.currentUser
             ['name', 'type'].each { property ->
                 if (dirtyProperties.containsKey(property)) {
-                    activityService.addActivity(story, user, Activity.CODE_UPDATE, story.name, property, dirtyProperties[property], story."$property")
+                    activityService.addActivity(story, user, Activity.CODE_UPDATE, story.name, property, dirtyProperties[property]?.toString(), story."$property"?.toString())
+                }
+            }
+            ['actor', 'feature', 'dependsOn'].each { property ->
+                if (dirtyProperties.containsKey(property)) {
+                    activityService.addActivity(story, user, Activity.CODE_UPDATE, story.name, property, dirtyProperties[property]?.uid?.toString(), story."$property"?.uid?.toString())
                 }
             }
             ['notes', 'description'].each { property ->
