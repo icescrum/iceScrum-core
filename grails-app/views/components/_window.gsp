@@ -20,7 +20,7 @@
 <div id="window-id-${id}" tabindex="1">
     <div class="clearfix stacks" ng-class="{ 'three-stacks': $state.params.tabId, 'two-stacks': ($state.params.id && !$state.params.tabId)|| (!$state.params.id && !$state.params.tabId) }">
         %{-- Content --}%
-        <div id="window-content-${id}" class="window-content">
+        <div id="window-content-${id}" class="window-content" ng-class="{ 'stacked': $state.params.tabId }">
         <g:if test="${toolbar != false && right != null}">
             <nav fixed="#window-content-${id}" class="navbar navbar-toolbar navbar-default" role="navigation">
                 <div class="container-fluid">
@@ -33,8 +33,7 @@
             ${windowContent}
         </div>
         <g:if test="${right}">
-            <div class="details" ui-view="details">
-            </div>
+            <div class="details" ui-view="details"></div>
             <div class="details-list" ui-view="details-list"></div>
             <div class="details-list-form" ui-view="details-list-form"></div>
         </g:if>
