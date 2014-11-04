@@ -23,6 +23,8 @@
  */
 package org.icescrum.core.domain
 
+import grails.util.Holders
+
 class Activity implements Serializable, Comparable {
 
     static final CODE_DELETE = 'delete'
@@ -40,6 +42,8 @@ class Activity implements Serializable, Comparable {
     String parentType
 
     User poster // BelongsTo or not belongTo ? that's the question
+
+    static transients = ['important']
 
     static constraints = {
         code blank: false
@@ -61,5 +65,9 @@ class Activity implements Serializable, Comparable {
     @Override
     int compareTo(Object o) {
         dateCreated.compareTo(o.dateCreated)
+    }
+
+    boolean getImportant() {
+        code in Holders.grailsApplication.config.icescrum.activities.important
     }
 }
