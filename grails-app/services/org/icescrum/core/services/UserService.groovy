@@ -65,25 +65,24 @@ class UserService extends IceScrumEventPublisher {
             def ext = FilenameUtils.getExtension(props.avatar)
             def path = "${grailsApplication.config.icescrum.images.users.dir}${user.id}.${ext}"
             if (props.avatar) {
-                def source = new File((String)props.avatar)
+                def source = new File((String) props.avatar)
                 def dest = new File(path)
                 FileUtils.copyFile(source, dest)
-                if(props.scale){
+                if (props.scale) {
                     def avatar = new File(path)
                     avatar.setBytes(hdImageService.scale(new FileInputStream(dest), 120, 120))
                 }
-                def files = new File(grailsApplication.config.icescrum.images.users.dir.toString()).listFiles((FilenameFilter)new WildcardFileFilter("${user.id}.*"))
+                def files = new File(grailsApplication.config.icescrum.images.users.dir.toString()).listFiles((FilenameFilter) new WildcardFileFilter("${user.id}.*"))
                 files.each {
-                    if(FilenameUtils.getExtension(it.path) != ext){
+                    if (FilenameUtils.getExtension(it.path) != ext) {
                         it.delete()
                     }
                 }
-
-            } else if(props.containsKey('avatar') && props.avatar == null) {
-                def oldAvatar = new File(path)
-                if (oldAvatar.exists())
-                    oldAvatar.delete()
-
+            } else if (props.containsKey('avatar') && props.avatar == null) {
+                File[] oldAvatars = new File(grailsApplication.config.icescrum.images.users.dir.toString()).listFiles((FilenameFilter)new WildcardFileFilter("${user.id}.*"))
+                oldAvatars.each {
+                    it.delete()
+                }
             }
         }
         catch (RuntimeException e) {
