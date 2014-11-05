@@ -260,7 +260,7 @@ class StoryService extends IceScrumEventPublisher {
             sprint.capacity = sprint.totalEffort
         }
         story.parentSprint = sprint
-
+        activityService.addActivity(story, user, 'plan', story.name, 'parentSprint', null, sprint.id.toString())
         if (sprint.state == Sprint.STATE_INPROGRESS) {
             story.state = Story.STATE_INPROGRESS
             story.inProgressDate = new Date()
@@ -310,9 +310,9 @@ class StoryService extends IceScrumEventPublisher {
         if (sprint.state == Sprint.STATE_WAIT) {
             sprint.capacity = sprint.totalEffort
         }
-        story.parentSprint = null
-
         User u = (User) springSecurityService.currentUser
+        activityService.addActivity(story, u, 'unPlan', story.name, 'parentSprint', story.parentSprint.id)
+        story.parentSprint = null
 
         def tasks = story.tasks.asList()
         tasks.each { Task task ->

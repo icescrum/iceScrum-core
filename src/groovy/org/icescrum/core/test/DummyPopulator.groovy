@@ -122,7 +122,7 @@ class DummyPopulator {
             product.addToActors(actor).addToActors(actor2).addToActors(actor3).addToActors(actor4).addToActors(actor5).save()
             // Stories
             def _storyCount = 0
-            def createStory = { state ->
+                def createStory = { state ->
                 def _act = _storyCount % 5 == 0 ? actor4 : _storyCount % 4 == 0 ? actor : _storyCount % 3 == 0 ? actor3 : actor
                 def story = new Story(backlog: product,
                         feature: _storyCount % 4 == 0 ? feature : _storyCount % 3 == 0 ? feature3 : feature2,
@@ -140,20 +140,17 @@ class DummyPopulator {
                         description: "As a A[${_act.uid}-${_act.name}], I can do something awesome, I can do something awesome, I can do something awesome, I can do something awesome, I can do something awesome, I can do something awesome, I can do something awesome, I can do something awesome,I can do something awesome",
                         notes: '*Un texte en gras* hahaha ! _et en italique_'
                 ).save()
+                addStoryActivity(story, usera, Activity.CODE_SAVE)
+                if (story.state >= Story.STATE_ACCEPTED) {
+                    story.acceptedDate = new Date()
+                    addStoryActivity(story, usera, 'acceptAs')
+                }
                 if (story.state < Story.STATE_ESTIMATED) {
                     story.estimatedDate = null
                     story.effort = null
+                } else {
+                    addStoryActivity(story, usera, 'estimate')
                 }
-                if (story.state >= Story.STATE_ACCEPTED) {
-                    story.acceptedDate = new Date()
-                }
-                def activity = new Activity(poster: usera,
-                                            parentRef: story.id,
-                                            parentType: 'story',
-                                            code: state == Story.STATE_SUGGESTED ? Activity.CODE_SAVE : 'acceptAs',
-                                            label: story.name)
-                activity.save()
-                story.addToActivities(activity)
                 return story
             }
             80.times {
@@ -217,6 +214,7 @@ class DummyPopulator {
     private static void updateContentDoneSprint(Sprint sprint) {
         sprint.stories.each { story ->
             story.state = Story.STATE_DONE
+            addStoryActivity(story, story.creator, 'done')
             story.doneDate = new Date()
             story.tasks?.each { t ->
                 t.state = Task.STATE_DONE
@@ -329,6 +327,12 @@ class DummyPopulator {
     private static void loginAsAdmin() {
         def userDetails = new GrailsUser('admin', 'adminadmin!', true, true, true, true, AuthorityUtils.createAuthorityList('ROLE_ADMIN'), 1)
         SCH.context.authentication = new UsernamePasswordAuthenticationToken(userDetails, 'adminadmin!', AuthorityUtils.createAuthorityList('ROLE_ADMIN'))
+    }
+
+    private static addStoryActivity(Story story, User poster, String code) {
+        def activity = new Activity(poster: poster, parentRef: story.id, parentType: 'story', code: code, label: story.name)
+        activity.save()
+        story.addToActivities(activity)
     }
 
 }
