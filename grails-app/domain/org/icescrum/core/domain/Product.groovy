@@ -148,14 +148,6 @@ class Product extends TimeBox implements Serializable, Attachmentable {
         return users.asList().unique()
     }
 
-    static recentActivity(Product product) {
-        executeQuery("""SELECT a
-                        FROM org.icescrum.core.domain.Activity as a
-                        WHERE a.parentType = 'product'
-                        AND a.parentRef = :p
-                        ORDER BY a.dateCreated DESC""", [p: product.id], [max: 15])
-    }
-
     static allProductsByUser(long userid, params) {
         executeQuery("SELECT p FROM org.icescrum.core.domain.Product as p WHERE p.id IN (SELECT DISTINCT p.id " +
                 "FROM org.icescrum.core.domain.Product as p INNER JOIN p.teams as t " +

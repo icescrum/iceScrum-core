@@ -142,22 +142,6 @@ class Team implements Serializable, Comparable {
                         "AND t.id = ai.objectId", [sid: user, p:permission*.mask ], params ?: [:])
     }
 
-    // TODO refactor using criteria on activities field
-    //Not working on ORACLE
-    static recentTeamsActivity(def uid) {
-        executeQuery("""SELECT DISTINCT a, p2
-                        FROM org.icescrum.core.domain.Activity as a, org.icescrum.core.domain.Product as p2
-                        WHERE a.parentType = 'product'
-                        AND a.parentRef = p2.id
-                        AND p2.id in (SELECT DISTINCT p.id
-                                      FROM org.icescrum.core.domain.Product as p INNER JOIN p.teams as t
-                                      WHERE t.id in (SELECT DISTINCT t2.id
-                                                     FROM org.icescrum.core.domain.Team as t2
-                                                     INNER JOIN t2.members as m
-                                                     WHERE m.id = :uid))
-                        ORDER BY a.dateCreated DESC""", [uid:uid], [cache:true,max: 15])
-    }
-
     static namedQueries = {
 
         productTeam {p, u ->

@@ -494,32 +494,6 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                    AND p.id = :pid """, [pid: pid])[0]?:0) + 1
     }
 
-    static recentActivity(Product product) {
-        executeQuery("""SELECT a
-                        FROM org.icescrum.core.domain.Activity as a, org.icescrum.core.domain.Story as s
-                        WHERE a.parentType = 'story'
-                        AND a.parentRef = s.id
-                        AND NOT (a.code LIKE 'task')
-                        AND s.backlog = :p
-                        ORDER BY a.dateCreated DESC""", [p: product], [max: 15])
-    }
-
-    //Not working on ORACLE
-    static recentActivity(User user) {
-        executeQuery("""SELECT DISTINCT a, s.backlog
-                        FROM org.icescrum.core.domain.Activity as a, org.icescrum.core.domain.Story as s
-                        WHERE a.parentType = 'story'
-                        AND a.parentRef = s.id
-                        AND not (a.code LIKE 'task')
-                        AND s.backlog.id in (SELECT DISTINCT p.id
-                                             FROM org.icescrum.core.domain.Product as p INNER JOIN p.teams as t
-                                             WHERE t.id in (SELECT DISTINCT t2.id
-                                                            FROM org.icescrum.core.domain.Team as t2
-                                                            INNER JOIN t2.members as m
-                                                            WHERE m.id = :uid))
-                        ORDER BY a.dateCreated DESC""", [uid: user.id], [cache:true,max: 15])
-    }
-
     static findLastUpdatedComment(def element) {
         executeQuery("SELECT c.lastUpdated " +
             "FROM org.grails.comments.Comment as c, org.grails.comments.CommentLink as cl, ${element.class.name} as b " +

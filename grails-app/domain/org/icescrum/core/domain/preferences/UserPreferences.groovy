@@ -43,6 +43,8 @@ class UserPreferences implements Serializable{
 
     boolean hideDoneState = false
 
+    Date lastReadActivities = new Date()
+
     Map menu = ["project": "1", "sandbox": "2", "backlog": "3", "timeline": "4", "releasePlan": "5", "sprintPlan": "6"]
     Map menuHidden = ["actor": "1", "feature": "2"]
 
@@ -52,6 +54,7 @@ class UserPreferences implements Serializable{
         activity nullable: true
         lastProductOpened nullable: true
         emailsSettingsData nullable: true
+        lastReadActivities nullable: true
     }
 
 
