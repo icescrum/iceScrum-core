@@ -289,37 +289,46 @@ class DummyPopulator {
         product.stories.findAll { it.state == Story.STATE_SUGGESTED }.asList()[0..3].eachWithIndex { Story story, index ->
             def acceptanceTest = new AcceptanceTest(name: "at $story.state $index", description: "desc $story.state $index", creator: user, parentStory: story)
             acceptanceTest.save()
+            addAcceptanceTestActivity(acceptanceTest, user)
             if (index % 2 == 0) {
                 def acceptanceTest2 = new AcceptanceTest(name: "at2 $story.state $index", description: "desc2 $story.state $index", creator: user, parentStory: story)
                 acceptanceTest2.save()
+                addAcceptanceTestActivity(acceptanceTest2, user)
             }
         }
         product.stories.findAll { it.state == Story.STATE_ACCEPTED }.asList()[0..3].eachWithIndex { Story story, index ->
             def acceptanceTest = new AcceptanceTest(name: "at $story.state $index", description: "desc $story.state $index", creator: user, parentStory: story)
             acceptanceTest.save()
+            addAcceptanceTestActivity(acceptanceTest, user)
             if (index % 2 == 0) {
                 def acceptanceTest2 = new AcceptanceTest(name: "at2 $story.state $index", description: "desc2 $story.state $index", creator: user, parentStory: story)
                 acceptanceTest2.save()
+                addAcceptanceTestActivity(acceptanceTest2, user)
             }
         }
         product.stories.findAll { it.state == Story.STATE_INPROGRESS }.asList()[0..3].eachWithIndex { Story story, index ->
             def acceptanceTest = new AcceptanceTest(name: "at $story.state $index", description: "desc $story.state $index", creator: user, parentStory: story, state: AcceptanceTest.AcceptanceTestState.SUCCESS.id)
             acceptanceTest.save()
+            addAcceptanceTestActivity(acceptanceTest, user)
             if (index % 2 == 0) {
                 def acceptanceTest2 = new AcceptanceTest(name: "at2 $story.state $index", description: "desc2 $story.state $index", creator: user, parentStory: story, state: AcceptanceTest.AcceptanceTestState.FAILED.id)
                 acceptanceTest2.save()
+                addAcceptanceTestActivity(acceptanceTest2, user)
             }
             if (index % 3 == 0) {
                 def acceptanceTest3 = new AcceptanceTest(name: "at3 $story.state $index", description: "desc3 $story.state $index", creator: user, parentStory: story, state: AcceptanceTest.AcceptanceTestState.TOCHECK.id)
                 acceptanceTest3.save()
+                addAcceptanceTestActivity(acceptanceTest3, user)
             }
         }
         product.stories.findAll { it.state == Story.STATE_DONE }.asList()[0..3].eachWithIndex { Story story, index ->
             def acceptanceTest = new AcceptanceTest(name: "at $story.state $index", description: "desc $story.state $index", creator: user, parentStory: story, state: AcceptanceTest.AcceptanceTestState.SUCCESS.id)
             acceptanceTest.save()
+            addAcceptanceTestActivity(acceptanceTest, user)
             if (index % 2 == 0) {
                 def acceptanceTest2 = new AcceptanceTest(name: "at2 $story.state $index", description: "desc2 $story.state $index", creator: user, parentStory: story, state: AcceptanceTest.AcceptanceTestState.SUCCESS.id)
                 acceptanceTest2.save()
+                addAcceptanceTestActivity(acceptanceTest2, user)
             }
         }
     }
@@ -335,4 +344,9 @@ class DummyPopulator {
         story.addToActivities(activity)
     }
 
+    private static addAcceptanceTestActivity(AcceptanceTest acceptanceTest, User poster) {
+        def activity = new Activity(poster: poster, parentRef: acceptanceTest.id, parentType: 'acceptanceTest', code: 'acceptanceTestSave', label: acceptanceTest.name)
+        activity.save()
+        acceptanceTest.addToActivities(activity)
+    }
 }

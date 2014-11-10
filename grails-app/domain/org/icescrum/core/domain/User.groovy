@@ -95,7 +95,7 @@ class User implements Serializable, Attachmentable {
     static findUsersLike(term, exCurrentUser, showDisabled, params) {
         executeQuery("SELECT DISTINCT u " +
                 "FROM org.icescrum.core.domain.User as u " +
-                "WHERE ${showDisabled == false ? 'u.enabled == true and ' : ''} ${exCurrentUser ? 'u.id != ' + SCH.context.authentication.principal?.id + ' and ' : ''}" +
+                "WHERE ${showDisabled == false ? 'u.enabled = true and ' : ''} ${exCurrentUser ? 'u.id != ' + SCH.context.authentication.principal?.id + ' and ' : ''}" +
                 "( lower(u.email) like lower(:term) " +
                 "or lower(u.username) like lower(:term) " +
                 "or lower(u.firstName) like lower(:term) " +
