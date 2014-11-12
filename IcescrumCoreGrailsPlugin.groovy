@@ -140,7 +140,6 @@ class IcescrumCoreGrailsPlugin {
                 def plugin = it.hasProperty('pluginName') ? it.getPropertyValue('pluginName') : null
                 addUIControllerMethods(it, ctx, plugin)
             }
-            addBroadcastMethods(it, application)
             addErrorMethod(it)
             addWithObjectsMethods(it)
             addRenderRESTMethod(it)
@@ -152,7 +151,6 @@ class IcescrumCoreGrailsPlugin {
         }
 
         application.serviceClasses.each {
-            addBroadcastMethods(it, application)
             addListenerSupport(it, ctx)
         }
         // Old school because no GORM Static API at the point where it is called
@@ -214,8 +212,6 @@ class IcescrumCoreGrailsPlugin {
                 }
             }
             if (application.isControllerClass(event.source)) {
-                addBroadcastMethods(event.source, application)
-
                 addErrorMethod(event.source)
                 addWithObjectsMethods(event.source)
                 addRenderRESTMethod(event.source)
@@ -338,149 +334,6 @@ class IcescrumCoreGrailsPlugin {
                 actionClosure
             }
             clazz.registerMapping(actionName)
-        }
-    }
-
-    def bufferBroadcast = new ConcurrentHashMap<String, ArrayList<String>>()
-
-    private addBroadcastMethods(source, application) {
-
-        source.metaClass.bufferBroadcast = { attrs ->
-
-            if (!application.config.icescrum.push?.enable)
-                return
-
-            attrs.channel = attrs.channel ? (attrs.channel instanceof String ? [attrs.channel] : attrs.channel) : [application.config.icescrum.push.mainChannel]
-            def threadId = Thread.currentThread().id
-            attrs.channel.each{ String it ->
-                if (!bufferBroadcast.containsKey(it)) {
-                    bufferBroadcast.put(threadId+'#'+it,[])
-                }
-            }
-        }
-
-        source.metaClass.resumeBufferedBroadcast = { attrs ->
-            if (!application.config.icescrum.push?.enable)
-                return
-
-            attrs.channel = attrs.channel ? (attrs.channel instanceof String ? [attrs.channel] : attrs.channel) : [application.config.icescrum.push.mainChannel]
-            attrs.excludeCaller = attrs.excludeCaller ?: true
-            def size = attrs.batchSize ?: 10
-            def threadId = Thread.currentThread().id
-
-            attrs.channel.each { String it ->
-                if (bufferBroadcast && bufferBroadcast.containsKey(threadId+'#'+it)) {
-                    def broadcaster = BroadcasterFactory?.default?.lookup(it)?:null
-                    if(broadcaster){
-                        def batch = []
-                        def messages = bufferBroadcast.get(threadId+'#'+it)
-                        def uuid = null
-                        try{
-                            uuid = attrs.excludeCaller ? RequestContextHolder.currentRequestAttributes()?.request?.getHeader(HeaderConfig.X_ATMOSPHERE_TRACKING_ID) : null
-                        }catch(IllegalStateException e){
-                            //something we are not in a webrequest (like in batch threads)
-                        }
-                        int partitionCount = messages.size() / size
-                        partitionCount.times { partitionNumber ->
-                            def start = partitionNumber * size
-                            def end = start + size - 1
-                            batch << messages[start..end]
-                        }
-                        if (messages.size() % size) batch << messages[partitionCount * size..-1]
-                        try {
-                            if (log.debugEnabled){
-                                log.debug("broadcast to channel ${it} and exclude uuid : ${uuid}")
-                            }
-                            batch.each {
-                                Set<AtmosphereResource> resources = uuid ? broadcaster.atmosphereResources?.findAll{ AtmosphereResource r -> r.uuid() !=  uuid} : null
-                                if(resources){
-                                    broadcaster.broadcast((it as JSON).toString(), resources)
-                                } else if (!uuid) {
-                                    broadcaster.broadcast((it as JSON).toString())
-                                }
-                            }
-                        }catch(Exception e){
-                            log.error("Error when broadcasting, message: ${e.getMessage()}", e)
-                        }
-                    }
-                }
-                bufferBroadcast.remove(threadId+'#'+it)
-            }
-
-            //clean old buffered broadcast if something happened...
-            def threadIds = Thread.getAllStackTraces().keySet()*.id
-            bufferBroadcast.keys().findAll{ String it ->
-                !((it.substring(0, it.indexOf('#'))).toLong() in threadIds)
-            }?.each{
-                if (log.errorEnabled){
-                    log.error("Clean old buffered broadcast")
-                }
-                bufferBroadcast.remove(it)
-            }
-        }
-
-        source.metaClass.broadcast = { attrs ->
-            if (!application.config.icescrum.push?.enable)
-                return
-
-            assert attrs.function, attrs.message
-
-            attrs.channel = attrs.channel ? (attrs.channel instanceof String ? [attrs.channel] : attrs.channel) : [application.config.icescrum.push.mainChannel]
-            attrs.excludeCaller = attrs.excludeCaller ?: true
-            def threadId = Thread.currentThread().id
-
-            def message = [call: attrs.function, object: attrs.message]
-            attrs.channel.each { String it ->
-                def broadcaster = BroadcasterFactory?.default?.lookup(it)?:null
-                if(broadcaster){
-                    def uuid = null
-                    try{
-                        uuid = attrs.excludeCaller ? RequestContextHolder.currentRequestAttributes()?.request?.getHeader(HeaderConfig.X_ATMOSPHERE_TRACKING_ID) : null
-                    }catch(IllegalStateException e){
-                        //something we are not in a webrequest (like in batch threads)
-                    }
-                    if (bufferBroadcast.containsKey(threadId+'#'+it)) {
-                        bufferBroadcast.get(threadId+'#'+it) << message
-                    } else {
-                        try {
-                            if (log.debugEnabled){
-                                log.debug("broadcast to channel ${it} and exclude uuid : ${uuid}")
-                            }
-                            Set<AtmosphereResource> resources = uuid ? broadcaster.atmosphereResources?.findAll{ AtmosphereResource r -> r.uuid() !=  uuid} : null
-                            if(resources){
-                                broadcaster.broadcast((message as JSON).toString(), resources)
-                            } else if (!uuid) {
-                                broadcaster.broadcast((message as JSON).toString())
-                            }
-                        }catch(Exception e){
-                            log.error("Error when broadcasting, message: ${e.getMessage()}", e)
-                        }
-                    }
-                }
-            }
-        }
-
-        source.metaClass.broadcastToSingleUser = {attrs ->
-            if (!application.config.icescrum.push?.enable)
-               return
-            assert attrs.function
-            assert attrs.message
-            assert attrs.user
-            if (!attrs.user)
-                return
-            if (attrs.user instanceof String) {
-                attrs.user = [attrs.user]
-            }
-            def message = [call: attrs.function, object: attrs.message]
-            def broadcaster = BroadcasterFactory?.default?.lookup(application.config.icescrum.push.mainChannel)?:null
-            Set<AtmosphereResource> resources = broadcaster?.atmosphereResources?.findAll{ it.request?.getAttribute(IceScrumAtmosphereEventListener.USER_CONTEXT)?.username in attrs.user }?:null
-            if(resources){
-                try {
-                    broadcaster.broadcast((message as JSON).toString(), resources)
-                }catch(Exception e){
-                    log.error("Error when broadcasting, message: ${e.getMessage()}", e)
-                }
-            }
         }
     }
 

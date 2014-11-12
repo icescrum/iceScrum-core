@@ -23,6 +23,9 @@
  */
 package org.icescrum.core.services
 
+import grails.converters.JSON
+import org.atmosphere.cpr.Broadcaster
+import org.icescrum.atmosphere.IceScrumBroadcaster
 import org.icescrum.core.domain.Activity
 import org.icescrum.core.domain.AcceptanceTest
 import org.icescrum.core.domain.Actor
@@ -39,14 +42,15 @@ class ListenerService {
 
     def springSecurityService
     def activityService
-
+    def atmosphereMeteor
     // SPECIFIC LISTENERS
 
     @IceScrumListener(domain = 'story', eventType = IceScrumEventType.CREATE)
     void storyCreate(Story story, Map dirtyProperties) {
         def user = (User) springSecurityService.currentUser
         activityService.addActivity(story, user, Activity.CODE_SAVE, story.name)
-        broadcast(function: 'add', message: story, channel: 'product-' + story.backlog.id)
+        Broadcaster broadcaster = atmosphereMeteor.broadcasterFactory.lookup(IceScrumBroadcaster.class, '/stream/app/product-'+story.backlog.id)
+        broadcaster.broadcast(story as JSON)
     }
 
     @IceScrumListener(domain = 'story', eventType = IceScrumEventType.UPDATE)
@@ -216,5 +220,9 @@ class ListenerService {
     @IceScrumListener(domains = ['actor', 'story', 'feature', 'task', 'sprint', 'release', 'acceptanceTest'], eventType = IceScrumEventType.BEFORE_UPDATE)
     void invalidCacheBeforeUpdate(object, Map dirtyProperties) {
         object.lastUpdated = new Date()
+    }
+
+    void broadcast(def a){
+
     }
 }

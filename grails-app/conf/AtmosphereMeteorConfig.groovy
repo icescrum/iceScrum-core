@@ -5,7 +5,7 @@
 //
 //servlets = [
 //        MeteorServletDefault: [
-//                className: "org.icescrum.IceScrumMeteorServlet",
+//                className: "org.icescrum.atmosphere.IceScrumMeteorServlet",
 //                mapping: "/stream/app/*",
 //                handler: IceScrumMeteorHandler,
 //                initParams: [

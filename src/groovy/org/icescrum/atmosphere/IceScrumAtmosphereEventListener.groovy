@@ -52,28 +52,14 @@ class IceScrumAtmosphereEventListener implements AtmosphereResourceEventListener
     @Override
     void onSuspend(AtmosphereResourceEvent event) {
         def request = event.resource.request
-
-        def productID = request.getParameterValues("product") ? request.getParameterValues("product")[0] : null
         def user = getUserFromAtmosphereResource(event.resource)
-
         if (!user){
             event.resource.resume();
             return
         }
-
         request.setAttribute(USER_CONTEXT, user)
-
-        def channel = productID && productID.isLong() ?  (Product.load(productID.toLong()) ? "product-${productID}" : null) : null
-        if (channel) {
-            def broadcaster = atmosphereMeteor.broadcasterFactory.lookup(channel, true)
-            broadcaster.addAtmosphereResource(event.resource)
-            if (log.isDebugEnabled()) {
-                log.debug("add user ${user.username} with UUID ${event.resource.uuid()} to broadcaster: ${channel}")
-            }
-            def users = broadcaster.atmosphereResources.collect{
-                it.request.getAttribute(IceScrumAtmosphereEventListener.USER_CONTEXT)
-            }
-            broadcaster.broadcast(([[command:'connected',object:users]] as JSON).toString())
+        if (log.isDebugEnabled()) {
+            log.debug("Suspend connection for user ${user?.username} with UUID ${event.resource.uuid()}")
         }
     }
 
@@ -142,5 +128,6 @@ class IceScrumAtmosphereEventListener implements AtmosphereResourceEventListener
         def user = [uuid:resource.uuid(), window:resource.request.getParameterValues("window") ? resource.request.getParameterValues("window")[0] : null]
         def springSecurityService = Holders.applicationContext.getBean("springSecurityService")
         user.putAll(springSecurityService.isLoggedIn() ? [fullName:springSecurityService.currentUser.fullName, id:springSecurityService.currentUser.id, username:springSecurityService.currentUser.username] : [fullName: 'anonymous', id: null, username: 'anonymous'])
+        return user
     }
 }

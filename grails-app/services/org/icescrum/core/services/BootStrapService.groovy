@@ -48,23 +48,6 @@ class BootStrapService {
         ApplicationSupport.generateFolders(config)
         ApplicationSupport.checkNewVersion(config)
 
-        if (config.icescrum.push.enable && config.icescrum.push.heartBeat.enable) {
-            def message = [heart: true];
-            if (!heartBeat) {
-                heartBeat = Executors.newSingleThreadScheduledExecutor()
-                Runnable task = new Runnable() {
-                    @Override
-                    void run() {
-                        def broadcaster = BroadcasterFactory?.default?.lookup('/stream/app/*') ?: null
-                        if (broadcaster?.atmosphereResources){
-                            broadcaster?.broadcast((message as JSON).toString());
-                        }
-                    }
-                }
-                heartBeat.scheduleAtFixedRate(task, 0, config.icescrum.push.heartBeat.delay, TimeUnit.SECONDS);
-            }
-        }
-
         config.grails.attachmentable.baseDir = config.icescrum.baseDir.toString()
         config.grails.mail.default.from = config.icescrum.alerts.default.from
 
