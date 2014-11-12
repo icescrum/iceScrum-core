@@ -1,6 +1,7 @@
 package org.icescrum.atmosphere
 
 import org.atmosphere.cpr.AtmosphereConfig
+import org.atmosphere.cpr.Broadcaster
 import org.atmosphere.cpr.DefaultBroadcaster
 import org.icescrum.core.domain.Product
 
@@ -9,14 +10,11 @@ class IceScrumBroadcaster extends DefaultBroadcaster {
     String pkey
     String pname
 
-    IceScrumBroadcaster(String name, URI uri, AtmosphereConfig config) {
-        super(name, uri, config)
-        initValues()
-    }
+    public IceScrumBroadcaster(){}
 
-    IceScrumBroadcaster(String name, AtmosphereConfig config) {
-        super(name, config)
+    public Broadcaster initialize(String name, AtmosphereConfig config) {
         initValues()
+        return super.initialize(name, config)
     }
 
     private void initValues() {

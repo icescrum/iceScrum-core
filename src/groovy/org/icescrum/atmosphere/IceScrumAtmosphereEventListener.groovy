@@ -22,6 +22,7 @@
 package org.icescrum.atmosphere
 
 import grails.converters.JSON
+import grails.util.Holders
 import org.apache.commons.logging.LogFactory
 import org.atmosphere.cpr.AtmosphereResource
 import org.atmosphere.cpr.AtmosphereResourceEvent
@@ -35,29 +36,36 @@ import org.springframework.security.web.context.HttpSessionSecurityContextReposi
 
 class IceScrumAtmosphereEventListener implements AtmosphereResourceEventListener {
 
-    public static final USER_CONTEXT = 'user_context'
     private static final log = LogFactory.getLog(this)
+    public static final USER_CONTEXT = 'user_context'
+
+    def atmosphereMeteor = Holders.applicationContext.getBean("atmosphereMeteor")
+
+    @Override
+    void onPreSuspend(AtmosphereResourceEvent event) {
+        if (log.isDebugEnabled()) {
+            def user = event.resource.request.getAttribute(USER_CONTEXT)?:null
+            log.debug("user ${user?.username} disconnected with UUID ${event.resource.uuid()}")
+        }
+    }
 
     @Override
     void onSuspend(AtmosphereResourceEvent event) {
         def request = event.resource.request
 
-        def user = getUserFromAtmosphereResource(event.resource, true)
+        def productID = request.getParameterValues("product") ? request.getParameterValues("product")[0] : null
+        def user = getUserFromAtmosphereResource(event.resource)
+
         if (!user){
             event.resource.resume();
             return
         }
+
         request.setAttribute(USER_CONTEXT, user)
 
-        def channel = null
-        def productID = request.getParameterValues("product") ? request.getParameterValues("product")[0] : null
-        if (productID && productID.isLong()) {
-            channel = Product.load(productID.toLong()) ? "product-${productID}" : null
-        }
-
-        channel = channel?.toString()
+        def channel = productID && productID.isLong() ?  (Product.load(productID.toLong()) ? "product-${productID}" : null) : null
         if (channel) {
-            def broadcaster = BroadcasterFactory.default.lookup(channel, true)
+            def broadcaster = atmosphereMeteor.broadcasterFactory.lookup(channel, true)
             broadcaster.addAtmosphereResource(event.resource)
             if (log.isDebugEnabled()) {
                 log.debug("add user ${user.username} with UUID ${event.resource.uuid()} to broadcaster: ${channel}")
@@ -71,24 +79,23 @@ class IceScrumAtmosphereEventListener implements AtmosphereResourceEventListener
 
     @Override
     void onResume(AtmosphereResourceEvent event) {
-        def user = event.resource.request.getAttribute(USER_CONTEXT)?:null
-        if (user && log.isDebugEnabled()) {
+        if (log.isDebugEnabled()) {
+            def user = event.resource.request.getAttribute(USER_CONTEXT)?:null
             log.debug("Resume connection for user ${user?.username} with UUID ${event.resource.uuid()}")
         }
     }
 
     @Override
     void onDisconnect(AtmosphereResourceEvent event) {
-        def resource =  AtmosphereResourceFactory.default.find(event.resource.uuid());
-        if (resource){
-            def user = resource.request.getAttribute(USER_CONTEXT)?:null
-            if (log.isDebugEnabled() && user) {
+        if (event.resource){
+            if (log.isDebugEnabled()) {
+                def user = event.resource.request.getAttribute(USER_CONTEXT)?:null
                 log.debug("user ${user?.username} disconnected with UUID ${event.resource.uuid()}")
             }
-            BroadcasterFactory.default.lookupAll().each {
-                if (it.atmosphereResources.contains(resource)){
+            atmosphereMeteor.broadcasterFactory.lookupAll().each {
+                if (it.atmosphereResources.contains(event.resource)){
                     if (it.getID().contains('product-') && it.atmosphereResources) {
-                        def users = it.atmosphereResources?.findAll{ it.uuid() != resource.uuid() }?.collect{ it.request.getAttribute(IceScrumAtmosphereEventListener.USER_CONTEXT) }
+                        def users = it.atmosphereResources?.findAll{ it.uuid() != event.resource.uuid() }?.collect{ it.request.getAttribute(IceScrumAtmosphereEventListener.USER_CONTEXT) }
                         if (users){
                             it.broadcast(([[command:'connected',object:users]] as JSON).toString())
                         }
@@ -109,23 +116,31 @@ class IceScrumAtmosphereEventListener implements AtmosphereResourceEventListener
 
     @Override
     void onThrowable(AtmosphereResourceEvent event) {
-        //To change body of implemented methods use File | Settings | File Templates.
+        if (log.isDebugEnabled()) {
+            def user = event.resource.request.getAttribute(USER_CONTEXT)?:null
+            log.debug("Throwable connection for user ${user?.username} with UUID ${event.resource.uuid()}")
+        }
     }
 
-    private static def getUserFromAtmosphereResource(def resource, def createSession = false) {
-        def window = resource.request.getParameterValues("window") ? resource.request.getParameterValues("window")[0] : null
-        def httpSession = resource.request.getSession(createSession)
-        def user = [uuid:resource.uuid(), window:window]
-        if (httpSession != null) {
-            def context = (SecurityContext) httpSession.getAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY);
-            if (context?.authentication?.isAuthenticated()) {
-                user.putAll([fullName:context.authentication.principal.fullName, id:context.authentication.principal.id, username:context.authentication.principal.username])
-            } else {
-                user.putAll([fullName: 'anonymous', id: null, username: 'anonymous'])
-            }
-        } else {
-            user = null
+    @Override
+    void onHeartbeat(AtmosphereResourceEvent event) {
+        if (log.isDebugEnabled()) {
+            def user = event.resource.request.getAttribute(USER_CONTEXT)?:null
+            log.debug("Heartbeat connection for user ${user?.username} with UUID ${event.resource.uuid()}")
         }
-        user
+    }
+
+    @Override
+    void onClose(AtmosphereResourceEvent event) {
+        if (log.isDebugEnabled()) {
+            def user = event.resource.request.getAttribute(USER_CONTEXT)?:null
+            log.debug("Close connection for user ${user?.username} with UUID ${event.resource.uuid()}")
+        }
+    }
+
+    private static def getUserFromAtmosphereResource(def resource) {
+        def user = [uuid:resource.uuid(), window:resource.request.getParameterValues("window") ? resource.request.getParameterValues("window")[0] : null]
+        def springSecurityService = Holders.applicationContext.getBean("springSecurityService")
+        user.putAll(springSecurityService.isLoggedIn() ? [fullName:springSecurityService.currentUser.fullName, id:springSecurityService.currentUser.id, username:springSecurityService.currentUser.username] : [fullName: 'anonymous', id: null, username: 'anonymous'])
     }
 }

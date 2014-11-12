@@ -58,17 +58,18 @@ grails.project.dependency.resolution = {
         compile('org.codehaus.groovy.modules.http-builder:http-builder:0.5.0') {
             excludes "commons-logging", "xml-apis", "groovy"
         }
-        compile('org.atmosphere:atmosphere-runtime:1.0.15'){
-            excludes 'slf4j-api', 'atmosphere-ping'
+
+        compile "org.atmosphere:atmosphere-runtime:2.2.3", {
+            excludes "slf4j-api"
         }
     }
 
     plugins {
-        compile ':spring-security-core:2.0-RC4'
 
+        compile ":atmosphere-meteor:1.0.3"
+        compile ':spring-security-core:2.0-RC4'
         //TODO remove org.icescrum when grails team will have update plugin
         compile 'org.icescrum:spring-security-acl:2.0-RC1'
-
         compile ":hd-image-utils:1.1"
         compile 'org.icescrum:icescrum-attachmentable:1.0.1'
         compile 'org.icescrum:commentable:1.3'

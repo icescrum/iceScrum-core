@@ -94,7 +94,7 @@ class IcescrumCoreGrailsPlugin {
 
     def observe = ['controllers']
     def loadAfter = ['controllers', 'feeds', 'hibernate']
-    def loadBefore = ['autobase']
+    def loadBefore = ['autobase', 'grails-atmosphere-meteor']
 
     // TODO Fill in these fields
     def author = "iceScrum"
@@ -108,32 +108,6 @@ class IcescrumCoreGrailsPlugin {
     def documentation = "http://www.icescrum.org/plugin/icescrum-core"
 
     def doWithWebDescriptor = { xml ->
-        mergeConfig(application)
-        def servlets = xml.'servlet'
-        servlets[servlets.size() - 1] + {
-            'servlet' {
-                'description'('AtmosphereServlet')
-                'servlet-name'('AtmosphereServlet')
-                'servlet-class'('org.atmosphere.cpr.AtmosphereServlet')
-                application.config.icescrum.push.servlet.initParams.each { initParam ->
-                    'init-param' {
-                        'param-name'(initParam.key)
-                        'param-value'(initParam.value)
-                    }
-                }
-                'load-on-startup'('0')
-            }
-        }
-
-        def mappings = xml.'servlet-mapping'
-        mappings[mappings.size() - 1] + {
-            'servlet-mapping' {
-                'servlet-name'('AtmosphereServlet')
-                def urlPattern = application.config.icescrum.push.servlet?.urlPattern ?: '/atmosphere/*'
-                'url-pattern'(urlPattern)
-            }
-        }
-
         def cors = application.config.icescrum.cors
         if (cors.enable){
             addCorsSupport(xml, cors)
@@ -143,8 +117,6 @@ class IcescrumCoreGrailsPlugin {
     def controllersWithDownloadAndPreview = ['story', 'actor', 'task', 'feature', 'sprint', 'release', 'project']
 
     def doWithSpring = {
-        mergeConfig(application)
-
         asyncApplicationEventMulticaster(IceScrumApplicationEventMulticaster) {
 			persistenceInterceptor = ref("persistenceInterceptor")
             taskExecutor = java.util.concurrent.Executors.newCachedThreadPool()
@@ -152,15 +124,6 @@ class IcescrumCoreGrailsPlugin {
 
         ApplicationSupport.createUUID()
         System.setProperty('lbdsl.home', "${application.config.icescrum.baseDir.toString()}${File.separator}lbdsl")
-    }
-
-    private void mergeConfig(GrailsApplication app) {
-      ConfigObject currentConfig = app.config.icescrum
-      ConfigSlurper slurper = new ConfigSlurper(Environment.getCurrent().getName());
-      ConfigObject secondaryConfig = slurper.parse(app.classLoader.loadClass("DefaultIceScrumCoreConfig"))
-      ConfigObject config = new ConfigObject();
-      config.putAll((ConfigObject)secondaryConfig.getProperty('icescrum').merge(currentConfig))
-      app.config.icescrum = config
     }
 
     def doWithDynamicMethods = { ctx ->
@@ -265,7 +228,6 @@ class IcescrumCoreGrailsPlugin {
     }
 
     def onConfigChange = { event ->
-        this.mergeConfig(event.application)
         event.application.mainContext.uiDefinitionService.reload()
     }
 
