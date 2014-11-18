@@ -4,6 +4,7 @@ import org.icescrum.core.domain.Product
 import org.icescrum.core.domain.User
 import org.icescrum.core.domain.Team
 import org.apache.commons.io.FilenameUtils
+import org.icescrum.core.utils.ServicesUtils
 
 /**
  * Created by IntelliJ IDEA.
@@ -27,13 +28,16 @@ class IceScrumProductEvent extends IceScrumEvent {
   IceScrumProductEvent(Product product, File importPath, Class generatedBy, User doneBy, def type, boolean synchronous = false){
     super(product, generatedBy, doneBy, type, synchronous)
     this.importPath = importPath
+    def xmlFile
     if (importPath.isDirectory()) {
-        def xmlFile = importPath.listFiles().find { !it.isDirectory() && FilenameUtils.getExtension(it.name) == 'xml' }
-        this.xml = new XmlSlurper().parse(xmlFile)
+        xmlFile = importPath.listFiles().find { !it.isDirectory() && FilenameUtils.getExtension(it.name) == 'xml' }
     } else {
-        this.xml = new XmlSlurper().parse(importPath)
+        xmlFile = importPath
     }
-    //be compatible with xml without export tag
+    String xmlText = xmlFile.getText()
+    String cleanedXmlText = ServicesUtils.cleanXml(xmlText)
+    this.xml = new XmlSlurper().parseText(cleanedXmlText)
+      //be compatible with xml without export tag
     if (this.xml.find{it.name == 'export'}){
         this.xml = this.xml.product
     }

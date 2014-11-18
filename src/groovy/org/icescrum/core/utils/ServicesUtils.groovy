@@ -29,20 +29,20 @@ import javax.crypto.Mac
 
 class ServicesUtils {
 
-  public static boolean isDateWeekend(Date date){
-    def c = Calendar.getInstance()
-    c.setTime(date)
-    switch (c.get(Calendar.DAY_OF_WEEK)){
-      case Calendar.SATURDAY:
-      case Calendar.SUNDAY:
-        return true
-        break
-      default:
-        return false
+    public static boolean isDateWeekend(Date date) {
+        def c = Calendar.getInstance()
+        c.setTime(date)
+        switch (c.get(Calendar.DAY_OF_WEEK)) {
+            case Calendar.SATURDAY:
+            case Calendar.SUNDAY:
+                return true
+                break
+            default:
+                return false
+        }
     }
-  }
 
-    public static parseDateISO8601 (String input) {
+    public static parseDateISO8601(String input) {
         //NOTE: SimpleDateFormat uses GMT[-+]hh:mm for the TZ which breaks
         //things a bit.  Before we go on we have to repair this.
         SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssz")
@@ -60,8 +60,7 @@ class ServicesUtils {
         return df.parse(input)
     }
 
-    public static byte[] calculateHMACMd5(String data, String key)
-    {
+    public static byte[] calculateHMACMd5(String data, String key) {
         SecretKey skey = new SecretKeySpec(key.getBytes(), "HmacMD5")
         Mac m = Mac.getInstance("HmacMD5")
         m.init(skey)
@@ -70,11 +69,26 @@ class ServicesUtils {
         return mac
     }
 
-	public static String getHexString(byte[] b) throws Exception {
-      String result = "";
-      for (int i=0; i < b.length; i++) {
-        result += Integer.toString( ( b[i] & 0xff ) + 0x100, 16).substring( 1 );
-      }
-      return result;
+    public static String getHexString(byte[] b) throws Exception {
+        String result = "";
+        for (int i = 0; i < b.length; i++) {
+            result += Integer.toString((b[i] & 0xff) + 0x100, 16).substring(1);
+        }
+        return result;
+    }
+
+    public static String cleanXml(String xmlString) {
+        StringBuffer out = new StringBuffer()
+        for (c in xmlString) {
+            if ((c == 0x9) ||
+                    (c == 0xA) ||
+                    (c == 0xD) ||
+                    ((c >= 0x20) && (c <= 0xD7FF)) ||
+                    ((c >= 0xE000) && (c <= 0xFFFD)) ||
+                    ((c >= 0x10000) && (c <= 0x10FFFF))) {
+                out.append(c)
+            }
+        }
+        out.toString()
     }
 }
