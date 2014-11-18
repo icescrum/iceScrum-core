@@ -87,6 +87,8 @@ class ServicesUtils {
                     ((c >= 0xE000) && (c <= 0xFFFD)) ||
                     ((c >= 0x10000) && (c <= 0x10FFFF))) {
                 out.append(c)
+            } else {
+                out.append(' ')
             }
         }
         out.toString()
