@@ -24,7 +24,7 @@
 package org.icescrum.core.services
 
 import grails.util.Holders
-
+import org.icescrum.core.utils.ServicesUtils
 import java.text.SimpleDateFormat
 import org.icescrum.core.domain.preferences.ProductPreferences
 import org.icescrum.core.domain.security.Authority
@@ -452,9 +452,11 @@ class ProductService {
 
     @PreAuthorize('isAuthenticated()')
     @Transactional(readOnly = true)
-    def parseXML(File x, ProgressSupport progress = null) {
+    def parseXML(File file, ProgressSupport progress = null) {
         def g = grailsApplication.mainContext.getBean('org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib')
-        def prod = new XmlSlurper().parse(x)
+        String xmlText = file.getText();
+        String cleanedXmlText = ServicesUtils.cleanXml(xmlText)
+        def prod = new XmlSlurper().parseText(cleanedXmlText)
 
         progress?.updateProgress(0, g.message(code: 'is.parse', args: [g.message(code: 'is.product')]))
         def Product p
