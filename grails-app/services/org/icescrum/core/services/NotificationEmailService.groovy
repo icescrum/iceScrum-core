@@ -99,22 +99,24 @@ class NotificationEmailService implements ApplicationListener<IceScrumEvent> {
         if (!ApplicationSupport.booleanValue(grailsApplication.config.icescrum.alerts.enable)) {
             return
         }
-        Product product = task.parentProduct
-        def subjectArgs = [product.name, task.name]
-        def permalink = grailsApplication.config.grails.serverURL + '/p/' + product.pkey + '-T' + task.uid
-        def projectLink = grailsApplication.config.grails.serverURL + '/p/' + product.pkey + '#project'
+        def product = Product.get(task.parentProduct.id)
+        Product.withSession {
+            def subjectArgs = [product.name, task.name]
+            def permalink = grailsApplication.config.grails.serverURL + '/p/' + product.pkey + '-T' + task.uid
+            def projectLink = grailsApplication.config.grails.serverURL + '/p/' + product.pkey + '#project'
 
-        def listTo = receiversByLocale(product.allUsers, user.id, [type:'onUrgentTask',pkey:product.pkey])
-        listTo?.each { locale, group ->
-            if (log.debugEnabled) {
-                log.debug "Send email, event:${type} to : ${group*.email.toArray()} with locale : ${locale}"
+            def listTo = receiversByLocale(product.allUsers, user.id, [type:'onUrgentTask',pkey:product.pkey])
+            listTo?.each { locale, group ->
+                if (log.debugEnabled) {
+                    log.debug "Send email, event:${type} to : ${group*.email.toArray()} with locale : ${locale}"
+                }
+                send([
+                        emails: group*.email.toArray(),
+                        subject: grailsApplication.config.icescrum.alerts.subject_prefix + getMessage('is.template.email.task.created.subject', (Locale) locale, subjectArgs),
+                        view: '/emails-templates/taskCreated',
+                        model: [locale: locale, taskName: task.name, permalink: permalink, linkName: product.name, link: projectLink, description:IceScrumEvent.EVENT_BEFORE_DELETE ? task.description?:null : null]
+                ])
             }
-            send([
-                    emails: group*.email.toArray(),
-                    subject: grailsApplication.config.icescrum.alerts.subject_prefix + getMessage('is.template.email.task.created.subject', (Locale) locale, subjectArgs),
-                    view: '/emails-templates/taskCreated',
-                    model: [locale: locale, taskName: task.name, permalink: permalink, linkName: product.name, link: projectLink, description:IceScrumEvent.EVENT_BEFORE_DELETE ? task.description?:null : null]
-            ])
         }
     }
 

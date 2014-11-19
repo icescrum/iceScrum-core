@@ -269,14 +269,16 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
     }
 
     def getHasNextSprint() {
-        if (Sprint.findHasNextSprint(parentRelease.id, orderNumber).list()[0]){
-            return true
+        Sprint.withNewSession {
+            if (Sprint.findHasNextSprint(parentRelease.id, orderNumber).list()[0]){
+                return true
+            }
+            def nextRelease = Release.findByOrderNumberAndParentProduct(parentRelease.orderNumber + 1, parentRelease.parentProduct)
+            if (nextRelease && Sprint.findHasNextSprint(nextRelease.id, 0).list()[0]){
+                return true
+            }
+            return false
         }
-        def nextRelease = Release.findByOrderNumberAndParentProduct(parentRelease.orderNumber + 1, parentRelease.parentProduct)
-        if (nextRelease && Sprint.findHasNextSprint(nextRelease.id, 0).list()[0]){
-            return true
-        }
-        return false
     }
 
     def getParentReleaseId() {
