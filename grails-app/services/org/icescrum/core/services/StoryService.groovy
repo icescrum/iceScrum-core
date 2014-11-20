@@ -849,10 +849,8 @@ class StoryService {
             story.addActivity(u, 'done', story.name)
             publishEvent(new IceScrumStoryEvent(story, this.class, u, IceScrumStoryEvent.EVENT_DONE))
 
-            // Set all tasks to done (and story estimation to 0)
             story.tasks?.findAll{ it.state != Task.STATE_DONE }?.each { t ->
-                t.estimation = 0
-                taskService.update(t, u)
+                taskService.state(t, Task.STATE_DONE, u)
             }
 
             story.acceptanceTests.each { AcceptanceTest acceptanceTest ->
