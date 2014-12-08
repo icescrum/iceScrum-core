@@ -26,13 +26,8 @@ import com.quirklabs.hdimageutils.HdImageService
 import grails.converters.JSON
 import grails.converters.XML
 import grails.plugins.wikitext.WikiTextTagLib
-import org.atmosphere.cpr.AtmosphereResource
-import org.atmosphere.cpr.BroadcasterFactory
-import org.atmosphere.cpr.HeaderConfig
 import org.codehaus.groovy.grails.commons.GrailsClassUtils
-import org.icescrum.atmosphere.IceScrumAtmosphereEventListener
 import org.icescrum.core.cors.CorsFilter
-import org.icescrum.core.domain.AcceptanceTest
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
 import org.icescrum.core.event.IceScrumListener
@@ -41,20 +36,13 @@ import org.icescrum.core.utils.JSONIceScrumDomainClassMarshaller
 import org.icescrum.plugins.attachmentable.domain.Attachment
 import org.icescrum.plugins.attachmentable.services.AttachmentableService
 import org.springframework.context.ApplicationContext
-import org.codehaus.groovy.grails.commons.GrailsApplication
-import grails.util.Environment
-import org.icescrum.core.domain.Story
-import org.icescrum.core.domain.Feature
 import org.icescrum.core.domain.Sprint
-import org.icescrum.core.domain.Actor
 import org.icescrum.core.domain.Release
 import org.icescrum.core.domain.Task
 import org.codehaus.groovy.grails.plugins.jasper.JasperReportDef
-import org.icescrum.core.domain.User
 import org.codehaus.groovy.grails.plugins.jasper.JasperExportFormat
 import org.springframework.transaction.support.TransactionCallback
 import org.springframework.transaction.support.TransactionTemplate
-import org.springframework.web.context.request.RequestContextHolder
 import org.springframework.web.servlet.support.RequestContextUtils as RCU
 import grails.plugin.springsecurity.SpringSecurityService
 import org.codehaus.groovy.grails.plugins.jasper.JasperService
@@ -62,14 +50,12 @@ import org.icescrum.core.support.ProgressSupport
 import org.icescrum.core.services.UiDefinitionService
 import org.icescrum.core.ui.UiDefinitionArtefactHandler
 import org.codehaus.groovy.grails.commons.ControllerArtefactHandler
-import org.icescrum.core.domain.Product
 import org.icescrum.core.event.IceScrumApplicationEventMulticaster
 import org.icescrum.core.utils.XMLIceScrumDomainClassMarshaller
 import org.icescrum.core.support.ApplicationSupport
 
 import javax.servlet.http.HttpServletResponse
 import java.lang.reflect.Method
-import java.util.concurrent.ConcurrentHashMap
 
 class IcescrumCoreGrailsPlugin {
     def groupId = 'org.icescrum'
@@ -140,6 +126,7 @@ class IcescrumCoreGrailsPlugin {
                 def plugin = it.hasProperty('pluginName') ? it.getPropertyValue('pluginName') : null
                 addUIControllerMethods(it, ctx, plugin)
             }
+            addBroadcastMethods(it) // TODO Remove & don't forget to clean method calls (controllers & co)
             addErrorMethod(it)
             addWithObjectsMethods(it)
             addRenderRESTMethod(it)
@@ -151,6 +138,7 @@ class IcescrumCoreGrailsPlugin {
         }
 
         application.serviceClasses.each {
+            addBroadcastMethods(it) // TODO Remove & don't forget to clean method calls (controllers & co)
             addListenerSupport(it, ctx)
         }
         // Old school because no GORM Static API at the point where it is called
@@ -212,6 +200,8 @@ class IcescrumCoreGrailsPlugin {
                 }
             }
             if (application.isControllerClass(event.source)) {
+                addBroadcastMethods(event.source) // TODO Remove & don't forget to clean method calls (controllers & co)
+
                 addErrorMethod(event.source)
                 addWithObjectsMethods(event.source)
                 addRenderRESTMethod(event.source)
@@ -335,6 +325,14 @@ class IcescrumCoreGrailsPlugin {
             }
             clazz.registerMapping(actionName)
         }
+    }
+
+    // TODO Remove & don't forget to clean method calls (controllers & co)
+    private addBroadcastMethods(source) {
+        source.metaClass.bufferBroadcast = {}
+        source.metaClass.resumeBufferedBroadcast = {}
+        source.metaClass.broadcast = {}
+        source.metaClass.broadcastToSingleUser = {}
     }
 
     private addErrorMethod(source) {
