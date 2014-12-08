@@ -66,10 +66,9 @@ grails.project.dependency.resolution = {
 
     plugins {
 
-        compile ":atmosphere-meteor:1.0.3"
+        compile ":atmosphere-meteor:1.0.4"
         compile ':spring-security-core:2.0-RC4'
-        //TODO remove org.icescrum when grails team will have update plugin
-        compile 'org.icescrum:spring-security-acl:2.0-RC1'
+        compile ':spring-security-acl:2.0-RC2'
         compile ":hd-image-utils:1.1"
         compile 'org.icescrum:icescrum-attachmentable:1.0.1'
         compile 'org.icescrum:commentable:1.3'
