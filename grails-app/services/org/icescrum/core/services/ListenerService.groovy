@@ -50,7 +50,7 @@ class ListenerService {
         def user = (User) springSecurityService.currentUser
         activityService.addActivity(story, user, Activity.CODE_SAVE, story.name)
         Broadcaster broadcaster = atmosphereMeteor.broadcasterFactory.lookup(IceScrumBroadcaster.class, '/stream/app/product-'+story.backlog.id)
-        broadcaster.broadcast(story as JSON)
+        broadcaster.broadcast((story as JSON).toString()) // toString() required to eagerly generate the String (lazy raise an error because no session in atmosphere thread)
     }
 
     @IceScrumListener(domain = 'story', eventType = IceScrumEventType.UPDATE)

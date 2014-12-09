@@ -59,7 +59,7 @@ grails.project.dependency.resolution = {
             excludes "commons-logging", "xml-apis", "groovy"
         }
 
-        compile "org.atmosphere:atmosphere-runtime:2.2.3", {
+        compile "org.atmosphere:atmosphere-runtime:2.2.4", {
             excludes "slf4j-api"
         }
     }
