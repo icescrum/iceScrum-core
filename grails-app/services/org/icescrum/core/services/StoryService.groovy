@@ -339,7 +339,6 @@ class StoryService extends IceScrumEventPublisher {
     def unPlanAll(Collection<Sprint> sprintList, Integer sprintState = null) {
         sprintList.sort  { sprint1, sprint2 -> sprint2.orderNumber <=> sprint1.orderNumber }
         def product = sprintList.first().parentProduct
-        bufferBroadcast(channel:'product-'+product.id)
         def storiesUnPlanned = []
         sprintList.each { sprint ->
             if ((!sprintState) || (sprintState && sprint.state == sprintState)) {
@@ -355,7 +354,6 @@ class StoryService extends IceScrumEventPublisher {
                 storiesUnPlanned.addAll(stories)
             }
         }
-        resumeBufferedBroadcast(channel:'product-'+product.id)
         return storiesUnPlanned
     }
 
@@ -498,7 +496,6 @@ class StoryService extends IceScrumEventPublisher {
     def acceptToBacklog(List<Story> stories) {
         def storiesA = []
         def product = stories[0].backlog
-        bufferBroadcast(channel:'product-'+product.id)
         stories.each { story ->
             if (story.state > Story.STATE_SUGGESTED)
                 throw new IllegalStateException('is.story.error.not.state.suggested')
@@ -525,14 +522,12 @@ class StoryService extends IceScrumEventPublisher {
             broadcast(function: 'accept', message: story, channel:'product-'+story.backlog.id)
             publishEvent(new IceScrumStoryEvent(story, this.class, u, IceScrumStoryEvent.EVENT_ACCEPTED))
         }
-        resumeBufferedBroadcast(channel:'product-'+product.id)
         return storiesA
     }
 
     @PreAuthorize('productOwner(#stories[0].backlog) and !archivedProduct(#stories[0].backlog)')
     void returnToSandbox(List<Story> stories) {
         Product product = (Product)stories[0].backlog
-        bufferBroadcast(channel:'product-'+product.id)
         stories.each { story ->
             if (!(story.state in [Story.STATE_ESTIMATED, Story.STATE_ACCEPTED]))
                 throw new IllegalStateException('is.story.error.not.in.backlog')
@@ -553,14 +548,12 @@ class StoryService extends IceScrumEventPublisher {
             broadcast(function: 'returnToSandbox', message: story, channel:'product-'+story.backlog.id)
             publishEvent(new IceScrumStoryEvent(story, this.class, u, IceScrumStoryEvent.EVENT_UPDATED))
         }
-        resumeBufferedBroadcast(channel:'product-'+product.id)
     }
 
     @PreAuthorize('productOwner(#stories[0].backlog) and !archivedProduct(#stories[0].backlog)')
     def acceptToFeature(List<Story> stories) {
         def features = []
         def product =  stories[0].backlog
-        bufferBroadcast(channel:'product-'+product.id)
         stories.each { story ->
             if (story.state > Story.STATE_SUGGESTED)
                 throw new IllegalStateException('is.story.error.not.state.suggested')
@@ -598,7 +591,6 @@ class StoryService extends IceScrumEventPublisher {
             activityService.addActivity(feature, user, 'acceptAs', feature.name)
             publishEvent(new IceScrumStoryEvent(feature, this.class, user, IceScrumStoryEvent.EVENT_ACCEPTED_AS_FEATURE))
         }
-        resumeBufferedBroadcast(channel:'product-'+product.id)
         return features
     }
 
@@ -606,7 +598,6 @@ class StoryService extends IceScrumEventPublisher {
     def acceptToUrgentTask(List<Story> stories) {
         def tasks = []
         def product = stories[0].backlog
-        bufferBroadcast(channel:'product-'+product.id)
         stories.each { story ->
 
             if (story.state > Story.STATE_SUGGESTED)
@@ -661,7 +652,6 @@ class StoryService extends IceScrumEventPublisher {
 
             publishEvent(new IceScrumStoryEvent(task, this.class, (User) springSecurityService.currentUser, IceScrumStoryEvent.EVENT_ACCEPTED_AS_TASK))
         }
-        resumeBufferedBroadcast(channel:'product-'+product.id)
         return tasks
     }
 
@@ -673,7 +663,6 @@ class StoryService extends IceScrumEventPublisher {
     @PreAuthorize('productOwner(#stories[0].backlog) and !archivedProduct(#stories[0].backlog)')
     void done(List<Story> stories) {
         def product = stories[0].backlog
-        bufferBroadcast(channel:'product-'+product.id)
         stories.each { story ->
 
             if (story.parentSprint.state != Sprint.STATE_INPROGRESS) {
@@ -715,7 +704,6 @@ class StoryService extends IceScrumEventPublisher {
         if (stories) {
             clicheService.createOrUpdateDailyTasksCliche(stories[0]?.parentSprint)
         }
-        resumeBufferedBroadcast(channel:'product-'+product.id)
     }
 
     @PreAuthorize('productOwner(#story.backlog) and !archivedProduct(#story.backlog)')
@@ -726,7 +714,6 @@ class StoryService extends IceScrumEventPublisher {
     @PreAuthorize('productOwner(#stories[0].backlog) and !archivedProduct(#stories[0].backlog)')
     void unDone(List<Story> stories) {
         def product = stories[0].backlog
-        bufferBroadcast(channel:'product-'+product.id)
         stories.each { story ->
 
             if (story.state != Story.STATE_DONE) {
@@ -754,9 +741,9 @@ class StoryService extends IceScrumEventPublisher {
             broadcast(function: 'update', message: story, channel:'product-'+product.id)
             publishEvent(new IceScrumStoryEvent(story, this.class, u, IceScrumStoryEvent.EVENT_UNDONE))
         }
-        if (stories)
+        if (stories) {
             clicheService.createOrUpdateDailyTasksCliche(stories[0]?.parentSprint)
-        resumeBufferedBroadcast(channel:'product-'+product.id)
+        }
     }
 
     // TODO check rights
@@ -775,7 +762,6 @@ class StoryService extends IceScrumEventPublisher {
     def copy(List<Story> stories) {
         def copiedStories = []
         def product =  stories[0].backlog
-        bufferBroadcast(channel:'product-'+product.id)
         stories.each { story ->
             def copiedStory = new Story(
                     name: story.name + '_1',
@@ -827,7 +813,6 @@ class StoryService extends IceScrumEventPublisher {
 
             copiedStories << copiedStory.refresh()
         }
-        resumeBufferedBroadcast(channel:'product-'+product.id)
         return copiedStories
     }
 
