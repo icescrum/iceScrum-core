@@ -30,7 +30,6 @@ import grails.util.GrailsNameUtils
 import org.apache.commons.io.FileUtils
 import org.grails.comments.Comment
 import org.grails.comments.CommentLink
-import org.hibernate.Hibernate
 import org.hibernate.exception.SQLGrammarException
 import org.hibernate.type.LongType
 import org.hibernate.type.StringType
