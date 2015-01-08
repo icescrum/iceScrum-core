@@ -21,6 +21,7 @@
  */
 package org.icescrum.core.services
 
+import org.icescrum.core.domain.Invitation
 import org.icescrum.core.domain.Product
 import org.icescrum.core.domain.Sprint
 import org.icescrum.core.domain.Task
@@ -254,6 +255,20 @@ class NotificationEmailService {
                 view: "/emails-templates/retrieve",
                 model: [locale: user.locale, user: user, password: password, ip: request.getHeader('X-Forwarded-For') ?: request.getRemoteAddr(), link: link]
         ])
+    }
+
+    void sendInvitation(Invitation invitation, User inviter) {
+        def link =  grailsApplication.config.grails.serverURL + '/#/user/register/' + invitation.token
+        def locale = inviter.locale
+        send([
+                to: invitation.email,
+                subject: grailsApplication.config.icescrum.alerts.subject_prefix + getMessage('is.template.email.user.invitation.subject', locale),
+                view: "/emails-templates/invitation",
+                model: [inviter: inviter, locale: locale, link: link]
+        ])
+        if (log.debugEnabled) {
+            log.debug "Send invitation to: $invitation.email"
+        }
     }
 
     void send(def options) {

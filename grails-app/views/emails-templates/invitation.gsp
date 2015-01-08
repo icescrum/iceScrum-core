@@ -1,5 +1,7 @@
 %{--
 -
+- Copyright (c) 2015 Kagilum SAS
+-
 - This file is part of iceScrum.
 -
 - iceScrum is free software: you can redistribute it and/or modify
@@ -22,11 +24,7 @@
 <%@ page contentType="text/html"%>
 <g:message
         locale="${locale}"
-        code='is.template.email.story.commentDeleted.text'
-        args="[storyName,permalink,by]"/>
+        code='is.template.email.user.invitation.text'
+        args="[(inviter.firstName + ' ' + inviter.lastName), inviter.username, link]"/>
 <br/><br/>--<br/>
-<g:message locale="${locale}" code='is.template.email.footer.reason.follow' args="[link,linkName]"/>
-<g:message locale="${locale}" code='is.template.email.footer.unfollow' args="[permalink]"/>
-<g:message locale="${locale}" code='is.template.email.footer.preferences.information'/>
-<br/>-<br/>
 <g:message locale="${locale}" code='is.template.email.footer.website'/>

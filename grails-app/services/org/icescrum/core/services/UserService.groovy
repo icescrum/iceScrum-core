@@ -23,8 +23,10 @@
 
 package org.icescrum.core.services
 
+import grails.plugin.springsecurity.SpringSecurityUtils
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.filefilter.WildcardFileFilter
+import org.icescrum.core.domain.Invitation
 import org.icescrum.core.domain.User
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
@@ -38,11 +40,12 @@ import org.icescrum.core.support.ApplicationSupport
 class UserService extends IceScrumEventPublisher {
 
     def grailsApplication
+    def productService
     def springSecurityService
     def hdImageService
     def notificationEmailService
 
-    void save(User user) {
+    void save(User user, String token = null) {
         if (!user.validate()){
             throw new RuntimeException()
         }
@@ -51,6 +54,17 @@ class UserService extends IceScrumEventPublisher {
             throw new RuntimeException()
         }
         publishSynchronousEvent(IceScrumEventType.CREATE, user)
+
+        if (token) {
+            def invitations = Invitation.findAllByToken(token)
+            invitations.each { invitation ->
+                // TODO check if it is necessary to use admin permissions
+                SpringSecurityUtils.doWithAuth('admin') {
+                    productService.addRole(invitation.product, invitation.team, user, invitation.role)
+                    invitation.delete()
+                }
+            }
+        }
     }
 
     void update(User user, Map props) {

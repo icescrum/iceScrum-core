@@ -25,9 +25,11 @@
 package org.icescrum.core.services
 
 import grails.util.Holders
+import org.icescrum.core.domain.Invitation
 import org.icescrum.core.domain.Product
 import org.icescrum.core.domain.Team
 import org.icescrum.core.domain.User
+import org.icescrum.core.domain.security.Authority
 import org.icescrum.core.support.ProgressSupport
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.transaction.annotation.Transactional
@@ -42,114 +44,111 @@ class TeamService {
     def springSecurityService
     def securityService
     def grailsApplication
+    def notificationEmailService
 
-    void save(Team team, List members, List scrumMasters) {
-        if (!team)
+    void save(Team team, List members, List scrumMasters, List invitedMembers = []) {
+        if (!team) {
             throw new RuntimeException('is.team.error.not.exist')
-
+        }
         if (!team.save()) {
             throw new RuntimeException('is.team.error.not.saved')
-        }
-
-        else {
+        } else {
             securityService.secureDomain(team)
             if (members) {
-                for (member in User.getAll(members*.toLong())) {
-                    if (!scrumMasters?.contains(member.id)) {
-                        if (member){
-                            addMember(team,member)
-                        }
+                for (member in User.getAll(members)) {
+                    if (!scrumMasters?.contains(member.id) && member) {
+                        addMember(team, member)
                     }
                 }
             }
-            if (scrumMasters){
-                for(scrumMaster in User.getAll(scrumMasters*.toLong())){
-                    if (scrumMaster){
-                        addScrumMaster(team,scrumMaster)
+            if (scrumMasters) {
+                for (scrumMaster in User.getAll(scrumMasters)) {
+                    if (scrumMaster) {
+                        addScrumMaster(team, scrumMaster)
                     }
                 }
             }
-            if (!team.save(flush:true)) {
+            if (!team.save(flush: true)) {
                 throw new RuntimeException()
+            }
+            invitedMembers.each {
+                if (!Invitation.findAllByEmailAndTeam(it, team)) {
+                    def invitation = new Invitation(email: it, team: team, type: Invitation.InvitationType.TEAM, role: Authority.MEMBER)
+                    invitation.save()
+                    notificationEmailService.sendInvitation(invitation, springSecurityService.currentUser)
+                }
             }
             publishEvent(new IceScrumTeamEvent(team, this.class, (User) springSecurityService.currentUser, IceScrumEvent.EVENT_CREATED))
         }
-
     }
 
     @PreAuthorize('owner(#team)')
     void delete(Team team) {
-        if (!team)
+        if (!team) {
             throw new IllegalStateException('Team must not be null')
-
-        Team.withSession {session ->
-
-            def toDelete = team.products.collect {it}
-
-            for (Product product in toDelete)
-                removeTeamsFromProduct(product, [team.id])
-            session.flush()
-
-            toDelete = team.members.collect {it}
-
-            for (User member in toDelete)
-                removeTeamsFromUser(member, [team.id])
-
-            team.delete()
-
-            securityService.unsecureDomain team
         }
-
+        Team.withSession { session ->
+            team.products.each { product ->
+                removeTeamsFromProduct(product, [team.id])
+            }
+            session.flush()
+            team.members.each { member ->
+                removeTeamsFromUser(member, [team.id])
+            }
+            team.delete()
+            securityService.unsecureDomain(team)
+        }
     }
 
     @PreAuthorize('owner(#team)')
     void update(Team team) {
-        if (!team)
+        if (!team) {
             throw new IllegalStateException('Team must not be null')
+        }
         if (!team.save()) {
             throw new RuntimeException('is.team.error.not.saved')
         }
     }
 
-    void removeTeamsFromUser(User _user, teamIds) {
-        if (!_user)
-            throw new IllegalStateException('_user must not be null')
-
-        if (!teamIds)
-            throw new IllegalStateException('_user must have at least one team')
-
-
-        for (team in Team.getAll(teamIds)) {
-            removeMemberOrScrumMaster(team,_user)
+    void removeTeamsFromUser(User user, teamIds) {
+        if (!user) {
+            throw new IllegalStateException('user must not be null')
         }
-
-        if (!_user.save())
-            throw new IllegalStateException('_user not saved')
+        if (!teamIds) {
+            throw new IllegalStateException('user must have at least one team')
+        }
+        for (team in Team.getAll(teamIds)) {
+            removeMemberOrScrumMaster(team, user)
+        }
+        if (!user.save()) {
+            throw new IllegalStateException('user not saved')
+        }
     }
 
-    @PreAuthorize('owner(#_product)')
-    void removeTeamsFromProduct(Product _product, teamIds) {
-        if (!_product)
+    @PreAuthorize('owner(#product)')
+    void removeTeamsFromProduct(Product product, teamIds) {
+        if (!product) {
             throw new IllegalStateException('Product must not be null')
-
-        if (!teamIds)
-            throw new IllegalStateException('Product must have at least one team')
-
-
-        for (team in Team.getAll(teamIds)) {
-            if (team)
-                _product.removeFromTeams(team)
-            publishEvent(new IceScrumProductEvent(_product, team, this.class, (User) springSecurityService.currentUser, IceScrumProductEvent.EVENT_TEAM_REMOVED))
         }
-
-        if (!_product.save())
+        if (!teamIds) {
+            throw new IllegalStateException('Product must have at least one team')
+        }
+        for (team in Team.getAll(teamIds)) {
+            if (team) {
+                product.removeFromTeams(team)
+                publishEvent(new IceScrumProductEvent(product, team, this.class, (User) springSecurityService.currentUser, IceScrumProductEvent.EVENT_TEAM_REMOVED))
+            }
+        }
+        if (!product.save()) {
             throw new IllegalStateException('Product not saved')
+        }
     }
 
     @PreAuthorize('isAuthenticated()')
     void saveImport(Team team) {
-        if (!team)
+        if (!team) {
             throw new IllegalStateException('is.team.error.not.exist')
+        }
 
         if (!team.save()) {
             throw new RuntimeException('is.team.error.not.saved')
@@ -158,46 +157,56 @@ class TeamService {
         securityService.secureDomain(team)
         def scrumMasters = team.scrumMasters
 
-        def u = (User) springSecurityService.currentUser
+        def user = (User) springSecurityService.currentUser
         for (member in team.members) {
-            if (!member.isAttached()) member = member.merge()
-            if (!(member in scrumMasters))
-                addMember(team,member)
+            if (!member.isAttached()) {
+                member = member.merge()
+            }
+            if (!(member in scrumMasters)) {
+                addMember(team, member)
+            }
         }
         if (scrumMasters) {
-            scrumMasters.eachWithIndex {it, index ->
-                if (!it.isAttached()) it = it.merge()
-                addScrumMaster(team,it)
+            scrumMasters.eachWithIndex { it, index ->
+                if (!it.isAttached()) {
+                    it = it.merge()
+                }
+                addScrumMaster(team, it)
             }
             securityService.changeOwner(team.scrumMasters.first(), team)
         } else {
-            if (!u.isAttached()) u = u.merge()
-            addScrumMaster(team,u)
-            securityService.changeOwner(u, team)
+            if (!user.isAttached()) {
+                user = user.merge()
+            }
+            addScrumMaster(team, user)
+            securityService.changeOwner(user, team)
         }
-        publishEvent(new IceScrumTeamEvent(team, this.class, u, IceScrumEvent.EVENT_CREATED))
+        publishEvent(new IceScrumTeamEvent(team, this.class, user, IceScrumEvent.EVENT_CREATED))
     }
 
     void addMember(Team team, User member) {
-        if (!team.members*.id?.contains(member.id))
+        if (!team.members*.id?.contains(member.id)) {
             team.addToMembers(member).save()
-        securityService.createTeamMemberPermissions member, team
+        }
+        securityService.createTeamMemberPermissions(member, team)
         publishEvent(new IceScrumTeamEvent(team, member, this.class, (User) springSecurityService.currentUser, IceScrumTeamEvent.EVENT_MEMBER_ADDED))
     }
 
     void addScrumMaster(Team team, User member) {
-        if (!team.members*.id?.contains(member.id))
+        if (!team.members*.id?.contains(member.id)) {
             team.addToMembers(member).save()
-        securityService.createScrumMasterPermissions member, team
+        }
+        securityService.createScrumMasterPermissions(member, team)
         publishEvent(new IceScrumTeamEvent(team, member, this.class, (User) springSecurityService.currentUser, IceScrumTeamEvent.EVENT_MEMBER_ADDED))
     }
 
     void removeMemberOrScrumMaster(Team team, User member) {
         team.removeFromMembers(member).save()
-        if (team.scrumMasters*.id?.contains(member.id))
-            securityService.deleteScrumMasterPermissions member, team
-        else
-            securityService.deleteTeamMemberPermissions member, team
+        if (team.scrumMasters*.id?.contains(member.id)) {
+            securityService.deleteScrumMasterPermissions(member, team)
+        } else {
+            securityService.deleteTeamMemberPermissions(member, team)
+        }
         publishEvent(new IceScrumTeamEvent(team, member, this.class, (User) springSecurityService.currentUser, IceScrumTeamEvent.EVENT_MEMBER_REMOVED))
     }
 
@@ -215,7 +224,7 @@ class TeamService {
             )
 
             def userService = (UserService) Holders.grailsApplication.mainContext.getBean('userService');
-            team.members.user.eachWithIndex {user, index ->
+            team.members.user.eachWithIndex { user, index ->
                 User u = userService.unMarshall(user)
                 if (!u.id) {
                     existingTeam = false
@@ -232,15 +241,16 @@ class TeamService {
 
             //fix between R6#x and R7
             def sm = team.scrumMasters.scrumMaster ?: team.scrumMasters.user
-            sm.eachWithIndex {user, index ->
+            sm.eachWithIndex { user, index ->
                 def u
-                if (!user.@uid?.isEmpty())
-                    u = ((User) t.members.find { it.uid == user.@uid.text() } ) ?: null
-                else{
-                    u = ApplicationSupport.findUserUIDOldXMl(user,null,t.members)
+                if (!user.@uid?.isEmpty()) {
+                    u = ((User) t.members.find { it.uid == user.@uid.text() }) ?: null
+                } else {
+                    u = ApplicationSupport.findUserUIDOldXMl(user, null, t.members)
                 }
-                if (u)
+                if (u) {
                     scrumMastersList << u
+                }
                 progress?.updateProgress((team.members.user.size() * (index + 1) / 100).toInteger(), g.message(code: 'is.parse', args: [g.message(code: 'is.user')]))
             }
             t.scrumMasters = scrumMastersList
@@ -263,7 +273,7 @@ class TeamService {
                 }
                 if (existingTeam) {
                     //Remove "tmp" team because team already exist
-                    dbTeam.members?.each{ member ->
+                    dbTeam.members?.each { member ->
                         member.removeFromTeams(t)
                     }
                     t.scrumMasters = null
