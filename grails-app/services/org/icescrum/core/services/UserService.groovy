@@ -27,7 +27,11 @@ import grails.plugin.springsecurity.SpringSecurityUtils
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.filefilter.WildcardFileFilter
 import org.icescrum.core.domain.Invitation
+import org.icescrum.core.domain.Invitation.InvitationType
+import org.icescrum.core.domain.Product
+import org.icescrum.core.domain.Team
 import org.icescrum.core.domain.User
+import org.icescrum.core.domain.security.Authority
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
 import org.springframework.security.access.prepost.PreAuthorize
@@ -188,6 +192,38 @@ class UserService extends IceScrumEventPublisher {
         if (!user.save()) {
             throw new RuntimeException()
         }
+    }
+
+    void inviteInTeam(Team team, invitedMembers, invitedScrumMasters) {
+        def invite = { int role, String email ->
+            def invitation = Invitation.findByTypeAndEmailAndTeam(InvitationType.TEAM, email, team)
+            if (!invitation) {
+                invitation = new Invitation(email: email, team: team, type: InvitationType.TEAM, role: role)
+                invitation.save()
+                notificationEmailService.sendInvitation(invitation, springSecurityService.currentUser)
+            } else if (role != invitation.role) {
+                invitation.role = role
+                invitation.save()
+            }
+        }
+        invitedMembers.each(invite.curry(Authority.MEMBER))
+        invitedScrumMasters.each(invite.curry(Authority.SCRUMMASTER))
+    }
+
+    void inviteInProduct(Product product, invitedProductOwners, invitedStakeHolders) {
+        def invite = { int role, String email ->
+            def invitation = Invitation.findByTypeAndEmailAndProduct(InvitationType.PRODUCT, email, product)
+            if (!invitation) {
+                invitation = new Invitation(email: email, product: product, type: InvitationType.PRODUCT, role: role)
+                invitation.save()
+                notificationEmailService.sendInvitation(invitation, springSecurityService.currentUser)
+            } else if (role != invitation.role) {
+                invitation.role = role
+                invitation.save()
+            }
+        }
+        invitedProductOwners.each(invite.curry(Authority.PRODUCTOWNER))
+        invitedStakeHolders.each(invite.curry(Authority.STAKEHOLDER))
     }
 
     @Transactional(readOnly = true)

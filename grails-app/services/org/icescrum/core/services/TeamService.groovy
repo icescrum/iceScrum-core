@@ -25,11 +25,9 @@
 package org.icescrum.core.services
 
 import grails.util.Holders
-import org.icescrum.core.domain.Invitation
 import org.icescrum.core.domain.Product
 import org.icescrum.core.domain.Team
 import org.icescrum.core.domain.User
-import org.icescrum.core.domain.security.Authority
 import org.icescrum.core.support.ProgressSupport
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.transaction.annotation.Transactional
@@ -44,9 +42,8 @@ class TeamService {
     def springSecurityService
     def securityService
     def grailsApplication
-    def notificationEmailService
 
-    void save(Team team, List members, List scrumMasters, List invitedMembers = []) {
+    void save(Team team, List members, List scrumMasters, List invitedMembers = [], List invitedScrumMasters = []) {
         if (!team) {
             throw new RuntimeException('is.team.error.not.exist')
         }
@@ -71,13 +68,8 @@ class TeamService {
             if (!team.save(flush: true)) {
                 throw new RuntimeException()
             }
-            invitedMembers.each {
-                if (!Invitation.findAllByEmailAndTeam(it, team)) {
-                    def invitation = new Invitation(email: it, team: team, type: Invitation.InvitationType.TEAM, role: Authority.MEMBER)
-                    invitation.save()
-                    notificationEmailService.sendInvitation(invitation, springSecurityService.currentUser)
-                }
-            }
+            def userService = (UserService) Holders.grailsApplication.mainContext.getBean('userService');
+            userService.inviteInTeam(team, invitedMembers, invitedScrumMasters)
             publishEvent(new IceScrumTeamEvent(team, this.class, (User) springSecurityService.currentUser, IceScrumEvent.EVENT_CREATED))
         }
     }

@@ -23,6 +23,8 @@
 
 package org.icescrum.core.domain
 
+import org.icescrum.core.domain.security.Authority
+
 class Invitation implements Serializable {
 
     InvitationType type
@@ -38,9 +40,11 @@ class Invitation implements Serializable {
         team(nullable: true)
         product(nullable: true)
         type(validator: { newType, Invitation -> newType == InvitationType.TEAM         && Invitation.team != null && Invitation.product == null ||
-                                                 newType == InvitationType.PRODUCT      && Invitation.team == null && Invitation.product != null ||
-                                                 newType == InvitationType.TEAM_PRODUCT && Invitation.team != null && Invitation.product != null
-        }) // TODO custom message
+                                                 newType == InvitationType.PRODUCT      && Invitation.team == null && Invitation.product != null
+        })
+        role(validator: { newRole, Invitation -> newRole in [Authority.MEMBER, Authority.SCRUMMASTER]       && Invitation.team != null && Invitation.product == null ||
+                                                 newRole in [Authority.STAKEHOLDER, Authority.PRODUCTOWNER] && Invitation.team == null && Invitation.product != null
+        })
     }
 
     static mapping = {
@@ -49,7 +53,7 @@ class Invitation implements Serializable {
     }
 
     enum InvitationType {
-        TEAM, PRODUCT, TEAM_PRODUCT
+        TEAM, PRODUCT
     }
 
     def beforeValidate() {

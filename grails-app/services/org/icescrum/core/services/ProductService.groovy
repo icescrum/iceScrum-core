@@ -50,7 +50,7 @@ class ProductService {
     def grailsApplication
 
     @PreAuthorize('isAuthenticated()')
-    void save(Product product, productOwners, stakeHolders) {
+    void save(Product product, productOwners, stakeHolders, invitedProductOwners, invitedStakeHolders) {
 
         product.orderNumber = (Product.count() ?: 0) + 1
 
@@ -70,6 +70,8 @@ class ProductService {
                     addRole(product, null, stakeHolder, Authority.STAKEHOLDER)
             }
         }
+        def userService = (UserService) Holders.grailsApplication.mainContext.getBean('userService');
+        userService.inviteInProduct(product, invitedProductOwners, invitedStakeHolders)
         publishEvent(new IceScrumProductEvent(product, this.class, (User)springSecurityService.currentUser, IceScrumEvent.EVENT_CREATED))
     }
 
