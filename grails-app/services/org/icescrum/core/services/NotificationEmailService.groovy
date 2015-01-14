@@ -113,7 +113,8 @@ class NotificationEmailService {
                     emails: group*.email.toArray(),
                     subject: grailsApplication.config.icescrum.alerts.subject_prefix + getMessage('is.template.email.story.' + eventLabel.toLowerCase() + '.subject', (Locale) locale, subjectArgs),
                     view: '/emails-templates/story' + eventLabel,
-                    model: [locale: locale, storyName: story.name, permalink: permalink, linkName: product.name, link: projectLink, description: description]
+                    model: [locale: locale, storyName: story.name, permalink: permalink, linkName: product.name, link: projectLink, description: description],
+                    async: true
             ])
         }
     }
@@ -136,7 +137,8 @@ class NotificationEmailService {
                     emails: group*.email.toArray(),
                     subject: grailsApplication.config.icescrum.alerts.subject_prefix + getMessage('is.template.email.task.created.subject', (Locale) locale, subjectArgs),
                     view: '/emails-templates/taskCreated',
-                    model: [locale: locale, taskName: task.name, permalink: permalink, linkName: product.name, link: projectLink, description: task.description]
+                    model: [locale: locale, taskName: task.name, permalink: permalink, linkName: product.name, link: projectLink, description: task.description],
+                    async: true
             ])
         }
     }
@@ -160,12 +162,13 @@ class NotificationEmailService {
                     emails: group*.email.toArray(),
                     subject: grailsApplication.config.icescrum.alerts.subject_prefix + getMessage('is.template.email.story.changedState.subject', (Locale) locale, subjectArgs),
                     view: '/emails-templates/storyChangedState',
-                    model: [state: getMessage('is.template.email.story.changedState.' + eventLabel.toLowerCase(), (Locale) locale), locale: locale, storyName: story.name, permalink: permalink, linkName: product.name, link: projectLink]
+                    model: [state: getMessage('is.template.email.story.changedState.' + eventLabel.toLowerCase(), (Locale) locale), locale: locale, storyName: story.name, permalink: permalink, linkName: product.name, link: projectLink],
+                    async: true
             ])
         }
     }
 
-    void sendAlertCommentAdded(Story story, Comment comment) {
+    private void sendAlertCommentAdded(Story story, Comment comment) {
         if (!ApplicationSupport.booleanValue(grailsApplication.config.icescrum.alerts.enable)) {
             return
         }
@@ -191,12 +194,13 @@ class NotificationEmailService {
                     emails: group*.email.toArray(),
                     subject: grailsApplication.config.icescrum.alerts.subject_prefix + getMessage('is.template.email.story.commented.subject', (Locale) locale, subjectArgs),
                     view: '/emails-templates/storyCommented',
-                    model: [by: comment.poster.firstName + " " + comment.poster.lastName, comment: text, locale: locale, storyName: story.name, permalink: permalink, linkName: product.name, link: projectLink]
+                    model: [by: comment.poster.firstName + " " + comment.poster.lastName, comment: text, locale: locale, storyName: story.name, permalink: permalink, linkName: product.name, link: projectLink],
+                    async: true
             ])
         }
     }
 
-    void sendAlertCommentUpdated(Story story) {
+    private void sendAlertCommentUpdated(Story story) {
         if (!ApplicationSupport.booleanValue(grailsApplication.config.icescrum.alerts.enable)) {
             return
         }
@@ -215,7 +219,8 @@ class NotificationEmailService {
                     emails: group*.email.toArray(),
                     subject: grailsApplication.config.icescrum.alerts.subject_prefix + getMessage('is.template.email.story.commentEdited.subject', (Locale) locale, subjectArgs),
                     view: '/emails-templates/storyCommentEdited',
-                    model: [by: user.firstName + " " + user.lastName, locale: locale, storyName: story.name, permalink: permalink, linkName: product.name, link: projectLink]
+                    model: [by: user.firstName + " " + user.lastName, locale: locale, storyName: story.name, permalink: permalink, linkName: product.name, link: projectLink],
+                    async: true
             ])
         }
     }
@@ -238,7 +243,8 @@ class NotificationEmailService {
                     emails: group*.email.toArray(),
                     subject: grailsApplication.config.icescrum.alerts.subject_prefix + getMessage('is.template.email.story.acceptedAs.subject', (Locale) locale, subjectArgs),
                     view: '/emails-templates/storyAcceptedAs',
-                    model: [acceptedAs: acceptedAs, locale: locale, elementName: element.name, linkName: product.name, link: projectLink]
+                    model: [acceptedAs: acceptedAs, locale: locale, elementName: element.name, linkName: product.name, link: projectLink],
+                    async: true
             ])
         }
     }
@@ -278,7 +284,8 @@ class NotificationEmailService {
         if (grailsApplication.config.icescrum.alerts.emailPerAccount && options.emails) {
             options.emails.each { toEmail ->
                 mailService.sendMail {
-                    async true
+                    if (options.async) // Warning : if async then error cannot be caught
+                        async true
                     if (options.from)
                         from options.from
                     to toEmail
@@ -293,7 +300,8 @@ class NotificationEmailService {
         } else {
             options.bcc = options.emails?:options.bcc
             mailService.sendMail {
-                async true
+                if (options.async) // Warning : if async then error cannot be caught
+                    async true
                 if (options.from)
                     from options.from
                 if (options.to)

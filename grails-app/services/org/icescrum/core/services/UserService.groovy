@@ -200,7 +200,7 @@ class UserService extends IceScrumEventPublisher {
             if (!invitation) {
                 invitation = new Invitation(email: email, team: team, type: InvitationType.TEAM, role: role)
                 invitation.save()
-                notificationEmailService.sendInvitation(invitation, springSecurityService.currentUser)
+                notificationEmailService.sendInvitation(invitation, springSecurityService.currentUser) // TODO display error message if error when sending email
             } else if (role != invitation.role) {
                 invitation.role = role
                 invitation.save()
@@ -216,7 +216,7 @@ class UserService extends IceScrumEventPublisher {
             if (!invitation) {
                 invitation = new Invitation(email: email, product: product, type: InvitationType.PRODUCT, role: role)
                 invitation.save()
-                notificationEmailService.sendInvitation(invitation, springSecurityService.currentUser)
+                notificationEmailService.sendInvitation(invitation, springSecurityService.currentUser) // TODO display error message if error when sending email
             } else if (role != invitation.role) {
                 invitation.role = role
                 invitation.save()
