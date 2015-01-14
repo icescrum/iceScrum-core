@@ -78,6 +78,10 @@ abstract class IceScrumEventPublisher {
                 if (object.hasProperty("$dirtyProperty")){
                     def newValue = object."$dirtyProperty"
                     if (newValue != oldValue) {
+                        if (dirtyProperty == 'password') {
+                            oldValue = '*******************'
+                            newValue = oldValue
+                        }
                         println "-- $dirtyProperty: \t" + oldValue + "\t-> " + newValue
                     }
                 } else {
