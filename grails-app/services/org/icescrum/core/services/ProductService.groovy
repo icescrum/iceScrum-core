@@ -50,7 +50,7 @@ class ProductService {
     def grailsApplication
 
     @PreAuthorize('isAuthenticated()')
-    void save(Product product, productOwners, stakeHolders, invitedProductOwners, invitedStakeHolders) {
+    void save(Product product, productOwners, stakeHolders) {
 
         product.orderNumber = (Product.count() ?: 0) + 1
 
@@ -70,8 +70,6 @@ class ProductService {
                     addRole(product, null, stakeHolder, Authority.STAKEHOLDER)
             }
         }
-        def userService = (UserService) Holders.grailsApplication.mainContext.getBean('userService');
-        userService.inviteInProduct(product, invitedProductOwners, invitedStakeHolders)
         publishEvent(new IceScrumProductEvent(product, this.class, (User)springSecurityService.currentUser, IceScrumEvent.EVENT_CREATED))
     }
 
@@ -182,6 +180,9 @@ class ProductService {
         if (hasHiddenChanged && !product.preferences.hidden) {
             product.stakeHolders?.each {
                 removeStakeHolder(product,it)
+            }
+            product.invitedStakeHolders?.each {
+                it.delete()
             }
         }
 
@@ -762,6 +763,26 @@ class ProductService {
                          role: Authority.STAKEHOLDER])
         }
         members.sort{ a,b -> b.role <=> a.role ?: a.name <=> b.name }
+    }
+
+    void updateMembers(Product product, List newMembers) {
+        def team = product.firstTeam
+        def currentMembers = getAllMembersProduct(product)
+        newMembers.each {
+            User user = User.get(it.id)
+            int role = it.role
+            def found = currentMembers.find { it.id == user.id }
+            if (found) {
+                if (found.role != role) {
+                    changeRole(product, team, user, role)
+                }
+            } else {
+                addRole(product, team, user, role)
+            }
+        }
+        currentMembers*.id.minus(newMembers*.id).each {
+            removeAllRoles(product, team, User.get(it));
+        }
     }
 
     private void addProductOwner(Product product, User productOwner) {

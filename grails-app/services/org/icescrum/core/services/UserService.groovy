@@ -194,36 +194,51 @@ class UserService extends IceScrumEventPublisher {
         }
     }
 
-    void inviteInTeam(Team team, invitedMembers, invitedScrumMasters) {
-        def invite = { int role, String email ->
-            def invitation = Invitation.findByTypeAndEmailAndTeam(InvitationType.TEAM, email, team)
-            if (!invitation) {
-                invitation = new Invitation(email: email, team: team, type: InvitationType.TEAM, role: role)
-                invitation.save()
-                notificationEmailService.sendInvitation(invitation, springSecurityService.currentUser) // TODO display error message if error when sending email
-            } else if (role != invitation.role) {
-                invitation.role = role
-                invitation.save()
-            }
-        }
-        invitedMembers.each(invite.curry(Authority.MEMBER))
-        invitedScrumMasters.each(invite.curry(Authority.SCRUMMASTER))
+    void manageTeamInvitations(Team team, invitedMembers, invitedScrumMasters) {
+        def type = InvitationType.TEAM
+        def currentInvitations = Invitation.findAllByTypeAndTeam(type, team)
+        def newInvitations = []
+        assert !invitedMembers.intersect(invitedScrumMasters)
+        newInvitations.addAll(invitedMembers.collect { [role: Authority.MEMBER, email: it] })
+        newInvitations.addAll(invitedScrumMasters.collect { [role: Authority.SCRUMMASTER, email: it] })
+        manageInvitations(currentInvitations, newInvitations, type, null, team)
     }
 
-    void inviteInProduct(Product product, invitedProductOwners, invitedStakeHolders) {
-        def invite = { int role, String email ->
-            def invitation = Invitation.findByTypeAndEmailAndProduct(InvitationType.PRODUCT, email, product)
-            if (!invitation) {
-                invitation = new Invitation(email: email, product: product, type: InvitationType.PRODUCT, role: role)
+    void manageProductInvitations(Product product, invitedProductOwners, invitedStakeHolders) {
+        def type = InvitationType.PRODUCT
+        def currentInvitations = Invitation.findAllByTypeAndProduct(type, product)
+        def newInvitations = []
+        assert !invitedProductOwners.intersect(invitedStakeHolders)
+        newInvitations.addAll(invitedProductOwners.collect { [role: Authority.PRODUCTOWNER, email: it] })
+        newInvitations.addAll(invitedStakeHolders.collect { [role: Authority.STAKEHOLDER, email: it] })
+        manageInvitations(currentInvitations, newInvitations, type, product, null)
+    }
+
+    private void manageInvitations(List<Invitation> currentInvitations, List newInvitations, InvitationType type, Product product, Team team) {
+        newInvitations.each {
+            def email = it.email
+            int role = it.role
+            Invitation currentInvitation = currentInvitations.find { it.email == email }
+            if (currentInvitation) {
+                if (currentInvitation.role != role) {
+                    currentInvitation.role = role
+                    currentInvitation.save()
+                }
+            } else {
+                def invitation = new Invitation(email: email, role: role, type: type)
+                if (type == InvitationType.TEAM) {
+                    invitation.team = team
+                } else {
+                    invitation.product = product
+                }
                 invitation.save()
-                notificationEmailService.sendInvitation(invitation, springSecurityService.currentUser) // TODO display error message if error when sending email
-            } else if (role != invitation.role) {
-                invitation.role = role
-                invitation.save()
+                notificationEmailService.sendInvitation(invitation, springSecurityService.currentUser)
+                // TODO display error message if error when sending email
             }
         }
-        invitedProductOwners.each(invite.curry(Authority.PRODUCTOWNER))
-        invitedStakeHolders.each(invite.curry(Authority.STAKEHOLDER))
+        currentInvitations.findAll { currentInvitation ->
+            !newInvitations*.email.contains(currentInvitation.email)
+        }*.delete()
     }
 
     @Transactional(readOnly = true)

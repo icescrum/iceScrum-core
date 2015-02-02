@@ -28,6 +28,8 @@ package org.icescrum.core.domain
 import grails.util.Holders
 import org.hibernate.ObjectNotFoundException
 import org.icescrum.core.domain.preferences.ProductPreferences
+import org.icescrum.core.domain.security.Authority
+import org.icescrum.core.domain.Invitation.InvitationType
 import org.icescrum.core.services.SecurityService
 import org.icescrum.core.event.IceScrumEvent
 import org.icescrum.core.event.IceScrumProductEvent
@@ -70,6 +72,8 @@ class Product extends TimeBox implements Serializable, Attachmentable {
             'productOwners',
             'erasableByUser',
             'stakeHolders',
+            'invitedStakeHolders',
+            'invitedProductOwners',
             'owner',
             'firstTeam',
             'versions',
@@ -260,33 +264,32 @@ class Product extends TimeBox implements Serializable, Attachmentable {
         //Only used when product is being imported
         if (this.productOwners) {
             this.productOwners
-        }
-        else if (this.id) {
+        } else if (this.id) {
             def acl = retrieveAclProduct()
             def users = acl.entries.findAll {it.permission in SecurityService.productOwnerPermissions}*.sid*.principal;
-            if (users)
+            if (users) {
                 return User.findAll("from User as u where u.username in (:users)",[users:users], [cache: true])
-            else
-                return null
+            } else {
+                return []
+            }
         } else {
-            null
+            return []
         }
     }
 
     def getStakeHolders() {
-        //Only used when product is being imported
         if (this.stakeHolders) {
-            this.stakeHolders
-        }
-        else if (this.id) {
+            this.stakeHolders // Used only when the project is being imported
+        } else if (this.id) {
             def acl = retrieveAclProduct()
             def users = acl.entries.findAll {it.permission in SecurityService.stakeHolderPermissions}*.sid*.principal
-            if (users)
+            if (users) {
                 return User.findAll("from User as u where u.username in (:users)",[users:users], [cache: true])
-            else
-                return null
+            } else {
+                return []
+            }
         } else {
-            null
+            return []
         }
     }
 
@@ -297,6 +300,14 @@ class Product extends TimeBox implements Serializable, Attachmentable {
         } else {
             null
         }
+    }
+
+    List getInvitedStakeHolders() {
+        return Invitation.findAllByTypeAndProductAndRole(InvitationType.PRODUCT, this, Authority.STAKEHOLDER).collect { it.userMock }
+    }
+
+    List getInvitedProductOwners() {
+        return Invitation.findAllByTypeAndProductAndRole(InvitationType.PRODUCT, this, Authority.PRODUCTOWNER).collect { it.userMock }
     }
 
     Team getFirstTeam(){

@@ -43,7 +43,7 @@ class TeamService {
     def securityService
     def grailsApplication
 
-    void save(Team team, List members, List scrumMasters, List invitedMembers = [], List invitedScrumMasters = []) {
+    void save(Team team, List members, List scrumMasters) {
         if (!team) {
             throw new RuntimeException('is.team.error.not.exist')
         }
@@ -68,8 +68,6 @@ class TeamService {
             if (!team.save(flush: true)) {
                 throw new RuntimeException()
             }
-            def userService = (UserService) Holders.grailsApplication.mainContext.getBean('userService');
-            userService.inviteInTeam(team, invitedMembers, invitedScrumMasters)
             publishEvent(new IceScrumTeamEvent(team, this.class, (User) springSecurityService.currentUser, IceScrumEvent.EVENT_CREATED))
         }
     }
