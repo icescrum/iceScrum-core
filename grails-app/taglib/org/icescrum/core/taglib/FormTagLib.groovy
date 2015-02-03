@@ -62,7 +62,7 @@ class FormTagLib {
         }
         def returnLocales = [:]
         locales.collect{  it ->
-            returnLocales[it.language] = it.getDisplayName(it).capitalize()
+            returnLocales[it.toString()] = it.getDisplayName(it).capitalize()
         }
         return returnLocales
     }
