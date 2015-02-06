@@ -56,15 +56,11 @@ grails.project.dependency.resolution = {
 
     dependencies {
         // specify dependencies here under either 'build', 'compile', 'runtime', 'test' or 'provided' scopes eg.
-        compile('org.codehaus.groovy.modules.http-builder:http-builder:0.5.0') {
-            excludes "commons-logging", "xml-apis", "groovy"
-        }
-
         compile "org.atmosphere:atmosphere-runtime:2.2.4", {
             excludes "slf4j-api"
         }
 
-        build('org.codehaus.groovy.modules.http-builder:http-builder:0.7.1') {
+        compile('org.codehaus.groovy.modules.http-builder:http-builder:0.7.1') {
             excludes "commons-logging", "xml-apis", "groovy"
         }
     }
