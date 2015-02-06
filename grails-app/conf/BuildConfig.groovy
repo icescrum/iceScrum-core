@@ -63,6 +63,10 @@ grails.project.dependency.resolution = {
         compile "org.atmosphere:atmosphere-runtime:2.2.4", {
             excludes "slf4j-api"
         }
+
+        build('org.codehaus.groovy.modules.http-builder:http-builder:0.7.1') {
+            excludes "commons-logging", "xml-apis", "groovy"
+        }
     }
 
     plugins {
@@ -82,6 +86,9 @@ grails.project.dependency.resolution = {
         compile ':wikitext:0.1.2'
         compile ":feeds:1.6"
         runtime(":hibernate4:4.3.6.1") {
+            export = false
+        }
+        build(":release:3.0.1") {
             export = false
         }
     }
