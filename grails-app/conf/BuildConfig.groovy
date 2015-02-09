@@ -56,7 +56,7 @@ grails.project.dependency.resolution = {
 
     dependencies {
         // specify dependencies here under either 'build', 'compile', 'runtime', 'test' or 'provided' scopes eg.
-        compile "org.atmosphere:atmosphere-runtime:2.2.4", {
+        compile "org.atmosphere:atmosphere-runtime:2.2.5", {
             excludes "slf4j-api"
         }
 
