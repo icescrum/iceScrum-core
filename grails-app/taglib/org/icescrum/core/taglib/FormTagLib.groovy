@@ -84,7 +84,7 @@ class FormTagLib {
     def localeTimeZone = { attrs ->
         def thelist = TimeZone.getAvailableIDs().sort().findAll {it.matches("^(Africa|America|Asia|Atlantic|Australia|Europe|Indian|Pacific)/.*")}
         attrs.from = thelist
-        attrs.value = (attrs.value ? attrs.value : TimeZone.getDefault())
+        attrs.value = (attrs.value ? attrs.value : thelist.first())
         attrs.optionValue = {
             TimeZone tz = TimeZone.getTimeZone(it);
             def offset = tz.rawOffset
