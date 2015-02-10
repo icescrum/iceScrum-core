@@ -410,7 +410,9 @@ class StoryService {
 
         broadcast(function: 'update', message: sprint, channel:'product-'+story.backlog.id)
         broadcast(function: 'unPlan', message: story, channel:'product-'+story.backlog.id)
-        publishEvent(new IceScrumStoryEvent(story, this.class, (User) springSecurityService.currentUser, IceScrumStoryEvent.EVENT_UNPLANNED))
+        if (fullUnPlan) {
+            publishEvent(new IceScrumStoryEvent(story, this.class, (User) springSecurityService.currentUser, IceScrumStoryEvent.EVENT_UNPLANNED))
+        }
     }
 
     /**
