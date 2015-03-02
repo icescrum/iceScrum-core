@@ -150,6 +150,9 @@ class NotificationEmailService implements ApplicationListener<IceScrumEvent> {
         if (!ApplicationSupport.booleanValue(grailsApplication.config.icescrum.alerts.enable)) {
             return
         }
+        if (story.origin && Story.findByNameAndBacklog(story.origin, story.backlog)) {
+            return
+        }
 
         def subjectArgs = [story.backlog.name, story.name]
         def permalink = grailsApplication.config.grails.serverURL + '/p/' + story.backlog.pkey + '-' + story.uid
