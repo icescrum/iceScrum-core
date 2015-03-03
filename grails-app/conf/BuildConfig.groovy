@@ -60,6 +60,7 @@ grails.project.dependency.resolution = {
             excludes 'slf4j-api', 'atmosphere-ping'
         }
         build 'org.apache.httpcomponents:httpclient:4.2'
+        compile 'org.apache.httpcomponents:httpclient:4.2'
         runtime('org.apache.geronimo.specs:geronimo-servlet_3.0_spec:1.0')
     }
 
@@ -79,7 +80,7 @@ grails.project.dependency.resolution = {
         compile ':mail:1.0.1'
         compile ':jasper:1.6.1'
         compile (':maven-publisher:0.8.1') {
-            exclude 'http-builder'
+            excludes 'http-builder'
         }
         compile ':rollback-on-exception:0.1'
         compile ':wikitext:0.1.2'
