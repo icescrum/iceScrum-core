@@ -307,6 +307,44 @@ class FormTagLib {
         writer << '</select>'
     }
 
+    def selectWithGroup = { attrs ->
+        if (!UtilsWebComponents.rendered(attrs)) {
+            return
+        }
+        def noSelection = attrs.remove('noSelection')
+        if (noSelection) {
+            attrs.'data-placeholder' = noSelection.entrySet().iterator().next().value
+            attrs.'data-allow-clear' = true
+            attrs.'data-width' = "element"
+        }
+        if (attrs.width) {
+            attrs.'data-width' = attrs.remove('width')
+        }
+        def writer = out
+        attrs.id = attrs.id ?: attrs.name
+        def fromMap = attrs.remove('fromMap')
+        def value = attrs.remove('value')
+        writer << "<select name=\"${attrs.remove('name')?.encodeAsHTML()}\" "
+        outputAttributes(attrs)
+        writer << '>'
+        writer.println()
+        if (noSelection) {
+            renderNoSelectionOptionImpl(writer, "", "", value)
+            writer.println()
+        }
+        fromMap.each { groupName, options ->
+            writer << "<optgroup label='${groupName.encodeAsHTML()}'>"
+            writer.println()
+            options.each { el ->
+                writer << "<option ${writeValueAndCheckIfSelected(el, value, writer)}>${el.encodeAsHTML()}</option>"
+                writer.println()
+            }
+            writer << "</optgroup>"
+            writer.println()
+        }
+        writer << '</select>'
+    }
+
     def typed = { attrs ->
 
         if (attrs.onlyletters) {
