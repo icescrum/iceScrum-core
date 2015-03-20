@@ -76,6 +76,13 @@ class TaskService {
 
         task.creator = user
         task.backlog = sprint
+
+        // It seems that the two queries following that trigger a flush
+        // So validation errors aren't caught properly
+        // We try to validate just before to display nice erros to the user
+        if (!task.validate()) {
+            throw new RuntimeException(task.errors?.toString())
+        }
         task.rank = Task.countByParentStoryAndType(task.parentStory, task.type) + 1
         task.uid = Task.findNextUId(task.backlog.parentRelease.parentProduct.id)
 
