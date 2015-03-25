@@ -1026,6 +1026,22 @@ class IcescrumCoreGrailsPlugin {
             }
         }
 
+        source.metaClass.withUsers = { String id = 'id', Closure c ->
+            def ids = params.list(id).collect { it.toLong() }
+            List<User> users = User.getAll(ids)
+            if (users) {
+                try {
+                    c.call users
+                } catch (IllegalStateException e) {
+                    returnError(exception: e)
+                } catch (RuntimeException e) {
+                    returnError(exception: e)
+                }
+            } else {
+                returnError(text: message(code: 'is.user.error.not.exist'))
+            }
+        }
+
         source.metaClass.withProduct = { String id = 'product', Closure c ->
             def pid = params."$id"?.decodeProductKey()
             Product product = Product.get(pid?.toLong())
