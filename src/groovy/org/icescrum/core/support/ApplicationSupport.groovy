@@ -321,7 +321,12 @@ class CheckerTimerTask extends TimerTask {
         }catch( ex ){
             if (interval == configInterval){
                 //Setup new timer with a long delay
-                if (log.debugEnabled) log.debug('Automatic check update error - new timer delay')
+                if (log.debugEnabled) {
+                    if (ex instanceof Exception) {
+                        log.debug(ex.message)
+                    }
+                    log.debug('Automatic check update error - new timer delay')
+                }
                 this.cancel()
                 def longInterval = configInterval >= 1440 ? configInterval*2 : computeInterval(1440)
                 timer.scheduleAtFixedRate(new CheckerTimerTask(timer,longInterval),longInterval,longInterval)
