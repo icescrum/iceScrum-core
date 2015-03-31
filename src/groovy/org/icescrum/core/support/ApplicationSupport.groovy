@@ -24,8 +24,16 @@
 package org.icescrum.core.support
 
 import grails.util.Environment
+import org.apache.http.Consts
+import org.apache.http.HttpResponse
+import org.apache.http.HttpStatus
+import org.apache.http.client.HttpClient
+import org.apache.http.client.methods.HttpGet
+import org.apache.http.client.utils.URLEncodedUtils
+import org.apache.http.impl.client.DefaultHttpClient
+import org.apache.http.message.BasicNameValuePair
+import org.apache.http.util.EntityUtils
 import org.codehaus.groovy.grails.commons.ApplicationHolder
-import groovyx.net.http.RESTClient
 import grails.util.Metadata
 import org.apache.commons.logging.LogFactory
 import org.icescrum.core.domain.User
@@ -277,7 +285,7 @@ class ApplicationSupport {
                     indexScrumOS:space.value.indexScrumOS] : false
         }
     }
-  
+
 }
 
 class CheckerTimerTask extends TimerTask {
@@ -294,42 +302,63 @@ class CheckerTimerTask extends TimerTask {
     @Override
     void run() {
         def config = ApplicationHolder.application.config
-        def configInterval = computeInterval(config.icescrum.check.interval?:1440)
-        def http = new RESTClient(config.icescrum.check.url)
-        http.client.params.setIntParameter( "http.connection.timeout", config.icescrum.check.timeout?:5000 )
-        http.client.params.setIntParameter( "http.socket.timeout", config.icescrum.check.timeout?:5000 )
+        def configInterval = computeInterval(config.icescrum.check.interval ?: 1440)
         try {
-            def vers = Metadata.current['app.version'].replace('#','.').replaceFirst('R','')
-            def resp = http.get(path:config.icescrum.check.path,
-                                query:[id:config.icescrum.appID,version:vers],
-                                headers:['User-Agent' : 'iceScrum-Agent/1.0','Referer' : config.grails.serverURL])
-            if(resp.success && resp.status == 200){
-                if (resp.data.version?.text()){
-                    config.icescrum.errors << [error:false, title:'is.warning.version', version:resp.data.version.text(), url:resp.data.url.text(), message:resp.data.message?.text()]
-                    if (log.debugEnabled) log.debug('Automatic check update - A new version is available : '+resp.data.version.text())
+            def vers = Metadata.current['app.version'].replace('#', '.').replaceFirst('R', '')
+            def queryParams = [id: config.icescrum.appID, version: vers]
+            def headers = ['User-Agent': 'iceScrum-Agent/1.0', 'Referer': config.grails.serverURL]
+            def params = ['http.connection.timeout': config.icescrum.check.timeout ?: 5000, 'http.socket.timeout': config.icescrum.check.timeout ?: 5000]
+            def resp = getXML(config.icescrum.check.url, config.icescrum.check.path, queryParams, headers, params)
+            if (resp.status == 200) {
+                if (resp.data.version?.text()) {
+                    config.icescrum.errors << [error: false, title: 'is.warning.version', version: resp.data.version.text(), url: resp.data.url.text(), message: resp.data.message?.text()]
+                    if (log.debugEnabled) log.debug('Automatic check update - A new version is available : ' + resp.data.version.text())
                     return
-                }else{
+                } else {
                     if (log.debugEnabled) log.debug('Automatic check update - iceScrum is up to date')
                 }
             }
-            if (interval != configInterval){
+            if (interval != configInterval) {
                 //Back to normal delay
                 this.cancel()
-                timer.scheduleAtFixedRate(new CheckerTimerTask(timer,configInterval),configInterval,configInterval)
+                timer.scheduleAtFixedRate(new CheckerTimerTask(timer, configInterval), configInterval, configInterval)
                 if (log.debugEnabled) log.debug('Automatic check update - back to normal delay')
             }
-        }catch( ex ){
-            if (interval == configInterval){
+        } catch (ex) {
+            if (interval == configInterval) {
                 //Setup new timer with a long delay
                 if (log.debugEnabled) log.debug('Automatic check update error - new timer delay')
                 this.cancel()
-                def longInterval = configInterval >= 1440 ? configInterval*2 : computeInterval(1440)
-                timer.scheduleAtFixedRate(new CheckerTimerTask(timer,longInterval),longInterval,longInterval)
+                def longInterval = configInterval >= 1440 ? configInterval * 2 : computeInterval(1440)
+                timer.scheduleAtFixedRate(new CheckerTimerTask(timer, longInterval), longInterval, longInterval)
             }
         }
     }
 
     public static computeInterval(int interval){
         return 1000 * 60 * interval
+    }
+
+    private Map getXML(String domain, String path, queryParams = [:], headers = [:], params = [:]) {
+        HttpClient httpclient = new DefaultHttpClient();
+        Map resp = [:]
+        try {
+            String urlWithQuery = domain + '/' + path
+            if (queryParams) {
+                // Don't use URIBuilder because of bug : https://issues.apache.org/jira/browse/HTTPCLIENT-1195
+                urlWithQuery += ('?' + URLEncodedUtils.format(queryParams.collect { k, v -> new BasicNameValuePair(k, v) }, Consts.UTF_8))
+            }
+            HttpGet httpget = new HttpGet(urlWithQuery);
+            headers.each { k, v -> httpget.setHeader(k, v) }
+            params.each { k, v -> httpget.params.setParameter(k, v) }
+            HttpResponse response = httpclient.execute(httpget);
+            resp.status = response.statusLine.statusCode
+            if (resp.status == HttpStatus.SC_OK) {
+                resp.data = new XmlParser().parseText(EntityUtils.toString(response.entity))
+            }
+        } finally {
+            httpclient.getConnectionManager().shutdown();
+        }
+        return resp
     }
 }
