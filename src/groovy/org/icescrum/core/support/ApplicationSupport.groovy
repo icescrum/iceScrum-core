@@ -343,12 +343,12 @@ class CheckerTimerTask extends TimerTask {
         HttpClient httpclient = new DefaultHttpClient();
         Map resp = [:]
         try {
-            String urlWithQuery = domain + '/' + path
+            String url = domain + '/' + path
             if (queryParams) {
                 // Don't use URIBuilder because of bug : https://issues.apache.org/jira/browse/HTTPCLIENT-1195
-                urlWithQuery += ('?' + URLEncodedUtils.format(queryParams.collect { k, v -> new BasicNameValuePair(k, v) }, Consts.UTF_8))
+                url += ('?' + URLEncodedUtils.format(queryParams.collect { k, v -> new BasicNameValuePair(k, v) }, Consts.UTF_8))
             }
-            HttpGet httpget = new HttpGet(urlWithQuery);
+            HttpGet httpget = new HttpGet(url);
             headers.each { k, v -> httpget.setHeader(k, v) }
             params.each { k, v -> httpget.params.setParameter(k, v) }
             HttpResponse response = httpclient.execute(httpget);
