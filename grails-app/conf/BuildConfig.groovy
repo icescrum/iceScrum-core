@@ -59,8 +59,8 @@ grails.project.dependency.resolution = {
         compile('org.atmosphere:atmosphere-runtime:1.0.15'){
             excludes 'slf4j-api', 'atmosphere-ping'
         }
-        build 'org.apache.httpcomponents:httpclient:4.2'
-        compile 'org.apache.httpcomponents:httpclient:4.2'
+        build 'org.apache.httpcomponents:httpclient:4.2.1'
+        compile 'org.apache.httpcomponents:httpclient:4.2.1'
         runtime('org.apache.geronimo.specs:geronimo-servlet_3.0_spec:1.0')
     }
 
