@@ -65,6 +65,7 @@ import org.icescrum.core.domain.Sprint
 import org.icescrum.core.domain.Actor
 import org.icescrum.core.domain.Release
 import org.icescrum.core.domain.Task
+import org.icescrum.core.domain.Team
 import org.icescrum.plugins.attachmentable.interfaces.AttachmentException
 import org.codehaus.groovy.grails.plugins.jasper.JasperReportDef
 import org.icescrum.core.domain.User
@@ -84,6 +85,7 @@ import org.icescrum.core.event.IceScrumApplicationEventMulticaster
 import org.icescrum.core.utils.XMLIceScrumDomainClassMarshaller
 import org.icescrum.core.support.ApplicationSupport
 import pl.burningice.plugins.image.BurningImageService
+
 
 import javax.servlet.http.HttpServletResponse
 import java.util.concurrent.ConcurrentHashMap
@@ -1056,6 +1058,22 @@ class IcescrumCoreGrailsPlugin {
                 }
             } else {
                 returnError(text: message(code: 'is.product.error.not.exist'))
+            }
+        }
+
+        source.metaClass.withTeam = { String id = 'id', Closure c ->
+            Team team = Team.get(params."$id"?.toLong())
+            if (team) {
+                try {
+                    c.call team
+                } catch (RuntimeException e) {
+                    if (team.errors.errorCount)
+                        returnError(object: team, exception: e)
+                    else
+                        returnError(exception: e)
+                }
+            } else {
+                returnError(text: message(code: 'is.team.error.not.exist'))
             }
         }
     }
