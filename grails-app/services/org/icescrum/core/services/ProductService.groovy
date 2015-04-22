@@ -25,22 +25,22 @@
 
 package org.icescrum.core.services
 
-import org.icescrum.core.utils.ServicesUtils
-import java.text.SimpleDateFormat
 import org.codehaus.groovy.grails.commons.ApplicationHolder
+import org.codehaus.groovy.grails.plugins.springsecurity.SpringSecurityUtils
+import org.icescrum.core.domain.*
 import org.icescrum.core.domain.preferences.ProductPreferences
+import org.icescrum.core.domain.preferences.UserPreferences
 import org.icescrum.core.domain.security.Authority
 import org.icescrum.core.event.IceScrumEvent
 import org.icescrum.core.event.IceScrumProductEvent
+import org.icescrum.core.event.IceScrumUserEvent
+import org.icescrum.core.support.ApplicationSupport
 import org.icescrum.core.support.ProgressSupport
+import org.icescrum.core.utils.ServicesUtils
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.transaction.annotation.Transactional
-import org.icescrum.core.domain.*
-import org.icescrum.core.support.ApplicationSupport
-import org.codehaus.groovy.grails.plugins.springsecurity.SpringSecurityUtils
-import org.icescrum.core.domain.preferences.UserPreferences
 
-import org.icescrum.core.event.IceScrumUserEvent
+import java.text.SimpleDateFormat
 
 class ProductService {
 
@@ -158,28 +158,18 @@ class ProductService {
     }
 
     @PreAuthorize('owner(#product) and !archivedProduct(#product)')
-    void addTeamsToProduct(Product product, teamIds) {
-        if (!product)
-            throw new IllegalStateException('Product must not be null')
-
-        if (!teamIds)
-            throw new IllegalStateException('Product must have at least one team')
-
-        for (team in Team.getAll(teamIds*.toLong())) {
-            if (team){
-                product.addToTeams(team)
-                team.scrumMasters?.each{
-                    securityService.createAdministrationPermissionsForProduct(it, product)
-                }
-                team.members?.each{
-                    broadcastToSingleUser(user:it.username, function:'addRoleProduct', message:[class:'User',product:product])
-                }
-            }
-            publishEvent(new IceScrumProductEvent(product, team, this.class, (User) springSecurityService.currentUser, IceScrumProductEvent.EVENT_TEAM_ADDED))
+    void addTeamToProduct(Product product, Team team) {
+        product.addToTeams(team)
+        team.scrumMasters?.each {
+            securityService.createAdministrationPermissionsForProduct(it, product)
         }
-
-        if (!product.save())
+        team.members?.each {
+            broadcastToSingleUser(user: it.username, function: 'addRoleProduct', message: [class: 'User', product: product])
+        }
+        publishEvent(new IceScrumProductEvent(product, team, this.class, (User) springSecurityService.currentUser, IceScrumProductEvent.EVENT_TEAM_ADDED))
+        if (!product.save()) {
             throw new IllegalStateException('Product not saved')
+        }
     }
 
     @PreAuthorize('(scrumMaster(#product) or owner(#product)) and !archivedProduct(#product)')
