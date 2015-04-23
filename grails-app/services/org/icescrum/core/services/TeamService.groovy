@@ -28,6 +28,7 @@ import org.icescrum.core.domain.Product
 import org.icescrum.core.domain.Team
 import org.icescrum.core.domain.User
 import org.icescrum.core.domain.preferences.TeamPreferences
+import org.icescrum.core.domain.security.Authority
 import org.icescrum.core.event.IceScrumEvent
 import org.icescrum.core.event.IceScrumProductEvent
 import org.icescrum.core.event.IceScrumTeamEvent
@@ -42,6 +43,7 @@ class TeamService {
 
     def springSecurityService
     def securityService
+    def grailsApplication
     def g = new org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib()
 
     void save(Team team, List members, List scrumMasters) {
@@ -163,6 +165,30 @@ class TeamService {
             securityService.deleteTeamMemberPermissions(member, team)
         }
         publishEvent(new IceScrumTeamEvent(team, member, this.class, (User) springSecurityService.currentUser, IceScrumTeamEvent.EVENT_MEMBER_REMOVED))
+    }
+
+    def getTeamMembersEntries(Long teamId) {
+        def is = grailsApplication.mainContext.getBean('org.icescrum.core.taglib.ScrumTagLib')
+        def memberEntries = []
+        def addEntry = { User user, int role ->
+            memberEntries << [name: user.firstName + ' ' + user.lastName,
+                              activity: user.preferences.activity ?: '&nbsp;',
+                              id: user.id,
+                              avatar: is.avatar(user: user, link: true),
+                              role: role]
+        }
+        if (teamId) {
+            Team team = Team.get(teamId)
+            def scrumMastersIds = team.scrumMasters*.id
+            team.members?.each { User member ->
+                int role = scrumMastersIds?.contains(member.id) ? Authority.SCRUMMASTER : Authority.MEMBER
+                addEntry(member, role)
+            }
+        } else {
+            addEntry(springSecurityService.currentUser, Authority.SCRUMMASTER)
+        }
+        memberEntries.sort { a, b -> b.role <=> a.role ?: a.name <=> b.name }
+        return memberEntries
     }
 
 

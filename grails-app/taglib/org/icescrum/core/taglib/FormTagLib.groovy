@@ -1053,7 +1053,7 @@ class FormTagLib {
         assert attrs.title
         // <a href="#" is no longer required as of jquery-ui 1.9 but the iceScrum style relies on it
         out << "<h3><a href='#'>${message(code: attrs.title)}</a></h3>"
-        out << "<div>"
+        out << "<div" + (attrs["class"] ? ' class="' + attrs["class"] + '"' :'') + (attrs.id ? 'id="' + attrs.id + '"' : '') + ">"
         out << body()
         out << "</div>"
     }

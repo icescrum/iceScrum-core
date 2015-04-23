@@ -712,6 +712,39 @@ class ProductService {
         members.sort{ a,b -> b.role <=> a.role ?: a.name <=> b.name }
     }
 
+    void updateTeamMembers(Team team, List newMembers) {
+        def currentMembers = team.scrumMasters.collect { [id: it.id, role: Authority.SCRUMMASTER]}
+        team.members.each { member ->
+            if (!currentMembers.any { it.id == member.id }) {
+                currentMembers << [id: member.id, role: Authority.MEMBER]
+            }
+        }
+        updateMembers(team, null, currentMembers, newMembers)
+    }
+
+    void updateProductMembers(Product product, List newMembers) {
+        def currentMembers = product.stakeHolders.collect { [id: it.id, role: Authority.STAKEHOLDER]} + product.productOwners.collect { [id: it.id, role: Authority.PRODUCTOWNER]}
+        updateMembers(null, product, currentMembers, newMembers)
+    }
+
+    private void updateMembers(Team team, Product product, List currentMembers, List newMembers) {
+        newMembers.each { newMember ->
+            User user = User.get(newMember.id)
+            int role = newMember.role
+            def found = currentMembers.find { it.id == user.id }
+            if (found) {
+                if (found.role != role) {
+                    changeRole(product, team, user, role)
+                }
+            } else {
+                addRole(product, team, user, role)
+            }
+        }
+        currentMembers*.id.minus(newMembers*.id).each {
+            removeAllRoles(product, team, User.get(it));
+        }
+    }
+
     private void addProductOwner(Product product, User productOwner) {
         securityService.createProductOwnerPermissions productOwner, product
     }
