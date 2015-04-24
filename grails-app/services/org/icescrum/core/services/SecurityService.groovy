@@ -176,7 +176,7 @@ class SecurityService {
                 product = product.id
             }
             if (product) {
-                authorized = springcacheService.doWithCache(CACHE_PRODUCTTEAM, new CacheKeyBuilder().append(product).append(auth.principal.id).append(getUserLastUpdated(auth.principal.id)).toCacheKey()) {
+                authorized = springcacheService.doWithCache(CACHE_PRODUCTTEAM, new CacheKeyBuilder().append(product).append(getProductLastUpdated(product)).append(auth.principal.id).append(getUserLastUpdated(auth.principal.id)).toCacheKey()) {
                     if (!p) p = Product.get(product)
                     if (!p || !auth) return false
                     //Check if he is ScrumMaster or Member
@@ -225,12 +225,9 @@ class SecurityService {
     }
 
     Team openProductTeam(Long productId, Long principalId) {
-        springcacheService.doWithCache(CACHE_OPENPRODUCTTEAM, new CacheKeyBuilder().append(productId).append(principalId).append(getUserLastUpdated(principalId)).toCacheKey()) {
+        springcacheService.doWithCache(CACHE_OPENPRODUCTTEAM, new CacheKeyBuilder().append(getProductLastUpdated(productId)).append(productId).append(principalId).append(getUserLastUpdated(principalId)).toCacheKey()) {
             def team = Team.productTeam(productId, principalId).list(max: 1)
-            if (team)
-                team[0]
-            else
-                null
+            return team ? team[0] : null
         }
 
     }

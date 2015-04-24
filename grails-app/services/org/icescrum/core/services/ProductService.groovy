@@ -172,6 +172,58 @@ class ProductService {
         }
     }
 
+    @PreAuthorize('owner(#product) and !archivedProduct(#product)')
+    void changeTeam(Product product, Team newTeam) {
+        // Collect members and roles
+        def oldTeam = product.firstTeam
+        def oldMembers = [:]
+        oldTeam.members.each { oldMembers[it] = Authority.MEMBER }
+        oldTeam.scrumMasters.each { oldMembers[it] = Authority.SCRUMMASTER }
+        def newMembers = [:]
+        newTeam.members.each { newMembers[it] = Authority.MEMBER }
+        newTeam.scrumMasters.each { newMembers[it] = Authority.SCRUMMASTER }
+        // Switch team
+        product.removeFromTeams(oldTeam)
+        product.addToTeams(newTeam)
+        // Broadcasts and events
+        publishEvent(new IceScrumProductEvent(product, oldTeam, this.class, (User) springSecurityService.currentUser, IceScrumProductEvent.EVENT_TEAM_REMOVED))
+        publishEvent(new IceScrumProductEvent(product, newTeam, this.class, (User) springSecurityService.currentUser, IceScrumProductEvent.EVENT_TEAM_ADDED))
+        newMembers.each { User newMember, int role ->
+            if (oldMembers.containsKey(newMember)) {
+                if (role != oldMembers[newMember]) {
+                    broadcastToSingleUser(user: newMember.username, function: 'updateRoleProduct', message: [class: 'User', product: product])
+                    publishEvent(new IceScrumUserEvent(newMember, product, role, this.class, (User) springSecurityService.currentUser, IceScrumUserEvent.EVENT_CHANGED_ROLE_IN_PRODUCT))
+                }
+            } else {
+                broadcastToSingleUser(user: newMember.username, function: 'addRoleProduct', message: [class: 'User', product: product])
+                publishEvent(new IceScrumUserEvent(newMember, product, role, this.class, (User) springSecurityService.currentUser, IceScrumUserEvent.EVENT_ADDED_TO_PRODUCT))
+            }
+        }
+        oldMembers.each { User oldMember, int role ->
+            if (!newMembers.containsKey(oldMember)) {
+                broadcastToSingleUser(user: oldMember.username, function: 'removeRoleProduct', message: [class: 'User', product: product])
+                publishEvent(new IceScrumUserEvent(oldMember, product, this.class, (User) springSecurityService.currentUser, IceScrumUserEvent.EVENT_REMOVED_FROM_PRODUCT))
+            }
+        }
+        // Remove conflicting POs and SHs
+        def membersIds = newTeam.members*.id
+        def tmIds = newTeam.members*.id - newTeam.scrumMasters*.id
+        product.productOwners?.each { User po ->
+            if (po.id in tmIds) {
+                removeAllRoles(product, null, po)
+            }
+        }
+        product.stakeHolders?.each { User sh ->
+            if (sh.id in membersIds) {
+                removeAllRoles(product, null, sh)
+            }
+        }
+        // Save
+        if (!product.save()) {
+            throw new RuntimeException('is.product.team.change.error')
+        }
+    }
+
     @PreAuthorize('(scrumMaster(#product) or owner(#product)) and !archivedProduct(#product)')
     void update(Product product, boolean hasHiddenChanged, String pkeyChanged) {
         if (!product.name?.trim()) {

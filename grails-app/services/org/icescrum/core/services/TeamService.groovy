@@ -99,15 +99,6 @@ class TeamService {
         }
     }
 
-    @PreAuthorize('owner(#_product)')
-    void removeTeamFromProduct(Product _product, Team team) {
-        _product.removeFromTeams(team)
-        publishEvent(new IceScrumProductEvent(_product, team, this.class, (User) springSecurityService.currentUser, IceScrumProductEvent.EVENT_TEAM_REMOVED))
-        if (!_product.save()) {
-            throw new IllegalStateException('Product not saved')
-        }
-    }
-
     @PreAuthorize('isAuthenticated()')
     void saveImport(Team team) {
         if (!team)
