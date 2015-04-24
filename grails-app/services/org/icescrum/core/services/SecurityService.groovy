@@ -226,10 +226,8 @@ class SecurityService {
 
     Team openProductTeam(Long productId, Long principalId) {
         springcacheService.doWithCache(CACHE_OPENPRODUCTTEAM, new CacheKeyBuilder().append(getProductLastUpdated(productId)).append(productId).append(principalId).append(getUserLastUpdated(principalId)).toCacheKey()) {
-            def team = Team.productTeam(productId, principalId).list(max: 1)
-            return team ? team[0] : null
+            return Team.findTeamByProductAndUser(productId, principalId)
         }
-
     }
 
 
@@ -252,8 +250,7 @@ class SecurityService {
                     team = t?.id
                 }
             }
-        }
-        else if (team in Team) {
+        } else if (team in Team) {
             t = GrailsHibernateUtil.unwrapIfProxy(team)
             team = t.id
         }
@@ -382,7 +379,7 @@ class SecurityService {
             def request = RCH.requestAttributes.currentRequest
             if (request.filtered)
                 return request.inTeam
-            else{
+            else {
                 def parsedProduct = parseCurrentRequestProduct(request)
                 if (parsedProduct) {
                     if (SpringSecurityUtils.ifAnyGranted(Authority.ROLE_ADMIN))
@@ -391,8 +388,7 @@ class SecurityService {
                     team = t?.id
                 }
             }
-        }
-        else if (team in Team) {
+        } else if (team in Team) {
             t = GrailsHibernateUtil.unwrapIfProxy(team)
             team = team.id
         }
@@ -407,8 +403,7 @@ class SecurityService {
                 if (!t || !auth) return false
                 return aclUtilService.hasPermission(auth, GrailsHibernateUtil.unwrapIfProxy(t), SecurityService.teamMemberPermissions)
             }
-        }
-        else
+        } else
             return false
     }
 

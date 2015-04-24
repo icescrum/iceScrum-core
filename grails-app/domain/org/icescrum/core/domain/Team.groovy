@@ -168,24 +168,21 @@ class Team implements Serializable, Comparable {
                 "ORDER BY a.activity.dateCreated DESC", [uid:uid], [cache:true,max: 15])
     }
 
+    static Team findTeamByProductAndUser(Long productId, Long userId) {
+        executeQuery("""SELECT DISTINCT t
+                        FROM org.icescrum.core.domain.Team t
+                        INNER JOIN t.members m
+                        INNER JOIN t.products p
+                        WHERE p.id = :productId
+                        AND m.id = :userId""", [userId: userId, productId: productId], [cache:true])[0]
+    }
+
     static namedQueries = {
-
-        productTeam {p, u ->
-            products {
-                idEq(p)
-            }
-            members {
-                idEq(u)
-            }
-        }
-
 
         teamLike {term ->
             ilike("name", "%$term%")
         }
-
     }
-
 
     def getScrumMasters() {
         def aclUtilService = (AclUtilService) ApplicationHolder.application.mainContext.getBean('aclUtilService');
