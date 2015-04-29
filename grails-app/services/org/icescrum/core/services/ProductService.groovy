@@ -206,22 +206,7 @@ class ProductService {
             }
         }
         // Remove conflicting POs and SHs
-        def membersIds = newTeam.members*.id
-        def tmIds = newTeam.members*.id - newTeam.scrumMasters*.id
-        product.productOwners?.each { User po ->
-            if (po.id in tmIds) {
-                removeAllRoles(product, null, po)
-            }
-        }
-        product.stakeHolders?.each { User sh ->
-            if (sh.id in membersIds) {
-                removeAllRoles(product, null, sh)
-            }
-        }
-        // Save
-        if (!product.save()) {
-            throw new RuntimeException('is.product.team.change.error')
-        }
+        removeConflictingPOandSH(newTeam, product)
     }
 
     @PreAuthorize('(scrumMaster(#product) or owner(#product)) and !archivedProduct(#product)')
@@ -772,6 +757,7 @@ class ProductService {
             }
         }
         updateMembers(team, null, currentMembers, newMembers)
+        removeConflictingPOandSH(team)
     }
 
     void updateProductMembers(Product product, List newMembers) {
@@ -794,6 +780,24 @@ class ProductService {
         }
         currentMembers*.id.minus(newMembers*.id).each {
             removeAllRoles(product, team, User.get(it));
+        }
+    }
+
+    private void removeConflictingPOandSH(team, product = null) {
+        def membersIds = team.members*.id
+        def tmIds = team.members*.id - team.scrumMasters*.id
+        def products = product ? [product] : team.products
+        products.each { Product p ->
+            p.productOwners?.each { User po ->
+                if (po.id in tmIds) {
+                    removeAllRoles(p, null, po)
+                }
+            }
+            p.stakeHolders?.each { User sh ->
+                if (sh.id in membersIds) {
+                    removeAllRoles(p, null, sh)
+                }
+            }
         }
     }
 

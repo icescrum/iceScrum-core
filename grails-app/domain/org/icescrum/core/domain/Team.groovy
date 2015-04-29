@@ -108,32 +108,32 @@ class Team implements Serializable, Comparable {
                         "WHERE p.id = :p) ", [p: id, term: "%$term%"], params ?: [:])
     }
 
-    static findAllByOwner(String user, params) {
-        executeQuery("SELECT DISTINCT t "+
-                        "From org.icescrum.core.domain.Team as t, "+
-                        "org.codehaus.groovy.grails.plugins.springsecurity.acl.AclClass as ac, "+
-                        "org.codehaus.groovy.grails.plugins.springsecurity.acl.AclObjectIdentity as ai, "+
-                        "org.codehaus.groovy.grails.plugins.springsecurity.acl.AclSid as acl "+
-                        "where "+
-                        "ac.className = 'org.icescrum.core.domain.Team' "+
-                        "AND ai.aclClass = ac.id "+
-                        "AND ai.owner.sid = :sid "+
-                        "AND acl.id = ai.owner "+
-                        "AND t.id = ai.objectId", [sid: user], params ?: [:])
+    static findAllByOwner(String user, params, String term = '%%') {
+        executeQuery("""SELECT DISTINCT t
+                        FROM org.icescrum.core.domain.Team as t,
+                             org.codehaus.groovy.grails.plugins.springsecurity.acl.AclClass as ac,
+                             org.codehaus.groovy.grails.plugins.springsecurity.acl.AclObjectIdentity as ai,
+                             org.codehaus.groovy.grails.plugins.springsecurity.acl.AclSid as acl
+                        WHERE ac.className = 'org.icescrum.core.domain.Team'
+                        AND ai.aclClass = ac.id
+                        AND ai.owner.sid = :sid
+                        AND acl.id = ai.owner
+                        AND t.id = ai.objectId
+                        AND t.name LIKE :term""", [sid: user, term: term], params ?: [:])
     }
 
-    static countByOwner(String user, params) {
-        executeQuery("SELECT DISTINCT COUNT(t.id) "+
-                        "From org.icescrum.core.domain.Team as t, "+
-                        "org.codehaus.groovy.grails.plugins.springsecurity.acl.AclClass as ac, "+
-                        "org.codehaus.groovy.grails.plugins.springsecurity.acl.AclObjectIdentity as ai, "+
-                        "org.codehaus.groovy.grails.plugins.springsecurity.acl.AclSid as acl "+
-                        "where "+
-                        "ac.className = 'org.icescrum.core.domain.Team' "+
-                        "AND ai.aclClass = ac.id "+
-                        "AND ai.owner.sid = :sid "+
-                        "AND acl.id = ai.owner "+
-                        "AND t.id = ai.objectId", [sid: user], params ?: [:])
+    static countByOwner(String user, params, String term = '%%') {
+        executeQuery("""SELECT DISTINCT COUNT(t.id)
+                        FROM org.icescrum.core.domain.Team as t,
+                             org.codehaus.groovy.grails.plugins.springsecurity.acl.AclClass as ac,
+                             org.codehaus.groovy.grails.plugins.springsecurity.acl.AclObjectIdentity as ai,
+                             org.codehaus.groovy.grails.plugins.springsecurity.acl.AclSid as acl
+                        WHERE ac.className = 'org.icescrum.core.domain.Team'
+                        AND ai.aclClass = ac.id
+                        AND ai.owner.sid = :sid
+                        AND acl.id = ai.owner
+                        AND t.id = ai.objectId
+                        AND t.name LIKE :term""", [sid: user, term: term], params ?: [:])
     }
 
     static findAllByRole(String user, List<BasePermission> permission, params) {
