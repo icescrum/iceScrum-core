@@ -34,9 +34,7 @@
                 <div class="browse-content">
                     <div id="${name}-details">
                         <g:if test="${initContent}">
-                            <div class='box-blank clearfix' style='display:block;'>
-                                <p>${initContent}</p>
-                            </div>
+                            ${initContent}
                         </g:if>
                     </div>
                 </div>
