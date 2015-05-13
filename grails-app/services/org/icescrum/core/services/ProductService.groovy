@@ -227,6 +227,9 @@ class ProductService {
             product.stakeHolders?.each {
                 removeStakeHolder(product,it)
             }
+            product.invitedStakeHolders?.each {
+                it.delete()
+            }
         }
 
         if (pkeyChanged){
