@@ -24,7 +24,9 @@
 
 package org.icescrum.core.domain
 
+import org.icescrum.core.domain.security.Authority
 import org.icescrum.core.services.SecurityService
+import org.icescrum.core.domain.Invitation.InvitationType
 import org.icescrum.core.domain.preferences.TeamPreferences
 import org.icescrum.core.event.IceScrumTeamEvent
 import org.icescrum.core.event.IceScrumEvent
@@ -52,7 +54,7 @@ class Team implements Serializable, Comparable {
             members: User
     ]
 
-    static transients = ['scrumMasters','owner']
+    static transients = ['scrumMasters', 'owner', 'invitedScrumMasters', 'invitedMembers']
 
     def scrumMasters = null
 
@@ -224,6 +226,14 @@ class Team implements Serializable, Comparable {
         } else {
             null
         }
+    }
+
+    List getInvitedScrumMasters() {
+        return Invitation.findAllByTypeAndTeamAndRole(InvitationType.TEAM, this, Authority.SCRUMMASTER).collect { it.userMock }
+    }
+
+    List getInvitedMembers() {
+        return Invitation.findAllByTypeAndTeamAndRole(InvitationType.TEAM, this, Authority.MEMBER).collect { it.userMock }
     }
 
     boolean equals(o) {

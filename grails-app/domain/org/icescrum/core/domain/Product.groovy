@@ -25,7 +25,9 @@
 
 package org.icescrum.core.domain
 
+import org.icescrum.core.domain.Invitation.InvitationType
 import org.icescrum.core.domain.preferences.ProductPreferences
+import org.icescrum.core.domain.security.Authority
 import org.icescrum.core.services.SecurityService
 import org.icescrum.core.event.IceScrumEvent
 import org.icescrum.core.event.IceScrumProductEvent
@@ -71,6 +73,8 @@ class Product extends TimeBox implements Serializable, Attachmentable {
             'productOwners',
             'erasableByUser',
             'stakeHolders',
+            'invitedStakeHolders',
+            'invitedProductOwners',
             'owner',
             'firstTeam',
             'versions',
@@ -295,6 +299,14 @@ class Product extends TimeBox implements Serializable, Attachmentable {
         } else {
             null
         }
+    }
+
+    List getInvitedStakeHolders() {
+        return Invitation.findAllByTypeAndProductAndRole(InvitationType.PRODUCT, this, Authority.STAKEHOLDER).collect { it.userMock }
+    }
+
+    List getInvitedProductOwners() {
+        return Invitation.findAllByTypeAndProductAndRole(InvitationType.PRODUCT, this, Authority.PRODUCTOWNER).collect { it.userMock }
     }
 
     Team getFirstTeam(){
