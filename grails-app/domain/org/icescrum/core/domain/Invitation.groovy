@@ -23,6 +23,7 @@
 
 package org.icescrum.core.domain
 
+import org.codehaus.groovy.grails.commons.ApplicationHolder
 import org.icescrum.core.domain.security.Authority
 
 class Invitation implements Serializable {
@@ -54,6 +55,21 @@ class Invitation implements Serializable {
         table 'icescrum2_invitation'
     }
 
+    static namedQueries = {
+        // Needs to be implemented manually because grails 1.3.9 prevents using dynamic finders with more than 2 elements
+        findAllByTypeAndProductAndRole { InvitationType type, Product product, Integer role ->
+            eq 'type', type
+            eq 'product', product
+            eq 'role', role
+        }
+        // Needs to be implemented manually because grails 1.3.9 prevents using dynamic finders with more than 2 elements
+        findAllByTypeAndTeamAndRole { InvitationType type, Team team, Integer role ->
+            eq 'type', type
+            eq 'team', team
+            eq 'role', role
+        }
+    }
+
     enum InvitationType {
         TEAM, PRODUCT
     }
@@ -67,14 +83,7 @@ class Invitation implements Serializable {
     }
 
     static Map getUserMock(String email) {
-        def emailPrefix = email.split('@')[0]
-        def firstName = emailPrefix
-        def lastName = ""
-        def dotPosition = emailPrefix.indexOf('.')
-        if (dotPosition != -1) {
-            firstName = emailPrefix.substring(0, dotPosition)?.capitalize()
-            lastName = emailPrefix.substring(dotPosition + 1)?.capitalize()
-        }
-        return [id: null, firstName: firstName, lastName: lastName, email: email]
+        def is = ApplicationHolder.application.mainContext.getBean('org.icescrum.core.taglib.ScrumTagLib')
+        return [id: email, name: email, activity: '', avatar: is.avatar([user:[email: email, id: email],link:true]), isInvited: true]
     }
 }
