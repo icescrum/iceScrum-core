@@ -302,11 +302,11 @@ class Product extends TimeBox implements Serializable, Attachmentable {
     }
 
     List getInvitedStakeHolders() {
-        return Invitation.findAllByTypeAndProductAndRole(InvitationType.PRODUCT, this, Authority.STAKEHOLDER).collect { it.userMock }
+        return Invitation.findAllByTypeAndProductAndRole(InvitationType.PRODUCT, this, Authority.STAKEHOLDER).list().collect { it.userMock }
     }
 
     List getInvitedProductOwners() {
-        return Invitation.findAllByTypeAndProductAndRole(InvitationType.PRODUCT, this, Authority.PRODUCTOWNER).collect { it.userMock }
+        return Invitation.findAllByTypeAndProductAndRole(InvitationType.PRODUCT, this, Authority.PRODUCTOWNER).list().collect { it.userMock }
     }
 
     Team getFirstTeam(){
