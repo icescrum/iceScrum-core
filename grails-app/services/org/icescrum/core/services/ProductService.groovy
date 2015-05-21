@@ -829,6 +829,8 @@ class ProductService {
     }
 
     void manageTeamInvitations(Team team, invitedMembers, invitedScrumMasters) {
+        invitedMembers = invitedMembers*.toLowerCase()
+        invitedScrumMasters = invitedScrumMasters*.toLowerCase()
         def type = Invitation.InvitationType.TEAM
         def currentInvitations = Invitation.findAllByTypeAndTeam(type, team)
         def newInvitations = []
@@ -840,6 +842,8 @@ class ProductService {
     }
 
     void manageProductInvitations(Product product, invitedProductOwners, invitedStakeHolders) {
+        invitedProductOwners = invitedProductOwners*.toLowerCase()
+        invitedStakeHolders = invitedStakeHolders*.toLowerCase()
         def type = Invitation.InvitationType.PRODUCT
         def currentInvitations = Invitation.findAllByTypeAndProduct(type, product)
         def newInvitations = []
