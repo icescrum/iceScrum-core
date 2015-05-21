@@ -24,13 +24,13 @@
 package org.icescrum.core.services
 
 import org.codehaus.groovy.grails.commons.ApplicationHolder
+import org.icescrum.core.domain.Invitation
 import org.icescrum.core.domain.Product
 import org.icescrum.core.domain.Team
 import org.icescrum.core.domain.User
 import org.icescrum.core.domain.preferences.TeamPreferences
 import org.icescrum.core.domain.security.Authority
 import org.icescrum.core.event.IceScrumEvent
-import org.icescrum.core.event.IceScrumProductEvent
 import org.icescrum.core.event.IceScrumTeamEvent
 import org.icescrum.core.support.ApplicationSupport
 import org.icescrum.core.support.ProgressSupport
@@ -86,6 +86,8 @@ class TeamService {
         team.members.each { User member ->
             removeMemberOrScrumMaster(team, member)
         }
+        team.invitedMembers*.delete()
+        team.invitedScrumMasters*.delete()
         team.delete()
         securityService.unsecureDomain(team)
     }
@@ -168,12 +170,26 @@ class TeamService {
                               avatar: is.avatar(user: user, link: true),
                               role: role]
         }
+        def addInvitationEntry = { Invitation invitation, int role ->
+            memberEntries<< [id: invitation.email,
+                             name: invitation.email,
+                             activity: '',
+                             avatar: is.avatar([user:[email: invitation.email, id: -1], link:true]),
+                             role: role,
+                             isInvited: true]
+        }
         if (teamId) {
             Team team = Team.get(teamId)
             def scrumMastersIds = team.scrumMasters*.id
             team.members?.each { User member ->
                 int role = scrumMastersIds?.contains(member.id) ? Authority.SCRUMMASTER : Authority.MEMBER
                 addEntry(member, role)
+            }
+            team.invitedMembers.each { Invitation invitation ->
+                addInvitationEntry(invitation, Authority.MEMBER)
+            }
+            team.invitedScrumMasters.each { Invitation invitation ->
+                addInvitationEntry(invitation, Authority.SCRUMMASTER)
             }
         } else {
             addEntry(springSecurityService.currentUser, Authority.SCRUMMASTER)

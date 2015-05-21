@@ -37,6 +37,7 @@ import org.icescrum.core.event.IceScrumUserEvent
 import org.icescrum.core.support.ApplicationSupport
 import org.icescrum.core.support.ProgressSupport
 import org.icescrum.core.utils.ServicesUtils
+import org.springframework.mail.MailException
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.transaction.annotation.Transactional
 
@@ -49,6 +50,7 @@ class ProductService {
     def teamService
     def actorService
     def grailsApplication
+    def notificationEmailService
 
     static transactional = true
 
@@ -207,6 +209,7 @@ class ProductService {
         }
         // Remove conflicting POs and SHs
         removeConflictingPOandSH(newTeam, product)
+        removeConflictingInvitedPOandSH(newTeam, product)
     }
 
     @PreAuthorize('(scrumMaster(#product) or owner(#product)) and !archivedProduct(#product)')
@@ -557,9 +560,12 @@ class ProductService {
     }
 
     @PreAuthorize('owner(#p)')
+    @Transactional
     def delete(Product p) {
         def id = p.id
         p.allUsers.each{ it.preferences.removeEmailsSettings(p.pkey) } // must be before unsecure to have POs
+        p.invitedStakeHolders*.delete()
+        p.invitedProductOwners*.delete()
         securityService.unsecureDomain p
         UserPreferences.findAllByLastProductOpened(p.pkey)?.each {
             it.lastProductOpened = null
@@ -820,5 +826,76 @@ class ProductService {
 
     private void removeStakeHolder(Product product, User stakeHolder) {
         securityService.deleteStakeHolderPermissions stakeHolder, product
+    }
+
+    void manageTeamInvitations(Team team, invitedMembers, invitedScrumMasters) {
+        def type = Invitation.InvitationType.TEAM
+        def currentInvitations = Invitation.findAllByTypeAndTeam(type, team)
+        def newInvitations = []
+        assert !invitedMembers.intersect(invitedScrumMasters)
+        newInvitations.addAll(invitedMembers.collect { [role: Authority.MEMBER, email: it] })
+        newInvitations.addAll(invitedScrumMasters.collect { [role: Authority.SCRUMMASTER, email: it] })
+        manageInvitations(currentInvitations, newInvitations, type, null, team)
+        removeConflictingInvitedPOandSH(team)
+    }
+
+    void manageProductInvitations(Product product, invitedProductOwners, invitedStakeHolders) {
+        def type = Invitation.InvitationType.PRODUCT
+        def currentInvitations = Invitation.findAllByTypeAndProduct(type, product)
+        def newInvitations = []
+        assert !invitedProductOwners.intersect(invitedStakeHolders)
+        newInvitations.addAll(invitedProductOwners.collect { [role: Authority.PRODUCTOWNER, email: it] })
+        if (invitedStakeHolders && product.preferences.hidden) {
+            newInvitations.addAll(invitedStakeHolders.collect { [role: Authority.STAKEHOLDER, email: it] })
+        }
+        manageInvitations(currentInvitations, newInvitations, type, product, null)
+    }
+
+    private void removeConflictingInvitedPOandSH(team, product = null) {
+        def invitedMembersEmail = team.invitedMembers*.email
+        def invitedMembersAndScrumMastersEmail = invitedMembersEmail + team.invitedScrumMasters*.email
+        def products = product ? [product] : team.products
+        products.each { Product p ->
+            p.invitedProductOwners?.each { Invitation invitedPo ->
+                if (invitedPo.email in invitedMembersEmail) {
+                    invitedPo.delete()
+                }
+            }
+            p.invitedStakeHolders?.each { Invitation invitedSh ->
+                if (invitedSh.email in invitedMembersAndScrumMastersEmail) {
+                    invitedSh.delete()
+                }
+            }
+        }
+    }
+
+    private void manageInvitations(List<Invitation> currentInvitations, List newInvitations, Invitation.InvitationType type, Product product, Team team) {
+        newInvitations.each {
+            def email = it.email
+            int role = it.role
+            Invitation currentInvitation = currentInvitations.find { it.email == email }
+            if (currentInvitation) {
+                if (currentInvitation.futureRole != role) {
+                    currentInvitation.futureRole = role
+                    currentInvitation.save()
+                }
+            } else {
+                def invitation = new Invitation(email: email, futureRole: role, type: type)
+                if (type == Invitation.InvitationType.TEAM) {
+                    invitation.team = team
+                } else {
+                    invitation.product = product
+                }
+                invitation.save()
+                try {
+                    notificationEmailService.sendInvitation(invitation, springSecurityService.currentUser)
+                } catch (MailException) {
+                    throw new IllegalStateException('is.mail.invitation.error')
+                }
+            }
+        }
+        currentInvitations.findAll { currentInvitation ->
+            !newInvitations*.email.contains(currentInvitation.email)
+        }*.delete()
     }
 }

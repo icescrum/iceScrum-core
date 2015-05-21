@@ -73,7 +73,7 @@ class UserService {
             invitations.each { invitation ->
                 // TODO check if it is necessary to use admin permissions
                 SpringSecurityUtils.doWithAuth('admin') {
-                    productService.addRole(invitation.product, invitation.team, _user, invitation.role)
+                    productService.addRole(invitation.product, invitation.team, _user, invitation.futureRole)
                     invitation.delete()
                 }
             }
@@ -189,53 +189,6 @@ class UserService {
         if (!_u.save()) {
             throw new RuntimeException()
         }
-    }
-
-    void manageTeamInvitations(Team team, invitedMembers, invitedScrumMasters) {
-        def type = InvitationType.TEAM
-        def currentInvitations = Invitation.findAllByTypeAndTeam(type, team)
-        def newInvitations = []
-        assert !invitedMembers.intersect(invitedScrumMasters)
-        newInvitations.addAll(invitedMembers.collect { [role: Authority.MEMBER, email: it] })
-        newInvitations.addAll(invitedScrumMasters.collect { [role: Authority.SCRUMMASTER, email: it] })
-        manageInvitations(currentInvitations, newInvitations, type, null, team)
-    }
-
-    void manageProductInvitations(Product product, invitedProductOwners, invitedStakeHolders) {
-        def type = InvitationType.PRODUCT
-        def currentInvitations = Invitation.findAllByTypeAndProduct(type, product)
-        def newInvitations = []
-        assert !invitedProductOwners.intersect(invitedStakeHolders)
-        newInvitations.addAll(invitedProductOwners.collect { [role: Authority.PRODUCTOWNER, email: it] })
-        newInvitations.addAll(invitedStakeHolders.collect { [role: Authority.STAKEHOLDER, email: it] })
-        manageInvitations(currentInvitations, newInvitations, type, product, null)
-    }
-
-    private void manageInvitations(List<Invitation> currentInvitations, List newInvitations, InvitationType type, Product product, Team team) {
-        newInvitations.each {
-            def email = it.email
-            int role = it.role
-            Invitation currentInvitation = currentInvitations.find { it.email == email }
-            if (currentInvitation) {
-                if (currentInvitation.role != role) {
-                    currentInvitation.role = role
-                    currentInvitation.save()
-                }
-            } else {
-                def invitation = new Invitation(email: email, role: role, type: type)
-                if (type == InvitationType.TEAM) {
-                    invitation.team = team
-                } else {
-                    invitation.product = product
-                }
-                invitation.save()
-                notificationEmailService.sendInvitation(invitation, springSecurityService.currentUser)
-                // TODO display error message if error when sending email
-            }
-        }
-        currentInvitations.findAll { currentInvitation ->
-            !newInvitations*.email.contains(currentInvitation.email)
-        }*.delete()
     }
 
     @Transactional(readOnly = true)

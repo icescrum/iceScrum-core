@@ -301,12 +301,12 @@ class Product extends TimeBox implements Serializable, Attachmentable {
         }
     }
 
-    List getInvitedStakeHolders() {
-        return Invitation.findAllByTypeAndProductAndRole(InvitationType.PRODUCT, this, Authority.STAKEHOLDER).list().collect { it.userMock }
+    List<Invitation> getInvitedStakeHolders() {
+        return Invitation.findAllByTypeAndProductAndFutureRole(InvitationType.PRODUCT, this, Authority.STAKEHOLDER).list()
     }
 
-    List getInvitedProductOwners() {
-        return Invitation.findAllByTypeAndProductAndRole(InvitationType.PRODUCT, this, Authority.PRODUCTOWNER).list().collect { it.userMock }
+    List<Invitation>  getInvitedProductOwners() {
+        return Invitation.findAllByTypeAndProductAndFutureRole(InvitationType.PRODUCT, this, Authority.PRODUCTOWNER).list()
     }
 
     Team getFirstTeam(){

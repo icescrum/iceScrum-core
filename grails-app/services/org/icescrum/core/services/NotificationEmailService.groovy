@@ -243,7 +243,7 @@ class NotificationEmailService implements ApplicationListener<IceScrumEvent> {
         def isProjectInvitation = invitation.type == Invitation.InvitationType.PRODUCT
         def invitedIn = isProjectInvitation ? invitation.product.name.encodeAsHTML() : invitation.team.name.encodeAsHTML()
         def locale = inviter.locale
-        def role = getMessage(BundleUtils.roles[invitation.role], locale)
+        def role = getMessage(BundleUtils.roles[invitation.futureRole], locale)
         send([
                 to: invitation.email,
                 subject: grailsApplication.config.icescrum.alerts.subject_prefix + getMessage('is.template.email.user.invitation.subject', locale),
