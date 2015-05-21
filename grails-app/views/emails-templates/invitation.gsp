@@ -22,9 +22,19 @@
 - Nicolas Noullet (nnoullet@kagilum.com)
 --}%
 <%@ page contentType="text/html"%>
-<g:message
-        locale="${locale}"
-        code='is.template.email.user.invitation.text'
-        args="[(inviter.firstName + ' ' + inviter.lastName), inviter.username, link]"/>
+<g:if test="${isProjectInvitation}">
+    <g:message locale="${locale}"
+               code='is.template.email.user.invitation.project.text'
+               args="[(inviter.firstName + ' ' + inviter.lastName), inviter.username, invitedIn, role]"/>
+</g:if><g:else>
+    <g:message locale="${locale}"
+               code='is.template.email.user.invitation.team.text'
+               args="[(inviter.firstName + ' ' + inviter.lastName), inviter.username, invitedIn, role]"/>
+</g:else>
+
+<br/><br/>
+<g:message locale="${locale}"
+           code='is.template.email.user.invitation.text'
+           args="[link]"/>
 <br/><br/>--<br/>
 <g:message locale="${locale}" code='is.template.email.footer.website'/>
