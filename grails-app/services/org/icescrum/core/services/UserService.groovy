@@ -58,6 +58,7 @@ class UserService {
 
     static transactional = true
 
+    @Transactional
     void save(User _user, String token = null) {
         if(_user.password.trim().length() == 0) {
             throw new RuntimeException('user.password.blank')
@@ -67,12 +68,12 @@ class UserService {
             throw new RuntimeException()
         publishEvent(new IceScrumUserEvent(_user, this.class, _user, IceScrumEvent.EVENT_CREATED))
 
-        if (token) {
+        if (token && ApplicationSupport.booleanValue(grailsApplication.config.icescrum.invitation.enable)) {
             def invitations = Invitation.findAllByToken(token)
             invitations.each { invitation ->
                 // TODO check if it is necessary to use admin permissions
                 SpringSecurityUtils.doWithAuth('admin') {
-                    productService.addRole(invitation.product, invitation.team, user, invitation.role)
+                    productService.addRole(invitation.product, invitation.team, _user, invitation.role)
                     invitation.delete()
                 }
             }
