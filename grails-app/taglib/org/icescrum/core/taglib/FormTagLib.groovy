@@ -45,6 +45,10 @@ class FormTagLib {
     def grailsApplication
     def grailsAttributes
 
+    def autoCompleteRenderItem = { attrs, body ->
+        out << """<a><img height='40' width='40' src='" + item.avatar + "'/><span><b>" + item.name + "</b><br/>" + (item.isInvited ? "${g.message(code: 'is.ui.user.will.be.invited')}" : item.activity) + "</span></a>"""
+    }
+
     def autoCompleteSkin = {attrs, body ->
         assert attrs.id
 
