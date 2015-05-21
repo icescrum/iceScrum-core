@@ -228,12 +228,12 @@ class Team implements Serializable, Comparable {
         }
     }
 
-    List getInvitedScrumMasters() {
-        return Invitation.findAllByTypeAndTeamAndRole(InvitationType.TEAM, this, Authority.SCRUMMASTER).list().collect { it.userMock }
+    List<Invitation> getInvitedScrumMasters() {
+        return Invitation.findAllByTypeAndTeamAndFutureRole(InvitationType.TEAM, this, Authority.SCRUMMASTER).list()
     }
 
-    List getInvitedMembers() {
-        return Invitation.findAllByTypeAndTeamAndRole(InvitationType.TEAM, this, Authority.MEMBER).list().collect { it.userMock }
+    List<Invitation> getInvitedMembers() {
+        return Invitation.findAllByTypeAndTeamAndFutureRole(InvitationType.TEAM, this, Authority.MEMBER).list()
     }
 
     boolean equals(o) {

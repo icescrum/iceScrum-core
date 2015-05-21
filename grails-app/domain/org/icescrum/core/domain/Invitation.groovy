@@ -23,7 +23,6 @@
 
 package org.icescrum.core.domain
 
-import org.codehaus.groovy.grails.commons.ApplicationHolder
 import org.icescrum.core.domain.security.Authority
 
 class Invitation implements Serializable {
@@ -31,22 +30,20 @@ class Invitation implements Serializable {
     InvitationType type
     String email
     Date dateCreated
-    Integer role
+    Integer futureRole // don't use "role" because it is a reserved keyword in some SQL dialects
     String token
 
     static belongsTo = [team: Team, product: Product]
-
-    static transients = ['userMock']
 
     static constraints = {
         email(blank: false, email: true)
         team(nullable: true)
         product(nullable: true)
-        type(validator: { newType, Invitation -> newType == InvitationType.TEAM         && Invitation.team != null && Invitation.product == null ||
-                newType == InvitationType.PRODUCT      && Invitation.team == null && Invitation.product != null
+        type(validator: { newType, Invitation -> newType == InvitationType.TEAM    && Invitation.team != null && Invitation.product == null ||
+                                                 newType == InvitationType.PRODUCT && Invitation.team == null && Invitation.product != null
         })
-        role(validator: { newRole, Invitation -> newRole in [Authority.MEMBER, Authority.SCRUMMASTER]       && Invitation.team != null && Invitation.product == null ||
-                newRole in [Authority.STAKEHOLDER, Authority.PRODUCTOWNER] && Invitation.team == null && Invitation.product != null
+        futureRole(validator: { newRole, Invitation -> newRole in [Authority.MEMBER,      Authority.SCRUMMASTER]  && Invitation.team != null && Invitation.product == null ||
+                                                       newRole in [Authority.STAKEHOLDER, Authority.PRODUCTOWNER] && Invitation.team == null && Invitation.product != null
         })
     }
 
@@ -57,16 +54,16 @@ class Invitation implements Serializable {
 
     static namedQueries = {
         // Needs to be implemented manually because grails 1.3.9 prevents using dynamic finders with more than 2 elements
-        findAllByTypeAndProductAndRole { InvitationType type, Product product, Integer role ->
+        findAllByTypeAndProductAndFutureRole { InvitationType type, Product product, Integer futureRole ->
             eq 'type', type
             eq 'product', product
-            eq 'role', role
+            eq 'futureRole', futureRole
         }
         // Needs to be implemented manually because grails 1.3.9 prevents using dynamic finders with more than 2 elements
-        findAllByTypeAndTeamAndRole { InvitationType type, Team team, Integer role ->
+        findAllByTypeAndTeamAndFutureRole { InvitationType type, Team team, Integer futureRole ->
             eq 'type', type
             eq 'team', team
-            eq 'role', role
+            eq 'futureRole', futureRole
         }
     }
 
@@ -76,14 +73,5 @@ class Invitation implements Serializable {
 
     def beforeValidate() {
         token = email.encodeAsMD5()
-    }
-
-    Map getUserMock() {
-        return getUserMock(email)
-    }
-
-    static Map getUserMock(String email) {
-        def is = ApplicationHolder.application.mainContext.getBean('org.icescrum.core.taglib.ScrumTagLib')
-        return [id: email, name: email, activity: '', avatar: is.avatar([user:[email: email, id: email],link:true]), isInvited: true]
     }
 }
