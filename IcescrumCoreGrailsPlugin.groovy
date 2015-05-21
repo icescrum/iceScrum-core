@@ -23,6 +23,7 @@
 import grails.converters.JSON
 import grails.converters.XML
 import grails.util.GrailsNameUtils
+import org.apache.commons.io.FileUtils
 import org.atmosphere.cpr.AtmosphereResource
 import org.atmosphere.cpr.BroadcasterFactory
 import org.atmosphere.cpr.HeaderConfig
@@ -468,8 +469,12 @@ class IcescrumCoreGrailsPlugin {
                                     response.setHeader(k, v)
                                 }
                             }
-                            response.contentType = attachment.contentType
-                            response.outputStream << file.newInputStream()
+                            if(attachment.contentType != "text/html"){
+                                response.contentType = attachment.contentType
+                                response.outputStream << file.newInputStream()
+                            } else {
+                                render(text:file.text)
+                            }
                             return
                         }
                     }
