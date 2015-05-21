@@ -239,7 +239,7 @@ class NotificationEmailService implements ApplicationListener<IceScrumEvent> {
     }
 
     void sendInvitation(Invitation invitation, User inviter) {
-        def link =  grailsApplication.config.grails.serverURL + '/#/user/register/' + invitation.token
+        def link = grailsApplication.config.grails.serverURL + '/user/register/' + invitation.token
         def isProjectInvitation = invitation.type == Invitation.InvitationType.PRODUCT
         def invitedIn = isProjectInvitation ? invitation.product.name.encodeAsHTML() : invitation.team.name.encodeAsHTML()
         def locale = inviter.locale
