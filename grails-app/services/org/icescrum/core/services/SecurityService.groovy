@@ -247,18 +247,16 @@ class SecurityService {
             } else {
                 def parsedProduct = parseCurrentRequestProduct(request)
                 if (parsedProduct) {
-                    if (SpringSecurityUtils.ifAnyGranted(Authority.ROLE_ADMIN)) {
-                        return true
-                    }
-                    t = openProductTeam(parsedProduct, springSecurityService.principal.id)
-                    team = t?.id
+                    def p = Product.get(parsedProduct)
+                    t = GrailsHibernateUtil.unwrapIfProxy(p.firstTeam)
+                    team = t.id
                 }
             }
         } else if (team in Team) {
             t = GrailsHibernateUtil.unwrapIfProxy(team)
             team = t.id
         }
-        return isScrumMaster(team, auth, t)
+        return isScrumMaster(team, auth, t) || isOwner(team, auth, grailsApplication.getDomainClass(Team.class.name).newInstance(), t)
     }
 
     boolean isScrumMaster(team, auth, t = null) {
@@ -347,7 +345,19 @@ class SecurityService {
             p = GrailsHibernateUtil.unwrapIfProxy(product)
             product = product.id
         }
-        return isProductOwner(product, auth, p)
+        def isPo = isProductOwner(product, auth, p)
+        if (isPo) {
+            return true
+        } else if (product) {
+            if (!p) {
+                p = Product.get(product)
+            }
+            Team t = GrailsHibernateUtil.unwrapIfProxy(p.firstTeam)
+            long team = t.id
+            return isOwner(team, auth, grailsApplication.getDomainClass(Team.class.name).newInstance(), t)
+        } else {
+            return false
+        }
     }
 
     boolean admin(auth) {
