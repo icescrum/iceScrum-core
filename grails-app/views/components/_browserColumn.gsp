@@ -27,7 +27,7 @@
                      params="[id: c.id]">
                 <div class="browse-item" data-elemid="${c.id}">
                     <img src="${resource(dir: is.currentThemeImage(), file: 'choose/default.png')}" class="ico">
-                    <p><strong>${c.label}</strong></p>
+                    <p><strong title="${c.label}">${c.label.size() > 17 ? c.label[0..16] + '...' : c.label}</strong></p>
                 </div>
             </is:link>
         </li>
