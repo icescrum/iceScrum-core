@@ -55,13 +55,10 @@ class SecurityService {
     def grailsApplication
     def aclService
 
-
     static final String TEAM_ATTR = 'team_id'
     static final String TEAM_URL_ATTR = 'team'
     static final String PRODUCT_ATTR = 'product_id'
     static final String PRODUCT_URL_ATTR = 'product'
-
-
 
     static final CACHE_TEAMMEMBER = 'teamMemberCache'
     static final CACHE_PRODUCTOWNER = 'productOwnerCache'
@@ -80,7 +77,6 @@ class SecurityService {
     Acl secureDomain(o) {
         createAcl objectIdentityRetrievalStrategy.getObjectIdentity(o)
     }
-
 
     Acl secureDomain(o, parent) {
         createAcl objectIdentityRetrievalStrategy.getObjectIdentity(o), aclService.retrieveObjectIdentity(objectIdentityRetrievalStrategy.getObjectIdentity(parent))
@@ -124,7 +120,7 @@ class SecurityService {
         u.save()
     }
 
-    void createAdministrationPermissionsForProduct(User u, Product p){
+    void createAdministrationPermissionsForProduct(User u, Product p) {
         aclUtilService.addPermission GrailsHibernateUtil.unwrapIfProxy(p), u.username, ADMINISTRATION
         u.lastUpdated = new Date()
         u.save()
@@ -158,27 +154,31 @@ class SecurityService {
 
     @SuppressWarnings("GroovyMissingReturnStatement")
     boolean inProduct(product, auth) {
-        if (!springSecurityService.isLoggedIn())
+        if (!springSecurityService.isLoggedIn()) {
             return false
-
+        }
         boolean authorized = productOwner(product, auth)
         if (!authorized) {
             def p
-            if (!product){
+            if (!product) {
                 def request = RCH.requestAttributes.currentRequest
-                if (request.filtered)
+                if (request.filtered) {
                     return request.inProduct
-                else
+                } else {
                     product = parseCurrentRequestProduct(request)
-            }
-            else if (product in Product) {
+                }
+            } else if (product in Product) {
                 p = product
                 product = product.id
             }
             if (product) {
                 authorized = springcacheService.doWithCache(CACHE_PRODUCTTEAM, new CacheKeyBuilder().append(product).append(getProductLastUpdated(product)).append(auth.principal.id).append(getUserLastUpdated(auth.principal.id)).toCacheKey()) {
-                    if (!p) p = Product.get(product)
-                    if (!p || !auth) return false
+                    if (!p) {
+                        p = Product.get(product)
+                    }
+                    if (!p || !auth) {
+                        return false
+                    }
                     //Check if he is ScrumMaster or Member
                     for (team in p.teams) {
                         if (inTeam(team, auth)) {
@@ -188,40 +188,45 @@ class SecurityService {
                 }
             }
         }
-
         return authorized
     }
 
-    boolean archivedProduct(product){
+    boolean archivedProduct(product) {
         def p
-        if (SpringSecurityUtils.ifAnyGranted(Authority.ROLE_ADMIN))
+        if (SpringSecurityUtils.ifAnyGranted(Authority.ROLE_ADMIN)) {
             return false
-
-        if (!product){
-                def request = RCH.requestAttributes.currentRequest
-                if (request.filtered)
-                    return request.archivedProduct ?: false
-                else
-                    product = parseCurrentRequestProduct(request)
-            }else if (product in Product) {
-                p = product
-                product = product.id
+        }
+        if (!product) {
+            def request = RCH.requestAttributes.currentRequest
+            if (request.filtered) {
+                return request.archivedProduct ?: false
+            } else {
+                product = parseCurrentRequestProduct(request)
             }
-            if (product) {
-                return springcacheService.doWithCache(CACHE_ARCHIVEDPRODUCT, new CacheKeyBuilder().append(product).append(getProductLastUpdated(product)).toCacheKey()) {
-                    if (!p) p = Product.get(product)
-                    if (!p) return false
-                    return p.preferences.archived
+        } else if (product in Product) {
+            p = product
+            product = product.id
+        }
+        if (product) {
+            return springcacheService.doWithCache(CACHE_ARCHIVEDPRODUCT, new CacheKeyBuilder().append(product).append(getProductLastUpdated(product)).toCacheKey()) {
+                if (!p) {
+                    p = Product.get(product)
                 }
-            }else{
-                return null
+                if (!p) {
+                    return false
+                }
+                return p.preferences.archived
             }
+        } else {
+            return null
+        }
     }
 
     boolean inTeam(team, auth) {
-        if (!springSecurityService.isLoggedIn())
+        if (!springSecurityService.isLoggedIn()) {
             return false
-        teamMember(team, auth) || scrumMaster(team, auth)
+        }
+        return teamMember(team, auth) || scrumMaster(team, auth)
     }
 
     Team openProductTeam(Long productId, Long principalId) {
@@ -230,22 +235,21 @@ class SecurityService {
         }
     }
 
-
     boolean scrumMaster(team, auth) {
-        if (!springSecurityService.isLoggedIn())
+        if (!springSecurityService.isLoggedIn()) {
             return false
-
+        }
         def t = null
-
         if (!team) {
             def request = RCH.requestAttributes.currentRequest
-            if (request.filtered)
+            if (request.filtered) {
                 return request.scrumMaster
-            else {
+            } else {
                 def parsedProduct = parseCurrentRequestProduct(request)
                 if (parsedProduct) {
-                    if (SpringSecurityUtils.ifAnyGranted(Authority.ROLE_ADMIN))
+                    if (SpringSecurityUtils.ifAnyGranted(Authority.ROLE_ADMIN)) {
                         return true
+                    }
                     t = openProductTeam(parsedProduct, springSecurityService.principal.id)
                     team = t?.id
                 }
@@ -254,43 +258,42 @@ class SecurityService {
             t = GrailsHibernateUtil.unwrapIfProxy(team)
             team = t.id
         }
-
-        isScrumMaster(team, auth, t)
+        return isScrumMaster(team, auth, t)
     }
 
     boolean isScrumMaster(team, auth, t = null) {
         if (team) {
-
-            if (SpringSecurityUtils.ifAnyGranted(Authority.ROLE_ADMIN))
+            if (SpringSecurityUtils.ifAnyGranted(Authority.ROLE_ADMIN)) {
                 return true
-
+            }
             def res = springcacheService.doWithCache(CACHE_SCRUMMASTER, new CacheKeyBuilder().append(team).append(auth.principal.id).append(getUserLastUpdated(auth.principal.id)).toCacheKey()) {
-                if (!t) t = Team.get(team)
-                if (!t || !auth) return false
+                if (!t) {
+                    t = Team.get(team)
+                }
+                if (!t || !auth) {
+                    return false
+                }
                 return aclUtilService.hasPermission(auth, GrailsHibernateUtil.unwrapIfProxy(t), SecurityService.scrumMasterPermissions)
             }
             return res
-        }
-        else
+        } else {
             return false
+        }
     }
 
-
     boolean stakeHolder(product, auth, onlyPrivate, controllerName = null) {
-
-        if (!springSecurityService.isLoggedIn() && onlyPrivate)
+        if (!springSecurityService.isLoggedIn() && onlyPrivate) {
             return false
-
+        }
         def p = null
         def stakeHolder = false
-
-        if (!product){
+        if (!product) {
             def request = RCH.requestAttributes.currentRequest
-            if (request.filtered  && !controllerName)
+            if (request.filtered && !controllerName) {
                 return request.stakeHolder
-            else {
+            } else {
                 product = parseCurrentRequestProduct(request)
-                if(request.stakeHolder) {
+                if (request.stakeHolder) {
                     stakeHolder = request.stakeHolder
                 }
             }
@@ -298,92 +301,96 @@ class SecurityService {
             p = GrailsHibernateUtil.unwrapIfProxy(product)
             product = product.id
         }
-
         if (product) {
-
-            if (!p) p = Product.get(product)
-            if (!p || !auth) return false
-
-            if (SpringSecurityUtils.ifAnyGranted(Authority.ROLE_ADMIN))
+            if (!p) {
+                p = Product.get(product)
+            }
+            if (!p || !auth) {
+                return false
+            }
+            if (SpringSecurityUtils.ifAnyGranted(Authority.ROLE_ADMIN)) {
                 return true
-
+            }
             def authkey = SpringSecurityUtils.ifAnyGranted(Authority.ROLE_VISITOR) ? auth.principal : auth.principal.id + getUserLastUpdated(auth.principal.id).toString() + controllerName ?: ''
             return springcacheService.doWithCache(CACHE_STAKEHOLDER, new CacheKeyBuilder().append(onlyPrivate).append(product).append(p.lastUpdated).append(authkey).toCacheKey()) {
                 //Owner always has an access to product... (even if not in team or PO)
-                if (springSecurityService.isLoggedIn()){
-                    if (p.owner?.id == auth.principal.id) return true
+                if (springSecurityService.isLoggedIn()) {
+                    if (p.owner?.id == auth.principal.id) {
+                        return true
+                    }
                 }
                 def access = stakeHolder ?: p.preferences.hidden ? aclUtilService.hasPermission(auth, GrailsHibernateUtil.unwrapIfProxy(p), SecurityService.stakeHolderPermissions) : !onlyPrivate
-                if (access && controllerName){
+                if (access && controllerName) {
                     return !(controllerName in p.preferences.stakeHolderRestrictedViews?.split(','))
-                }else{
+                } else {
                     return access
                 }
             }
-
-        }
-        else
+        } else {
             return false
+        }
     }
 
     boolean productOwner(product, auth) {
-        if (!springSecurityService.isLoggedIn())
+        if (!springSecurityService.isLoggedIn()) {
             return false
-
+        }
         def p = null
-
-        if (!product){
+        if (!product) {
             def request = RCH.requestAttributes.currentRequest
-            if (request.filtered)
+            if (request.filtered) {
                 return request.productOwner
-            else
+            } else {
                 product = parseCurrentRequestProduct(request)
-        }else if (product in Product) {
+            }
+        } else if (product in Product) {
             p = GrailsHibernateUtil.unwrapIfProxy(product)
             product = product.id
         }
-
-        isProductOwner(product, auth, p)
+        return isProductOwner(product, auth, p)
     }
 
     boolean admin(auth) {
-        if (!springSecurityService.isLoggedIn())
+        if (!springSecurityService.isLoggedIn()) {
             return false
-
+        }
         return SpringSecurityUtils.ifAnyGranted(Authority.ROLE_ADMIN)
     }
 
     boolean isProductOwner(product, auth, p = null) {
         if (product) {
-
-            if (SpringSecurityUtils.ifAnyGranted(Authority.ROLE_ADMIN))
+            if (SpringSecurityUtils.ifAnyGranted(Authority.ROLE_ADMIN)) {
                 return true
-
+            }
             return springcacheService.doWithCache(CACHE_PRODUCTOWNER, new CacheKeyBuilder().append(product).append(auth.principal.id).append(getUserLastUpdated(auth.principal.id)).toCacheKey()) {
-                if (!p) p = Product.get(product)
-                if (!p || !auth) return false
+                if (!p) {
+                    p = Product.get(product)
+                }
+                if (!p || !auth) {
+                    return false
+                }
                 return aclUtilService.hasPermission(auth, GrailsHibernateUtil.unwrapIfProxy(p), SecurityService.productOwnerPermissions)
             }
-        }
-        else
+        } else {
             return false
+        }
     }
 
     boolean teamMember(team, auth) {
-        if (!springSecurityService.isLoggedIn())
+        if (!springSecurityService.isLoggedIn()) {
             return false
-
+        }
         def t
-
         if (!team) {
             def request = RCH.requestAttributes.currentRequest
-            if (request.filtered)
+            if (request.filtered) {
                 return request.inTeam
-            else {
+            } else {
                 def parsedProduct = parseCurrentRequestProduct(request)
                 if (parsedProduct) {
-                    if (SpringSecurityUtils.ifAnyGranted(Authority.ROLE_ADMIN))
+                    if (SpringSecurityUtils.ifAnyGranted(Authority.ROLE_ADMIN)) {
                         return true
+                    }
                     t = openProductTeam(parsedProduct, springSecurityService.principal.id)
                     team = t?.id
                 }
@@ -392,23 +399,26 @@ class SecurityService {
             t = GrailsHibernateUtil.unwrapIfProxy(team)
             team = team.id
         }
-
         if (team) {
-
-            if (SpringSecurityUtils.ifAnyGranted(Authority.ROLE_ADMIN))
+            if (SpringSecurityUtils.ifAnyGranted(Authority.ROLE_ADMIN)) {
                 return true
-
+            }
             return springcacheService.doWithCache(CACHE_TEAMMEMBER, new CacheKeyBuilder().append(team).append(auth.principal.id).append(getUserLastUpdated(auth.principal.id)).toCacheKey()) {
-                if (!t) t = Team.get(team)
-                if (!t || !auth) return false
+                if (!t) {
+                    t = Team.get(team)
+                }
+                if (!t || !auth) {
+                    return false
+                }
                 return aclUtilService.hasPermission(auth, GrailsHibernateUtil.unwrapIfProxy(t), SecurityService.teamMemberPermissions)
             }
-        } else
+        } else {
             return false
+        }
     }
 
     boolean hasRoleAdmin(User user) {
-        UserAuthority.countByAuthorityAndUser(Authority.findByAuthority(Authority.ROLE_ADMIN, [cache: true]), user, [cache: true])
+        return UserAuthority.countByAuthorityAndUser(Authority.findByAuthority(Authority.ROLE_ADMIN, [cache: true]), user, [cache: true])
     }
 
     Long parseCurrentRequestProduct(request) {
@@ -423,8 +433,7 @@ class SecurityService {
             }
             request[PRODUCT_ATTR] = res
         }
-
-        res
+        return res
     }
 
     MutableAcl createAcl(ObjectIdentity objectIdentity, parent = null) throws AlreadyExistsException {
@@ -456,21 +465,20 @@ class SecurityService {
     }
 
     public boolean owner(domain, Authentication auth) {
-        if (!springSecurityService.isLoggedIn())
+        if (!springSecurityService.isLoggedIn()) {
             return false
-
-        if (SpringSecurityUtils.ifAnyGranted(Authority.ROLE_ADMIN))
+        }
+        if (SpringSecurityUtils.ifAnyGranted(Authority.ROLE_ADMIN)) {
             return true
-
+        }
         def d = null
         def parsedDomain
         def domainClass
-
         if (!domain) {
             def request = RCH.requestAttributes.currentRequest
-            if (request.filtered)
+            if (request.filtered) {
                 return request.owner
-            else{
+            } else {
                 parsedDomain = parseCurrentRequestProduct(request)
                 domain = parsedDomain
                 domainClass = grailsApplication.getDomainClass(Product.class.name).newInstance()
@@ -478,77 +486,82 @@ class SecurityService {
         } else {
             d = GrailsHibernateUtil.unwrapIfProxy(domain)
             domainClass = d
-            if (!d) return false
+            if (!d) {
+                return false
+            }
             domain = d.id
         }
-        isOwner(domain, auth, domainClass, d)
+        return isOwner(domain, auth, domainClass, d)
     }
 
     boolean isOwner(domain, auth, domainClass, d = null) {
         if (domain && domainClass) {
             return springcacheService.doWithCache(CACHE_OWNER, new CacheKeyBuilder().append(domain).append(domainClass.class.name).append(auth.principal.id).append(getUserLastUpdated(auth.principal.id)).toCacheKey()) {
-                if (!d) d = domainClass.get(domain)
-
-                if (!d || !auth) return false
-
+                if (!d) {
+                    d = domainClass.get(domain)
+                }
+                if (!d || !auth) {
+                    return false
+                }
                 def acl = aclService.readAclById(objectIdentityRetrievalStrategy.getObjectIdentity(d))
                 return acl.owner == new PrincipalSid((Authentication) auth)
             }
-        }
-        else
+        } else {
             return false
+        }
     }
 
-    def filterRequest(){
+    def filterRequest() {
         def request = RCH.requestAttributes.currentRequest
 
-        if (!request || (request && request.filtered))
+        if (!request || (request && request.filtered)) {
             return
+        }
 
-        request.authenticated =  springSecurityService.isLoggedIn()
-        request.scrumMaster   = request.scrumMaster ?: scrumMaster(null,springSecurityService.authentication)
-        request.productOwner  = request.productOwner ?: productOwner(null,springSecurityService.authentication)
-        request.teamMember    = request.teamMember ?: teamMember(null,springSecurityService.authentication)
-        request.stakeHolder   = request.stakeHolder ?: stakeHolder(null,springSecurityService.authentication,false)
-        request.owner         = request.owner ?: owner(null,springSecurityService.authentication)
-        request.inProduct     = request.inProduct ?: request.scrumMaster ?: request.productOwner ?: request.teamMember ?: false
-        request.inTeam        = request.inTeam ?: request.scrumMaster ?: request.teamMember ?: false
-        request.admin         = request.admin ?: admin(springSecurityService.authentication) ?: false
+        request.authenticated = springSecurityService.isLoggedIn()
+        request.scrumMaster = request.scrumMaster ?: scrumMaster(null, springSecurityService.authentication)
+        request.productOwner = request.productOwner ?: productOwner(null, springSecurityService.authentication)
+        request.teamMember = request.teamMember ?: teamMember(null, springSecurityService.authentication)
+        request.stakeHolder = request.stakeHolder ?: stakeHolder(null, springSecurityService.authentication, false)
+        request.owner = request.owner ?: owner(null, springSecurityService.authentication)
+        request.inProduct = request.inProduct ?: request.scrumMaster ?: request.productOwner ?: request.teamMember ?: false
+        request.inTeam = request.inTeam ?: request.scrumMaster ?: request.teamMember ?: false
+        request.admin = request.admin ?: admin(springSecurityService.authentication) ?: false
 
-        if (request.owner && !request.inProduct && !request.admin){
+        if (request.owner && !request.inProduct && !request.admin) {
             request.stakeholder = true
         }
 
-        if ((request.inProduct || request.stakeHolder) && archivedProduct(null)){
-            request.scrumMaster     = false
-            request.productOwner    = false
-            request.teamMember      = false
-            request.inTeam          = false
-            request.inProduct       = false
-            request.owner           = false
+        if ((request.inProduct || request.stakeHolder) && archivedProduct(null)) {
+            request.scrumMaster = false
+            request.productOwner = false
+            request.teamMember = false
+            request.inTeam = false
+            request.inProduct = false
+            request.owner = false
             request.archivedProduct = true
         }
 
         request.filtered = request.filtered ?: true
     }
 
-    def getUserLastUpdated(id){
+    def getUserLastUpdated(id) {
         User.createCriteria().get {
-          eq 'id', id
+            eq 'id', id
             projections {
-               property 'lastUpdated'
+                property 'lastUpdated'
             }
-          cache true
+            cache true
         }
     }
 
-    def getProductLastUpdated(id){
+    def getProductLastUpdated(id) {
         Product.createCriteria().get {
-          eq 'id', id
+            eq 'id', id
             projections {
-               property 'lastUpdated'
+                property 'lastUpdated'
             }
-          cache true
+            cache true
         }
     }
 
