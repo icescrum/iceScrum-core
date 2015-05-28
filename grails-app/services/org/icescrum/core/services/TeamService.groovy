@@ -46,6 +46,7 @@ class TeamService {
     def grailsApplication
     def g = new org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib()
 
+    @PreAuthorize('isAuthenticated()')
     void save(Team team, List members, List scrumMasters) {
         if (!team)
             throw new RuntimeException('is.team.error.not.exist')
@@ -124,6 +125,7 @@ class TeamService {
         publishEvent(new IceScrumTeamEvent(team, this.class, u, IceScrumEvent.EVENT_CREATED))
     }
 
+    @PreAuthorize('isAuthenticated()')
     void addMember(Team team, User member) {
         if (!team.members*.id?.contains(member.id))
             team.addToMembers(member).save()
@@ -131,6 +133,7 @@ class TeamService {
         publishEvent(new IceScrumTeamEvent(team, member, this.class, (User) springSecurityService.currentUser, IceScrumTeamEvent.EVENT_MEMBER_ADDED))
     }
 
+    @PreAuthorize('isAuthenticated()')
     void addScrumMaster(Team team, User member) {
         if (!team.members*.id?.contains(member.id))
             team.addToMembers(member).save()
@@ -138,6 +141,7 @@ class TeamService {
         publishEvent(new IceScrumTeamEvent(team, member, this.class, (User) springSecurityService.currentUser, IceScrumTeamEvent.EVENT_MEMBER_ADDED))
     }
 
+    @PreAuthorize('isAuthenticated()')
     void removeMemberOrScrumMaster(Team team, User member) {
         team.removeFromMembers(member)
         if (!team.save()) {
@@ -151,6 +155,7 @@ class TeamService {
         publishEvent(new IceScrumTeamEvent(team, member, this.class, (User) springSecurityService.currentUser, IceScrumTeamEvent.EVENT_MEMBER_REMOVED))
     }
 
+    @PreAuthorize('isAuthenticated()')
     def getTeamMembersEntries(Long teamId) {
         def is = grailsApplication.mainContext.getBean('org.icescrum.core.taglib.ScrumTagLib')
         def memberEntries = []
