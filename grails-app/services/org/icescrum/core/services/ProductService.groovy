@@ -159,7 +159,7 @@ class ProductService {
         }
     }
 
-    @PreAuthorize('owner(#product) and !archivedProduct(#product)')
+    @PreAuthorize('owner(#team) and !archivedProduct(#product)')
     void addTeamToProduct(Product product, Team team) {
         product.addToTeams(team)
         team.scrumMasters?.each {
@@ -174,7 +174,7 @@ class ProductService {
         }
     }
 
-    @PreAuthorize('owner(#product) and !archivedProduct(#product)')
+    @PreAuthorize('owner(#product.firstTeam) and owner(#newTeam) and !archivedProduct(#product)')
     void changeTeam(Product product, Team newTeam) {
         // Collect members and roles
         def oldTeam = product.firstTeam
@@ -212,7 +212,7 @@ class ProductService {
         removeConflictingInvitedPOandSH(newTeam, product)
     }
 
-    @PreAuthorize('(scrumMaster(#product) or owner(#product)) and !archivedProduct(#product)')
+    @PreAuthorize('scrumMaster(#product) and !archivedProduct(#product)')
     void update(Product product, boolean hasHiddenChanged, String pkeyChanged) {
         if (!product.name?.trim()) {
             throw new IllegalStateException("is.product.error.no.name")
@@ -559,7 +559,7 @@ class ProductService {
         }
     }
 
-    @PreAuthorize('owner(#p)')
+    @PreAuthorize('owner(#p.firstTeam)')
     @Transactional
     def delete(Product p) {
         def id = p.id
@@ -578,7 +578,7 @@ class ProductService {
         broadcast(function: 'delete', message: [class: p.class, id: id], channel:'product-'+id)
     }
 
-    @PreAuthorize('owner(#p) or scrumMaster(#p)')
+    @PreAuthorize('scrumMaster(#p)')
     def archive(Product p) {
         p.preferences.archived = true
         p.lastUpdated = new Date()

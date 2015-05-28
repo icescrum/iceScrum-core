@@ -92,15 +92,6 @@ class TeamService {
         securityService.unsecureDomain(team)
     }
 
-    @PreAuthorize('owner(#team)')
-    void update(Team team) {
-        if (!team)
-            throw new IllegalStateException('Team must not be null')
-        if (!team.save()) {
-            throw new RuntimeException('is.team.error.not.saved')
-        }
-    }
-
     @PreAuthorize('isAuthenticated()')
     void saveImport(Team team) {
         if (!team)

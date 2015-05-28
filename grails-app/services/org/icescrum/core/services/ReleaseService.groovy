@@ -45,7 +45,7 @@ class ReleaseService {
     def springSecurityService
     def grailsApplication
 
-    @PreAuthorize('(productOwner(#product) or scrumMaster(#product) or owner(#product)) and !archivedProduct(#product)')
+    @PreAuthorize('(productOwner(#product) or scrumMaster(#product)) and !archivedProduct(#product)')
     void save(Release release, Product product) {
         release.parentProduct = product
         release.state = Release.STATE_WAIT
