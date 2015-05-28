@@ -476,16 +476,19 @@ class SecurityService {
             return true
         }
         def d = null
-        def parsedDomain
         def domainClass
         if (!domain) {
             def request = RCH.requestAttributes.currentRequest
             if (request.filtered) {
                 return request.owner
             } else {
-                parsedDomain = parseCurrentRequestProduct(request)
-                domain = parsedDomain
-                domainClass = grailsApplication.getDomainClass(Product.class.name).newInstance()
+                def parsedProduct = parseCurrentRequestProduct(request)
+                if (parsedProduct) {
+                    def p = Product.get(parsedProduct)
+                    d = GrailsHibernateUtil.unwrapIfProxy(p.firstTeam)
+                    domain = d.id
+                    domainClass = grailsApplication.getDomainClass(Team.class.name).newInstance()
+                }
             }
         } else {
             d = GrailsHibernateUtil.unwrapIfProxy(domain)
