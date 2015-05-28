@@ -293,12 +293,7 @@ class Product extends TimeBox implements Serializable, Attachmentable {
     }
 
     def getOwner() {
-        if (this.id) {
-            def acl = retrieveAclProduct()
-            return User.findByUsername(acl.owner.principal,[cache: true])
-        } else {
-            null
-        }
+        return (id && firstTeam) ? firstTeam.owner : null
     }
 
     List<Invitation> getInvitedStakeHolders() {

@@ -311,12 +311,6 @@ class SecurityService {
             }
             def authkey = SpringSecurityUtils.ifAnyGranted(Authority.ROLE_VISITOR) ? auth.principal : auth.principal.id + getUserLastUpdated(auth.principal.id).toString() + controllerName ?: ''
             return springcacheService.doWithCache(CACHE_STAKEHOLDER, new CacheKeyBuilder().append(onlyPrivate).append(product).append(p.lastUpdated).append(authkey).toCacheKey()) {
-                //Owner always has an access to product... (even if not in team or PO)
-                if (springSecurityService.isLoggedIn()) {
-                    if (p.owner?.id == auth.principal.id) {
-                        return true
-                    }
-                }
                 def access = stakeHolder ?: p.preferences.hidden ? aclUtilService.hasPermission(auth, GrailsHibernateUtil.unwrapIfProxy(p), SecurityService.stakeHolderPermissions) : !onlyPrivate
                 if (access && controllerName) {
                     return !(controllerName in p.preferences.stakeHolderRestrictedViews?.split(','))

@@ -24,16 +24,18 @@
 
 package org.icescrum.core.domain
 
-import org.icescrum.core.domain.security.Authority
-import org.icescrum.core.services.SecurityService
-import org.icescrum.core.domain.Invitation.InvitationType
-import org.icescrum.core.domain.preferences.TeamPreferences
-import org.icescrum.core.event.IceScrumTeamEvent
-import org.icescrum.core.event.IceScrumEvent
-import org.springframework.security.acls.domain.BasePermission
-import org.springframework.security.core.context.SecurityContextHolder as SCH
 import org.codehaus.groovy.grails.commons.ApplicationHolder
 import org.grails.plugins.springsecurity.service.acl.AclUtilService
+import org.icescrum.core.domain.Invitation.InvitationType
+import org.icescrum.core.domain.preferences.TeamPreferences
+import org.icescrum.core.domain.security.Authority
+import org.icescrum.core.event.IceScrumEvent
+import org.icescrum.core.event.IceScrumTeamEvent
+import org.icescrum.core.services.SecurityService
+import org.springframework.security.acls.domain.BasePermission
+import org.springframework.security.acls.model.Acl
+import org.springframework.security.acls.model.NotFoundException
+import org.springframework.security.core.context.SecurityContextHolder as SCH
 
 class Team implements Serializable, Comparable {
 
@@ -219,9 +221,8 @@ class Team implements Serializable, Comparable {
     }
 
     def getOwner() {
-        def aclUtilService = (AclUtilService) ApplicationHolder.application.mainContext.getBean('aclUtilService');
         if (this.id) {
-            def acl = aclUtilService.readAcl(this.getClass(), this.id)
+            def acl = retrieveAclTeam()
             return User.findByUsername(acl.owner.principal,[cache: true])
         } else {
             null
@@ -276,5 +277,23 @@ class Team implements Serializable, Comparable {
     @Override
     int compareTo(Object t) {
         return this.name?.compareTo(t.name)
+    }
+
+    private Acl retrieveAclTeam() {
+        def aclUtilService = (AclUtilService) ApplicationHolder.application.mainContext.getBean('aclUtilService')
+        def acl
+        try {
+            acl = aclUtilService.readAcl(this.getClass(), this.id)
+        } catch (NotFoundException e) {
+            if (log.debugEnabled) {
+                log.debug(e.getMessage())
+                log.debug("fixing unsecured team ... admin user will be the owner")
+            }
+            def securityService = (SecurityService) ApplicationHolder.application.mainContext.getBean('securityService')
+            securityService.secureDomain(this)
+            securityService.changeOwner(User.findById(1), this)
+            acl = aclUtilService.readAcl(this.getClass(), this.id)
+        }
+        return acl
     }
 }
