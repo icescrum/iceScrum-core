@@ -126,6 +126,35 @@ class Team implements Serializable, Comparable {
                         AND t.name LIKE :term""", [sid: user, term: term], params ?: [:])
     }
 
+    private static findAllBySM(String user, params, String term = '%%') {
+        executeQuery("""SELECT t
+                        FROM org.icescrum.core.domain.Team as t,
+                             org.codehaus.groovy.grails.plugins.springsecurity.acl.AclClass as ac,
+                             org.codehaus.groovy.grails.plugins.springsecurity.acl.AclObjectIdentity as ai,
+                             org.codehaus.groovy.grails.plugins.springsecurity.acl.AclSid as acl,
+                             org.codehaus.groovy.grails.plugins.springsecurity.acl.AclEntry as ae
+                        WHERE ac.className = 'org.icescrum.core.domain.Team'
+                        AND ai.aclClass = ac.id
+                        AND acl.sid = :sid
+                        AND acl.id = ae.sid.id
+                        AND ae.mask = :smMask
+                        AND ai.id = ae.aclObjectIdentity.id
+                        AND t.id = ai.objectId
+                        AND t.name LIKE :term""", [sid: user, term: term, smMask: BasePermission.WRITE.mask], params ?: [:])
+    }
+
+    static List<Team> findAllByOwnerOrSM(String user, params, String term = '%%') {
+        // Union of queries is not allowed in HQL so we do it manually
+        def smTeams = findAllByOwner(user, params, term)
+        def ownerTeams = findAllBySM(user, params, term)
+        def teams = smTeams + ownerTeams
+        return teams.unique { it.id }
+    }
+
+    static Integer countByOwnerOrSM(String user, params, String term = '%%') {
+        return findAllByOwnerOrSM(user, params, term).size()
+    }
+
     static Integer countActiveProductsByTeamOwner(String username, params) {
         executeQuery("""SELECT COUNT(DISTINCT p.id)
                         FROM org.icescrum.core.domain.Product p,
@@ -154,23 +183,6 @@ class Team implements Serializable, Comparable {
                         AND acl.id = ai.owner
                         AND t.id = ai.objectId
                         AND t.name LIKE :term""", [sid: user, term: term], params ?: [:])
-    }
-
-    static findAllByRole(String user, List<BasePermission> permission, params) {
-        executeQuery("SELECT DISTINCT t "+
-                        "From org.icescrum.core.domain.Team as t, "+
-                        "org.codehaus.groovy.grails.plugins.springsecurity.acl.AclClass as ac, "+
-                        "org.codehaus.groovy.grails.plugins.springsecurity.acl.AclObjectIdentity as ai, "+
-                        "org.codehaus.groovy.grails.plugins.springsecurity.acl.AclSid as acl, "+
-                        "org.codehaus.groovy.grails.plugins.springsecurity.acl.AclEntry as ae "+
-                        "where "+
-                        "ac.className = 'org.icescrum.core.domain.Team' "+
-                        "AND ai.aclClass = ac.id "+
-                        "AND acl.sid = :sid "+
-                        "AND acl.id = ae.sid.id "+
-                        "AND ae.mask IN(:p) "+
-                        "AND ai.id = ae.aclObjectIdentity.id "+
-                        "AND t.id = ai.objectId", [sid: user, p:permission*.mask ], params ?: [:])
     }
 
     //Not working on ORACLE
