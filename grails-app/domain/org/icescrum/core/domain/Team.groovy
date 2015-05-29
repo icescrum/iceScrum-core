@@ -145,8 +145,8 @@ class Team implements Serializable, Comparable {
 
     static List<Team> findAllByOwnerOrSM(String user, params, String term = '%%') {
         // Union of queries is not allowed in HQL so we do it manually
-        def smTeams = findAllByOwner(user, params, term)
-        def ownerTeams = findAllBySM(user, params, term)
+        def ownerTeams = findAllByOwner(user, params, term)
+        def smTeams = findAllBySM(user, params, term)
         def teams = smTeams + ownerTeams
         return teams.unique { it.id }
     }
