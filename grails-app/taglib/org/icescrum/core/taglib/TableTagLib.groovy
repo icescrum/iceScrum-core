@@ -29,7 +29,7 @@ class TableTagLib {
     static namespace = 'is'
 
     def tableView = {attrs, body ->
-        out << "<div class=\"view-table\">"
+        out << "<div class=\"view-table\" ${attrs.style ? ' style="'+attrs.style+'" ' : ''}>"
         out << body()
         out << "</div>"
     }
