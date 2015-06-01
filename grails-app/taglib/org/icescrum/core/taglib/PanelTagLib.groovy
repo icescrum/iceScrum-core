@@ -22,6 +22,7 @@
 
 package org.icescrum.core.taglib
 
+import grails.converters.JSON
 import org.icescrum.components.UtilsWebComponents
 
 class PanelTagLib {
@@ -91,6 +92,8 @@ class PanelTagLib {
         assert attrs.controller
         assert attrs.action
 
+        def disableNext = attrs.disableNext ?: []
+
         out << "<form action='' id='${attrs.id}' method='post' class='box-form box-form-250 box-form-200-legend'>"
         out << body()
         out << "</form>"
@@ -105,6 +108,7 @@ class PanelTagLib {
                 params: "jQuery('#${attrs.id}').serialize()"
         )
         def jqCode = """\$('#${attrs.id}').isWizard({
+                                    disableNext:${disableNext as JSON},
                                     submitButton:'${message(code: attrs.submit)}',
                                     nextButton:'${message(code: attrs.next)}',
                                     previousButton:'${message(code: attrs.previous)}',
