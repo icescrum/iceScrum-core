@@ -31,7 +31,6 @@ import org.icescrum.core.domain.Invitation.InvitationType
 import org.icescrum.core.domain.Product
 import org.icescrum.core.domain.Team
 import org.icescrum.core.domain.User
-import org.icescrum.core.domain.security.Authority
 import org.springframework.security.access.prepost.PreAuthorize
 
 import org.icescrum.core.domain.preferences.UserPreferences
@@ -44,10 +43,6 @@ import org.icescrum.core.event.IceScrumEvent
 import org.icescrum.core.event.IceScrumUserEvent
 import org.icescrum.core.support.ApplicationSupport
 
-/**
- * The UserService class monitor the operations on the User domain requested by the web layer.
- * It acts as a "Facade" between the UI and the domain operations
- */
 class UserService {
 
     def grailsApplication
@@ -73,7 +68,22 @@ class UserService {
             invitations.each { invitation ->
                 // TODO check if it is necessary to use admin permissions
                 SpringSecurityUtils.doWithAuth('admin') {
-                    productService.addRole(invitation.product, invitation.team, _user, invitation.futureRole)
+                    if (InvitationType.PRODUCT) {
+                        Product product = invitation.product
+                        def oldMembers = productService.getAllMembersProductByRole(product)
+                        productService.addRole(product, _user, invitation.futureRole)
+                        productService.manageProductEvents(product, oldMembers)
+                    } else {
+                        Team team = invitation.team
+                        def oldMembersByProduct = [:]
+                        team.products.each { Product product ->
+                            oldMembersByProduct[product.id] = productService.getAllMembersProductByRole(product)
+                        }
+                        productService.addRole(team, _user, invitation.futureRole)
+                        oldMembersByProduct.each { Long productId, Map oldMembers ->
+                            productService.manageProductEvents(Product.get(productId), oldMembers)
+                        }
+                    }
                     invitation.delete()
                 }
             }
