@@ -68,7 +68,7 @@ class UserService {
             invitations.each { invitation ->
                 // TODO check if it is necessary to use admin permissions
                 SpringSecurityUtils.doWithAuth('admin') {
-                    if (InvitationType.PRODUCT) {
+                    if (invitation.type == InvitationType.PRODUCT) {
                         Product product = invitation.product
                         def oldMembers = productService.getAllMembersProductByRole(product)
                         productService.addRole(product, _user, invitation.futureRole)
