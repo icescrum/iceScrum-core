@@ -88,7 +88,7 @@ class Team implements Serializable, Comparable {
                         "WHERE t.id not in " +
                         "(SELECT DISTINCT t2.id FROM org.icescrum.core.domain.Team as t2 " +
                         "INNER JOIN t2.members as m " +
-                        "WHERE m.id = :u) AND lower(t.name) like :term " +
+                        "WHERE m.id = :u) AND lower(t.name) like lower(:term) " +
                         "AND t.preferences.allowNewMembers = :allow ", [allow: true, term: "%$term%", u: id], params ?: [:])
     }
 
@@ -123,7 +123,7 @@ class Team implements Serializable, Comparable {
                         AND ai.owner.sid = :sid
                         AND acl.id = ai.owner
                         AND t.id = ai.objectId
-                        AND t.name LIKE :term""", [sid: user, term: term], params ?: [:])
+                        AND lower(t.name) LIKE lower(:term)""", [sid: user, term: term], params ?: [:])
     }
 
     private static findAllBySM(String user, params, String term = '%%') {
@@ -140,7 +140,7 @@ class Team implements Serializable, Comparable {
                         AND ae.mask = :smMask
                         AND ai.id = ae.aclObjectIdentity.id
                         AND t.id = ai.objectId
-                        AND t.name LIKE :term""", [sid: user, term: term, smMask: BasePermission.WRITE.mask], params ?: [:])
+                        AND lower(t.name) LIKE lower(:term)""", [sid: user, term: term, smMask: BasePermission.WRITE.mask], params ?: [:])
     }
 
     static List<Team> findAllByOwnerOrSM(String user, params, String term = '%%') {
@@ -182,7 +182,7 @@ class Team implements Serializable, Comparable {
                         AND ai.owner.sid = :sid
                         AND acl.id = ai.owner
                         AND t.id = ai.objectId
-                        AND t.name LIKE :term""", [sid: user, term: term], params ?: [:])
+                        AND lower(t.name) LIKE lower(:term)""", [sid: user, term: term], params ?: [:])
     }
 
     //Not working on ORACLE

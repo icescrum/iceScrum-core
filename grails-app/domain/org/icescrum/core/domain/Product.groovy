@@ -204,8 +204,8 @@ class Product extends TimeBox implements Serializable, Attachmentable {
         executeQuery("SELECT p FROM org.icescrum.core.domain.Product as p WHERE p.id IN (SELECT DISTINCT p.id "+
                         "From org.icescrum.core.domain.Product as p "+
                         "where "+
-                        " ( p.name LIKE :term AND p.preferences.hidden = false ) " +
-                        "OR ( p.name LIKE :term AND p.id IN "+
+                        " ( lower(p.name) LIKE lower(:term) AND p.preferences.hidden = false ) " +
+                        "OR ( lower(p.name) LIKE lower(:term) AND p.id IN "+
                         "(SELECT DISTINCT p.id " +
                         "FROM org.icescrum.core.domain.Product as p INNER JOIN p.teams as t " +
                         "WHERE t.id in " +
@@ -234,14 +234,14 @@ class Product extends TimeBox implements Serializable, Attachmentable {
                         "From org.icescrum.core.domain.Product as p "+
                         "where "+
                         " ( p.name LIKE :term AND p.preferences.hidden = false ) " +
-                        "OR ( p.name LIKE :term AND p.id IN "+
+                        "OR ( lower(p.name) LIKE lower(:term) AND p.id IN "+
                         "(SELECT DISTINCT p.id " +
                         "FROM org.icescrum.core.domain.Product as p INNER JOIN p.teams as t " +
                         "WHERE t.id in " +
                         "(SELECT DISTINCT t2.id FROM org.icescrum.core.domain.Team as t2 " +
                         "INNER JOIN t2.members as m " +
                         "WHERE m.id = :uid) ) )" +
-                        "or ( p.name LIKE :term AND p.id IN ( SELECT DISTINCT p.id "+
+                        "or ( lower(p.name) LIKE lower(:term) AND p.id IN ( SELECT DISTINCT p.id "+
                         "From org.icescrum.core.domain.Product as p, "+
                         "org.codehaus.groovy.grails.plugins.springsecurity.acl.AclClass as ac, "+
                         "org.codehaus.groovy.grails.plugins.springsecurity.acl.AclObjectIdentity as ai, "+
