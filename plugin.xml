@@ -5,7 +5,7 @@
   <description>
     iceScrum core plugin (include domain / services / taglib)
 </description>
-  <documentation>http://www.icescrum.org/plugin/icescrum-core</documentation>
+  <documentation>https://www.icescrum.com/plugin/icescrum-core</documentation>
   <resources>
     <resource>BuildConfig</resource>
     <resource>DefaultIceScrumCoreConfig</resource>

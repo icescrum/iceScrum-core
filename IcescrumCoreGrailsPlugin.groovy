@@ -124,7 +124,7 @@ class IcescrumCoreGrailsPlugin {
 '''
 
     // URL to the plugin's documentation
-    def documentation = "http://www.icescrum.org/plugin/icescrum-core"
+    def documentation = "https://www.icescrum.com/plugin/icescrum-core"
 
     def doWithWebDescriptor = { xml ->
         mergeConfig(application)
