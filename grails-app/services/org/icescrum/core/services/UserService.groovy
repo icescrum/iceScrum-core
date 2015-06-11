@@ -31,6 +31,8 @@ import org.icescrum.core.domain.Invitation.InvitationType
 import org.icescrum.core.domain.Product
 import org.icescrum.core.domain.Team
 import org.icescrum.core.domain.User
+import org.icescrum.core.domain.security.Authority
+import org.icescrum.core.domain.security.UserAuthority
 import org.springframework.security.access.prepost.PreAuthorize
 
 import org.icescrum.core.domain.preferences.UserPreferences
@@ -66,8 +68,8 @@ class UserService {
         if (token && ApplicationSupport.booleanValue(grailsApplication.config.icescrum.invitation.enable)) {
             def invitations = Invitation.findAllByToken(token)
             invitations.each { invitation ->
-                // TODO check if it is necessary to use admin permissions
-                SpringSecurityUtils.doWithAuth('admin') {
+                def userAdmin = UserAuthority.findByAuthority(Authority.findByAuthority(Authority.ROLE_ADMIN)).user
+                SpringSecurityUtils.doWithAuth(userAdmin ? userAdmin.username : 'admin') {
                     if (invitation.type == InvitationType.PRODUCT) {
                         Product product = invitation.product
                         def oldMembers = productService.getAllMembersProductByRole(product)
