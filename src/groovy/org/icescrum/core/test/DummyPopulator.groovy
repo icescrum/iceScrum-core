@@ -104,17 +104,18 @@ class DummyPopulator {
             p.preferences = new ProductPreferences()
             p.preferences.webservices = true
             p.save()
-
             securityService.secureDomain(p)
 
-
-            def team = new Team(name: 'testProj Team', preferences: new TeamPreferences()).addToProducts(p).addToMembers(ua).addToMembers(uz)
+            sessionFactory.currentSession.flush() // required because Team beforeInsert can trigger stackoverflow it attempts to flush the session
+            def team = new Team(name: 'testProj Team', preferences: new TeamPreferences())
             team.save()
+            team.addToProducts(p).addToMembers(ua).addToMembers(uz)
             securityService.secureDomain(team)
 
-
-            def team3 = new Team(name: 'empty Team3', preferences: new TeamPreferences()).addToMembers(ux)
+            sessionFactory.currentSession.flush() // required because Team beforeInsert can trigger stackoverflow it attempts to flush the session
+            def team3 = new Team(name: 'empty Team3', preferences: new TeamPreferences())
             team3.save()
+            team3.addToMembers(ux)
             securityService.secureDomain(team3)
 
             securityService.createTeamMemberPermissions(ux, team3)
