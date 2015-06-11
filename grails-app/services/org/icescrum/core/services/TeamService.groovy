@@ -37,6 +37,7 @@ import org.icescrum.core.support.ProgressSupport
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.transaction.annotation.Transactional
 
+@Transactional
 class TeamService {
 
     static transactional = true
@@ -84,8 +85,9 @@ class TeamService {
         if (team.products) {
             throw new RuntimeException('is.team.error.delete.has.products')
         }
-        team.members.each { User member ->
-            removeMemberOrScrumMaster(team, member)
+        def teamMembersIds = team.members*.id
+        teamMembersIds.each { Long id ->
+            removeMemberOrScrumMaster(team, User.get(id))
         }
         team.invitedMembers*.delete()
         team.invitedScrumMasters*.delete()
