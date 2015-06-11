@@ -67,9 +67,9 @@ class UserService {
 
         if (token && ApplicationSupport.booleanValue(grailsApplication.config.icescrum.invitation.enable)) {
             def invitations = Invitation.findAllByToken(token)
-            invitations.each { invitation ->
-                def userAdmin = UserAuthority.findByAuthority(Authority.findByAuthority(Authority.ROLE_ADMIN)).user
-                SpringSecurityUtils.doWithAuth(userAdmin ? userAdmin.username : 'admin') {
+            def userAdmin = UserAuthority.findByAuthority(Authority.findByAuthority(Authority.ROLE_ADMIN)).user
+            SpringSecurityUtils.doWithAuth(userAdmin ? userAdmin.username : 'admin') {
+                invitations.each { invitation ->
                     if (invitation.type == InvitationType.PRODUCT) {
                         Product product = invitation.product
                         def oldMembers = productService.getAllMembersProductByRole(product)
