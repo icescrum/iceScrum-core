@@ -44,19 +44,12 @@ import org.springframework.security.acls.model.*
 
 class SecurityService {
 
-    static transactional = true
-
     def aclUtilService
     def objectIdentityRetrievalStrategy
     def springSecurityService
     def grailsUrlMappingsHolder
     def grailsApplication
     def aclService
-
-    static final String TEAM_ATTR = 'team_id'
-    static final String TEAM_URL_ATTR = 'team'
-    static final String PRODUCT_ATTR = 'product_id'
-    static final String PRODUCT_URL_ATTR = 'product'
 
     static final productOwnerPermissions = [BasePermission.WRITE]
     static final stakeHolderPermissions = [BasePermission.READ]
@@ -65,15 +58,6 @@ class SecurityService {
 
     Acl secureDomain(o) {
         createAcl objectIdentityRetrievalStrategy.getObjectIdentity(o)
-    }
-
-
-    Acl secureDomain(o, parent) {
-        createAcl objectIdentityRetrievalStrategy.getObjectIdentity(o), aclService.retrieveObjectIdentity(objectIdentityRetrievalStrategy.getObjectIdentity(parent))
-    }
-
-    Acl secureDomainByProduct(o, Product product) {
-        createAcl objectIdentityRetrievalStrategy.getObjectIdentity(o), aclService.retrieveObjectIdentity(objectIdentityRetrievalStrategy.getObjectIdentity(product))
     }
 
     void unsecureDomain(o) {
@@ -106,12 +90,6 @@ class SecurityService {
 
     void deleteTeamMemberPermissions(User u, Team t) {
         aclUtilService.deletePermission GrailsHibernateUtil.unwrapIfProxy(t), u.username, READ
-        u.lastUpdated = new Date()
-        u.save()
-    }
-
-    void createAdministrationPermissionsForProduct(User u, Product p) {
-        aclUtilService.addPermission GrailsHibernateUtil.unwrapIfProxy(p), u.username, ADMINISTRATION
         u.lastUpdated = new Date()
         u.save()
     }
@@ -238,18 +216,16 @@ class SecurityService {
             } else {
                 def parsedProduct = parseCurrentRequestProduct(request)
                 if (parsedProduct) {
-                    if (SpringSecurityUtils.ifAnyGranted(Authority.ROLE_ADMIN)) {
-                        return true
-                    }
-                    t = openProductTeam(parsedProduct, springSecurityService.principal.id)
-                    team = t?.id
+                    def p = Product.get(parsedProduct)
+                    t = GrailsHibernateUtil.unwrapIfProxy(p.firstTeam)
+                    team = t.id
                 }
             }
         } else if (team in Team) {
             t = GrailsHibernateUtil.unwrapIfProxy(team)
             team = t.id
         }
-        return isScrumMaster(team, auth, t)
+        return isScrumMaster(team, auth, t) || isOwner(team, auth, grailsApplication.getDomainClass(Team.class.name).newInstance(), t)
     }
 
     boolean isScrumMaster(team, auth, t = null) {
@@ -272,15 +248,12 @@ class SecurityService {
         }
     }
 
-
     boolean stakeHolder(product, auth, onlyPrivate, controllerName = null) {
-
-        if (!springSecurityService.isLoggedIn() && onlyPrivate)
+        if (!springSecurityService.isLoggedIn() && onlyPrivate) {
             return false
-
+        }
         def p = null
         def stakeHolder = false
-
         if (!product) {
             def request = RCH.requestAttributes.currentRequest
             if (request.filtered && !controllerName) {
@@ -295,7 +268,6 @@ class SecurityService {
             p = GrailsHibernateUtil.unwrapIfProxy(product)
             product = product.id
         }
-
         if (product) {
             if (!p) {
                 p = Product.get(product)
@@ -306,13 +278,7 @@ class SecurityService {
             if (SpringSecurityUtils.ifAnyGranted(Authority.ROLE_ADMIN)) {
                 return true
             }
-
-            def authkey = SpringSecurityUtils.ifAnyGranted(Authority.ROLE_VISITOR) ? auth.principal : auth.principal.id + getUserLastUpdated(auth.principal.id).toString() + controllerName ?: ''
             def computeResult = {
-                //Owner always has an access to product... (even if not in team or PO)
-                if (springSecurityService.isLoggedIn()) {
-                    if (p.owner?.id == auth.principal.id) return true
-                }
                 def access = stakeHolder ?: p.preferences.hidden ? aclUtilService.hasPermission(auth, GrailsHibernateUtil.unwrapIfProxy(p), SecurityService.stakeHolderPermissions) : !onlyPrivate
                 if (access && controllerName) {
                     return !(controllerName in p.preferences.stakeHolderRestrictedViews?.split(','))
@@ -333,7 +299,7 @@ class SecurityService {
         def p = null
         if (!product) {
             def request = RCH.requestAttributes.currentRequest
-            if (request.filtered){
+            if (request.filtered) {
                 return request.productOwner
             } else {
                 product = parseCurrentRequestProduct(request)
@@ -342,7 +308,19 @@ class SecurityService {
             p = GrailsHibernateUtil.unwrapIfProxy(product)
             product = product.id
         }
-        isProductOwner(product, auth, p)
+        def isPo = isProductOwner(product, auth, p)
+        if (isPo) {
+            return true
+        } else if (product) {
+            if (!p) {
+                p = Product.get(product)
+            }
+            Team t = GrailsHibernateUtil.unwrapIfProxy(p.firstTeam)
+            long team = t.id
+            return isOwner(team, auth, grailsApplication.getDomainClass(Team.class.name).newInstance(), t)
+        } else {
+            return false
+        }
     }
 
     boolean admin(auth) {
@@ -376,9 +354,7 @@ class SecurityService {
         if (!springSecurityService.isLoggedIn()) {
             return false
         }
-
         def t
-
         if (!team) {
             def request = RCH.requestAttributes.currentRequest
             if (request.filtered) {
@@ -397,7 +373,6 @@ class SecurityService {
             t = GrailsHibernateUtil.unwrapIfProxy(team)
             team = team.id
         }
-
         if (team) {
             if (SpringSecurityUtils.ifAnyGranted(Authority.ROLE_ADMIN)) {
                 return true
@@ -422,16 +397,16 @@ class SecurityService {
     }
 
     Long parseCurrentRequestProduct(request) {
-        def res = request[PRODUCT_ATTR]
+        def res = request['product_id']
         if (!res) {
-            def param = request.getParameter(PRODUCT_URL_ATTR)
+            def param = request.getParameter('product')
             if (!param) {
                 def mappingInfo = grailsUrlMappingsHolder.match(request.forwardURI.replaceFirst(request.contextPath, ''))
-                res = mappingInfo?.parameters?.getAt(PRODUCT_URL_ATTR)?.decodeProductKey()?.toLong()
+                res = mappingInfo?.parameters?.getAt('product')?.decodeProductKey()?.toLong()
             } else {
                 res = param?.decodeProductKey()?.toLong()
             }
-            request[PRODUCT_ATTR] = res
+            request['product_id'] = res
         }
         return res
     }
@@ -467,19 +442,20 @@ class SecurityService {
         if (SpringSecurityUtils.ifAnyGranted(Authority.ROLE_ADMIN)) {
             return true
         }
-
         def d = null
-        def parsedDomain
         def domainClass
-
         if (!domain) {
             def request = RCH.requestAttributes.currentRequest
             if (request.filtered) {
                 return request.owner
             } else {
-                parsedDomain = parseCurrentRequestProduct(request)
-                domain = parsedDomain
-                domainClass = grailsApplication.getDomainClass(Product.class.name).newInstance()
+                def parsedProduct = parseCurrentRequestProduct(request)
+                if (parsedProduct) {
+                    def p = Product.get(parsedProduct)
+                    d = GrailsHibernateUtil.unwrapIfProxy(p.firstTeam)
+                    domain = d.id
+                    domainClass = grailsApplication.getDomainClass(Team.class.name).newInstance()
+                }
             }
         } else {
             d = GrailsHibernateUtil.unwrapIfProxy(domain)
@@ -489,7 +465,7 @@ class SecurityService {
             }
             domain = d.id
         }
-        isOwner(domain, auth, domainClass, d)
+        return isOwner(domain, auth, domainClass, d)
     }
 
     boolean isOwner(domain, auth, domainClass, d = null) {
@@ -512,11 +488,9 @@ class SecurityService {
 
     def filterRequest() {
         def request = RCH.requestAttributes.currentRequest
-
         if (!request || (request && request.filtered)) {
             return
         }
-
         request.scrumMaster = request.scrumMaster ?: scrumMaster(null, springSecurityService.authentication)
         request.productOwner = request.productOwner ?: productOwner(null, springSecurityService.authentication)
         request.teamMember = request.teamMember ?: teamMember(null, springSecurityService.authentication)
@@ -525,11 +499,9 @@ class SecurityService {
         request.inProduct = request.inProduct ?: request.scrumMaster ?: request.productOwner ?: request.teamMember ?: false
         request.inTeam = request.inTeam ?: request.scrumMaster ?: request.teamMember ?: false
         request.admin = request.admin ?: admin(springSecurityService.authentication) ?: false
-
         if (request.owner && !request.inProduct && !request.admin) {
             request.stakeholder = true
         }
-
         if ((request.inProduct || request.stakeHolder) && archivedProduct(null)) {
             request.scrumMaster = false
             request.productOwner = false
@@ -539,28 +511,6 @@ class SecurityService {
             request.owner = false
             request.archivedProduct = true
         }
-
         request.filtered = request.filtered ?: true
     }
-
-    def getUserLastUpdated(id) {
-        User.createCriteria().get {
-            eq 'id', id
-            projections {
-                property 'lastUpdated'
-            }
-            cache true
-        }
-    }
-
-    def getProductLastUpdated(id) {
-        Product.createCriteria().get {
-            eq 'id', id
-            projections {
-                property 'lastUpdated'
-            }
-            cache true
-        }
-    }
-
 }
