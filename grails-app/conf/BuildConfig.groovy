@@ -27,7 +27,9 @@ grails.project.test.reports.dir = "target/test-reports"
 grails.project.dependency.resolver = "maven"
 
 grails.project.dependency.resolution = {
-    inherits("global") {}
+    inherits("global") {
+        // excludes 'ehcache' // WARNING THIS IS REQUIRED TO WORK WITH GRAILS 2.5.0
+    }
     log "warn"
     repositories {
         grailsPlugins()
@@ -38,6 +40,7 @@ grails.project.dependency.resolution = {
         mavenRepo "https://oss.sonatype.org/content/repositories/snapshots/"
         mavenRepo "http://repo.icescrum.org/artifactory/plugins-release/"
         mavenRepo "http://repo.icescrum.org/artifactory/plugins-snapshot/"
+        mavenRepo "http://jaspersoft.artifactoryonline.com/jaspersoft/third-party-ce-artifacts/" // Because Jasper depends on olap4j which is not available anymore the repositories
     }
     dependencies {
         compile 'org.atmosphere:atmosphere-runtime:2.2.6', {
