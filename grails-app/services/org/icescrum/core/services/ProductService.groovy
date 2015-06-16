@@ -113,13 +113,6 @@ class ProductService {
             }
             securityService.secureDomain(product)
 
-            product.teams.each{
-               it.scrumMasters?.each{ u ->
-                   u = User.get(u.id)
-                   securityService.createAdministrationPermissionsForProduct(u,product)
-               }
-            }
-
             if (productOwners) {
                 productOwners?.eachWithIndex {it, index ->
                     it = User.get(it.id)
@@ -152,9 +145,6 @@ class ProductService {
         for (team in Team.getAll(teamIds*.toLong())) {
             if (team){
                 product.addToTeams(team)
-                team.scrumMasters?.each{
-                    securityService.createAdministrationPermissionsForProduct(it, product)
-                }
                 team.members?.each{
                     broadcastToSingleUser(user:it.username, function:'addRoleProduct', message:[class:'User',product:product])
                 }
