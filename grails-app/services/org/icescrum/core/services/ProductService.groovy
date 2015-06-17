@@ -656,8 +656,7 @@ class ProductService {
                 usersByRole[productOwner] = Authority.PRODUCTOWNER
             }
         }
-        product.stakeHolders?.each {
-            User stakeHolder
+        product.stakeHolders?.each { User stakeHolder ->
             usersByRole[stakeHolder] = Authority.STAKEHOLDER
         }
         return usersByRole
