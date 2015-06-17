@@ -94,7 +94,7 @@ class PanelTagLib {
 
         def disableNext = attrs.disableNext ?: []
 
-        out << "<form action='' id='${attrs.id}' method='post' class='box-form box-form-250 box-form-200-legend'>"
+        out << "<form action='' id='${attrs.id}' method='post' class='box-form box-form-250 box-form-200-legend ${attrs.class ?: ''}'>"
         out << body()
         out << "</form>"
 
