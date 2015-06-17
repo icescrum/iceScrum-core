@@ -547,6 +547,7 @@ class SecurityService {
             request.inProduct = false
             request.owner = false
             request.archivedProduct = true
+            request.stakeHolder = true // force true for case where project is private
         }
 
         request.filtered = request.filtered ?: true
