@@ -27,6 +27,7 @@ import org.icescrum.core.domain.Sprint
 import org.icescrum.core.domain.Task
 import org.icescrum.core.event.IceScrumEventType
 import org.icescrum.core.event.IceScrumListener
+import org.icescrum.core.utils.BundleUtils
 import org.icescrum.core.domain.Story
 import org.grails.comments.Comment
 import org.icescrum.core.domain.BacklogElement
@@ -264,13 +265,16 @@ class NotificationEmailService {
     }
 
     void sendInvitation(Invitation invitation, User inviter) {
-        def link =  grailsApplication.config.grails.serverURL + '/#/user/register/' + invitation.token
+        def link = grailsApplication.config.grails.serverURL + '/#/user/register/' + invitation.token
+        def isProjectInvitation = invitation.type == Invitation.InvitationType.PRODUCT
+        def invitedIn = isProjectInvitation ? invitation.product.name.encodeAsHTML() : invitation.team.name.encodeAsHTML()
         def locale = inviter.locale
+        def role = getMessage(BundleUtils.roles[invitation.futureRole], locale)
         send([
                 to: invitation.email,
                 subject: grailsApplication.config.icescrum.alerts.subject_prefix + getMessage('is.template.email.user.invitation.subject', locale),
                 view: "/emails-templates/invitation",
-                model: [inviter: inviter, locale: locale, link: link]
+                model: [inviter: inviter, locale: locale, link: link, isProjectInvitation: isProjectInvitation, invitedIn: invitedIn, role: role]
         ])
         if (log.debugEnabled) {
             log.debug "Send invitation to: $invitation.email"
