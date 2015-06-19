@@ -38,8 +38,6 @@ import org.icescrum.core.support.ApplicationSupport
 import grails.plugin.springsecurity.SpringSecurityUtils
 import org.icescrum.core.domain.preferences.UserPreferences
 
-import org.icescrum.core.event.IceScrumUserEvent
-
 @Transactional
 class ProductService {
 
@@ -48,26 +46,27 @@ class ProductService {
     def teamService
     def actorService
     def grailsApplication
+    def notificationEmailService
 
     @PreAuthorize('isAuthenticated()')
     void save(Product product, productOwners, stakeHolders) {
-
         product.orderNumber = (Product.count() ?: 0) + 1
-
-        if (!product.save(flush: true))
+        if (!product.save(flush: true)) {
             throw new RuntimeException()
+        }
         securityService.secureDomain(product)
-
         if (productOwners){
             for(productOwner in User.getAll(productOwners*.toLong())){
-                if (productOwner)
-                    addRole(product, null, productOwner, Authority.PRODUCTOWNER)
+                if (productOwner) {
+                    addRole(product, productOwner, Authority.PRODUCTOWNER)
+                }
             }
         }
-        if (stakeHolders){
+        if (stakeHolders && product.preferences.hidden){
             for(stakeHolder in User.getAll(stakeHolders*.toLong())){
-                if (stakeHolder)
-                    addRole(product, null, stakeHolder, Authority.STAKEHOLDER)
+                if (stakeHolder) {
+                    addRole(product, stakeHolder, Authority.STAKEHOLDER)
+                }
             }
         }
         publishEvent(new IceScrumProductEvent(product, this.class, (User)springSecurityService.currentUser, IceScrumEvent.EVENT_CREATED))
@@ -137,26 +136,30 @@ class ProductService {
         }
     }
 
-    @PreAuthorize('owner(#product) and !archivedProduct(#product)')
-    void addTeamsToProduct(Product product, teamIds) {
-         if (!teamIds)
-            throw new IllegalStateException('Product must have at least one team')
-
-        for (team in Team.getAll(teamIds*.toLong())) {
-            if (team){
-                product.addToTeams(team)
-                team.members?.each{
-                    broadcastToSingleUser(user:it.username, function:'addRoleProduct', message:[class:'User',product:product])
-                }
-            }
-            publishEvent(new IceScrumProductEvent(product, team, this.class, (User) springSecurityService.currentUser, IceScrumProductEvent.EVENT_TEAM_ADDED))
-        }
-
-        if (!product.save())
+    @PreAuthorize('owner(#team) and !archivedProduct(#product)')
+    void addTeamToProduct(Product product, Team team) {
+        product.addToTeams(team)
+        publishEvent(new IceScrumProductEvent(product, team, this.class, (User) springSecurityService.currentUser, IceScrumProductEvent.EVENT_TEAM_ADDED))
+        if (!product.save()) {
             throw new IllegalStateException('Product not saved')
+        }
     }
 
-    @PreAuthorize('(scrumMaster(#product) or owner(#product)) and !archivedProduct(#product)')
+    @PreAuthorize('owner(#product.firstTeam) and owner(#newTeam) and !archivedProduct(#product)')
+    void changeTeam(Product product, Team newTeam) {
+        def oldTeam = product.firstTeam
+        // Switch team
+        product.removeFromTeams(oldTeam)
+        product.addToTeams(newTeam)
+        // Remove conflicting POs and SHs
+        removeConflictingPOandSH(newTeam, product)
+        removeConflictingInvitedPOandSH(newTeam, product)
+        // Broadcasts and events
+        publishEvent(new IceScrumProductEvent(product, oldTeam, this.class, (User) springSecurityService.currentUser, IceScrumProductEvent.EVENT_TEAM_REMOVED))
+        publishEvent(new IceScrumProductEvent(product, newTeam, this.class, (User) springSecurityService.currentUser, IceScrumProductEvent.EVENT_TEAM_ADDED))
+    }
+
+    @PreAuthorize('scrumMaster(#product) and !archivedProduct(#product)')
     void update(Product product, boolean hasHiddenChanged, String pkeyChanged) {
         if (!product.name?.trim()) {
             throw new IllegalStateException("is.product.error.no.name")
@@ -559,10 +562,12 @@ class ProductService {
         }
     }
 
-    @PreAuthorize('owner(#p)')
+    @PreAuthorize('owner(#p.firstTeam)')
     def delete(Product p) {
         def id = p.id
         p.allUsers.each{ it.preferences.removeEmailsSettings(p.pkey) } // must be before unsecure to have POs
+        p.invitedStakeHolders*.delete()
+        p.invitedProductOwners*.delete()
         securityService.unsecureDomain p
         UserPreferences.findAllByLastProductOpened(p.pkey)?.each {
             it.lastProductOpened = null
@@ -575,7 +580,7 @@ class ProductService {
         broadcast(function: 'delete', message: [class: p.class, id: id], channel:'product-'+id)
     }
 
-    @PreAuthorize('owner(#p) or scrumMaster(#p)')
+    @PreAuthorize('scrumMaster(#p)')
     def archive(Product p) {
         p.preferences.archived = true
         p.lastUpdated = new Date()
@@ -595,117 +600,27 @@ class ProductService {
         broadcast(function: 'unarchive', message: p, channel:'product-'+p.id)
     }
 
-    void removeAllRoles(Product product, Team team, User user, boolean broadcast = true, boolean raiseEvent = true) {
-        if (team){
-            teamService.removeMemberOrScrumMaster(team,user)
-        }
-        if (product){
-            removeProductOwner(product,user)
-            removeStakeHolder(product,user)
-        }else{
-            team.products*.each{
-                removeProductOwner(it,user)
-                removeStakeHolder(it,user)
-            }
-        }
-        // Remove email settings only if it's not a role update (remove -> add)
-        if (broadcast || raiseEvent) {
-            if (product) {
-                user.preferences.removeEmailsSettings(product.pkey)
-            } else {
-                team?.products?.each {
-                    user.preferences.removeEmailsSettings(it.pkey)
-                }
-            }
-        }
-        if (broadcast){
-            if (product){
-                broadcastToSingleUser(user:user.username, function:'removeRoleProduct', message:[class:'User',product:product])
-            }else{
-                team.products?.each{
-                    broadcastToSingleUser(user:user.username, function:'removeRoleProduct', message:[class:'User',product:it])
-                }
-            }
-        }
-        if(raiseEvent) {
-            if (product){
-                publishEvent(new IceScrumUserEvent(user, product, this.class, (User) springSecurityService.currentUser, IceScrumUserEvent.EVENT_REMOVED_FROM_PRODUCT))
-            } else {
-                team?.products?.each{
-                    publishEvent(new IceScrumUserEvent(user, it, this.class, (User) springSecurityService.currentUser, IceScrumUserEvent.EVENT_REMOVED_FROM_PRODUCT))
-                }
-            }
+    void removeAllRoles(domain, User user) {
+        if (domain instanceof Team) {
+            teamService.removeMemberOrScrumMaster(domain, user)
+        } else if (domain instanceof Product) {
+            removeProductOwner(domain, user)
+            removeStakeHolder(domain, user)
         }
     }
 
-    void addRole(Product product, Team team, User user, int role, boolean broadcast = true, boolean raiseEvent = true) {
-        switch (role){
-            case Authority.SCRUMMASTER:
-                teamService.addScrumMaster(team,user)
-                break
-            case Authority.MEMBER:
-                teamService.addMember(team,user)
-                break
-            case Authority.PRODUCTOWNER:
-                if (product)
-                    addProductOwner(product,user)
-                else{
-                    team.products?.each{
-                        addProductOwner(it,user)
-                    }
-                }
-                break
-            case Authority.STAKEHOLDER:
-                if (product) {
-                    addStakeHolder(product, user)
-                } else {
-                    team?.products?.each {
-                        addStakeHolder(it, user)
-                    }
-                }
-                break
-            case Authority.PO_AND_SM:
-                teamService.addScrumMaster(team,user)
-                if (product)
-                    addProductOwner(product,user)
-                else{
-                    team.products?.each{
-                        addProductOwner(it,user)
-                    }
-                }
-                break
-        }
-        if(broadcast){
-            if (product){
-                broadcastToSingleUser(user:user.username, function:'addRoleProduct', message:[class:'User',product:product])
-            }else{
-                team?.products?.each{
-                    broadcastToSingleUser(user:user.username, function:'addRoleProduct', message:[class:'User',product:it])
-                }
+    void addRole(domain, User user, int role) {
+        if (domain instanceof Team) {
+            if (role == Authority.SCRUMMASTER) {
+                teamService.addScrumMaster(domain, user)
+            } else if (role == Authority.MEMBER) {
+                teamService.addMember(domain, user)
             }
-        }
-        if(raiseEvent) {
-            if (product){
-                publishEvent(new IceScrumUserEvent(user, product, role, this.class, (User) springSecurityService.currentUser, IceScrumUserEvent.EVENT_ADDED_TO_PRODUCT))
-            } else {
-                team?.products?.each{
-                    publishEvent(new IceScrumUserEvent(user, it, role, this.class, (User) springSecurityService.currentUser, IceScrumUserEvent.EVENT_ADDED_TO_PRODUCT))
-                }
-            }
-        }
-    }
-
-    void changeRole(Product product, Team team, User user, int role, boolean broadcast = true){
-        removeAllRoles(product, team, user, false, false)
-        addRole(product, team, user, role, false, false)
-        publishEvent(new IceScrumUserEvent(user, product, role, this.class, (User) springSecurityService.currentUser, IceScrumUserEvent.EVENT_CHANGED_ROLE_IN_PRODUCT))
-        if(broadcast){
-            if (product){
-                broadcastToSingleUser(user:user.username, function:'updateRoleProduct', message:[class:'User',product:product])
-            }else{
-                team?.products?.each{
-                    broadcastToSingleUser(user:user.username, function:'updateRoleProduct', message:[class:'User',product:it])
-                }
+        } else if (domain instanceof Product) {
+            if (role == Authority.PRODUCTOWNER) {
+                addProductOwner(domain, user)
+            } else if (role == Authority.STAKEHOLDER) {
+                addStakeHolder(domain, user)
             }
         }
     }
@@ -755,23 +670,56 @@ class ProductService {
         members.sort{ a,b -> b.role <=> a.role ?: a.name <=> b.name }
     }
 
-    void updateMembers(Product product, List newMembers) {
-        def team = product.firstTeam
-        def currentMembers = getAllMembersProduct(product)
-        newMembers.each {
-            User user = User.get(it.id)
-            int role = it.role
+    void updateTeamMembers(Team team, List newMembers) {
+        def currentMembers = team.scrumMasters.collect { [id: it.id, role: Authority.SCRUMMASTER]}
+        team.members.each { member ->
+            if (!currentMembers.any { it.id == member.id }) {
+                currentMembers << [id: member.id, role: Authority.MEMBER]
+            }
+        }
+        updateMembers(team, currentMembers, newMembers)
+        removeConflictingPOandSH(team)
+    }
+
+    void updateProductMembers(Product product, List newMembers) {
+        def currentMembers = product.stakeHolders.collect { [id: it.id, role: Authority.STAKEHOLDER]} + product.productOwners.collect { [id: it.id, role: Authority.PRODUCTOWNER]}
+        updateMembers(product, currentMembers, newMembers)
+    }
+
+    private void updateMembers(domain, List currentMembers, List newMembers) {
+        newMembers.each { newMember ->
+            User user = User.get(newMember.id)
+            int role = newMember.role
             def found = currentMembers.find { it.id == user.id }
             if (found) {
                 if (found.role != role) {
-                    changeRole(product, team, user, role)
+                    removeAllRoles(domain, user)
+                    addRole(domain, user, role)
                 }
             } else {
-                addRole(product, team, user, role)
+                addRole(domain, user, role)
             }
         }
         currentMembers*.id.minus(newMembers*.id).each {
-            removeAllRoles(product, team, User.get(it));
+            removeAllRoles(domain, User.get(it));
+        }
+    }
+
+    private void removeConflictingPOandSH(team, product = null) {
+        def membersIds = team.members*.id
+        def tmIds = team.members*.id - team.scrumMasters*.id
+        def products = product ? [product] : team.products
+        products.each { Product p ->
+            p.productOwners?.each { User po ->
+                if (po.id in tmIds) {
+                    removeAllRoles(p, po)
+                }
+            }
+            p.stakeHolders?.each { User sh ->
+                if (sh.id in membersIds) {
+                    removeAllRoles(p, sh)
+                }
+            }
         }
     }
 
@@ -791,5 +739,82 @@ class ProductService {
 
     private void removeStakeHolder(Product product, User stakeHolder) {
         securityService.deleteStakeHolderPermissions stakeHolder, product
+    }
+
+    // INVITATIONS
+
+    void manageTeamInvitations(Team team, invitedMembers, invitedScrumMasters) {
+        invitedMembers = invitedMembers*.toLowerCase()
+        invitedScrumMasters = invitedScrumMasters*.toLowerCase()
+        def type = Invitation.InvitationType.TEAM
+        def currentInvitations = Invitation.findAllByTypeAndTeam(type, team)
+        def newInvitations = []
+        assert !invitedMembers.intersect(invitedScrumMasters)
+        newInvitations.addAll(invitedMembers.collect { [role: Authority.MEMBER, email: it] })
+        newInvitations.addAll(invitedScrumMasters.collect { [role: Authority.SCRUMMASTER, email: it] })
+        manageInvitations(currentInvitations, newInvitations, type, null, team)
+        removeConflictingInvitedPOandSH(team)
+    }
+
+    void manageProductInvitations(Product product, invitedProductOwners, invitedStakeHolders) {
+        invitedProductOwners = invitedProductOwners*.toLowerCase()
+        invitedStakeHolders = invitedStakeHolders*.toLowerCase()
+        def type = Invitation.InvitationType.PRODUCT
+        def currentInvitations = Invitation.findAllByTypeAndProduct(type, product)
+        def newInvitations = []
+        assert !invitedProductOwners.intersect(invitedStakeHolders)
+        newInvitations.addAll(invitedProductOwners.collect { [role: Authority.PRODUCTOWNER, email: it] })
+        if (invitedStakeHolders && product.preferences.hidden) {
+            newInvitations.addAll(invitedStakeHolders.collect { [role: Authority.STAKEHOLDER, email: it] })
+        }
+        manageInvitations(currentInvitations, newInvitations, type, product, null)
+    }
+
+    private void removeConflictingInvitedPOandSH(team, product = null) {
+        def invitedMembersEmail = team.invitedMembers*.email
+        def invitedMembersAndScrumMastersEmail = invitedMembersEmail + team.invitedScrumMasters*.email
+        def products = product ? [product] : team.products
+        products.each { Product p ->
+            p.invitedProductOwners?.each { Invitation invitedPo ->
+                if (invitedPo.email in invitedMembersEmail) {
+                    invitedPo.delete()
+                }
+            }
+            p.invitedStakeHolders?.each { Invitation invitedSh ->
+                if (invitedSh.email in invitedMembersAndScrumMastersEmail) {
+                    invitedSh.delete()
+                }
+            }
+        }
+    }
+
+    private void manageInvitations(List<Invitation> currentInvitations, List newInvitations, Invitation.InvitationType type, Product product, Team team) {
+        newInvitations.each {
+            def email = it.email
+            int role = it.role
+            Invitation currentInvitation = currentInvitations.find { it.email == email }
+            if (currentInvitation) {
+                if (currentInvitation.futureRole != role) {
+                    currentInvitation.futureRole = role
+                    currentInvitation.save()
+                }
+            } else {
+                def invitation = new Invitation(email: email, futureRole: role, type: type)
+                if (type == Invitation.InvitationType.TEAM) {
+                    invitation.team = team
+                } else {
+                    invitation.product = product
+                }
+                invitation.save()
+                try {
+                    notificationEmailService.sendInvitation(invitation, springSecurityService.currentUser)
+                } catch (MailException) {
+                    throw new IllegalStateException('is.mail.invitation.error')
+                }
+            }
+        }
+        currentInvitations.findAll { currentInvitation ->
+            !newInvitations*.email.contains(currentInvitation.email)
+        }*.delete()
     }
 }
