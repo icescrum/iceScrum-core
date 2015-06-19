@@ -30,7 +30,7 @@ class Invitation implements Serializable {
     InvitationType type
     String email
     Date dateCreated
-    Integer role
+    Integer futureRole // don't use "role" because it is a reserved keyword in some SQL dialects
     String token
 
     static belongsTo = [team: Team, product: Product]
@@ -44,8 +44,8 @@ class Invitation implements Serializable {
         type(validator: { newType, Invitation -> newType == InvitationType.TEAM         && Invitation.team != null && Invitation.product == null ||
                                                  newType == InvitationType.PRODUCT      && Invitation.team == null && Invitation.product != null
         })
-        role(validator: { newRole, Invitation -> newRole in [Authority.MEMBER, Authority.SCRUMMASTER]       && Invitation.team != null && Invitation.product == null ||
-                                                 newRole in [Authority.STAKEHOLDER, Authority.PRODUCTOWNER] && Invitation.team == null && Invitation.product != null
+        futureRole(validator: { newRole, Invitation -> newRole in [Authority.MEMBER,      Authority.SCRUMMASTER]  && Invitation.team != null && Invitation.product == null ||
+                                                       newRole in [Authority.STAKEHOLDER, Authority.PRODUCTOWNER] && Invitation.team == null && Invitation.product != null
         })
     }
 
