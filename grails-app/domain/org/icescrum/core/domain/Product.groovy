@@ -152,15 +152,6 @@ class Product extends TimeBox implements Serializable, Attachmentable {
         return users.asList().unique()
     }
 
-    static allProductsByUser(long userid, params) {
-        executeQuery("SELECT p FROM org.icescrum.core.domain.Product as p WHERE p.id IN (SELECT DISTINCT p.id " +
-                "FROM org.icescrum.core.domain.Product as p INNER JOIN p.teams as t " +
-                "WHERE t.id in" +
-                "(SELECT DISTINCT t2.id FROM org.icescrum.core.domain.Team as t2 " +
-                "INNER JOIN t2.members as m " +
-                "WHERE m.id = :uid))", [uid: userid], params ?: [:])
-    }
-
     static findAllByRole(User user, List<BasePermission> permission, params, members = true, archived = true) {
         executeQuery("SELECT p FROM org.icescrum.core.domain.Product as p WHERE p.id IN (SELECT DISTINCT p.id "+
                 "From org.icescrum.core.domain.Product as p "+
@@ -195,62 +186,55 @@ class Product extends TimeBox implements Serializable, Attachmentable {
                 "AND p.id = ai.objectId ) ) )", members ? [sid: user?.username?:'', uid: user?.id?:0L, p:permission*.mask ] : [sid: user?.username?:'', p:permission*.mask ], params ?: [:])
     }
 
-    static searchPublicAndMyProducts(User user, String term, params) {
-        executeQuery("SELECT p FROM org.icescrum.core.domain.Product as p WHERE p.id IN (SELECT DISTINCT p.id "+
-                        "From org.icescrum.core.domain.Product as p "+
-                        "where "+
-                        " ( p.name LIKE :term AND p.preferences.hidden = false ) " +
-                        "OR ( p.name LIKE :term AND p.id IN "+
-                        "(SELECT DISTINCT p.id " +
-                        "FROM org.icescrum.core.domain.Product as p INNER JOIN p.teams as t " +
-                        "WHERE t.id in " +
-                        "(SELECT DISTINCT t2.id FROM org.icescrum.core.domain.Team as t2 " +
-                        "INNER JOIN t2.members as m " +
-                        "WHERE m.id = :uid) ) )" +
-                        "or ( p.name LIKE :term AND p.id IN ( SELECT DISTINCT p.id "+
-                        "From org.icescrum.core.domain.Product as p, "+
-                        "grails.plugin.springsecurity.acl.AclClass as ac, "+
-                        "grails.plugin.springsecurity.acl.AclObjectIdentity as ai, "+
-                        "grails.plugin.springsecurity.acl.AclSid as acl, "+
-                        "grails.plugin.springsecurity.acl.AclEntry as ae "+
-                        "where "+
-                        "ac.className = 'org.icescrum.core.domain.Product' "+
-                        "AND ai.aclClass = ac.id "+
-                        "AND acl.sid = :sid "+
-                        "AND acl.id = ae.sid.id "+
-                        "AND ae.mask IN(:p) "+
-                        "AND ai.id = ae.aclObjectIdentity.id "+
-                        "AND p.id = ai.objectId ) ) )"
-                        , [term:term, sid: user?.username?:'', uid: user?.id?:0L, p:[BasePermission.WRITE,BasePermission.READ]*.mask ], params ?: [:])
+    static findAllByMember(long userid, params) {
+        executeQuery("""SELECT p
+                        FROM org.icescrum.core.domain.Product as p
+                        WHERE p.id IN (
+                            SELECT DISTINCT p.id
+                            FROM org.icescrum.core.domain.Product as p
+                            INNER JOIN p.teams as t
+                            WHERE t.id IN (
+                                SELECT DISTINCT t2.id
+                                FROM org.icescrum.core.domain.Team as t2
+                                INNER JOIN t2.members as m
+                                WHERE m.id = :uid
+                            )
+                        )""", [uid: userid], params ?: [:])
     }
 
-    static countPublicAndMyProducts(User user, String term, params) {
-        executeQuery("SELECT DISTINCT count(p) "+
-                        "From org.icescrum.core.domain.Product as p "+
-                        "where "+
-                        " ( p.name LIKE :term AND p.preferences.hidden = false ) " +
-                        "OR ( p.name LIKE :term AND p.id IN "+
-                        "(SELECT DISTINCT p.id " +
-                        "FROM org.icescrum.core.domain.Product as p INNER JOIN p.teams as t " +
-                        "WHERE t.id in " +
-                        "(SELECT DISTINCT t2.id FROM org.icescrum.core.domain.Team as t2 " +
-                        "INNER JOIN t2.members as m " +
-                        "WHERE m.id = :uid) ) )" +
-                        "or ( p.name LIKE :term AND p.id IN ( SELECT DISTINCT p.id "+
-                        "From org.icescrum.core.domain.Product as p, "+
-                        "grails.plugin.springsecurity.acl.AclClass as ac, "+
-                        "grails.plugin.springsecurity.acl.AclObjectIdentity as ai, "+
-                        "grails.plugin.springsecurity.acl.AclSid as acl, "+
-                        "grails.plugin.springsecurity.acl.AclEntry as ae "+
-                        "where "+
-                        "ac.className = 'org.icescrum.core.domain.Product' "+
-                        "AND ai.aclClass = ac.id "+
-                        "AND acl.sid = :sid "+
-                        "AND acl.id = ae.sid.id "+
-                        "AND ae.mask IN(:p) "+
-                        "AND ai.id = ae.aclObjectIdentity.id "+
-                        "AND p.id = ai.objectId ) )"
-                        , [term:term, sid: user?.username?:'', uid: user?.id?:0L, p:[BasePermission.WRITE,BasePermission.READ]*.mask ], params ?: [:])
+    static findAllByUser(User user) {
+        executeQuery("""SELECT DISTINCT p
+                        FROM org.icescrum.core.domain.Product as p
+                        WHERE p.id in (
+                            SELECT DISTINCT p.id
+                            FROM org.icescrum.core.domain.Product as p
+                            WHERE p.id IN (
+                                SELECT DISTINCT p.id
+                                FROM org.icescrum.core.domain.Product as p
+                                INNER JOIN p.teams as t
+                                WHERE t.id in (
+                                    SELECT DISTINCT t2.id
+                                    FROM org.icescrum.core.domain.Team as t2
+                                    INNER JOIN t2.members as m
+                                    WHERE m.id = :uid
+                                )
+                            )
+                            OR p.id IN (
+                                SELECT DISTINCT p.id
+                                FROM org.icescrum.core.domain.Product as p,
+                                grails.plugin.springsecurity.acl.AclClass as ac,
+                                grails.plugin.springsecurity.acl.AclObjectIdentity as ai,
+                                grails.plugin.springsecurity.acl.AclSid as acl,
+                                grails.plugin.springsecurity.acl.AclEntry as ae
+                                WHERE ac.className = 'org.icescrum.core.domain.Product'
+                                AND ai.aclClass = ac.id
+                                AND acl.sid = :sid
+                                AND acl.id = ae.sid.id
+                                AND ae.mask IN (:masks)
+                                AND ai.id = ae.aclObjectIdentity.id
+                                AND p.id = ai.objectId
+                            )
+                        )""", [sid: user?.username?:'', uid: user?.id?:0L, masks: [BasePermission.WRITE,BasePermission.READ]*.mask ])
     }
 
     static Product withProduct(long id){
@@ -294,20 +278,15 @@ class Product extends TimeBox implements Serializable, Attachmentable {
     }
 
     def getOwner() {
-        if (this.id) {
-            def acl = retrieveAclProduct()
-            return User.findByUsername(acl.owner.principal,[cache: true])
-        } else {
-            null
-        }
+        return (id && firstTeam) ? firstTeam.owner : null
     }
 
-    List getInvitedStakeHolders() {
-        return Invitation.findAllByTypeAndProductAndRole(InvitationType.PRODUCT, this, Authority.STAKEHOLDER).collect { it.userMock }
+    List<Invitation> getInvitedStakeHolders() {
+        return Invitation.findAllByTypeAndProductAndFutureRole(InvitationType.PRODUCT, this, Authority.STAKEHOLDER)
     }
 
-    List getInvitedProductOwners() {
-        return Invitation.findAllByTypeAndProductAndRole(InvitationType.PRODUCT, this, Authority.PRODUCTOWNER).collect { it.userMock }
+    List<Invitation>  getInvitedProductOwners() {
+        return Invitation.findAllByTypeAndProductAndFutureRole(InvitationType.PRODUCT, this, Authority.PRODUCTOWNER)
     }
 
     Team getFirstTeam(){
