@@ -33,7 +33,6 @@ import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.transaction.annotation.Transactional
 import org.icescrum.core.event.IceScrumEvent
 import org.icescrum.core.event.IceScrumTeamEvent
-import org.icescrum.core.event.IceScrumProductEvent
 import org.icescrum.core.support.ApplicationSupport
 
 @Transactional
@@ -74,64 +73,17 @@ class TeamService {
 
     @PreAuthorize('owner(#team)')
     void delete(Team team) {
-        if (!team) {
-            throw new IllegalStateException('Team must not be null')
+        if (team.products) {
+            throw new RuntimeException('is.team.error.delete.has.products')
         }
-        Team.withSession { session ->
-            team.products.each { product ->
-                removeTeamsFromProduct(product, [team.id])
-            }
-            session.flush()
-            team.members.each { member ->
-                removeTeamsFromUser(member, [team.id])
-            }
-            team.delete()
-            securityService.unsecureDomain(team)
+        def teamMembersIds = team.members*.id
+        teamMembersIds.each { Long id ->
+            removeMemberOrScrumMaster(team, User.get(id))
         }
-    }
-
-    @PreAuthorize('owner(#team)')
-    void update(Team team) {
-        if (!team) {
-            throw new IllegalStateException('Team must not be null')
-        }
-        if (!team.save()) {
-            throw new RuntimeException('is.team.error.not.saved')
-        }
-    }
-
-    void removeTeamsFromUser(User user, teamIds) {
-        if (!user) {
-            throw new IllegalStateException('user must not be null')
-        }
-        if (!teamIds) {
-            throw new IllegalStateException('user must have at least one team')
-        }
-        for (team in Team.getAll(teamIds)) {
-            removeMemberOrScrumMaster(team, user)
-        }
-        if (!user.save()) {
-            throw new IllegalStateException('user not saved')
-        }
-    }
-
-    @PreAuthorize('owner(#product)')
-    void removeTeamsFromProduct(Product product, teamIds) {
-        if (!product) {
-            throw new IllegalStateException('Product must not be null')
-        }
-        if (!teamIds) {
-            throw new IllegalStateException('Product must have at least one team')
-        }
-        for (team in Team.getAll(teamIds)) {
-            if (team) {
-                product.removeFromTeams(team)
-                publishEvent(new IceScrumProductEvent(product, team, this.class, (User) springSecurityService.currentUser, IceScrumProductEvent.EVENT_TEAM_REMOVED))
-            }
-        }
-        if (!product.save()) {
-            throw new IllegalStateException('Product not saved')
-        }
+        team.invitedMembers*.delete()
+        team.invitedScrumMasters*.delete()
+        team.delete()
+        securityService.unsecureDomain(team)
     }
 
     @PreAuthorize('isAuthenticated()')
@@ -199,7 +151,6 @@ class TeamService {
         }
         publishEvent(new IceScrumTeamEvent(team, member, this.class, (User) springSecurityService.currentUser, IceScrumTeamEvent.EVENT_MEMBER_REMOVED))
     }
-
 
     @Transactional(readOnly = true)
     def unMarshall(def team, Product p = null, ProgressSupport progress = null) {
