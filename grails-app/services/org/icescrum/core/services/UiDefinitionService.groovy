@@ -38,7 +38,6 @@ class UiDefinitionService {
     def loadDefinitions() {
         if (log.infoEnabled) { log.info "Loading UI definitions..." }
         definitionsById = new ConcurrentHashMap()
-        grailsApplication.config.modulesResources = []
         grailsApplication.uiDefinitionClasses.each{
             def config = new ConfigSlurper().parse(it.clazz)
             def enabled = config.pluginName ? pluginManager.getUserPlugins().find{ it.name == config.pluginName && it.isEnabled() } : true
@@ -53,17 +52,6 @@ class UiDefinitionService {
                 uiDefinitions()
             } else {
                 log.warn("UI definitions file $it.clazz.name does not define any UI definition")
-            }
-
-            if (config.modulesResources){
-                def modules = config.modulesResources instanceof Closure ? config.modulesResources(grailsApplication) : config.modulesResources
-                if (modules instanceof String){
-                    grailsApplication.config.modulesResources.add(modules)
-                    if (log.debugEnabled) { log.debug "Resources module added: ${modules}" }
-                }else if (modules){
-                    grailsApplication.config.modulesResources.addAll(modules)
-                    if (log.debugEnabled) { log.debug "Resources modules added: ${modules.join(',')}" }
-                }
             }
         }
     }
