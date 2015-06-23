@@ -63,6 +63,8 @@ grails.project.dependency.resolution = {
         compile ':rollback-on-exception:0.1'
         compile ':wikitext:0.1.2'
         compile ':feeds:1.6'
+        compile ':cache:1.1.8'
+        compile ':cache-ehcache:1.0.5'
         runtime(':hibernate4:4.3.8.1') {
             export = false
         }
