@@ -24,18 +24,61 @@ class AddonsService implements ApplicationListener<IceScrumProductEvent> {
     void onApplicationEvent(IceScrumProductEvent e) {
         if (e.type == IceScrumProductEvent.EVENT_IMPORTED){
             //Wait a small very small time to let hibernate do its job... well
-            Thread.sleep(500);
+            Thread.sleep(1000);
             synchronisedDataImport(e)
         }
     }
 
-    void synchronisedDataImport(IceScrumProductEvent e){
+    void synchronisedDataImport(IceScrumProductEvent e) {
         Product p = (Product) e.source
-        addTags(p, e.xml)
-        addDependsOn(p, e.xml)
-        addComments(p, e.xml)
-        addActivities(p, e.xml)
-        addAttachments(p, e.xml, e.importPath)
+        try{
+            addAttachments(p, e.xml, e.importPath)
+        }catch(Exception e){
+                log.error("error when importing attachments")
+            if (log.debugEnabled) {
+                e.printStackTrace()
+            }
+        }
+        try{
+            addTags(p, e.xml)
+        }catch(Exception e){
+                log.error("error when importing tags")
+            if (log.debugEnabled) {
+                e.printStackTrace()
+            }
+        }
+        try{
+            addDependsOn(p, e.xml)
+        }catch(Exception e){
+            log.error("error when importing dependsOn")
+            if (log.debugEnabled) {
+                e.printStackTrace()
+            }
+        }
+        try{
+            addComments(p, e.xml)
+        }catch(Exception e){
+            log.error("error when importing comments")
+            if (log.debugEnabled) {
+                e.printStackTrace()
+            }
+        }
+        try{
+            addTags(p, e.xml)
+        }catch(Exception e){
+                log.error("error when importing tags")
+            if (log.debugEnabled) {
+                e.printStackTrace()
+            }
+        }
+        try{
+            addActivities(p, e.xml)
+        }catch(Exception e){
+                log.error("error when importing activities")
+            if (log.debugEnabled) {
+                e.printStackTrace()
+            }
+        }
     }
 
     void addTags(Product p, def root) {
