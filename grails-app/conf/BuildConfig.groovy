@@ -62,6 +62,8 @@ grails.project.dependency.resolution = {
         build 'org.apache.httpcomponents:httpclient:4.2'
         compile 'org.apache.httpcomponents:httpclient:4.2'
         runtime('org.apache.geronimo.specs:geronimo-servlet_3.0_spec:1.0')
+        compile 'org.fusesource.wikitext:wikitext-core:1.4'
+        compile 'org.fusesource.wikitext:textile-core:1.4'
     }
 
     plugins {
@@ -83,7 +85,6 @@ grails.project.dependency.resolution = {
             excludes 'http-builder'
         }
         compile ':rollback-on-exception:0.1'
-        compile ':wikitext:0.1.2'
         compile ':hibernate:1.3.9'
     }
 }

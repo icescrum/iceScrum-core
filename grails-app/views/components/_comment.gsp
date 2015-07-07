@@ -80,7 +80,7 @@
             ${comment.body}
         </g:if>
           <g:else>
-              <div class="rich-content"><wikitext:renderHtml markup="Textile">${comment.body}</wikitext:renderHtml></div>
+              <div class="rich-content"><is:renderHtml>${comment.body}</is:renderHtml></div>
           </g:else>
       </div>
 

@@ -570,7 +570,7 @@ class FormTagLib {
                 if (attrs.rich.fillWidth) {
                     jqCode += "jQuery('#${attrs.id}-field').width(jQuery('#${attrs.id}-field').parent().width() - ${attrs.rich.margin ?: 0});"
                 }
-                out << wikitext.renderHtml(markup: "Textile", {attrs.value?.replace('<!--', '')})
+                out << is.renderHtml([text:attrs.value?.replace('<!--', '')], null)
             }
             else {
                 attrs.rich.id = attrs.id
