@@ -33,50 +33,50 @@ class AddonsService implements ApplicationListener<IceScrumProductEvent> {
         Product p = (Product) e.source
         try{
             addAttachments(p, e.xml, e.importPath)
-        }catch(Exception e){
+        }catch(Exception _e){
                 log.error("error when importing attachments")
             if (log.debugEnabled) {
-                e.printStackTrace()
+                _e.printStackTrace()
             }
         }
         try{
             addTags(p, e.xml)
-        }catch(Exception e){
+        }catch(Exception _e){
                 log.error("error when importing tags")
             if (log.debugEnabled) {
-                e.printStackTrace()
+                _e.printStackTrace()
             }
         }
         try{
             addDependsOn(p, e.xml)
-        }catch(Exception e){
+        }catch(Exception _e){
             log.error("error when importing dependsOn")
             if (log.debugEnabled) {
-                e.printStackTrace()
+                _e.printStackTrace()
             }
         }
         try{
             addComments(p, e.xml)
-        }catch(Exception e){
+        }catch(Exception _e){
             log.error("error when importing comments")
             if (log.debugEnabled) {
-                e.printStackTrace()
+                _e.printStackTrace()
             }
         }
         try{
             addTags(p, e.xml)
-        }catch(Exception e){
+        }catch(Exception _e){
                 log.error("error when importing tags")
             if (log.debugEnabled) {
-                e.printStackTrace()
+                _e.printStackTrace()
             }
         }
         try{
             addActivities(p, e.xml)
-        }catch(Exception e){
+        }catch(Exception _e){
                 log.error("error when importing activities")
             if (log.debugEnabled) {
-                e.printStackTrace()
+                _e.printStackTrace()
             }
         }
     }
