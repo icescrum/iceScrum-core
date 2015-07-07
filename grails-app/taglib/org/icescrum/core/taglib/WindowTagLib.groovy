@@ -36,7 +36,6 @@ import org.codehaus.groovy.grails.web.util.WebUtils
 class WindowTagLib {
     static namespace = 'is'
 
-    def uiDefinitionService
     def springSecurityService
     def grailsApplication
     def securityService
@@ -91,6 +90,13 @@ class WindowTagLib {
         def right = ''
         if (attrs.hasRight) {
             right = include(controller: windowId, action: 'right', params: includeParams)
+        }
+
+        if (attrs.guidedTour){
+            attrs.help = attrs.help ?: ""
+            attrs.help += """
+<p><button class="ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only guidedTour-button" onClick="\$.icescrum.startTour('$windowId', true)" id='startTour' type="button">${message(code:'is.ui.guidedTour')}</button>
+   ${message(code:'is.ui.guidedTour.button')} """
         }
 
         if (attrs.shortcuts) {
