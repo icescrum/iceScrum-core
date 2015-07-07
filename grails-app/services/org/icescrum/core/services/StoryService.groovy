@@ -375,7 +375,7 @@ class StoryService {
             throw new IllegalStateException('is.sprint.error.dissociate.story.done')
 
         if (fullUnPlan && story.dependences?.find{it.state > Story.STATE_ESTIMATED})
-            throw new RuntimeException(g.message(code:'is.story.error.dependences.dissociate',args: [story.name, story.dependences.find{it.state > Story.STATE_ESTIMATED}.name]).toString())
+            throw new RuntimeException(g.message(code:'is.story.error.dependences.dissociate',args: [story.name, story.dependences.findAll{it.state > Story.STATE_ESTIMATED}.name.join(', ')]).toString())
 
         resetRank(story)
 
