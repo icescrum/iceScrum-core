@@ -567,12 +567,18 @@ class ProductService {
         broadcast(function: 'unarchive', message: p, channel:'product-'+p.id)
     }
 
-    void removeAllRoles(domain, User user) {
+    void removeAllRoles(domain, User user, boolean updateRoleContext) {
         if (domain instanceof Team) {
             teamService.removeMemberOrScrumMaster(domain, user)
         } else if (domain instanceof Product) {
             removeProductOwner(domain, user)
             removeStakeHolder(domain, user)
+        }
+        if(!updateRoleContext){
+            def productsPkey = domain instanceof Team ? domain.products?.collect {it.pkey} : [domain.pkey]
+            if(user.preferences.lastProductOpened in productsPkey){
+                user.preferences.lastProductOpened = null
+            }
         }
     }
 
@@ -694,7 +700,7 @@ class ProductService {
             def found = currentMembers.find { it.id == user.id }
             if (found) {
                 if (found.role != role) {
-                    removeAllRoles(domain, user)
+                    removeAllRoles(domain, user, true)
                     addRole(domain, user, role)
                 }
             } else {
@@ -702,7 +708,7 @@ class ProductService {
             }
         }
         currentMembers*.id.minus(newMembers*.id).each {
-            removeAllRoles(domain, User.get(it));
+            removeAllRoles(domain, User.get(it), false);
         }
     }
 
@@ -713,12 +719,12 @@ class ProductService {
         products.each { Product p ->
             p.productOwners?.each { User po ->
                 if (po.id in tmIds) {
-                    removeAllRoles(p, po)
+                    removeAllRoles(p, po, false)
                 }
             }
             p.stakeHolders?.each { User sh ->
                 if (sh.id in membersIds) {
-                    removeAllRoles(p, sh)
+                    removeAllRoles(p, sh, false)
                 }
             }
         }
