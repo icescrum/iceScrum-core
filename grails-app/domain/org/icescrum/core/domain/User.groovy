@@ -105,6 +105,48 @@ class User implements Serializable, Attachmentable {
                 [term: "%$term%"], params ?: [:])
     }
 
+    static countUsersLike(exCurrentUser, term, params){
+        executeQuery("SELECT COUNT(DISTINCT u) " +
+                "FROM org.icescrum.core.domain.User as u " +
+                "WHERE ${exCurrentUser ? 'u.id != '+SCH.context.authentication.principal?.id+' and ' : ''}" +
+                "( lower(u.email) like lower(:term) " +
+                "or lower(u.username) like lower(:term) " +
+                "or lower(u.firstName) like lower(:term) " +
+                "or lower(u.lastName) like lower(:term) " +
+                "or lower(concat(u.firstName,' ', u.lastName)) like lower(:term)" +
+                "or lower(concat(u.lastName,' ', u.firstName)) like lower(:term))",
+                [term: "%$term%"], params ?: [:])[0]
+    }
+
+    static findUsersLikeAndEnabled(excludeCurrentUser, term, enabled, params){
+        executeQuery("SELECT DISTINCT u " +
+                "FROM org.icescrum.core.domain.User as u " +
+                "WHERE ${excludeCurrentUser ? 'u.id != '+SCH.context.authentication.principal?.id+' and ' : ''}" +
+                "( lower(u.email) like lower(:term) " +
+                "or lower(u.username) like lower(:term) " +
+                "or lower(u.firstName) like lower(:term) " +
+                "or lower(u.lastName) like lower(:term) " +
+                "or lower(concat(u.firstName,' ', u.lastName)) like lower(:term)" +
+                "or lower(concat(u.lastName,' ', u.firstName)) like lower(:term)) " +
+                "and enabled = :enabled " +
+                "ORDER BY u.username ASC",
+                [term: "%$term%", enabled:enabled], params ?: [:])
+    }
+
+    static countUsersLikeAndEnabled(excludeCurrentUser, term, enabled, params){
+        executeQuery("SELECT COUNT(DISTINCT u) " +
+                "FROM org.icescrum.core.domain.User as u " +
+                "WHERE ${excludeCurrentUser ? 'u.id != '+SCH.context.authentication.principal?.id+' and ' : ''}" +
+                "( lower(u.email) like lower(:term) " +
+                "or lower(u.username) like lower(:term) " +
+                "or lower(u.firstName) like lower(:term) " +
+                "or lower(u.lastName) like lower(:term) " +
+                "or lower(concat(u.firstName,' ', u.lastName)) like lower(:term)" +
+                "or lower(concat(u.lastName,' ', u.firstName)) like lower(:term)) " +
+                "and enabled = :enabled ",
+                [term: "%$term%", enabled:enabled], params ?: [:])[0]
+    }
+
     Set<Authority> getAuthorities() {
         UserAuthority.findAllByUser(this).collect { it.authority } as Set
     }
