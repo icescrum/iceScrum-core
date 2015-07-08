@@ -104,7 +104,47 @@ class UserMigration {
             sql('UPDATE icescrum2_user set account_external = 0 WHERE account_external is NULL')
             addNotNullConstraint(tableName:"icescrum2_user",columnName:'account_external',columnDataType:'BIT')
         }
+
+
+        // Lastlogin HSQL & PostgreSQL
+        changeSet(id:'user_add_constraint_lastlogin', author:'vbarrier', filePath:filePath) {
+            preConditions(onFail:"MARK_RAN"){
+                or {
+                    dbms(type:'hsqldb')
+                    dbms(type:'postgresql')
+                }
+            }
+            sql('UPDATE icescrum2_user set last_login = CURRENT_DATE WHERE last_login is NULL')
+            addNotNullConstraint(tableName:"icescrum2_user",columnName:'last_login',columnDataType:'DATETIME')
+        }
+
+        // Lastlogin MSSQL
+        changeSet(id:'user_add_constraint_lastlogin_mssql', author:'vbarrier', filePath:filePath) {
+            preConditions(onFail:"MARK_RAN"){
+                dbms(type:'mssql')
+            }
+            sql('UPDATE icescrum2_user set last_login = GETDATE() WHERE last_login is NULL')
+            addNotNullConstraint(tableName:"icescrum2_user",columnName:'last_login',columnDataType:'DATETIME')
+        }
+
+        // Lastlogin OTHERS
+        changeSet(id:'user_add_constraint_lastlogin_sql', author:'vbarrier', filePath:filePath) {
+            preConditions(onFail:"MARK_RAN"){
+                not{
+                    or {
+                        dbms(type:'hsqldb')
+                        dbms(type:'postgresql')
+                        dbms(type:'mssql')
+                        dbms(type:'oracle')
+                    }
+                }
+            }
+            sql('UPDATE icescrum2_user set last_login = CURRENT_DATE() WHERE last_login is NULL')
+            addNotNullConstraint(tableName:"icescrum2_user",columnName:'last_login',columnDataType:'DATETIME')
+        }
     }
+
+
 
     static def getFilePath(){
         return ""

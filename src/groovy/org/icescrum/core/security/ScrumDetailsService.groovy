@@ -55,6 +55,13 @@ class ScrumDetailsService extends GormUserDetailsService {
             }
             Collection<GrantedAuthority> authorities = loadAuthorities(user, username, loadRoles)
             authorities.add(new GrantedAuthorityImpl(Authority.ROLE_USER))
+
+            //last login
+            if(user.enabled && !user.accountExpired && !user.passwordExpired && !user.accountLocked){
+                user.lastLogin = new Date()
+                user.save(flush:true)
+            }
+
             return new ScrumUserDetails(user.username, user.password, user.enabled,
                     !user.accountExpired, !user.passwordExpired,
                     !user.accountLocked, authorities ?: NO_ROLES, user.id,
