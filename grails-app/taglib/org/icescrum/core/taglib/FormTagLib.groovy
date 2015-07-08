@@ -130,6 +130,7 @@ class FormTagLib {
         def name = attrs.remove('name') ?: elementId
         def withTags = attrs.remove('withTags')
         def searchOnInit = attrs.remove('searchOnInit') == "true"
+        def beforeSearch = attrs.remove('beforeSearch')
         def minLength = 0
         def url = createLink(controller: controller, action: action, params: params.product ? [product: params.product] : null , id: id)
 
@@ -139,6 +140,7 @@ class FormTagLib {
                          data-update="$update"
                          data-url="$url"
                          data-search-on-init="$searchOnInit"
+                         ${beforeSearch ? 'data-before-search="'+ beforeSearch + '"' : '' }
                          ${withTags ? 'data-tag-url="' + createLink(controller: 'finder', action: 'tag', params: [product: params.product, withKeyword: true]) + '"' : ''}
                          data-min-length="$minLength"
                          ${attrs.collect {k, v -> " $k=\"$v\"" }.join('')} />"""
