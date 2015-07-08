@@ -51,7 +51,7 @@ class TableTagLib {
             pageScope.rowHeaders.eachWithIndex { col, index ->
                 col."class" = col."class" ?: ""
                 def colBody = col.includeBody ? col.body() : ''
-                out << '<th ' + (col.width ? ' style=\'width:' + col.width + '\'' : '') + ' class="break-word ' + col."class" + '"><div class=\"table-cell\">' + is.nbps(null, col.name) + colBody + (attrs.sortableCols ?'<div class="sorter"></sorter>' :'') +'</div></th>'
+                out << '<th ' + (col.sortName && col.sortName != "false" ? ' data-sort-name=\'' + col.sortName + '\'' : '') + (col.width ? ' style=\'width:' + col.width + '\'' : '') + ' class="break-word ' + col."class" + '"><div class=\"table-cell\">' + is.nbps(null, col.name) + colBody + (attrs.sortableCols && col.sortName != "false" ?'<div class="sorter"></sorter>' :'') +'</div></th>'
             }
             out << '</tr>'
             out << "</thead>"
@@ -106,6 +106,7 @@ class TableTagLib {
                 key: attrs.key,
                 width: attrs.width ?: null,
                 'class': attrs."class",
+                sortName : attrs.sortName ?: null,
                 includeBody: attrs.includeBody ? attrs.includeBody.toBoolean() : false,
                 body: body ?: {->}
         ]
