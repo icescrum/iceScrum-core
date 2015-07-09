@@ -80,7 +80,7 @@ class UserPreferencesMigration {
             addNotNullConstraint(tableName:"icescrum2_user_preferences",columnName:'display_whats_new',columnDataType:'BIT')
         }
 
-        changeSet(id:'user_preferences_constraint_displayWelcomeTourAndfullProjectTour', author:'vbarrier', filePath:filePath) {
+        changeSet(id:'user_preferences_displayWelcomeTourAndfullProjectTour', author:'vbarrier', filePath:filePath) {
             preConditions(onFail:"MARK_RAN"){
                 not{
                     or {
@@ -94,7 +94,7 @@ class UserPreferencesMigration {
             addNotNullConstraint(tableName:"icescrum2_user_preferences",columnName:'display_welcome_tour',columnDataType:'BOOLEAN')
             addNotNullConstraint(tableName:"icescrum2_user_preferences",columnName:'display_full_project_tour',columnDataType:'BOOLEAN')
         }
-        changeSet(id:'user_preferences_constraint_displayWelcomeTourAndfullProjectTour_mssql', author:'vbarrier', filePath:filePath) {
+        changeSet(id:'user_preferences_displayWelcomeTourAndfullProjectTour_mssql', author:'vbarrier', filePath:filePath) {
             preConditions(onFail:"MARK_RAN"){
                 dbms(type:'mssql')
             }
