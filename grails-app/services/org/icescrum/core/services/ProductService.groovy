@@ -202,6 +202,11 @@ class ProductService {
             product.invitedStakeHolders?.each {
                 it.delete()
             }
+        } else if(hasHiddenChanged && product.preferences.hidden){
+            //remove public stakeholders that have lastProductOpened
+            UserPreferences.findAllByLastProductOpenedAndUserNotInList(product.pkey, product.getAllUsers())?.each{
+                it.lastProductOpened = null
+            }
         }
 
         if (pkeyChanged){
