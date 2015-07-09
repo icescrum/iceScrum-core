@@ -39,9 +39,10 @@ class UserPreferences implements Serializable{
     String filterTask = "allTasks"
     String lastProductOpened
     String emailsSettingsData //[onStory:['pkey','pkey2'...],onUrgentTask:['pkey','pkey2'...],autoFollow['pkey','pkey2'...]]
-    boolean displayWhatsNew = false
+
 
     boolean hideDoneState = false
+    boolean displayWhatsNew = false
 
     Map menu = ["project": "1", "sandbox": "2", "backlog": "3", "timeline": "4", "releasePlan": "5", "sprintPlan": "6"]
     Map menuHidden = ["actor": "1", "feature": "2"]

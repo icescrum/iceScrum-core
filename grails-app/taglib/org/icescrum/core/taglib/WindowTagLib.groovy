@@ -94,7 +94,7 @@ class WindowTagLib {
 
         if (attrs.guidedTour){
             attrs.help = attrs.help ?: ""
-            attrs.help += """<p><button class="ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only guidedTour-button" onClick="\$.icescrum.startTour('$windowId', true)" id='startTour' type="button">${message(code:'is.ui.guidedTour')}</button>"""
+            attrs.help += """<p><button class="ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only guidedTour-button" onClick="\$.icescrum.guidedTour('$windowId', true)" type="button">${message(code:'is.ui.guidedTour')}</button>"""
         }
 
         if (attrs.shortcuts) {

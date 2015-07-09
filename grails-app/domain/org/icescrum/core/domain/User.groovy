@@ -80,6 +80,7 @@ class User implements Serializable, Attachmentable {
         password(blank: false)
         lastName(blank: false)
         firstName(blank: false)
+        lastLogin(nullable: true)
         email(blank: false, email: true)
     }
 

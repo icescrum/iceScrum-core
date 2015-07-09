@@ -107,28 +107,26 @@ class UserMigration {
 
 
         // Lastlogin HSQL & PostgreSQL
-        changeSet(id:'user_add_constraint_lastlogin', author:'vbarrier', filePath:filePath) {
+        changeSet(id:'user_add_value_lastlogin', author:'vbarrier', filePath:filePath) {
             preConditions(onFail:"MARK_RAN"){
                 or {
                     dbms(type:'hsqldb')
                     dbms(type:'postgresql')
                 }
             }
-            sql('UPDATE icescrum2_user set last_login = CURRENT_DATE WHERE last_login is NULL')
-            addNotNullConstraint(tableName:"icescrum2_user",columnName:'last_login',columnDataType:'DATETIME')
+            sql('UPDATE icescrum2_user set last_login = CURRENT_DATE WHERE last_login is NULL AND last_updated != date_created')
         }
 
         // Lastlogin MSSQL
-        changeSet(id:'user_add_constraint_lastlogin_mssql', author:'vbarrier', filePath:filePath) {
+        changeSet(id:'user_add_value_lastlogin_mssql', author:'vbarrier', filePath:filePath) {
             preConditions(onFail:"MARK_RAN"){
                 dbms(type:'mssql')
             }
-            sql('UPDATE icescrum2_user set last_login = GETDATE() WHERE last_login is NULL')
-            addNotNullConstraint(tableName:"icescrum2_user",columnName:'last_login',columnDataType:'DATETIME')
+            sql('UPDATE icescrum2_user set last_login = GETDATE() WHERE last_login is NULL AND last_updated != date_created')
         }
 
         // Lastlogin OTHERS
-        changeSet(id:'user_add_constraint_lastlogin_sql', author:'vbarrier', filePath:filePath) {
+        changeSet(id:'user_add_value_lastlogin_sql', author:'vbarrier', filePath:filePath) {
             preConditions(onFail:"MARK_RAN"){
                 not{
                     or {
@@ -139,8 +137,7 @@ class UserMigration {
                     }
                 }
             }
-            sql('UPDATE icescrum2_user set last_login = CURRENT_DATE() WHERE last_login is NULL')
-            addNotNullConstraint(tableName:"icescrum2_user",columnName:'last_login',columnDataType:'DATETIME')
+            sql('UPDATE icescrum2_user set last_login = CURRENT_DATE() WHERE last_login is NULL AND last_updated != date_created')
         }
     }
 
