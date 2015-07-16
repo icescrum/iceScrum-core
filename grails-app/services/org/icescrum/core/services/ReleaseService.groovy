@@ -45,6 +45,8 @@ class ReleaseService {
     def springSecurityService
     def grailsApplication
 
+    def g = new org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib()
+
     @PreAuthorize('(productOwner(#product) or scrumMaster(#product)) and !archivedProduct(#product)')
     void save(Release release, Product product) {
         release.parentProduct = product
@@ -64,6 +66,7 @@ class ReleaseService {
     }
 
     @PreAuthorize('(productOwner(#release.parentProduct) or scrumMaster(#release.parentProduct)) and !archivedProduct(#release.parentProduct)')
+    @Transactional
     void update(Release release, Date startDate = null, Date endDate = null) {
 
         if (release.state == Release.STATE_DONE){
@@ -87,17 +90,24 @@ class ReleaseService {
             def firstSprint = release.sprints.min { it.startDate }
             if (firstSprint.startDate.before(startDate)) {
                 if (firstSprint.state >= Sprint.STATE_INPROGRESS) {
-                    throw new IllegalStateException('is.release.error.endDate.before.inprogress.sprint')
+                    throw new IllegalStateException('is.release.error.startDate.after.inprogress.sprint')
                 }
                 sprintService.update(firstSprint, startDate, (startDate + firstSprint.duration - 1), false, false)
             }
             def outOfBoundsSprints = release.sprints.findAll {it.startDate >= endDate}
             if (outOfBoundsSprints) {
+                Collection<Sprint> sprints = outOfBoundsSprints.findAll { Sprint sprint ->
+                    return sprint.tasks || sprint.stories?.any { Story story -> story.tasks }
+                }
+                if (sprints) {
+                    def sprintNames = sprints.collect { Sprint sprint -> g.message(code: 'is.sprint') + ' ' + sprint.orderNumber }.join(', ')
+                    throw new IllegalStateException(g.message(code: 'is.release.error.sprint.tasks', args: [sprintNames]))
+                }
                 sprintService.delete(outOfBoundsSprints.min { it.startDate }) // deleting the first will delete the next ones
             }
             def overlappingSprint = release.sprints.find {it.endDate.after(endDate)}
             if (overlappingSprint) {
-                if (overlappingSprint.state >= Sprint.STATE_INPROGRESS) {
+                if (overlappingSprint.state > Sprint.STATE_INPROGRESS) {
                     throw new IllegalStateException('is.release.error.endDate.before.inprogress.sprint')
                 }
                 sprintService.update(overlappingSprint, overlappingSprint.startDate, endDate, false, false)
