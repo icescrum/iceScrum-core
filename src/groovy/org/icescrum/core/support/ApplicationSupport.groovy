@@ -49,10 +49,6 @@ class ApplicationSupport {
     private static final log = LogFactory.getLog(this)
     public  static final CONFIG_ENV_NAME = 'icescrum_config_location'
 
-    public static boolean isProVersion() {
-        return Metadata.current['app.version']?.contains('Pro') ? true : false
-    }
-
     public static String getNormalisedVersion(){
         def version = Metadata.current['app.version']
         return version.substring(0, version.indexOf(" ") > 0 ? version.indexOf(" ")  : version.length()).toLowerCase().replaceAll('#','')
@@ -64,13 +60,13 @@ class ApplicationSupport {
             ApplicationSupport.forName("javax.servlet.http.Part")
         }catch(ClassNotFoundException e){
             config.icescrum.errors << [error:true, title:'is.warning.httpPart.title',
-                                       message:'is.warning.httpPart.message' + (isProVersion() ? '.pro' : '')]
+                                       message:'is.warning.httpPart.message']
             config.icescrum.push.enable = false;
         }
         //check if serverURL is valid
         if (config.grails.serverURL.contains('localhost') && Environment.current != Environment.DEVELOPMENT){
             config.icescrum.errors << [error:true, title:'is.warning.serverUrl.title',
-                                       message:'is.warning.serverUrl.message' + (isProVersion() ? '.pro' : ''),
+                                       message:'is.warning.serverUrl.message',
                                        args:[config.grails.serverURL]]
         }
     }
