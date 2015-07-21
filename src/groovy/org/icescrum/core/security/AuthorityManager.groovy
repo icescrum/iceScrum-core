@@ -28,23 +28,24 @@ import org.icescrum.core.domain.security.Authority
 import org.icescrum.core.domain.security.UserAuthority
 
 class AuthorityManager {
-    static public createAppAuthorities = {ctx ->
+    static public createAppAuthorities = {ctx, createDefaultAdmin ->
 
         def springSecurityService = ctx.springSecurityService
         def adminRole = new Authority(authority: Authority.ROLE_ADMIN).save()
         def permissionRole = new Authority(authority: Authority.ROLE_PERMISSION).save()
 
-        def admin = new User(username: 'admin',
-                email: 'admin@icescrum.com',
-                enabled: true,
-                firstName: "--",
-                lastName: "Admin",
-                password: springSecurityService.encodePassword('adminadmin!'),
-                preferences: new UserPreferences(language: "en")
-        ).save(flush:true)
-
-        UserAuthority.create admin, adminRole, false
-        UserAuthority.create admin, permissionRole, true
+        if (createDefaultAdmin){
+            def admin = new User(username: 'admin',
+                    email: 'admin@icescrum.com',
+                    enabled: true,
+                    firstName: "--",
+                    lastName: "Admin",
+                    password: springSecurityService.encodePassword('adminadmin!'),
+                    preferences: new UserPreferences(language: "en")
+            ).save(flush:true)
+            UserAuthority.create admin, adminRole, false
+            UserAuthority.create admin, permissionRole, true
+        }
     }
 
     static public initSecurity = { def grailsApplication ->
@@ -53,8 +54,9 @@ class AuthorityManager {
         def securityService = ctx.securityService
         ctx.webExpressionHandler?.securityService = securityService
         ctx.expressionHandler?.securityService = securityService
+        def createDefaultAdmin = grailsApplication.config.createDefaultAdmin ?: false
 
         if (Authority.count() == 0)
-            AuthorityManager.createAppAuthorities(ctx)
+            AuthorityManager.createAppAuthorities(ctx, createDefaultAdmin)
     }
 }

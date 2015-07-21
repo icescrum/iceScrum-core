@@ -29,7 +29,6 @@ import org.atmosphere.cpr.BroadcasterFactory
 import org.icescrum.core.security.AuthorityManager
 import org.icescrum.core.support.ApplicationSupport
 import org.icescrum.core.test.DummyPopulator
-import org.codehaus.groovy.grails.commons.ApplicationHolder
 
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
@@ -42,6 +41,9 @@ class BootStrapService {
     private ScheduledExecutorService heartBeat
 
     void start() {
+        def dev = Environment.current == Environment.DEVELOPMENT && !System.properties['icescrum.fixtures']
+        grailsApplication.config.createDefaultAdmin = dev
+
         AuthorityManager.initSecurity(grailsApplication)
 
         def config = grailsApplication.config
@@ -74,7 +76,7 @@ class BootStrapService {
             pluginManager.informPluginsOfConfigChange()
         }
 
-        if (Environment.current == Environment.DEVELOPMENT && !System.properties['icescrum.fixtures'])
+        if (dev)
             DummyPopulator.dummyze()
 
     }
