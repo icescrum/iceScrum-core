@@ -23,6 +23,7 @@
 
 package org.icescrum.core.support
 
+import grails.converters.JSON
 import grails.util.Environment
 import org.apache.http.Consts
 import org.apache.http.HttpResponse
@@ -300,18 +301,17 @@ class CheckerTimerTask extends TimerTask {
         def config = ApplicationHolder.application.config
         def configInterval = computeInterval(config.icescrum.check.interval ?: 1440)
         try {
-            def vers = Metadata.current['app.version'].replace('#', '.').replaceFirst('R', '')
-            def queryParams = [id: config.icescrum.appID, version: vers]
+            def vers = Metadata.current['app.version'].replace('#', '.').replaceFirst('R', '').replace('.','-')
             def headers = ['User-Agent': 'iceScrum-Agent/1.0', 'Referer': config.grails.serverURL]
             def params = ['http.connection.timeout': config.icescrum.check.timeout ?: 5000, 'http.socket.timeout': config.icescrum.check.timeout ?: 5000]
-            def resp = getXML(config.icescrum.check.url, config.icescrum.check.path, queryParams, headers, params)
+            def resp = getJSON(config.icescrum.check.url, config.icescrum.check.path + "/" + config.icescrum.appID + "/" + vers, [:], headers, params)
             if (resp.status == 200) {
-                if (resp.data.version?.text()) {
-                    config.icescrum.errors << [error: false, title: 'is.warning.version', version: resp.data.version.text(), url: resp.data.url.text(), message: resp.data.message?.text()]
+                if (resp.data) {
+                    config.icescrum.errors << [error: false, title: 'is.warning.version', version: resp.data.version, url: resp.data.url, message: resp.data.message]
                     if (log.debugEnabled) log.debug('Automatic check update - A new version is available : ' + resp.data.version.text())
                     return
                 } else {
-                    if (log.debugEnabled) log.debug('Automatic check update - iceScrum is up to date')
+                        if (log.debugEnabled) log.debug('Automatic check update - iceScrum is up to date')
                 }
             }
             if (interval != configInterval) {
@@ -335,9 +335,9 @@ class CheckerTimerTask extends TimerTask {
         return 1000 * 60 * interval
     }
 
-    private Map getXML(String domain, String path, queryParams = [:], headers = [:], params = [:]) {
+    private static Map getJSON(String domain, String path, queryParams = [:], headers = [:], params = [:]) {
         HttpClient httpclient = new DefaultHttpClient();
-        Map resp = [:]
+        Map resp = [data:'']
         try {
             String url = domain + '/' + path
             if (queryParams) {
@@ -349,8 +349,9 @@ class CheckerTimerTask extends TimerTask {
             params.each { k, v -> httpget.params.setParameter(k, v) }
             HttpResponse response = httpclient.execute(httpget);
             resp.status = response.statusLine.statusCode
-            if (resp.status == HttpStatus.SC_OK) {
-                resp.data = new XmlParser().parseText(EntityUtils.toString(response.entity))
+            def data = EntityUtils.toString(response.entity)
+            if (resp.status == HttpStatus.SC_OK && data) {
+                resp.data = JSON.parse(data)
             }
         } finally {
             httpclient.getConnectionManager().shutdown();
