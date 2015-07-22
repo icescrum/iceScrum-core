@@ -308,7 +308,7 @@ class CheckerTimerTask extends TimerTask {
             if (resp.status == 200) {
                 if (resp.data) {
                     config.icescrum.errors << [error: false, title: 'is.warning.version', version: resp.data.version, url: resp.data.url, message: resp.data.message]
-                    if (log.debugEnabled) log.debug('Automatic check update - A new version is available : ' + resp.data.version.text())
+                    if (log.debugEnabled) log.debug('Automatic check update - A new version is available : ' + resp.data.version)
                     return
                 } else {
                         if (log.debugEnabled) log.debug('Automatic check update - iceScrum is up to date')
