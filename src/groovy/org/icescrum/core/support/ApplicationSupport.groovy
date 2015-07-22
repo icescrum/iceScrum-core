@@ -306,24 +306,30 @@ class CheckerTimerTask extends TimerTask {
             def params = ['http.connection.timeout': config.icescrum.check.timeout ?: 5000, 'http.socket.timeout': config.icescrum.check.timeout ?: 5000]
             def resp = getJSON(config.icescrum.check.url, config.icescrum.check.path + "/" + config.icescrum.appID + "/" + vers, [:], headers, params)
             if (resp.status == 200) {
-                if (resp.data) {
+                if (!resp.data.up_to_date) {
                     config.icescrum.errors << [error: false, title: 'is.warning.version', version: resp.data.version, url: resp.data.url, message: resp.data.message]
-                    if (log.debugEnabled) log.debug('Automatic check update - A new version is available : ' + resp.data.version.text())
+                    if (log.debugEnabled) {
+                        log.debug('Automatic check update - A new version is available : ' + resp.data.version)
+                    }
                     return
-                } else {
-                        if (log.debugEnabled) log.debug('Automatic check update - iceScrum is up to date')
+                } else if (log.debugEnabled) {
+                    log.debug('Automatic check update - iceScrum is up to date')
                 }
             }
             if (interval != configInterval) {
                 //Back to normal delay
                 this.cancel()
                 timer.scheduleAtFixedRate(new CheckerTimerTask(timer, configInterval), configInterval, configInterval)
-                if (log.debugEnabled) log.debug('Automatic check update - back to normal delay')
+                if (log.debugEnabled) {
+                    log.debug('Automatic check update - back to normal delay')
+                }
             }
         } catch (ex) {
             if (interval == configInterval) {
                 //Setup new timer with a long delay
-                if (log.debugEnabled) log.debug('Automatic check update error - new timer delay')
+                if (log.debugEnabled) {
+                    log.debug('Automatic check update error - new timer delay')
+                }
                 this.cancel()
                 def longInterval = configInterval >= 1440 ? configInterval * 2 : computeInterval(1440)
                 timer.scheduleAtFixedRate(new CheckerTimerTask(timer, longInterval), longInterval, longInterval)
