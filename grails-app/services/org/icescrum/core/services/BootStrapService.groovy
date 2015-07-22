@@ -41,7 +41,7 @@ class BootStrapService {
     private ScheduledExecutorService heartBeat
 
     void start() {
-        def dev = Environment.current == Environment.DEVELOPMENT && !System.properties['icescrum.fixtures']
+        def dev = Environment.current == Environment.DEVELOPMENT && !System.properties['icescrum.noDummyze']
         grailsApplication.config.createDefaultAdmin = dev
 
         AuthorityManager.initSecurity(grailsApplication)
@@ -76,8 +76,9 @@ class BootStrapService {
             pluginManager.informPluginsOfConfigChange()
         }
 
-        if (dev)
+        if (dev) {
             DummyPopulator.dummyze()
+        }
 
     }
 }
