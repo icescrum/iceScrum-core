@@ -87,7 +87,6 @@ class PanelTagLib {
     def wizard = {attrs, body ->
         assert attrs.next
         assert attrs.previous
-        assert attrs.cancel
         assert attrs.id
         assert attrs.controller
         assert attrs.action
