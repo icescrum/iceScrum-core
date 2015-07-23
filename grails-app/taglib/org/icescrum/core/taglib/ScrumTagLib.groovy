@@ -352,13 +352,7 @@ class ScrumTagLib {
         if (ApplicationSupport.booleanValue(grailsApplication.config.icescrum.gravatar?.enable)){
             def hash = attrs.user.email.encodeAsMD5()
             def dgu = createLink(uri: '/' + is.currentThemeImage()) + "avatars/avatar.png"
-            def gravatarBaseUrl
-
-            if (ApplicationSupport.booleanValue(grailsApplication.config.icescrum.gravatar?.secure))
-                gravatarBaseUrl = "https://secure.gravatar.com/avatar/"
-            else
-                gravatarBaseUrl = "http://gravatar.com/avatar/"
-
+            def gravatarBaseUrl = "https://secure.gravatar.com/avatar/"
             String gravatarUrl = "$gravatarBaseUrl$hash"
             gravatarUrl += dgu.matches(/404|mm|identicon|monsterid|wavatar|retro|http.*/) ? "?d=${dgu}&s=40" : ''
             if (attrs.link){
