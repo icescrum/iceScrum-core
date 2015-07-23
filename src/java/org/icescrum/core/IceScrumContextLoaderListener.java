@@ -33,7 +33,7 @@ public class IceScrumContextLoaderListener extends GrailsContextLoaderListener {
         System.out.println("Java version: " + System.getProperty("java.specification.version"));
         if(System.getProperty("java.specification.version").equals("1.5")){
             throw new RuntimeException("\n\nReally? Incompatible Java version. iceScrum isn't compatible with Java 1.5. \n"+
-                    "Please change your Java plateform. \n" +
+                    "Please update your Java plateform. \n" +
                     "More information here: https://www.icescrum.com/documentation/install-guide" +
                     "\n\n");
         }
