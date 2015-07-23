@@ -28,35 +28,32 @@ import org.icescrum.core.domain.security.Authority
 import org.icescrum.core.domain.security.UserAuthority
 
 class AuthorityManager {
-    static public createAppAuthorities = {ctx, createDefaultAdmin ->
 
-        def springSecurityService = ctx.springSecurityService
-        def adminRole = new Authority(authority: Authority.ROLE_ADMIN).save()
-        def permissionRole = new Authority(authority: Authority.ROLE_PERMISSION).save()
-
-        if (createDefaultAdmin){
-            def admin = new User(username: 'admin',
-                    email: 'admin@icescrum.com',
-                    enabled: true,
-                    firstName: "--",
-                    lastName: "Admin",
-                    password: springSecurityService.encodePassword('adminadmin!'),
-                    preferences: new UserPreferences(language: "en")
-            ).save(flush:true)
-            UserAuthority.create admin, adminRole, false
-            UserAuthority.create admin, permissionRole, true
-        }
+    static public makeAdmin = { user ->
+        UserAuthority.create(user, Authority.findByAuthority(Authority.ROLE_ADMIN), false)
+        UserAuthority.create(user, Authority.findByAuthority(Authority.ROLE_PERMISSION), true)
     }
 
     static public initSecurity = { def grailsApplication ->
-
         def ctx = grailsApplication.mainContext
         def securityService = ctx.securityService
         ctx.webExpressionHandler?.securityService = securityService
         ctx.expressionHandler?.securityService = securityService
-        def createDefaultAdmin = grailsApplication.config.createDefaultAdmin ?: false
-
-        if (Authority.count() == 0)
-            AuthorityManager.createAppAuthorities(ctx, createDefaultAdmin)
+        def springSecurityService = ctx.springSecurityService
+        if (Authority.count() == 0) {
+            new Authority(authority: Authority.ROLE_ADMIN).save()
+            new Authority(authority: Authority.ROLE_PERMISSION).save()
+            if (grailsApplication.config.createDefaultAdmin) {
+                def admin = new User(username: 'admin',
+                                     email: 'admin@icescrum.com',
+                                     enabled: true,
+                                     firstName: "--",
+                                     lastName: "Admin",
+                                     password: springSecurityService.encodePassword('adminadmin!'),
+                                     preferences: new UserPreferences(language: "en")
+                ).save(flush:true)
+                AuthorityManager.makeAdmin(admin)
+            }
+        }
     }
 }
