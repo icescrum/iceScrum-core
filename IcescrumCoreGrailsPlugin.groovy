@@ -153,6 +153,14 @@ class IcescrumCoreGrailsPlugin {
             }
         }
 
+        def listeners = xml.'listener'
+        def listenerClass = listeners?.find{ it.'listener-class' == 'org.codehaus.groovy.grails.web.context.GrailsContextLoaderListener' }
+        if(listenerClass)
+            listenerClass[0].replaceBody {
+                'listener-class'('org.icescrum.core.IceScrumContextLoaderListener')
+            }
+
+
         def cors = application.config.icescrum.cors
         if (cors.enable){
             addCorsSupport(xml, cors)
