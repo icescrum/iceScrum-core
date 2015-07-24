@@ -109,6 +109,7 @@ class PanelTagLib {
         def jqCode = """\$('#${attrs.id}').isWizard({
                                     disableNext:${disableNext as JSON},
                                     submitButton:'${message(code: attrs.submit)}',
+                                    validateStep: "${attrs.validateStep ?: ''}",
                                     nextButton:'${message(code: attrs.next)}',
                                     previousButton:'${message(code: attrs.previous)}',
                                     cancelButton:'${message(code: attrs.cancel)}',
