@@ -285,6 +285,8 @@ class IcescrumCoreGrailsPlugin {
 		}
 
         ApplicationSupport.createUUID()
+        //Fix for 1.7 with Grails 1.3.9 and NoSuchFieldException
+        System.setProperty("stringchararrayaccessor.disabled", "true")
         System.setProperty('lbdsl.home', "${application.config.icescrum.baseDir.toString()}${File.separator}lbdsl")
     }
 
