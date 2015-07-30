@@ -102,6 +102,7 @@ class PanelTagLib {
                 controller: attrs.controller,
                 remote: true,
                 onSuccess: attrs.onSuccess,
+                onFailure: attrs.onFailure,
                 before: attrs.before,
                 update: attrs.update,
                 params: "jQuery('#${attrs.id}').serialize()"
