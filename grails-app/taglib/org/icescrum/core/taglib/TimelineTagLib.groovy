@@ -124,7 +124,6 @@ class TimelineTagLib {
 
               \$(window).bind('resize.timeline',function(){onResize();}).trigger('resize');
               \$('${attrs.container}').bind('beforeIsCloseWindow',function(){\$(window).unbind('resize.timeline');});
-              \$('${attrs.container}').bind('onWindowToWidget',function(){\$(window).unbind('resize.timeline');});
               \$('#${attrs.id}').disableSelection();
 
               """

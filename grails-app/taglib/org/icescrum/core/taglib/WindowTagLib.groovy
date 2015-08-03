@@ -66,7 +66,7 @@ class WindowTagLib {
         }
 
         // Check for toolbar existence
-        attrs.toolbar =  attrs.toolbar ? include(controller: windowId, action: attrs.type == 'widget' ? 'toolbarWidget' : 'toolbar', params: includeParams) : false
+        attrs.toolbar =  attrs.toolbar ? include(controller: windowId, action: 'toolbar', params: includeParams) : false
 
         // Check for shortcuts
         if (attrs.shortcuts) {
@@ -87,7 +87,6 @@ class WindowTagLib {
                 icon: attrs.icon ?: null,
                 windowActions: attrs.windowActions ?: [
                         help: attrs.help ?: null,
-                        widgetable: attrs.widgetable ? true : false,
                         fullScreen: attrs.fullScreen ?: false,
                         printable:attrs.printable
                 ],
@@ -130,29 +129,6 @@ class WindowTagLib {
 
         out << is.link(attrs, str).trim();
 
-    }
-
-    /**
-     * Generate a widget using the is:window tag
-     */
-    def widget = { attrs, body ->
-        attrs = attrs.attrs ?: attrs
-        def params = [
-                type: 'widget',
-                title: attrs.title,
-                icon: attrs.icon,
-                windowActions: [
-                        help: attrs.help ?: null,
-                        closeable: attrs.closeable ?: false,
-                        windowable: attrs.windowable ?: false
-                ],
-                window: attrs.id,
-                sortable: attrs.sortable,
-                resizable: attrs.resizable?:false,
-                toolbar: attrs.toolbar,
-                init: attrs.init
-        ]
-        out << is.window(params, {})
     }
 
     //TODO Remove when no reference left

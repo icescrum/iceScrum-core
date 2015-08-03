@@ -33,7 +33,6 @@ class UiDefinition {
     String space = "product"
     String icon = ''
     MenuBarDefinition menuBar
-    WidgetDefinition widget
     WindowDefinition window
     def options = [:]
     def exportFormats = []
@@ -51,14 +50,6 @@ class UiDefinition {
         this.menuBar = menuBar
     }
 
-    void widget(Closure widgetClosure) {
-        WidgetDefinition widget = new WidgetDefinition()
-        widgetClosure.delegate = widget
-        widgetClosure.resolveStrategy = Closure.DELEGATE_FIRST
-        widgetClosure()
-        this.widget = widget
-    }
-    
     void window(Closure windowClosure) {
         WindowDefinition window = new WindowDefinition()
         windowClosure.delegate = window

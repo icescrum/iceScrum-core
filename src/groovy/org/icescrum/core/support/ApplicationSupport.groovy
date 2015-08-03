@@ -299,10 +299,8 @@ class CheckerTimerTask extends TimerTask {
         http.client.params.setIntParameter( "http.connection.timeout", config.icescrum.check.timeout?:5000 )
         http.client.params.setIntParameter( "http.socket.timeout", config.icescrum.check.timeout?:5000 )
         try {
-            def vers = Metadata.current['app.version'].replace('#','.').replaceFirst('R','')
-            def resp = http.get(path:config.icescrum.check.path,
-                                query:[id:config.icescrum.appID,version:vers],
-                                headers:['User-Agent' : 'iceScrum-Agent/1.0','Referer' : config.grails.serverURL])
+            def vers = Metadata.current['app.version'].replace('#','.').replaceFirst('R','').replace('.','-')
+            def resp = http.get(path:config.icescrum.check.path+'/'+config.icescrum.appID+'/'+vers, headers:['User-Agent' : 'iceScrum-Agent/2.0','Referer' : config.grails.serverURL])
             if(resp.success && resp.status == 200){
                 if (resp.data.version?.text()){
                     config.icescrum.errors << [error:false, title:'is.warning.version', version:resp.data.version.text(), url:resp.data.url.text(), message:resp.data.message?.text()]

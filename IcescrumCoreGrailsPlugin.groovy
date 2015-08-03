@@ -220,14 +220,6 @@ class IcescrumCoreGrailsPlugin {
     private addUIControllerMethods(clazz, ApplicationContext ctx, pluginName) {
         def mc = clazz.metaClass
         def dynamicActions = [
-                toolbarWidget: {->
-                    try {
-                        render(plugin: pluginName, template: "widget/toolbar", model: [id: controllerName])
-                    } catch (Exception e) {
-                        render('')
-                        log.debug(e.getMessage())
-                    }
-                },
                 toolbar: {->
                     try {
                         render(plugin: pluginName, template: "window/toolbar", model: [id: controllerName])
@@ -247,14 +239,6 @@ class IcescrumCoreGrailsPlugin {
                 right: {
                     try {
                         render(plugin: pluginName, template: "window/right", model: [id: controllerName])
-                    } catch (Exception e) {
-                        render('')
-                        log.debug(e.getMessage())
-                    }
-                },
-                titleBarContentWidget: {
-                    try {
-                        render(plugin: pluginName, template: "widget/titleBarContent", model: [id: controllerName])
                     } catch (Exception e) {
                         render('')
                         log.debug(e.getMessage())
