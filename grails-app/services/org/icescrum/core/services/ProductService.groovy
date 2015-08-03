@@ -204,7 +204,14 @@ class ProductService {
             }
         } else if(hasHiddenChanged && product.preferences.hidden){
             //remove public stakeholders that have lastProductOpened
-            UserPreferences.findAllByLastProductOpenedAndUserNotInList(product.pkey, product.getAllUsers())?.each{
+            UserPreferences.createCriteria().list {
+                eq 'lastProductOpened', product.pkey
+                user {
+                    not {
+                        inList 'id', product.allUsers*.id
+                    }
+                }
+            }?.each{
                 it.lastProductOpened = null
             }
         }
