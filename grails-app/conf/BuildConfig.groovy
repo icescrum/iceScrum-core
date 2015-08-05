@@ -43,7 +43,7 @@ grails.project.dependency.resolution = {
         mavenRepo "http://jaspersoft.artifactoryonline.com/jaspersoft/third-party-ce-artifacts/" // Because Jasper depends on olap4j which is not available anymore the repositories
     }
     dependencies {
-        compile 'org.atmosphere:atmosphere-runtime:2.2.8', {
+        compile 'org.atmosphere:atmosphere-runtime:2.3.3', {
             excludes 'slf4j-api'
         }
         compile('org.codehaus.groovy.modules.http-builder:http-builder:0.7.1') {
@@ -51,7 +51,7 @@ grails.project.dependency.resolution = {
         }
     }
     plugins {
-        compile ':atmosphere-meteor:1.0.4'
+        compile ':atmosphere-meteor:1.0.5'
         compile ':spring-security-core:2.0-RC4'
         compile ':spring-security-acl:2.0-RC2'
         compile ':hd-image-utils:1.1'
