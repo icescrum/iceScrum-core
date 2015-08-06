@@ -27,15 +27,17 @@ class IceScrumMeteorHandler extends HttpServlet {
 	public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
         def conf = Holders.grailsApplication.config.icescrum.push
         if (!conf.enable) {
-            return;
+            return
         }
         response.setContentType("text/plain;charset=UTF-8")
 
 		Meteor meteor = Meteor.build(request)
-		Broadcaster broadcaster = broadcasterLookup(request.pathInfo)
-		meteor.addListener(new IceScrumAtmosphereEventListener())
-		meteor.setBroadcaster(broadcaster)
-        meteor.suspend(-1)
+        Broadcaster broadcaster = broadcasterLookup(request.pathInfo)
+        if(broadcaster){
+            meteor.addListener(new IceScrumAtmosphereEventListener())
+            meteor.setBroadcaster(broadcaster)
+            meteor.suspend(-1)
+        }
 	}
 
 	@Override
@@ -49,9 +51,11 @@ class IceScrumMeteorHandler extends HttpServlet {
             }
             else if (request.getParameterValues("command") && request.getParameterValues("data") && request.getParameterValues("to")){
                 Broadcaster broadcaster = broadcasterLookup(request.pathInfo)
-                AtmosphereResource resourceTo = atmosphereMeteor.framework.atmosphereFactory().find(request.getParameterValues("to")[0])
-                if (resourceTo){
-                    broadcaster.broadcast(([command:request.getParameterValues("command")[0],data:request.getParameterValues("data")[0], from:meteor.atmosphereResource.uuid()] as JSON).toString(),resourceTo)
+                if(broadcaster) {
+                    AtmosphereResource resourceTo = atmosphereMeteor.framework.atmosphereFactory().find(request.getParameterValues("to")[0])
+                    if (resourceTo) {
+                        broadcaster.broadcast(([command: request.getParameterValues("command")[0], data: request.getParameterValues("data")[0], from: meteor.atmosphereResource.uuid()] as JSON).toString(), resourceTo)
+                    }
                 }
             }
         }
@@ -59,13 +63,17 @@ class IceScrumMeteorHandler extends HttpServlet {
     }
 
     public Broadcaster broadcasterLookup(String pathInfo) {
-        String[] decodedPath = pathInfo ? pathInfo.split("/") : [];
-        Broadcaster b;
-        if (decodedPath.length > 0) {
-            b = atmosphereMeteor.broadcasterFactory.lookup(DEFAULT_CHANNEL +"/"+ decodedPath[decodedPath.length - 1], true);
+        String[] decodedPath = pathInfo ? pathInfo.split("/") : []
+        Broadcaster b
+        if (atmosphereMeteor.broadcasterFactory){
+            if (decodedPath.length > 0) {
+                b = atmosphereMeteor.broadcasterFactory.lookup(DEFAULT_CHANNEL +"/"+ decodedPath[decodedPath.length - 1], true)
+            } else {
+                b = atmosphereMeteor.broadcasterFactory.lookup(DEFAULT_CHANNEL, true)
+            }
         } else {
-            b = atmosphereMeteor.broadcasterFactory.lookup(DEFAULT_CHANNEL, true);
+            b = null
         }
-        return b;
+        return b
     }
 }
