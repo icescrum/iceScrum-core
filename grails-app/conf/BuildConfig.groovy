@@ -27,9 +27,7 @@ grails.project.test.reports.dir = "target/test-reports"
 grails.project.dependency.resolver = "maven"
 
 grails.project.dependency.resolution = {
-    inherits("global") {
-        // excludes 'ehcache' // WARNING THIS IS REQUIRED TO WORK WITH GRAILS 2.5.0
-    }
+    inherits("global") { }
     log "warn"
     repositories {
         grailsPlugins()
@@ -65,7 +63,7 @@ grails.project.dependency.resolution = {
         compile ':feeds:1.6'
         compile ':cache:1.1.8'
         compile ':cache-ehcache:1.0.5'
-        runtime(':hibernate4:4.3.8.1') {
+        runtime(':hibernate4:4.3.10') {
             export = false
         }
         build  (':release:3.1.1') {
