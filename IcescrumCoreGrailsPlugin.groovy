@@ -222,7 +222,7 @@ class IcescrumCoreGrailsPlugin {
         def dynamicActions = [
                 toolbar: {->
                     try {
-                        render(plugin: pluginName, template: "window/toolbar", model: [id: controllerName])
+                        render(plugin: pluginName, template: "toolbar", model: [id: controllerName])
                     } catch (Exception e) {
                         render('')
                         log.debug(e.getMessage())

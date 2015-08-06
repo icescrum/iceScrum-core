@@ -45,7 +45,7 @@ class UserPreferences implements Serializable{
 
     Date lastReadActivities = new Date()
 
-    Map menu = ["project": "1", "sandbox": "2", "backlog": "3", "timeline": "4", "releasePlan": "5", "sprintPlan": "6"]
+    Map menu = ["project": "1", "backlog": "2", "timeline": "3", "releasePlan": "4", "sprintPlan": "5"]
     Map menuHidden = ["actor": "1", "feature": "2"]
 
     static transients = ["emailsSettings"]

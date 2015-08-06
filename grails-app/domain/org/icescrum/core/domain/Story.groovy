@@ -593,9 +593,22 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                         eq 'id', options.story.actor.toLong()
                     }
                 }
-                if (options.story?.state?.isInteger()){
-                    eq 'state', options.story.state.toInteger()
+                //case [2,3] or more
+                if (options.story?.state instanceof List && options.story.state.size() >= 2){
+                    or {
+                        options.story.state.each{
+                            eq 'state', it
+                        }
+                    }
+                //case [3]
+                } else if (options.story?.state instanceof List){
+                    eq 'state', it[0]
                 }
+                //case 3
+                else if (options.story?.state){
+                    eq 'state', options.story.state instanceof String ? options.story?.state.toInteger() : options.story?.state
+                }
+
                 if (options.story?.parentRelease?.isLong()){
                     parentSprint {
                         parentRelease{
