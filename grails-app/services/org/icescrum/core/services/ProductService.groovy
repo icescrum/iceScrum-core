@@ -770,6 +770,16 @@ class ProductService {
         manageInvitations(currentInvitations, newInvitations, type, product, null)
     }
 
+    List<Product> getAllActiveProductsByUser(String searchTerm = '') {
+        def user = springSecurityService.currentUser
+        def projects = Product.findAllByUserAndActive(user, [sort: "name", order: "asc", cache:true], searchTerm)
+        def projectsOwnerOf = Team.findAllActiveProductsByTeamOwner(user.username, [sort: "name", order: "asc", cache:true]).findAll {
+            !(it in projects)
+        }
+        projects.addAll(projectsOwnerOf)
+        return projects
+    }
+
     private void removeConflictingInvitedPOandSH(team, product = null) {
         def invitedMembersEmail = team.invitedMembers*.email
         def invitedMembersAndScrumMastersEmail = invitedMembersEmail + team.invitedScrumMasters*.email
