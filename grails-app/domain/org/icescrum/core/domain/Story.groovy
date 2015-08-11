@@ -559,9 +559,18 @@ class Story extends BacklogElement implements Cloneable, Serializable {
         return true
     }
 
-    static search(product, options){
+    static search(product, options, projectionColor = false){
         List<Story> stories = []
         def criteria = {
+
+            if(projectionColor){
+                projections {
+                    feature{
+                        property("color")
+                    }
+                }
+            }
+
             backlog {
                 eq 'id', product
             }
@@ -658,7 +667,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                 criteria.call()
             }
         }
-        if (stories){
+        if (stories && !projectionColor){
             Map storiesGrouped = stories?.groupBy{ it.feature }
             stories = []
             storiesGrouped?.each{
