@@ -67,6 +67,8 @@ class WindowTagLib {
 
         // Check for toolbar existence
         attrs.toolbar =  attrs.toolbar ? include(controller: windowId, action: 'toolbar', params: includeParams) : false
+        // Check for bottombar existence
+        attrs.bottombar =  attrs.bottombar ? include(controller: windowId, action: 'bottombar', params: includeParams) : false
 
         // Check for shortcuts
         if (attrs.shortcuts) {
@@ -92,6 +94,7 @@ class WindowTagLib {
                 ],
                 id: windowId,
                 toolbar: attrs.toolbar,
+                bottombar: attrs.bottombar,
                 resizable: attrs.resizable ?: false,
                 sortable: attrs.sortable ?: false,
                 right:attrs.right,

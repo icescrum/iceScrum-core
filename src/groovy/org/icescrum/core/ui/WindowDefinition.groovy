@@ -32,6 +32,7 @@ class WindowDefinition {
     String title = ''
     boolean right = false
     boolean toolbar = false
+    boolean bottombar = false
     boolean printable = true
     boolean fullScreen = true
     def help = null
@@ -51,6 +52,10 @@ class WindowDefinition {
 
     void toolbar(boolean toolbar) {
         this.toolbar = toolbar
+    }
+
+    void bottombar(boolean bottombar) {
+        this.bottombar = bottombar
     }
 
     void help(String help) {

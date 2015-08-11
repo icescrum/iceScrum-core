@@ -21,7 +21,7 @@
     <div class="clearfix stacks" ng-class="{ 'one-stack': !$state.current.data.stack, 'two-stacks': $state.current.data.stack == 2 , 'three-stacks': $state.current.data.stack == 3 }">
         %{-- Content --}%
         <div id="window-content-${id}" class="window-content">
-        <g:if test="${toolbar != false && right != null}">
+        <g:if test="${toolbar != false}">
             <nav fixed="#window-content-${id}" class="navbar navbar-toolbar navbar-default" role="navigation">
                 <div class="container-fluid">
                     <div class="btn-toolbar" id="${controllerName}-toolbar" role="toolbar">
@@ -31,11 +31,20 @@
             </nav>
         </g:if>
             ${windowContent}
-        </div>
-        <g:if test="${right}">
-            <div class="details" ui-view="details"></div>
-            <div class="details-list" ui-view="details-list"></div>
-            <div class="details-list-form" ui-view="details-list-form"></div>
+        <g:if test="${bottombar != false}">
+            <nav fixed="#window-content-${id}" fixed-bottom="true" class="navbar navbar-toolbar bottombar navbar-default" fixed-offset-bottom="11" role="navigation">
+                <div class="container-fluid">
+                    <div class="btn-toolbar" id="${controllerName}-bottombar" role="toolbar">
+                        ${bottombar}
+                    </div>
+                </div>
+            </nav>
         </g:if>
+    </div>
+    <g:if test="${right}">
+        <div class="details" ui-view="details"></div>
+        <div class="details-list" ui-view="details-list"></div>
+        <div class="details-list-form" ui-view="details-list-form"></div>
+    </g:if>
     </div>
 </div>
