@@ -32,7 +32,7 @@
         </g:if>
             ${windowContent}
         <g:if test="${bottombar != false}">
-            <nav fixed="#window-content-${id}" fixed-bottom="true" class="navbar navbar-toolbar bottombar navbar-default" fixed-offset-bottom="11" role="navigation">
+            <nav fixed="#window-content-${id}" fixed-bottom="true" class="navbar navbar-toolbar bottombar navbar-default hidden" fixed-offset-bottom="11" role="navigation">
                 <div class="container-fluid">
                     <div class="btn-toolbar" id="${controllerName}-bottombar" role="toolbar">
                         ${bottombar}
