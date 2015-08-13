@@ -449,21 +449,6 @@ class IcescrumCoreGrailsPlugin {
                 returnError(text: message(code: 'is.sprint.error.not.exist'))
             }
         }
-
-        source.metaClass.withRelease = { def id = 'id', Closure c ->
-            def release = (Release)Release.getInProduct(params.long('product'), (id instanceof String ? params."$id".toLong() : id) ).list()
-            if (release) {
-                try {
-                    c.call release
-                } catch (IllegalStateException e) {
-                    returnError(exception: e)
-                } catch (RuntimeException e) {
-                    returnError(object: release, exception: e)
-                }
-            } else {
-                returnError(text: message(code: 'is.release.error.not.exist'))
-            }
-        }
     }
 
     private addCorsSupport(def xml, def config){
