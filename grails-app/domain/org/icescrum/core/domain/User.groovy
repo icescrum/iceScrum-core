@@ -40,6 +40,7 @@ class User implements Serializable, Attachmentable {
 
     static final long serialVersionUID = 813639032272976126L
 
+    String notes
     String lastName = "Doe"
     String firstName = "John"
     String username = ""
@@ -71,6 +72,7 @@ class User implements Serializable, Attachmentable {
         username index: 'username_index'
         preferences lazy: false
         teams cache: true
+        notes length: 5000
     }
 
     static constraints = {
@@ -79,6 +81,7 @@ class User implements Serializable, Attachmentable {
         lastName(blank: false)
         firstName(blank: false)
         email(blank: false, email: true)
+        notes(maxSize: 5000, nullable: true)
     }
 
     static findExceptTeam(Long id, term, params) {
