@@ -25,6 +25,7 @@
 
 package org.icescrum.core.domain
 
+import org.hibernate.ObjectNotFoundException
 import org.icescrum.plugins.attachmentable.interfaces.Attachmentable
 
 import java.sql.Timestamp
@@ -111,6 +112,13 @@ class Release extends TimeBox implements Cloneable, Attachmentable {
             }
             uniqueResult = true
         }
+    }
+
+    static Release withRelease(long productId, long id){
+        Release release = (Release) getInProduct(productId, id).list()
+        if (!release)
+            throw new ObjectNotFoundException(id,'Release')
+        return release
     }
 
     static Timestamp findLastUpdatedSprint(Release release) {
