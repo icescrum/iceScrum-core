@@ -170,6 +170,7 @@ class DummyPopulator {
                 if (i % 4 == 0) {
                     (i % 7).times {
                         story.addToTasks(new Task(parentProduct: product, uid: nextTaskUid, type: null, estimation: 3, name: "task ${it} story : ${story.id}", creator: usera, responsible: usera, parentStory: story, creationDate: new Date()))
+                        nextTaskUid++
                     }
                     story.save()
                 }
