@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 Kagilum SAS.
+ * Copyright (c) 2015 Kagilum SAS.
  *
  * This file is part of iceScrum.
  *
@@ -94,7 +94,6 @@ class Activity implements Serializable, Comparable {
         activitiesAndStories
     }
 
-    // TODO remove when no more used in project controller
     static recentProductActivity(Product product) {
         executeQuery("""SELECT a
                         FROM org.icescrum.core.domain.Activity as a
@@ -103,7 +102,6 @@ class Activity implements Serializable, Comparable {
                         ORDER BY a.dateCreated DESC""", [p: product.id], [max: 15])
     }
 
-    // TODO remove when no more used in project controller
     static recentStoryActivity(Product product) {
         executeQuery("""SELECT a
                         FROM org.icescrum.core.domain.Activity as a, org.icescrum.core.domain.Story as s
@@ -112,38 +110,5 @@ class Activity implements Serializable, Comparable {
                         AND NOT (a.code LIKE 'task')
                         AND s.backlog = :p
                         ORDER BY a.dateCreated DESC""", [p: product], [max: 15])
-    }
-
-    // TODO remove when no more needed in K REST controller
-    //Not working on ORACLE
-    static recentTeamsActivity(def uid) {
-        executeQuery("""SELECT DISTINCT a, p2
-                        FROM org.icescrum.core.domain.Activity as a, org.icescrum.core.domain.Product as p2
-                        WHERE a.parentType = 'product'
-                        AND a.parentRef = p2.id
-                        AND p2.id in (SELECT DISTINCT p.id
-                                      FROM org.icescrum.core.domain.Product as p INNER JOIN p.teams as t
-                                      WHERE t.id in (SELECT DISTINCT t2.id
-                                                     FROM org.icescrum.core.domain.Team as t2
-                                                     INNER JOIN t2.members as m
-                                                     WHERE m.id = :uid))
-                        ORDER BY a.dateCreated DESC""", [uid:uid], [cache:true,max: 15])
-    }
-
-    // TODO remove when no more needed in K REST controller
-    //Not working on ORACLE
-    static recentStoryActivity(User user) {
-        executeQuery("""SELECT DISTINCT a, s.backlog
-                        FROM org.icescrum.core.domain.Activity as a, org.icescrum.core.domain.Story as s
-                        WHERE a.parentType = 'story'
-                        AND a.parentRef = s.id
-                        AND not (a.code LIKE 'task')
-                        AND s.backlog.id in (SELECT DISTINCT p.id
-                                             FROM org.icescrum.core.domain.Product as p INNER JOIN p.teams as t
-                                             WHERE t.id in (SELECT DISTINCT t2.id
-                                                            FROM org.icescrum.core.domain.Team as t2
-                                                            INNER JOIN t2.members as m
-                                                            WHERE m.id = :uid))
-                        ORDER BY a.dateCreated DESC""", [uid: user.id], [cache:true,max: 15])
     }
 }
