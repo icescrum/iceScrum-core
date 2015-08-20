@@ -27,6 +27,7 @@
 
 package org.icescrum.core.domain
 
+import org.hibernate.ObjectNotFoundException
 import org.icescrum.plugins.attachmentable.interfaces.Attachmentable
 
 
@@ -167,6 +168,14 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
 
     void setDone() {
         this.state = Sprint.STATE_DONE
+    }
+
+    static Sprint withSprint(long productId, long id){
+        Sprint sprint = (Sprint) getInProduct(productId, id).list()
+        if (!sprint) {
+            throw new ObjectNotFoundException(id,'Sprint')
+        }
+        return sprint
     }
 
     @Override

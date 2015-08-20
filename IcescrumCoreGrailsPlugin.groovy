@@ -36,8 +36,6 @@ import org.icescrum.core.utils.JSONIceScrumDomainClassMarshaller
 import org.icescrum.plugins.attachmentable.domain.Attachment
 import org.icescrum.plugins.attachmentable.services.AttachmentableService
 import org.springframework.context.ApplicationContext
-import org.icescrum.core.domain.Sprint
-import org.icescrum.core.domain.Release
 import org.icescrum.core.domain.Task
 import org.codehaus.groovy.grails.plugins.jasper.JasperReportDef
 import org.codehaus.groovy.grails.plugins.jasper.JasperExportFormat
@@ -432,21 +430,6 @@ class IcescrumCoreGrailsPlugin {
                 }
             } else {
                 returnError(text: message(code: 'is.tasks.error.not.exist'))
-            }
-        }
-
-        source.metaClass.withSprint = { def id = 'id', Closure c ->
-            def sprint = (Sprint)Sprint.getInProduct(params.long('product'), (id instanceof String ? params."$id"?.toLong() : id) ).list()
-            if (sprint) {
-                try {
-                    c.call sprint
-                } catch (IllegalStateException ise) {
-                    returnError(text: message(code: ise.getMessage()))
-                } catch (RuntimeException e) {
-                    returnError(object: sprint, exception: e)
-                }
-            } else {
-                returnError(text: message(code: 'is.sprint.error.not.exist'))
             }
         }
     }

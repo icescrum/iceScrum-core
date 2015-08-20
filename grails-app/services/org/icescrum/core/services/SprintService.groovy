@@ -61,7 +61,10 @@ class SprintService extends IceScrumEventPublisher {
 
         if (checkIntegrity) {
             if (sprint.state == Sprint.STATE_DONE) {
-                throw new IllegalStateException('is.sprint.error.update.done')
+                def illegalDirtyProperties = sprint.dirtyPropertyNames - ['doneDefinition', 'retrospective']
+                if (illegalDirtyProperties) {
+                    throw new IllegalStateException('is.sprint.error.update.done')
+                }
             }
             if (sprint.state == Sprint.STATE_INPROGRESS && startDate && sprint.startDate != startDate) {
                 throw new IllegalStateException('is.sprint.error.update.startdate.inprogress')

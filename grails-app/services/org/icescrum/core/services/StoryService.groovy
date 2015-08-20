@@ -310,7 +310,7 @@ class StoryService extends IceScrumEventPublisher {
             sprint.capacity = sprint.totalEffort
         }
         User u = (User) springSecurityService.currentUser
-        activityService.addActivity(story, u, 'unPlan', story.name, 'parentSprint', story.parentSprint.id)
+        activityService.addActivity(story, u, 'unPlan', story.name, 'parentSprint', sprint.id.toString())
         story.parentSprint = null
 
         def tasks = story.tasks.asList()
