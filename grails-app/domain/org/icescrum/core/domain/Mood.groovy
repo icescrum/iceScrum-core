@@ -1,6 +1,6 @@
 
 /*
- * Copyright (c) 2015 iceScrum Technologies.
+ * Copyright (c) 2015 Kagilum.
  *
  * This file is part of iceScrum.
  *
@@ -18,11 +18,9 @@
  *
  * Authors:
  *
- * Vincent Barrier (vbarrier@kagilum.com)
- * Stéphane Maldini (stephane.maldini@icescrum.com)
- * Manuarii Stein (manuarii.stein@icescrum.com)
+ * Marwah Soltani (msoltani@kagilum.com)
+ *
  */
-
 
 package org.icescrum.core.domain
 
@@ -31,9 +29,9 @@ class Mood {
     static final int MOOD_GOOD = 1
     static final int MOOD_MEH = 2
     static final int MOOD_BAD = 3
-    int moodUser = Mood.MOOD_GOOD
-    static belongsTo = [User]
-
+    Integer feeling
+    Date dateCreated
+    static belongsTo = [user: User]
 }
 
 
