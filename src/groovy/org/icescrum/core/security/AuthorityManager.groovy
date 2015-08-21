@@ -34,6 +34,11 @@ class AuthorityManager {
         UserAuthority.create(user, Authority.findByAuthority(Authority.ROLE_PERMISSION), true)
     }
 
+    static public makeUnAdmin = { user ->
+        UserAuthority.remove(user, Authority.findByAuthority(Authority.ROLE_ADMIN), false)
+        UserAuthority.remove(user, Authority.findByAuthority(Authority.ROLE_PERMISSION), true)
+    }
+
     static public initSecurity = { def grailsApplication ->
         def ctx = grailsApplication.mainContext
         def securityService = ctx.securityService
