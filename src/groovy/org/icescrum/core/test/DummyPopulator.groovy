@@ -76,6 +76,18 @@ class DummyPopulator {
             userx = User.findByUsername("x")
         }
 
+
+
+        def mood1  = new Mood(feeling:1, feelingDay: new Date()-3 , user:usera)
+        def mood2  = new Mood(feeling:2, feelingDay: new Date()-2 , user:usera)
+        def mood3  = new Mood(feeling:3, feelingDay: new Date()-1 , user:usera)
+        def mood4  = new Mood(feeling:1, feelingDay: new Date()-5 , user:usera)
+
+        mood1.save()
+        mood2.save()
+        mood3.save()
+        mood4.save()
+
         loginAsAdmin()
 
         if (Product.count() == 0) {

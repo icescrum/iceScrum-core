@@ -30,8 +30,10 @@ class Mood {
     static final int MOOD_MEH = 2
     static final int MOOD_BAD = 3
     Integer feeling
-    Date dateCreated
+    Date feelingDay
     static belongsTo = [user: User]
+
+    static constraints = {
+        feelingDay(unique: 'user')
+    }
 }
-
-
