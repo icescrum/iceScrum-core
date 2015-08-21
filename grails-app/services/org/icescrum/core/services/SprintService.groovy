@@ -312,7 +312,7 @@ class SprintService {
                 }
                 broadcast(function: 'update', message: it, channel:'product-'+sprint.parentProduct.id)
             }
-            storyService.plan(nextSprint, sprint.stories.findAll {it.state != Story.STATE_DONE})
+            storyService.plan(nextSprint, sprint.stories.findAll {it.state != Story.STATE_DONE}.sort { it.rank })
         } else {
             storyService.unPlanAll([sprint])
         }
