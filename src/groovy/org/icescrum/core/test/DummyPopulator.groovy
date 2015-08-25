@@ -45,6 +45,7 @@ import org.icescrum.core.domain.Team
 import org.icescrum.core.domain.User
 import grails.plugin.springsecurity.userdetails.GrailsUser
 import org.icescrum.core.domain.Actor
+import org.icescrum.core.domain.Mood
 
 class DummyPopulator {
 
@@ -76,17 +77,12 @@ class DummyPopulator {
             userx = User.findByUsername("x")
         }
 
-
-
-        def mood1  = new Mood(feeling:1, feelingDay: new Date()-3 , user:usera)
-        def mood2  = new Mood(feeling:2, feelingDay: new Date()-2 , user:usera)
-        def mood3  = new Mood(feeling:3, feelingDay: new Date()-1 , user:usera)
-        def mood4  = new Mood(feeling:1, feelingDay: new Date()-5 , user:usera)
-
+        def mood1 = new Mood(feeling: 1, feelingDay: new Date() - 3, user: usera)
         mood1.save()
+        def mood2 = new Mood(feeling: 1, feelingDay: new Date() - 2, user: usera)
         mood2.save()
+        def mood3 = new Mood(feeling: 1, feelingDay: new Date() - 1, user: usera)
         mood3.save()
-        mood4.save()
 
         loginAsAdmin()
 

@@ -36,4 +36,8 @@ class Mood {
     static constraints = {
         feelingDay(unique: 'user')
     }
+
+    def beforeValidate() {
+        feelingDay = feelingDay.clearTime()
+    }
 }
