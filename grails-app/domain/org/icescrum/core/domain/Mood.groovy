@@ -33,6 +33,11 @@ class Mood {
     Date feelingDay
     static belongsTo = [user: User]
 
+    static mapping = {
+        cache true
+        table 'icescrum2_mood'
+    }
+
     static constraints = {
         feelingDay(unique: 'user')
     }
