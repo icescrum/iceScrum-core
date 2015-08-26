@@ -116,8 +116,9 @@ class Release extends TimeBox implements Cloneable, Attachmentable {
 
     static Release withRelease(long productId, long id){
         Release release = (Release) getInProduct(productId, id).list()
-        if (!release)
+        if (!release) {
             throw new ObjectNotFoundException(id,'Release')
+        }
         return release
     }
 
