@@ -221,7 +221,7 @@ class SprintService extends IceScrumEventPublisher {
                     if ((ServicesUtils.isDateWeekend(lastDaycliche) && !sprint.parentRelease.parentProduct.preferences.hideWeekend) || !ServicesUtils.isDateWeekend(lastDaycliche))
                         values << [
                                 remainingTime: currentRemaining,
-                                label: "${g.formatDate(date: lastDaycliche, formatName: 'is.date.format.short')}"
+                                label: lastDaycliche.clone().clearTime().time
                         ]
                 }
             }
@@ -232,7 +232,7 @@ class SprintService extends IceScrumEventPublisher {
                 if ((ServicesUtils.isDateWeekend(lastDaycliche + (it + 1)) && !sprint.parentRelease.parentProduct.preferences.hideWeekend) || !ServicesUtils.isDateWeekend(lastDaycliche + (it + 1)))
                     values << [
                             remainingTime: null,
-                            label: "${g.formatDate(date: lastDaycliche + (it + 1), formatName: 'is.date.format.short')}"
+                            label: (lastDaycliche + (it + 1)).clearTime().time
                     ]
             }
         }
@@ -260,7 +260,7 @@ class SprintService extends IceScrumEventPublisher {
                         values << [
                                 tasksDone: xmlRoot."${Cliche.TASKS_DONE}".toInteger(),
                                 tasks: xmlRoot."${Cliche.TOTAL_TASKS}".toInteger(),
-                                label: "${g.formatDate(date: lastDaycliche, formatName: 'is.date.format.short')}"
+                                label: lastDaycliche.clone().clearTime().time
                         ]
                     }
                 }
@@ -274,7 +274,7 @@ class SprintService extends IceScrumEventPublisher {
                     values << [
                             tasksDone: null,
                             tasks: null,
-                            label: "${g.formatDate(date: lastDaycliche + (it + 1), formatName: 'is.date.format.short')}"
+                            label: (lastDaycliche + (it + 1)).clearTime().time
                     ]
                 }
             }
@@ -301,7 +301,7 @@ class SprintService extends IceScrumEventPublisher {
                                 stories: xmlRoot."${Cliche.TOTAL_STORIES}".toInteger(),
                                 pointsDone: xmlRoot."${Cliche.STORIES_POINTS_DONE}"?.toString()?.isBigDecimal() ? xmlRoot."${Cliche.STORIES_POINTS_DONE}".toBigDecimal() :0,
                                 totalPoints: xmlRoot."${Cliche.STORIES_TOTAL_POINTS}"?.toString()?.isBigDecimal() ? xmlRoot."${Cliche.STORIES_TOTAL_POINTS}".toBigDecimal() :0,
-                                label: "${g.formatDate(date: lastDaycliche, formatName: 'is.date.format.short')}"
+                                label: lastDaycliche.clone().clearTime().time
                         ]
                     }
                 }
@@ -317,7 +317,7 @@ class SprintService extends IceScrumEventPublisher {
                             stories: null,
                             pointsDone: null,
                             totalPoints: null,
-                            label: "${g.formatDate(date: lastDaycliche + (it + 1), formatName: 'is.date.format.short')}"
+                            label: (lastDaycliche + (it + 1)).clearTime().time
                     ]
                 }
             }
