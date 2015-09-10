@@ -50,7 +50,7 @@ grails.project.dependency.resolution = {
     }
     plugins {
         compile ':atmosphere-meteor:1.0.5'
-        compile ':spring-security-core:2.0-RC4'
+        compile ':spring-security-core:2.0-RC5'
         compile ':spring-security-acl:2.0-RC2'
         compile ':hd-image-utils:1.1'
         compile ':taggable:1.1.0'
