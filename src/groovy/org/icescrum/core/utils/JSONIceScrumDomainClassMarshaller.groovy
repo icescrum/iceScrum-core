@@ -182,22 +182,25 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
             }
         }
         propertiesMap."${configName}"?.include?.each {
-            if (value.properties."${it}" != null) {
+            def val = value.properties."${it}"
+            if (val != null) {
                 writer.key(it);
-                json.convertAnother(value.properties."${it}");
+                json.convertAnother(val);
             }
         }
         propertiesMap."${configName}"?.includeCount?.each {
-            if (value.properties."${it}" instanceof Collection) {
-                Collection o = value.properties."${it}"
+            def val = value.properties."${it}"
+            if (val instanceof Collection) {
+                Collection o = val
                 writer.key(it + "_count").value(o.size())
             }
         }
         if (textileRenderer && propertiesMap."${configName}"?.textile) {
             propertiesMap."${configName}"?.textile?.each {
-                if (value.properties."${it}" != null) {
+                def val = value.properties."${it}"
+                if (val != null) {
                     writer.key(it + "_html")
-                    json.convertAnother(textileRenderer.renderHtml([markup: "Textile"], value.properties."${it}"))
+                    json.convertAnother(textileRenderer.renderHtml([markup: "Textile"], val))
                 }
             }
         }
@@ -229,9 +232,10 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
 
         def configName = GrailsNameUtils.getShortName(referencedDomainClass.getName()).toLowerCase()
         propertiesMap."${configName}"?.asShort?.each {
-            if (refObj.properties."${it}" != null) {
+            def val = refObj.properties."${it}"
+            if (val != null) {
                 writer.key(it)
-                json.convertAnother(refObj.properties."${it}")
+                json.convertAnother(val)
             }
         }
 
