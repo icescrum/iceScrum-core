@@ -53,7 +53,7 @@ grails.project.dependency.resolution = {
         compile ':spring-security-core:2.0-RC5'
         compile ':spring-security-acl:2.0-RC2'
         compile ':hd-image-utils:1.1'
-        compile ':taggable:1.1.0'
+        compile 'org.icescrum:taggable:1.1.2'
         compile ':jdbc-pool:7.0.47'
         compile ':mail:1.0.7'
         compile ':spring-events:1.2'// TODO Remove
