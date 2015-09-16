@@ -169,15 +169,16 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
             }
         }
         propertiesMap."${configName}"?.include?.each {
-            if (value.properties."${it}" != null) {
+            def val = value.properties."${it}"
+            if (val != null) {
                 writer.key(it);
-                json.convertAnother(value.properties."${it}");
+                json.convertAnother(val);
             }
         }
         propertiesMap."${configName}"?.includeShort?.each {
-            if (value.properties."${it}" != null) {
+            def referenceObject = value.properties."${it}"
+            if (referenceObject != null) {
                 writer.key(it);
-                def referenceObject = value.properties."${it}"
                 if (referenceObject instanceof Collection && referenceObject.size() > 0) {
                     referenceObject = new ArrayList((Collection) referenceObject);
                     GrailsDomainClass referencedDomainClass = ConverterUtil.getDomainClass(referenceObject[0].getClass().getName())
@@ -221,9 +222,10 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
 
         def configName = GrailsNameUtils.getShortName(referencedDomainClass.getName()).toLowerCase()
         propertiesMap."${configName}"?.asShort?.each {
-            if (refObj.properties."${it}" != null) {
+            def val = refObj.properties."${it}"
+            if (val != null) {
                 writer.key(it);
-                json.convertAnother(refObj.properties."${it}");
+                json.convertAnother(val);
             }
         }
 

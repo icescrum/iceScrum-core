@@ -150,9 +150,10 @@ public class XMLIceScrumDomainClassMarshaller extends DomainClassMarshaller {
             xml.end()
         }
         propertiesMap."${configName}"?.include?.each {
-            if (value.properties."${it}" != null) {
+            def val = value.properties."${it}"
+            if (val != null) {
                 xml.startNode(it)
-                xml.convertAnother(value.properties."${it}")
+                xml.convertAnother(val)
                 xml.end()
             }
         }
@@ -176,9 +177,10 @@ public class XMLIceScrumDomainClassMarshaller extends DomainClassMarshaller {
 
         def configName = GrailsNameUtils.getShortName(referencedDomainClass.getName()).toLowerCase()
         propertiesMap."${configName}"?.asShort?.each {
-            if (refObj.properties."${it}" != null) {
+            def val = refObj.properties."${it}"
+            if (val != null) {
                 xml.startNode(it)
-                xml.convertAnother(refObj.properties."${it}")
+                xml.convertAnother(val)
                 xml.end()
             }
         }
