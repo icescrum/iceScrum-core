@@ -454,16 +454,24 @@ class Story extends BacklogElement implements Cloneable, Serializable {
     }
 
     static recentActivity(Product currentProductInstance) {
-        def storyActivity = executeQuery("""SELECT a.activity
-                        FROM grails.plugin.fluxiable.ActivityLink as a,
-                             org.icescrum.core.domain.Story as s
-                        WHERE a.type = 'story'
-                        AND s.backlog = :p
-                        AND s.id = a.activityRef
-                        AND NOT (a.activity.code LIKE 'task')""", [p: currentProductInstance])
-        storyActivity.sort { a, b -> b.dateCreated <=> a.dateCreated }
-        def limit = 15
-        return storyActivity.size() > limit ? storyActivity.subList(0, limit) : storyActivity
+        // Really ugly hack to force the execution plan by separating the query into 2 queries
+        // because MySQL would often mess up and join all the entries before applying the where restrictions
+        // leading to catastrophic performances when there is a lot of activities
+        def activityLinksIds = executeQuery("""SELECT a.id
+                                               FROM grails.plugin.fluxiable.ActivityLink as a,
+                                                    org.icescrum.core.domain.Story as s
+                                               WHERE a.type = 'story'
+                                               AND s.backlog = :p
+                                               AND s.id = a.activityRef
+                                               AND NOT (a.activity.code LIKE 'task')""", [p: currentProductInstance])
+        if (activityLinksIds) {
+            return executeQuery("""SELECT a.activity
+                                   FROM grails.plugin.fluxiable.ActivityLink as a
+                                   WHERE a.id IN(:ids)
+                                   ORDER BY a.activity.dateCreated DESC""", [ids: activityLinksIds], [max: 15])
+        } else {
+            return []
+        }
     }
 
     //Not working on ORACLE
