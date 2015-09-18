@@ -454,13 +454,16 @@ class Story extends BacklogElement implements Cloneable, Serializable {
     }
 
     static recentActivity(Product currentProductInstance) {
-        executeQuery("SELECT act FROM grails.plugin.fluxiable.Activity as act WHERE act.id IN (SELECT DISTINCT a.activity.id " +
-                "FROM grails.plugin.fluxiable.ActivityLink as a, org.icescrum.core.domain.Story as s " +
-                "WHERE a.type='story' " +
-                "and s.backlog=:p " +
-                "and s.id=a.activityRef " +
-                "and not (a.activity.code like 'task') )" +
-                "ORDER BY act.dateCreated DESC", [p: currentProductInstance], [max: 15])
+        def storyActivity = executeQuery("""SELECT a.activity
+                        FROM grails.plugin.fluxiable.ActivityLink as a,
+                             org.icescrum.core.domain.Story as s
+                        WHERE a.type = 'story'
+                        AND s.backlog = :p
+                        AND s.id = a.activityRef
+                        AND NOT (a.activity.code LIKE 'task')""", [p: currentProductInstance])
+        storyActivity.sort { a, b -> b.dateCreated <=> a.dateCreated }
+        def limit = 15
+        return storyActivity.size() > limit ? storyActivity.subList(0, limit) : storyActivity
     }
 
     //Not working on ORACLE

@@ -148,13 +148,13 @@ class Product extends TimeBox implements Serializable, Attachmentable {
     }
 
     static recentActivity(Product currentProductInstance) {
-        executeQuery("""SELECT act FROM grails.plugin.fluxiable.Activity as act
-                        WHERE act.id IN (SELECT DISTINCT a.activity.id """ +
-                                                "FROM grails.plugin.fluxiable.ActivityLink as a, org.icescrum.core.domain.Product as p " +
-                                                "WHERE a.type='product' " +
-                                                "and p.id=a.activityRef " +
-                                                "and p.id=:p )" +
-                            "ORDER BY act.dateCreated DESC", [p: currentProductInstance.id], [max: 15])
+        def productActivity = executeQuery("""SELECT a.activity
+                        FROM grails.plugin.fluxiable.ActivityLink as a
+                        WHERE a.type = 'product'
+                        AND a.activityRef = :p""", [p: currentProductInstance.id])
+        productActivity.sort { a, b -> b.dateCreated <=> a.dateCreated }
+        def limit = 15
+        return productActivity.size() > limit ? productActivity.subList(0, limit) : productActivity
     }
 
     static allProductsByUser(long userid, params) {
