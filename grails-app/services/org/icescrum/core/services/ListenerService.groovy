@@ -49,10 +49,7 @@ class ListenerService {
     void storyCreate(Story story, Map dirtyProperties) {
         def user = (User) springSecurityService.currentUser
         activityService.addActivity(story, user, Activity.CODE_SAVE, story.name)
-        Broadcaster broadcaster = atmosphereMeteor.broadcasterFactory.lookup(IceScrumBroadcaster.class, '/stream/app/product-'+story.backlog.id)
-        if (broadcaster) { // TODO FIX IT SHOULD BE THERE BUT IT IS NOT
-            broadcaster.broadcast((story as JSON).toString()) // toString() required to eagerly generate the String (lazy raise an error because no session in atmosphere thread)
-        }
+        broadcastProduct('add', story, story.backlog.id)
     }
 
     @IceScrumListener(domain = 'story', eventType = IceScrumEventType.UPDATE)
@@ -65,11 +62,11 @@ class ListenerService {
                     def newProperty = story."$property"
                     if (oldProperty != null) {
                         oldProperty.lastUpdated = new Date()
-                        broadcast(function: 'update', message: oldProperty, channel: 'product-' + product.id)
+                        broadcastProduct('update', oldProperty, product.id)
                     }
                     if (newProperty != null) {
                         newProperty.lastUpdated = new Date()
-                        broadcast(function: 'update', message: newProperty, channel: 'product-' + product.id)
+                        broadcastProduct('update', newProperty, product.id)
                     }
                 }
             }
@@ -89,34 +86,34 @@ class ListenerService {
                     activityService.addActivity(story, user, Activity.CODE_UPDATE, story.name, property)
                 }
             }
-            broadcast(function: 'update', message: story, channel: 'product-' + product.id)
+            broadcastProduct('update', story, product.id)
         }
     }
 
     @IceScrumListener(domain = 'story', eventType = IceScrumEventType.DELETE)
     void storyDelete(Story story, Map dirtyProperties) {
-        broadcast(function: 'delete', message: [class: story.class, id: dirtyProperties.id, state: dirtyProperties.state], channel: 'product-' + dirtyProperties.backlog.id)
+        broadcastProduct('delete', [class: story.class, id: dirtyProperties.id, state: dirtyProperties.state], dirtyProperties.backlog.id)
     }
 
     @IceScrumListener(domain = 'actor', eventType = IceScrumEventType.CREATE)
     void actorCreate(Actor actor, Map dirtyProperties) {
-        broadcast(function: 'add', message: actor, channel: 'product-' + actor.backlog.id)
+        broadcastProduct('add', actor, actor.backlog.id)
     }
 
     @IceScrumListener(domain = 'actor', eventType = IceScrumEventType.UPDATE)
     void actorUpdate(Actor actor, Map dirtyProperties) {
-        broadcast(function: 'update', message: actor, channel: 'product-' + actor.backlog.id)
+        broadcastProduct('update', actor, actor.backlog.id)
     }
 
     @IceScrumListener(domain = 'actor', eventType = IceScrumEventType.DELETE)
     void actorDelete(Actor actor, Map dirtyProperties) {
-        broadcast(function: 'delete', message: [class: actor.class, id: dirtyProperties.id], channel: 'product-' + dirtyProperties.backlog.id)
+        broadcastProduct('delete', [class: actor.class, id: dirtyProperties.id], dirtyProperties.backlog.id)
     }
 
 
     @IceScrumListener(domain = 'feature', eventType = IceScrumEventType.CREATE)
     void featureCreate(Feature feature, Map dirtyProperties) {
-        broadcast(function: 'add', message: feature, channel: 'product-' + feature.backlog.id)
+        broadcastProduct('add', feature, feature.backlog.id)
     }
 
     @IceScrumListener(domain = 'feature', eventType = IceScrumEventType.UPDATE)
@@ -124,19 +121,19 @@ class ListenerService {
         def productId = feature.backlog.id
         if(dirtyProperties.containsKey('color')) {
             feature.stories.each { story ->
-                broadcast(function: 'update', message: story, channel: 'product-' + productId)
+                broadcastProduct('update', story, productId)
             }
         }
-        broadcast(function: 'update', message: feature, channel: 'product-' + productId)
+        broadcastProduct('update', feature, productId)
     }
 
     @IceScrumListener(domain = 'feature', eventType = IceScrumEventType.DELETE)
     void featureDelete(Feature feature, Map dirtyProperties) {
         def productId = dirtyProperties.backlog.id
         dirtyProperties.stories.each { story ->
-            broadcast(function: 'update', message: story, channel: 'product-' + productId)
+            broadcastProduct('update', story, productId)
         }
-        broadcast(function: 'delete', message: [class: feature.class, id: dirtyProperties.id], channel: 'product-' + productId)
+        broadcastProduct('delete', [class: feature.class, id: dirtyProperties.id], productId)
     }
 
     @IceScrumListener(domain = 'task', eventType = IceScrumEventType.CREATE)
@@ -144,56 +141,56 @@ class ListenerService {
         def user = (User) springSecurityService.currentUser
         activityService.addActivity(task, user, 'taskSave', task.name)
         def productId = task.backlog ? task.backlog.id : task.parentStory.backlog.id
-        broadcast(function: 'add', message: task, channel: 'product-' + productId)
+        broadcastProduct('add', task, productId)
     }
 
     @IceScrumListener(domain = 'task', eventType = IceScrumEventType.UPDATE)
     void taskUpdate(Task task, Map dirtyProperties) {
         def productId = task.backlog ? task.backlog.id : task.parentStory.backlog.id
-        broadcast(function: 'update', message: task, channel: 'product-' + productId)
+        broadcastProduct('update', task, productId)
     }
 
     @IceScrumListener(domain = 'task', eventType = IceScrumEventType.DELETE)
     void taskDelete(Task task, Map dirtyProperties) {
         def productId = dirtyProperties.backlog ? dirtyProperties.backlog.id : dirtyProperties.parentStory.backlog.id
-        broadcast(function: 'delete', message: [class: task.class, id: dirtyProperties.id], channel: 'product-' + productId)
+        broadcastProduct('delete', [class: task.class, id: dirtyProperties.id], productId)
     }
 
     @IceScrumListener(domain = 'sprint', eventType = IceScrumEventType.CREATE)
     void sprintCreate(Sprint sprint, Map dirtyProperties) {
-        broadcast(function: 'add', message: sprint, channel: 'product-' + sprint.parentProduct.id)
+        broadcastProduct('add', sprint, sprint.parentProduct.id)
     }
 
     @IceScrumListener(domain = 'sprint', eventType = IceScrumEventType.UPDATE)
     void sprintUpdate(Sprint sprint, Map dirtyProperties) {
-        broadcast(function: 'update', message: sprint, channel: 'product-' + sprint.parentProduct.id)
+        broadcastProduct('update', sprint, sprint.parentProduct.id)
     }
 
     @IceScrumListener(domain = 'sprint', eventType = IceScrumEventType.DELETE)
     void sprintDelete(Sprint sprint, Map dirtyProperties) {
-        broadcast(function: 'delete', message: [class: sprint.class, id: dirtyProperties.id], channel: 'product-' + dirtyProperties.parentRelease.parentProduct.id)
+        broadcastProduct('delete', [class: sprint.class, id: dirtyProperties.id], dirtyProperties.parentRelease.parentProduct.id)
     }
 
     @IceScrumListener(domain = 'release', eventType = IceScrumEventType.CREATE)
     void releaseCreate(Release release, Map dirtyProperties) {
-        broadcast(function: 'add', message: release, channel: 'product-' + release.parentProduct.id)
+        broadcastProduct('add', release, release.parentProduct.id)
     }
 
     @IceScrumListener(domain = 'release', eventType = IceScrumEventType.UPDATE)
     void releaseUpdate(Release release, Map dirtyProperties) {
-        broadcast(function: 'update', message: release, channel: 'product-' + release.parentProduct.id)
+        broadcastProduct('update', release, release.parentProduct.id)
     }
 
     @IceScrumListener(domain = 'release', eventType = IceScrumEventType.DELETE)
     void releaseDelete(Release release, Map dirtyProperties) {
-        broadcast(function: 'delete', message: [class: release.class, id: dirtyProperties.id], channel: 'product-' + dirtyProperties.parentProduct.id)
+        broadcastProduct('delete', [class: release.class, id: dirtyProperties.id], dirtyProperties.parentProduct.id)
     }
 
     @IceScrumListener(domain = 'acceptanceTest', eventType = IceScrumEventType.CREATE)
     void acceptanceTestCreate(AcceptanceTest acceptanceTest, Map dirtyProperties) {
         def user = (User) springSecurityService.currentUser
         activityService.addActivity(acceptanceTest, user, 'acceptanceTestSave', acceptanceTest.name)
-        broadcast(function: 'add', message: acceptanceTest, channel: 'product-' + acceptanceTest.parentProduct.id)
+        broadcastProduct('add', acceptanceTest, acceptanceTest.parentProduct.id)
     }
 
     @IceScrumListener(domain = 'acceptanceTest', eventType = IceScrumEventType.UPDATE)
@@ -201,14 +198,14 @@ class ListenerService {
         def user = (User) springSecurityService.currentUser
         def activityType = 'acceptanceTest' + (dirtyProperties.containsKey('state') ? acceptanceTest.stateEnum.name().toLowerCase().capitalize() : 'Update')
         activityService.addActivity(acceptanceTest, user, activityType, acceptanceTest.name)
-        broadcast(function: 'update', message: acceptanceTest, channel: 'product-' + acceptanceTest.parentProduct.id)
+        broadcastProduct('update', acceptanceTest, acceptanceTest.parentProduct.id)
     }
 
     @IceScrumListener(domain = 'acceptanceTest', eventType = IceScrumEventType.DELETE)
     void acceptanceTestDelete(AcceptanceTest acceptanceTest, Map dirtyProperties) {
         def product = dirtyProperties.parentStory.backlog
         activityService.addActivity(dirtyProperties.parentStory, springSecurityService.currentUser, 'acceptanceTestDelete', acceptanceTest.name)
-        broadcast(function: 'delete', message: [class: acceptanceTest.class, id: dirtyProperties.id], channel: 'product-' + product.id)
+        broadcastProduct('delete', [class: acceptanceTest.class, id: dirtyProperties.id], product.id)
     }
 
     // SHARED LISTENERS
@@ -224,7 +221,8 @@ class ListenerService {
         object.lastUpdated = new Date()
     }
 
-    void broadcast(def a){
-
+    private void broadcastProduct(function, message, productId){
+        Broadcaster broadcaster = atmosphereMeteor.broadcasterFactory.lookup(IceScrumBroadcaster.class, '/stream/app/product-' + productId)
+        broadcaster.broadcast((message as JSON).toString()) // toString() required to eagerly generate the String (lazy raise an error because no session in atmosphere thread)
     }
 }
