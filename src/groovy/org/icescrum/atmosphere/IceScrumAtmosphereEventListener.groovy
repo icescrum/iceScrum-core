@@ -24,15 +24,10 @@ package org.icescrum.atmosphere
 import grails.converters.JSON
 import grails.util.Holders
 import org.apache.commons.logging.LogFactory
-import org.atmosphere.cpr.AtmosphereResource
 import org.atmosphere.cpr.AtmosphereResourceEvent
 import org.atmosphere.cpr.AtmosphereResourceEventListener
-import org.atmosphere.cpr.AtmosphereResourceFactory
-import org.atmosphere.cpr.BroadcasterFactory
-import org.icescrum.core.domain.Product
 import org.springframework.security.core.context.SecurityContext
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository
-
 
 class IceScrumAtmosphereEventListener implements AtmosphereResourceEventListener {
 
@@ -125,9 +120,16 @@ class IceScrumAtmosphereEventListener implements AtmosphereResourceEventListener
     }
 
     private static def getUserFromAtmosphereResource(def resource) {
-        def user = [uuid:resource.uuid(), window:resource.request.getParameterValues("window") ? resource.request.getParameterValues("window")[0] : null]
-        def springSecurityService = Holders.applicationContext.getBean("springSecurityService")
-        user.putAll(springSecurityService.isLoggedIn() ? [fullName:springSecurityService.currentUser.fullName, id:springSecurityService.currentUser.id, username:springSecurityService.currentUser.username] : [fullName: 'anonymous', id: null, username: 'anonymous'])
+        def request = resource.request
+        def user = [uuid: resource.uuid(), window: request.getParameterValues("window") ? request.getParameterValues("window")[0] : null]
+        // Cannot use springSecurityService directly here because there is no hibernate session to look into
+        def context = (SecurityContext) request.session?.getAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY);
+        if (context?.authentication?.isAuthenticated()) {
+            def principal = context.authentication.principal
+            user.putAll([fullName: principal.fullName, id: principal.id, username: principal.username])
+        } else {
+            user.putAll([fullName: 'anonymous', id: null, username: 'anonymous'])
+        }
         return user
     }
 }

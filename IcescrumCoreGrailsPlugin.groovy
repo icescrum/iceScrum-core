@@ -92,6 +92,9 @@ class IcescrumCoreGrailsPlugin {
     def documentation = "http://www.icescrum.org/plugin/icescrum-core"
 
     def doWithWebDescriptor = { xml ->
+        if (application.config.icescrum.push.enable) {
+            addAtmosphereSessionSupport(xml)
+        }
         def cors = application.config.icescrum.cors
         if (cors.enable){
             addCorsSupport(xml, cors)
@@ -430,6 +433,28 @@ class IcescrumCoreGrailsPlugin {
                 }
             } else {
                 returnError(text: message(code: 'is.tasks.error.not.exist'))
+            }
+        }
+    }
+
+    // Websockets are not backed by HttpSessions, which prevents from looking at the security context
+    // One way to work around that consists in enabling HttpSession support at the atmosphere level
+    // References:
+    // - https://github.com/Atmosphere/atmosphere/wiki/Enabling-HttpSession-Support
+    // - https://spring.io/blog/2014/09/16/preview-spring-security-websocket-support-sessions
+    private addAtmosphereSessionSupport(xml) {
+        def nodeName = 'listener' // An 1 level indirection is required, using the "listener" string literal fails miserably
+        def listener = xml[nodeName]
+        listener[listener.size() - 1] + {
+            "$nodeName" {
+                'listener-class'('org.atmosphere.cpr.SessionSupport')
+            }
+        }
+        def contextParam = xml.'context-param'
+        contextParam[contextParam.size() - 1] + {
+            'context-param' {
+                'param-name'('org.atmosphere.cpr.sessionSupport')
+                'param-value'(true)
             }
         }
     }
