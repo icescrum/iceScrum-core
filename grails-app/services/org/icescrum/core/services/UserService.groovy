@@ -235,7 +235,7 @@ class UserService extends IceScrumEventPublisher {
     }
 
     void panel(User user, String id, String position) {
-        def currentPanels=user.preferences.panel
+        def currentPanels=user.preferences.panels
         def from = currentPanels.get(id)?.toInteger()
         from = from ?: 1
         def to = position.toInteger()
