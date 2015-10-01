@@ -24,19 +24,19 @@
 
 package org.icescrum.core.domain
 
-class Rss {
+class Feed {
 
-    String rssUrl
+    String feedUrl
     Date dateCreated
 
     static belongsTo = [user: User]
 
     static constraints = {
-        rssUrl (url: true)
+        feedUrl (url: true)
     }
 
     static mapping = {
         cache true
-        table 'icescrum2_rss'
+        table 'icescrum2_feed'
     }
 }
