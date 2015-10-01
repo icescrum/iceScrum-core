@@ -47,6 +47,7 @@ class UserPreferences implements Serializable{
 
     Map menu = ["project": "1", "backlog": "2", "timeline": "3", "releasePlan": "4", "sprintPlan": "5"]
     Map menuHidden = ["feature": "2"]
+    Map panel =["rss": "0", "notes": "1", "projects": "2", "mood": "3", "tasks": "4"]
 
     static transients = ["emailsSettings"]
 
@@ -95,6 +96,7 @@ class UserPreferences implements Serializable{
 
     def xml = { builder ->
         builder.preferences(id:this.id) {
+            panel(this.panel)
             menu(this.menu)
             language(this.language)
             activity(this.activity)

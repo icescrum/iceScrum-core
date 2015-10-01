@@ -46,7 +46,7 @@ class UserService extends IceScrumEventPublisher {
     def notificationEmailService
 
     void save(User user, String token = null) {
-        if (!user.validate()){
+        if (!user.validate()) {
             throw new RuntimeException()
         }
         user.password = springSecurityService.encodePassword(user.password)
@@ -69,10 +69,10 @@ class UserService extends IceScrumEventPublisher {
 
     void update(User user, Map props) {
 
-        if (props.pwd){
+        if (props.pwd) {
             user.password = springSecurityService.encodePassword(props.pwd)
         }
-        if (props.emailsSettings){
+        if (props.emailsSettings) {
             user.preferences.emailsSettings = props.emailsSettings
         }
         try {
@@ -93,7 +93,7 @@ class UserService extends IceScrumEventPublisher {
                     }
                 }
             } else if (props.containsKey('avatar') && props.avatar == null) {
-                File[] oldAvatars = new File(grailsApplication.config.icescrum.images.users.dir.toString()).listFiles((FilenameFilter)new WildcardFileFilter("${user.id}.*"))
+                File[] oldAvatars = new File(grailsApplication.config.icescrum.images.users.dir.toString()).listFiles((FilenameFilter) new WildcardFileFilter("${user.id}.*"))
                 oldAvatars.each {
                     it.delete()
                 }
@@ -130,7 +130,7 @@ class UserService extends IceScrumEventPublisher {
         Random rand = new Random(System.currentTimeMillis())
         def passChars = (0..10).collect { pool[rand.nextInt(pool.size())] }
         def password = passChars.join('')
-        update(user, [pwd:password])
+        update(user, [pwd: password])
         notificationEmailService.sendNewPassword(user, password)
     }
 
@@ -146,8 +146,7 @@ class UserService extends IceScrumEventPublisher {
                 }
                 user.preferences.menu.remove(id)
             }
-        }
-        else {
+        } else {
             currentMenu = user.preferences.menu
             if (!currentMenu.containsKey(id)) {
                 currentMenu.put(id, (currentMenu.size() + 1).toString())
@@ -157,6 +156,7 @@ class UserService extends IceScrumEventPublisher {
                 user.preferences.menuHidden.remove(id)
             }
         }
+
         def from = currentMenu.get(id)?.toInteger()
         from = from ?: 1
         def to = position.toInteger()
@@ -164,21 +164,18 @@ class UserService extends IceScrumEventPublisher {
         if (from != to) {
 
             if (from > to) {
-                currentMenu.entrySet().each {it ->
+                currentMenu.entrySet().each { it ->
                     if (it.value.toInteger() >= to && it.value.toInteger() <= from && it.key != id) {
                         it.value = (it.value.toInteger() + 1).toString()
-                    }
-                    else if (it.key == id) {
+                    } else if (it.key == id) {
                         it.value = position
                     }
                 }
-            }
-            else {
-                currentMenu.entrySet().each {it ->
+            } else {
+                currentMenu.entrySet().each { it ->
                     if (it.value.toInteger() <= to && it.value.toInteger() >= from && it.key != id) {
                         it.value = (it.value.toInteger() - 1).toString()
-                    }
-                    else if (it.key == id) {
+                    } else if (it.key == id) {
                         it.value = position
                     }
                 }
@@ -196,8 +193,8 @@ class UserService extends IceScrumEventPublisher {
             def u
             if (user.@uid.text())
                 u = User.findByUid(user.@uid.text())
-            else{
-                u = ApplicationSupport.findUserUIDOldXMl(user,null,null)
+            else {
+                u = ApplicationSupport.findUserUIDOldXMl(user, null, null)
             }
             if (!u) {
                 u = new User(
@@ -234,6 +231,36 @@ class UserService extends IceScrumEventPublisher {
         } catch (Exception e) {
             if (log.debugEnabled) e.printStackTrace()
             throw new RuntimeException(e)
+        }
+    }
+
+    void panel(User user, String id, String position) {
+        def currentPanels=user.preferences.panel
+        def from = currentPanels.get(id)?.toInteger()
+        from = from ?: 1
+        def to = position.toInteger()
+        if (from != to) {
+            if (from > to) {
+                currentPanels.entrySet().each { it ->
+                    if (it.value.toInteger() >= to && it.value.toInteger() <= from && it.key != id) {
+                        it.value = (it.value.toInteger() + 1).toString()
+                    } else if (it.key == id) {
+                        it.value = position
+                    }
+                }
+            } else {
+                currentPanels.entrySet().each { it ->
+                    if (it.value.toInteger() <= to && it.value.toInteger() >= from && it.key != id) {
+                        it.value = (it.value.toInteger() - 1).toString()
+                    } else if (it.key == id) {
+                        it.value = position
+                    }
+                }
+            }
+        }
+        user.lastUpdated = new Date()
+        if (!user.save()) {
+            throw new RuntimeException()
         }
     }
 }

@@ -51,6 +51,8 @@ class User implements Serializable, Attachmentable {
     UserPreferences preferences
     String uid
 
+
+
     boolean enabled = true
     boolean accountExternal = false
     boolean accountExpired
