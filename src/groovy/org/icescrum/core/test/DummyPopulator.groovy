@@ -25,7 +25,9 @@
 
 package org.icescrum.core.test
 
+import de.svenjacobs.loremipsum.LoremIpsum
 import grails.util.Holders
+import org.apache.commons.lang.RandomStringUtils
 import org.icescrum.core.domain.AcceptanceTest
 import org.icescrum.core.domain.Sprint
 import org.springframework.security.core.context.SecurityContextHolder as SCH
@@ -65,24 +67,26 @@ class DummyPopulator {
         def sprintService = app.mainContext.sprintService
         def storyService = app.mainContext.storyService
 
+
+
         // Users
         def usera, userz, userx
         if (User.count() <= 1) {
-            usera = new User(username: "a", email: "a@gmail.com", firstName: "Roberto", password: springSecurityService.encodePassword('a'), preferences: new UserPreferences(language: 'en', activity: 'Consultant')).save()
-            userz = new User(username: "z", email: "z@gmail.com", firstName: "Bernardo", password: springSecurityService.encodePassword('z'), preferences: new UserPreferences(language: 'en', activity: 'WebDesigner', menu: ["feature": "1", "backlog": "2"])).save()
-            userx = new User(username: "x", email: "x@gmail.com", firstName: "Antonio", password: springSecurityService.encodePassword('x'), preferences: new UserPreferences(language: 'en', activity: 'Consultant')).save()
+            usera = new User(username: "a", email: "a@gmail.com", firstName: "Roberto", password: springSecurityService.encodePassword('a'), preferences: new UserPreferences(language: 'en', activity: 'Consultant')).save(failOnError: true)
+            userz = new User(username: "z", email: "z@gmail.com", firstName: "Bernardo", password: springSecurityService.encodePassword('z'), preferences: new UserPreferences(language: 'en', activity: 'WebDesigner', menu: ["feature": "1", "backlog": "2"])).save(failOnError: true)
+            userx = new User(username: "x", email: "x@gmail.com", firstName: "Antonio", password: springSecurityService.encodePassword('x'), preferences: new UserPreferences(language: 'en', activity: 'Consultant')).save(failOnError: true)
         } else {
             usera = User.findByUsername("a")
             userz = User.findByUsername("z")
             userx = User.findByUsername("x")
         }
 
-        def mood1 = new Mood(feeling: 1, feelingDay: new Date() - 3, user: usera)
-        mood1.save()
-        def mood2 = new Mood(feeling: 1, feelingDay: new Date() - 2, user: usera)
-        mood2.save()
-        def mood3 = new Mood(feeling: 1, feelingDay: new Date() - 1, user: usera)
-        mood3.save()
+        def mood1 = new Mood(feeling: Mood.MOOD_GOOD, feelingDay: new Date() - 3, user: usera)
+        mood1.save(failOnError: true)
+        def mood2 = new Mood(feeling: Mood.MOOD_BAD, feelingDay: new Date() - 2, user: usera)
+        mood2.save(failOnError: true)
+        def mood3 = new Mood(feeling: Mood.MOOD_GOOD, feelingDay: new Date() - 1, user: usera)
+        mood3.save(failOnError: true)
 
         loginAsAdmin()
 
@@ -95,11 +99,12 @@ class DummyPopulator {
             product.endDate = startDate + 120
             product.preferences = new ProductPreferences()
             product.preferences.webservices = true
-            product.save()
+            product.description = randomWords(50, 20)
+            product.save(failOnError: true)
             securityService.secureDomain(product)
             // Teams and members
             def team = new Team(name: 'testProj Team').addToProducts(product).addToMembers(usera).addToMembers(userz)
-            team.save()
+            team.save(failOnError: true)
             securityService.secureDomain(team)
             securityService.createTeamMemberPermissions(userz, team)
             securityService.createProductOwnerPermissions(usera, product)
@@ -107,27 +112,27 @@ class DummyPopulator {
             securityService.changeOwner(usera, product)
             securityService.changeOwner(usera, team)
             def team3 = new Team(name: 'empty Team3').addToMembers(userx)
-            team3.save()
+            team3.save(failOnError: true)
             securityService.secureDomain(team3)
             securityService.createTeamMemberPermissions(userx, team3)
             // Releases
-            def release1 = new Release(startDate: startDate, endDate: startDate + 120, goal: 'test Goal', description: 'bla', name: "dummy relesase")
-            def release2 = new Release(startDate: startDate + 121, endDate: startDate + 241, goal: 'test Goal 2', description: 'bla 2', name: "dummy relesase 2")
+            def release1 = new Release(startDate: startDate, endDate: startDate + 120, goal: randomWords(15, 5), description: randomWords(100, 50, 2900), name: randomWords(10, 2, 200))
+            def release2 = new Release(startDate: startDate + 121, endDate: startDate + 241, goal: randomWords(15, 5), description: randomWords(100, 50, 2900), name: randomWords(10, 2, 200))
             releaseService.save(release1, product)
             releaseService.save(release2, product)
             // Sprints
             sprintService.generateSprints(release1)
             // Features
-            def feature = new Feature(uid: 1, name: 'La feature', value: 1, description: 'Une feature', backlog: product, rank: 1).save()
-            def feature2 = new Feature(uid: 2, name: 'La feature 2', value: 1, description: 'Une feature', backlog: product, rank: 2, color: '#e778ff').save()
-            def feature3 = new Feature(uid: 3, name: 'La feature 3', value: 1, description: 'Une feature', backlog: product, rank: 3, color: '#c3ed39').save()
+            def feature = new Feature(uid: 1, name: randomWords(15,  5, 200), value: 1, description: randomWords(50, 20, 2900), backlog: product, rank: 1).save(failOnError: true)
+            def feature2 = new Feature(uid: 2, name: randomWords(15,  5, 200), value: 1, description: randomWords(50, 10, 2900), backlog: product, rank: 2, color: '#e778ff').save(failOnError: true)
+            def feature3 = new Feature(uid: 3, name: randomWords(15,  5, 200), value: 1, description: randomWords(50, 10, 2900), backlog: product, rank: 3, color: '#c3ed39').save(failOnError: true)
             // Actors
-            def actor = new Actor(uid: 1, name: 'ScrumMaster', description: 'Un ScrumMaster', backlog: product).save()
-            def actor2 = new Actor(uid: 2, name: 'ProductOwner', description: 'Un ProductOwner', backlog: product).save()
-            def actor3 = new Actor(uid: 3, name: 'StakeHolder', description: 'Un StakeHolder', backlog: product).save()
-            def actor4 = new Actor(uid: 4, name: 'Team member', description: 'Un Team member', backlog: product).save()
-            def actor5 = new Actor(uid: 5, name: 'visitor', description: 'Un visitor', backlog: product).save()
-            product.addToActors(actor).addToActors(actor2).addToActors(actor3).addToActors(actor4).addToActors(actor5).save()
+            def actor = new Actor(uid: 1, name: randomWords(15,  5, 200), description: randomWords(50, 10, 2900), backlog: product).save(failOnError: true)
+            def actor2 = new Actor(uid: 2, name: randomWords(15,  5, 200), description: randomWords(50, 10, 2900), backlog: product).save(failOnError: true)
+            def actor3 = new Actor(uid: 3, name: randomWords(15,  5, 200), description: randomWords(50, 10, 2900), backlog: product).save(failOnError: true)
+            def actor4 = new Actor(uid: 4, name: randomWords(15,  5, 200), description: randomWords(50, 10, 2900), backlog: product).save(failOnError: true)
+            def actor5 = new Actor(uid: 5, name: randomWords(15,  5, 200), description: randomWords(50, 10, 2900), backlog: product).save(failOnError: true)
+            product.addToActors(actor).addToActors(actor2).addToActors(actor3).addToActors(actor4).addToActors(actor5).save(failOnError: true)
             // Stories
             def _storyCount = 0
                 def createStory = { state ->
@@ -135,7 +140,7 @@ class DummyPopulator {
                 def story = new Story(backlog: product,
                         feature: _storyCount % 4 == 0 ? feature : _storyCount % 3 == 0 ? feature3 : feature2,
                         actor: _act,
-                        name: "A story $_storyCount with something awesome inside very awesome !!",
+                        name: randomWords(15,  5, 200),
                         effort: 5,
                         uid: _storyCount + 1,
                         type: _storyCount % 6 == 0 ? Story.TYPE_TECHNICAL_STORY : _storyCount % 4 == 0 ? Story.TYPE_DEFECT : Story.TYPE_USER_STORY,
@@ -145,9 +150,9 @@ class DummyPopulator {
                         state: state,
                         creator: usera,
                         rank: _storyCount++,
-                        description: "As a A[${_act.uid}-${_act.name}], I can do something awesome, I can do something awesome, I can do something awesome, I can do something awesome, I can do something awesome, I can do something awesome, I can do something awesome, I can do something awesome,I can do something awesome",
-                        notes: '*Un texte en gras* hahaha ! _et en italique_'
-                ).save()
+                        description: "As a A[${_act.uid}-${_act.name}], ${randomWords(30, 15, 2500)}",
+                        notes: "${randomWords(3, 1)} *Un texte en gras* hahaha ! ${randomWords(5, 2)} _et en italique_ ${randomWords(20, 10)}"
+                ).save(failOnError: true)
                 addStoryActivity(story, usera, Activity.CODE_SAVE)
                 if (story.state >= Story.STATE_ACCEPTED) {
                     story.acceptedDate = new Date()
@@ -157,56 +162,56 @@ class DummyPopulator {
                     story.estimatedDate = null
                     story.effort = null
                 } else {
-                    addStoryActivity(story, usera, 'estimate')
+                    addStoryActivity(story, userz, 'estimate')
                 }
                 return story
             }
             80.times {
                 product.addToStories(createStory(it % 5 == 0 ? Story.STATE_SUGGESTED : Story.STATE_ESTIMATED))
             }
-            product.save()
+            product.save(failOnError: true)
             sessionFactory.currentSession.flush()
             storyService.autoPlan(release1, 40)
             60.times {
                 product.addToStories(createStory((it % 10) % 3 == 0 ? Story.STATE_ACCEPTED : Story.STATE_ESTIMATED))
             }
-            product.save()
+            product.save(failOnError: true)
             rankStories(product)
             // Tasks and sprint progression
             int nextTaskUid = 1
             product.stories.findAll { it.state < Story.STATE_PLANNED }.eachWithIndex { Story story, int i ->
                 if (i % 4 == 0) {
                     (i % 7).times {
-                        story.addToTasks(new Task(parentProduct: product, uid: nextTaskUid, type: null, estimation: 3, name: "task ${it} story : ${story.id}", creator: usera, responsible: usera, parentStory: story, creationDate: new Date()))
+                        story.addToTasks(new Task(parentProduct: product, uid: nextTaskUid, type: null, estimation: 3, name: randomWords(15,  5, 200), creator: usera, responsible: usera, parentStory: story, creationDate: new Date()))
                         nextTaskUid++
                     }
-                    story.save()
+                    story.save(failOnError: true)
                 }
             }
             release1.sprints.findAll { it.orderNumber < 8 }.each { sprint ->
                 sprint.stories.each { story ->
                     (sprint.orderNumber - 1).times {
-                        def task = new Task(parentProduct: product, uid: nextTaskUid, rank: it + 1, type: null, estimation: 3, name: "task ${it} story : ${story.id}", creator: usera, responsible: usera, parentStory: story, backlog: sprint, creationDate: new Date())
+                        def task = new Task(parentProduct: product, uid: nextTaskUid, rank: it + 1, type: null, estimation: 3, name: randomWords(15,  5, 200), creator: usera, responsible: usera, parentStory: story, backlog: sprint, creationDate: new Date())
                         story.addToTasks(task)
                         sprint.addToTasks(task)
                         nextTaskUid++
                     }
                 }
                 20.times {
-                    def task = new Task(parentProduct: product, uid: nextTaskUid, type: Task.TYPE_RECURRENT, estimation: 5, name: "task recurrent ${it} ${sprint.id}", creator: usera, responsible: usera, parentStory: null, backlog: sprint, creationDate: new Date())
+                    def task = new Task(parentProduct: product, uid: nextTaskUid, type: Task.TYPE_RECURRENT, estimation: 5, name: randomWords(15,  5, 200), creator: usera, responsible: usera, parentStory: null, backlog: sprint, creationDate: new Date())
                     sprint.addToTasks(task)
-                    task.save()
+                    task.save(failOnError: true)
                     nextTaskUid++
-                    def task2 = new Task(parentProduct: product, uid: nextTaskUid, type: Task.TYPE_URGENT, estimation: 4, name: "task urgent ${it} ${sprint.id}", creator: usera, responsible: usera, parentStory: null, backlog: sprint, creationDate: new Date())
+                    def task2 = new Task(parentProduct: product, uid: nextTaskUid, type: Task.TYPE_URGENT, estimation: 4, name: randomWords(15,  5, 200), creator: usera, responsible: usera, parentStory: null, backlog: sprint, creationDate: new Date())
                     sprint.addToTasks(task2)
-                    task2.save()
+                    task2.save(failOnError: true)
                     nextTaskUid++
                 }
                 if (sprint.orderNumber < 7) {
                     sprint.save(flush: true)
                     sprintService.activate(sprint)
                     if (sprint.orderNumber < 6) {
-                        updateContentDoneSprint(sprint)
+                        updateContentDoneSprint(sprint, team.members)
                         sprintService.close(sprint)
                     } else {
                         updateContentInProgressSprint(sprint)
@@ -220,25 +225,25 @@ class DummyPopulator {
         SCH.clearContext()
     }
 
-    private static void updateContentDoneSprint(Sprint sprint) {
+    private static void updateContentDoneSprint(Sprint sprint, Set<User> members) {
         sprint.stories.each { story ->
             story.state = Story.STATE_DONE
-            addStoryActivity(story, story.creator, 'done')
+            addStoryActivity(story, ((int)story.id) % 2 == 0 ? members.first() : members.last(), 'done')
             story.doneDate = new Date()
             story.tasks?.each { t ->
                 t.state = Task.STATE_DONE
                 t.estimation = 0
                 t.doneDate = new Date()
             }
-            story.save()
+            story.save(failOnError: true)
         }
         sprint.tasks.findAll { it.type == Task.TYPE_RECURRENT }.each {
             it.state = Task.STATE_DONE
-            it.save()
+            it.save(failOnError: true)
         }
         sprint.tasks.findAll { it.type == Task.TYPE_URGENT }.each {
             it.state = Task.STATE_DONE
-            it.save()
+            it.save(failOnError: true)
         }
     }
 
@@ -252,7 +257,7 @@ class DummyPopulator {
                 task.state = Task.STATE_DONE
                 task.doneDate = new Date()
             }
-            task.save()
+            task.save(failOnError: true)
         }
         sprint.tasks.findAll { it.type == Task.TYPE_URGENT }.eachWithIndex { task, index ->
             if (index > 0 && index < 8) {
@@ -263,7 +268,7 @@ class DummyPopulator {
                 task.state = Task.STATE_DONE
                 task.doneDate = new Date()
             }
-            task.save()
+            task.save(failOnError: true)
         }
         sprint.tasks.eachWithIndex { task, index ->
             if (index == 0) {
@@ -274,7 +279,7 @@ class DummyPopulator {
                 task.state = Task.STATE_BUSY
                 task.inProgressDate = new Date()
             }
-            task.save()
+            task.save(failOnError: true)
         }
     }
 
@@ -283,60 +288,60 @@ class DummyPopulator {
             (it.state == Story.STATE_ACCEPTED) || (it.state == Story.STATE_ESTIMATED)
         }.eachWithIndex { story, index ->
             story.rank = index + 1
-            story.save()
+            story.save(failOnError: true)
         }
 
         product.stories.findAll {
             (it.state != Story.STATE_ACCEPTED) && (it.state != Story.STATE_ESTIMATED)
         }.eachWithIndex { story, index ->
             story.rank = 0
-            story.save()
+            story.save(failOnError: true)
         }
     }
 
     private static void createAcceptanceTests(Product product, User user) {
         product.stories.findAll { it.state == Story.STATE_SUGGESTED }.asList()[0..3].eachWithIndex { Story story, index ->
-            def acceptanceTest = new AcceptanceTest(name: "at $story.state $index", description: "desc $story.state $index", creator: user, parentStory: story)
-            acceptanceTest.save()
+            def acceptanceTest = new AcceptanceTest(name: randomWords(15,  5, 200), description: randomWords(30, 5), creator: user, parentStory: story)
+            acceptanceTest.save(failOnError: true)
             addAcceptanceTestActivity(acceptanceTest, user)
             if (index % 2 == 0) {
-                def acceptanceTest2 = new AcceptanceTest(name: "at2 $story.state $index", description: "desc2 $story.state $index", creator: user, parentStory: story)
-                acceptanceTest2.save()
+                def acceptanceTest2 = new AcceptanceTest(name: randomWords(15,  5, 200), description: randomWords(30, 5), creator: user, parentStory: story)
+                acceptanceTest2.save(failOnError: true)
                 addAcceptanceTestActivity(acceptanceTest2, user)
             }
         }
         product.stories.findAll { it.state == Story.STATE_ACCEPTED }.asList()[0..3].eachWithIndex { Story story, index ->
-            def acceptanceTest = new AcceptanceTest(name: "at $story.state $index", description: "desc $story.state $index", creator: user, parentStory: story)
-            acceptanceTest.save()
+            def acceptanceTest = new AcceptanceTest(name: randomWords(15,  5, 200), description: randomWords(30, 5), creator: user, parentStory: story)
+            acceptanceTest.save(failOnError: true)
             addAcceptanceTestActivity(acceptanceTest, user)
             if (index % 2 == 0) {
-                def acceptanceTest2 = new AcceptanceTest(name: "at2 $story.state $index", description: "desc2 $story.state $index", creator: user, parentStory: story)
-                acceptanceTest2.save()
+                def acceptanceTest2 = new AcceptanceTest(name: randomWords(15,  5, 200), description: randomWords(30, 5), creator: user, parentStory: story)
+                acceptanceTest2.save(failOnError: true)
                 addAcceptanceTestActivity(acceptanceTest2, user)
             }
         }
         product.stories.findAll { it.state == Story.STATE_INPROGRESS }.asList()[0..3].eachWithIndex { Story story, index ->
-            def acceptanceTest = new AcceptanceTest(name: "at $story.state $index", description: "desc $story.state $index", creator: user, parentStory: story, state: AcceptanceTest.AcceptanceTestState.SUCCESS.id)
-            acceptanceTest.save()
+            def acceptanceTest = new AcceptanceTest(name: randomWords(15,  5, 200), description: randomWords(30, 5), creator: user, parentStory: story, state: AcceptanceTest.AcceptanceTestState.SUCCESS.id)
+            acceptanceTest.save(failOnError: true)
             addAcceptanceTestActivity(acceptanceTest, user)
             if (index % 2 == 0) {
-                def acceptanceTest2 = new AcceptanceTest(name: "at2 $story.state $index", description: "desc2 $story.state $index", creator: user, parentStory: story, state: AcceptanceTest.AcceptanceTestState.FAILED.id)
-                acceptanceTest2.save()
+                def acceptanceTest2 = new AcceptanceTest(name: randomWords(15,  5, 200), description: randomWords(30, 5), creator: user, parentStory: story, state: AcceptanceTest.AcceptanceTestState.FAILED.id)
+                acceptanceTest2.save(failOnError: true)
                 addAcceptanceTestActivity(acceptanceTest2, user)
             }
             if (index % 3 == 0) {
-                def acceptanceTest3 = new AcceptanceTest(name: "at3 $story.state $index", description: "desc3 $story.state $index", creator: user, parentStory: story, state: AcceptanceTest.AcceptanceTestState.TOCHECK.id)
-                acceptanceTest3.save()
+                def acceptanceTest3 = new AcceptanceTest(name: randomWords(10, 2), description: randomWords(30, 5), creator: user, parentStory: story, state: AcceptanceTest.AcceptanceTestState.TOCHECK.id)
+                acceptanceTest3.save(failOnError: true)
                 addAcceptanceTestActivity(acceptanceTest3, user)
             }
         }
         product.stories.findAll { it.state == Story.STATE_DONE }.asList()[0..3].eachWithIndex { Story story, index ->
-            def acceptanceTest = new AcceptanceTest(name: "at $story.state $index", description: "desc $story.state $index", creator: user, parentStory: story, state: AcceptanceTest.AcceptanceTestState.SUCCESS.id)
-            acceptanceTest.save()
+            def acceptanceTest = new AcceptanceTest(name: randomWords(15,  5, 200), description: randomWords(30, 5), creator: user, parentStory: story, state: AcceptanceTest.AcceptanceTestState.SUCCESS.id)
+            acceptanceTest.save(failOnError: true)
             addAcceptanceTestActivity(acceptanceTest, user)
             if (index % 2 == 0) {
-                def acceptanceTest2 = new AcceptanceTest(name: "at2 $story.state $index", description: "desc2 $story.state $index", creator: user, parentStory: story, state: AcceptanceTest.AcceptanceTestState.SUCCESS.id)
-                acceptanceTest2.save()
+                def acceptanceTest2 = new AcceptanceTest(name: randomWords(15,  5, 200), description: randomWords(30, 5), creator: user, parentStory: story, state: AcceptanceTest.AcceptanceTestState.SUCCESS.id)
+                acceptanceTest2.save(failOnError: true)
                 addAcceptanceTestActivity(acceptanceTest2, user)
             }
         }
@@ -349,13 +354,36 @@ class DummyPopulator {
 
     private static addStoryActivity(Story story, User poster, String code) {
         def activity = new Activity(poster: poster, parentRef: story.id, parentType: 'story', code: code, label: story.name)
-        activity.save()
+        activity.save(failOnError: true)
         story.addToActivities(activity)
     }
 
     private static addAcceptanceTestActivity(AcceptanceTest acceptanceTest, User poster) {
         def activity = new Activity(poster: poster, parentRef: acceptanceTest.id, parentType: 'acceptanceTest', code: 'acceptanceTestSave', label: acceptanceTest.name)
-        activity.save()
+        activity.save(failOnError: true)
         acceptanceTest.addToActivities(activity)
+    }
+
+    public static randomWords(int max = 1, int min = -1, int maxChar = 0){
+        def wordsGenerator = new LoremIpsum()
+        def intGenerator = new Random()
+
+        if(min == -1){
+            min = intGenerator.nextInt(max)
+        }
+
+        def wordsCount = intGenerator.nextInt(max+1)
+        while(wordsCount < min && min > 0){
+            wordsCount = intGenerator.nextInt(max+1)
+        };
+
+        def words = wordsGenerator.getWords( wordsCount )
+        while(maxChar > 0 && words.length() > maxChar){
+            words = wordsGenerator.getWords( wordsCount , intGenerator.nextInt(50))
+        }
+        words = words.split(/ /).toList()
+        Collections.shuffle(words)
+        words = words.join(' ')
+        return words
     }
 }

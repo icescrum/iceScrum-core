@@ -55,7 +55,8 @@ class Product extends TimeBox implements Serializable, Attachmentable {
             releases: Release,
             impediments: Impediment,
             domains: Domain,
-            teams: Team
+            teams: Team,
+            backlogs: Backlog
     ]
 
     static mappedBy = [
@@ -64,7 +65,8 @@ class Product extends TimeBox implements Serializable, Attachmentable {
             stories: "backlog",
             releases: "parentProduct",
             impediments: "backlog",
-            domains: "backlog"
+            domains: "backlog",
+            backlogs: "product"
     ]
 
     static transients = [
