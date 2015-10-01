@@ -140,7 +140,7 @@ class DummyPopulator {
                 def story = new Story(backlog: product,
                         feature: _storyCount % 4 == 0 ? feature : _storyCount % 3 == 0 ? feature3 : feature2,
                         actor: _act,
-                        name: randomWords(15,  5, 200),
+                        name: randomWords(15, 6, 200),
                         effort: 5,
                         uid: _storyCount + 1,
                         type: _storyCount % 6 == 0 ? Story.TYPE_TECHNICAL_STORY : _storyCount % 4 == 0 ? Story.TYPE_DEFECT : Story.TYPE_USER_STORY,
@@ -382,6 +382,7 @@ class DummyPopulator {
             words = wordsGenerator.getWords( wordsCount , intGenerator.nextInt(50))
         }
         words = words.split(/ /).toList()
+        Collections.shuffle(words)
         Collections.shuffle(words)
         words = words.join(' ')
         return words
