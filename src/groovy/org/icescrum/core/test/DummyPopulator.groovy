@@ -73,18 +73,17 @@ class DummyPopulator {
             usera = new User(username: "a", email: "a@gmail.com", firstName: "Roberto", password: springSecurityService.encodePassword('a'), preferences: new UserPreferences(language: 'en', activity: 'Consultant')).save(failOnError: true)
             userz = new User(username: "z", email: "z@gmail.com", firstName: "Bernardo", password: springSecurityService.encodePassword('z'), preferences: new UserPreferences(language: 'en', activity: 'WebDesigner', menu: ["feature": "1", "backlog": "2"])).save(failOnError: true)
             userx = new User(username: "x", email: "x@gmail.com", firstName: "Antonio", password: springSecurityService.encodePassword('x'), preferences: new UserPreferences(language: 'en', activity: 'Consultant')).save(failOnError: true)
+            def mood1 = new Mood(feeling: Mood.MOOD_GOOD, feelingDay: new Date() - 3, user: usera)
+            mood1.save(failOnError: true)
+            def mood2 = new Mood(feeling: Mood.MOOD_BAD, feelingDay: new Date() - 2, user: usera)
+            mood2.save(failOnError: true)
+            def mood3 = new Mood(feeling: Mood.MOOD_GOOD, feelingDay: new Date() - 1, user: usera)
+            mood3.save(failOnError: true)
         } else {
             usera = User.findByUsername("a")
             userz = User.findByUsername("z")
             userx = User.findByUsername("x")
         }
-
-        def mood1 = new Mood(feeling: Mood.MOOD_GOOD, feelingDay: new Date() - 3, user: usera)
-        mood1.save(failOnError: true)
-        def mood2 = new Mood(feeling: Mood.MOOD_BAD, feelingDay: new Date() - 2, user: usera)
-        mood2.save(failOnError: true)
-        def mood3 = new Mood(feeling: Mood.MOOD_GOOD, feelingDay: new Date() - 1, user: usera)
-        mood3.save(failOnError: true)
 
         loginAsAdmin()
 
