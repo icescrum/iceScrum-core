@@ -38,32 +38,26 @@ class IceScrumAtmosphereEventListener implements AtmosphereResourceEventListener
     def atmosphereMeteor = Holders.applicationContext.getBean("atmosphereMeteor")
 
     @Override
-    void onPreSuspend(AtmosphereResourceEvent event) {
-        if (log.isDebugEnabled()) {
-            def user = event.resource.request.getAttribute(USER_CONTEXT) ?: null
-            log.debug("user ${user?.username} disconnected with UUID ${event.resource.uuid()}")
-        }
-    }
+    void onPreSuspend(AtmosphereResourceEvent event) {}
 
     @Override
     void onSuspend(AtmosphereResourceEvent event) {
         def request = event.resource.request
         def user = getUserFromAtmosphereResource(event.resource)
         request.setAttribute(USER_CONTEXT, user)
-        if (log.isDebugEnabled()) {
-            log.debug("add user ${user.username} with UUID ${event.resource.uuid()} to default broadcaster")
-        }
         String[] decodedPath = request.pathInfo ? request.pathInfo.split("/") : []
         Broadcaster broadcaster
+        def broadcasters = ["default channel"]
         if (atmosphereMeteor.broadcasterFactory){
             if (decodedPath.length > 0) {
                 def channel = "/stream/app/" + decodedPath[decodedPath.length - 1]
                 broadcaster = atmosphereMeteor.broadcasterFactory.lookup(channel, true)
                 broadcaster.addAtmosphereResource(event.resource)
-                if (log.isDebugEnabled()) {
-                    log.debug("add user ${user.username} with UUID ${event.resource.uuid()} to broadcaster: ${channel}")
-                }
+                broadcasters << channel
             }
+        }
+        if (log.isDebugEnabled()) {
+            log.debug("add user ${user.username} with UUID ${event.resource.uuid()} to broadcasters: " + broadcasters.join(', '))
         }
     }
 
