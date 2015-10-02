@@ -404,8 +404,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                     and {
                         gt 'state', Story.STATE_ESTIMATED
                     }
-                }
-                else if (story.state in [Story.STATE_PLANNED, Story.STATE_INPROGRESS]){
+                } else if (story.state in [Story.STATE_PLANNED, Story.STATE_INPROGRESS]){
                     and {
                         'in' 'state', [Story.STATE_PLANNED, Story.STATE_INPROGRESS, Story.STATE_DONE]
                         lt 'rank', story.rank

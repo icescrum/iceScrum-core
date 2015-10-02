@@ -67,8 +67,6 @@ class DummyPopulator {
         def sprintService = app.mainContext.sprintService
         def storyService = app.mainContext.storyService
 
-
-
         // Users
         def usera, userz, userx
         if (User.count() <= 1) {
