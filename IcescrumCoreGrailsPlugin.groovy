@@ -323,7 +323,6 @@ class IcescrumCoreGrailsPlugin {
     // TODO Remove & don't forget to clean method calls (controllers & co)
     private addBroadcastMethods(source) {
         source.metaClass.broadcast = {}
-        source.metaClass.broadcastToSingleUser = {}
     }
 
     private addErrorMethod(source) {

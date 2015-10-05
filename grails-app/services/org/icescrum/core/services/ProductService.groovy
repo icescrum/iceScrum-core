@@ -24,12 +24,12 @@
 package org.icescrum.core.services
 
 import grails.util.Holders
+import org.icescrum.core.event.IceScrumEventPublisher
+import org.icescrum.core.event.IceScrumEventType
 import org.icescrum.core.utils.ServicesUtils
 import java.text.SimpleDateFormat
 import org.icescrum.core.domain.preferences.ProductPreferences
 import org.icescrum.core.domain.security.Authority
-import org.icescrum.core.event.IceScrumEvent
-import org.icescrum.core.event.IceScrumProductEvent
 import org.icescrum.core.support.ProgressSupport
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.transaction.annotation.Transactional
@@ -39,7 +39,7 @@ import grails.plugin.springsecurity.SpringSecurityUtils
 import org.icescrum.core.domain.preferences.UserPreferences
 
 @Transactional
-class ProductService {
+class ProductService extends IceScrumEventPublisher {
 
     def springSecurityService
     def securityService
@@ -69,7 +69,8 @@ class ProductService {
                 }
             }
         }
-        publishEvent(new IceScrumProductEvent(product, this.class, (User)springSecurityService.currentUser, IceScrumEvent.EVENT_CREATED))
+        manageProductEvents(product, [:])
+        publishSynchronousEvent(IceScrumEventType.CREATE, product)
     }
 
     @PreAuthorize('isAuthenticated()')
@@ -138,16 +139,18 @@ class ProductService {
 
     @PreAuthorize('owner(#team) and !archivedProduct(#product)')
     void addTeamToProduct(Product product, Team team) {
+        def oldMembers = getAllMembersProductByRole(product)
         product.addToTeams(team)
-        publishEvent(new IceScrumProductEvent(product, team, this.class, (User) springSecurityService.currentUser, IceScrumProductEvent.EVENT_TEAM_ADDED))
         if (!product.save()) {
             throw new IllegalStateException('Product not saved')
         }
+        manageProductEvents(product, oldMembers)
     }
 
     @PreAuthorize('owner(#product.firstTeam) and owner(#newTeam) and !archivedProduct(#product)')
     void changeTeam(Product product, Team newTeam) {
         def oldTeam = product.firstTeam
+        def oldMembers = getAllMembersProductByRole(product)
         // Switch team
         product.removeFromTeams(oldTeam)
         product.addToTeams(newTeam)
@@ -155,8 +158,7 @@ class ProductService {
         removeConflictingPOandSH(newTeam, product)
         removeConflictingInvitedPOandSH(newTeam, product)
         // Broadcasts and events
-        publishEvent(new IceScrumProductEvent(product, oldTeam, this.class, (User) springSecurityService.currentUser, IceScrumProductEvent.EVENT_TEAM_REMOVED))
-        publishEvent(new IceScrumProductEvent(product, newTeam, this.class, (User) springSecurityService.currentUser, IceScrumProductEvent.EVENT_TEAM_ADDED))
+        manageProductEvents(product, oldMembers)
     }
 
     @PreAuthorize('scrumMaster(#product) and !archivedProduct(#product)')
@@ -164,12 +166,10 @@ class ProductService {
         if (!product.name?.trim()) {
             throw new IllegalStateException("is.product.error.no.name")
         }
-
         if (hasHiddenChanged && product.preferences.hidden && !ApplicationSupport.booleanValue(grailsApplication.config.icescrum.project.private.enable)
               && !SpringSecurityUtils.ifAnyGranted(Authority.ROLE_ADMIN)) {
             product.preferences.hidden = false
         }
-
         if (hasHiddenChanged && !product.preferences.hidden) {
             product.stakeHolders?.each {
                 removeStakeHolder(product,it)
@@ -178,21 +178,17 @@ class ProductService {
                 it.delete()
             }
         }
-
         if (pkeyChanged){
             UserPreferences.findAllByLastProductOpened(pkeyChanged)?.each {
                 it.lastProductOpened = product.pkey
                 it.save()
             }
         }
-
-        product.lastUpdated = new Date()
+        def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_UPDATE, product)
         if (!product.save(flush: true)) {
             throw new RuntimeException()
         }
-
-        broadcast(function: 'update', message: product, channel:'product-'+product.id)
-        publishEvent(new IceScrumProductEvent(product, this.class, (User) springSecurityService.currentUser, IceScrumEvent.EVENT_UPDATED))
+        publishSynchronousEvent(IceScrumEventType.UPDATE, product, dirtyProperties)
     }
 
     @PreAuthorize('stakeHolder(#product) or inProduct(#product)')
@@ -564,7 +560,7 @@ class ProductService {
 
     @PreAuthorize('owner(#p.firstTeam)')
     def delete(Product p) {
-        def id = p.id
+        def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_DELETE, p)
         p.allUsers.each{ it.preferences.removeEmailsSettings(p.pkey) } // must be before unsecure to have POs
         p.invitedStakeHolders*.delete()
         p.invitedProductOwners*.delete()
@@ -577,27 +573,27 @@ class ProductService {
         }
         p.removeAllAttachments()
         p.delete(flush:true)
-        broadcast(function: 'delete', message: [class: p.class, id: id], channel:'product-'+id)
+        publishSynchronousEvent(IceScrumEventType.DELETE, p, dirtyProperties)
     }
 
-    @PreAuthorize('scrumMaster(#p)')
-    def archive(Product p) {
-        p.preferences.archived = true
-        p.lastUpdated = new Date()
-        if (!p.save(flush:true)){
+    @PreAuthorize('scrumMaster(#product)')
+    def archive(Product product) {
+        product.preferences.archived = true
+        def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_UPDATE, product)
+        if (!product.save(flush:true)){
             throw new RuntimeException()
         }
-        broadcast(function: 'archive', message: p, channel:'product-'+p.id)
+        publishSynchronousEvent(IceScrumEventType.UPDATE, product, dirtyProperties)
     }
 
     @PreAuthorize("hasRole('ROLE_ADMIN')")
-    def unArchive(Product p) {
-        p.preferences.archived = false
-        p.lastUpdated = new Date()
-        if (!p.save(flush:true)){
+    def unArchive(Product product) {
+        product.preferences.archived = false
+        def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_UPDATE, product)
+        if (!product.save(flush:true)){
             throw new RuntimeException()
         }
-        broadcast(function: 'unarchive', message: p, channel:'product-'+p.id)
+        publishSynchronousEvent(IceScrumEventType.UPDATE, product, dirtyProperties)
     }
 
     void removeAllRoles(domain, User user) {
@@ -671,6 +667,10 @@ class ProductService {
     }
 
     void updateTeamMembers(Team team, List newMembers) {
+        def oldMembersByProduct = [:]
+        team.products.each { Product product ->
+            oldMembersByProduct[product.id] = getAllMembersProductByRole(product)
+        }
         def currentMembers = team.scrumMasters.collect { [id: it.id, role: Authority.SCRUMMASTER]}
         team.members.each { member ->
             if (!currentMembers.any { it.id == member.id }) {
@@ -679,11 +679,16 @@ class ProductService {
         }
         updateMembers(team, currentMembers, newMembers)
         removeConflictingPOandSH(team)
+        oldMembersByProduct.each { Long productId, Map oldMembers ->
+            manageProductEvents(Product.get(productId), oldMembers)
+        }
     }
 
     void updateProductMembers(Product product, List newMembers) {
+        def oldMembers = getAllMembersProductByRole(product)
         def currentMembers = product.stakeHolders.collect { [id: it.id, role: Authority.STAKEHOLDER]} + product.productOwners.collect { [id: it.id, role: Authority.PRODUCTOWNER]}
         updateMembers(product, currentMembers, newMembers)
+        manageProductEvents(product, oldMembers)
     }
 
     private void updateMembers(domain, List currentMembers, List newMembers) {
@@ -826,5 +831,42 @@ class ProductService {
         currentInvitations.findAll { currentInvitation ->
             !newInvitations*.email.contains(currentInvitation.email)
         }*.delete()
+    }
+
+    // Quite experimental
+    void manageProductEvents(Product product, Map oldMembers) {
+        Map newMembers = getAllMembersProductByRole(product)
+        if (product.hasProperty('membersByRole')) {
+            product.membersByRole = newMembers
+        } else {
+            product.metaClass.membersByRole = newMembers
+        }
+        publishSynchronousEvent(IceScrumEventType.BEFORE_UPDATE, product, [membersByRole: oldMembers])
+        publishSynchronousEvent(IceScrumEventType.UPDATE, product, [membersByRole: oldMembers])
+    }
+
+    Map getAllMembersProductByRole(Product product) {
+        def usersByRole = [:]
+        def productOwners = product.productOwners
+        def team = product.firstTeam
+        if (team) {
+            def scrumMasters = team.scrumMasters
+            team.members?.each { User member ->
+                def role = Authority.MEMBER
+                if (scrumMasters?.contains(member)) {
+                    role = productOwners?.contains(member) ? Authority.PO_AND_SM : Authority.SCRUMMASTER
+                }
+                usersByRole[member] = role
+            }
+        }
+        productOwners?.each { User productOwner ->
+            if (!usersByRole.containsKey(productOwner)) {
+                usersByRole[productOwner] = Authority.PRODUCTOWNER
+            }
+        }
+        product.stakeHolders?.each { User stakeHolder ->
+            usersByRole[stakeHolder] = Authority.STAKEHOLDER
+        }
+        return usersByRole
     }
 }

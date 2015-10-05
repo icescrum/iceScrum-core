@@ -25,16 +25,21 @@ package org.icescrum.core.services
 
 import grails.plugin.springsecurity.SpringSecurityUtils
 import org.apache.commons.io.FileUtils
+import org.apache.commons.io.FilenameUtils
 import org.apache.commons.io.filefilter.WildcardFileFilter
 import org.icescrum.core.domain.Invitation
+import org.icescrum.core.domain.Invitation.InvitationType
+import org.icescrum.core.domain.Product
+import org.icescrum.core.domain.Team
 import org.icescrum.core.domain.User
+import org.icescrum.core.domain.preferences.UserPreferences
+import org.icescrum.core.domain.security.Authority
+import org.icescrum.core.domain.security.UserAuthority
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
-import org.springframework.security.access.prepost.PreAuthorize
-import org.icescrum.core.domain.preferences.UserPreferences
-import org.springframework.transaction.annotation.Transactional
-import org.apache.commons.io.FilenameUtils
 import org.icescrum.core.support.ApplicationSupport
+import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.transaction.annotation.Transactional
 
 @Transactional
 class UserService extends IceScrumEventPublisher {
@@ -54,14 +59,27 @@ class UserService extends IceScrumEventPublisher {
             throw new RuntimeException()
         }
         publishSynchronousEvent(IceScrumEventType.CREATE, user)
-
-        if (token) {
+        if (token && grailsApplication.config.icescrum.invitation.enable) {
             def invitations = Invitation.findAllByToken(token)
             invitations.each { invitation ->
-                // TODO check if it is necessary to use admin permissions
-                SpringSecurityUtils.doWithAuth('admin') {
-                    productService.addRole(invitation.product, invitation.team, user, invitation.role)
-                    invitation.delete()
+                def userAdmin = UserAuthority.findByAuthority(Authority.findByAuthority(Authority.ROLE_ADMIN)).user
+                SpringSecurityUtils.doWithAuth(userAdmin ? userAdmin.username : 'admin') {
+                    if (invitation.type == InvitationType.PRODUCT) {
+                        Product product = invitation.product
+                        def oldMembers = productService.getAllMembersProductByRole(product)
+                        productService.addRole(product, user, invitation.futureRole)
+                        productService.manageProductEvents(product, oldMembers)
+                    } else {
+                        Team team = invitation.team
+                        def oldMembersByProduct = [:]
+                        team.products.each { Product product ->
+                            oldMembersByProduct[product.id] = productService.getAllMembersProductByRole(product)
+                        }
+                        productService.addRole(team, user, invitation.futureRole)
+                        oldMembersByProduct.each { Long productId, Map oldMembers ->
+                            productService.manageProductEvents(Product.get(productId), oldMembers)
+                        }
+                    }
                 }
             }
         }
@@ -103,9 +121,7 @@ class UserService extends IceScrumEventPublisher {
             if (log.debugEnabled) e.printStackTrace()
             throw new RuntimeException('is.convert.image.error')
         }
-
         user.lastUpdated = new Date()
-
         def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_UPDATE, user)
         if (!user.save()) {
             throw new RuntimeException(user.errors?.toString())
@@ -191,9 +207,9 @@ class UserService extends IceScrumEventPublisher {
     def unMarshall(def user) {
         try {
             def u
-            if (user.@uid.text())
+            if (user.@uid.text()) {
                 u = User.findByUid(user.@uid.text())
-            else {
+            } else {
                 u = ApplicationSupport.findUserUIDOldXMl(user, null, null)
             }
             if (!u) {
