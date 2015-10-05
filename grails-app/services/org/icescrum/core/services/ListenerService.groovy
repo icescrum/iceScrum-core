@@ -205,8 +205,8 @@ class ListenerService {
     }
 
     @IceScrumListener(domain = 'product', eventType = IceScrumEventType.UPDATE)
-    void productUpdate(def product, Map dirtyProperties) {
-        if (product.membersByRole) {
+    void productUpdate(Product product, Map dirtyProperties) {
+        if (product.hasProperty('membersByRole') && product.membersByRole) {
             def newMembers = product.membersByRole
             def oldMembers = dirtyProperties.membersByRole
             def productId = product.id
