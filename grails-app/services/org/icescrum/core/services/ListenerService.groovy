@@ -211,21 +211,21 @@ class ListenerService {
         if (product.hasProperty('membersByRole') && product.membersByRole) {
             def newMembers = product.membersByRole
             def oldMembers = dirtyProperties.membersByRole
-            def productId = product.id
+            def shortProduct = [id: product.id, pkey: product.pkey, name: product.name]
             newMembers.each { User newMember, int role ->
                 if (oldMembers.containsKey(newMember)) {
                     def oldRole = oldMembers[newMember]
                     if (role != oldRole) {
-                        pushService.broadcastToSingleUser(IceScrumEventType.UPDATE, [class: 'User', id: newMember.id, updatedRole: [role: role, oldRole: oldRole, product: productId]], newMember)
+                        pushService.broadcastToSingleUser(IceScrumEventType.UPDATE, [class: 'User', id: newMember.id, updatedRole: [role: role, oldRole: oldRole, product: shortProduct]], newMember)
                     }
                 } else {
-                    pushService.broadcastToSingleUser(IceScrumEventType.UPDATE, [class: 'User', id: newMember.id, updatedRole: [role: role, product: productId]], newMember)
+                    pushService.broadcastToSingleUser(IceScrumEventType.UPDATE, [class: 'User', id: newMember.id, updatedRole: [role: role, product: shortProduct]], newMember)
                 }
             }
             oldMembers.each { User oldMember, int role ->
                 if (!newMembers.containsKey(oldMember)) {
                     oldMember.preferences.removeEmailsSettings(product.pkey)
-                    pushService.broadcastToSingleUser(IceScrumEventType.UPDATE, [class: 'User', id: oldMember.id, updatedRole: [product: productId]], oldMember)
+                    pushService.broadcastToSingleUser(IceScrumEventType.UPDATE, [class: 'User', id: oldMember.id, updatedRole: [product: shortProduct]], oldMember)
                 }
             }
         } else {
