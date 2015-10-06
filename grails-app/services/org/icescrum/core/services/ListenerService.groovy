@@ -175,6 +175,15 @@ class ListenerService {
         pushService.broadcastToProductUsers(IceScrumEventType.DELETE, [class: 'Release', id: dirtyProperties.id], dirtyProperties.parentProduct.id)
     }
 
+    @IceScrumListener(domain = 'activity', eventType = IceScrumEventType.CREATE)
+    void activityCreate(Activity activity, Map dirtyProperties) {
+        if (activity.parentType == 'story' && activity.important) {
+            Product product = Story.get(activity.parentRef).backlog
+            def users = product.allUsersAndStakehokders - activity.poster
+            pushService.broadcastToUsers(IceScrumEventType.CREATE, activity, users)
+        }
+    }
+
     @IceScrumListener(domain = 'acceptanceTest', eventType = IceScrumEventType.CREATE)
     void acceptanceTestCreate(AcceptanceTest acceptanceTest, Map dirtyProperties) {
         def user = (User) springSecurityService.currentUser

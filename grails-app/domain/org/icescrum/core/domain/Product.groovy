@@ -71,6 +71,7 @@ class Product extends TimeBox implements Serializable, Attachmentable {
 
     static transients = [
             'allUsers',
+            'allUsersAndStakehokders',
             'productOwners',
             'erasableByUser',
             'stakeHolders',
@@ -152,6 +153,12 @@ class Product extends TimeBox implements Serializable, Attachmentable {
             users.addAll(pos)
         }
         return users.asList().unique()
+    }
+
+    Collection<User> getAllUsersAndStakehokders() {
+        def users = getAllUsers()
+        users.addAll(this.getStakeHolders())
+        return users.unique()
     }
 
     static findAllByRole(User user, List<BasePermission> permission, params, members = true, archived = true, String term = '%%') {

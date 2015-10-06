@@ -27,8 +27,10 @@ import org.hibernate.proxy.HibernateProxyHelper
 import org.icescrum.core.domain.Activity
 import org.icescrum.core.domain.User
 import grails.util.GrailsNameUtils
+import org.icescrum.core.event.IceScrumEventPublisher
+import org.icescrum.core.event.IceScrumEventType
 
-class ActivityService {
+class ActivityService extends IceScrumEventPublisher {
 
     Activity addActivity(Object item, User poster, String code, String label, String field = null, String beforeValue = null, String afterValue = null) {
         if (item.id == null) {
@@ -43,6 +45,7 @@ class ActivityService {
         }
         activity.save()
         item.addToActivities(activity)
+        publishSynchronousEvent(IceScrumEventType.CREATE, activity)
         return activity
     }
 
