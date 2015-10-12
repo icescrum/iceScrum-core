@@ -46,8 +46,11 @@ class User implements Serializable, Attachmentable {
     String username = ""
     String password = ""
     String email
+
     Date dateCreated
     Date lastUpdated
+    Date lastLogin
+
     UserPreferences preferences
     String uid
 
@@ -82,6 +85,7 @@ class User implements Serializable, Attachmentable {
         password(blank: false)
         lastName(blank: false)
         firstName(blank: false)
+        lastLogin(nullable: true)
         email(blank: false, email: true)
         notes(maxSize: 5000, nullable: true)
     }

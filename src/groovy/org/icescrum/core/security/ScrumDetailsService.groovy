@@ -53,6 +53,13 @@ class ScrumDetailsService extends GormUserDetailsService {
                 log.warn "User not found: $username"
                 throw new UsernameNotFoundException('User not found', username)
             }
+
+            //last login
+            if(user.enabled && !user.accountExpired && !user.passwordExpired && !user.accountLocked){
+                user.lastLogin = new Date()
+                user.save(flush:true)
+            }
+
             Collection<GrantedAuthority> authorities = loadAuthorities(user, username, loadRoles)
             authorities.add(new GrantedAuthorityImpl(Authority.ROLE_USER))
             return new ScrumUserDetails(user.username, user.password, user.enabled,
