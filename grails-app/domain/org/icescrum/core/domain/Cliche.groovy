@@ -36,9 +36,10 @@ class Cliche implements Serializable {
     int type = Cliche.TYPE_ACTIVATION
 
     static mapping = {
+        cache true
         data type: 'text'
         table 'icescrum2_cliches'
-        cache true
+        sort: datePrise:'asc'
     }
 
     static constraints = {
