@@ -73,12 +73,19 @@ class DummyPopulator {
             usera = new User(username: "a", email: "a@gmail.com", firstName: "Roberto", password: springSecurityService.encodePassword('a'), preferences: new UserPreferences(language: 'en', activity: 'Consultant')).save(failOnError: true)
             userz = new User(username: "z", email: "z@gmail.com", firstName: "Bernardo", password: springSecurityService.encodePassword('z'), preferences: new UserPreferences(language: 'en', activity: 'WebDesigner', menu: ["feature": "1", "backlog": "2"])).save(failOnError: true)
             userx = new User(username: "x", email: "x@gmail.com", firstName: "Antonio", password: springSecurityService.encodePassword('x'), preferences: new UserPreferences(language: 'en', activity: 'Consultant')).save(failOnError: true)
-            def mood1 = new Mood(feeling: Mood.MOOD_GOOD, feelingDay: new Date() - 3, user: usera)
-            mood1.save(failOnError: true)
-            def mood2 = new Mood(feeling: Mood.MOOD_BAD, feelingDay: new Date() - 2, user: usera)
-            mood2.save(failOnError: true)
-            def mood3 = new Mood(feeling: Mood.MOOD_GOOD, feelingDay: new Date() - 1, user: usera)
-            mood3.save(failOnError: true)
+            def randomMood = {
+                Random rand = new Random()
+                int randomNum = rand.nextInt(3) + 1;
+                def moodsByInt = [1: Mood.MOOD_GOOD, 2: Mood.MOOD_MEH, 3: Mood.MOOD_BAD]
+                return moodsByInt[randomNum]
+            }
+            for (int i = 10; i > 0 ; i--) {
+                def date = new Date() - i
+                def moodA = new Mood(feeling: randomMood(), feelingDay: date, user: usera)
+                moodA.save(failOnError: true)
+                def moodZ = new Mood(feeling: randomMood(), feelingDay: date, user: userz)
+                moodZ.save(failOnError: true)
+            }
         } else {
             usera = User.findByUsername("a")
             userz = User.findByUsername("z")
