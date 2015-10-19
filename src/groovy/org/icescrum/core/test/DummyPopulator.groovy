@@ -75,8 +75,8 @@ class DummyPopulator {
             userx = new User(username: "x", email: "x@gmail.com", firstName: "Antonio", password: springSecurityService.encodePassword('x'), preferences: new UserPreferences(language: 'en', activity: 'Consultant')).save(failOnError: true)
             def randomMood = {
                 Random rand = new Random()
-                int randomNum = rand.nextInt(3) + 1;
-                def moodsByInt = [1: Mood.MOOD_GOOD, 2: Mood.MOOD_MEH, 3: Mood.MOOD_BAD]
+                int randomNum = rand.nextInt(3);
+                def moodsByInt = [0: Mood.MOOD_BAD, 1: Mood.MOOD_MEH, 2: Mood.MOOD_GOOD]
                 return moodsByInt[randomNum]
             }
             for (int i = 10; i > 0 ; i--) {

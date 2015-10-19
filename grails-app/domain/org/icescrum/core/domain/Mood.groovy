@@ -26,9 +26,9 @@ package org.icescrum.core.domain
 
 
 class Mood {
-    static final int MOOD_GOOD = 1
-    static final int MOOD_MEH = 2
-    static final int MOOD_BAD = 3
+    static final int MOOD_GOOD = 2
+    static final int MOOD_MEH = 1
+    static final int MOOD_BAD = 0
     Integer feeling
     Date feelingDay
     static belongsTo = [user: User]
