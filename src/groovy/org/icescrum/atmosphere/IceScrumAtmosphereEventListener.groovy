@@ -76,20 +76,7 @@ class IceScrumAtmosphereEventListener implements AtmosphereResourceEventListener
                 def user = event.resource.request.getAttribute(USER_CONTEXT) ?: null
                 log.debug("user ${user?.username} disconnected with UUID ${event.resource.uuid()}")
             }
-            atmosphereMeteor.broadcasterFactory.lookupAll().each {
-                if (it.atmosphereResources.contains(event.resource)) {
-                    if (it.getID().contains('product-') && it.atmosphereResources) {
-                        def users = it.atmosphereResources?.findAll { it.uuid() != event.resource.uuid() }?.collect {
-                            it.request.getAttribute(IceScrumAtmosphereEventListener.USER_CONTEXT)
-                        }
-                        if (users) {
-                            it.broadcast(([[command: 'connected', object: users]] as JSON).toString())
-                        }
-                    }
-                }
-            }
         }
-
     }
 
     @Override
