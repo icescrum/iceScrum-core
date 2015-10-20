@@ -27,7 +27,6 @@
 package org.icescrum.core.domain.preferences
 
 import grails.converters.JSON
-import org.codehaus.groovy.grails.web.json.JSONObject
 import org.icescrum.core.domain.User
 
 class UserPreferences implements Serializable{
@@ -45,8 +44,8 @@ class UserPreferences implements Serializable{
 
     Date lastReadActivities = new Date()
 
-    Map menu = ["project": "1", "backlog": "2", "timeline": "3", "releasePlan": "4", "sprintPlan": "5"]
-    Map menuHidden = ["feature": "2"]
+    Map menu = ["project": "1", "backlog": "2", "releasePlan": "3", "sprintPlan": "4", "feature": "5"]
+    Map menuHidden = [:]
     Map panels =["feed": "0", "notes": "1", "userProjects": "2", "mood": "3", "tasks": "4"]
 
     static transients = ["emailsSettings"]
