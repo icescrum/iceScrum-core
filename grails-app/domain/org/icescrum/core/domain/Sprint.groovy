@@ -65,7 +65,7 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
     ]
 
     static transients = [
-            'recurrentTasks', 'urgentTasks', 'hasNextSprint', 'parentReleaseId', 'activable', 'effectiveEndDate', 'effectiveStartDate', 'totalRemaining', 'parentProduct', 'totalEffort', 'previousSprint', 'nextSprint'
+            'recurrentTasks', 'urgentTasks', 'hasNextSprint', 'parentReleaseId', 'activable', 'effectiveEndDate', 'effectiveStartDate', 'totalRemaining', 'parentProduct', 'totalEffort', 'previousSprint', 'nextSprint', 'parentReleaseName'
     ]
 
     static namedQueries = {
@@ -319,6 +319,10 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
 
     BigDecimal getTotalEffort() {
         return (BigDecimal) (this.stories.sum { it.effort } ?: 0)
+    }
+
+    String getParentReleaseName() {
+        return parentRelease.name
     }
 
     def xml(builder){
