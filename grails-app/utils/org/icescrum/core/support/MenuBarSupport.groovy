@@ -39,29 +39,37 @@ class MenuBarSupport {
         permissionDynamicBar(url)
     }
 
-    private commonUserPreferences(id) {
-        UserPreferences up = null
-        if (GrailsUser.isAssignableFrom(SCH.context.authentication?.principal?.getClass()))
-            up = User.get(SCH.context.authentication.principal?.id)?.preferences
-        def pos = up?.menu?.getAt(id)
-        if (pos)
-            return [visible: true, pos: pos]
-        else
-            pos = up?.menuHidden?.getAt(id)
-        if (pos)
-            return [visible: false, pos: pos]
-        else
-            return null
+    private menuFromUserPreferences(uiDefininitionId) {
+        UserPreferences userPreferences = null
+        if (GrailsUser.isAssignableFrom(SCH.context.authentication?.principal?.getClass())) {
+            userPreferences = User.get(SCH.context.authentication.principal?.id)?.preferences
+        }
+        def visiblePosition = userPreferences?.menu?.getAt(uiDefininitionId)
+        def hiddenPosition = userPreferences?.menuHidden?.getAt(uiDefininitionId)
+        def menuEntry = [:]
+        if (visiblePosition) {
+            menuEntry.pos = visiblePosition
+            menuEntry.visible = true
+        } else if (hiddenPosition) {
+            menuEntry.pos = hiddenPosition
+            menuEntry.visible = false
+        } else {
+            menuEntry = null
+        }
+        return menuEntry
     }
 
-    def spaceDynamicBar = { id, defaultVisibility, defaultPosition, space ->
+    def spaceDynamicBar = { uiDefininitionId, defaultVisibility, defaultPosition, space ->
         return {
-            if (!params?."$space") return false
-            if (!defaultPosition) return false
+            if (!params?."$space" || !defaultPosition) {
+                return false
+            }
             def attrs = [:]
             attrs."$space" = params."$space"
-            if (!commonVerification(createLink(controller: id, params:attrs))) return false
-            commonUserPreferences(id) ?: [visible: defaultVisibility, pos: defaultPosition]
+            if (!commonVerification(createLink(controller: uiDefininitionId, params:attrs))) {
+                return false
+            }
+            return menuFromUserPreferences(uiDefininitionId) ?: [visible: defaultVisibility, pos: defaultPosition]
         }
     }
 
