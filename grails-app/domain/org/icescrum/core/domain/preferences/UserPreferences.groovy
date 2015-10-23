@@ -27,12 +27,13 @@
 package org.icescrum.core.domain.preferences
 
 import grails.converters.JSON
+import org.icescrum.core.domain.Feed
 import org.icescrum.core.domain.User
 
 class UserPreferences implements Serializable{
 
     static final long serialVersionUID = 813649045202976126L
-
+    Feed feed
     String language = "en"
     String activity
     String filterTask = "allTasks"
@@ -55,6 +56,7 @@ class UserPreferences implements Serializable{
         lastProductOpened nullable: true
         emailsSettingsData nullable: true
         lastReadActivities nullable: true
+        feed nullable :true
     }
 
 

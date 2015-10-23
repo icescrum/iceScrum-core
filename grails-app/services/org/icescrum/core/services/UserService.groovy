@@ -27,6 +27,7 @@ import grails.plugin.springsecurity.SpringSecurityUtils
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.FilenameUtils
 import org.apache.commons.io.filefilter.WildcardFileFilter
+import org.icescrum.core.domain.Feed
 import org.icescrum.core.domain.Invitation
 import org.icescrum.core.domain.Invitation.InvitationType
 import org.icescrum.core.domain.Product
@@ -251,7 +252,7 @@ class UserService extends IceScrumEventPublisher {
     }
 
     void panel(User user, String id, String position) {
-        def currentPanels=user.preferences.panels
+        def currentPanels = user.preferences.panels
         def from = currentPanels.get(id)?.toInteger()
         from = from ?: 1
         def to = position.toInteger()
@@ -279,4 +280,13 @@ class UserService extends IceScrumEventPublisher {
             throw new RuntimeException()
         }
     }
+
+    void saveFeed(User user, Feed feed) {
+        user.preferences.feed = feed
+        user.lastUpdated = new Date()
+        if (!user.save()) {
+            throw new RuntimeException()
+        }
+    }
+
 }
