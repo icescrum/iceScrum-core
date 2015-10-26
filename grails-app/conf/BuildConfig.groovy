@@ -63,9 +63,7 @@ grails.project.dependency.resolution = {
         compile ':feeds:1.6'
         compile ':cache:1.1.8'
         compile ':cache-ehcache:1.0.5'
-        runtime(':hibernate4:4.3.10') {
-            export = false
-        }
+        runtime(':hibernate4:4.3.10')
         build  (':release:3.1.1') {
             export = false
         }
