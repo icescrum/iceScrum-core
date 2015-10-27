@@ -28,6 +28,7 @@ class Feed {
 
     String feedUrl
     Date dateCreated
+    String title
 
     static belongsTo = [user: User]
 
