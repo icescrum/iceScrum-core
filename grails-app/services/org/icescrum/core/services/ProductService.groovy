@@ -23,7 +23,6 @@
 
 package org.icescrum.core.services
 
-import grails.util.Holders
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
 import org.icescrum.core.utils.ServicesUtils
@@ -240,20 +239,9 @@ class ProductService extends IceScrumEventPublisher {
     @PreAuthorize('stakeHolder(#product) or inProduct(#product)')
     def productBurndownValues(Product product) {
         def values = []
-        product.releases?.sort {a, b -> a.orderNumber <=> b.orderNumber}?.each {
-            Cliche.findAllByParentTimeBoxAndType(it, Cliche.TYPE_ACTIVATION, [sort: "datePrise", order: "asc"])?.each { cliche ->
-                def xmlRoot = new XmlSlurper().parseText(cliche.data)
-                if (xmlRoot) {
-                    def sprintEntry = [
-                            label: xmlRoot."${Cliche.SPRINT_ID}".toString(),
-                            userstories: xmlRoot."${Cliche.FUNCTIONAL_STORY_PRODUCT_REMAINING_POINTS}".toBigDecimal(),
-                            technicalstories: xmlRoot."${Cliche.TECHNICAL_STORY_PRODUCT_REMAINING_POINTS}".toBigDecimal(),
-                            defectstories: xmlRoot."${Cliche.DEFECT_STORY_PRODUCT_REMAINING_POINTS}".toBigDecimal()
-                    ]
-                    sprintEntry << computeLabelsForSprintEntry(sprintEntry)
-                    values << sprintEntry
-                }
-            }
+        def releaseService = (ReleaseService) grailsApplication.mainContext.getBean('releaseService')
+        product.releases?.sort {a, b -> a.orderNumber <=> b.orderNumber}?.each { Release release ->
+            values.addAll(releaseService.releaseBurndownValues(release))
         }
         return values
     }
@@ -380,7 +368,7 @@ class ProductService extends IceScrumEventPublisher {
                 if (!u) {
                     u = User.findByUsernameAndEmail(productOwner.username.text(), productOwner.email.text())
                     if (!u) {
-                        def userService = (UserService) Holders.grailsApplication.mainContext.getBean('userService');
+                        def userService = (UserService) grailsApplication.mainContext.getBean('userService')
                         u = userService.unMarshall(productOwner)
                     }
                 }
@@ -388,7 +376,7 @@ class ProductService extends IceScrumEventPublisher {
             }
             p.productOwners = productOwnersList
 
-            def featureService = (FeatureService) Holders.grailsApplication.mainContext.getBean('featureService');
+            def featureService = (FeatureService) grailsApplication.mainContext.getBean('featureService')
             product.features.feature.eachWithIndex { it, index ->
                 def f = featureService.unMarshall(it)
                 p.addToFeatures(f)
@@ -401,7 +389,7 @@ class ProductService extends IceScrumEventPublisher {
                 progress?.updateProgress((product.actors.actor.size() * (index + 1) / 100).toInteger(), g.message(code: 'is.parse', args: [g.message(code: 'is.actor')]))
             }
 
-            def storyService = (StoryService) Holders.grailsApplication.mainContext.getBean('storyService');
+            def storyService = (StoryService) grailsApplication.mainContext.getBean('storyService')
             product.stories.story.eachWithIndex { it, index ->
                 storyService.unMarshall(it, p)
                 progress?.updateProgress((product.stories.story.size() * (index + 1) / 100).toInteger(), g.message(code: 'is.parse', args: [g.message(code: 'is.story')]))
@@ -412,7 +400,7 @@ class ProductService extends IceScrumEventPublisher {
                 it.rank = index + 1
             }
 
-            def releaseService = (ReleaseService) Holders.grailsApplication.mainContext.getBean('releaseService');
+            def releaseService = (ReleaseService) grailsApplication.mainContext.getBean('releaseService')
             product.releases.release.eachWithIndex { it, index ->
                 releaseService.unMarshall(it, p, progress)
                 progress?.updateProgress((product.releases.release.size() * (index + 1) / 100).toInteger(), g.message(code: 'is.parse', args: [g.message(code: 'is.release')]))
@@ -446,7 +434,7 @@ class ProductService extends IceScrumEventPublisher {
     @Transactional(readOnly = true)
     def parseXML(File file, ProgressSupport progress = null) {
         def g = grailsApplication.mainContext.getBean('org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib')
-        String xmlText = file.getText();
+        String xmlText = file.getText()
         String cleanedXmlText = ServicesUtils.cleanXml(xmlText)
         def prod = new XmlSlurper().parseText(cleanedXmlText)
 
@@ -706,7 +694,7 @@ class ProductService extends IceScrumEventPublisher {
             }
         }
         currentMembers*.id.minus(newMembers*.id).each {
-            removeAllRoles(domain, User.get(it));
+            removeAllRoles(domain, User.get(it))
         }
     }
 

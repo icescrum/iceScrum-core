@@ -24,7 +24,6 @@
 
 package org.icescrum.core.services
 
-import grails.util.Holders
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
 
@@ -76,7 +75,7 @@ class ReleaseService extends IceScrumEventPublisher {
             update(nextRelease, nextStartDate) // cascade the update of next releases recursively
         }
         if (!release.sprints.isEmpty()) {
-            def sprintService = (SprintService) Holders.grailsApplication.mainContext.getBean('sprintService');
+            def sprintService = (SprintService) grailsApplication.mainContext.getBean('sprintService')
             def firstSprint = release.sprints.min { it.startDate }
             if (firstSprint.startDate.before(startDate)) {
                 if (firstSprint.state >= Sprint.STATE_INPROGRESS) {
@@ -171,10 +170,11 @@ class ReleaseService extends IceScrumEventPublisher {
         publishSynchronousEvent(IceScrumEventType.DELETE, release, dirtyProperties)
     }
 
+    @PreAuthorize('stakeHolder(#release.parentProduct) or inProduct(#release.parentProduct)')
     def releaseBurndownValues(Release release) {
         def values = []
-        Cliche.findAllByParentTimeBoxAndType(release, Cliche.TYPE_ACTIVATION, [sort: "datePrise", order: "asc"])?.each { it ->
-            def xmlRoot = new XmlSlurper().parseText(it.data)
+        Cliche.findAllByParentTimeBoxAndType(release, Cliche.TYPE_ACTIVATION, [sort: "datePrise", order: "asc"])?.each { cliche ->
+            def xmlRoot = new XmlSlurper().parseText(cliche.data)
             if (xmlRoot) {
                 def sprintEntry = [
                         label: xmlRoot."${Cliche.SPRINT_ID}".toString(),
@@ -230,7 +230,7 @@ class ReleaseService extends IceScrumEventPublisher {
             }
 
             if (p) {
-                def sprintService = (SprintService) Holders.grailsApplication.mainContext.getBean('sprintService');
+                def sprintService = (SprintService) grailsApplication.mainContext.getBean('sprintService')
                 release.sprints.sprint.eachWithIndex { it, index ->
                     def s = sprintService.unMarshall(it, p)
                     r.addToSprints(s)
