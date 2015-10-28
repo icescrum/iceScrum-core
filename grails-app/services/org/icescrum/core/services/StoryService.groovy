@@ -365,7 +365,7 @@ class StoryService extends IceScrumEventPublisher {
         int maxSprint = sprints.size()
 
         // Get the list of stories that have been estimated
-        Collection<Story> itemsList = product.stories.findAll { it.state == Story.STATE_ESTIMATED }.sort { it.rank };
+        Collection<Story> itemsList = product.stories.findAll { it.state == Story.STATE_ESTIMATED }.sort { it.rank }
 
         Sprint currentSprint = null
 
@@ -385,7 +385,7 @@ class StoryService extends IceScrumEventPublisher {
                         }
                         else {
                             nbSprint++
-                            break;
+                            break
                         }
                     }
                     if (nbSprint > maxSprint) {
@@ -956,7 +956,7 @@ class StoryService extends IceScrumEventPublisher {
                         migrateTemplatesOnStory(storyToMigrate[iAs], storyToMigrate[iIcan], storyToMigrate[iTo], story, i18n)
                         session.save(story)
                     }
-                    def removeOldTemplates = session.createSQLQuery("UPDATE icescrum2_story SET text_as = NULL, textican = NULL, text_to = NULL");
+                    def removeOldTemplates = session.createSQLQuery("UPDATE icescrum2_story SET text_as = NULL, textican = NULL, text_to = NULL")
                     removeOldTemplates.executeUpdate()
                     if (log.debugEnabled) {
                         log.debug("Old story templates migrated")

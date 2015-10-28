@@ -23,7 +23,6 @@
 
 package org.icescrum.core.services
 
-import grails.util.Holders
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
 
@@ -41,6 +40,7 @@ class TaskService extends IceScrumEventPublisher {
     def springSecurityService
     def securityService
     def activityService
+    def grailsApplication
 
     @PreAuthorize('(inProduct(#task.backlog?.parentProduct) or inProduct(#task.parentStory?.parentProduct)) and (!archivedProduct(#task.backlog?.parentProduct) or !archivedProduct(#task.parentStory?.parentProduct))')
     void save(Task task, User user) {
@@ -142,8 +142,8 @@ class TaskService extends IceScrumEventPublisher {
         task.doneDate = new Date()
         def story = task.type ? null : Story.get(task.parentStory?.id)
         if (story && task.parentProduct.preferences.autoDoneStory && !story.tasks.any { it.state != Task.STATE_DONE } && story.state != Story.STATE_DONE) {
-            ApplicationContext ctx = (ApplicationContext)Holders.grailsApplication.mainContext;
-            StoryService service = (StoryService) ctx.getBean("storyService");
+            ApplicationContext ctx = (ApplicationContext) grailsApplication.mainContext
+            StoryService service = (StoryService) ctx.getBean("storyService")
             service.done(story)
         }
         if (user) {

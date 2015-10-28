@@ -24,7 +24,6 @@
 
 package org.icescrum.core.services
 
-import grails.util.Holders
 import org.icescrum.core.domain.Product
 import org.icescrum.core.domain.Team
 import org.icescrum.core.domain.User
@@ -164,7 +163,7 @@ class TeamService {
                     uid: team.@uid.text() ?: (team."${'name'}".text()).encodeAsMD5()
             )
 
-            def userService = (UserService) Holders.grailsApplication.mainContext.getBean('userService');
+            def userService = (UserService) grailsApplication.mainContext.getBean('userService')
             team.members.user.eachWithIndex { user, index ->
                 User u = userService.unMarshall(user)
                 if (!u.id) {

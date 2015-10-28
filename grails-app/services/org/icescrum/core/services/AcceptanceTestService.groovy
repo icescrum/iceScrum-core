@@ -22,7 +22,6 @@
  */
 package org.icescrum.core.services
 
-import grails.util.Holders
 import org.icescrum.core.domain.AcceptanceTest
 import org.icescrum.core.domain.AcceptanceTest.AcceptanceTestState
 import org.icescrum.core.event.IceScrumEventPublisher
@@ -37,6 +36,7 @@ import org.springframework.transaction.annotation.Transactional
 class AcceptanceTestService extends IceScrumEventPublisher {
 
     def springSecurityService
+    def grailsApplication
 
     @PreAuthorize('inProduct(#parentStory.backlog) and !archivedProduct(#parentStory.backlog)')
     void save(AcceptanceTest acceptanceTest, Story parentStory, User user) {
@@ -47,7 +47,7 @@ class AcceptanceTestService extends IceScrumEventPublisher {
             throw new RuntimeException()
         }
         publishSynchronousEvent(IceScrumEventType.CREATE, acceptanceTest)
-        def storyService = (StoryService) Holders.grailsApplication.mainContext.getBean('storyService');
+        def storyService = (StoryService) grailsApplication.mainContext.getBean('storyService')
         storyService.update(parentStory)
     }
 
@@ -59,7 +59,7 @@ class AcceptanceTestService extends IceScrumEventPublisher {
             throw new RuntimeException()
         }
         publishSynchronousEvent(IceScrumEventType.UPDATE, acceptanceTest, dirtyProperties)
-        def storyService = (StoryService) Holders.grailsApplication.mainContext.getBean('storyService');
+        def storyService = (StoryService) grailsApplication.mainContext.getBean('storyService')
         storyService.update(acceptanceTest.parentStory)
     }
 
