@@ -288,5 +288,4 @@ class UserService extends IceScrumEventPublisher {
             throw new RuntimeException()
         }
     }
-
 }
