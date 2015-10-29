@@ -328,15 +328,14 @@ class IcescrumCoreGrailsPlugin {
     private addErrorMethod(source) {
         source.metaClass.returnError = { attrs ->
             def error = attrs.object?.hasErrors() ? attrs.object.errors.allErrors.collect { [code: "${controllerName}.${it.field}",text:message(error:it)] } :
-                    attrs.text ? [error:attrs.text] : attrs.exception?.getMessage() ? [error:attrs.exception.getMessage()] : [error: 'An error has occured']
-
+                        attrs.text ? [text:attrs.text] : attrs.exception?.getMessage() ? [text:attrs.exception.getMessage()] : [text: 'An error has occurred']
             if (delegate.log.debugEnabled && !attrs.object?.hasErrors() && attrs.exception) {
                 delegate.log.debug(attrs.exception)
                 delegate.log.debug(attrs.exception.cause)
                 attrs.exception.stackTrace.each {
                     delegate.log.debug(it)
                 }
-            }else if (!delegate.log.debugEnabled && delegate.log.errorEnabled && !attrs.object?.hasErrors() && attrs.exception){
+            } else if (!delegate.log.debugEnabled && delegate.log.errorEnabled && !attrs.object?.hasErrors() && attrs.exception) {
                 delegate.log.error(attrs.exception)
                 delegate.log.error(attrs.exception.cause)
                 attrs.exception.stackTrace.each {
