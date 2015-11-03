@@ -150,10 +150,6 @@ class ReleaseService extends IceScrumEventPublisher {
         if (release.state >= Release.STATE_INPROGRESS) {
             throw new IllegalStateException("is.release.error.not.deleted")
         }
-        def nextRelease = release.nextRelease
-        if (nextRelease) {
-            delete(nextRelease) // cascade the deletion of next releases recursively
-        }
         def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_DELETE, release)
         if (release.sprints) {
             storyService.unPlanAll(release.sprints)
@@ -162,6 +158,9 @@ class ReleaseService extends IceScrumEventPublisher {
         def product = release.parentProduct
         product.removeFromReleases(release)
         if (product.releases) {
+            product.releases.sort { it.startDate }.eachWithIndex { Release r, int i ->
+                r.orderNumber = i + 1;
+            }
             product.endDate = product.releases*.endDate.max()
         }
         if (!product.save(flush: true)) {
