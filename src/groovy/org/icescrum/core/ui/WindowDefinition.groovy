@@ -30,9 +30,8 @@ class WindowDefinition {
 
     String init = 'index'
     String title = ''
+    boolean flex = true
     boolean right = false
-    boolean toolbar = false
-    boolean bottombar = false
     boolean printable = true
     boolean fullScreen = true
     def help = null
@@ -50,12 +49,8 @@ class WindowDefinition {
         this.right = right
     }
 
-    void toolbar(boolean toolbar) {
-        this.toolbar = toolbar
-    }
-
-    void bottombar(boolean bottombar) {
-        this.bottombar = bottombar
+    void flex(boolean flex) {
+        this.flex = flex
     }
 
     void help(String help) {

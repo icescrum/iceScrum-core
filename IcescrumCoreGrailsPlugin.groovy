@@ -229,14 +229,6 @@ class IcescrumCoreGrailsPlugin {
                         log.debug(e.getMessage())
                     }
                 },
-                bottombar: {->
-                    try {
-                        render(plugin: pluginName, template: "bottombar", model: [id: controllerName])
-                    } catch (Exception e) {
-                        render('')
-                        log.debug(e.getMessage())
-                    }
-                },
                 titleBarContent: {
                     try {
                         render(plugin: pluginName, template: "window/titleBarContent", model: [id: controllerName])

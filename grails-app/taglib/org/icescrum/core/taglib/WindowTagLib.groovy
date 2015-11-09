@@ -41,7 +41,7 @@ class WindowTagLib {
      * The attribute "id" is obligatory
      */
     def window = { attrs, body ->
-        def windowId = attrs.window ?: controllerName
+        def id = attrs.window ?: controllerName
         attrs.type = attrs.type ?: 'window'
         def includeParams = [:]
 
@@ -49,26 +49,21 @@ class WindowTagLib {
         attrs.each{ if (!(it.key in ["controller", "action"])) { includeParams << it} }
 
         // Check for content window
-        def windowContent
+        def content
         if (attrs.init){
-            def result = includeContent([controller: windowId, action: attrs.init, params:includeParams])
+            def result = includeContent([controller: id, action: attrs.init, params:includeParams])
             if (result.contentType == 'application/json;charset=utf-8'){
                 response.setStatus(400)
                 response.setContentType(result.contentType)
                 out << result.content
                 return
             }else{
-                windowContent = result.content
+                content = result.content
             }
         }
         else {
-            windowContent = body()
+            content = body()
         }
-
-        // Check for toolbar existence
-        attrs.toolbar =  attrs.toolbar ? include(controller: windowId, action: 'toolbar', params: includeParams) : false
-        // Check for bottombar existence
-        attrs.bottombar =  attrs.bottombar ? include(controller: windowId, action: 'bottombar', params: includeParams) : false
 
         // Check for shortcuts
         if (attrs.shortcuts) {
@@ -83,25 +78,22 @@ class WindowTagLib {
         }
 
         def params = [
-                spaceName: attrs.spaceName,
                 type: attrs.type,
-                title: attrs.title ?: null,
+                id: id,
+                content: content,
+                right:attrs.right,
                 icon: attrs.icon ?: null,
+                flex: attrs.flex,
+                spaceName: attrs.spaceName,
+                title: attrs.title ?: null,
+                contentClass: attrs.contentClass,
                 windowActions: attrs.windowActions ?: [
                         help: attrs.help ?: null,
-                        fullScreen: attrs.fullScreen ?: false,
+                        fullScreen: attrs.fullScreen,
                         printable:attrs.printable
                 ],
-                id: windowId,
-                toolbar: attrs.toolbar,
-                bottombar: attrs.bottombar,
-                resizable: attrs.resizable ?: false,
-                sortable: attrs.sortable ?: false,
-                right:attrs.right,
-                contentClass: attrs.contentClass,
-                windowContent: windowContent
         ]
-        if (windowContent && !webRequest?.params?.returnError){
+        if (content && !webRequest?.params?.returnError){
             out << g.render(template: '/components/' + attrs.type, plugin: 'icescrum-core', model: params)
         }
     }
