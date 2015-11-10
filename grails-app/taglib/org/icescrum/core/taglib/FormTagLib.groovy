@@ -24,17 +24,7 @@
 
 package org.icescrum.core.taglib
 
-import org.springframework.web.servlet.support.RequestContextUtils as RCU
-
-import grails.converters.JSON
 import grails.util.BuildSettingsHolder
-import org.codehaus.groovy.grails.commons.DomainClassArtefactHandler
-import org.codehaus.groovy.grails.commons.GrailsClassUtils
-import org.codehaus.groovy.grails.web.util.StreamCharBuffer
-import org.icescrum.components.UtilsWebComponents
-import org.icescrum.core.support.ApplicationSupport
-import org.springframework.beans.SimpleTypeConverter
-import org.springframework.context.MessageSourceResolvable
 
 class FormTagLib {
 
@@ -61,7 +51,7 @@ class FormTagLib {
                 locales << (arr.length > 3 ? new Locale(arr[1], arr[2]) : arr.length > 2 ? new Locale(arr[1]) : new Locale(""))
         }
         def returnLocales = [:]
-        locales.collect{  it ->
+        locales.collect { it ->
             returnLocales[it.toString()] = it.getDisplayName(it).capitalize()
         }
         return returnLocales
@@ -82,7 +72,9 @@ class FormTagLib {
     }
 
     def localeTimeZone = { attrs ->
-        def thelist = TimeZone.getAvailableIDs().sort().findAll {it.matches("^(Africa|America|Asia|Atlantic|Australia|Europe|Indian|Pacific)/.*")}
+        def thelist = TimeZone.getAvailableIDs().sort().findAll {
+            it.matches("^(Africa|America|Asia|Atlantic|Australia|Europe|Indian|Pacific)/.*")
+        }
         attrs.from = thelist
         attrs.value = (attrs.value ? attrs.value : thelist.first())
         attrs.optionValue = {

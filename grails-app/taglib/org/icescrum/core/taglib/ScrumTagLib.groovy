@@ -22,27 +22,21 @@
  */
 package org.icescrum.core.taglib
 
-import org.icescrum.components.UtilsWebComponents
-import org.icescrum.core.domain.Product
-import org.icescrum.core.support.ApplicationSupport
-
-
 class ScrumTagLib {
 
     def springSecurityService
 
     static namespace = 'is'
-    static returnObjectForTags = ['storyDescription', 'avatar']
+    static returnObjectForTags = ['storyDescription']
 
-    //New tags
     def generateStoryTemplate = { attrs ->
         def i18n = { g.message(code: "is.story.template." + it) }
         def newLine = attrs.newLine ?: "\n"
-        out << ['as', 'ican', 'to'].collect { i18n(it) + " "}.join(newLine)
+        out << ['as', 'ican', 'to'].collect { i18n(it) + " " }.join(newLine)
     }
 
     def generateAcceptanceTestTemplate = {
-        def i18n = { g.message(code:"is.acceptanceTest.template.$it") }
+        def i18n = { g.message(code: "is.acceptanceTest.template.$it") }
         def highlight = { '_*' + it + '*_' }
         out << ['given', 'when', 'then'].collect {
             highlight(i18n(it)) + " "
@@ -57,17 +51,4 @@ class ScrumTagLib {
         }
         attrs.displayBR ? storyDescription.encodeAsNL2BR() : storyDescription
     }
-
-
-    //end new tags
-
-    // TODO REMOVE
-    def avatar = {}
-    def postit = {}
-    def postitIcon = {}
-    def backlogElementLayout = {}
-    def truncated = {}
-    def link = {}
-    def createScrumLink = {}
-    def scrumLink = {}
 }
