@@ -27,7 +27,6 @@ package org.icescrum.core.test
 
 import de.svenjacobs.loremipsum.LoremIpsum
 import grails.util.Holders
-import org.apache.commons.lang.RandomStringUtils
 import org.icescrum.core.domain.AcceptanceTest
 import org.icescrum.core.domain.Sprint
 import org.springframework.security.core.context.SecurityContextHolder as SCH
@@ -126,6 +125,16 @@ class DummyPopulator {
             releaseService.save(release2, product)
             // Sprints
             sprintService.generateSprints(release1)
+            def sprint3 = release1.sprints.asList()[3]
+            if (sprint3) {
+                sprint3.deliveredVersion = "V3"
+                sprint3.save(failOnError: true)
+            }
+            def sprint4 = release1.sprints.asList()[4]
+            if (sprint4) {
+                sprint4.deliveredVersion = "V4"
+                sprint4.save(failOnError: true)
+            }
             // Features
             def feature = new Feature(uid: 1, name: randomWords(15,  5, 200), value: 1, description: randomWords(50, 20, 2900), backlog: product, rank: 1).save(failOnError: true)
             def feature2 = new Feature(uid: 2, name: randomWords(15,  5, 200), value: 1, description: randomWords(50, 10, 2900), backlog: product, rank: 2, color: '#e778ff').save(failOnError: true)
