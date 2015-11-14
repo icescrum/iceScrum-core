@@ -17,13 +17,11 @@
   - along with iceScrum.  If not, see <http://www.gnu.org/licenses/>.
   --}%
  %{-- view --}%
-<div id="view-${id}" class="view ${flex?'':'no-flex'}">
-    <div class="${right ? 'col-md-8' : 'col-md-12' }">
+<div id="view-${id}" class="view ${flex?'':'no-flex'}" ng-class="'with-' + $state.current.data.view">
+    <div class="content">
         ${content}
     </div>
-    <g:if test="${right}">
-        <div class="details col-md-4"  ui-view="details"></div>
-        <div class="details-list"      ui-view="details-list"></div>
-        <div class="details-list-form" ui-view="details-list-form"></div>
+    <g:if test="${details}">
+        <div ui-view="details"></div>
     </g:if>
 </div>

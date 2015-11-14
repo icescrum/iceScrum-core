@@ -31,7 +31,7 @@ class WindowDefinition {
     String init = 'index'
     String title = ''
     boolean flex = true
-    boolean right = false
+    boolean details = false
     boolean printable = true
     boolean fullScreen = true
     def help = null
@@ -45,8 +45,8 @@ class WindowDefinition {
         this.title = title
     }
 
-    void right(boolean right) {
-        this.right = right
+    void details(boolean details) {
+        this.details = details
     }
 
     void flex(boolean flex) {

@@ -78,10 +78,10 @@ class WindowTagLib {
         def params = [
                 type: attrs.type,
                 id: id,
-                content: content,
-                right:attrs.right,
-                icon: attrs.icon ?: null,
                 flex: attrs.flex,
+                content: content,
+                details:attrs.details,
+                icon: attrs.icon ?: null,
                 spaceName: attrs.spaceName,
                 title: attrs.title ?: null,
                 contentClass: attrs.contentClass,
