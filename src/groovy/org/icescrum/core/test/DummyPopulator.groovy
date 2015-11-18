@@ -28,6 +28,7 @@ package org.icescrum.core.test
 import de.svenjacobs.loremipsum.LoremIpsum
 import grails.util.Holders
 import org.icescrum.core.domain.AcceptanceTest
+import org.icescrum.core.domain.Backlog
 import org.icescrum.core.domain.Sprint
 import org.springframework.security.core.context.SecurityContextHolder as SCH
 
@@ -104,6 +105,10 @@ class DummyPopulator {
             product.preferences.webservices = true
             product.description = randomWords(50, 20)
             product.save(failOnError: true)
+            new Backlog(product: product, shared: true, filter: '{"story":{}}', name: 'All').save(failOnError: true)
+            new Backlog(product: product, shared: true, filter: '{"story":{"state":1}}', name: 'Sandbox').save(failOnError: true)
+            new Backlog(product: product, shared: true, filter: '{"story":{"state":[2,3]}}', name: 'Backlog').save(failOnError: true)
+            new Backlog(product: product, shared: true, filter: '{"story":{"state":7}}', name: 'Done').save(failOnError: true)
             securityService.secureDomain(product)
             // Teams and members
             def team = new Team(name: 'testProj Team').addToProducts(product).addToMembers(usera).addToMembers(userz)

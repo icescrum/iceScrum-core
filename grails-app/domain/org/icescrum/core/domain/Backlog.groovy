@@ -28,18 +28,17 @@ import grails.converters.JSON
 
 class Backlog {
 
-    String name
-    String filter
+    String  name
+    String  filter
+    User    owner
     boolean shared
 
     static belongsTo = [
-            product: Product,
-            owner  : User
+        product: Product
     ]
 
     static mapping = {
         cache true
-        name(blank: false)
         table 'icescrum2_backlogs'
     }
 
@@ -48,28 +47,15 @@ class Backlog {
     ]
 
     static constraints = {
+        owner(nullable:true)
         name(blank: false, maxSize: 200, unique: true)
     }
 
     def getCount() {
-        return Story.search(product, JSON.parse(this.filter), false, true)
+        return Story.search(product.id, JSON.parse(this.filter), false, true)
     }
 
     def getStories() {
-        return Story.search(product, JSON.parse(this.filter), false)
-    }
-
-    static namedQueries = {
-        findAllByProductAndSharedOrOwner { p, s, u ->
-            product {
-                eq 'id', p
-            }
-            or {
-                eq 'shared', s
-                owner {
-                    eq 'id', u
-                }
-            }
-        }
+        return Story.search(product.id, JSON.parse(this.filter), false)
     }
 }

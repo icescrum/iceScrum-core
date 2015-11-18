@@ -570,7 +570,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                         }
                     }
                     if (rowCount){
-                        rowCount()
+                        count()
                     }
                 }
             }
@@ -672,7 +672,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
             }
         }
         if(stories && rowCount && stories instanceof List){
-            return stories.size()
+            return stories.get(0)
         }
         else if (stories && !projectionColor){
             Map storiesGrouped = stories?.groupBy{ it.feature }
