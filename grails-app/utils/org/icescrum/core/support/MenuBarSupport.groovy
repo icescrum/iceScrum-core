@@ -59,14 +59,14 @@ class MenuBarSupport {
         return menuEntry
     }
 
-    def spaceDynamicBar = { uiDefininitionId, defaultVisibility, defaultPosition, space ->
+    def spaceDynamicBar = { uiDefininitionId, defaultVisibility, defaultPosition, space, initAction ->
         return {
             if (!params?."$space" || !defaultPosition) {
                 return false
             }
             def attrs = [:]
             attrs."$space" = params."$space"
-            if (!commonVerification(createLink(controller: uiDefininitionId, params:attrs))) {
+            if (!commonVerification(createLink(controller: uiDefininitionId, action: initAction, params:attrs))) {
                 return false
             }
             return menuFromUserPreferences(uiDefininitionId) ?: [visible: defaultVisibility, pos: defaultPosition]
