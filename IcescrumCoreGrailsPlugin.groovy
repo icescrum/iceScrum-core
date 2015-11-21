@@ -358,7 +358,7 @@ class IcescrumCoreGrailsPlugin {
     private void addJasperMethod(source, springSecurityService, jasperService){
         try {
             source.metaClass.renderReport = { String reportName, String format, def data, String outputName = null, def parameters = null ->
-                outputName = (outputName ? outputName.replaceAll("[^a-zA-Z\\s]", "").replaceAll(" ", "") + '-' + reportName : reportName) + '-' + (g.formatDate(formatName: 'is.date.file'))
+                outputName = (outputName ? outputName.replaceAll("[^\\-a-zA-Z\\s]", "").replaceAll(" ", "") + '-' + reportName : reportName) + '-' + (g.formatDate(formatName: 'is.date.file'))
                 if (!session.progress){
                      session.progress = new ProgressSupport()
                 }
