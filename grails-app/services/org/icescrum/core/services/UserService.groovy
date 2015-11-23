@@ -27,12 +27,8 @@ import grails.plugin.springsecurity.SpringSecurityUtils
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.FilenameUtils
 import org.apache.commons.io.filefilter.WildcardFileFilter
-import org.icescrum.core.domain.Feed
-import org.icescrum.core.domain.Invitation
+import org.icescrum.core.domain.*
 import org.icescrum.core.domain.Invitation.InvitationType
-import org.icescrum.core.domain.Product
-import org.icescrum.core.domain.Team
-import org.icescrum.core.domain.User
 import org.icescrum.core.domain.preferences.UserPreferences
 import org.icescrum.core.domain.security.Authority
 import org.icescrum.core.domain.security.UserAuthority
@@ -159,9 +155,9 @@ class UserService extends IceScrumEventPublisher {
             if (!currentMenu.containsKey(id)) {
                 currentMenu.put(id, (currentMenu.size() + 1).toString())
                 if (user.preferences.menu.containsKey(id)) {
-                    this.menu(user, id, user.preferences.menuHidden.size().toString(), true)
+                    this.menu(user, id, user.preferences.menu.size().toString(), false)
+                    user.preferences.menu.remove(id)
                 }
-                user.preferences.menu.remove(id)
             }
         } else {
             currentMenu = user.preferences.menu
@@ -169,17 +165,14 @@ class UserService extends IceScrumEventPublisher {
                 currentMenu.put(id, (currentMenu.size() + 1).toString())
                 if (user.preferences.menuHidden.containsKey(id)) {
                     this.menu(user, id, user.preferences.menuHidden.size().toString(), true)
+                    user.preferences.menuHidden.remove(id)
                 }
-                user.preferences.menuHidden.remove(id)
             }
         }
-
         def from = currentMenu.get(id)?.toInteger()
         from = from ?: 1
         def to = position.toInteger()
-
         if (from != to) {
-
             if (from > to) {
                 currentMenu.entrySet().each { it ->
                     if (it.value.toInteger() >= to && it.value.toInteger() <= from && it.key != id) {
@@ -251,8 +244,27 @@ class UserService extends IceScrumEventPublisher {
         }
     }
 
-    void panel(User user, String id, String position) {
-        def currentPanels = user.preferences.panels
+    void updatePanelPosition(User user, String id, String position, boolean right) {
+        def currentPanels
+        if (right) {
+            currentPanels = user.preferences.panelsRight
+            if (!currentPanels.containsKey(id)) {
+                currentPanels.put(id, (currentPanels.size()).toString())
+                if (user.preferences.panelsLeft.containsKey(id)) {
+                    updatePanelPosition(user, id, (user.preferences.panelsLeft.size() - 1).toString(), false)
+                    user.preferences.panelsLeft.remove(id)
+                }
+            }
+        } else {
+            currentPanels = user.preferences.panelsLeft
+            if (!currentPanels.containsKey(id)) {
+                currentPanels.put(id, (currentPanels.size()).toString())
+                if (user.preferences.panelsRight.containsKey(id)) {
+                    updatePanelPosition(user, id, (user.preferences.panelsRight.size() - 1).toString(), true)
+                    user.preferences.panelsRight.remove(id)
+                }
+            }
+        }
         def from = currentPanels.get(id)?.toInteger()
         from = from ?: 1
         def to = position.toInteger()
