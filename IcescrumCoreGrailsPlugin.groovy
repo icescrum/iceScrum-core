@@ -334,10 +334,13 @@ class IcescrumCoreGrailsPlugin {
                     delegate.log.error(it)
                 }
             }
+            if (attrs.silent) {
+                error.silent = true
+            }
             withFormat {
                 html { render(status: 400, contentType: 'application/json', text:error as JSON) }
-                json { renderRESTJSON(text:error, status:400) }
-                xml  { renderRESTXML(text:error, status:400) }
+                json { renderRESTJSON(text:error, status: 400) }
+                xml  { renderRESTXML(text:error, status: 400) }
             }
         }
     }
