@@ -47,8 +47,8 @@ class UserPreferences implements Serializable{
 
     Map menu = ["project": "1", "backlog": "2", "releasePlan": "3", "sprintPlan": "4", "feature": "5"]
     Map menuHidden = [:]
-    Map panelsLeft = ["feed": "0", "userProjects": "1", "tasks": "2"]
-    Map panelsRight = ["notes": "0", "mood": "1"]
+    Map panelsLeft = ["userProjects": "0", "tasks": "1", "notes": "2"]
+    Map panelsRight = ["feed": "0", "mood": "1"]
 
     static transients = ["emailsSettings"]
 
