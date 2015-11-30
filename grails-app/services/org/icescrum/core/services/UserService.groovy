@@ -266,7 +266,7 @@ class UserService extends IceScrumEventPublisher {
             }
         }
         def from = currentPanels.get(id)?.toInteger()
-        from = from ?: 1
+        from = from ?: 0
         def to = position.toInteger()
         if (from != to) {
             if (from > to) {
