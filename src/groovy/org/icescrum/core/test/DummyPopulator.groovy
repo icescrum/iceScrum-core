@@ -310,7 +310,14 @@ class DummyPopulator {
         }
 
         product.stories.findAll {
-            (it.state != Story.STATE_ACCEPTED) && (it.state != Story.STATE_ESTIMATED)
+            it.state == Story.STATE_SUGGESTED
+        }.eachWithIndex { story, index ->
+            story.rank = index + 1
+            story.save(failOnError: true)
+        }
+
+        product.stories.findAll {
+            it.state != Story.STATE_ACCEPTED && it.state != Story.STATE_ESTIMATED && it.state != Story.STATE_SUGGESTED
         }.eachWithIndex { story, index ->
             story.rank = 0
             story.save(failOnError: true)
