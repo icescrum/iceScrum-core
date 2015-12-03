@@ -744,7 +744,6 @@ class StoryService extends IceScrumEventPublisher {
                     origin: story.name,
                     feature: story.feature,
                     value: story.value,
-                    executionFrequency: story.executionFrequency
             )
 
             copiedStory.validate()
@@ -824,7 +823,6 @@ class StoryService extends IceScrumEventPublisher {
                     inProgressDate: inProgressDate,
                     doneDate: doneDate,
                     type: story.type.text().toInteger(),
-                    executionFrequency: story.executionFrequency.text().toInteger(),
                     affectVersion: story.affectVersion.text(),
                     uid: story.@uid.text()?.isEmpty() ? story.@id.text().toInteger() : story.@uid.text().toInteger(),
                     origin: story.origin.text()

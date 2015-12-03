@@ -51,7 +51,6 @@ class Story extends BacklogElement implements Cloneable, Serializable {
     static final int EXECUTION_FREQUENCY_MONTH = 3
 
     int type = 0
-    int executionFrequency = Story.EXECUTION_FREQUENCY_DAY
     Date suggestedDate
     Date acceptedDate
     Date plannedDate
@@ -789,7 +788,6 @@ class Story extends BacklogElement implements Cloneable, Serializable {
             suggestedDate(this.suggestedDate)
             estimatedDate(this.estimatedDate)
             inProgressDate(this.inProgressDate)
-            executionFrequency(this.executionFrequency)
 
             tags { builder.mkp.yieldUnescaped("<![CDATA[${this.tags}]]>") }
             name { builder.mkp.yieldUnescaped("<![CDATA[${this.name}]]>") }
