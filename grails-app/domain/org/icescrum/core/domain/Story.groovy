@@ -84,7 +84,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
     ]
 
     static transients = [
-            'todo', 'dependences', 'deliveredVersion', 'testState', 'testStateEnum', 'activity', 'liked', 'followed', 'sameBacklogStories'
+            'todo', 'dependences', 'deliveredVersion', 'testState', 'testStateEnum', 'activity', 'liked', 'followed', 'sameBacklogStories', 'countDoneTasks'
     ]
 
     static mapping = {
@@ -123,6 +123,10 @@ class Story extends BacklogElement implements Cloneable, Serializable {
 
     def getDeliveredVersion(){
         return this.state == STATE_DONE ? this.parentSprint.deliveredVersion ?: null : null
+    }
+
+    def getCountDoneTasks() {
+        return state >= STATE_INPROGRESS ? tasks.count { it.state == Task.STATE_DONE} : 0;
     }
 
     List<Story> getSameBacklogStories() {
