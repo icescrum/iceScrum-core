@@ -23,6 +23,7 @@
 
 package org.icescrum.core.services
 
+import grails.plugin.cache.Cacheable
 import grails.plugin.springsecurity.SpringSecurityUtils
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.FilenameUtils
@@ -299,5 +300,19 @@ class UserService extends IceScrumEventPublisher {
         if (!user.save()) {
             throw new RuntimeException()
         }
+    }
+
+    @Cacheable("feed")
+    def getFeedContent(def url){
+        def channel = new XmlSlurper().parse(url).channel
+        def contentFeed = [title: channel.title.text(), description: channel.description.text()]
+        contentFeed.items = channel.item.collect { xmlItem ->
+            return [feedTitle: channel.title.text(),
+                    link: xmlItem.link.text(),
+                    title: xmlItem.title.text(),
+                    description: xmlItem.description.text(),
+                    pubDate: Date.parse("EEE', 'dd' 'MMM' 'yyyy' 'HH:mm:ss' 'Z", xmlItem.pubDate.text()).time]
+        }
+        return contentFeed
     }
 }
