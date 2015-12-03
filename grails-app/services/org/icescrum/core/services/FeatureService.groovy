@@ -40,15 +40,7 @@ class FeatureService extends IceScrumEventPublisher {
     @PreAuthorize('productOwner(#product) and !archivedProduct(#product)')
     void save(Feature feature, Product product) {
         feature.name = feature.name?.trim()
-        def maxRank = Feature.countByBacklog(product) + 1
-        if (feature.rank == 0) {
-            feature.rank = maxRank
-        } else {
-            if (!(feature.rank in 1..maxRank)) {
-                throw new RuntimeException()
-            }
-            rank(feature)
-        }
+        feature.rank = Feature.countByBacklog(product) + 1
         if (feature.value == null) {
             feature.value = 0 // TODO check if relevant (previously, it wasn't possible to create a feature with no value)
         }
@@ -86,11 +78,12 @@ class FeatureService extends IceScrumEventPublisher {
         feature.name = feature.name.trim()
         def product = feature.backlog
         if (feature.isDirty('rank')) {
+            def oldRank = feature.getPersistentValue('rank') // must be stored here or it will be flushed by the count
             def maxRank = Feature.countByBacklog(product)
             if (!(feature.rank in 1..maxRank)) {
                 throw new RuntimeException()
             }
-            rank(feature)
+            rank(feature, oldRank)
         }
         def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_UPDATE, feature)
         if (feature.isDirty('color')) {
@@ -153,8 +146,8 @@ class FeatureService extends IceScrumEventPublisher {
         return itemsDone / items
     }
 
-    private void rank(Feature feature) {
-        Range affectedRange = feature.getPersistentValue('rank')..feature.rank
+    private void rank(Feature feature, Long oldRank) {
+        Range affectedRange = oldRank..feature.rank
         int delta = affectedRange.isReverse() ? 1 : -1
         feature.backlog.features.findAll {
             it != feature && it.rank in affectedRange
