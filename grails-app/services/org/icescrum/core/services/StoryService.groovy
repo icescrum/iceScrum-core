@@ -151,16 +151,12 @@ class StoryService extends IceScrumEventPublisher {
     @PreAuthorize('isAuthenticated() and !archivedProduct(#story.backlog)')
     void update(Story story, Map props = [:]) {
 
-        if (story.state < Story.STATE_SUGGESTED && story.rank != 0) {
-            story.rank = 0
-        } else if (props.rank != null && props.rank != story.rank) {
-            rank(story, props.rank) // Must be before state change (e.g. before acceptToBacklog) because such change will change story rank
-        }
-
         if (props.state != null && props.state != story.state) {
             if (props.state == Story.STATE_ACCEPTED) {
+                props.remove('rank') // we don't want the rank function to be called because the state change will take care of rank changing
                 acceptToBacklog([story])
             } else if (props.state == Story.STATE_SUGGESTED) {
+                props.remove('rank') // we don't want the rank function to be called because the state change will take care of rank changing
                 returnToSandbox([story])
             } else if (props.state == Story.STATE_INPROGRESS) {
                 story.state = Story.STATE_INPROGRESS
@@ -200,6 +196,12 @@ class StoryService extends IceScrumEventPublisher {
 
         if (story.type != Story.TYPE_DEFECT) {
             story.affectVersion = null
+        }
+
+        if (story.state <= Story.STATE_SUGGESTED && story.rank != 0) {
+            story.rank = 0
+        } else if (props.rank != null && props.rank != story.rank) {
+            rank(story, props.rank)
         }
 
         def product = story.backlog
