@@ -142,8 +142,8 @@ class DummyPopulator {
             }
             // Features
             def feature = new Feature(uid: 1, name: randomWords(15,  5, 200), value: 1, description: randomWords(50, 20, 2900), backlog: product, rank: 1).save(failOnError: true)
-            def feature2 = new Feature(uid: 2, name: randomWords(15,  5, 200), value: 1, description: randomWords(50, 10, 2900), backlog: product, rank: 2, color: '#e778ff').save(failOnError: true)
-            def feature3 = new Feature(uid: 3, name: randomWords(15,  5, 200), value: 1, description: randomWords(50, 10, 2900), backlog: product, rank: 3, color: '#c3ed39').save(failOnError: true)
+            def feature2 = new Feature(uid: 2, name: randomWords(15,  5, 200), value: 1, description: randomWords(50, 10, 2900), backlog: product, rank: 2, color: '#f0679e').save(failOnError: true)
+            def feature3 = new Feature(uid: 3, name: randomWords(15,  5, 200), value: 1, description: randomWords(50, 10, 2900), backlog: product, rank: 3, color: '#a0dffa').save(failOnError: true)
             // Actors
             def actor = new Actor(uid: 1, name: randomWords(15,  5, 200), description: randomWords(50, 10, 2900), backlog: product).save(failOnError: true)
             def actor2 = new Actor(uid: 2, name: randomWords(15,  5, 200), description: randomWords(50, 10, 2900), backlog: product).save(failOnError: true)
@@ -308,18 +308,10 @@ class DummyPopulator {
             story.rank = index + 1
             story.save(failOnError: true)
         }
-
         product.stories.findAll {
             it.state == Story.STATE_SUGGESTED
         }.eachWithIndex { story, index ->
             story.rank = index + 1
-            story.save(failOnError: true)
-        }
-
-        product.stories.findAll {
-            it.state != Story.STATE_ACCEPTED && it.state != Story.STATE_ESTIMATED && it.state != Story.STATE_SUGGESTED
-        }.eachWithIndex { story, index ->
-            story.rank = 0
             story.save(failOnError: true)
         }
     }

@@ -159,7 +159,9 @@ class SprintService extends IceScrumEventPublisher {
         }
         def autoCreateTaskOnEmptyStory = sprint.parentRelease.parentProduct.preferences.autoCreateTaskOnEmptyStory
         sprint.stories?.each { Story story ->
-            storyService.update(story, [state: Story.STATE_INPROGRESS])
+            story.state = Story.STATE_INPROGRESS
+            story.inProgressDate = new Date()
+            storyService.update(story)
             if (autoCreateTaskOnEmptyStory && story.tasks?.size() == 0) {
                 def newTask = new Task(name: story.name, description: story.description, backlog: sprint, parentStory: story)
                 taskService.save(newTask, (User) springSecurityService.currentUser)
