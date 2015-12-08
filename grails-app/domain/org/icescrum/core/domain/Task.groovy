@@ -38,7 +38,7 @@ class Task extends BacklogElement implements Serializable {
     static final int TYPE_RECURRENT = 10
     static final int TYPE_URGENT = 11
 
-    String color = "yellow"
+    String color = "#f9f157"
 
     Integer type
     Float estimation

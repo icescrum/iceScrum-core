@@ -200,7 +200,7 @@ class DummyPopulator {
             product.stories.findAll { it.state < Story.STATE_PLANNED }.eachWithIndex { Story story, int i ->
                 if (i % 4 == 0) {
                     (i % 7).times {
-                        story.addToTasks(new Task(parentProduct: product, uid: nextTaskUid, type: null, estimation: 3, name: randomWords(15,  5, 200), creator: usera, responsible: usera, parentStory: story, creationDate: new Date()))
+                        story.addToTasks(new Task(parentProduct: product, uid: nextTaskUid, type: null, estimation: 3, name: randomWords(15,  5, 200), description: randomWords(50, 0, 2900), creator: usera, responsible: usera, parentStory: story, creationDate: new Date()))
                         nextTaskUid++
                     }
                     story.save(failOnError: true)
@@ -209,18 +209,18 @@ class DummyPopulator {
             release1.sprints.findAll { it.orderNumber < 8 }.each { sprint ->
                 sprint.stories.each { story ->
                     (sprint.orderNumber - 1).times {
-                        def task = new Task(parentProduct: product, uid: nextTaskUid, rank: it + 1, type: null, estimation: 3, name: randomWords(15,  5, 200), creator: usera, responsible: usera, parentStory: story, backlog: sprint, creationDate: new Date())
+                        def task = new Task(parentProduct: product, uid: nextTaskUid, rank: it + 1, type: null, estimation: 3, name: randomWords(15,  5, 200), description: randomWords(50, 0, 2900), creator: usera, responsible: usera, parentStory: story, backlog: sprint, creationDate: new Date())
                         story.addToTasks(task)
                         sprint.addToTasks(task)
                         nextTaskUid++
                     }
                 }
                 20.times {
-                    def task = new Task(parentProduct: product, uid: nextTaskUid, type: Task.TYPE_RECURRENT, estimation: 5, name: randomWords(15,  5, 200), creator: usera, responsible: usera, parentStory: null, backlog: sprint, creationDate: new Date())
+                    def task = new Task(parentProduct: product, uid: nextTaskUid, type: Task.TYPE_RECURRENT, estimation: 5, name: randomWords(15,  5, 200), description: randomWords(50, 0, 2900), creator: usera, responsible: usera, parentStory: null, backlog: sprint, creationDate: new Date())
                     sprint.addToTasks(task)
                     task.save(failOnError: true)
                     nextTaskUid++
-                    def task2 = new Task(parentProduct: product, uid: nextTaskUid, type: Task.TYPE_URGENT, estimation: 4, name: randomWords(15,  5, 200), creator: usera, responsible: usera, parentStory: null, backlog: sprint, creationDate: new Date())
+                    def task2 = new Task(parentProduct: product, uid: nextTaskUid, type: Task.TYPE_URGENT, estimation: 4, name: randomWords(15,  5, 200), description: randomWords(50, 0, 2900), creator: usera, responsible: usera, parentStory: null, backlog: sprint, creationDate: new Date())
                     sprint.addToTasks(task2)
                     task2.save(failOnError: true)
                     nextTaskUid++
