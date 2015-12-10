@@ -60,7 +60,11 @@ class TaskService extends IceScrumEventPublisher {
         }
         task.parentProduct = product
         task.creator = user
-        task.rank = Task.countByParentStoryAndType(task.parentStory, task.type) + 1
+        if (task.parentStory) {
+            task.rank = Task.countByParentStory(task.parentStory) + 1
+        } else {
+            task.rank = Task.countByBacklogAndType(task.backlog, task.type) + 1
+        }
         task.uid = Task.findNextUId(product.id)
         if (!task.save(flush: true)) {
             throw new RuntimeException()
