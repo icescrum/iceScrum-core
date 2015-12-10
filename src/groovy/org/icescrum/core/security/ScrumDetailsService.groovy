@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010 iceScrum Technologies.
+ * Copyright (c) 2015 Kagilum SAS.
  *
  * This file is part of iceScrum.
  *
@@ -18,61 +18,49 @@
  * Authors:
  *
  * Vincent Barrier (vbarrier@kagilum.com)
- * Stéphane Maldini (stephane.maldini@icescrum.com)
  */
-
-
-package org.icescrum.core.security;
-
-
-import grails.plugin.springsecurity.userdetails.GormUserDetailsService
-
-import org.springframework.security.core.userdetails.UserDetails
-import org.springframework.security.core.userdetails.UsernameNotFoundException
-import org.springframework.security.core.GrantedAuthority
+package org.icescrum.core.security
 
 import grails.plugin.springsecurity.SpringSecurityUtils
-import org.springframework.security.core.authority.GrantedAuthorityImpl
+import grails.plugin.springsecurity.userdetails.GrailsUserDetailsService;
 import org.icescrum.core.domain.security.Authority
+import org.springframework.security.core.authority.GrantedAuthorityImpl
+import org.springframework.security.core.userdetails.UserDetails
+import org.springframework.security.core.userdetails.UsernameNotFoundException
+import org.springframework.transaction.annotation.Transactional
 
-class ScrumDetailsService extends GormUserDetailsService {
+class ScrumDetailsService implements GrailsUserDetailsService {
 
+    def grailsApplication
+    static final List NO_ROLES = [new GrantedAuthorityImpl(Authority.ROLE_USER)]
 
-    UserDetails loadUserByUsername(String username, boolean loadRoles) throws UsernameNotFoundException {
+    UserDetails loadUserByUsername(String username, boolean loadRoles)
+            throws UsernameNotFoundException {
+        return loadUserByUsername(username)
+    }
+
+    @Transactional(readOnly=true, noRollbackFor=[IllegalArgumentException, UsernameNotFoundException])
+    UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         def conf = SpringSecurityUtils.securityConfig
         Class<?> User = grailsApplication.getDomainClass(conf.userLookup.userDomainClassName).clazz
 
-        User.withTransaction { status ->
-            def user = User.findWhere((conf.userLookup.usernamePropertyName): username, accountExternal:false)
-
-            //Will be valid only on reauthenticate context
-            if (!user && grailsApplication.mainContext['ldapUserDetailsMapper']?.isEnabled()){
-                user = User.findWhere((conf.userLookup.usernamePropertyName): username, accountExternal:true)
-            }
-            if (!user){
-                log.warn "User not found: $username"
-                throw new UsernameNotFoundException('User not found', username)
-            }
-
-            //last login
-            if(user.enabled && !user.accountExpired && !user.passwordExpired && !user.accountLocked){
-                user.lastLogin = new Date()
-                user.save(flush:true)
-            }
-
-            Collection<GrantedAuthority> authorities = loadAuthorities(user, username, loadRoles)
-            authorities.add(new GrantedAuthorityImpl(Authority.ROLE_USER))
-            return new ScrumUserDetails(user.username, user.password, user.enabled,
-                    !user.accountExpired, !user.passwordExpired,
-                    !user.accountLocked, authorities ?: NO_ROLES, user.id,
-                    user.firstName + " " + user.lastName)
+        def user = User.findWhere((conf.userLookup.usernamePropertyName): username, accountExternal:false)
+        if (!user && grailsApplication.mainContext['ldapUserDetailsMapper']?.isEnabled()){
+            user = User.findWhere((conf.userLookup.usernamePropertyName): username, accountExternal:true)
         }
-    }
 
-    /**
-     * {@inheritDoc}
-     */
-    UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        loadUserByUsername username, true
+        if (!user){
+            log.warn "User not found: $username"
+            throw new UsernameNotFoundException('User not found', username)
+        }
+
+        def authorities = user.authorities.collect {
+            new GrantedAuthorityImpl(it.authority)
+        }
+
+        return new ScrumUserDetails(user.username, user.password,
+                user.enabled, !user.accountExpired, !user.passwordExpired,
+                !user.accountLocked, authorities ?: NO_ROLES, user.id,
+                user.firstName + " " + user.lastName)
     }
 }
