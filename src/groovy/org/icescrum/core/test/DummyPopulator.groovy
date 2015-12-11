@@ -289,6 +289,14 @@ class DummyPopulator {
         }
         sprint.tasks.findAll { it.parentStory == null }.groupBy { "$it.type" + "$it.state" }.each(rankTasks)
         sprint.tasks.findAll { it.parentStory != null }.groupBy { "$it.parentStory.id" + "$it.state" }.each(rankTasks)
+        def lastStory = sprint.stories.sort { it.rank }.last()
+        lastStory.state = Story.STATE_DONE
+        addStoryActivity(lastStory, lastStory.creator, 'done')
+        lastStory.doneDate = new Date()
+        lastStory.save(failOnError: true)
+        lastStory.tasks.each { Task task ->
+            doneTask(task)
+        }
     }
 
     private static void rankStories(Product product) {
