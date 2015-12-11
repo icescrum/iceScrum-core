@@ -197,10 +197,12 @@ class DummyPopulator {
             rankStories(product)
             // Tasks and sprint progression
             int nextTaskUid = 1
+            def getCreator = { number -> number % 3 == 0 ? userz : usera }
+            def getResponsible = { number -> number % 5 == 0 ? userz : usera }
             product.stories.findAll { it.state < Story.STATE_PLANNED }.eachWithIndex { Story story, int i ->
                 if (i % 4 == 0) {
                     (i % 7).times {
-                        story.addToTasks(new Task(parentProduct: product, uid: nextTaskUid, rank: it + 1, type: null, estimation: 3, name: randomWords(15,  5, 200), description: randomWords(50, 0, 2900), creator: usera, responsible: usera, parentStory: story, creationDate: new Date()))
+                        story.addToTasks(new Task(parentProduct: product, uid: nextTaskUid, rank: it + 1, type: null, estimation: 3, name: randomWords(15,  5, 200), description: randomWords(50, 0, 2900), creator: getCreator(nextTaskUid), responsible: getResponsible(nextTaskUid), parentStory: story, creationDate: new Date()))
                         nextTaskUid++
                     }
                     story.save(failOnError: true)
@@ -209,18 +211,18 @@ class DummyPopulator {
             release1.sprints.findAll { it.orderNumber < 8 }.each { sprint ->
                 sprint.stories.each { story ->
                     (sprint.orderNumber - 1).times {
-                        def task = new Task(parentProduct: product, uid: nextTaskUid, rank: it + 1, type: null, estimation: 3, name: randomWords(15,  5, 200), description: randomWords(50, 0, 2900), creator: usera, responsible: usera, parentStory: story, backlog: sprint, creationDate: new Date())
+                        def task = new Task(parentProduct: product, uid: nextTaskUid, rank: it + 1, type: null, estimation: 3, name: randomWords(15,  5, 200), description: randomWords(50, 0, 2900), creator: getCreator(nextTaskUid), responsible: getResponsible(nextTaskUid), parentStory: story, backlog: sprint, creationDate: new Date())
                         story.addToTasks(task)
                         sprint.addToTasks(task)
                         nextTaskUid++
                     }
                 }
                 15.times {
-                    def task = new Task(parentProduct: product, uid: nextTaskUid, rank: it + 1, type: Task.TYPE_RECURRENT, estimation: 5, name: randomWords(15,  5, 200), description: randomWords(50, 0, 2900), creator: usera, responsible: usera, parentStory: null, backlog: sprint, creationDate: new Date())
+                    def task = new Task(parentProduct: product, uid: nextTaskUid, rank: it + 1, type: Task.TYPE_RECURRENT, estimation: 5, name: randomWords(15,  5, 200), description: randomWords(50, 0, 2900), creator: getCreator(nextTaskUid), responsible: getResponsible(nextTaskUid), parentStory: null, backlog: sprint, creationDate: new Date())
                     sprint.addToTasks(task)
                     task.save(failOnError: true)
                     nextTaskUid++
-                    def task2 = new Task(parentProduct: product, uid: nextTaskUid, rank: it + 1, type: Task.TYPE_URGENT, estimation: 4, name: randomWords(15,  5, 200), description: randomWords(50, 0, 2900), creator: usera, responsible: usera, parentStory: null, backlog: sprint, creationDate: new Date())
+                    def task2 = new Task(parentProduct: product, uid: nextTaskUid, rank: it + 1, type: Task.TYPE_URGENT, estimation: 4, name: randomWords(15,  5, 200), description: randomWords(50, 0, 2900), creator: getCreator(nextTaskUid), responsible: getResponsible(nextTaskUid), parentStory: null, backlog: sprint, creationDate: new Date())
                     sprint.addToTasks(task2)
                     task2.save(failOnError: true)
                     nextTaskUid++
@@ -248,40 +250,35 @@ class DummyPopulator {
             story.state = Story.STATE_DONE
             addStoryActivity(story, ((int)story.id) % 2 == 0 ? members.first() : members.last(), 'done')
             story.doneDate = new Date()
-            story.tasks?.each { t ->
-                t.state = Task.STATE_DONE
-                t.estimation = 0
-                t.doneDate = new Date()
-            }
             story.save(failOnError: true)
         }
-        sprint.tasks.findAll { it.type == Task.TYPE_RECURRENT }.each {
-            it.state = Task.STATE_DONE
-            it.save(failOnError: true)
-        }
-        sprint.tasks.findAll { it.type == Task.TYPE_URGENT }.each {
-            it.state = Task.STATE_DONE
-            it.save(failOnError: true)
+        sprint.tasks.each { Task task ->
+            doneTask(task)
         }
     }
 
+    private static void inProgressTask(Task task) {
+        task.state = Task.STATE_BUSY
+        task.inProgressDate = new Date()
+        task.save(failOnError: true)
+    }
+
+    private static void doneTask(Task task) {
+        task.state = Task.STATE_DONE
+        if (!task.inProgressDate) {
+            task.inProgressDate = new Date()
+        }
+        task.doneDate = new Date()
+        task.estimation = 0
+        task.save(failOnError: true)
+    }
+
     private static void updateContentInProgressSprint(Sprint sprint) {
-        def inProgress = { task ->
-            task.state = Task.STATE_BUSY
-            task.inProgressDate = new Date()
-            task.save(failOnError: true)
-        }
-        def done = { task ->
-            task.state = Task.STATE_DONE
-            task.inProgressDate = new Date()
-            task.doneDate = new Date()
-            task.save(failOnError: true)
-        }
         sprint.tasks.eachWithIndex { task, index ->
             if (index % 5 == 0) {
-                done(task)
+                doneTask(task)
             } else if (index % 2 == 0) {
-                inProgress(task)
+                inProgressTask(task)
             }
         }
         def rankTasks = { k, tasks ->
