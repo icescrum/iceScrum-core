@@ -200,7 +200,7 @@ class DummyPopulator {
             product.stories.findAll { it.state < Story.STATE_PLANNED }.eachWithIndex { Story story, int i ->
                 if (i % 4 == 0) {
                     (i % 7).times {
-                        story.addToTasks(new Task(parentProduct: product, uid: nextTaskUid, type: null, estimation: 3, name: randomWords(15,  5, 200), description: randomWords(50, 0, 2900), creator: usera, responsible: usera, parentStory: story, creationDate: new Date()))
+                        story.addToTasks(new Task(parentProduct: product, uid: nextTaskUid, rank: it + 1, type: null, estimation: 3, name: randomWords(15,  5, 200), description: randomWords(50, 0, 2900), creator: usera, responsible: usera, parentStory: story, creationDate: new Date()))
                         nextTaskUid++
                     }
                     story.save(failOnError: true)
@@ -266,39 +266,32 @@ class DummyPopulator {
     }
 
     private static void updateContentInProgressSprint(Sprint sprint) {
-        sprint.tasks.findAll { it.type == Task.TYPE_RECURRENT }.eachWithIndex { task, index ->
-            if (index > 0 && index < 8) {
-                task.state = Task.STATE_BUSY
-                task.inProgressDate = new Date()
-            }
-            if (index == 8) {
-                task.state = Task.STATE_DONE
-                task.doneDate = new Date()
-            }
+        def inProgress = { task ->
+            task.state = Task.STATE_BUSY
+            task.inProgressDate = new Date()
             task.save(failOnError: true)
         }
-        sprint.tasks.findAll { it.type == Task.TYPE_URGENT }.eachWithIndex { task, index ->
-            if (index > 0 && index < 8) {
-                task.state = Task.STATE_BUSY
-                task.inProgressDate = new Date()
-            }
-            if (index == 8) {
-                task.state = Task.STATE_DONE
-                task.doneDate = new Date()
-            }
+        def done = { task ->
+            task.state = Task.STATE_DONE
+            task.inProgressDate = new Date()
+            task.doneDate = new Date()
             task.save(failOnError: true)
         }
         sprint.tasks.eachWithIndex { task, index ->
-            if (index == 0) {
-                task.state = Task.STATE_DONE
-                task.inProgressDate = new Date()
-                task.doneDate = new Date()
+            if (index % 5 == 0) {
+                done(task)
             } else if (index % 2 == 0) {
-                task.state = Task.STATE_BUSY
-                task.inProgressDate = new Date()
+                inProgress(task)
             }
-            task.save(failOnError: true)
         }
+        def rankTasks = { k, tasks ->
+            tasks.eachWithIndex { task, index ->
+                task.rank = index + 1
+                task.save(failOnError: true)
+            }
+        }
+        sprint.tasks.findAll { it.parentStory == null }.groupBy { "$it.type" + "$it.state" }.each(rankTasks)
+        sprint.tasks.findAll { it.parentStory != null }.groupBy { "$it.parentStory.id" + "$it.state" }.each(rankTasks)
     }
 
     private static void rankStories(Product product) {
