@@ -6,7 +6,7 @@ import javax.crypto.spec.SecretKeySpec
 import javax.crypto.Mac
 
 /*
- * Copyright (c) 2010 iceScrum Technologies.
+ * Copyright (c) 2015 Kagilum SAS
  *
  * This file is part of iceScrum.
  *
