@@ -217,6 +217,10 @@ class SecurityService {
                 def parsedProduct = parseCurrentRequestProduct(request)
                 if (parsedProduct) {
                     def p = Product.get(parsedProduct)
+                    //case product doesn't exist
+                    if(!p){
+                        return false
+                    }
                     t = GrailsHibernateUtil.unwrapIfProxy(p.firstTeam)
                     team = t.id
                 }
@@ -314,6 +318,10 @@ class SecurityService {
         } else if (product) {
             if (!p) {
                 p = Product.get(product)
+            }
+            //case product doesn't exist
+            if(!p){
+                return false
             }
             Team t = GrailsHibernateUtil.unwrapIfProxy(p.firstTeam)
             long team = t.id
@@ -452,6 +460,10 @@ class SecurityService {
                 def parsedProduct = parseCurrentRequestProduct(request)
                 if (parsedProduct) {
                     def p = Product.get(parsedProduct)
+                    //case product doesn't exist
+                    if(!p){
+                        return false
+                    }
                     d = GrailsHibernateUtil.unwrapIfProxy(p.firstTeam)
                     domain = d.id
                     domainClass = grailsApplication.getDomainClass(Team.class.name).newInstance()
