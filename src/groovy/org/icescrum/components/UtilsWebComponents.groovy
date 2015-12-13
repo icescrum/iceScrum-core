@@ -155,7 +155,7 @@ public final class UtilsWebComponents {
                     delegate.render(status:200)
                 }
             } else {
-                delegate.render(status:404)
+                delegate.render(status:204)
             }
         } else if(request.method == 'POST') {
             RandomAccessFile raf = new RandomAccessFile(uploadInfo.filePath, "rw")
