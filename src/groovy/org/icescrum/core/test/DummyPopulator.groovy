@@ -205,7 +205,10 @@ class DummyPopulator {
             product.stories.findAll { it.state < Story.STATE_PLANNED }.eachWithIndex { Story story, int i ->
                 if (i % 4 == 0) {
                     (i % 7).times {
-                        story.addToTasks(new Task(parentProduct: product, uid: nextTaskUid, rank: it + 1, type: null, estimation: 3, name: randomWords(15,  5, 200), description: randomWords(50, 0, 2900), creator: getCreator(nextTaskUid), responsible: getResponsible(nextTaskUid), parentStory: story, creationDate: new Date()))
+                        def task = new Task(parentProduct: product, uid: nextTaskUid, rank: it + 1, type: null, estimation: 3, name: randomWords(15,  5, 200), description: randomWords(50, 0, 2900), creator: getCreator(nextTaskUid), responsible: getResponsible(nextTaskUid), parentStory: story, creationDate: new Date())
+                        task.save(failOnError: true)
+                        addTaskActivity(task, task.creator, 'taskSave')
+                        story.addToTasks(task)
                         nextTaskUid++
                     }
                     story.save(failOnError: true)
@@ -215,6 +218,8 @@ class DummyPopulator {
                 sprint.stories.each { story ->
                     (sprint.orderNumber - 1).times {
                         def task = new Task(parentProduct: product, uid: nextTaskUid, rank: it + 1, type: null, estimation: 3, name: randomWords(15,  5, 200), description: randomWords(50, 0, 2900), creator: getCreator(nextTaskUid), responsible: getResponsible(nextTaskUid), parentStory: story, backlog: sprint, creationDate: new Date())
+                        task.save(failOnError: true)
+                        addTaskActivity(task, task.creator, 'taskSave')
                         story.addToTasks(task)
                         sprint.addToTasks(task)
                         nextTaskUid++
@@ -224,10 +229,12 @@ class DummyPopulator {
                     def task = new Task(parentProduct: product, uid: nextTaskUid, rank: it + 1, type: Task.TYPE_RECURRENT, estimation: 5, name: randomWords(15,  5, 200), description: randomWords(50, 0, 2900), creator: getCreator(nextTaskUid), responsible: getResponsible(nextTaskUid), parentStory: null, backlog: sprint, creationDate: new Date())
                     sprint.addToTasks(task)
                     task.save(failOnError: true)
+                    addTaskActivity(task, task.creator, 'taskSave')
                     nextTaskUid++
                     def task2 = new Task(parentProduct: product, uid: nextTaskUid, rank: it + 1, type: Task.TYPE_URGENT, estimation: 4, name: randomWords(15,  5, 200), description: randomWords(50, 0, 2900), creator: getCreator(nextTaskUid), responsible: getResponsible(nextTaskUid), parentStory: null, backlog: sprint, creationDate: new Date())
                     sprint.addToTasks(task2)
                     task2.save(failOnError: true)
+                    addTaskActivity(task2, task2.creator, 'taskSave')
                     nextTaskUid++
                 }
                 if (sprint.orderNumber < 7) {
@@ -264,6 +271,7 @@ class DummyPopulator {
         task.state = Task.STATE_BUSY
         task.inProgressDate = new Date()
         task.save(failOnError: true)
+        addTaskActivity(task, task.responsible, 'taskInprogress')
     }
 
     private static void doneTask(Task task) {
@@ -274,6 +282,8 @@ class DummyPopulator {
         task.doneDate = new Date()
         task.estimation = 0
         task.save(failOnError: true)
+        addTaskActivity(task, task.responsible, 'taskInprogress')
+        addTaskActivity(task, task.responsible, 'taskFinish')
     }
 
     private static void updateContentInProgressSprint(Sprint sprint) {
@@ -374,6 +384,12 @@ class DummyPopulator {
         def activity = new Activity(poster: poster, parentRef: story.id, parentType: 'story', code: code, label: story.name)
         activity.save(failOnError: true)
         story.addToActivities(activity)
+    }
+
+    private static addTaskActivity(Task task, User poster, String code) {
+        def activity = new Activity(poster: poster, parentRef: task.id, parentType: 'task', code: code, label: task.name)
+        activity.save(failOnError: true)
+        task.addToActivities(activity)
     }
 
     private static addAcceptanceTestActivity(AcceptanceTest acceptanceTest, User poster) {

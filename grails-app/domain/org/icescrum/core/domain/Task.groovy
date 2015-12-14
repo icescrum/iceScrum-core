@@ -27,6 +27,7 @@
 package org.icescrum.core.domain
 
 import grails.util.GrailsNameUtils
+import org.hibernate.ObjectNotFoundException
 
 class Task extends BacklogElement implements Serializable {
 
@@ -61,7 +62,7 @@ class Task extends BacklogElement implements Serializable {
 
     static hasMany = [participants: User]
 
-    static transients = ['sprint']
+    static transients = ['sprint', 'activity']
 
     static mapping = {
         cache true
@@ -299,6 +300,14 @@ class Task extends BacklogElement implements Serializable {
             [max: 1])[0]
     }
 
+    static Task withTask(long productId, long id){
+        Task task = (Task) getInProduct(productId, id)
+        if (!task) {
+            throw new ObjectNotFoundException(id, 'Task')
+        }
+        return task
+    }
+
     @Override
     int hashCode() {
         final int prime = 31
@@ -331,6 +340,10 @@ class Task extends BacklogElement implements Serializable {
         if (this.getBacklog()?.id)
             return (Sprint)this.getBacklog()
         return null
+    }
+
+    def getActivity(){
+        return activities.sort { a, b-> b.dateCreated <=> a.dateCreated }
     }
 
     static search(product, options){
