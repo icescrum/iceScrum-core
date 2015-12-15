@@ -129,7 +129,6 @@ class IcescrumCoreGrailsPlugin {
             }
             addBroadcastMethods(it) // TODO Remove & don't forget to clean method calls (controllers & co)
             addErrorMethod(it)
-            addWithObjectsMethods(it)
             addRenderRESTMethod(it)
             addJasperMethod(it, springSecurityService, jasperService)
 
@@ -204,7 +203,6 @@ class IcescrumCoreGrailsPlugin {
                 addBroadcastMethods(event.source) // TODO Remove & don't forget to clean method calls (controllers & co)
 
                 addErrorMethod(event.source)
-                addWithObjectsMethods(event.source)
                 addRenderRESTMethod(event.source)
 
                 SpringSecurityService springSecurityService = event.ctx.getBean('springSecurityService')
@@ -385,48 +383,6 @@ class IcescrumCoreGrailsPlugin {
         } catch (Exception e) {
             if (log.debugEnabled) e.printStackTrace()
             session.progress.progressError(message(code: 'is.report.error'))
-        }
-    }
-
-    private addWithObjectsMethods (source) {
-
-        source.metaClass.withTask = { def id = 'id', def uid = false, Closure c ->
-            def task
-            if (uid)
-                task = (Task)Task.getInProductByUid(params.long('product'), (id instanceof String ? params."$id".toInteger() : id) )
-            else
-                task = (Task)Task.getInProduct(params.long('product'), (id instanceof String ? params."$id".toLong() : id) )
-            if (task) {
-                try {
-                    c.call task
-                } catch (IllegalStateException e) {
-                    returnError(exception: e)
-                } catch (RuntimeException e) {
-                    returnError(object: task, exception: e)
-                }
-            } else {
-                returnError(text: message(code: 'is.task.error.not.exist'))
-            }
-        }
-
-        source.metaClass.withTasks = { String id = 'id', Closure c ->
-            def ids = params.list(id).collect { it.toLong() }
-            List<Task> tasks = Task.getAllInProduct(params.long('product'), ids)
-            if (tasks) {
-                try {
-                    c.call tasks
-                } catch (IllegalStateException e) {
-                    returnError(exception: e)
-                } catch (RuntimeException e) {
-                    if (tasks.size() == 1){
-                        returnError(exception: e, object:tasks[0])
-                    } else {
-                        returnError(exception: e)
-                    }
-                }
-            } else {
-                returnError(text: message(code: 'is.tasks.error.not.exist'))
-            }
         }
     }
 

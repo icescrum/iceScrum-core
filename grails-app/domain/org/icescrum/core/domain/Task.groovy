@@ -308,6 +308,15 @@ class Task extends BacklogElement implements Serializable {
         return task
     }
 
+    static List<Task> withTasks(def params, def id = 'id'){
+        def ids = params[id]?.contains(',') ? params[id].split(',')*.toLong() : params.list(id)
+        List<Task> tasks = ids ? Task.getAll(ids) : null
+        if (!tasks) {
+            throw new ObjectNotFoundException(ids, 'Task')
+        }
+        return tasks
+    }
+
     @Override
     int hashCode() {
         final int prime = 31
