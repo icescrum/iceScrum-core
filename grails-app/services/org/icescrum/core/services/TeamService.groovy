@@ -30,8 +30,6 @@ import org.icescrum.core.domain.User
 import org.icescrum.core.support.ProgressSupport
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.transaction.annotation.Transactional
-import org.icescrum.core.event.IceScrumEvent
-import org.icescrum.core.event.IceScrumTeamEvent
 import org.icescrum.core.support.ApplicationSupport
 
 @Transactional
@@ -66,7 +64,7 @@ class TeamService {
             if (!team.save(flush: true)) {
                 throw new RuntimeException()
             }
-            publishEvent(new IceScrumTeamEvent(team, this.class, (User) springSecurityService.currentUser, IceScrumEvent.EVENT_CREATED))
+            team.products = [] // Grails does not initialize the collection and it is serialized as null instead of empty collection
         }
     }
 
@@ -90,14 +88,11 @@ class TeamService {
         if (!team) {
             throw new IllegalStateException('is.team.error.not.exist')
         }
-
         if (!team.save()) {
             throw new RuntimeException('is.team.error.not.saved')
         }
-
         securityService.secureDomain(team)
         def scrumMasters = team.scrumMasters
-
         def user = (User) springSecurityService.currentUser
         for (member in team.members) {
             if (!member.isAttached()) {
@@ -122,7 +117,6 @@ class TeamService {
             addScrumMaster(team, user)
             securityService.changeOwner(user, team)
         }
-        publishEvent(new IceScrumTeamEvent(team, this.class, user, IceScrumEvent.EVENT_CREATED))
     }
 
     void addMember(Team team, User member) {
@@ -130,7 +124,6 @@ class TeamService {
             team.addToMembers(member).save()
         }
         securityService.createTeamMemberPermissions(member, team)
-        publishEvent(new IceScrumTeamEvent(team, member, this.class, (User) springSecurityService.currentUser, IceScrumTeamEvent.EVENT_MEMBER_ADDED))
     }
 
     void addScrumMaster(Team team, User member) {
@@ -138,7 +131,6 @@ class TeamService {
             team.addToMembers(member).save()
         }
         securityService.createScrumMasterPermissions(member, team)
-        publishEvent(new IceScrumTeamEvent(team, member, this.class, (User) springSecurityService.currentUser, IceScrumTeamEvent.EVENT_MEMBER_ADDED))
     }
 
     void removeMemberOrScrumMaster(Team team, User member) {
@@ -148,7 +140,6 @@ class TeamService {
         } else {
             securityService.deleteTeamMemberPermissions(member, team)
         }
-        publishEvent(new IceScrumTeamEvent(team, member, this.class, (User) springSecurityService.currentUser, IceScrumTeamEvent.EVENT_MEMBER_REMOVED))
     }
 
     @Transactional(readOnly = true)
