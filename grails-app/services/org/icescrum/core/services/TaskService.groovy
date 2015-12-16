@@ -199,6 +199,7 @@ class TaskService extends IceScrumEventPublisher {
                 dateCreated: new Date(),
                 backlog: task.backlog,
                 parentStory: task.parentStory ?: null,
+                parentProduct: task.parentProduct,
                 type: task.type
         )
         task.participants?.each {
