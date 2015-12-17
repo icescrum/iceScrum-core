@@ -39,11 +39,11 @@ class Backlog {
 
     static mapping = {
         cache true
-        table 'icescrum2_backlogs'
+        table 'icescrum2_backlog'
     }
 
     static transients = [
-            'count', 'stories'
+        'count', 'stories'
     ]
 
     static constraints = {
