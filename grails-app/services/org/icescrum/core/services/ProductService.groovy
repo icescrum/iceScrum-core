@@ -609,51 +609,6 @@ class ProductService extends IceScrumEventPublisher {
         }
     }
 
-    List getAllMembersProduct(def product) {
-        def team = product.firstTeam
-        def productOwners = product.productOwners
-        def members = []
-        def is = grailsApplication.mainContext.getBean('org.icescrum.core.taglib.ScrumTagLib')
-
-        if (team) {
-            def scrumMasters = team.scrumMasters
-            team.members?.each {
-                def role = Authority.MEMBER
-                if (scrumMasters*.id?.contains(it.id) && productOwners*.id?.contains(it.id)) {
-                    role = Authority.PO_AND_SM
-                } else if (scrumMasters*.id?.contains(it.id)) {
-                    role = Authority.SCRUMMASTER
-                } else if (productOwners*.id?.contains(it.id)) {
-                    role = Authority.PRODUCTOWNER
-                }
-                members.add([name: it.firstName + ' ' + it.lastName,
-                        activity: it.preferences.activity ?: '&nbsp;',
-                        id: it.id,
-                        avatar: is.avatar(user: it, link: true),
-                        role: role])
-            }
-        }
-
-        productOwners?.each{
-            if(!members*.id?.contains(it.id)){
-                members.add([name: it.firstName+' '+it.lastName,
-                activity:it.preferences.activity?:'&nbsp;',
-                         id: it.id,
-                         avatar:is.avatar(user:it,link:true),
-                         role: Authority.PRODUCTOWNER])
-            }
-        }
-
-        product.stakeHolders?.each{
-            members.add([name: it.firstName+' '+it.lastName,
-                         activity:it.preferences.activity?:'&nbsp;',
-                         id: it.id,
-                         avatar:is.avatar(user:it,link:true),
-                         role: Authority.STAKEHOLDER])
-        }
-        members.sort{ a,b -> b.role <=> a.role ?: a.name <=> b.name }
-    }
-
     void updateTeamMembers(Team team, List newMembers) {
         def oldMembersByProduct = [:]
         team.products.each { Product product ->
