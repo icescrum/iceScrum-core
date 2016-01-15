@@ -314,8 +314,8 @@ class CheckerTimerTask extends TimerTask {
         def config = Holders.grailsApplication.config
         def configInterval = computeInterval(config.icescrum.check.interval ?: 1440)
         try {
-            def vers = Metadata.current['app.version'].replace('#', '.').replaceFirst('R', '').replace('.', '-')
             def headers = ['User-Agent': 'iceScrum-Agent/1.0', 'Referer': config.grails.serverURL]
+            def vers = Metadata.current['app.version'].replace('#', '.').replaceFirst('R', '').replace('.', '-').replace(' ', '%20')
             def params = ['http.connection.timeout': config.icescrum.check.timeout ?: 5000, 'http.socket.timeout': config.icescrum.check.timeout ?: 5000]
             def resp = getJSON(config.icescrum.check.url, config.icescrum.check.path + "/" + config.icescrum.appID + "/" + vers, [:], headers, params)
             if (resp.status == 200) {
@@ -342,6 +342,7 @@ class CheckerTimerTask extends TimerTask {
                 //Setup new timer with a long delay
                 if (log.debugEnabled) {
                     log.debug('Automatic check update error - new timer delay')
+                    log.debug(ex.message)
                 }
                 this.cancel()
                 def longInterval = configInterval >= 1440 ? configInterval * 2 : computeInterval(1440)
