@@ -53,6 +53,7 @@ class ProductService extends IceScrumEventPublisher {
         if (!product.save(flush: true)) {
             throw new RuntimeException()
         }
+        createDefaultBacklogs(product)
         securityService.secureDomain(product)
         if (productOwners){
             for(productOwner in User.getAll(productOwners*.toLong())){
@@ -421,7 +422,7 @@ class ProductService extends IceScrumEventPublisher {
                     }
                 }
             }
-
+            createDefaultBacklogs(p)
             return p
         } catch (Exception e) {
             if (log.debugEnabled) e.printStackTrace()
@@ -811,5 +812,12 @@ class ProductService extends IceScrumEventPublisher {
             usersByRole[stakeHolder] = Authority.STAKEHOLDER
         }
         return usersByRole
+    }
+
+    private void createDefaultBacklogs(Product product) {
+        new Backlog(product: product, shared: true, filter: '{"story":{}}', name: 'All').save()
+        new Backlog(product: product, shared: true, filter: '{"story":{"state":1}}', name: 'Sandbox').save()
+        new Backlog(product: product, shared: true, filter: '{"story":{"state":[2,3]}}', name: 'Backlog').save()
+        new Backlog(product: product, shared: true, filter: '{"story":{"state":7}}', name: 'Done').save()
     }
 }

@@ -48,7 +48,7 @@ class Backlog {
 
     static constraints = {
         owner(nullable:true)
-        name(blank: false, maxSize: 200, unique: true)
+        name(blank: false, maxSize: 200)
     }
 
     def getCount() {
