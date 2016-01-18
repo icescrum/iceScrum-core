@@ -815,9 +815,9 @@ class ProductService extends IceScrumEventPublisher {
     }
 
     private void createDefaultBacklogs(Product product) {
-        new Backlog(product: product, shared: true, filter: '{"story":{}}', name: 'All').save()
-        new Backlog(product: product, shared: true, filter: '{"story":{"state":1}}', name: 'Sandbox').save()
-        new Backlog(product: product, shared: true, filter: '{"story":{"state":[2,3]}}', name: 'Backlog').save()
-        new Backlog(product: product, shared: true, filter: '{"story":{"state":7}}', name: 'Done').save()
+        new Backlog(product: product, shared: true, filter: '{"story":{}}', name: 'todo.is.ui.backlog.all').save()
+        new Backlog(product: product, shared: true, filter: '{"story":{"state":1}}', name: 'is.ui.sandbox').save()
+        new Backlog(product: product, shared: true, filter: '{"story":{"state":[2,3]}}', name: 'is.ui.backlog').save()
+        new Backlog(product: product, shared: true, filter: '{"story":{"state":7}}', name: 'todo.is.ui.backlog.done').save()
     }
 }

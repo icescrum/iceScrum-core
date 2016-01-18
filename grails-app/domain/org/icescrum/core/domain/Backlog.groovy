@@ -43,7 +43,7 @@ class Backlog {
     }
 
     static transients = [
-        'count', 'stories'
+        'count', 'stories', 'isDefault'
     ]
 
     static constraints = {
@@ -57,5 +57,9 @@ class Backlog {
 
     def getStories() {
         return Story.search(product.id, JSON.parse(this.filter), false)
+    }
+
+    def getIsDefault() {
+        return owner == null
     }
 }
