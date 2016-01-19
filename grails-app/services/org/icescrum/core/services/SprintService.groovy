@@ -60,7 +60,7 @@ class SprintService extends IceScrumEventPublisher {
     void update(Sprint sprint, Date startDate = null, Date endDate = null, def checkIntegrity = true, boolean updateRelease = true) {
         if (checkIntegrity) {
             if (sprint.state == Sprint.STATE_DONE) {
-                def illegalDirtyProperties = sprint.dirtyPropertyNames - ['deliveredVersion', 'retrospective', 'doneDefinition']
+                def illegalDirtyProperties = sprint.dirtyPropertyNames - ['goal', 'deliveredVersion', 'retrospective', 'doneDefinition']
                 if (illegalDirtyProperties) {
                     throw new IllegalStateException('is.sprint.error.update.done')
                 }
