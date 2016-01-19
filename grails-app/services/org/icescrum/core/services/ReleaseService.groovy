@@ -62,7 +62,10 @@ class ReleaseService extends IceScrumEventPublisher {
     @PreAuthorize('(productOwner(#release.parentProduct) or scrumMaster(#release.parentProduct)) and !archivedProduct(#release.parentProduct)')
     void update(Release release, Date startDate = null, Date endDate = null, boolean checkIntegrity = true) {
         if (checkIntegrity && release.state == Release.STATE_DONE) {
-            throw new IllegalStateException('is.release.error.update.state.done')
+            def illegalDirtyProperties = release.dirtyPropertyNames - ['name', 'goal', 'vision']
+            if (illegalDirtyProperties) {
+                throw new IllegalStateException('is.release.error.update.state.done')
+            }
         }
         startDate = startDate ?: release.startDate
         endDate = endDate ?: release.endDate
