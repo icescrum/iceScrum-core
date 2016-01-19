@@ -58,10 +58,9 @@ class SprintService extends IceScrumEventPublisher {
 
     @PreAuthorize('(productOwner(#sprint.parentRelease.parentProduct) or scrumMaster(#sprint.parentRelease.parentProduct)) and !archivedProduct(#sprint.parentRelease.parentProduct)')
     void update(Sprint sprint, Date startDate = null, Date endDate = null, def checkIntegrity = true, boolean updateRelease = true) {
-
         if (checkIntegrity) {
             if (sprint.state == Sprint.STATE_DONE) {
-                def illegalDirtyProperties = sprint.dirtyPropertyNames - ['doneDefinition', 'retrospective']
+                def illegalDirtyProperties = sprint.dirtyPropertyNames - ['deliveredVersion', 'retrospective', 'doneDefinition']
                 if (illegalDirtyProperties) {
                     throw new IllegalStateException('is.sprint.error.update.done')
                 }
@@ -70,7 +69,6 @@ class SprintService extends IceScrumEventPublisher {
                 throw new IllegalStateException('is.sprint.error.update.startdate.inprogress')
             }
         }
-
         if (startDate && endDate) {
             def nextSprint = sprint.parentRelease.sprints?.find { it.orderNumber == sprint.orderNumber + 1 }
             if (sprint.endDate != endDate && nextSprint && endDate >= nextSprint.startDate) {
@@ -90,7 +88,6 @@ class SprintService extends IceScrumEventPublisher {
             sprint.startDate = startDate
             sprint.endDate = endDate
         }
-
         def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_UPDATE, sprint)
         if (updateRelease) {
             sprint.parentRelease.lastUpdated = new Date()
