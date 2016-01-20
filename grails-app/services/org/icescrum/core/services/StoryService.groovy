@@ -289,8 +289,6 @@ class StoryService extends IceScrumEventPublisher {
                 task.doneDate = null
                 task.type = Task.TYPE_URGENT
                 taskService.update(task, user)
-            } else if (fullUnPlan) {
-                taskService.delete(task, user)
             } else {
                 task.state = Task.STATE_WAIT
                 // TODO The sprint close problem occurs right after the task state setting. Before that, executing task.properties is OK, after it is not
