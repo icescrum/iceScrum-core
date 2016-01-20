@@ -23,22 +23,15 @@
 
 package org.icescrum.core.services
 
-import grails.converters.JSON
 import grails.util.Environment
-import org.atmosphere.cpr.BroadcasterFactory
 import org.icescrum.core.security.AuthorityManager
 import org.icescrum.core.support.ApplicationSupport
 import org.icescrum.core.test.DummyPopulator
-
-import java.util.concurrent.Executors
-import java.util.concurrent.ScheduledExecutorService
-import java.util.concurrent.TimeUnit
 
 class BootStrapService {
 
     def pluginManager
     def grailsApplication
-    private ScheduledExecutorService heartBeat
 
     void start() {
         AuthorityManager.initSecurity(grailsApplication)
@@ -56,8 +49,8 @@ class BootStrapService {
             pluginManager.informPluginsOfConfigChange()
         }
 
-        if (Environment.current == Environment.DEVELOPMENT && !System.properties['icescrum.fixtures'])
+        if (Environment.current == Environment.DEVELOPMENT && !System.properties['icescrum.fixtures']) {
             DummyPopulator.dummyze()
-
+        }
     }
 }
