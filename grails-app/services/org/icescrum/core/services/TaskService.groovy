@@ -163,6 +163,9 @@ class TaskService extends IceScrumEventPublisher {
         if (task.state == Task.STATE_DONE && !scrumMaster && !productOwner) {
             throw new IllegalStateException('is.task.error.delete.not.scrumMaster')
         }
+        if (sprint && sprint.state == Sprint.STATE_DONE) {
+            throw new IllegalStateException('is.task.error.delete.sprint.done')
+        }
         if (task.responsible && task.responsible.id.equals(user.id) || task.creator.id.equals(user.id) || productOwner || scrumMaster) {
             resetRank(task)
             def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_DELETE, task)
@@ -170,9 +173,8 @@ class TaskService extends IceScrumEventPublisher {
                 dirtyProperties.parentStory = task.parentStory
                 activityService.addActivity(task.parentStory, user, 'taskDelete', task.name)
                 task.parentStory.removeFromTasks(task)
-
             }
-            if (task.sprint) {
+            if (sprint) {
                 dirtyProperties.backlog = sprint
                 sprint.removeFromTasks(task)
                 sprint.save()
