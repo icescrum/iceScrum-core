@@ -285,15 +285,12 @@ class StoryService extends IceScrumEventPublisher {
         story.parentSprint = null
         def tasks = story.tasks.asList()
         tasks.each { Task task ->
-            if (task.state == Task.STATE_DONE) {
-                task.doneDate = null
-                task.type = Task.TYPE_URGENT
-                taskService.update(task, user)
-            } else {
-                task.state = Task.STATE_WAIT
-                // TODO The sprint close problem occurs right after the task state setting. Before that, executing task.properties is OK, after it is not
-                task.inProgressDate = null
+            def props = [:]
+            if (task.state != Task.STATE_WAIT) {
+                props.state = Task.STATE_WAIT
             }
+            task.backlog = null
+            taskService.update(task, user, false, props)
         }
         story.state = Story.STATE_ESTIMATED
         story.inProgressDate = null
