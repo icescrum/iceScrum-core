@@ -47,6 +47,7 @@ class Product extends TimeBox implements Serializable, Attachmentable {
     ProductPreferences preferences
     String pkey
     SortedSet<Team> teams
+    SortedSet<Release> releases
 
     static hasMany = [
             actors: Actor,
