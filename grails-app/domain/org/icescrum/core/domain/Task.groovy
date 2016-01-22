@@ -89,117 +89,6 @@ class Task extends BacklogElement implements Serializable {
     }
 
     static namedQueries = {
-        findNextTask {t, u ->
-            backlog {
-                eq 'id', t.backlog.id
-            }
-            or {
-                responsible {
-                    eq 'id', u.id
-                }
-                isNull('responsible')
-            }
-            ne 'state', Task.STATE_DONE
-            gt 'id', t.id
-            maxResults(1)
-            order("id", "asc")
-        }
-
-        findNextTaskInSprint { Task task ->
-            backlog {
-                eq 'id', task.backlog.id
-            }
-            gt 'id', task.id
-            maxResults(1)
-            order("id", "asc")
-        }
-
-        findPreviousTaskInSprint { Task task ->
-            backlog {
-                eq 'id', task.backlog.id
-            }
-            lt 'id', task.id
-            maxResults(1)
-            order("id", "desc")
-        }
-
-        findUrgentTasksFilter { s, term = null, u = null, userid = null ->
-            backlog {
-                eq 'id', s.id
-            }
-            if (term) {
-                or {
-                    def termInteger = term.replaceAll('%','')
-                    if (termInteger?.isInteger()){
-                        eq 'uid', termInteger.toInteger()
-                    }
-                    ilike 'name', term
-                    ilike 'description', term
-                    ilike 'notes', term
-                }
-            }
-            if (userid) {
-                responsible {
-                    eq 'id', userid
-                }
-            } else if (u) {
-                responsible {
-                    if (u.preferences.filterTask == 'myTasks') {
-                        eq 'id', u.id
-                    }
-                }
-                if (u.preferences.filterTask == 'freeTasks') {
-                    isNull('responsible')
-                }
-                if (u.preferences.hideDoneState && s?.state == Sprint.STATE_INPROGRESS) {
-                    ne 'state', Task.STATE_DONE
-                }
-                if (u.preferences.filterTask == 'blockedTasks') {
-                    eq 'blocked', true
-                }
-            }
-            eq 'type', Task.TYPE_URGENT
-        }
-
-        findRecurrentTasksFilter { s, term = null, u = null, userid = null ->
-            backlog {
-                eq 'id', s.id
-            }
-            if (term) {
-                or {
-                    def termInteger = term.replaceAll('%','')
-                    if (termInteger?.isInteger()){
-                        eq 'uid', termInteger.toInteger()
-                    }else{
-                        ilike 'name', term
-                        ilike 'description', term
-                        ilike 'notes', term
-                    }
-                }
-            }
-            if (userid) {
-                responsible {
-                    eq 'id', userid
-                }
-            } else if (u) {
-                responsible {
-                    if (u.preferences.filterTask == 'myTasks') {
-                        eq 'id', u.id
-                    }
-                }
-                if (u.preferences.filterTask == 'freeTasks') {
-                    isNull('responsible')
-                }
-                if (u.preferences.hideDoneState && s?.state == Sprint.STATE_INPROGRESS) {
-                    ne 'state', Task.STATE_DONE
-                }
-                if (u.preferences.filterTask == 'blockedTasks') {
-                    eq 'blocked', true
-                }
-            }
-            eq 'type', Task.TYPE_RECURRENT
-        }
-
         getUserTasks { s, u ->
             backlog {
                 eq 'id', s
@@ -208,20 +97,17 @@ class Task extends BacklogElement implements Serializable {
                 eq 'id', u
             }
         }
-
         getFreeTasks { s ->
             backlog {
                 eq 'id', s
             }
             isNull('responsible')
         }
-
         getAllTasksInSprint { s ->
             backlog {
                 eq 'id', s
             }
         }
-
         findLastUpdated {storyId ->
             parentStory {
                 eq 'id', storyId

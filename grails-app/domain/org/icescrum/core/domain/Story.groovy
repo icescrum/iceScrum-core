@@ -45,10 +45,6 @@ class Story extends BacklogElement implements Cloneable, Serializable {
     static final int TYPE_USER_STORY = 0
     static final int TYPE_DEFECT = 2
     static final int TYPE_TECHNICAL_STORY = 3
-    static final int EXECUTION_FREQUENCY_HOUR = 0
-    static final int EXECUTION_FREQUENCY_DAY = 1
-    static final int EXECUTION_FREQUENCY_WEEK = 2
-    static final int EXECUTION_FREQUENCY_MONTH = 3
 
     int type = 0
     Date suggestedDate
@@ -84,7 +80,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
     ]
 
     static transients = [
-            'todo', 'dependences', 'deliveredVersion', 'testState', 'testStateEnum', 'activity', 'liked', 'followed', 'sameBacklogStories', 'countDoneTasks'
+            'dependences', 'deliveredVersion', 'testState', 'testStateEnum', 'activity', 'liked', 'followed', 'sameBacklogStories', 'countDoneTasks'
     ]
 
     static mapping = {
@@ -187,150 +183,12 @@ class Story extends BacklogElement implements Cloneable, Serializable {
             }
         }
 
-        findAllStoriesInSprints { p ->
-            parentSprint {
-                parentRelease {
-                    parentProduct {
-                        eq 'id', p.id
-                    }
-                    order('orderNumber')
-                }
-                order('orderNumber')
-            }
-            order('rank')
-        }
-
-        findNextStoryInSprints {p ->
-            parentSprint {
-                parentRelease {
-                    parentProduct {
-                        eq 'id', p.id
-                    }
-                    order('orderNumber')
-                }
-                order('orderNumber')
-            }
-            order('rank')
-        }
-
-        findPreviousStoryInSprints {p ->
-            parentSprint {
-                parentRelease {
-                    parentProduct {
-                        eq 'id', p.id
-                    }
-                    order('orderNumber')
-                }
-                order('orderNumber')
-            }
-            order('rank')
-        }
-
         storiesByRelease { r ->
             parentSprint {
                 parentRelease {
                     eq 'id', r.id
                 }
             }
-        }
-
-        findPreviousSuggested { p, d ->
-            backlog {
-                eq 'id', p
-            }
-            eq 'state', Story.STATE_SUGGESTED
-            gt 'suggestedDate', d
-            maxResults(1)
-            order("suggestedDate", "asc")
-        }
-
-        findFirstSuggested { p ->
-            backlog {
-                eq 'id', p
-            }
-            eq 'state', Story.STATE_SUGGESTED
-            maxResults(1)
-            order("suggestedDate", "asc")
-        }
-
-        findNextSuggested { p, d, u = null ->
-            backlog {
-                eq 'id', p
-            }
-            if (u){
-                creator {
-                    eq 'id', u
-                }
-            }
-            eq 'state', Story.STATE_SUGGESTED
-            lt 'suggestedDate', d
-            maxResults(1)
-            order("suggestedDate", "desc")
-        }
-
-        findNextAcceptedOrEstimated { p, r ->
-            backlog {
-                eq 'id', p
-            }
-            or {
-                eq 'state', Story.STATE_ACCEPTED
-                eq 'state', Story.STATE_ESTIMATED
-            }
-            eq 'rank', r + 1
-            maxResults(1)
-        }
-
-        findPreviousAcceptedOrEstimated { p, r ->
-            backlog {
-                eq 'id', p
-            }
-            or {
-                eq 'state', Story.STATE_ACCEPTED
-                eq 'state', Story.STATE_ESTIMATED
-            }
-            eq 'rank', r - 1
-            maxResults(1)
-        }
-
-        findNextStoryBySprint { s, r ->
-            parentSprint {
-                eq 'id', s
-            }
-            or {
-                ne 'state', Story.STATE_DONE
-            }
-            eq 'rank', r + 1
-            maxResults(1)
-        }
-
-        findLastAcceptedOrEstimated { p ->
-            backlog {
-                eq 'id', p
-            }
-            or {
-                eq 'state', Story.STATE_ACCEPTED
-                eq 'state', Story.STATE_ESTIMATED
-            }
-            maxResults(1)
-            order("rank", "desc")
-        }
-
-        findAllAcceptedOrEstimated { p ->
-            backlog {
-                eq 'id', p
-            }
-            or {
-                eq 'state', Story.STATE_ACCEPTED
-                eq 'state', Story.STATE_ESTIMATED
-            }
-        }
-
-        findLastBySprint { s ->
-            parentSprint {
-                eq 'id', s
-            }
-            maxResults(1)
-            order("rank", "desc")
         }
 
         countAllAcceptedOrEstimated { p ->
@@ -343,58 +201,6 @@ class Story extends BacklogElement implements Cloneable, Serializable {
             }
             projections {
                 rowCount()
-            }
-        }
-
-        findStoriesFilter { s, term = null, u = null, userid = null ->
-            cache false
-            parentSprint {
-                eq 'id', s.id
-            }
-
-            or {
-                def termInteger = term?.replaceAll('%','')
-                if (termInteger?.isInteger()){
-                    eq 'uid', termInteger.toInteger()
-                }
-                tasks {
-                    if (term) {
-                        or {
-                            if (termInteger?.isInteger()){
-                                eq 'uid', termInteger.toInteger()
-                            }else{
-                                ilike 'name', term
-                                ilike 'description', term
-                                ilike 'notes', term
-                            }
-                        }
-                    }
-                    if (userid) {
-                        responsible {
-                            eq 'id', userid
-                        }
-                    } else if (u) {
-                        responsible {
-                            if (u.preferences.filterTask == 'myTasks') {
-                                eq 'id', u.id
-                            }
-                        }
-                        if (u.preferences.filterTask == 'freeTasks') {
-                            isNull('responsible')
-                        }
-                        if (u.preferences.filterTask == 'blockedTasks') {
-                            eq 'blocked', true
-                        }
-                    }
-                }
-                if (term) {
-                    feature {
-                        ilike 'name', term
-                    }
-                }
-            }
-            if (u?.preferences?.hideDoneState && s?.state == Sprint.STATE_INPROGRESS) {
-                ne 'state', Story.STATE_DONE
             }
         }
 
