@@ -33,8 +33,6 @@ import org.icescrum.plugins.attachmentable.interfaces.Attachmentable
 
 class Sprint extends TimeBox implements Serializable, Attachmentable {
 
-    static final long serialVersionUID = -7022481404086376233L
-
     static final int STATE_WAIT = 1
     static final int STATE_INPROGRESS = 2
     static final int STATE_DONE = 3
