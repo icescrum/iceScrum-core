@@ -81,9 +81,16 @@ class TaskService extends IceScrumEventPublisher {
         if (props.state != null) {
             state(task, props.state, user)
         }
-        if (props.rank != null) {
-            rank(task, props.rank)
+        if (task.isDirty('state') || task.isDirty('parentStory') || task.isDirty('type')) {
+            if (props.rank == null) {
+                props.rank = 1
+            }
+            resetRank(task)
+            setRank(task, props.rank)
+        } else if (props.rank != null) {
+            updateRank(task, props.rank)
         }
+
         def sprint = task.sprint
         if (sprint?.state == Sprint.STATE_DONE) {
             throw new IllegalStateException('is.sprint.error.state.not.inProgress')
@@ -256,16 +263,27 @@ class TaskService extends IceScrumEventPublisher {
     }
 
     private void resetRank(Task task) {
-        def container = task.parentStory ?: task.backlog
+        def container = task.getPersistentValue('parentStory') ?: task.backlog
         container.tasks.findAll {
-            it.rank > task.rank && it.type == task.type && it.state == task.state
+            it.rank > task.rank && it.type == task.getPersistentValue('type') && it.state == task.getPersistentValue('state')
         }.each {
             it.rank--
             it.save()
         }
     }
 
-    private void rank(Task task, int newRank) {
+    private void setRank(Task task, int newRank) {
+        def container = task.parentStory ?: task.backlog
+        container.tasks.findAll {
+            it.rank >= newRank && it.type == task.type && it.state == task.state
+        }.each {
+            it.rank++
+            it.save()
+        }
+        task.rank = newRank
+    }
+
+    private void updateRank(Task task, int newRank) {
         def container = task.parentStory ?: task.backlog
         Range affectedRange = task.rank..newRank
         int delta = affectedRange.isReverse() ? 1 : -1

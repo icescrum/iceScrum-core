@@ -294,14 +294,6 @@ class DummyPopulator {
                 inProgressTask(task)
             }
         }
-        def rankTasks = { k, tasks ->
-            tasks.eachWithIndex { task, index ->
-                task.rank = index + 1
-                task.save(failOnError: true)
-            }
-        }
-        sprint.tasks.findAll { it.parentStory == null }.groupBy { "$it.type" + "$it.state" }.each(rankTasks)
-        sprint.tasks.findAll { it.parentStory != null }.groupBy { "$it.parentStory.id" + "$it.state" }.each(rankTasks)
         def lastStory = sprint.stories.sort { it.rank }.last()
         lastStory.state = Story.STATE_DONE
         addStoryActivity(lastStory, lastStory.creator, 'done')
@@ -310,6 +302,14 @@ class DummyPopulator {
         lastStory.tasks.each { Task task ->
             doneTask(task)
         }
+        def rankTasks = { k, tasks ->
+            tasks.eachWithIndex { task, index ->
+                task.rank = index + 1
+                task.save(failOnError: true)
+            }
+        }
+        sprint.tasks.findAll { it.parentStory == null }.groupBy { "$it.type" + "$it.state" }.each(rankTasks)
+        sprint.tasks.findAll { it.parentStory != null }.groupBy { "$it.parentStory.id" + "$it.state" }.each(rankTasks)
     }
 
     private static void rankStories(Product product) {
