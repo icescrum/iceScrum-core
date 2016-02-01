@@ -35,16 +35,17 @@ grails.project.dependency.resolution = {
         grailsCentral()
         mavenCentral()
         mavenRepo "http://repo.spring.io/milestone"
+        mavenRepo "http://repo.spring.io/libs-release" // for http-builder 0.7.2
         mavenRepo "https://oss.sonatype.org/content/repositories/snapshots/"
         mavenRepo "http://repo.icescrum.org/artifactory/plugins-release/"
         mavenRepo "http://repo.icescrum.org/artifactory/plugins-snapshot/"
         mavenRepo "http://jaspersoft.artifactoryonline.com/jaspersoft/third-party-ce-artifacts/" // Because Jasper depends on olap4j which is not available anymore the repositories
     }
     dependencies {
-        compile 'org.atmosphere:atmosphere-runtime:2.3.5', {
+        compile 'org.atmosphere:atmosphere-runtime:2.4.2', {
             excludes 'slf4j-api'
         }
-        compile('org.codehaus.groovy.modules.http-builder:http-builder:0.7.1') {
+        compile('org.codehaus.groovy.modules.http-builder:http-builder:0.7.2') {
             excludes 'commons-logging', 'xml-apis', 'groovy'
         }
     }
