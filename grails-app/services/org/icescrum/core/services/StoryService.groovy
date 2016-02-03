@@ -321,11 +321,11 @@ class StoryService extends IceScrumEventPublisher {
     }
 
     // TODO check rights
-    def autoPlan(Release release, Double capacity) {
+    def autoPlan(List<Sprint> sprints, Double capacity) {
         def nbPoints = 0
         int nbSprint = 0
-        def product = release.parentProduct
-        def sprints = release.sprints.findAll { it.state == Sprint.STATE_WAIT }.sort { it.orderNumber }.asList()
+        def product = sprints.first().parentProduct
+        sprints = sprints.findAll { it.state == Sprint.STATE_WAIT }.sort { it.orderNumber }
         int maxSprint = sprints.size()
         // Get the list of stories that have been estimated
         Collection<Story> itemsList = product.stories.findAll { it.state == Story.STATE_ESTIMATED }.sort { it.rank }

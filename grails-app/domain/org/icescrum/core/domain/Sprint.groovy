@@ -176,6 +176,14 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
         return sprint
     }
 
+    static List<Sprint> withSprints(def params, def id = 'id'){
+        def ids = params[id]?.contains(',') ? params[id].split(',')*.toLong() : params.list(id)
+        List<Sprint> sprints = ids ? Sprint.getAll(ids) : null
+        if (!sprints)
+            throw new ObjectNotFoundException(ids, 'Sprint')
+        return sprints
+    }
+
     @Override
     int hashCode() {
         final int prime = 31
