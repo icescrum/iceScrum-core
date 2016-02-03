@@ -91,9 +91,10 @@ class Feature extends BacklogElement implements Serializable {
 
     static List<Feature> withFeatures(def params, def id = 'id'){
         def ids = params[id]?.contains(',') ? params[id].split(',')*.toLong() : params.list(id)
-        List<Feature> features = ids ? Feature.getAll(ids) : null
-        if (!features)
-            throw new ObjectNotFoundException(ids,'Feature')
+        List<Feature> features = ids ? getAll(ids).findAll { it.backlog.id == params.product.toLong() } : null
+        if (!features) {
+            throw new ObjectNotFoundException(ids, 'Feature')
+        }
         return features
     }
 
