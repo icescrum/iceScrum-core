@@ -302,6 +302,7 @@ class DummyPopulator {
         lastStory.tasks.each { Task task ->
             doneTask(task)
         }
+        lastStory.parentSprint.velocity += lastStory.effort
         def rankTasks = { k, tasks ->
             tasks.eachWithIndex { task, index ->
                 task.rank = index + 1
