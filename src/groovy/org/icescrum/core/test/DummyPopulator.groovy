@@ -192,7 +192,7 @@ class DummyPopulator {
             }
             product.save(failOnError: true)
             sessionFactory.currentSession.flush()
-            storyService.autoPlan(release1, 40)
+            storyService.autoPlan(release1.sprints.asList(), 40)
             60.times {
                 product.addToStories(createStory((it % 10) % 3 == 0 ? Story.STATE_ACCEPTED : Story.STATE_ESTIMATED))
             }
