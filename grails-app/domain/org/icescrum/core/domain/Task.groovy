@@ -195,7 +195,7 @@ class Task extends BacklogElement implements Serializable {
     }
 
     static List<Task> withTasks(def params, def id = 'id'){
-        def ids = params[id]?.contains(',') ? params[id].split(',')*.toLong() : params.list(id)
+        def ids = params[id]?.contains(',') ? params[id].split(',')*.toLong() : params.list(id)*.toLong()
         List<Task> tasks = ids ? getAllInProduct(params.product.toLong(), ids) : null
         if (!tasks) {
             throw new ObjectNotFoundException(ids, 'Task')
