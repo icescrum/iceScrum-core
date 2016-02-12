@@ -45,7 +45,7 @@ class UserPreferences implements Serializable{
 
     Date lastReadActivities = new Date()
 
-    Map menu = ["project": "1", "backlog": "2", "releasePlan": "3", "sprintPlan": "4", "feature": "5"]
+    Map menu = ["project": "1", "backlog": "2", "planning": "3", "taskBoard": "4", "feature": "5"]
     Map menuHidden = [:]
     Map panelsLeft = ["userProjects": "0", "tasks": "1", "notes": "2"]
     Map panelsRight = ["feed": "0", "mood": "1"]
