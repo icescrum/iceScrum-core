@@ -141,7 +141,7 @@ class StoryService extends IceScrumEventPublisher {
                 activityService.addActivity(product, springSecurityService.currentUser, Activity.CODE_DELETE, story.name)
             }
             product.removeFromStories(story)
-            // product.save() TODO remove
+            product.save(flush: true)
             // Be careful, events may be pushed event if the delete fails because the flush didn't occur yet
             publishSynchronousEvent(IceScrumEventType.DELETE, story, dirtyProperties)
         }
@@ -484,6 +484,7 @@ class StoryService extends IceScrumEventPublisher {
             User user = (User) springSecurityService.currentUser
             def storyProperties = [:] << story.properties
             storyProperties.remove('type')
+            storyProperties.remove('activities')
             def feature = new Feature(storyProperties)
             feature.description = (feature.description ?: '')
             feature.validate()
@@ -521,7 +522,9 @@ class StoryService extends IceScrumEventPublisher {
             if (story.state > Story.STATE_SUGGESTED) {
                 throw new IllegalStateException('is.story.error.not.state.suggested')
             }
-            def task = new Task(story.properties)
+            def storyProperties = [:] << story.properties
+            storyProperties.remove('activities')
+            def task = new Task(storyProperties)
             task.type = Task.TYPE_URGENT
             task.state = Task.STATE_WAIT
             task.description = (story.affectVersion ? g.message(code: 'is.story.affectVersion') + ': ' + story.affectVersion : '') + (task.description ?: '')
