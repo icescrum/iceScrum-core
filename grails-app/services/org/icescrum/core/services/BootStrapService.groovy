@@ -42,11 +42,11 @@ class BootStrapService {
 
     void start() {
         def dev = Environment.current == Environment.DEVELOPMENT && !System.properties['icescrum.noDummyze']
-        grailsApplication.config.createDefaultAdmin = dev
+        def config = grailsApplication.config
+
+        config.createDefaultAdmin = !config.createDefaultAdmin ? !config.createDefaultAdmin && dev : config.createDefaultAdmin
 
         AuthorityManager.initSecurity(grailsApplication)
-
-        def config = grailsApplication.config
         ApplicationSupport.checkInitialConfig(config)
         ApplicationSupport.generateFolders(config)
         ApplicationSupport.checkNewVersion(config)
