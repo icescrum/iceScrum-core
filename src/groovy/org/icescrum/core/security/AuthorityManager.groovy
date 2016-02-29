@@ -48,7 +48,7 @@ class AuthorityManager {
         if (Authority.count() == 0) {
             new Authority(authority: Authority.ROLE_ADMIN).save()
             new Authority(authority: Authority.ROLE_PERMISSION).save()
-            if (grailsApplication.config.createDefaultAdmin) {
+            if (grailsApplication.config.icescrum.createDefaultAdmin) {
                 def admin = new User(username: 'admin',
                                      email: 'admin@icescrum.com',
                                      enabled: true,
