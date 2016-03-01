@@ -105,10 +105,10 @@ class DummyPopulator {
             product.preferences.webservices = true
             product.description = randomWords(50, 20)
             product.save(failOnError: true)
-            new Backlog(product: product, shared: true, filter: '{"story":{"state":1}}', name: 'is.ui.sandbox').save(failOnError: true)
-            new Backlog(product: product, shared: true, filter: '{"story":{"state":[2,3]}}', name: 'is.ui.backlog').save(failOnError: true)
-            new Backlog(product: product, shared: true, filter: '{"story":{"state":7}}', name: 'todo.is.ui.backlog.done').save(failOnError: true)
-            new Backlog(product: product, shared: true, filter: '{"story":{}}', name: 'todo.is.ui.backlog.all').save(failOnError: true)
+            new Backlog(product: product, shared: true, filter: '{"story":{"state":1}}', name: 'is.ui.sandbox', code: 'sandbox').save(failOnError: true)
+            new Backlog(product: product, shared: true, filter: '{"story":{"state":[2,3]}}', name: 'is.ui.backlog', code: 'backlog').save(failOnError: true)
+            new Backlog(product: product, shared: true, filter: '{"story":{"state":7}}', name: 'todo.is.ui.backlog.done', code: 'done').save(failOnError: true)
+            new Backlog(product: product, shared: true, filter: '{"story":{}}', name: 'todo.is.ui.backlog.all', code: 'all').save(failOnError: true)
             securityService.secureDomain(product)
             // Teams and members
             def team = new Team(name: 'testProj Team').addToProducts(product).addToMembers(usera).addToMembers(userz)

@@ -30,6 +30,7 @@ class Backlog {
 
     String  name
     String  filter
+    String  code
     User    owner
     boolean shared
 
