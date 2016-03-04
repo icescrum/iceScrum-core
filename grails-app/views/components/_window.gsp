@@ -17,7 +17,7 @@
   - along with iceScrum.  If not, see <http://www.gnu.org/licenses/>.
   --}%
  %{-- view --}%
-<div id="view-${id}" class="view ${flex?'':'no-flex'}" ${details ? 'ng-class="displayDetailsView()"' : ''}>
+<div id="view-${id}" class="view ${flex?'flex':''}" ${details ? 'ng-class="displayDetailsView()"' : ''}>
     <div class="content">
         ${content}
     </div>
