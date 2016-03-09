@@ -304,7 +304,8 @@ class CheckerTimerTask extends TimerTask {
             def vers = Metadata.current['app.version'].replace('#', '.').replaceFirst('R', '').replace('.','-').replace(' ', '%20')
             def headers = ['User-Agent': 'iceScrum-Agent/1.0', 'Referer': config.grails.serverURL]
             def params = ['http.connection.timeout': config.icescrum.check.timeout ?: 5000, 'http.socket.timeout': config.icescrum.check.timeout ?: 5000]
-            def resp = getJSON(config.icescrum.check.url, config.icescrum.check.path + "/" + config.icescrum.appID + "/" + vers, [:], headers, params)
+            def queryParams = [environment: (System.getProperty('icescrum.environment') ?: 'production')]
+            def resp = getJSON(config.icescrum.check.url, config.icescrum.check.path + "/" + config.icescrum.appID + "/" + vers, queryParams, headers, params)
             if (resp.status == 200) {
                 if (!resp.data.up_to_date) {
                     config.icescrum.errors << [error: false, title: 'is.warning.version', version: resp.data.version, url: resp.data.url, message: resp.data.message]
