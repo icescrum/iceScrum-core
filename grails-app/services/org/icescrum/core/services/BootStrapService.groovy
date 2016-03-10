@@ -39,6 +39,7 @@ class BootStrapService {
         def config = grailsApplication.config
         ApplicationSupport.checkInitialConfig(config)
         ApplicationSupport.generateFolders(config)
+        ApplicationSupport.initEnvironment(config)
         ApplicationSupport.checkNewVersion(config)
 
         config.grails.attachmentable.baseDir = config.icescrum.baseDir.toString()
