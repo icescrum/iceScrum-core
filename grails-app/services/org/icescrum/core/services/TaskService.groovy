@@ -51,7 +51,7 @@ class TaskService extends IceScrumEventPublisher {
         if (!task.id && sprint?.state == Sprint.STATE_DONE) {
             throw new IllegalStateException('is.task.error.not.saved')
         }
-        if (task.estimation == 0 && task.state != Task.STATE_DONE) {
+        if (task.estimation == 0f && task.state != Task.STATE_DONE) {
             task.estimation = null
         }
         Product product = sprint ? sprint.parentProduct : (Product) task.parentStory.backlog
@@ -116,11 +116,11 @@ class TaskService extends IceScrumEventPublisher {
                     if (story && story.state == Story.STATE_DONE) {
                         throw new IllegalStateException('is.story.error.done')
                     }
-                    if (task.estimation == 0) {
+                    if (task.estimation == 0f) {
                         task.estimation = null
                     }
                     task.doneDate = null
-                } else if (task.estimation == 0 && sprint.state == Sprint.STATE_INPROGRESS) {
+                } else if (task.estimation == 0f && sprint.state == Sprint.STATE_INPROGRESS) {
                     if (product.preferences.assignOnBeginTask && !task.responsible) {
                         task.responsible = user
                     }
