@@ -72,6 +72,15 @@ class ApplicationSupport {
         }
     }
 
+    static public initEnvironment = { def config ->
+        config.icescrum.environment = (System.getProperty('icescrum.environment') ?: 'production')
+        if(config.icescrum.environment == 'production'){
+            if(new File(File.separator + 'dev' + File.separator + 'turnkey').exists()){
+                config.icescrum.environment = 'turnkey'
+            }
+        }
+    }
+
     static public generateFolders = { def config ->
         def dirPath = config.icescrum.baseDir.toString() + File.separator + "images" + File.separator + "users" + File.separator
         def dir = new File(dirPath)
@@ -304,7 +313,7 @@ class CheckerTimerTask extends TimerTask {
             def vers = Metadata.current['app.version'].replace('#', '.').replaceFirst('R', '').replace('.','-').replace(' ', '%20')
             def headers = ['User-Agent': 'iceScrum-Agent/1.0', 'Referer': config.grails.serverURL]
             def params = ['http.connection.timeout': config.icescrum.check.timeout ?: 5000, 'http.socket.timeout': config.icescrum.check.timeout ?: 5000]
-            def queryParams = [environment: (System.getProperty('icescrum.environment') ?: 'production')]
+            def queryParams = [environment: config.icescrum.environment]
             def resp = getJSON(config.icescrum.check.url, config.icescrum.check.path + "/" + config.icescrum.appID + "/" + vers, queryParams, headers, params)
             if (resp.status == 200) {
                 if (!resp.data.up_to_date) {

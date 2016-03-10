@@ -49,6 +49,7 @@ class BootStrapService {
         AuthorityManager.initSecurity(grailsApplication)
         ApplicationSupport.checkInitialConfig(config)
         ApplicationSupport.generateFolders(config)
+        ApplicationSupport.initEnvironment(config)
         ApplicationSupport.checkNewVersion(config)
 
         if (config.icescrum.push.enable && config.icescrum.push.heartBeat.enable) {
