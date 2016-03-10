@@ -25,6 +25,7 @@ package org.icescrum.core.security;
 import org.codehaus.groovy.grails.plugins.springsecurity.GrailsUserDetailsService
 import org.codehaus.groovy.grails.plugins.springsecurity.SpringSecurityUtils
 import org.icescrum.core.domain.security.Authority
+import org.slf4j.LoggerFactory
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.security.core.userdetails.UsernameNotFoundException
 import org.springframework.security.core.authority.GrantedAuthorityImpl
@@ -51,7 +52,7 @@ class ScrumDetailsService implements GrailsUserDetailsService {
         }
 
         if (!user){
-            log.warn "User not found: $username"
+            LoggerFactory.getLogger(getClass()).warn "User not found: $username"
             throw new UsernameNotFoundException('User not found', username)
         }
 
