@@ -74,10 +74,8 @@ class ApplicationSupport {
 
     static public initEnvironment = { def config ->
         config.icescrum.environment = (System.getProperty('icescrum.environment') ?: 'production')
-        if(config.icescrum.environment == 'production'){
-            if(new File(File.separator + 'dev' + File.separator + 'turnkey').exists()){
-                config.icescrum.environment = 'turnkey'
-            }
+        if(config.icescrum.environment == 'production' && new File(File.separator + 'dev' + File.separator + 'turnkey').exists()){
+            config.icescrum.environment = 'turnkey'
         }
     }
 
