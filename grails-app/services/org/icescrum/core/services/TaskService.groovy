@@ -153,7 +153,10 @@ class TaskService {
             }
         } else if (newStory != null) {
             Story story = (Story) Story.getInProduct(product.id, newStory).list()
-            if (story) {
+            if (story && story.state == Story.STATE_DONE) {
+                throw new IllegalStateException('is.story.error.done')
+            }
+            else if (story) {
                 task.parentStory = story
                 task.type = null
             } else {
