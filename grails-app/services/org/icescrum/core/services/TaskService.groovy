@@ -229,7 +229,9 @@ class TaskService extends IceScrumEventPublisher {
             }
         }
         save(clonedTask, user)
-        clicheService.createOrUpdateDailyTasksCliche(task.sprint)
+        if (task.sprint) {
+            clicheService.createOrUpdateDailyTasksCliche(task.sprint)
+        }
         return clonedTask
     }
 
