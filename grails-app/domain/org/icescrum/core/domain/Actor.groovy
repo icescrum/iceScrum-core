@@ -81,16 +81,6 @@ class Actor extends BacklogElement implements Serializable, Comparable<Actor> {
             }
             uniqueResult = true
         }
-
-        getInProductByUid {p, id ->
-            backlog {
-                eq 'id', p
-            }
-            and {
-                eq 'uid', id
-            }
-            uniqueResult = true
-        }
     }
 
     static Actor withActor(long product, long id){
