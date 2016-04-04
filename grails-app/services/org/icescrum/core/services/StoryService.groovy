@@ -283,20 +283,16 @@ class StoryService extends IceScrumEventPublisher {
         User user = (User) springSecurityService.currentUser
         activityService.addActivity(story, user, 'unPlan', story.name, 'parentSprint', sprint.id.toString())
         story.parentSprint = null
-        def tasks = story.tasks.asList()
-        tasks.each { Task task ->
-            def props = [:]
-            if (task.state != Task.STATE_WAIT) {
-                props.state = Task.STATE_WAIT
-            }
-            task.backlog = null
-            taskService.update(task, user, false, props)
-        }
         story.state = Story.STATE_ESTIMATED
         story.inProgressDate = null
         story.plannedDate = null
         setRank(story, 1)
         update(story)
+        story.tasks.each { Task task ->
+            def props = task.state == Task.STATE_WAIT ? [:] : [state: Task.STATE_WAIT]
+            task.backlog = null
+            taskService.update(task, user, false, props)
+        }
     }
 
     // TODO check rights
