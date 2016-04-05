@@ -199,7 +199,6 @@ class TaskService extends IceScrumEventPublisher {
         }
         def clonedTask = new Task(
                 name: task.name + '_1',
-                rank: Task.countByParentStoryAndType(task.parentStory, task.type) + 1,
                 state: clonedState,
                 creator: user,
                 color: task.color,
