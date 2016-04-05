@@ -289,9 +289,11 @@ class StoryService extends IceScrumEventPublisher {
         setRank(story, 1)
         update(story)
         story.tasks.each { Task task ->
-            def props = task.state == Task.STATE_WAIT ? [:] : [state: Task.STATE_WAIT]
-            task.backlog = null
-            taskService.update(task, user, false, props)
+            if (task.state != Task.STATE_DONE) {
+                def props = task.state == Task.STATE_WAIT ? [:] : [state: Task.STATE_WAIT]
+                task.backlog = null
+                taskService.update(task, user, false, props)
+            }
         }
     }
 

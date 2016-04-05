@@ -83,7 +83,7 @@ class Task extends BacklogElement implements Serializable {
         impediment nullable: true
         name unique: 'parentStory'
         responsible nullable: true
-        parentStory nullable: true, validator: { newParentStory, task -> newParentStory == null || newParentStory.parentSprint == task.backlog }
+        parentStory nullable: true
         parentProduct validator: { newParentProduct, task -> newParentProduct == task.backlog?.parentProduct || newParentProduct == task.parentStory?.backlog }
         inProgressDate nullable: true
     }

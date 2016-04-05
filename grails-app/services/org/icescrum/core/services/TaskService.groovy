@@ -205,7 +205,7 @@ class TaskService extends IceScrumEventPublisher {
                 description: task.description,
                 notes: task.notes,
                 dateCreated: new Date(),
-                backlog: task.backlog,
+                backlog: task.parentStory ? task.parentStory.parentSprint : task.backlog,
                 parentStory: task.parentStory ?: null,
                 parentProduct: task.parentProduct,
                 type: task.type
@@ -224,7 +224,7 @@ class TaskService extends IceScrumEventPublisher {
                 clonedTask.name = clonedTask.name[0..20]
                 clonedTask.validate()
             } else {
-                throw new RuntimeException()
+                throw new RuntimeException(clonedTask.errors.toString())
             }
         }
         save(clonedTask, user)
