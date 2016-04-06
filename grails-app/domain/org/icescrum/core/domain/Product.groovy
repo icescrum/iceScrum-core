@@ -105,8 +105,8 @@ class Product extends TimeBox implements Serializable, Attachmentable {
     static constraints = {
         name(blank: false, maxSize: 200, unique: true)
         pkey(blank: false, maxSize: 10, matches: /^[A-Z0-9]*$/, unique: true)   //TODO custom message
-        planningPokerGameType(validator:{ val, obj ->
-            if (!(val in [PlanningPokerGame.INTEGER_SUITE, PlanningPokerGame.FIBO_SUITE, PlanningPokerGame.CUSTOM_SUITE])){
+        planningPokerGameType(validator: { val, obj ->
+            if (!(val in [PlanningPokerGame.INTEGER_SUITE, PlanningPokerGame.FIBO_SUITE, PlanningPokerGame.CUSTOM_SUITE])) {
                 return ['no.game']
             }
             return true
@@ -230,10 +230,11 @@ class Product extends TimeBox implements Serializable, Attachmentable {
                         )""", [uid: userid], params ?: [:])
     }
 
-    static Product withProduct(long id){
+    static Product withProduct(long id) {
         Product product = get(id)
-        if (!product)
-            throw new ObjectNotFoundException(id,'Product')
+        if (!product) {
+            throw new ObjectNotFoundException(id, 'Product')
+        }
         return product
     }
 
@@ -243,9 +244,9 @@ class Product extends TimeBox implements Serializable, Attachmentable {
             this.productOwners
         } else if (this.id) {
             def acl = retrieveAclProduct()
-            def users = acl.entries.findAll {it.permission in SecurityService.productOwnerPermissions}*.sid*.principal;
+            def users = acl.entries.findAll { it.permission in SecurityService.productOwnerPermissions }*.sid*.principal;
             if (users) {
-                return User.findAll("from User as u where u.username in (:users)",[users:users], [cache: true])
+                return User.findAll("from User as u where u.username in (:users)", [users: users], [cache: true])
             } else {
                 return []
             }
@@ -259,9 +260,9 @@ class Product extends TimeBox implements Serializable, Attachmentable {
             this.stakeHolders // Used only when the project is being imported
         } else if (this.id) {
             def acl = retrieveAclProduct()
-            def users = acl.entries.findAll {it.permission in SecurityService.stakeHolderPermissions}*.sid*.principal
+            def users = acl.entries.findAll { it.permission in SecurityService.stakeHolderPermissions }*.sid*.principal
             if (users) {
-                return User.findAll("from User as u where u.username in (:users)",[users:users], [cache: true])
+                return User.findAll("from User as u where u.username in (:users)", [users: users], [cache: true])
             } else {
                 return []
             }
@@ -278,12 +279,12 @@ class Product extends TimeBox implements Serializable, Attachmentable {
         return Invitation.findAllByTypeAndProductAndFutureRole(InvitationType.PRODUCT, this, Authority.STAKEHOLDER)
     }
 
-    List<Invitation>  getInvitedProductOwners() {
+    List<Invitation> getInvitedProductOwners() {
         return Invitation.findAllByTypeAndProductAndFutureRole(InvitationType.PRODUCT, this, Authority.PRODUCTOWNER)
     }
 
-    Team getFirstTeam(){
-        return this.teams? this.teams.first() : null
+    Team getFirstTeam() {
+        return this.teams ? this.teams.first() : null
     }
 
     def beforeDelete() {
@@ -299,36 +300,36 @@ class Product extends TimeBox implements Serializable, Attachmentable {
     }
 
     def getVersions(def onlyFromSprints = false, def onlyDelivered = false) {
-        def versions = onlyFromSprints ? [] : this.stories.findAll{it.affectVersion}*.affectVersion
+        def versions = onlyFromSprints ? [] : this.stories.findAll { it.affectVersion }*.affectVersion
         def sprints = this.releases*.sprints?.flatten()
-        versions.addAll (onlyDelivered ? sprints?.findAll{ it.state == Sprint.STATE_DONE && it.deliveredVersion }*.deliveredVersion : sprints?.findAll{ it.deliveredVersion }*.deliveredVersion)
+        versions.addAll(onlyDelivered ? sprints?.findAll { it.state == Sprint.STATE_DONE && it.deliveredVersion }*.deliveredVersion : sprints?.findAll { it.deliveredVersion }*.deliveredVersion)
         return versions.unique()
     }
 
-    def getSprints () {
+    def getSprints() {
         return this.releases*.sprints.flatten()
     }
 
-    private Acl retrieveAclProduct(){
+    private Acl retrieveAclProduct() {
         def aclUtilService = (AclUtilService) Holders.grailsApplication.mainContext.getBean('aclUtilService')
         def acl
-        try{
+        try {
             acl = aclUtilService.readAcl(this.getClass(), this.id)
-        }catch(NotFoundException e){
-            if (log.debugEnabled){
+        } catch (NotFoundException e) {
+            if (log.debugEnabled) {
                 log.debug(e.getMessage())
                 log.debug("fixing unsecured project ... admin user will be the owner")
             }
             def securityService = (SecurityService) Holders.grailsApplication.mainContext.getBean('securityService')
             securityService.secureDomain(this)
-            securityService.changeOwner(User.findById(1),this)
+            securityService.changeOwner(User.findById(1), this)
             acl = aclUtilService.readAcl(this.getClass(), this.id)
         }
         return acl
     }
-    
+
     def xml(builder) {
-        builder.product(id:this.id) {
+        builder.product(id: this.id) {
             pkey(this.pkey)
             endDate(this.endDate)
             startDate(this.startDate)
@@ -336,42 +337,40 @@ class Product extends TimeBox implements Serializable, Attachmentable {
             dateCreated(this.dateCreated)
             planningPokerGameType(this.planningPokerGameType)
             name { builder.mkp.yieldUnescaped("<![CDATA[${this.name}]]>") }
-            description { builder.mkp.yieldUnescaped("<![CDATA[${this.description?:''}]]>") }
-
+            description { builder.mkp.yieldUnescaped("<![CDATA[${this.description ?: ''}]]>") }
             this.preferences.xml(builder)
-
             teams() {
                 this.teams.each { _team ->
                     _team.xml(builder)
                 }
             }
-
-            features(){
-                this.features.each{ _feature ->
-                    _feature.xml(builder)
-                }
-            }
-
-            productOwners(){
+            productOwners() {
                 this.productOwners.each { _user ->
                     _user.xml(builder)
                 }
             }
-
-            stories(){
-                this.stories.findAll{ it.parentSprint == null }.each{ _story ->
+            features() {
+                this.features.each { _feature ->
+                    _feature.xml(builder)
+                }
+            }
+            stories() {
+                this.stories.findAll { it.parentSprint == null }.each { _story ->
                     _story.xml(builder)
                 }
             }
-
-            attachments(){
+            releases() {
+                this.releases.each { _release ->
+                    _release.xml(builder)
+                }
+            }
+            attachments() {
                 this.attachments.each { _att ->
                     _att.xml(builder)
                 }
             }
-
-            cliches(){
-                this.cliches.each{ _cliche ->
+            cliches() {
+                this.cliches.each { _cliche ->
                     _cliche.xml(builder)
                 }
             }
