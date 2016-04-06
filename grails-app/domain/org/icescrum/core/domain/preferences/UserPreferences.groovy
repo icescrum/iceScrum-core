@@ -22,15 +22,13 @@
  */
 
 
-
-
 package org.icescrum.core.domain.preferences
 
 import grails.converters.JSON
 import org.icescrum.core.domain.Feed
 import org.icescrum.core.domain.User
 
-class UserPreferences implements Serializable{
+class UserPreferences implements Serializable {
 
     static final long serialVersionUID = 813649045202976126L
     Feed feed
@@ -57,7 +55,7 @@ class UserPreferences implements Serializable{
         lastProductOpened nullable: true
         emailsSettingsData nullable: true
         lastReadActivities nullable: true
-        feed nullable :true
+        feed nullable: true
     }
 
 
@@ -84,7 +82,7 @@ class UserPreferences implements Serializable{
         emailsSettingsData ? JSON.parse(emailsSettingsData) as Map : [:]
     }
 
-    public removeEmailsSettings(pkey){
+    public removeEmailsSettings(pkey) {
         def settings = getEmailsSettings()
         if (settings) {
             settings.each { setting, projects ->
@@ -97,8 +95,9 @@ class UserPreferences implements Serializable{
     }
 
     def xml = { builder ->
-        builder.preferences(id:this.id) {
-            panel(this.panel)
+        builder.preferences(id: this.id) {
+            panelsLeft(this.panelsLeft)
+            panelsRight(this.panelsRight)
             menu(this.menu)
             language(this.language)
             activity(this.activity)
