@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 Kagilum SAS
+ * Copyright (c) 2016 Kagilum SAS
  *
  * This file is part of iceScrum.
  *
@@ -18,6 +18,7 @@
  * Authors:
  *
  * Vincent Barrier (vbarrier@kagilum.com)
+ * Nicolas Noullet (nnoullet@kagilum.com)
  * Manuarii Stein (manuarii.stein@icescrum.com)
  */
 
@@ -25,36 +26,19 @@
 package org.icescrum.core.services
 
 import groovy.xml.StreamingMarkupBuilder
-import java.text.SimpleDateFormat
+import org.icescrum.core.domain.*
 import org.springframework.transaction.annotation.Transactional
-import org.icescrum.core.domain.Cliche
-import org.icescrum.core.domain.Impediment
-import org.icescrum.core.domain.Product
-import org.icescrum.core.domain.Release
-import org.icescrum.core.domain.Story
-import org.icescrum.core.domain.Sprint
-import org.icescrum.core.domain.Task
-import org.icescrum.core.domain.TimeBox
+
+import java.text.SimpleDateFormat
 
 @Transactional
 class ClicheService {
 
-    void save(Cliche b, TimeBox t) {
-        t.addToCliches(b)
-        if (!b.save()) {
-            throw new RuntimeException(b.errors.toString())
+    private static void save(Cliche cliche, TimeBox timeBox) {
+        timeBox.addToCliches(cliche)
+        if (!cliche.save()) {
+            throw new RuntimeException(cliche.errors.toString())
         }
-    }
-
-    void deleteAll(TimeBox t) {
-        def cliches = t.cliches
-        cliches.each {
-            t.removeFromCliches(it)
-        }
-    }
-
-    void delete(Cliche c, TimeBox t) {
-        t.removeFromCliches(c)
     }
 
     /**
@@ -98,7 +82,8 @@ class ClicheService {
                 }
             }
         }
-        [compteurUS: cUS,
+        [
+                compteurUS: cUS,
                 compteurDefect: cDefect,
                 compteurTechnical: cTechnical,
                 compteurUSFinish: cUSDone,
@@ -107,93 +92,75 @@ class ClicheService {
         ]
     }
 
-    void createSprintCliche(Sprint s, Date d, int type) {
+    void createSprintCliche(Sprint sprint, Date date, int clicheType) {
         // Retrieve the current release and the current sprint
-        Release r = s.parentRelease
-        Product p = r.parentProduct
+        Release release = sprint.parentRelease
+        Product product = release.parentProduct
         // Browse the stories and add their estimated velocity to the corresponding counter
-        def currentSprintData = computeDataOnType(s.stories)
-
-        //****************************************************
-        // Remaining release points
-        //****************************************************
-        // Retrieve all the PBI of the release
-        List<Story> allItemsInRelease = Story.storiesByRelease(r).list()
+        def currentSprintData = computeDataOnType(sprint.stories)
+        // Retrieve all the stories of the release
+        List<Story> allItemsInRelease = Story.storiesByRelease(release).list()
         def allItemsReleaseData = computeDataOnType(allItemsInRelease)
-
-        //****************************************************
         // Product Backlog points + Remaining product points
-        //****************************************************
-        def allItemsProductData = computeDataOnType(p.stories)
-
-        //****************************************************
-        // Total number of stories by state
-        //****************************************************
-        int done = 0
-        int inprogress = 0
-        int planned = 0
-        int estimated = 0
-        int accepted = 0
-        int suggested = 0
-
-        p.stories.each { pbi ->
-            switch (pbi.state) {
+        def allItemsProductData = computeDataOnType(product.stories)
+        // Stories by state
+        int doneCount = 0
+        int inprogressCount = 0
+        int plannedCount = 0
+        int estimatedCount = 0
+        int acceptedCount = 0
+        int suggestedCount = 0
+        product.stories.each { story ->
+            switch (story.state) {
                 case Story.STATE_DONE:
-                    done++
+                    doneCount++
                     break
                 case Story.STATE_INPROGRESS:
-                    inprogress++
+                    inprogressCount++
                     break
                 case Story.STATE_PLANNED:
-                    planned++
+                    plannedCount++
                     break
                 case Story.STATE_ESTIMATED:
-                    estimated++
+                    estimatedCount++
                     break
                 case Story.STATE_ACCEPTED:
-                    accepted++
+                    acceptedCount++
                     break
                 case Story.STATE_SUGGESTED:
-                    suggested++
+                    suggestedCount++
                     break
                 default:
                     break
             }
         }
-
-        def unresolvedImpediments = p.impediments.findAll {it.state != Impediment.SOLVED }?.size() ?: 0
-
+        def unresolvedImpediments = product.impediments.findAll { it.state != Impediment.SOLVED }?.size() ?: 0
         def clicheData = {
             cliche {
-
-                "${Cliche.SPRINT_ID}"("R${r.orderNumber}S${s.orderNumber}")
-
-                if (type == Cliche.TYPE_ACTIVATION) {
+                "${Cliche.SPRINT_ID}"("R${release.orderNumber}S${sprint.orderNumber}")
+                if (clicheType == Cliche.TYPE_ACTIVATION) {
                     // Activation Date
-                    "${Cliche.ACTIVATION_DATE}"(s.activationDate)
+                    "${Cliche.ACTIVATION_DATE}"(sprint.activationDate)
                     // Capacity
                     "${Cliche.SPRINT_CAPACITY}"(currentSprintData['compteurUS'] + currentSprintData['compteurTechnical'] + currentSprintData['compteurDefect'])
                     "${Cliche.FUNCTIONAL_STORY_CAPACITY}"(currentSprintData['compteurUS'])
                     "${Cliche.TECHNICAL_STORY_CAPACITY}"(currentSprintData['compteurTechnical'])
                     "${Cliche.DEFECT_STORY_CAPACITY}"(currentSprintData['compteurDefect'])
                 }
-
-                if (type == Cliche.TYPE_CLOSE) {
+                if (clicheType == Cliche.TYPE_CLOSE) {
                     // Close Date
-                    "${Cliche.CLOSE_DATE}"(s.closeDate)
+                    "${Cliche.CLOSE_DATE}"(sprint.closeDate)
                     // Capacity
                     "${Cliche.SPRINT_VELOCITY}"(currentSprintData['compteurUS'] + currentSprintData['compteurTechnical'] + currentSprintData['compteurDefect'])
                     "${Cliche.FUNCTIONAL_STORY_VELOCITY}"(currentSprintData['compteurUS'])
                     "${Cliche.TECHNICAL_STORY_VELOCITY}"(currentSprintData['compteurTechnical'])
                     "${Cliche.DEFECT_STORY_VELOCITY}"(currentSprintData['compteurDefect'])
                 }
-
                 // Product points
                 "${Cliche.FUNCTIONAL_STORY_BACKLOG_POINTS}"(allItemsProductData['compteurUS'])
                 "${Cliche.TECHNICAL_STORY_BACKLOG_POINTS}"(allItemsProductData['compteurTechnical'])
                 "${Cliche.DEFECT_STORY_BACKLOG_POINTS}"(allItemsProductData['compteurDefect'])
                 "${Cliche.PRODUCT_BACKLOG_POINTS}"(allItemsProductData['compteurUS'] + allItemsProductData['compteurTechnical'] + allItemsProductData['compteurDefect'])
-
                 // Remaining backlog points
                 def srp = allItemsProductData['compteurUS'] - allItemsProductData['compteurUSFinish']
                 def trp = allItemsProductData['compteurTechnical'] - allItemsProductData['compteurTechnicalFinish']
@@ -202,177 +169,141 @@ class ClicheService {
                 "${Cliche.TECHNICAL_STORY_PRODUCT_REMAINING_POINTS}"(trp)
                 "${Cliche.DEFECT_STORY_PRODUCT_REMAINING_POINTS}"(drp)
                 "${Cliche.PRODUCT_REMAINING_POINTS}"(srp + trp + drp)
-
                 // Release remaining points
                 "${Cliche.FUNCTIONAL_STORY_RELEASE_REMAINING_POINTS}"(allItemsReleaseData['compteurUS'] - allItemsReleaseData['compteurUSFinish'])
                 "${Cliche.TECHNICAL_STORY_RELEASE_REMAINING_POINTS}"(allItemsReleaseData['compteurTechnical'] - allItemsReleaseData['compteurTechnicalFinish'])
                 "${Cliche.DEFECT_STORY_RELEASE_REMAINING_POINTS}"(allItemsReleaseData['compteurDefect'] - allItemsReleaseData['compteurDefectFinish'])
-
                 // Stories points by states
-                "${Cliche.FINISHED_STORIES}"(done)
-                "${Cliche.INPROGRESS_STORIES}"(inprogress)
-                "${Cliche.PLANNED_STORIES}"(planned)
-                "${Cliche.ESTIMATED_STORIES}"(estimated)
-                "${Cliche.ACCEPTED_STORIES}"(accepted)
-                "${Cliche.SUGGESTED_STORIES}"(suggested)
-
+                "${Cliche.FINISHED_STORIES}"(doneCount)
+                "${Cliche.INPROGRESS_STORIES}"(inprogressCount)
+                "${Cliche.PLANNED_STORIES}"(plannedCount)
+                "${Cliche.ESTIMATED_STORIES}"(estimatedCount)
+                "${Cliche.ACCEPTED_STORIES}"(acceptedCount)
+                "${Cliche.SUGGESTED_STORIES}"(suggestedCount)
                 // Impediments
                 "${Cliche.UNRESOLVED_IMPEDIMENTS}"(unresolvedImpediments)
             }
         }
         StreamingMarkupBuilder xmlBuilder = new StreamingMarkupBuilder()
-
-        Cliche c = new Cliche(
-                type: type,
-                datePrise: d,
+        Cliche cliche = new Cliche(
+                type: clicheType,
+                datePrise: date,
                 data: xmlBuilder.bind(clicheData).toString()
         )
-        save(c, r)
+        save(cliche, release)
     }
 
-    void createOrUpdateDailyTasksCliche(Sprint s) {
-
-        if (s.state == Sprint.STATE_WAIT || s.state == Sprint.STATE_DONE) {
+    void createOrUpdateDailyTasksCliche(Sprint sprint) {
+        if (sprint.state == Sprint.STATE_WAIT || sprint.state == Sprint.STATE_DONE) {
             return
         }
-        //****************************************************
-        // Total tasks by state
-        //****************************************************
-        int done = 0
-        int inprogress = 0
-        int wait = 0
-
-        int recurrent = 0
-        int urgent = 0
-        int story = 0
-
+        int doneCount = 0
+        int inprogressCount = 0
+        int waitCount = 0
+        int recurrentCount = 0
+        int urgentCount = 0
+        int storyCount = 0
         float remainingTime = 0
-        s.tasks.each { task ->
-
-            def use = true
-            if (task.parentStory && task.parentStory.parentSprint?.id != s.id) {
-                use = false
+        sprint.tasks.each { task ->
+            switch (task.state) {
+                case Task.STATE_DONE:
+                    doneCount++
+                    break
+                case Task.STATE_BUSY:
+                    inprogressCount++
+                    break
+                case Task.STATE_WAIT:
+                    waitCount++
+                    break
+                default:
+                    break
             }
-
-            if (use) {
-                switch (task.state) {
-                    case Task.STATE_DONE:
-                        done++
-                        break
-                    case Task.STATE_BUSY:
-                        inprogress++
-                        break
-                    case Task.STATE_WAIT:
-                        wait++
-                        break
-                    default:
-                        break
-                }
-                switch (task.type) {
-                    case Task.TYPE_RECURRENT:
-                        recurrent++
-                        break
-                    case Task.TYPE_URGENT:
-                        urgent++
-                        break
-                    default:
-                        story++
-                        break
-                }
-                remainingTime += task.estimation ?: 0
+            switch (task.type) {
+                case Task.TYPE_RECURRENT:
+                    recurrentCount++
+                    break
+                case Task.TYPE_URGENT:
+                    urgentCount++
+                    break
+                default:
+                    storyCount++
+                    break
             }
+            remainingTime += task.estimation ?: 0
         }
-
-        int storiesDone = 0
-        int storiesInProgress = 0
+        int storiesDoneCount = 0
+        int storiesInProgressCount = 0
         def totalPointsStories = 0
         def pointsDoneStories = 0
-        s.stories.each { storyd ->
-            switch (storyd.state) {
+        sprint.stories.each { story ->
+            switch (story.state) {
                 case Story.STATE_DONE:
-                    storiesDone++
-                    pointsDoneStories += storyd.effort
+                    storiesDoneCount++
+                    pointsDoneStories += story.effort
                     break
                 case Story.STATE_INPROGRESS:
-                    storiesInProgress++
+                    storiesInProgressCount++
                     break
             }
-            totalPointsStories += storyd.effort
+            totalPointsStories += story.effort
         }
-
         def clicheData = {
             cliche {
                 //Total stories
-                "${Cliche.TOTAL_STORIES}"(storiesDone + storiesInProgress)
-
+                "${Cliche.TOTAL_STORIES}"(storiesDoneCount + storiesInProgressCount)
                 //Stories by state
-                "${Cliche.STORIES_INPROGRESS}"(storiesInProgress)
-                "${Cliche.STORIES_DONE}"(storiesDone)
-
+                "${Cliche.STORIES_INPROGRESS}"(storiesInProgressCount)
+                "${Cliche.STORIES_DONE}"(storiesDoneCount)
                 //Points
                 "${Cliche.STORIES_TOTAL_POINTS}"(totalPointsStories)
                 "${Cliche.STORIES_POINTS_DONE}"(pointsDoneStories)
-
                 //Total tasks
-                "${Cliche.TOTAL_TASKS}"(wait + inprogress + done)
-
+                "${Cliche.TOTAL_TASKS}"(waitCount + inprogressCount + doneCount)
                 // Tasks by states
-                "${Cliche.TASKS_WAIT}"(wait)
-                "${Cliche.TASKS_INPROGRESS}"(inprogress)
-                "${Cliche.TASKS_DONE}"(done)
-
+                "${Cliche.TASKS_WAIT}"(waitCount)
+                "${Cliche.TASKS_INPROGRESS}"(inprogressCount)
+                "${Cliche.TASKS_DONE}"(doneCount)
                 // Tasks by type
-                "${Cliche.TASKS_SPRINT}"(recurrent + urgent)
-                "${Cliche.TASKS_RECURRENT}"(recurrent)
-                "${Cliche.TASKS_URGENT}"(urgent)
-                "${Cliche.TASKS_STORY}"(story)
-
+                "${Cliche.TASKS_SPRINT}"(recurrentCount + urgentCount)
+                "${Cliche.TASKS_RECURRENT}"(recurrentCount)
+                "${Cliche.TASKS_URGENT}"(urgentCount)
+                "${Cliche.TASKS_STORY}"(storyCount)
                 //daily remainingTime
                 "${Cliche.REMAINING_TIME}"(remainingTime)
-
             }
         }
         StreamingMarkupBuilder xmlBuilder = new StreamingMarkupBuilder()
-
-        def d = new Date()
-
-        def lastCliche = null
-        if (s.cliches?.size()) {
-            lastCliche = s.cliches.asList().last()
-        }
-
+        def today = new Date()
+        def lastCliche = sprint.cliches?.size() ? sprint.cliches.asList().last() : null
         if (lastCliche) {
-            def days = d - lastCliche.datePrise
-            def uniq = lastCliche.data.encodeAsMD5()
+            def days = today - lastCliche.datePrise
             if (days < 1) {
                 def data = xmlBuilder.bind(clicheData).toString()
-                if (data.encodeAsMD5() != uniq){
-                    s.lastUpdated = new Date()
-                    s.save()
+                if (data.encodeAsMD5() != lastCliche.data.encodeAsMD5()) {
+                    sprint.lastUpdated = new Date()
+                    sprint.save()
                     lastCliche.data = data
                     lastCliche.save()
                 }
                 return
             } else {
                 for (def i = 1; i < days; i++) {
-                    Cliche c = new Cliche(type: Cliche.TYPE_DAILY, datePrise: lastCliche.datePrise + i, data: lastCliche.data)
-                    save(c, s)
+                    Cliche cliche = new Cliche(type: Cliche.TYPE_DAILY, datePrise: lastCliche.datePrise + i, data: lastCliche.data)
+                    save(cliche, sprint)
                 }
             }
         }
-
-        Cliche c = new Cliche(type: Cliche.TYPE_DAILY, datePrise: d, data: xmlBuilder.bind(clicheData).toString())
-        save(c, s)
+        Cliche cliche = new Cliche(type: Cliche.TYPE_DAILY, datePrise: today, data: xmlBuilder.bind(clicheData).toString())
+        save(cliche, sprint)
     }
 
     @Transactional(readOnly = true)
-    def unMarshall(def cliche) {
-        def c = new Cliche(
-                type: cliche.type.text().toInteger(),
-                datePrise: new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(cliche.datePrise.text()),
-                data: cliche.data.text()
+    def unMarshall(def xmlCliche) {
+        def cliche = new Cliche(
+                type: xmlCliche.type.text().toInteger(),
+                datePrise: new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(xmlCliche.datePrise.text()),
+                data: xmlCliche.data.text()
         )
-
-        return c
+        return cliche
     }
 }
