@@ -41,12 +41,10 @@ class ScrumDetailsService implements GrailsUserDetailsService {
 
     @Transactional(readOnly=true, noRollbackFor=[IllegalArgumentException, UsernameNotFoundException])
     UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        def conf = SpringSecurityUtils.securityConfig
-        Class<?> User = grailsApplication.getDomainClass(conf.userLookup.userDomainClassName).clazz
+        def user = findUser(username, false)
 
-        def user = User.findWhere((conf.userLookup.usernamePropertyName): username, accountExternal:false)
         if (!user && grailsApplication.mainContext['ldapUserDetailsMapper']?.isEnabled()){
-            user = User.findWhere((conf.userLookup.usernamePropertyName): username, accountExternal:true)
+            user = findUser(username, true)
         }
 
         if (!user){
@@ -62,5 +60,18 @@ class ScrumDetailsService implements GrailsUserDetailsService {
                 user.enabled, !user.accountExpired, !user.passwordExpired,
                 !user.accountLocked, authorities ?: NO_ROLES, user.id,
                 user.firstName + " " + user.lastName)
+    }
+
+    def findUser(username, external){
+        def conf = SpringSecurityUtils.securityConfig
+        Class<?> User = grailsApplication.getDomainClass(conf.userLookup.userDomainClassName).clazz
+        return User.createCriteria().get {
+            or {
+                eq conf.userLookup.usernamePropertyName, username
+                eq 'email', username.toLowerCase()
+            }
+            eq('accountExternal', external)
+            cache true
+        }
     }
 }

@@ -81,12 +81,12 @@ class User implements Serializable, Attachmentable {
     }
 
     static constraints = {
+        email(blank: false, email: true, unique: true)
         username(blank: false, unique: true)
         password(blank: false)
         lastName(blank: false)
         firstName(blank: false)
         lastLogin(nullable: true)
-        email(blank: false, email: true)
         notes(maxSize: 5000, nullable: true)
     }
 
