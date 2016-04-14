@@ -32,7 +32,6 @@ class ListenerService {
     def springSecurityService
     def activityService
     def pushService
-    // SPECIFIC LISTENERS
 
     @IceScrumListener(domain = 'story', eventType = IceScrumEventType.CREATE)
     void storyCreate(Story story, Map dirtyProperties) {
@@ -99,7 +98,6 @@ class ListenerService {
         pushService.broadcastToProductUsers(IceScrumEventType.DELETE, [class: 'Actor', id: dirtyProperties.id], dirtyProperties.backlog.id)
     }
 
-
     @IceScrumListener(domain = 'feature', eventType = IceScrumEventType.CREATE)
     void featureCreate(Feature feature, Map dirtyProperties) {
         pushService.broadcastToProductUsers(IceScrumEventType.CREATE, feature, feature.backlog.id)
@@ -108,20 +106,12 @@ class ListenerService {
     @IceScrumListener(domain = 'feature', eventType = IceScrumEventType.UPDATE)
     void featureUpdate(Feature feature, Map dirtyProperties) {
         def productId = feature.backlog.id
-        if(dirtyProperties.containsKey('color')) {
-            feature.stories.each { story ->
-                pushService.broadcastToProductUsers(IceScrumEventType.UPDATE, story, productId)
-            }
-        }
         pushService.broadcastToProductUsers(IceScrumEventType.UPDATE, feature, productId)
     }
 
     @IceScrumListener(domain = 'feature', eventType = IceScrumEventType.DELETE)
     void featureDelete(Feature feature, Map dirtyProperties) {
         def productId = dirtyProperties.backlog.id
-        dirtyProperties.stories.each { story ->
-            pushService.broadcastToProductUsers(IceScrumEventType.UPDATE, story, productId)
-        }
         pushService.broadcastToProductUsers(IceScrumEventType.DELETE, [class: 'Feature', id: dirtyProperties.id], productId)
     }
 
