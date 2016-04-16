@@ -19,6 +19,22 @@
 - Vincent Barrier (vbarrier@kagilum.com)
 - Nicolas Noullet (nnoullet@kagilum.com)
 --}%
+<script type="application/ld+json">
+{
+  "@context": "http://schema.org",
+  "@type": "EmailMessage",
+  "potentialAction": {
+    "@type": "ViewAction",
+    "target": "${permalink}",
+    "name": "${g.message(code:'is.template.email.markup.name.story.name', locale:locale)}"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "iceScrum",
+    "url": "${grailsApplication.config.grails.serverURL}"
+  }
+}
+</script>
 <%@ page contentType="text/html"%>
 <g:message
         locale="${locale}"

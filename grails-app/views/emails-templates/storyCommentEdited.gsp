@@ -20,6 +20,22 @@
 - Nicolas Noullet (nnoullet@kagilum.com)
 --}%
 <%@ page contentType="text/html"%>
+<script type="application/ld+json">
+{
+  "@context": "http://schema.org",
+  "@type": "EmailMessage",
+  "potentialAction": {
+    "@type": "ViewAction",
+    "target": "${permalink}",
+    "name": "${g.message(code:'is.template.email.markup.name.story.name', locale:locale)}"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "iceScrum",
+    "url": "${grailsApplication.config.grails.serverURL}"
+  }
+}
+</script>
 <g:message
         locale="${locale}"
         code='is.template.email.story.commentEdited.text'
