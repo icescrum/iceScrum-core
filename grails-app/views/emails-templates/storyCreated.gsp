@@ -26,7 +26,7 @@
   "@type": "EmailMessage",
   "potentialAction": {
     "@type": "ViewAction",
-    "target": "${permalink}",
+    "url": "${permalink}",
     "name": "${g.message(code:'is.template.email.markup.name', locale:locale)}"
   },
   "publisher": {
