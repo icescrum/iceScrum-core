@@ -42,10 +42,10 @@ import org.springframework.transaction.annotation.Transactional
 @Transactional
 class UserService extends IceScrumEventPublisher {
 
-    def grailsApplication
     def productService
-    def springSecurityService
     def hdImageService
+    def grailsApplication
+    def springSecurityService
     def notificationEmailService
 
     void save(User user, String token = null) {
