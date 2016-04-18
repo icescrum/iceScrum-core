@@ -29,14 +29,14 @@ import grails.plugin.springsecurity.userdetails.GrailsUser
 import org.icescrum.core.domain.User
 import org.icescrum.core.domain.preferences.UserPreferences
 
-class MenuBarSupport {
+class MenuSupport {
 
     def webInvocationPrivilegeEvaluator
     def springSecurityService
 
     private commonVerification(url) {
         url = url.toString() - SRH.request.contextPath
-        permissionDynamicBar(url)
+        permissionDynamic(url)
     }
 
     private menuFromUserPreferences(uiDefininitionId) {
@@ -59,7 +59,7 @@ class MenuBarSupport {
         return menuEntry
     }
 
-    def spaceDynamicBar = { uiDefininitionId, defaultVisibility, defaultPosition, space, initAction ->
+    def spaceDynamic = { uiDefininitionId, defaultVisibility, defaultPosition, space, initAction ->
         return {
             if (!params?."$space" || !defaultPosition) {
                 return false
@@ -73,7 +73,7 @@ class MenuBarSupport {
         }
     }
 
-    def permissionDynamicBar = {url ->
+    def permissionDynamic = { url ->
         webInvocationPrivilegeEvaluator.isAllowed(SRH.request.contextPath, url, 'GET', SCH.context?.authentication)
     }
 }

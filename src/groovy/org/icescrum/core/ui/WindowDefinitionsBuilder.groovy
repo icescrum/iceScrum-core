@@ -25,30 +25,30 @@ import java.util.concurrent.ConcurrentHashMap
  * Nicolas Noullet (nnoullet@kagilum.com)
  *
  */
-class UiDefinitionsBuilder {
+class WindowDefinitionsBuilder {
 
     private final log = LoggerFactory.getLogger(this.class.name)
 
-    private ConcurrentHashMap definitionsById
     private boolean disabled = false
-    
-    UiDefinitionsBuilder(ConcurrentHashMap definitionsById, boolean disabled) {
-        this.definitionsById = definitionsById
+    private ConcurrentHashMap windowsDefinitionsById
+
+    WindowDefinitionsBuilder(ConcurrentHashMap windowsDefinitionsById, boolean disabled) {
         this.disabled = disabled
+        this.windowsDefinitionsById = windowsDefinitionsById
     }
 
     def invokeMethod(String name, args) {
         if (args.size() == 1 && args[0] instanceof Closure) {
-            def uiDefinitionClosure = args[0]
-            UiDefinition uiDefinition = new UiDefinition(name, disabled)
-            uiDefinitionClosure.delegate = uiDefinition
-            uiDefinitionClosure.resolveStrategy = Closure.DELEGATE_FIRST
-            uiDefinitionClosure()
-            if(definitionsById[name]) {
-                log.warn("UI definition for $name will be overriden")
+            def definitionClosure = args[0]
+            WindowDefinition windowDefinition = new WindowDefinition(name, disabled)
+            definitionClosure.delegate = windowDefinition
+            definitionClosure.resolveStrategy = Closure.DELEGATE_FIRST
+            definitionClosure()
+            if(windowsDefinitionsById[name]) {
+                log.warn("UI window definition for $name will be overriden")
             }
-            definitionsById[name] = uiDefinition
-            if (log.debugEnabled) { log.debug("Added new UI definition for $name and status is : ${disabled ? 'disabled' : 'enabled'}") }
+            windowsDefinitionsById[name] = windowDefinition
+            if (log.debugEnabled) { log.debug("Added new UI window definition for $name and status is : ${disabled ? 'disabled' : 'enabled'}") }
         }
     }
 }

@@ -24,46 +24,33 @@ import org.slf4j.LoggerFactory
  * Nicolas Noullet (nnoullet@kagilum.com)
  *
  */
-class UiDefinition {
+
+class WidgetDefinition {
 
     private final log = LoggerFactory.getLogger(this.class.name)
 
     boolean disabled
-    String id
-    String space = "product"
-    String icon = ''
-    MenuBarDefinition menuBar
-    WindowDefinition window
-    def options = [:]
-    def exportFormats = []
 
-    UiDefinition(String id, boolean disabled) {
+    String id
+    String title = ''
+
+    def options = [:]
+
+    WidgetDefinition(String id, boolean disabled) {
         this.id = id
         this.disabled = disabled
     }
-    
-    void menuBar(Closure menuBarClosure) {
-        MenuBarDefinition menuBar = new MenuBarDefinition()
-        menuBarClosure.delegate = menuBar
-        menuBarClosure.resolveStrategy = Closure.DELEGATE_FIRST
-        menuBarClosure()
-        this.menuBar = menuBar
+
+    void title(String title) {
+        this.title = title
     }
 
-    void window(Closure windowClosure) {
-        WindowDefinition window = new WindowDefinition()
-        windowClosure.delegate = window
-        windowClosure.resolveStrategy = Closure.DELEGATE_FIRST
-        windowClosure()
-        this.window = window
-    }
-    
     def methodMissing(String name, args) {
-        log.warn("The field $name is unrecognized for $id UI definition")
+        log.warn("The field $name is unrecognized for $id UI Widget definition")
     }
 
     def propertyMissing(String name, value){
         this.options."$name" = value
-        log.debug("The field $name is unrecognized for $id UI definition added to options")
+        log.debug("The field $name is unrecognized for $id UI Widget definition added to options")
     }
 }

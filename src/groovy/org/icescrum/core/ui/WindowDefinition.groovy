@@ -28,14 +28,37 @@ class WindowDefinition {
 
     private final log = LoggerFactory.getLogger(this.class.name)
 
-    String init = 'index'
-    String title = ''
+    boolean disabled
     boolean flex = true
     boolean details = false
     boolean printable = true
     boolean fullScreen = true
+
+    String id
+    String icon = ''
+    String title = ''
+    String init = 'index'
+    String space = "product"
+
     def help = null
+    def options = [:]
+    def exportFormats = []
+
+    MenuDefinition menu
     Closure before = null
+
+    WindowDefinition(String id, boolean disabled) {
+        this.id = id
+        this.disabled = disabled
+    }
+    
+    void menu(Closure menuClosure) {
+        MenuDefinition menu = new MenuDefinition()
+        menuClosure.delegate = menu
+        menuClosure.resolveStrategy = Closure.DELEGATE_FIRST
+        menuClosure()
+        this.menu = menu
+    }
 
     void init(String init) {
         this.init = init
@@ -68,8 +91,13 @@ class WindowDefinition {
     void printable(boolean printable) {
         this.printable = printable
     }
-
+    
     def methodMissing(String name, args) {
-        log.warn("The field $name is unrecognized for window UI definition")
+        log.warn("The field $name is unrecognized for $id UI definition")
+    }
+
+    def propertyMissing(String name, value){
+        this.options."$name" = value
+        log.debug("The field $name is unrecognized for $id UI definition added to options")
     }
 }

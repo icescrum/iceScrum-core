@@ -68,6 +68,6 @@
     <resource>org.icescrum.core.taglib.TimelineTagLib</resource>
     <resource>org.icescrum.core.taglib.WindowTagLib</resource>
     <resource>NL2BRCodec</resource>
-    <resource>org.icescrum.core.support.MenuBarSupport</resource>
+    <resource>org.icescrum.core.support.MenuSupport</resource>
   </resources>
 </plugin>

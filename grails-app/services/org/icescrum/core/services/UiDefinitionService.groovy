@@ -22,57 +22,102 @@
  */
 package org.icescrum.core.services
 
+import org.icescrum.core.ui.WidgetDefinition
+import org.icescrum.core.ui.WindowDefinitionsBuilder
+
 import java.util.concurrent.ConcurrentHashMap
-import org.icescrum.core.ui.UiDefinitionsBuilder
-import org.icescrum.core.ui.UiDefinition
+import org.icescrum.core.ui.WidgetDefinitionsBuilder
+import org.icescrum.core.ui.WindowDefinition
 
 class UiDefinitionService {
 
     static transactional = false
 
-    def grailsApplication
     def pluginManager
+    def grailsApplication
 
-    private ConcurrentHashMap definitionsById
+    private ConcurrentHashMap widgetsDefinitionsById
+    private ConcurrentHashMap windowsDefinitionsById
 
     def loadDefinitions() {
-        if (log.infoEnabled) { log.info "Loading UI definitions..." }
-        definitionsById = new ConcurrentHashMap()
+        loadWindowsDefinitions()
+        loadWidgetsDefinitions()
+    }
+
+    def loadWindowsDefinitions() {
+        if (log.infoEnabled) { log.info "Loading UI Windows definitions..." }
+        windowsDefinitionsById = new ConcurrentHashMap()
         grailsApplication.uiDefinitionClasses.each{
             def config = new ConfigSlurper().parse(it.clazz)
             def enabled = config.pluginName ? pluginManager.getUserPlugins().find{ it.name == config.pluginName && it.isEnabled() } : true
             enabled = enabled ? true : false
-            def uiDefinitions = config.uiDefinitions
 
-            if(uiDefinitions instanceof Closure) {
-                if (log.debugEnabled) { log.debug("Evaluating UI definitions from $it.clazz.name") }
-                def builder = new UiDefinitionsBuilder(definitionsById, !enabled)
-                uiDefinitions.delegate = builder
-                uiDefinitions.resolveStrategy = Closure.DELEGATE_FIRST
-                uiDefinitions()
+            def windows = config.windows
+            if(windows instanceof Closure) {
+                if (log.debugEnabled) { log.debug("Evaluating UI Windows definitions from $it.clazz.name") }
+                def builder = new WindowDefinitionsBuilder(windowsDefinitionsById, !enabled)
+                windows.delegate = builder
+                windows.resolveStrategy = Closure.DELEGATE_FIRST
+                windows()
             } else {
-                log.warn("UI definitions file $it.clazz.name does not define any UI definition")
+                log.warn("UI definitions file $it.clazz.name does not define any UI window definition")
+            }
+        }
+    }
+
+    def loadWidgetsDefinitions() {
+        if (log.infoEnabled) { log.info "Loading UI Widgets definitions..." }
+        widgetsDefinitionsById = new ConcurrentHashMap()
+        grailsApplication.uiDefinitionClasses.each{
+            def config = new ConfigSlurper().parse(it.clazz)
+            def enabled = config.pluginName ? pluginManager.getUserPlugins().find{ it.name == config.pluginName && it.isEnabled() } : true
+            enabled = enabled ? true : false
+
+            def widgets = config.widgets
+            if(widgets instanceof Closure) {
+                if (log.debugEnabled) { log.debug("Evaluating UI widgets definitions from $it.clazz.name") }
+                def builder = new WidgetDefinitionsBuilder(widgetsDefinitionsById, !enabled)
+                widgets.delegate = builder
+                widgets.resolveStrategy = Closure.DELEGATE_FIRST
+                widgets()
+            } else {
+                log.warn("UI definitions file $it.clazz.name does not define any UI widget definition")
             }
         }
     }
 
     def reload() {
-        if (log.infoEnabled) { log.info("Reloading UI definitions") }
+        if (log.infoEnabled) { log.info("Reloading UI Windows & Widgets definitions") }
         loadDefinitions()
     }
 
-    UiDefinition getDefinitionById(String id) {
-        if (definitionsById[id] && !definitionsById[id]?.disabled)
-            definitionsById[id]
+    WindowDefinition getWindowDefinitionById(String id) {
+        if (windowsDefinitionsById[id] && !windowsDefinitionsById[id]?.disabled)
+            windowsDefinitionsById[id]
         else
             null
     }
 
-    def getDefinitions() {
-        definitionsById.findAll { !it.value.disabled }
+    def getWindowDefinitions() {
+        windowsDefinitionsById.findAll { !it.value.disabled }
     }
 
-    boolean hasDefinition(String id) {
-        definitionsById.containsKey(id)
+    boolean hasWindowDefinition(String id) {
+        windowsDefinitionsById.containsKey(id)
+    }
+
+    WidgetDefinition getWidgetDefinitionById(String id) {
+        if (widgetsDefinitionsById[id] && !widgetsDefinitionsById[id]?.disabled)
+            widgetsDefinitionsById[id]
+        else
+            null
+    }
+
+    def getWidgetDefinitions() {
+        widgetsDefinitionsById.findAll { !it.value.disabled }
+    }
+
+    boolean hasWidgetDefinition(String id) {
+        widgetsDefinitionsById.containsKey(id)
     }
 }

@@ -24,7 +24,7 @@ import org.slf4j.LoggerFactory
  * Nicolas Noullet (nnoullet@kagilum.com)
  *
  */
-class MenuBarDefinition {
+class MenuDefinition {
 
     private final log = LoggerFactory.getLogger(this.class.name)
 
