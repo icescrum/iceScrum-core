@@ -119,20 +119,17 @@ class ListenerService {
     void taskCreate(Task task, Map dirtyProperties) {
         def user = (User) springSecurityService.currentUser
         activityService.addActivity(task, user, 'taskSave', task.name)
-        def productId = task.backlog ? task.backlog.id : task.parentStory.backlog.id
-        pushService.broadcastToProductUsers(IceScrumEventType.CREATE, task, productId)
+        pushService.broadcastToProductUsers(IceScrumEventType.CREATE, task, task.parentProduct.id)
     }
 
     @IceScrumListener(domain = 'task', eventType = IceScrumEventType.UPDATE)
     void taskUpdate(Task task, Map dirtyProperties) {
-        def productId = task.backlog ? task.backlog.id : task.parentStory.backlog.id
-        pushService.broadcastToProductUsers(IceScrumEventType.UPDATE, task, productId)
+        pushService.broadcastToProductUsers(IceScrumEventType.UPDATE, task, task.parentProduct.id)
     }
 
     @IceScrumListener(domain = 'task', eventType = IceScrumEventType.DELETE)
     void taskDelete(Task task, Map dirtyProperties) {
-        def productId = dirtyProperties.backlog ? dirtyProperties.backlog.id : dirtyProperties.parentStory.backlog.id
-        pushService.broadcastToProductUsers(IceScrumEventType.DELETE, [class: 'Task', id: dirtyProperties.id], productId)
+        pushService.broadcastToProductUsers(IceScrumEventType.DELETE, [class: 'Task', id: dirtyProperties.id], dirtyProperties.parentProduct.id)
     }
 
     @IceScrumListener(domain = 'sprint', eventType = IceScrumEventType.CREATE)
