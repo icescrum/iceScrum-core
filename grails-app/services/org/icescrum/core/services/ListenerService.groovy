@@ -44,7 +44,8 @@ class ListenerService {
     void storyUpdate(Story story, Map dirtyProperties) {
         if (dirtyProperties) {
             def product = story.backlog
-            ['feature', 'dependsOn', 'actor'].each { property ->
+            def newUpdatedProperties = [:]
+            ['feature', 'dependsOn', 'actor', 'parentSprint'].each { property ->
                 if (dirtyProperties.containsKey(property)) {
                     def oldProperty = dirtyProperties[property]
                     def newProperty = story."$property"
@@ -55,8 +56,17 @@ class ListenerService {
                     if (newProperty != null) {
                         newProperty.lastUpdated = new Date()
                         pushService.broadcastToProductUsers(IceScrumEventType.UPDATE, newProperty, product.id)
+                        newUpdatedProperties[property] = true
                     }
                 }
+            }
+            if (dirtyProperties.containsKey('state') && Story.STATE_DONE in [dirtyProperties.state, story.state] && story.feature && !newUpdatedProperties['feature']) {
+                story.feature.lastUpdated = new Date()
+                pushService.broadcastToProductUsers(IceScrumEventType.UPDATE, story.feature, product.id)
+            }
+            if (dirtyProperties.containsKey('state') && Story.STATE_DONE in [dirtyProperties.state, story.state] && story.parentSprint && !newUpdatedProperties['parentSprint']) {
+                story.parentSprint.lastUpdated = new Date()
+                pushService.broadcastToProductUsers(IceScrumEventType.UPDATE, story.parentSprint, product.id)
             }
             def user = (User) springSecurityService.currentUser
             ['name', 'type'].each { property ->
@@ -124,7 +134,26 @@ class ListenerService {
 
     @IceScrumListener(domain = 'task', eventType = IceScrumEventType.UPDATE)
     void taskUpdate(Task task, Map dirtyProperties) {
-        pushService.broadcastToProductUsers(IceScrumEventType.UPDATE, task, task.parentProduct.id)
+        def product = task.parentProduct
+        def newStoryUpdated = false
+        if (dirtyProperties.containsKey('parentStory')) {
+            def oldStory = dirtyProperties.parentStory
+            if (oldStory != null) {
+                oldStory.lastUpdated = new Date()
+                pushService.broadcastToProductUsers(IceScrumEventType.UPDATE, oldStory, product.id)
+            }
+            def newStory = task.parentStory
+            if (newStory != null) {
+                newStory.lastUpdated = new Date()
+                pushService.broadcastToProductUsers(IceScrumEventType.UPDATE, newStory, product.id)
+                newStoryUpdated = true;
+            }
+        }
+        if (dirtyProperties.containsKey('state') && Task.STATE_DONE in [dirtyProperties.state, task.state] && task.parentStory && !newStoryUpdated) {
+            task.parentStory.lastUpdated = new Date()
+            pushService.broadcastToProductUsers(IceScrumEventType.UPDATE, task.parentStory, product.id)
+        }
+        pushService.broadcastToProductUsers(IceScrumEventType.UPDATE, task, product.id)
     }
 
     @IceScrumListener(domain = 'task', eventType = IceScrumEventType.DELETE)

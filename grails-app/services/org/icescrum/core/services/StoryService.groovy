@@ -587,12 +587,13 @@ class StoryService extends IceScrumEventPublisher {
             story.state = Story.STATE_DONE
             story.doneDate = new Date()
             story.parentSprint.velocity += story.effort
+            def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_UPDATE, story)
             if (!story.save()) {
-                throw new RuntimeException()
+                throw new RuntimeException(story.errors?.toString())
             }
+            publishSynchronousEvent(IceScrumEventType.UPDATE, story, dirtyProperties)
             User user = (User) springSecurityService.currentUser
             activityService.addActivity(story, user, 'done', story.name)
-            publishEvent(new IceScrumStoryEvent(story, this.class, user, IceScrumStoryEvent.EVENT_DONE))
             story.tasks?.findAll { it.state != Task.STATE_DONE }?.each { t ->
                 taskService.update(t, user, false, [state: Task.STATE_DONE])
             }
