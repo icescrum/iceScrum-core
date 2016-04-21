@@ -140,11 +140,15 @@ class ListenerService {
             def oldStory = dirtyProperties.parentStory
             if (oldStory != null) {
                 oldStory.lastUpdated = new Date()
+                oldStory.save(flush: true)
+                oldStory.refresh()
                 pushService.broadcastToProductUsers(IceScrumEventType.UPDATE, oldStory, product.id)
             }
             def newStory = task.parentStory
             if (newStory != null) {
                 newStory.lastUpdated = new Date()
+                newStory.save(flush: true)
+                newStory.refresh()
                 pushService.broadcastToProductUsers(IceScrumEventType.UPDATE, newStory, product.id)
                 newStoryUpdated = true;
             }

@@ -44,23 +44,10 @@ class PushService {
         def channel = '/stream/app/product-' + productId
         Broadcaster broadcaster = atmosphereMeteor.broadcasterFactory?.lookup(IceScrumBroadcaster.class, channel)
         if (broadcaster) {
-            def uuid = null
-            try {
-                uuid = RequestContextHolder.currentRequestAttributes()?.request?.getHeader(HeaderConfig.X_ATMOSPHERE_TRACKING_ID)
-            } catch (IllegalStateException e) {
-                println e.message
-                //something we are not in a webrequest (like in batch threads)
-            }
-            Set<AtmosphereResource> resources = uuid ? broadcaster.atmosphereResources?.findAll { AtmosphereResource r -> r.uuid() != uuid } : null
-            def message = ([eventType: eventType.name(), object: object] as JSON).toString()
             // toString() required to eagerly generate the String (lazy raise an error because no session in atmosphere thread)
-            if (resources) {
-                log.debug("broadcast to everybody except $uuid on channel " + channel)
-                broadcaster.broadcast(message, resources)
-            } else if (!uuid) {
-                log.debug("broadcast to everybody on channel " + channel)
-                broadcaster.broadcast(message)
-            }
+            def message = ([eventType: eventType.name(), object: object] as JSON).toString()
+            log.debug("broadcast to everybody on channel " + channel)
+            broadcaster.broadcast(message)
         }
     }
 
