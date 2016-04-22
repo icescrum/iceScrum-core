@@ -308,7 +308,7 @@ class Task extends BacklogElement implements Serializable {
             initial(this.initial)
             doneDate(this.doneDate)
             estimation(this.estimation)
-            creationDate(this.creationDate)
+            todoDate(this.todoDate)
             inProgressDate(this.inProgressDate)
 
             creator(uid:this.creator.uid)

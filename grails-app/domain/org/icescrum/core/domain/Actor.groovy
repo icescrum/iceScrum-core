@@ -206,7 +206,7 @@ class Actor extends BacklogElement implements Serializable, Comparable<Actor> {
             uid(this.uid)
             instances(this.instances)
             useFrequency(this.useFrequency)
-            creationDate(this.creationDate)
+            todoDate(this.todoDate)
             expertnessLevel(this.expertnessLevel)
             tags { builder.mkp.yieldUnescaped("<![CDATA[${this.tags}]]>") }
             name { builder.mkp.yieldUnescaped("<![CDATA[${this.name}]]>") }

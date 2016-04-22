@@ -165,7 +165,7 @@ class DummyPopulator {
                         value: value,
                         uid: _storyCount + 1,
                         type: _storyCount % 6 == 0 ? Story.TYPE_TECHNICAL_STORY : _storyCount % 4 == 0 ? Story.TYPE_DEFECT : Story.TYPE_USER_STORY,
-                        creationDate: new Date(),
+                        todoDate: new Date(),
                         suggestedDate: new Date(),
                         estimatedDate: new Date(),
                         state: state,
@@ -205,7 +205,7 @@ class DummyPopulator {
             product.stories.findAll { it.state < Story.STATE_PLANNED }.eachWithIndex { Story story, int i ->
                 if (i % 4 == 0) {
                     (i % 7).times {
-                        def task = new Task(parentProduct: product, uid: nextTaskUid, rank: it + 1, type: null, estimation: 3, name: randomWords(15,  5, 200), description: randomWords(50, 0, 2900), creator: getCreator(nextTaskUid), responsible: getResponsible(nextTaskUid), parentStory: story, creationDate: new Date())
+                        def task = new Task(parentProduct: product, uid: nextTaskUid, rank: it + 1, type: null, estimation: 3, name: randomWords(15,  5, 200), description: randomWords(50, 0, 2900), creator: getCreator(nextTaskUid), responsible: getResponsible(nextTaskUid), parentStory: story, todoDate: new Date())
                         task.save(failOnError: true)
                         addTaskActivity(task, task.creator, 'taskSave')
                         story.addToTasks(task)
@@ -217,7 +217,7 @@ class DummyPopulator {
             release1.sprints.findAll { it.orderNumber < 8 }.each { sprint ->
                 sprint.stories.each { story ->
                     (sprint.orderNumber - 1).times {
-                        def task = new Task(parentProduct: product, uid: nextTaskUid, rank: it + 1, type: null, estimation: 3, name: randomWords(15,  5, 200), description: randomWords(50, 0, 2900), creator: getCreator(nextTaskUid), responsible: getResponsible(nextTaskUid), parentStory: story, backlog: sprint, creationDate: new Date())
+                        def task = new Task(parentProduct: product, uid: nextTaskUid, rank: it + 1, type: null, estimation: 3, name: randomWords(15,  5, 200), description: randomWords(50, 0, 2900), creator: getCreator(nextTaskUid), responsible: getResponsible(nextTaskUid), parentStory: story, backlog: sprint, todoDate: new Date())
                         task.save(failOnError: true)
                         addTaskActivity(task, task.creator, 'taskSave')
                         story.addToTasks(task)
@@ -226,12 +226,12 @@ class DummyPopulator {
                     }
                 }
                 15.times {
-                    def task = new Task(parentProduct: product, uid: nextTaskUid, rank: it + 1, type: Task.TYPE_RECURRENT, estimation: 5, name: randomWords(15,  5, 200), description: randomWords(50, 0, 2900), creator: getCreator(nextTaskUid), responsible: getResponsible(nextTaskUid), parentStory: null, backlog: sprint, creationDate: new Date())
+                    def task = new Task(parentProduct: product, uid: nextTaskUid, rank: it + 1, type: Task.TYPE_RECURRENT, estimation: 5, name: randomWords(15,  5, 200), description: randomWords(50, 0, 2900), creator: getCreator(nextTaskUid), responsible: getResponsible(nextTaskUid), parentStory: null, backlog: sprint, todoDate: new Date())
                     sprint.addToTasks(task)
                     task.save(failOnError: true)
                     addTaskActivity(task, task.creator, 'taskSave')
                     nextTaskUid++
-                    def task2 = new Task(parentProduct: product, uid: nextTaskUid, rank: it + 1, type: Task.TYPE_URGENT, estimation: 4, name: randomWords(15,  5, 200), description: randomWords(50, 0, 2900), creator: getCreator(nextTaskUid), responsible: getResponsible(nextTaskUid), parentStory: null, backlog: sprint, creationDate: new Date())
+                    def task2 = new Task(parentProduct: product, uid: nextTaskUid, rank: it + 1, type: Task.TYPE_URGENT, estimation: 4, name: randomWords(15,  5, 200), description: randomWords(50, 0, 2900), creator: getCreator(nextTaskUid), responsible: getResponsible(nextTaskUid), parentStory: null, backlog: sprint, todoDate: new Date())
                     sprint.addToTasks(task2)
                     task2.save(failOnError: true)
                     addTaskActivity(task2, task2.creator, 'taskSave')

@@ -585,7 +585,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
             doneDate(this.doneDate)
             plannedDate(this.plannedDate)
             acceptedDate(this.acceptedDate)
-            creationDate(this.creationDate)
+            todoDate(this.todoDate)
             suggestedDate(this.suggestedDate)
             estimatedDate(this.estimatedDate)
             inProgressDate(this.inProgressDate)

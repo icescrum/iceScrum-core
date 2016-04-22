@@ -319,7 +319,7 @@ class TaskService extends IceScrumEventPublisher {
                     doneDate: doneDate,
                     inProgressDate: inProgressDate,
                     state: task.state.text().toInteger(),
-                    creationDate: new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(task.creationDate.text()),
+                    todoDate: new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(task.todoDate.text()),
                     blocked: task.blocked.text()?.toBoolean() ?: false,
                     uid: task.@uid.text()?.isEmpty() ? task.@id.text().toInteger() : task.@uid.text().toInteger(),
                     color: task?.color?.text() ?: "yellow"

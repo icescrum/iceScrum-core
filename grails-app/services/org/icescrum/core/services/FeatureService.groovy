@@ -183,7 +183,7 @@ class FeatureService extends IceScrumEventPublisher {
                     description: feat.description.text(),
                     notes: feat.notes.text(),
                     color: feat.color.text(),
-                    creationDate: new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(feat.creationDate.text()),
+                    todoDate: new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(feat.todoDate.text()),
                     value: feat.value.text().toInteger(),
                     type: feat.type.text().toInteger(),
                     rank: feat.rank.text()?.toInteger(),

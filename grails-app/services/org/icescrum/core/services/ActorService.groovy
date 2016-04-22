@@ -81,7 +81,7 @@ class ActorService extends IceScrumEventPublisher {
                     name: actor."${'name'}".text(),
                     description: actor.description.text(),
                     notes: actor.notes.text(),
-                    creationDate: new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(actor.creationDate.text()),
+                    todoDate: new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(actor.todoDate.text()),
                     instances: (actor.instances.text().isNumber()) ? actor.instances.text().toInteger() : 0,
                     useFrequency: (actor.useFrequency.text().isNumber()) ? actor.useFrequency.text().toInteger() : 2,
                     expertnessLevel: (actor.expertnessLevel.text().isNumber()) ? actor.expertnessLevel.text().toInteger() : 1,

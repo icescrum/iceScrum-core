@@ -342,7 +342,7 @@ class SprintService extends IceScrumEventPublisher {
         tasks.each { it ->
             def tmp = new Task()
             tmp.properties = it.properties
-            tmp.creationDate = new Date()
+            tmp.todoDate = new Date()
             tmp.state = Task.STATE_WAIT
             tmp.backlog = sprint
             tmp.responsible = null

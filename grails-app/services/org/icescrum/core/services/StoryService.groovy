@@ -729,7 +729,7 @@ class StoryService extends IceScrumEventPublisher {
                     name: xmlStory."${'name'}".text(),
                     description: xmlStory.description.text(),
                     notes: xmlStory.notes.text(),
-                    creationDate: new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(xmlStory.creationDate.text()),
+                    todoDate: new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(xmlStory.todoDate.text()),
                     effort: xmlStory.effort.text().isEmpty() ? null : xmlStory.effort.text().toBigDecimal(),
                     value: xmlStory.value.text().isEmpty() ? null : xmlStory.value.text().toInteger(),
                     rank: xmlStory.rank.text().toInteger(),

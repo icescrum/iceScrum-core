@@ -39,7 +39,7 @@ abstract class BacklogElement implements Attachmentable, Commentable, Serializab
     String name
     Date dateCreated
     Date lastUpdated
-    Date creationDate = new Date()
+    Date todoDate = new Date()
     int uid
 
     TimeBox backlog
