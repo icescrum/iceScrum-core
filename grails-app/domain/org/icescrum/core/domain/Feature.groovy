@@ -23,8 +23,6 @@
  */
 
 
-
-
 package org.icescrum.core.domain
 
 import org.hibernate.ObjectNotFoundException
@@ -45,7 +43,7 @@ class Feature extends BacklogElement implements Serializable {
     int type = Feature.TYPE_FUNCTIONAL
     int rank
 
-    static transients = ['countDoneStories', 'state', 'effort']
+    static transients = ['countDoneStories', 'state', 'effort', 'inProgressDate', 'doneDate']
 
     static belongsTo = [
             parentDomain: Domain,
@@ -71,7 +69,7 @@ class Feature extends BacklogElement implements Serializable {
 
     static namedQueries = {
 
-        getInProduct {p, id ->
+        getInProduct { p, id ->
             backlog {
                 eq 'id', p
             }
@@ -82,14 +80,15 @@ class Feature extends BacklogElement implements Serializable {
         }
     }
 
-    static Feature withFeature(long productId, long id){
+    static Feature withFeature(long productId, long id) {
         Feature feature = (Feature) getInProduct(productId, id).list()
-        if (!feature)
-            throw new ObjectNotFoundException(id,'Feature')
+        if (!feature) {
+            throw new ObjectNotFoundException(id, 'Feature')
+        }
         return feature
     }
 
-    static List<Feature> withFeatures(def params, def id = 'id'){
+    static List<Feature> withFeatures(def params, def id = 'id') {
         def ids = params[id]?.contains(',') ? params[id].split(',')*.toLong() : params.list(id)
         List<Feature> features = ids ? getAll(ids).findAll { it.backlog.id == params.product.toLong() } : null
         if (!features) {
@@ -107,23 +106,30 @@ class Feature extends BacklogElement implements Serializable {
     }
 
     boolean equals(Object obj) {
-        if (this.is(obj))
+        if (this.is(obj)) {
             return true
-        if (obj == null)
+        }
+        if (obj == null) {
             return false
-        if (getClass() != obj.getClass())
+        }
+        if (getClass() != obj.getClass()) {
             return false
+        }
         final Feature other = (Feature) obj
         if (name == null) {
-            if (other.name != null)
+            if (other.name != null) {
                 return false
-        } else if (!name.equals(other.name))
+            }
+        } else if (!name.equals(other.name)) {
             return false
+        }
         if (backlog == null) {
-            if (other.backlog != null)
+            if (other.backlog != null) {
                 return false
-        } else if (!backlog.equals(other.backlog))
+            }
+        } else if (!backlog.equals(other.backlog)) {
             return false
+        }
         return true
     }
 
@@ -132,56 +138,64 @@ class Feature extends BacklogElement implements Serializable {
                 """SELECT MAX(f.uid)
                    FROM org.icescrum.core.domain.Feature as f, org.icescrum.core.domain.Product as p
                    WHERE f.backlog = p
-                   AND p.id = :pid """, [pid: pid])[0]?:0) + 1
+                   AND p.id = :pid """, [pid: pid])[0] ?: 0) + 1
     }
 
-    def getCountDoneStories(){
-        return stories?.sum {(it.state == Story.STATE_DONE) ? 1 : 0}?:0
+    def getCountDoneStories() {
+        return stories?.sum { (it.state == Story.STATE_DONE) ? 1 : 0 } ?: 0
     }
 
-    def getState(){
-        if (!stories || stories.find{ it.state > Story.STATE_INPROGRESS} == null ) {
+    def getState() {
+        if (!stories || stories.find { it.state > Story.STATE_PLANNED } == null) {
             return STATE_WAIT
         }
-        if (stories.collect{it.state}.count(Story.STATE_DONE) == stories.size()){
+        if (stories.collect { it.state }.count(Story.STATE_DONE) == stories.size()) {
             return STATE_DONE
-        }else{
+        } else {
             return STATE_BUSY
         }
     }
 
-    def getEffort(){
-        return stories?.sum {it.effort ?: 0}?:0
+    def getEffort() {
+        return stories?.sum { it.effort ?: 0 } ?: 0
     }
 
-    static search(product, options){
+    Date getInProgressDate() {
+        return state > STATE_WAIT ? stories.collect { it.inProgressDate }.findAll { it != null }.sort().last() : null
+    }
+
+    Date getDoneDate() {
+        return state == STATE_DONE ? stories.collect { it.doneDate }.findAll { it != null }.sort().first() : null
+    }
+
+    static search(product, options) {
         def criteria = {
             backlog {
                 eq 'id', product
             }
-            if (options.term || options.feature){
-                if (options.term){
+            if (options.term || options.feature) {
+                if (options.term) {
                     or {
-                        if (options.term?.isInteger()){
+                        if (options.term?.isInteger()) {
                             eq 'uid', options.term.toInteger()
-                        }else{
-                            ilike 'name', '%'+options.term+'%'
-                            ilike 'description', '%'+options.term+'%'
-                            ilike 'notes', '%'+options.term+'%'
+                        } else {
+                            ilike 'name', '%' + options.term + '%'
+                            ilike 'description', '%' + options.term + '%'
+                            ilike 'notes', '%' + options.term + '%'
                         }
                     }
                 }
-                if (options.feature?.type?.isInteger()){
+                if (options.feature?.type?.isInteger()) {
                     eq 'type', options.feature.type.toInteger()
                 }
             }
         }
-        if (options.tag){
+        if (options.tag) {
             return Feature.findAllByTagWithCriteria(options.tag) {
                 criteria.delegate = delegate
                 criteria.call()
             }
-        } else if(options.term || options.feature != null)  {
+        } else if (options.term || options.feature != null) {
             return Feature.createCriteria().list {
                 criteria.delegate = delegate
                 criteria.call()
@@ -201,7 +215,7 @@ class Feature extends BacklogElement implements Serializable {
     }
 
     def xml(builder) {
-        builder.feature(uid:this.uid){
+        builder.feature(uid: this.uid) {
             type(this.type)
             rank(this.rank)
             color(this.color)
@@ -209,16 +223,16 @@ class Feature extends BacklogElement implements Serializable {
             todoDate(this.todoDate)
             tags { builder.mkp.yieldUnescaped("<![CDATA[${this.tags}]]>") }
             name { builder.mkp.yieldUnescaped("<![CDATA[${this.name}]]>") }
-            notes { builder.mkp.yieldUnescaped("<![CDATA[${this.notes?:''}]]>") }
-            description { builder.mkp.yieldUnescaped("<![CDATA[${this.description?:''}]]>") }
+            notes { builder.mkp.yieldUnescaped("<![CDATA[${this.notes ?: ''}]]>") }
+            description { builder.mkp.yieldUnescaped("<![CDATA[${this.description ?: ''}]]>") }
 
-            stories(){
-                this.stories.each{ _story ->
+            stories() {
+                this.stories.each { _story ->
                     story(uid: _story.uid)
                 }
             }
 
-            attachments(){
+            attachments() {
                 this.attachments.each { _att ->
                     _att.xml(builder)
                 }
