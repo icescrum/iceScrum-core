@@ -204,6 +204,7 @@ class Release extends TimeBox implements Cloneable, Attachmentable {
         builder.release(id:this.id){
             state(this.state)
             endDate(this.endDate)
+            todoDate(this.todoDate)
             startDate(this.startDate)
             orderNumber(this.orderNumber)
             lastUpdated(this.lastUpdated)

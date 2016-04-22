@@ -338,6 +338,7 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
             endDate(this.endDate)
             velocity(this.velocity)
             capacity(this.capacity)
+            todoDate(this.todoDate)
             closeDate(this.closeDate)
             startDate(this.startDate)
             orderNumber(this.orderNumber)

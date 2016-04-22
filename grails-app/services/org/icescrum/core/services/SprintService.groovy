@@ -381,6 +381,7 @@ class SprintService extends IceScrumEventPublisher {
                     capacity: (sprint.capacity.text().isNumber()) ? sprint.capacity.text().toDouble() : 0d,
                     dateCreated: sprint.dateCreated.text() ? new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(sprint.dateCreated.text()) : new Date(),
                     lastUpdated: sprint.lastUpdated.text() ? new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(sprint.lastUpdated.text()) : new Date(),
+                    todoDate: new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(sprint.todoDate.text()),
                     startDate: new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(sprint.startDate.text()),
                     endDate: new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(sprint.endDate.text()),
                     orderNumber: sprint.orderNumber.text().toInteger(),

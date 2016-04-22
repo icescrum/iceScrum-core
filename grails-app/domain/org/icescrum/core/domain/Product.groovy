@@ -332,6 +332,7 @@ class Product extends TimeBox implements Serializable, Attachmentable {
         builder.product(id: this.id) {
             pkey(this.pkey)
             endDate(this.endDate)
+            todoDate(this.todoDate)
             startDate(this.startDate)
             lastUpdated(this.lastUpdated)
             dateCreated(this.dateCreated)

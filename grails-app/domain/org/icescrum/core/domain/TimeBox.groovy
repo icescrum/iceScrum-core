@@ -34,6 +34,7 @@ class TimeBox implements Comparable<TimeBox>, Serializable {
     int orderNumber = 0
     String description
     Date dateCreated
+    Date todoDate = new Date()
     Date lastUpdated
 
     SortedSet<Activity> activities

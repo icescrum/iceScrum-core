@@ -218,6 +218,7 @@ class ReleaseService extends IceScrumEventPublisher {
                     name: release.name.text(),
                     dateCreated: release.dateCreated.text() ? new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(release.dateCreated.text()) : new Date(),
                     lastUpdated: release.lastUpdated.text() ? new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(release.lastUpdated.text()) : new Date(),
+                    todoDate: new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(release.todoDate.text()),
                     startDate: new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(release.startDate.text()),
                     endDate: new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(release.endDate.text()),
                     orderNumber: release.orderNumber.text().toInteger(),
