@@ -165,7 +165,7 @@ class SprintService extends IceScrumEventPublisher {
             }
         }
         sprint.state = Sprint.STATE_INPROGRESS
-        sprint.activationDate = new Date()
+        sprint.inProgressDate = new Date()
         if (sprint.previousSprint?.doneDefinition && !sprint.doneDefinition) {
             sprint.doneDefinition = sprint.previousSprint.doneDefinition
         }
@@ -195,7 +195,7 @@ class SprintService extends IceScrumEventPublisher {
         def doneStories = sprint.stories.findAll { it.state == Story.STATE_DONE }
         sprint.velocity = (Double) doneStories*.effort.sum() ?: 0
         sprint.state = Sprint.STATE_DONE
-        sprint.closeDate = new Date()
+        sprint.doneDate = new Date()
         sprint.tasks.findAll { it.type == Task.TYPE_URGENT || it.type == Task.TYPE_RECURRENT }?.each {
             it.lastUpdated = new Date()
         }
@@ -207,8 +207,8 @@ class SprintService extends IceScrumEventPublisher {
     // TODO check rights
     def sprintBurndownRemainingValues(Sprint sprint) {
         def values = []
-        def lastDaycliche = sprint.activationDate
-        def date = (sprint.state == Sprint.STATE_DONE) ? sprint.closeDate : (sprint.state == Sprint.STATE_INPROGRESS) ? new Date() : sprint.endDate
+        def lastDaycliche = sprint.inProgressDate
+        def date = (sprint.state == Sprint.STATE_DONE) ? sprint.doneDate : (sprint.state == Sprint.STATE_INPROGRESS) ? new Date() : sprint.endDate
         clicheService.createOrUpdateDailyTasksCliche(sprint)
 
         sprint.cliches?.sort { a, b -> a.datePrise <=> b.datePrise }?.eachWithIndex { cliche, index ->
@@ -245,8 +245,8 @@ class SprintService extends IceScrumEventPublisher {
     // TODO check rights
     def sprintBurnupTasksValues(Sprint sprint) {
         def values = []
-        def lastDaycliche = sprint.activationDate
-        def date = (sprint.state == Sprint.STATE_DONE) ? sprint.closeDate : (sprint.state == Sprint.STATE_INPROGRESS) ? new Date() : sprint.endDate
+        def lastDaycliche = sprint.inProgressDate
+        def date = (sprint.state == Sprint.STATE_DONE) ? sprint.doneDate : (sprint.state == Sprint.STATE_INPROGRESS) ? new Date() : sprint.endDate
 
         clicheService.createOrUpdateDailyTasksCliche(sprint)
 
@@ -284,8 +284,8 @@ class SprintService extends IceScrumEventPublisher {
     // TODO check rights
     def sprintBurnupStoriesValues(Sprint sprint) {
         def values = []
-        def lastDaycliche = sprint.activationDate
-        def date = (sprint.state == Sprint.STATE_DONE) ? sprint.closeDate : (sprint.state == Sprint.STATE_INPROGRESS) ? new Date() : sprint.endDate
+        def lastDaycliche = sprint.inProgressDate
+        def date = (sprint.state == Sprint.STATE_DONE) ? sprint.doneDate : (sprint.state == Sprint.STATE_INPROGRESS) ? new Date() : sprint.endDate
 
         clicheService.createOrUpdateDailyTasksCliche(sprint)
 
@@ -358,23 +358,23 @@ class SprintService extends IceScrumEventPublisher {
     @Transactional(readOnly = true)
     def unMarshall(def sprint, Product p = null) {
         try {
-            def activationDate = null
-            if (sprint.activationDate?.text() && sprint.activationDate?.text() != "")
-                activationDate = new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(sprint.activationDate.text()) ?: null
-            if (!activationDate && sprint.state.text().toInteger() >= Sprint.STATE_INPROGRESS) {
-                activationDate = new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(sprint.startDate.text())
+            def inProgressDate = null
+            if (sprint.inProgressDate?.text() && sprint.inProgressDate?.text() != "")
+                inProgressDate = new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(sprint.inProgressDate.text()) ?: null
+            if (!inProgressDate && sprint.state.text().toInteger() >= Sprint.STATE_INPROGRESS) {
+                inProgressDate = new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(sprint.startDate.text())
             }
-            def closeDate = null
-            if (sprint.closeDate?.text() && sprint.closeDate?.text() != "")
-                closeDate = new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(sprint.closeDate.text()) ?: null
-            if (!closeDate && sprint.state.text().toInteger() == Sprint.STATE_INPROGRESS) {
-                closeDate = new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(sprint.endDate.text())
+            def doneDate = null
+            if (sprint.doneDate?.text() && sprint.doneDate?.text() != "")
+                doneDate = new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(sprint.doneDate.text()) ?: null
+            if (!doneDate && sprint.state.text().toInteger() == Sprint.STATE_INPROGRESS) {
+                doneDate = new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(sprint.endDate.text())
             }
             def s = new Sprint(
                     retrospective: sprint.retrospective.text(),
                     doneDefinition: sprint.doneDefinition.text(),
-                    activationDate: activationDate,
-                    closeDate: closeDate,
+                    inProgressDate: inProgressDate,
+                    doneDate: doneDate,
                     state: sprint.state.text().toInteger(),
                     velocity: (sprint.velocity.text().isNumber()) ? sprint.velocity.text().toDouble() : 0d,
                     dailyWorkTime: (sprint.dailyWorkTime.text().isNumber()) ? sprint.dailyWorkTime.text().toDouble() : 8d,

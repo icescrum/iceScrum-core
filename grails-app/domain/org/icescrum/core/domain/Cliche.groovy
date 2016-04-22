@@ -60,7 +60,7 @@ class Cliche implements Serializable {
     static final FUNCTIONAL_STORY_CAPACITY = 'functionalStoryCapacity'
     static final DEFECT_STORY_CAPACITY = 'defectStoryCapacity'
     static final TECHNICAL_STORY_CAPACITY = 'technicalStoryCapacity'
-    static final ACTIVATION_DATE = 'activationDate'
+    static final INPROGRESS_DATE = 'activationDate'
 
     //type close sprint
     // Velocity
@@ -68,7 +68,7 @@ class Cliche implements Serializable {
     static final FUNCTIONAL_STORY_VELOCITY = 'functionalStoryVelocity'
     static final DEFECT_STORY_VELOCITY = 'defectStoryVelocity'
     static final TECHNICAL_STORY_VELOCITY = 'technicalStoryVelocity'
-    static final CLOSE_DATE = 'closeDate'
+    static final DONE_DATE = 'closeDate'
 
     // Backlog points
     static final PRODUCT_BACKLOG_POINTS = 'productBacklogPoints'

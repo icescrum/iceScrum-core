@@ -140,7 +140,7 @@ class ClicheService {
                 "${Cliche.SPRINT_ID}"("R${release.orderNumber}S${sprint.orderNumber}")
                 if (clicheType == Cliche.TYPE_ACTIVATION) {
                     // Activation Date
-                    "${Cliche.ACTIVATION_DATE}"(sprint.activationDate)
+                    "${Cliche.INPROGRESS_DATE}"(sprint.inProgressDate)
                     // Capacity
                     "${Cliche.SPRINT_CAPACITY}"(currentSprintData['compteurUS'] + currentSprintData['compteurTechnical'] + currentSprintData['compteurDefect'])
                     "${Cliche.FUNCTIONAL_STORY_CAPACITY}"(currentSprintData['compteurUS'])
@@ -149,7 +149,7 @@ class ClicheService {
                 }
                 if (clicheType == Cliche.TYPE_CLOSE) {
                     // Close Date
-                    "${Cliche.CLOSE_DATE}"(sprint.closeDate)
+                    "${Cliche.DONE_DATE}"(sprint.doneDate)
                     // Capacity
                     "${Cliche.SPRINT_VELOCITY}"(currentSprintData['compteurUS'] + currentSprintData['compteurTechnical'] + currentSprintData['compteurDefect'])
                     "${Cliche.FUNCTIONAL_STORY_VELOCITY}"(currentSprintData['compteurUS'])

@@ -41,8 +41,8 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
     int state = Sprint.STATE_WAIT
     String retrospective  // Beware of distinct, it won't work in MSSQL since this attribute is TEXT
     String doneDefinition // Beware of distinct, it won't work in MSSQL since this attribute is TEXT
-    Date activationDate
-    Date closeDate
+    Date inProgressDate
+    Date doneDate
     Double velocity = 0d
     Double capacity = 0d
     Double dailyWorkTime = 8d
@@ -146,8 +146,8 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
         deliveredVersion nullable: true
         retrospective nullable: true
         doneDefinition nullable: true
-        activationDate nullable: true
-        closeDate nullable: true
+        inProgressDate nullable: true
+        doneDate nullable: true
         initialRemainingTime nullable: true
         endDate(validator:{ val, obj ->
             if (val > obj.parentRelease.endDate)
@@ -308,12 +308,12 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
 
     //Get the right endDate from the sprint state
     Date getEffectiveEndDate(){
-        return this.state == STATE_DONE ? closeDate : endDate
+        return this.state == STATE_DONE ? doneDate : endDate
     }
 
     //Get the right startDate from the sprint state
     Date getEffectiveStartDate(){
-        return this.state == STATE_WAIT ? startDate : activationDate
+        return this.state == STATE_WAIT ? startDate : inProgressDate
     }
 
     BigDecimal getTotalRemaining() {
@@ -339,13 +339,13 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
             velocity(this.velocity)
             capacity(this.capacity)
             todoDate(this.todoDate)
-            closeDate(this.closeDate)
+            doneDate(this.doneDate)
             startDate(this.startDate)
             orderNumber(this.orderNumber)
             lastUpdated(this.lastUpdated)
             dateCreated(this.dateCreated)
             dailyWorkTime(this.dailyWorkTime)
-            activationDate(this.activationDate)
+            inProgressDate(this.inProgressDate)
             deliveredVersion(this.deliveredVersion)
             initialRemainingTime(this.initialRemainingTime)
 
