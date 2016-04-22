@@ -41,6 +41,8 @@ class Release extends TimeBox implements Cloneable, Attachmentable {
     String vision = "" // Beware of distinct, it won't work in MSSQL since this attribute is TEXT
     String name = "R"
     SortedSet<Sprint> sprints
+    Date inProgressDate
+    Date doneDate
 
     static belongsTo = [parentProduct: Product]
 
@@ -60,6 +62,8 @@ class Release extends TimeBox implements Cloneable, Attachmentable {
 
     static constraints = {
         vision nullable: true
+        inProgressDate nullable: true
+        doneDate nullable: true
         name(blank: false, unique: 'parentProduct')
         startDate(validator:{ val, obj ->
             if (val.before(obj.parentProduct.startDate)){
@@ -205,10 +209,12 @@ class Release extends TimeBox implements Cloneable, Attachmentable {
             state(this.state)
             endDate(this.endDate)
             todoDate(this.todoDate)
+            doneDate(this.doneDate)
             startDate(this.startDate)
             orderNumber(this.orderNumber)
             lastUpdated(this.lastUpdated)
             dateCreated(this.dateCreated)
+            inProgressDate(this.inProgressDate)
             name { builder.mkp.yieldUnescaped("<![CDATA[${this.name}]]>") }
             goal { builder.mkp.yieldUnescaped("<![CDATA[${this.goal?:''}]]>") }
             vision { builder.mkp.yieldUnescaped("<![CDATA[${this.vision?:''}]]>") }

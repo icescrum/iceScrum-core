@@ -48,6 +48,7 @@ class ReleaseService extends IceScrumEventPublisher {
         release.parentProduct = product
         release.state = Release.STATE_WAIT
         if (product.releases?.size() <= 0 || product.releases == null) {
+            release.inProgressDate = new Date()
             release.state = Release.STATE_INPROGRESS
         }
         release.orderNumber = (product.releases?.size() ?: 0) + 1
@@ -134,6 +135,7 @@ class ReleaseService extends IceScrumEventPublisher {
         if (lastRelease.orderNumber + 1 != release.orderNumber) {
             throw new IllegalStateException('is.release.error.not.next')
         }
+        release.inProgressDate = new Date()
         release.state = Release.STATE_INPROGRESS
         update(release)
     }
@@ -143,6 +145,7 @@ class ReleaseService extends IceScrumEventPublisher {
         if (release.state != Release.STATE_INPROGRESS) {
             throw new IllegalStateException('is.release.error.not.state.wait')
         }
+        release.doneDate = new Date()
         release.state = Release.STATE_DONE
         def lastSprintEndDate = release.sprints ? release.sprints.asList().last().endDate : new Date()
         update(release, null, lastSprintEndDate, false)
@@ -213,6 +216,14 @@ class ReleaseService extends IceScrumEventPublisher {
     def unMarshall(def release, Product p = null, ProgressSupport progress) {
         def g = grailsApplication.mainContext.getBean('org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib')
         try {
+            def inProgressDate = null
+            if (release.inProgressDate?.text() && release.inProgressDate?.text() != "") {
+                inProgressDate = new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(release.inProgressDate.text()) ?: null
+            }
+            def doneDate = null
+            if (release.doneDate?.text() && release.doneDate?.text() != "") {
+                doneDate = new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(release.doneDate.text()) ?: null
+            }
             def r = new Release(
                     state: release.state.text().toInteger(),
                     name: release.name.text(),
@@ -220,6 +231,8 @@ class ReleaseService extends IceScrumEventPublisher {
                     lastUpdated: release.lastUpdated.text() ? new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(release.lastUpdated.text()) : new Date(),
                     todoDate: new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(release.todoDate.text()),
                     startDate: new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(release.startDate.text()),
+                    doneDate: doneDate,
+                    inProgressDate: inProgressDate,
                     endDate: new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(release.endDate.text()),
                     orderNumber: release.orderNumber.text().toInteger(),
                     description: release.description.text(),
