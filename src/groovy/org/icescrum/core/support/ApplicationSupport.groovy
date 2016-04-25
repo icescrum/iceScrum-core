@@ -1,29 +1,8 @@
-/*
- * Copyright (c) 2010 iceScrum Technologies / 2011 Kagilum SAS.
- *
- * This file is part of iceScrum.
- *
- * iceScrum is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License.
- *
- * iceScrum is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with iceScrum.  If not, see <http://www.gnu.org/licenses/>.
- *
- * Authors:
- *
- * Vincent Barrier (vbarrier@kagilum.com)
- */
-
-
 package org.icescrum.core.support
 
 import grails.converters.JSON
+import grails.plugin.springsecurity.userdetails.GrailsUser
+import grails.plugin.springsecurity.web.SecurityRequestHolder
 import grails.util.Environment
 import grails.util.Holders
 import grails.util.Metadata
@@ -37,7 +16,11 @@ import org.apache.http.client.utils.URLEncodedUtils
 import org.apache.http.impl.client.DefaultHttpClient
 import org.apache.http.message.BasicNameValuePair
 import org.apache.http.util.EntityUtils
+import org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib
 import org.icescrum.core.domain.User
+import org.icescrum.core.domain.preferences.UserPreferences
+import org.springframework.security.core.context.SecurityContextHolder
+import org.springframework.security.web.access.WebInvocationPrivilegeEvaluator
 
 import java.security.MessageDigest
 import java.util.zip.ZipEntry
@@ -48,6 +31,42 @@ class ApplicationSupport {
 
     private static final log = LogFactory.getLog(this)
     public static final CONFIG_ENV_NAME = 'icescrum_config_location'
+
+    public static boolean isAllowed(def windowDefinition, def request, def params) {
+        ApplicationTagLib g = (ApplicationTagLib) Holders.grailsApplication.mainContext.getBean(ApplicationTagLib.class)
+        WebInvocationPrivilegeEvaluator webInvocationPrivilegeEvaluator = (WebInvocationPrivilegeEvaluator) Holders.grailsApplication.mainContext.getBean(WebInvocationPrivilegeEvaluator.class)
+
+        def space = getCurrentSpace(params,windowDefinition.space)
+        if (!windowDefinition || (windowDefinition.space && !params?."$windowDefinition.space")) {
+            return false
+        }
+        def attrs = [:]
+        attrs."$space" = params."$space"
+        def url = g.createLink(controller: windowDefinition.id, action: windowDefinition.init, params: attrs)
+        url = url.toString() - request.contextPath
+
+        return webInvocationPrivilegeEvaluator.isAllowed(SecurityRequestHolder.request.contextPath, url, 'GET', SecurityContextHolder.context?.authentication)
+    }
+
+    public static Map menuPositionFromUserPreferences(def windowDefinition) {
+        UserPreferences userPreferences = null
+        if (GrailsUser.isAssignableFrom(SecurityContextHolder.context.authentication?.principal?.getClass())) {
+            userPreferences = User.get(SecurityContextHolder.context.authentication.principal?.id)?.preferences
+        }
+        def visiblePosition = userPreferences?.menu?.getAt(windowDefinition.id)
+        def hiddenPosition = userPreferences?.menuHidden?.getAt(windowDefinition.id)
+        def menuEntry = [:]
+        if (visiblePosition) {
+            menuEntry.pos = visiblePosition
+            menuEntry.visible = true
+        } else if (hiddenPosition) {
+            menuEntry.pos = hiddenPosition
+            menuEntry.visible = false
+        } else {
+            menuEntry = null
+        }
+        return menuEntry
+    }
 
     public static String getNormalisedVersion() {
         def version = Metadata.current['app.version']
@@ -94,7 +113,7 @@ class ApplicationSupport {
 
     static public initEnvironment = { def config ->
         config.icescrum.environment = (System.getProperty('icescrum.environment') ?: 'production')
-        if(config.icescrum.environment == 'production' && new File(File.separator + 'dev' + File.separator + 'turnkey').exists()){
+        if (config.icescrum.environment == 'production' && new File(File.separator + 'dev' + File.separator + 'turnkey').exists()) {
             config.icescrum.environment = 'turnkey'
         }
     }
@@ -302,7 +321,6 @@ class ApplicationSupport {
                              indexScrumOS: space.value.indexScrumOS] : false
         }
     }
-
 }
 
 class CheckerTimerTask extends TimerTask {
