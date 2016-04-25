@@ -48,7 +48,7 @@ class Release extends TimeBox implements Cloneable, Attachmentable {
 
     static hasMany = [sprints: Sprint, features: Feature]
 
-    static mappedBy = [sprints: 'parentRelease',features: 'parentRelease']
+    static mappedBy = [sprints: 'parentRelease', features: 'parentRelease']
 
     static transients = ['firstDate', 'closable', 'activable', 'meanVelocity', 'previousRelease', 'nextRelease']
 
@@ -65,17 +65,17 @@ class Release extends TimeBox implements Cloneable, Attachmentable {
         inProgressDate nullable: true
         doneDate nullable: true
         name(blank: false, unique: 'parentProduct')
-        startDate(validator:{ val, obj ->
-            if (val.before(obj.parentProduct.startDate)){
+        startDate(validator: { val, obj ->
+            if (val.before(obj.parentProduct.startDate)) {
                 return ['before.productStartDate']
             }
-            def r = obj.parentProduct.releases?.find{ it.orderNumber == obj.orderNumber - 1}
+            def r = obj.parentProduct.releases?.find { it.orderNumber == obj.orderNumber - 1 }
             if (r && val.before(r.endDate)) {
                 return ['before.previous']
             }
             return true
         })
-        state(validator:{ val, obj ->
+        state(validator: { val, obj ->
             if (val == STATE_DONE && obj.sprints.any { it.state != Sprint.STATE_DONE })
                 return ['sprint.not.done']
             return true
@@ -83,7 +83,7 @@ class Release extends TimeBox implements Cloneable, Attachmentable {
     }
 
     static namedQueries = {
-        findCurrentOrNextRelease {p ->
+        findCurrentOrNextRelease { p ->
             parentProduct {
                 eq 'id', p
             }
@@ -95,7 +95,7 @@ class Release extends TimeBox implements Cloneable, Attachmentable {
             maxResults(1)
         }
 
-        findCurrentOrLastRelease {p ->
+        findCurrentOrLastRelease { p ->
             parentProduct {
                 eq 'id', p
             }
@@ -107,7 +107,7 @@ class Release extends TimeBox implements Cloneable, Attachmentable {
             maxResults(1)
         }
 
-        getInProduct {p, id ->
+        getInProduct { p, id ->
             parentProduct {
                 eq 'id', p
             }
@@ -118,10 +118,10 @@ class Release extends TimeBox implements Cloneable, Attachmentable {
         }
     }
 
-    static Release withRelease(long productId, long id){
+    static Release withRelease(long productId, long id) {
         Release release = (Release) getInProduct(productId, id).list()
         if (!release) {
-            throw new ObjectNotFoundException(id,'Release')
+            throw new ObjectNotFoundException(id, 'Release')
         }
         return release
     }
@@ -164,29 +164,25 @@ class Release extends TimeBox implements Cloneable, Attachmentable {
     }
 
     Date getFirstDate() {
-        if (sprints?.size() > 0)
+        if (sprints?.size() > 0) {
             return sprints.asList().last().endDate
-        else
+        } else {
             return startDate
-    }
-
-    boolean getClosable(){
-        if (state != STATE_INPROGRESS)
-            return false
-
-        if (sprints?.size()) {
-            if (sprints.asList().last().state == Sprint.STATE_DONE)
-                return true
         }
-       return false
     }
 
-    boolean getActivable(){
-        if (state == STATE_WAIT && parentProduct.releases?.find{it.state == STATE_INPROGRESS} == null){
-            if (orderNumber >= 2 && parentProduct.releases.find{it.orderNumber == orderNumber - 1}.state == STATE_DONE)
+    boolean getClosable() {
+        return state == STATE_INPROGRESS && (!sprints?.size() || sprints.asList().last().state == Sprint.STATE_DONE)
+    }
+
+    boolean getActivable() {
+        if (state == STATE_WAIT && parentProduct.releases?.find { it.state == STATE_INPROGRESS } == null) {
+            if (orderNumber >= 2 && parentProduct.releases.find { it.orderNumber == orderNumber - 1 }.state == STATE_DONE) {
                 return true
-            if (orderNumber == 1)
+            }
+            if (orderNumber == 1) {
                 return true
+            }
         }
         return false
     }
@@ -203,9 +199,9 @@ class Release extends TimeBox implements Cloneable, Attachmentable {
         def doneSprints = sprints.findAll { it.state == Sprint.STATE_DONE }
         return doneSprints ? ((Integer) doneSprints.sum { it.velocity.toBigDecimal() }).intdiv(doneSprints.size()) : 0
     }
-    
-    def xml(builder){
-        builder.release(id:this.id){
+
+    def xml(builder) {
+        builder.release(id: this.id) {
             state(this.state)
             endDate(this.endDate)
             todoDate(this.todoDate)
@@ -216,30 +212,26 @@ class Release extends TimeBox implements Cloneable, Attachmentable {
             dateCreated(this.dateCreated)
             inProgressDate(this.inProgressDate)
             name { builder.mkp.yieldUnescaped("<![CDATA[${this.name}]]>") }
-            goal { builder.mkp.yieldUnescaped("<![CDATA[${this.goal?:''}]]>") }
-            vision { builder.mkp.yieldUnescaped("<![CDATA[${this.vision?:''}]]>") }
-            description { builder.mkp.yieldUnescaped("<![CDATA[${this.description?:''}]]>") }
-
+            goal { builder.mkp.yieldUnescaped("<![CDATA[${this.goal ?: ''}]]>") }
+            vision { builder.mkp.yieldUnescaped("<![CDATA[${this.vision ?: ''}]]>") }
+            description { builder.mkp.yieldUnescaped("<![CDATA[${this.description ?: ''}]]>") }
             sprints() {
-                this.sprints.each{ _sprint ->
+                this.sprints.each { _sprint ->
                     _sprint.xml(builder)
                 }
             }
-
-            features(){
-                this.features.each{ _feature ->
+            features() {
+                this.features.each { _feature ->
                     feature(uid: _feature.uid)
                 }
             }
-
-            attachments(){
+            attachments() {
                 this.attachments.each { _att ->
                     _att.xml(builder)
                 }
             }
-
-            cliches(){
-                this.cliches.each{ _cliche ->
+            cliches() {
+                this.cliches.each { _cliche ->
                     _cliche.xml(builder)
                 }
             }
