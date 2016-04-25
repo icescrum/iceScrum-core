@@ -122,14 +122,13 @@ class StoryService extends IceScrumEventPublisher {
             if (story.feature) {
                 story.feature.removeFromStories(story)
             }
-            def dependences = story.dependences
-            if (dependences) {
-                dependences.each {
-                    notDependsOn(it)
-                }
-            }
             if (story.dependsOn) {
-                notDependsOn(story)
+                story.dependsOn.removeFromDependences(story)
+            }
+            story.dependences?.each {
+                story.removeFromDependences(it)
+                it.dependsOn = null
+                it.save()
             }
             story.removeAllAttachments()
             resetRank(story)
@@ -242,11 +241,12 @@ class StoryService extends IceScrumEventPublisher {
                 story.plannedDate = story.inProgressDate
             }
             def autoCreateTaskOnEmptyStory = sprint.parentRelease.parentProduct.preferences.autoCreateTaskOnEmptyStory
-            if (autoCreateTaskOnEmptyStory)
+            if (autoCreateTaskOnEmptyStory) {
                 if (autoCreateTaskOnEmptyStory && !story.tasks) {
                     def emptyTask = new Task(name: story.name, state: Task.STATE_WAIT, description: story.description, parentStory: story)
                     taskService.save(emptyTask, user)
                 }
+            }
             clicheService.createOrUpdateDailyTasksCliche(sprint)
         } else {
             story.state = Story.STATE_PLANNED
@@ -639,16 +639,6 @@ class StoryService extends IceScrumEventPublisher {
         if (stories) {
             clicheService.createOrUpdateDailyTasksCliche(stories[0]?.parentSprint)
         }
-    }
-
-    // TODO check rights
-    private notDependsOn(Story story) {
-        def oldDepends = story.dependsOn
-        story.dependsOn = null
-        oldDepends.lastUpdated = new Date()
-        oldDepends.save()
-        User user = (User) springSecurityService.currentUser
-        publishEvent(new IceScrumStoryEvent(story, this.class, user, IceScrumStoryEvent.EVENT_UPDATED))
     }
 
     @PreAuthorize('inProduct(#stories[0].backlog) and !archivedProduct(#stories[0].backlog)')

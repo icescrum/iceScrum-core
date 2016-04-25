@@ -51,10 +51,15 @@ class ListenerService {
                     def newProperty = story."$property"
                     if (oldProperty != null) {
                         oldProperty.lastUpdated = new Date()
+                        oldProperty.save(flush: true)
+                        oldProperty.refresh()
                         pushService.broadcastToProductUsers(IceScrumEventType.UPDATE, oldProperty, product.id)
                     }
                     if (newProperty != null) {
                         newProperty.lastUpdated = new Date()
+                        newProperty.lastUpdated = new Date()
+                        newProperty.save(flush: true)
+                        newProperty.refresh()
                         pushService.broadcastToProductUsers(IceScrumEventType.UPDATE, newProperty, product.id)
                         newUpdatedProperties[property] = true
                     }

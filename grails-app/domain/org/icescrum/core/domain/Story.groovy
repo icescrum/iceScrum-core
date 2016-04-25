@@ -22,7 +22,6 @@
  */
 
 
-
 package org.icescrum.core.domain
 
 import grails.plugin.springsecurity.SpringSecurityService
@@ -59,13 +58,13 @@ class Story extends BacklogElement implements Cloneable, Serializable {
     int state = Story.STATE_SUGGESTED
     int value = 0
     String affectVersion
-    Story dependsOn
 
     static belongsTo = [
             creator: User,
             feature: Feature,
             parentSprint: Sprint,
-            actor: Actor
+            actor: Actor,
+            dependsOn: Story
     ]
 
     static hasMany = [
@@ -73,6 +72,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
             acceptanceTests: AcceptanceTest,
             likers: User,
             followers: User,
+            dependences: Story
     ]
 
     static mappedBy = [
@@ -80,13 +80,14 @@ class Story extends BacklogElement implements Cloneable, Serializable {
     ]
 
     static transients = [
-            'dependences', 'deliveredVersion', 'testState', 'testStateEnum', 'activity', 'liked', 'followed', 'sameBacklogStories', 'countDoneTasks'
+            'deliveredVersion', 'testState', 'testStateEnum', 'activity', 'liked', 'followed', 'sameBacklogStories', 'countDoneTasks'
     ]
 
     static mapping = {
         cache true
         table 'icescrum2_story'
         tasks cascade: 'all'
+        dependences cache: true, sort: "state", order: "asc"
         acceptanceTests sort: 'uid'
         effort precision: 5, scale: 2
     }
@@ -108,21 +109,17 @@ class Story extends BacklogElement implements Cloneable, Serializable {
         origin(nullable: true)
     }
 
-    def getActivity(){
+    def getActivity() {
         def activities = this.activities + this.tasks*.activities.flatten() + this.acceptanceTests*.activities.flatten()
-        return activities.sort { a, b-> b.dateCreated <=> a.dateCreated }
+        return activities.sort { a, b -> b.dateCreated <=> a.dateCreated }
     }
 
-    def getDependences(){
-        return Story.findAllByDependsOn(this,[cache:true,sort:"state",order:"asc"])
-    }
-
-    def getDeliveredVersion(){
+    def getDeliveredVersion() {
         return this.state == STATE_DONE ? this.parentSprint.deliveredVersion ?: null : null
     }
 
     def getCountDoneTasks() {
-        return state >= STATE_INPROGRESS ? tasks.count { it.state == Task.STATE_DONE} : 0;
+        return state >= STATE_INPROGRESS ? tasks.count { it.state == Task.STATE_DONE } : 0;
     }
 
     List<Story> getSameBacklogStories() {
@@ -157,15 +154,15 @@ class Story extends BacklogElement implements Cloneable, Serializable {
 
     static namedQueries = {
 
-        findInStoriesAcceptedEstimated {p, term ->
+        findInStoriesAcceptedEstimated { p, term ->
             backlog {
                 eq 'id', p
             }
             or {
-                def termInteger = term?.replaceAll('%','')
-                if (termInteger?.isInteger()){
+                def termInteger = term?.replaceAll('%', '')
+                if (termInteger?.isInteger()) {
                     eq 'uid', termInteger.toInteger()
-                } else{
+                } else {
                     ilike 'name', term
                     ilike 'description', term
                     ilike 'notes', term
@@ -204,24 +201,24 @@ class Story extends BacklogElement implements Cloneable, Serializable {
             }
         }
 
-        findPossiblesDependences{ Story story ->
+        findPossiblesDependences { Story story ->
             backlog {
                 eq 'id', story.backlog.id
             }
-            or{
-                if (story.state == Story.STATE_SUGGESTED){
+            or {
+                if (story.state == Story.STATE_SUGGESTED) {
                     and {
                         ge 'state', Story.STATE_SUGGESTED
                         ne 'id', story.id
-                        if (story.dependences){
-                        not {
-                                'in' 'id', story.dependences.collect{ it.id }
+                        if (story.dependences) {
+                            not {
+                                'in' 'id', story.dependences.collect { it.id }
                             }
                         }
                     }
                 }
 
-                if (story.state in [Story.STATE_ACCEPTED, Story.STATE_ESTIMATED]){
+                if (story.state in [Story.STATE_ACCEPTED, Story.STATE_ESTIMATED]) {
                     and {
                         'in' 'state', [Story.STATE_ACCEPTED, Story.STATE_ESTIMATED]
                         lt 'rank', story.rank
@@ -229,16 +226,16 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                     and {
                         gt 'state', Story.STATE_ESTIMATED
                     }
-                } else if (story.state in [Story.STATE_PLANNED, Story.STATE_INPROGRESS]){
+                } else if (story.state in [Story.STATE_PLANNED, Story.STATE_INPROGRESS]) {
                     and {
                         'in' 'state', [Story.STATE_PLANNED, Story.STATE_INPROGRESS, Story.STATE_DONE]
                         lt 'rank', story.rank
-                        parentSprint{
+                        parentSprint {
                             eq 'id', story.parentSprint.id
                         }
                     }
                     and {
-                        parentSprint{
+                        parentSprint {
                             lt 'startDate', story.parentSprint.startDate
                         }
                     }
@@ -274,7 +271,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
             }
         }
 
-        getInProduct {p, id ->
+        getInProduct { p, id ->
             backlog {
                 eq 'id', p
             }
@@ -285,14 +282,14 @@ class Story extends BacklogElement implements Cloneable, Serializable {
         }
     }
 
-    static Story withStory(long productId, long id){
+    static Story withStory(long productId, long id) {
         Story story = (Story) getInProduct(productId, id).list()
         if (!story)
-            throw new ObjectNotFoundException(id,'Story')
+            throw new ObjectNotFoundException(id, 'Story')
         return story
     }
 
-    static List<Story> withStories(def params, def id = 'id'){
+    static List<Story> withStories(def params, def id = 'id') {
         def ids = params[id]?.contains(',') ? params[id].split(',')*.toLong() : params.list(id)
         List<Story> stories = ids ? getAll(ids).findAll { it.backlog.id == params.product.toLong() } : null
         if (!stories) {
@@ -306,7 +303,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                 """SELECT MAX(s.uid)
                    FROM org.icescrum.core.domain.Story as s, org.icescrum.core.domain.Product as p
                    WHERE s.backlog = p
-                   AND p.id = :pid """, [pid: pid])[0]?:0) + 1
+                   AND p.id = :pid """, [pid: pid])[0] ?: 0) + 1
     }
 
     static findLastUpdatedComment(def element) {
@@ -374,18 +371,18 @@ class Story extends BacklogElement implements Cloneable, Serializable {
         return true
     }
 
-    static search(product, options, projectionColor = false, rowCount = false){
+    static search(product, options, projectionColor = false, rowCount = false) {
         List<Story> stories = []
         def criteria = {
 
-             if(projectionColor || rowCount){
+            if (projectionColor || rowCount) {
                 projections {
-                    if(projectionColor) {
+                    if (projectionColor) {
                         feature {
                             property("color")
                         }
                     }
-                    if (rowCount){
+                    if (rowCount) {
                         count()
                     }
                 }
@@ -394,107 +391,106 @@ class Story extends BacklogElement implements Cloneable, Serializable {
             backlog {
                 eq 'id', product
             }
-            if (options.term || options.story){
+            if (options.term || options.story) {
                 if (options.term) {
                     or {
-                        if (options.term instanceof List){
-                            options.term.each{
-                                ilike 'name', '%'+it+'%'
-                                ilike 'description', '%'+it+'%'
-                                ilike 'notes', '%'+it+'%'
+                        if (options.term instanceof List) {
+                            options.term.each {
+                                ilike 'name', '%' + it + '%'
+                                ilike 'description', '%' + it + '%'
+                                ilike 'notes', '%' + it + '%'
                             }
-                        } else if (options.term?.isInteger()){
+                        } else if (options.term?.isInteger()) {
                             eq 'uid', options.term.toInteger()
                         } else {
-                            ilike 'name', '%'+options.term+'%'
-                            ilike 'description', '%'+options.term+'%'
-                            ilike 'notes', '%'+options.term+'%'
+                            ilike 'name', '%' + options.term + '%'
+                            ilike 'description', '%' + options.term + '%'
+                            ilike 'notes', '%' + options.term + '%'
                         }
                     }
                 }
-                if (options.story?.feature?.isLong()){
+                if (options.story?.feature?.isLong()) {
                     feature {
                         eq 'id', options.story.feature.toLong()
                     }
                 }
-                if (options.story?.actor?.isLong()){
+                if (options.story?.actor?.isLong()) {
                     actor {
                         eq 'id', options.story.actor.toLong()
                     }
                 }
                 //case [2,3] or more
-                if (options.story?.state instanceof List && options.story.state.size() >= 2){
+                if (options.story?.state instanceof List && options.story.state.size() >= 2) {
                     or {
-                        options.story.state.each{
+                        options.story.state.each {
                             eq 'state', it
                         }
                     }
                 //case [3]
-                } else if (options.story?.state instanceof List){
+                } else if (options.story?.state instanceof List) {
                     eq 'state', it[0]
                 }
                 //case 3
-                else if (options.story?.state){
+                else if (options.story?.state) {
                     eq 'state', options.story.state instanceof String ? options.story?.state.toInteger() : options.story?.state
                 }
 
-                if (options.story?.parentRelease?.isLong()){
+                if (options.story?.parentRelease?.isLong()) {
                     parentSprint {
-                        parentRelease{
+                        parentRelease {
                             eq 'id', options.story.parentRelease.toLong()
                         }
                     }
                 }
-                if (options.story?.parentSprint?.isLong()){
+                if (options.story?.parentSprint?.isLong()) {
                     parentSprint {
                         eq 'id', options.story.parentSprint.toLong()
                     }
                 }
-                if (options.story?.creator?.isLong()){
+                if (options.story?.creator?.isLong()) {
                     creator {
                         eq 'id', options.story.creator.toLong()
                     }
                 }
-                if (options.story?.type?.isInteger()){
+                if (options.story?.type?.isInteger()) {
                     eq 'type', options.story.type.toInteger()
                 }
-                if (options.story?.dependsOn?.isLong()){
+                if (options.story?.dependsOn?.isLong()) {
                     dependsOn {
                         eq 'id', options.story.dependsOn.toLong()
                     }
                 }
-                if (options.story?.effort?.isBigDecimal()){
+                if (options.story?.effort?.isBigDecimal()) {
                     eq 'effort', options.story.effort.toBigDecimal()
                 }
-                if (options.story?.affectedVersion){
+                if (options.story?.affectedVersion) {
                     eq 'affectVersion', options.story.affectedVersion
                 }
-                if (options.story?.deliveredVersion){
+                if (options.story?.deliveredVersion) {
                     parentSprint {
                         eq 'deliveredVersion', options.story.deliveredVersion
                     }
                 }
             }
         }
-        if (options.tag){
+        if (options.tag) {
             stories = Story.findAllByTagWithCriteria(options.tag) {
                 criteria.delegate = delegate
                 criteria.call()
             }
-        } else if(options.term || options.story != null) {
-            stories = Story.createCriteria().list(options.list?:[:]) {
+        } else if (options.term || options.story != null) {
+            stories = Story.createCriteria().list(options.list ?: [:]) {
                 criteria.delegate = delegate
                 criteria.call()
             }
         }
-        if(stories && rowCount && stories instanceof List){
+        if (stories && rowCount && stories instanceof List) {
             return stories.get(0)
-        }
-        else if (stories && !projectionColor){
-            Map storiesGrouped = stories?.groupBy{ it.feature }
+        } else if (stories && !projectionColor) {
+            Map storiesGrouped = stories?.groupBy { it.feature }
             stories = []
-            storiesGrouped?.each{
-                it.value?.sort{ st -> st.state }
+            storiesGrouped?.each {
+                it.value?.sort { st -> st.state }
                 stories.addAll(it.value)
             }
         }
@@ -561,7 +557,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
             FROM Story story INNER JOIN story.acceptanceTests AS test
             WHERE story.id = :id
             GROUP BY test.state
-            ORDER BY test.state ASC """, [id: id, cache:true]
+            ORDER BY test.state ASC """, [id: id, cache: true]
         ).inject([:]) { countByState, group ->
             def (state, stateCount) = group
             if (AcceptanceTestState.exists(state)) {
@@ -575,8 +571,8 @@ class Story extends BacklogElement implements Cloneable, Serializable {
         return isProductOwner || ((state == STATE_SUGGESTED && currentUser == creator))
     }
 
-    def xml(builder){
-        builder.story(uid:this.uid){
+    def xml(builder) {
+        builder.story(uid: this.uid) {
             type(this.type)
             rank(this.rank)
             state(this.state)
@@ -592,19 +588,18 @@ class Story extends BacklogElement implements Cloneable, Serializable {
 
             tags { builder.mkp.yieldUnescaped("<![CDATA[${this.tags}]]>") }
             name { builder.mkp.yieldUnescaped("<![CDATA[${this.name}]]>") }
-            notes { builder.mkp.yieldUnescaped("<![CDATA[${this.notes?:''}]]>") }
-            description { builder.mkp.yieldUnescaped("<![CDATA[${this.description?:''}]]>") }
+            notes { builder.mkp.yieldUnescaped("<![CDATA[${this.notes ?: ''}]]>") }
+            description { builder.mkp.yieldUnescaped("<![CDATA[${this.description ?: ''}]]>") }
 
-            creator(uid:this.creator.uid)
-
-            if (this.feature){
-                feature(uid:this.feature.uid)
+            creator(uid: this.creator.uid)
+            if (this.feature) {
+                feature(uid: this.feature.uid)
             }
-            if (this.actor){
-                actor(uid:this.actor.uid)
+            if (this.actor) {
+                actor(uid: this.actor.uid)
             }
-            if (dependsOn){
-                dependsOn(uid:this.dependsOn.uid)
+            if (dependsOn) {
+                dependsOn(uid: this.dependsOn.uid)
             }
 
             comments() {
@@ -617,7 +612,6 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                     }
                 }
             }
-
             activities() {
                 this.activities.each { _activity ->
                     activity() {
@@ -631,13 +625,11 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                     }
                 }
             }
-
             acceptanceTests() {
                 this.acceptanceTests.each { _acceptanceTest ->
                     _acceptanceTest.xml(builder)
                 }
             }
-
             attachments() {
                 this.attachments.each { _att ->
                     _att.xml(builder)
