@@ -37,8 +37,8 @@ class WindowDefinition {
     String id
     String icon = ''
     String title = ''
-    String init = 'index'
-    String space = "product"
+    String secured = ''
+    String context = "product"
 
     def help = null
     def options = [:]
@@ -60,12 +60,20 @@ class WindowDefinition {
         this.menu = menu
     }
 
-    void init(String init) {
-        this.init = init
+    void icon(String icon) {
+        this.icon = icon
     }
 
     void title(String title) {
         this.title = title
+    }
+
+    void context(String context) {
+        this.context = context
+    }
+
+    void secured(String secured) {
+        this.secured = secured
     }
 
     void details(boolean details) {

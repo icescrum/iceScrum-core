@@ -23,6 +23,7 @@
 package org.icescrum.core.support
 
 import grails.converters.JSON
+import grails.plugin.springsecurity.SpringSecurityUtils
 import grails.plugin.springsecurity.userdetails.GrailsUser
 import grails.plugin.springsecurity.web.SecurityRequestHolder
 import grails.util.Environment
@@ -41,9 +42,15 @@ import org.apache.http.util.EntityUtils
 import org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib
 import org.icescrum.core.domain.User
 import org.icescrum.core.domain.preferences.UserPreferences
+import org.icescrum.core.security.WebScrumExpressionHandler
+import org.springframework.security.access.expression.ExpressionUtils
 import org.springframework.security.core.context.SecurityContextHolder
-import org.springframework.security.web.access.WebInvocationPrivilegeEvaluator
+import org.springframework.security.web.FilterInvocation
+import org.springframework.expression.Expression
+import org.springframework.security.access.expression.ExpressionUtils
+import org.springframework.security.web.FilterInvocation
 
+import javax.servlet.FilterChain
 import java.security.MessageDigest
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
@@ -53,21 +60,23 @@ class ApplicationSupport {
 
     private static final log = LogFactory.getLog(this)
     public static final CONFIG_ENV_NAME = 'icescrum_config_location'
+    protected static final FilterChain DUMMY_CHAIN = [
+            doFilter: { req, res -> throw new UnsupportedOperationException() }
+    ] as FilterChain
 
-    public static boolean isAllowed(def windowDefinition, def request, def params) {
-        ApplicationTagLib g = (ApplicationTagLib) Holders.grailsApplication.mainContext.getBean(ApplicationTagLib.class)
-        WebInvocationPrivilegeEvaluator webInvocationPrivilegeEvaluator = (WebInvocationPrivilegeEvaluator) Holders.grailsApplication.mainContext.getBean(WebInvocationPrivilegeEvaluator.class)
-
-        def space = getCurrentSpace(params,windowDefinition.space)
-        if (!windowDefinition || (windowDefinition.space && !params?."$windowDefinition.space")) {
+    public static boolean isAllowed(def windowDefinition, def params) {
+        WebScrumExpressionHandler webExpressionHandler = (WebScrumExpressionHandler) Holders.grailsApplication.mainContext.getBean(WebScrumExpressionHandler.class)
+        if (!windowDefinition || (windowDefinition.context && !params?."$windowDefinition.context")) {
             return false
         }
-        def attrs = [:]
-        attrs."$space" = params."$space"
-        def url = g.createLink(controller: windowDefinition.id, action: windowDefinition.init, params: attrs)
-        url = url.toString() - request.contextPath
-
-        return webInvocationPrivilegeEvaluator.isAllowed(SecurityRequestHolder.request.contextPath, url, 'GET', SecurityContextHolder.context?.authentication)
+        if(windowDefinition.secured){
+            Expression expression = webExpressionHandler.expressionParser.parseExpression(windowDefinition.secured)
+            FilterInvocation fi = new FilterInvocation(SecurityRequestHolder.getRequest(), SecurityRequestHolder.getResponse(), DUMMY_CHAIN)
+            def ctx = webExpressionHandler.createEvaluationContext(SecurityContextHolder.getContext().getAuthentication(), fi)
+            return ExpressionUtils.evaluateAsBoolean(expression, ctx)
+        } else {
+            return true
+        }
     }
 
     public static Map menuPositionFromUserPreferences(def windowDefinition) {
@@ -332,15 +341,15 @@ class ApplicationSupport {
         return dir
     }
 
-    public static getCurrentSpace(def params, def id = null) {
-        def space = Holders.grailsApplication.config.icescrum.spaces.find { id ? it.key == id : params."$it.key" }
-        if (space) {
-            def object = space.value.spaceClass.get(params.long("$space.key"))
-            return object ? [name        : space.key,
+    public static getCurrentContext(def params, def id = null) {
+        def context = Holders.grailsApplication.config.icescrum.contexts.find { id ? it.key == id : params."$it.key" }
+        if (context) {
+            def object = context.value.contextClass.get(params.long("$context.key"))
+            return object ? [name        : context.key,
                              object      : object,
-                             config      : space.value.config(object),
-                             params      : space.value.params(object),
-                             indexScrumOS: space.value.indexScrumOS] : false
+                             config      : context.value.config(object),
+                             params      : context.value.params(object),
+                             indexScrumOS: context.value.indexScrumOS] : false
         }
     }
 }

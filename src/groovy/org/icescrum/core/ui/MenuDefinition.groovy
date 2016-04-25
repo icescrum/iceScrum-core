@@ -32,7 +32,6 @@ class MenuDefinition {
     def show // no type because it can be a closure
     boolean defaultVisibility
     int  defaultPosition
-    boolean spaceDynamicBar = false
 
     void title(String title) {
         this.title = title
@@ -48,10 +47,6 @@ class MenuDefinition {
 
     void defaultPosition(int defaultPosition) {
         this.defaultPosition = defaultPosition
-    }
-
-    void spaceDynamicBar(boolean spaceDynamicBar) {
-        this.spaceDynamicBar = spaceDynamicBar
     }
 
     def methodMissing(String name, args) {

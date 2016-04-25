@@ -36,64 +36,7 @@ class WindowTagLib {
     def securityService
 
     def window = { attrs, body ->
-        def id = attrs.window ?: controllerName
-        attrs.type = attrs.type ?: 'window'
-        def includeParams = [:]
-        params.each {
-            if (!(it.key in ["controller", "action"])) {
-                includeParams << it
-            }
-        }
-        attrs.each {
-            if (!(it.key in ["controller", "action"])) {
-                includeParams << it
-            }
-        }
-        // Check for content window
-        def content
-        if (attrs.init) {
-            def result = includeContent([controller: id, action: attrs.init, params: includeParams])
-            if (result.contentType == 'application/json;charset=utf-8') {
-                response.setStatus(400)
-                response.setContentType(result.contentType)
-                out << result.content
-                return
-            } else {
-                content = result.content
-            }
-        } else {
-            content = body()
-        }
-        // Check for shortcuts
-        if (attrs.shortcuts) {
-            attrs.help = attrs.help ?: ""
-            attrs.help += "<span class='help-shortcut-title'>${message(code: 'is.ui.shortcut.title')}</span>"
-            attrs.shortcuts.each {
-                attrs.help += "<p class='keyboard-mappings'>"
-                attrs.help += "<span class='code box-simple ui-corner-all'>${message(code: it.code)}</span>"
-                attrs.help += "${message(code: it.text)}"
-                attrs.help += "</p>"
-            }
-        }
-        def params = [
-                type: attrs.type,
-                id: id,
-                flex: attrs.flex,
-                content: content,
-                details:attrs.details,
-                icon: attrs.icon ?: null,
-                spaceName: attrs.spaceName,
-                title: attrs.title ?: null,
-                contentClass: attrs.contentClass,
-                windowActions: attrs.windowActions ?: [
-                        help: attrs.help ?: null,
-                        fullScreen: attrs.fullScreen,
-                        printable:attrs.printable
-                ],
-        ]
-        if (content && !webRequest?.params?.returnError) {
-            out << g.render(template: '/components/' + attrs.type, plugin: 'icescrum-core', model: params)
-        }
+        out << g.render(template: '/components/window', plugin: 'icescrum-core', model:[windowDefinition:attrs.windowDefinition, content:body()])
     }
 
     def modal = { attrs, body ->

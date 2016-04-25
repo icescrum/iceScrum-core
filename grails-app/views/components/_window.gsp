@@ -17,11 +17,11 @@
   - along with iceScrum.  If not, see <http://www.gnu.org/licenses/>.
   --}%
  %{-- view --}%
-<div id="view-${id}" class="view ${flex?'flex':''}" ${details ? 'ng-class="displayDetailsView()"' : ''}>
+<div id="view-${windowDefinition.id}" class="view ${windowDefinition.flex?'flex':''}" ${windowDefinition.details ? 'ng-class="displayDetailsView()"' : ''}>
     <div class="content">
         ${content}
     </div>
-    <g:if test="${details}">
+    <g:if test="${windowDefinition.details}">
         <div ui-view="details"></div>
     </g:if>
 </div>

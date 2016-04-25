@@ -226,6 +226,19 @@ class IcescrumCoreGrailsPlugin {
                         render('')
                         log.debug(e.getMessage())
                     }
+                },
+                window: {
+                    try {
+                        //come from forward
+                        if(params.controller == 'scrumOS'){
+                            render(plugin: pluginName, template: "window")
+                        } else {
+                            render(status:403)
+                        }
+                    } catch (Exception e) {
+                        render('')
+                        log.debug(e.getMessage())
+                    }
                 }
         ]
 
