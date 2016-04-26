@@ -23,9 +23,8 @@
 package org.icescrum.core.support
 
 import grails.converters.JSON
-import grails.plugin.springsecurity.SpringSecurityUtils
 import grails.plugin.springsecurity.userdetails.GrailsUser
-import grails.plugin.springsecurity.web.SecurityRequestHolder
+import grails.plugin.springsecurity.web.SecurityRequestHolder as SRH
 import grails.util.Environment
 import grails.util.Holders
 import grails.util.Metadata
@@ -43,12 +42,11 @@ import org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib
 import org.icescrum.core.domain.User
 import org.icescrum.core.domain.preferences.UserPreferences
 import org.icescrum.core.security.WebScrumExpressionHandler
-import org.springframework.security.access.expression.ExpressionUtils
-import org.springframework.security.core.context.SecurityContextHolder
-import org.springframework.security.web.FilterInvocation
+import org.springframework.security.core.context.SecurityContextHolder as SCH
 import org.springframework.expression.Expression
 import org.springframework.security.access.expression.ExpressionUtils
 import org.springframework.security.web.FilterInvocation
+import org.springframework.security.web.access.WebInvocationPrivilegeEvaluator
 
 import javax.servlet.FilterChain
 import java.security.MessageDigest
@@ -64,25 +62,40 @@ class ApplicationSupport {
             doFilter: { req, res -> throw new UnsupportedOperationException() }
     ] as FilterChain
 
+    public static def controllerExist(def controllerName, def actionName = ''){
+        def controllerClass = Holders.grailsApplication.controllerClasses.find{ it.logicalPropertyName == controllerName }
+        return actionName ? controllerClass?.metaClass?.respondsTo(actionName) : controllerClass
+    }
+
     public static boolean isAllowed(def windowDefinition, def params) {
-        WebScrumExpressionHandler webExpressionHandler = (WebScrumExpressionHandler) Holders.grailsApplication.mainContext.getBean(WebScrumExpressionHandler.class)
+        def grailsApplication  = Holders.grailsApplication
+        WebScrumExpressionHandler webExpressionHandler = (WebScrumExpressionHandler) grailsApplication.mainContext.getBean(WebScrumExpressionHandler.class)
         if (!windowDefinition || (windowDefinition.context && !params?."$windowDefinition.context")) {
             return false
         }
+        //secured on uiDefinition
         if(windowDefinition.secured){
             Expression expression = webExpressionHandler.expressionParser.parseExpression(windowDefinition.secured)
-            FilterInvocation fi = new FilterInvocation(SecurityRequestHolder.getRequest(), SecurityRequestHolder.getResponse(), DUMMY_CHAIN)
-            def ctx = webExpressionHandler.createEvaluationContext(SecurityContextHolder.getContext().getAuthentication(), fi)
+            FilterInvocation fi = new FilterInvocation(SRH.request, SRH.response, DUMMY_CHAIN)
+            def ctx = webExpressionHandler.createEvaluationContext(SCH.context.getAuthentication(), fi)
             return ExpressionUtils.evaluateAsBoolean(expression, ctx)
         } else {
-            return true
+            //secured on controller
+            if(controllerExist(windowDefinition.id, 'window')) {
+                ApplicationTagLib g = (ApplicationTagLib) grailsApplication.mainContext.getBean(ApplicationTagLib.class)
+                WebInvocationPrivilegeEvaluator webInvocationPrivilegeEvaluator = (WebInvocationPrivilegeEvaluator) grailsApplication.mainContext.getBean(WebInvocationPrivilegeEvaluator.class)
+                def url = g.createLink(controller: windowDefinition.id, action: 'window')
+                url = url.toString() - SRH.request.contextPath
+                return webInvocationPrivilegeEvaluator.isAllowed(SRH.request.contextPath, url, 'GET', SCH.context?.authentication)
+            }
         }
+        return false
     }
 
     public static Map menuPositionFromUserPreferences(def windowDefinition) {
         UserPreferences userPreferences = null
-        if (GrailsUser.isAssignableFrom(SecurityContextHolder.context.authentication?.principal?.getClass())) {
-            userPreferences = User.get(SecurityContextHolder.context.authentication.principal?.id)?.preferences
+        if (GrailsUser.isAssignableFrom(SCH.context.authentication?.principal?.getClass())) {
+            userPreferences = User.get(SCH.context.authentication.principal?.id)?.preferences
         }
         def visiblePosition = userPreferences?.menu?.getAt(windowDefinition.id)
         def hiddenPosition = userPreferences?.menuHidden?.getAt(windowDefinition.id)

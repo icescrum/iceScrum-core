@@ -36,6 +36,7 @@ class WindowTagLib {
     def securityService
 
     def window = { attrs, body ->
+        assert attrs.windowDefinition
         out << g.render(template: '/components/window', plugin: 'icescrum-core', model:[windowDefinition:attrs.windowDefinition, content:body()])
     }
 

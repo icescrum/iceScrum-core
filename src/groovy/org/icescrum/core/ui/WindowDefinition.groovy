@@ -37,7 +37,7 @@ class WindowDefinition {
     String id
     String icon = ''
     String title = ''
-    String secured = ''
+    String secured = 'permitAll()'
     String context = "product"
 
     def help = null
