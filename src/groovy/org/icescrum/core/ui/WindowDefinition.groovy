@@ -37,8 +37,9 @@ class WindowDefinition {
     String id
     String icon = ''
     String title = ''
-    String secured = 'permitAll()'
+    String pluginName = null
     String context = "product"
+    String secured = 'permitAll()'
 
     def help = null
     def options = [:]
@@ -47,9 +48,10 @@ class WindowDefinition {
     MenuDefinition menu
     Closure before = null
 
-    WindowDefinition(String id, boolean disabled) {
+    WindowDefinition(String id, String pluginName, boolean disabled) {
         this.id = id
         this.disabled = disabled
+        this.pluginName = pluginName
     }
     
     void menu(Closure menuClosure) {

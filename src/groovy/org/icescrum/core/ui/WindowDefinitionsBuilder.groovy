@@ -30,17 +30,19 @@ class WindowDefinitionsBuilder {
     private final log = LoggerFactory.getLogger(this.class.name)
 
     private boolean disabled = false
+    private String pluginName = null
     private ConcurrentHashMap windowsDefinitionsById
 
-    WindowDefinitionsBuilder(ConcurrentHashMap windowsDefinitionsById, boolean disabled) {
+    WindowDefinitionsBuilder(ConcurrentHashMap windowsDefinitionsById, String pluginName, boolean disabled) {
         this.disabled = disabled
+        this.pluginName = pluginName
         this.windowsDefinitionsById = windowsDefinitionsById
     }
 
     def invokeMethod(String name, args) {
         if (args.size() == 1 && args[0] instanceof Closure) {
             def definitionClosure = args[0]
-            WindowDefinition windowDefinition = new WindowDefinition(name, disabled)
+            WindowDefinition windowDefinition = new WindowDefinition(name, pluginName, disabled)
             definitionClosure.delegate = windowDefinition
             definitionClosure.resolveStrategy = Closure.DELEGATE_FIRST
             definitionClosure()

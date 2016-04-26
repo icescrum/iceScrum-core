@@ -55,7 +55,7 @@ class UiDefinitionService {
             def windows = config.windows
             if(windows instanceof Closure) {
                 if (log.debugEnabled) { log.debug("Evaluating UI Windows definitions from $it.clazz.name") }
-                def builder = new WindowDefinitionsBuilder(windowsDefinitionsById, !enabled)
+                def builder = new WindowDefinitionsBuilder(windowsDefinitionsById, config.pluginName?:null, !enabled)
                 windows.delegate = builder
                 windows.resolveStrategy = Closure.DELEGATE_FIRST
                 windows()
