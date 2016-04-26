@@ -34,6 +34,7 @@ class UiDefinitionService {
     static transactional = false
 
     def pluginManager
+    def groovyPageLocator
     def grailsApplication
 
     private ConcurrentHashMap widgetsDefinitionsById
@@ -76,7 +77,7 @@ class UiDefinitionService {
             def widgets = config.widgets
             if(widgets instanceof Closure) {
                 if (log.debugEnabled) { log.debug("Evaluating UI widgets definitions from $it.clazz.name") }
-                def builder = new WidgetDefinitionsBuilder(widgetsDefinitionsById, !enabled)
+                def builder = new WidgetDefinitionsBuilder(widgetsDefinitionsById, config.pluginName?:null, !enabled, groovyPageLocator)
                 widgets.delegate = builder
                 widgets.resolveStrategy = Closure.DELEGATE_FIRST
                 widgets()

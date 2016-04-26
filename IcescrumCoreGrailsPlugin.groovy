@@ -123,10 +123,6 @@ class IcescrumCoreGrailsPlugin {
         uiDefinitionService.loadDefinitions()
 
         application.controllerClasses.each {
-            if(uiDefinitionService.hasWindowDefinition(it.logicalPropertyName)) {
-                def plugin = it.hasProperty('pluginName') ? it.getPropertyValue('pluginName') : null
-                addUIControllerMethods(it, ctx, plugin)
-            }
             addBroadcastMethods(it) // TODO Remove & don't forget to clean method calls (controllers & co)
             addErrorMethod(it)
             addRenderRESTMethod(it)
@@ -193,8 +189,6 @@ class IcescrumCoreGrailsPlugin {
             AttachmentableService attachmentableService = event.ctx.getBean('attachmentableService')
 
             if(uiDefinitionService.hasWindowDefinition(controller.logicalPropertyName)) {
-                def plugin = controller.hasProperty('pluginName') ? controller.getPropertyValue('pluginName') : null
-                addUIControllerMethods(controller, application.mainContext, plugin)
                 if (controller.logicalPropertyName in controllersWithDownloadAndPreview){
                     addDownloadAndPreviewMethods(controller, attachmentableService, hdImageService)
                 }
@@ -214,31 +208,6 @@ class IcescrumCoreGrailsPlugin {
 
     def onConfigChange = { event ->
         event.application.mainContext.uiDefinitionService.reload()
-    }
-
-    private addUIControllerMethods(clazz, ApplicationContext ctx, pluginName) {
-        def mc = clazz.metaClass
-        def dynamicActions = [
-                right: {
-                    try {
-                        render(plugin: pluginName, template: "window/right", model: [id: controllerName])
-                    } catch (Exception e) {
-                        render('')
-                        log.debug(e.getMessage())
-                    }
-                }
-        ]
-
-        dynamicActions.each { actionName, actionClosure ->
-            if (!clazz.getPropertyValue(actionName)) {
-                mc."${GrailsClassUtils.getGetterName(actionName)}" = {->
-                    actionClosure.delegate = delegate
-                    actionClosure.resolveStrategy = Closure.DELEGATE_FIRST
-                    actionClosure
-                }
-                clazz.registerMapping(actionName)
-            }
-        }
     }
 
     private addDownloadAndPreviewMethods(clazz, attachmentableService, hdImageService){

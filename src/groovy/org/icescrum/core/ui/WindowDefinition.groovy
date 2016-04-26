@@ -38,6 +38,7 @@ class WindowDefinition {
     String icon = ''
     String title = ''
     String pluginName = null
+    String templatePath = null
     String context = "product"
     String secured = 'permitAll()'
 
@@ -76,6 +77,10 @@ class WindowDefinition {
 
     void secured(String secured) {
         this.secured = secured
+    }
+
+    void templatePath(String templatePath) {
+        this.templatePath = templatePath
     }
 
     void details(boolean details) {

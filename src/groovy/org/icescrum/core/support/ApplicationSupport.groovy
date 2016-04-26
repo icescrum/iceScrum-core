@@ -67,24 +67,24 @@ class ApplicationSupport {
         return actionName ? controllerClass?.metaClass?.respondsTo(actionName) : controllerClass
     }
 
-    public static boolean isAllowed(def windowDefinition, def params) {
+    public static boolean isAllowed(def viewDefinition, def params, def widget = false) {
         def grailsApplication  = Holders.grailsApplication
         WebScrumExpressionHandler webExpressionHandler = (WebScrumExpressionHandler) grailsApplication.mainContext.getBean(WebScrumExpressionHandler.class)
-        if (!windowDefinition || (windowDefinition.context && !params?."$windowDefinition.context")) {
+        if (!viewDefinition || (viewDefinition.context && !params?."$viewDefinition.context")) {
             return false
         }
         //secured on uiDefinition
-        if(windowDefinition.secured){
-            Expression expression = webExpressionHandler.expressionParser.parseExpression(windowDefinition.secured)
+        if(viewDefinition.secured){
+            Expression expression = webExpressionHandler.expressionParser.parseExpression(viewDefinition.secured)
             FilterInvocation fi = new FilterInvocation(SRH.request, SRH.response, DUMMY_CHAIN)
             def ctx = webExpressionHandler.createEvaluationContext(SCH.context.getAuthentication(), fi)
             return ExpressionUtils.evaluateAsBoolean(expression, ctx)
         } else {
             //secured on controller
-            if(controllerExist(windowDefinition.id, 'window')) {
+            if(controllerExist(viewDefinition.id, widget ? 'widget' : 'window')) {
                 ApplicationTagLib g = (ApplicationTagLib) grailsApplication.mainContext.getBean(ApplicationTagLib.class)
                 WebInvocationPrivilegeEvaluator webInvocationPrivilegeEvaluator = (WebInvocationPrivilegeEvaluator) grailsApplication.mainContext.getBean(WebInvocationPrivilegeEvaluator.class)
-                def url = g.createLink(controller: windowDefinition.id, action: 'window')
+                def url = g.createLink(controller: viewDefinition.id, action: widget ? 'widget' : 'window')
                 url = url.toString() - SRH.request.contextPath
                 return webInvocationPrivilegeEvaluator.isAllowed(SRH.request.contextPath, url, 'GET', SCH.context?.authentication)
             }

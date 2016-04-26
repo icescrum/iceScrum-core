@@ -1,5 +1,7 @@
 package org.icescrum.core.ui
 
+import groovy.text.Template
+import org.codehaus.groovy.grails.io.support.PathMatchingResourcePatternResolver
 import org.slf4j.LoggerFactory
 import java.util.concurrent.ConcurrentHashMap
 
@@ -29,24 +31,31 @@ class WidgetDefinitionsBuilder {
 
     private final log = LoggerFactory.getLogger(this.class.name)
 
+    private def groovyPageLocator
     private boolean disabled = false
+    private String pluginName = null
     private ConcurrentHashMap widgetsDefinitionsById
 
-    WidgetDefinitionsBuilder(ConcurrentHashMap widgetsDefinitionsById, boolean disabled) {
+    WidgetDefinitionsBuilder(ConcurrentHashMap widgetsDefinitionsById, String pluginName, boolean disabled, def groovyPageLocator) {
         this.disabled = disabled
+        this.pluginName = pluginName
+        this.groovyPageLocator = groovyPageLocator
         this.widgetsDefinitionsById = widgetsDefinitionsById
     }
 
     def invokeMethod(String name, args) {
         if (args.size() == 1 && args[0] instanceof Closure) {
             def definitionClosure = args[0]
-            WidgetDefinition widgetDefinition = new WidgetDefinition(name, disabled)
+            WidgetDefinition widgetDefinition = new WidgetDefinition(name, pluginName, disabled)
             definitionClosure.delegate = widgetDefinition
             definitionClosure.resolveStrategy = Closure.DELEGATE_FIRST
             definitionClosure()
             if(widgetsDefinitionsById[name]) {
                 log.warn("UI widget definition for $name will be overriden")
             }
+            widgetDefinition.templatePath = widgetDefinition.templatePath ?: "/${widgetDefinition.id}/widget"
+            widgetDefinition.footer = groovyPageLocator.findTemplate(widgetDefinition.id, "widget/footer") ? true : false
+            widgetDefinition.settings = groovyPageLocator.findTemplate(widgetDefinition.id, "widget/settings") ? true : false
             widgetsDefinitionsById[name] = widgetDefinition
             if (log.debugEnabled) { log.debug("Added new UI widget definition for $name and status is : ${disabled ? 'disabled' : 'enabled'}") }
         }

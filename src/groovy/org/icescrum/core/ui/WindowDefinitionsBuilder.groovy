@@ -49,6 +49,7 @@ class WindowDefinitionsBuilder {
             if(windowsDefinitionsById[name]) {
                 log.warn("UI window definition for $name will be overriden")
             }
+            windowDefinition.templatePath = windowDefinition.templatePath ?: "/${windowDefinition.id}/widget"
             windowsDefinitionsById[name] = windowDefinition
             if (log.debugEnabled) { log.debug("Added new UI window definition for $name and status is : ${disabled ? 'disabled' : 'enabled'}") }
         }

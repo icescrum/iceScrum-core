@@ -30,19 +30,43 @@ class WidgetDefinition {
     private final log = LoggerFactory.getLogger(this.class.name)
 
     boolean disabled
+    boolean footer = false
+    boolean settings = false
+
 
     String id
+    String icon = ''
     String title = ''
+    String context = null
+    String pluginName = null
+    String templatePath = null
+    String secured = 'permitAll()'
 
     def options = [:]
 
-    WidgetDefinition(String id, boolean disabled) {
+    WidgetDefinition(String id, String pluginName, boolean disabled) {
         this.id = id
         this.disabled = disabled
+        this.pluginName = pluginName
     }
 
+    void icon(String icon) {
+        this.icon = icon
+    }
     void title(String title) {
         this.title = title
+    }
+
+    void context(String context) {
+        this.context = context
+    }
+
+    void secured(String secured) {
+        this.secured = secured
+    }
+
+    void templatePath(String templatePath) {
+        this.templatePath = templatePath
     }
 
     def methodMissing(String name, args) {
