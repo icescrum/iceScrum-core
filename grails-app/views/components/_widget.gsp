@@ -19,7 +19,7 @@
 %{-- widget --}%
 <div ng-controller="widgetCtrl" class="panel panel-light">
     <div id="widget-${widgetDefinition.id}" class="widget widget-${widgetDefinition.id}">
-        <div class="panel-heading clearfix">
+        <div class="panel-heading clearfix" as-sortable-item-handle>
             <h3 class="panel-title">
                 <i class="fa fa-${widgetDefinition.icon}"></i> <g:message code="${widgetDefinition.title}"/>
                 <g:if test="${widgetDefinition.settings}">

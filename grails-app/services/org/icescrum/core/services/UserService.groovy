@@ -198,53 +198,6 @@ class UserService extends IceScrumEventPublisher {
         }
     }
 
-    @Transactional(readOnly = true)
-    def unMarshall(def user) {
-        try {
-            def u
-            if (user.@uid.text()) {
-                u = User.findByUid(user.@uid.text())
-            } else {
-                u = ApplicationSupport.findUserUIDOldXMl(user, null, null)
-            }
-            if (!u) {
-                u = new User(
-                        lastName: user.lastName.text(),
-                        firstName: user.firstName.text(),
-                        username: user.username.text(),
-                        email: user.email.text(),
-                        password: user.password.text(),
-                        enabled: user.enabled.text().toBoolean() ?: true,
-                        accountExpired: user.accountExpired.text().toBoolean() ?: false,
-                        accountLocked: user.accountLocked.text().toBoolean() ?: false,
-                        passwordExpired: user.passwordExpired.text().toBoolean() ?: false,
-                        accountExternal: user.accountExternal?.text()?.toBoolean() ?: false,
-                        uid: user.@uid.text() ?: (user.username.text() + user.email.text()).encodeAsMD5()
-                )
-
-                def language = user.preferences.language.text()
-                if (language == "en") {
-                    def version = ApplicationSupport.findIceScrumVersionFromXml(user)
-                    if (version == null || version < "R6#2") {
-                        language = "en_US"
-                    }
-                }
-                u.preferences = new UserPreferences(
-                        language: language,
-                        activity: user.preferences.activity.text(),
-                        filterTask: user.preferences.filterTask.text(),
-                        menu: user.preferences.menu.text(),
-                        menuHidden: user.preferences.menuHidden.text(),
-                        hideDoneState: user.preferences.hideDoneState.text()?.toBoolean() ?: false
-                )
-            }
-            return u
-        } catch (Exception e) {
-            if (log.debugEnabled) e.printStackTrace()
-            throw new RuntimeException(e)
-        }
-    }
-
     void updatePanelPosition(User user, String id, String position, boolean right) {
         def currentPanels
         if (right) {
@@ -314,5 +267,52 @@ class UserService extends IceScrumEventPublisher {
                     pubDate: Date.parse("EEE', 'dd' 'MMM' 'yyyy' 'HH:mm:ss' 'Z", xmlItem.pubDate.text()).time]
         }
         return contentFeed
+    }
+
+    @Transactional(readOnly = true)
+    def unMarshall(def user) {
+        try {
+            def u
+            if (user.@uid.text()) {
+                u = User.findByUid(user.@uid.text())
+            } else {
+                u = ApplicationSupport.findUserUIDOldXMl(user, null, null)
+            }
+            if (!u) {
+                u = new User(
+                        lastName: user.lastName.text(),
+                        firstName: user.firstName.text(),
+                        username: user.username.text(),
+                        email: user.email.text(),
+                        password: user.password.text(),
+                        enabled: user.enabled.text().toBoolean() ?: true,
+                        accountExpired: user.accountExpired.text().toBoolean() ?: false,
+                        accountLocked: user.accountLocked.text().toBoolean() ?: false,
+                        passwordExpired: user.passwordExpired.text().toBoolean() ?: false,
+                        accountExternal: user.accountExternal?.text()?.toBoolean() ?: false,
+                        uid: user.@uid.text() ?: (user.username.text() + user.email.text()).encodeAsMD5()
+                )
+
+                def language = user.preferences.language.text()
+                if (language == "en") {
+                    def version = ApplicationSupport.findIceScrumVersionFromXml(user)
+                    if (version == null || version < "R6#2") {
+                        language = "en_US"
+                    }
+                }
+                u.preferences = new UserPreferences(
+                        language: language,
+                        activity: user.preferences.activity.text(),
+                        filterTask: user.preferences.filterTask.text(),
+                        menu: user.preferences.menu.text(),
+                        menuHidden: user.preferences.menuHidden.text(),
+                        hideDoneState: user.preferences.hideDoneState.text()?.toBoolean() ?: false
+                )
+            }
+            return u
+        } catch (Exception e) {
+            if (log.debugEnabled) e.printStackTrace()
+            throw new RuntimeException(e)
+        }
     }
 }
