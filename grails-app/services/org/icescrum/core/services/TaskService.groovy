@@ -77,20 +77,9 @@ class TaskService extends IceScrumEventPublisher {
 
     @PreAuthorize('inProduct(#task.parentProduct) and !archivedProduct(#task.parentProduct)')
     void update(Task task, User user, boolean force = false, props = [:]) {
-
         if (props.state != null) {
             state(task, props.state, user)
         }
-        if (task.isDirty('state') || task.isDirty('parentStory') || task.isDirty('type')) {
-            if (props.rank == null) {
-                props.rank = 1
-            }
-            resetRank(task)
-            setRank(task, props.rank)
-        } else if (props.rank != null) {
-            updateRank(task, props.rank)
-        }
-
         def sprint = task.sprint
         if (sprint?.state == Sprint.STATE_DONE) {
             throw new IllegalStateException('is.sprint.error.state.not.inProgress')
@@ -102,7 +91,7 @@ class TaskService extends IceScrumEventPublisher {
                 && product.preferences.limitUrgentTasks >= sprint.tasks?.findAll { it.type == Task.TYPE_URGENT && it.state == Task.STATE_BUSY && it.id != task.id }?.size()) {
             throw new IllegalStateException('is.task.error.limitTasksUrgent')
         }
-        if (!(task.state == Task.STATE_DONE && task.doneDate)) {
+        if (task.state != Task.STATE_DONE || !task.doneDate) {
             if (force || task.responsible?.id?.equals(user.id) || task.creator.id.equals(user.id) || securityService.scrumMaster(null, springSecurityService.authentication)) {
                 if (task.state >= Task.STATE_BUSY && !task.inProgressDate) {
                     task.inProgressDate = new Date()
@@ -134,6 +123,17 @@ class TaskService extends IceScrumEventPublisher {
             }
         } else {
             throw new IllegalStateException('is.task.error.done')
+        }
+        if (task.isDirty('state') || task.isDirty('parentStory') || task.isDirty('type')) {
+            if (props.rank == null) {
+                def container = task.parentStory ?: task.backlog
+                def sameStateAndTypeTasks = container.tasks.findAll { it.state == task.state && it.type == task.type && it.id != task.id }
+                props.rank = sameStateAndTypeTasks ? sameStateAndTypeTasks.size() + 1 : 1
+            }
+            resetRank(task)
+            setRank(task, props.rank)
+        } else if (props.rank != null) {
+            updateRank(task, props.rank)
         }
         def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_UPDATE, task)
         if (!task.save(flush: true)) {
