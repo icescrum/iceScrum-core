@@ -32,10 +32,10 @@
             </h3>
         </div>
         <div class="panel-body" ${widgetDefinition.settings ? 'ng-switch="showSettings"' : ''}>
-            <div ${widgetDefinition.settings ? 'ng-switch-default' : ''}>
+            ${widgetDefinition.settings ? '<div ng-switch-default>' : ''}
                 ${content}
-            </div>
-            <g:if test="${widgetDefinition.settings}">
+            ${widgetDefinition.settings ? '</div>' : ''}
+        <g:if test="${widgetDefinition.settings}">
                 <g:render template="/${widgetDefinition.id}/widget/settings" plugin="${widgetDefinition.pluginName}"/>
             </g:if>
         </div>
