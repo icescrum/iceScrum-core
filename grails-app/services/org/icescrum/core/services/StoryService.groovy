@@ -88,6 +88,8 @@ class StoryService extends IceScrumEventPublisher {
         }.each {
             story.addToFollowers(user)
         }
+        def rank = story.sameBacklogStories ? story.sameBacklogStories.max { it.rank }.rank + 1 : 1
+        setRank(story, rank)
         if (story.save(flush: true)) {
             story.refresh() // required to initialize collections to empty list
             product.addToStories(story)
@@ -179,7 +181,7 @@ class StoryService extends IceScrumEventPublisher {
         if (story.state < Story.STATE_SUGGESTED && story.rank != 0) {
             story.rank = 0
         } else if (props.rank != null && props.rank != story.rank) {
-            rank(story, props.rank)
+            updateRank(story, props.rank)
         }
         if (story.isDirty('description')) {
             def product = story.backlog
@@ -400,18 +402,14 @@ class StoryService extends IceScrumEventPublisher {
 
     // TODO check rights
     private void resetRank(Story story) {
-        def stories = story.sameBacklogStories
-        if (stories) {
-            stories.findAll { it.rank > story.rank }.each {
-                it.rank--
-                it.save()
-            }
+        story.sameBacklogStories.findAll { it.rank > story.rank }.each {
+            it.rank--
+            it.save()
         }
     }
 
     // TODO check rights
-    @PreAuthorize('(productOwner(#story.backlog) or scrumMaster(#story.backlog))  and !archivedProduct(#story.backlog)')
-    private void rank(Story story, Long rank) {
+    private void updateRank(Story story, Long rank) {
         rank = adjustRankAccordingToDependences(story, rank)
         if ((story.dependsOn || story.dependences) && story.rank == rank) {
             return
@@ -583,7 +581,7 @@ class StoryService extends IceScrumEventPublisher {
                 throw new IllegalStateException('is.story.error.declareAsDone.state.not.inProgress')
             }
             //Move story to last rank in sprint
-            rank(story, Story.countByParentSprint(story.parentSprint))
+            updateRank(story, Story.countByParentSprint(story.parentSprint))
             story.state = Story.STATE_DONE
             story.doneDate = new Date()
             story.parentSprint.velocity += story.effort
@@ -628,7 +626,7 @@ class StoryService extends IceScrumEventPublisher {
             story.doneDate = null
             story.parentSprint.velocity -= story.effort
             //Move story to last rank of in progress stories in sprint
-            rank(story, Story.countByParentSprintAndState(story.parentSprint, Story.STATE_INPROGRESS) + 1)
+            updateRank(story, Story.countByParentSprintAndState(story.parentSprint, Story.STATE_INPROGRESS) + 1)
             if (!story.save()) {
                 throw new RuntimeException()
             }

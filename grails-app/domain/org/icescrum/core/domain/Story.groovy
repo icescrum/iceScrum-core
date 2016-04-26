@@ -76,7 +76,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
     ]
 
     static mappedBy = [
-            tasks: 'parentStory'
+            tasks: 'parentStory' // Todo check if can be removed, probably yes because there is no ambiguity in mapping: task is related to story only with "parentStory"
     ]
 
     static transients = [
@@ -99,13 +99,13 @@ class Story extends BacklogElement implements Cloneable, Serializable {
         plannedDate(nullable: true)
         inProgressDate(nullable: true)
         doneDate(nullable: true)
-        parentSprint(nullable: true)
-        feature(nullable: true, validator: { newFeature, story -> newFeature == null || newFeature.backlog == story.backlog }) // TODO custom message
-        actor(nullable: true)
+        parentSprint(nullable: true, validator: { newSprint, story -> newSprint == null || newSprint.parentProduct.id == story.backlog.id }) // TODO custom message
+        feature(nullable: true, validator: { newFeature, story -> newFeature == null || newFeature.backlog.id == story.backlog.id }) // TODO custom message
+        actor(nullable: true, validator: { newActor, story -> newActor == null || newActor.backlog.id == story.backlog.id }) // TODO custom message)
         affectVersion(nullable: true)
         effort(nullable: true, validator: { newEffort, story -> newEffort == null || (newEffort >= 0 && newEffort < 1000) }) // TODO custom message
         creator(nullable: true) // in case of a user deletion, the story can remain without owner
-        dependsOn(nullable: true, validator: { newDependsOn, story -> newDependsOn == null || newDependsOn.backlog == story.backlog }) // TODO custom message
+        dependsOn(nullable: true, validator: { newDependsOn, story -> newDependsOn == null || (newDependsOn.backlog.id == story.backlog.id && newDependsOn.state >= story.state) }) // TODO custom message
         origin(nullable: true)
     }
 
