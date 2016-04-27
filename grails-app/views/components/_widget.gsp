@@ -22,13 +22,22 @@
         <div class="panel-heading clearfix" as-sortable-item-handle>
             <h3 class="panel-title">
                 <i class="fa fa-${widgetDefinition.icon}"></i> <g:message code="${widgetDefinition.title}"/>
-                <g:if test="${widgetDefinition.settings}">
-                    <button class="pull-right visible-on-hover btn btn-default btn-sm"
-                            ng-click="toggleSettings()"
-                            uib-tooltip="${message(code: 'todo.is.ui.setting')}">
-                        <i class="fa fa-cog"></i>
-                    </button>
-                </g:if>
+                <div class="pull-right btn-group visible-on-hover">
+                    <g:if test="${widgetDefinition.settings}">
+                        <button class="btn btn-default btn-sm"
+                                ng-click="toggleSettings()"
+                                uib-tooltip="${message(code: 'todo.is.ui.setting')}">
+                            <i class="fa fa-cog"></i>
+                        </button>
+                    </g:if>
+                    <g:if test="${widgetDefinition.allowRemove}">
+                        <button class="btn btn-default btn-sm"
+                                ng-click="remove()"
+                                uib-tooltip="${message(code: 'todo.is.ui.setting')}">
+                            <i class="fa fa-times"></i>
+                        </button>
+                    </g:if>
+                </div>
             </h3>
         </div>
         <div class="panel-body" ${widgetDefinition.settings ? 'ng-switch="showSettings"' : ''}>

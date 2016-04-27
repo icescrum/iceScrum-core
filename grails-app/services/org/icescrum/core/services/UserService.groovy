@@ -198,45 +198,47 @@ class UserService extends IceScrumEventPublisher {
         }
     }
 
-    void updatePanelPosition(User user, String id, String position, boolean right) {
-        def currentPanels
+    void updateWidgetPosition(User user, Widget widget, String position, boolean right) {
+        def currentWidgets
         if (right) {
-            currentPanels = user.preferences.panelsRight
-            if (!currentPanels.containsKey(id)) {
-                currentPanels.put(id, (currentPanels.size()).toString())
-                if (user.preferences.panelsLeft.containsKey(id)) {
-                    updatePanelPosition(user, id, (user.preferences.panelsLeft.size() - 1).toString(), false)
-                    user.preferences.panelsLeft.remove(id)
+            currentWidgets = Widget.findAllByRightAndUserPreferences(true, user.preferences)
+            if (!currentWidgets.contains(widget)) {
+                widget.right = right
+                widget.position = currentWidgets.size() + 1
+                def widgetsLeft = Widget.findAllByRightAndUserPreferences(false, user.preferences)
+                if (widgetsLeft.contains(widget)) {
+                    updateWidgetPosition(user, widget, (widgetsLeft.size() - 1).toString(), false)
                 }
             }
         } else {
-            currentPanels = user.preferences.panelsLeft
-            if (!currentPanels.containsKey(id)) {
-                currentPanels.put(id, (currentPanels.size()).toString())
-                if (user.preferences.panelsRight.containsKey(id)) {
-                    updatePanelPosition(user, id, (user.preferences.panelsRight.size() - 1).toString(), true)
-                    user.preferences.panelsRight.remove(id)
+            currentWidgets = Widget.findAllByRightAndUserPreferences(false, user.preferences)
+            if (!currentWidgets.contains(widget)) {
+                widget.right = right
+                widget.position = currentWidgets.size() + 1
+                def widgetsRight = Widget.findAllByRightAndUserPreferences(true, user.preferences)
+                if (widgetsRight.contains(widget)) {
+                    updateWidgetPosition(user, widget, (widgetsRight.size() - 1).toString(), true)
                 }
             }
         }
-        def from = currentPanels.get(id)?.toInteger()
-        from = from ?: 0
+        def from = widget.position
+        from = from ?: 1
         def to = position.toInteger()
         if (from != to) {
             if (from > to) {
-                currentPanels.entrySet().each { it ->
-                    if (it.value.toInteger() >= to && it.value.toInteger() <= from && it.key != id) {
-                        it.value = (it.value.toInteger() + 1).toString()
-                    } else if (it.key == id) {
-                        it.value = position
+                currentWidgets.each { Widget it ->
+                    if (it.position >= to && it.position <= from && it.id != widget.id) {
+                        it.position++
+                    } else if (it.id == widget.id) {
+                        it.position = position.toInteger()
                     }
                 }
             } else {
-                currentPanels.entrySet().each { it ->
-                    if (it.value.toInteger() <= to && it.value.toInteger() >= from && it.key != id) {
-                        it.value = (it.value.toInteger() - 1).toString()
-                    } else if (it.key == id) {
-                        it.value = position
+                currentWidgets.each { Widget it ->
+                    if (it.position <= to && it.position >= from && it.id != widget.id) {
+                        it.position--
+                    } else if (it.id == widget.id) {
+                        it.position = position.toInteger()
                     }
                 }
             }
@@ -248,7 +250,7 @@ class UserService extends IceScrumEventPublisher {
     }
 
     void saveFeed(User user, Feed feed) {
-        user.preferences.feed = feed
+        //user.preferences.feed = feed
         user.lastUpdated = new Date()
         if (!user.save()) {
             throw new RuntimeException()

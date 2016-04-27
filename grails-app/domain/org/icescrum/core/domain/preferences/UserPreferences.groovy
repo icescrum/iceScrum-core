@@ -27,26 +27,25 @@ package org.icescrum.core.domain.preferences
 import grails.converters.JSON
 import org.icescrum.core.domain.Feed
 import org.icescrum.core.domain.User
+import org.icescrum.core.domain.Widget
 
 class UserPreferences implements Serializable {
 
     static final long serialVersionUID = 813649045202976126L
-    Feed feed
-    String language = "en"
+
     String activity
-    String filterTask = "allTasks"
+    String language = "en"
     String lastProductOpened
     String emailsSettingsData //[onStory:['pkey','pkey2'...],onUrgentTask:['pkey','pkey2'...],autoFollow['pkey','pkey2'...]]
-    boolean displayWhatsNew = false
+    String filterTask = "allTasks"
 
     boolean hideDoneState = false
+    boolean displayWhatsNew = false
 
     Date lastReadActivities = new Date()
 
     Map menu = ["project": "1", "backlog": "2", "planning": "3", "taskBoard": "4", "feature": "5"]
     Map menuHidden = [:]
-    Map panelsLeft = ["tasks": "0", "notes": "1"]
-    Map panelsRight = ["feed": "0", "mood": "1"]
 
     static transients = ["emailsSettings"]
 
@@ -55,7 +54,6 @@ class UserPreferences implements Serializable {
         lastProductOpened nullable: true
         emailsSettingsData nullable: true
         lastReadActivities nullable: true
-        feed nullable: true
     }
 
 
@@ -63,10 +61,14 @@ class UserPreferences implements Serializable {
             user: User
     ]
 
+    static hasMany = [
+            widgets: Widget
+    ]
+
     static mapping = {
         cache true
-        table System.properties['icescrum.oracle'] ? 'icescrum2_u_pref' : 'icescrum2_user_preferences'
         emailsSettingsData type: "text"
+        table System.properties['icescrum.oracle'] ? 'icescrum2_u_pref' : 'icescrum2_user_preferences'
     }
 
     public void setEmailsSettings(Map settings) {
@@ -96,13 +98,13 @@ class UserPreferences implements Serializable {
 
     def xml = { builder ->
         builder.preferences(id: this.id) {
-            panelsLeft(this.panelsLeft)
-            panelsRight(this.panelsRight)
             menu(this.menu)
             language(this.language)
             activity(this.activity)
             filterTask(this.filterTask)
             menuHidden(this.menuHidden)
+            panelsLeft(this.panelsLeft)
+            panelsRight(this.panelsRight)
             hideDoneState(this.hideDoneState)
             lastProductOpened(this.lastProductOpened)
             emailsSettingsData(this.lastProductOpened)

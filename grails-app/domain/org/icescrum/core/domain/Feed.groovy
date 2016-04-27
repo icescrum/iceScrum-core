@@ -26,9 +26,9 @@ package org.icescrum.core.domain
 
 class Feed {
 
+    String title
     String feedUrl
     Date dateCreated
-    String title
 
     static belongsTo = [user: User]
 

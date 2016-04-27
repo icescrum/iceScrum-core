@@ -32,6 +32,8 @@ class WidgetDefinition {
     boolean disabled
     boolean footer = false
     boolean settings = false
+    boolean allowRemove = true
+    boolean allowDuplicate = true
 
 
     String id
@@ -63,6 +65,14 @@ class WidgetDefinition {
 
     void secured(String secured) {
         this.secured = secured
+    }
+
+    void allowRemove(boolean allowRemove) {
+        this.allowRemove = allowRemove
+    }
+
+    void allowDuplicate(boolean allowDuplicate) {
+        this.allowDuplicate = allowDuplicate
     }
 
     void templatePath(String templatePath) {
