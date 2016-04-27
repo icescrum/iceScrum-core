@@ -8,7 +8,7 @@ class Widget implements Serializable {
     static final long serialVersionUID = 813639045722976126L
 
     int position
-    boolean right = false
+    boolean onRight = false
 
     String settingsData
     String widgetDefinitionId
@@ -22,13 +22,13 @@ class Widget implements Serializable {
     static mapping = {
         cache true
         settingsData type: 'text'
-        table 'icescrum2_user_widgets'
+        table 'icescrum2_up_widgets'
         userPreferences index:'up_wdi_index'
         widgetDefinitionId index:'up_wdi_index'
     }
 
     def beforeInsert() {
-        position = !position ? Widget.countByRight(right) + 1 : position
+        position = !position ? Widget.countByOnRight(onRight) + 1 : position
     }
 
     static transients = ["settings"]

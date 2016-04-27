@@ -201,21 +201,21 @@ class UserService extends IceScrumEventPublisher {
     void updateWidgetPosition(User user, Widget widget, String position, boolean right) {
         def currentWidgets
         if (right) {
-            currentWidgets = Widget.findAllByRightAndUserPreferences(true, user.preferences)
+            currentWidgets = Widget.findAllByOnRightAndUserPreferences(true, user.preferences)
             if (!currentWidgets.contains(widget)) {
-                widget.right = right
+                widget.onRight = right
                 widget.position = currentWidgets.size() + 1
-                def widgetsLeft = Widget.findAllByRightAndUserPreferences(false, user.preferences)
+                def widgetsLeft = Widget.findAllByOnRightAndUserPreferences(false, user.preferences)
                 if (widgetsLeft.contains(widget)) {
                     updateWidgetPosition(user, widget, (widgetsLeft.size() - 1).toString(), false)
                 }
             }
         } else {
-            currentWidgets = Widget.findAllByRightAndUserPreferences(false, user.preferences)
+            currentWidgets = Widget.findAllByOnRightAndUserPreferences(false, user.preferences)
             if (!currentWidgets.contains(widget)) {
-                widget.right = right
+                widget.onRight = right
                 widget.position = currentWidgets.size() + 1
-                def widgetsRight = Widget.findAllByRightAndUserPreferences(true, user.preferences)
+                def widgetsRight = Widget.findAllByOnRightAndUserPreferences(true, user.preferences)
                 if (widgetsRight.contains(widget)) {
                     updateWidgetPosition(user, widget, (widgetsRight.size() - 1).toString(), true)
                 }
