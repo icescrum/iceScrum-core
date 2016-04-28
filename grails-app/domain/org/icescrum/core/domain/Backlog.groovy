@@ -49,6 +49,7 @@ class Backlog {
 
     static constraints = {
         owner(nullable:true)
+        code(unique: 'product', matches: '[a-z0-9_]+')
         name(blank: false, maxSize: 200)
     }
 
