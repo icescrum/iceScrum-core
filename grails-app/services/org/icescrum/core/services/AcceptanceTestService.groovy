@@ -44,7 +44,7 @@ class AcceptanceTestService extends IceScrumEventPublisher {
         acceptanceTest.uid = AcceptanceTest.findNextUId(parentStory.backlog.id)
         acceptanceTest.parentStory = parentStory
         if (!acceptanceTest.save()) {
-            throw new RuntimeException()
+            throw new RuntimeException(acceptanceTest.errors?.toString())
         }
         publishSynchronousEvent(IceScrumEventType.CREATE, acceptanceTest)
         def storyService = (StoryService) grailsApplication.mainContext.getBean('storyService')
@@ -56,7 +56,7 @@ class AcceptanceTestService extends IceScrumEventPublisher {
     void update(AcceptanceTest acceptanceTest) {
         def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_UPDATE, acceptanceTest)
         if (!acceptanceTest.save()) {
-            throw new RuntimeException()
+            throw new RuntimeException(acceptanceTest.errors?.toString())
         }
         publishSynchronousEvent(IceScrumEventType.UPDATE, acceptanceTest, dirtyProperties)
         def storyService = (StoryService) grailsApplication.mainContext.getBean('storyService')
@@ -86,8 +86,8 @@ class AcceptanceTestService extends IceScrumEventPublisher {
                 uid: acceptanceTest.@uid.text().toInteger()
             )
             if (product) {
-                def u = ((User) product.getAllUsers().find { it.uid == acceptanceTest.creator.@uid.text() } ) ?: null
-                at.creator = u ?:  product.productOwners.first()
+                def u = ((User) product.getAllUsers().find { it.uid == acceptanceTest.creator.@uid.text() }) ?: null
+                at.creator = u ?: product.productOwners.first()
             }
             return at
 
