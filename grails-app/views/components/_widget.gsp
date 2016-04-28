@@ -23,17 +23,17 @@
             <h3 class="panel-title">
                 <i class="fa fa-${widgetDefinition.icon}"></i> <g:message code="${widgetDefinition.title}"/>
                 <div class="pull-right btn-group visible-on-hover">
-                    <g:if test="${widgetDefinition.settings}">
+                    <g:if test="${widget && widgetDefinition.settings}">
                         <button class="btn btn-default btn-sm"
-                                ng-click="toggleSettings()"
+                                ng-click="toggleSettings(widget)"
                                 uib-tooltip="${message(code: 'todo.is.ui.setting')}">
                             <i class="fa fa-cog"></i>
                         </button>
                     </g:if>
-                    <g:if test="${widgetDefinition.allowRemove}">
+                    <g:if test="${widget && widgetDefinition.allowRemove}">
                         <button class="btn btn-default btn-sm"
-                                ng-click="remove()"
-                                uib-tooltip="${message(code: 'todo.is.ui.setting')}">
+                                ng-click="delete(widget)"
+                                uib-tooltip="${message(code: 'todo.is.ui.remove')}">
                             <i class="fa fa-times"></i>
                         </button>
                     </g:if>

@@ -44,7 +44,12 @@ class WidgetDefinition {
     String templatePath = null
     String secured = 'permitAll()'
 
-    def options = [:]
+    Closure onSave    = { def widget -> }
+    Closure onUpdate  = { def widget, settings -> }
+    Closure onDelete  = { def widget -> }
+
+    Map options = [:]
+    Map defaultSettings = [:]
 
     WidgetDefinition(String id, String pluginName, boolean disabled) {
         this.id = id
@@ -67,16 +72,28 @@ class WidgetDefinition {
         this.secured = secured
     }
 
+    void onSave(Closure onSave) {
+        this.onSave = onSave
+    }
+
+    void onUpdate(Closure onUpdate) {
+        this.onUpdate = onUpdate
+    }
+
+    void onDelete(Closure onDelete) {
+        this.onDelete = onDelete
+    }
+
     void allowRemove(boolean allowRemove) {
         this.allowRemove = allowRemove
     }
 
-    void allowDuplicate(boolean allowDuplicate) {
-        this.allowDuplicate = allowDuplicate
-    }
-
     void templatePath(String templatePath) {
         this.templatePath = templatePath
+    }
+
+    void allowDuplicate(boolean allowDuplicate) {
+        this.allowDuplicate = allowDuplicate
     }
 
     def methodMissing(String name, args) {

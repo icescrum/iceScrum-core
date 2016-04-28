@@ -61,12 +61,14 @@ class DummyPopulator {
         println "Dummy Data loading...."
 
         def app = Holders.grailsApplication
-        def springSecurityService = app.mainContext.springSecurityService
-        def securityService = app.mainContext.securityService
-        def sessionFactory = app.mainContext.sessionFactory
-        def releaseService = app.mainContext.releaseService
-        def sprintService = app.mainContext.sprintService
         def storyService = app.mainContext.storyService
+        def sprintService = app.mainContext.sprintService
+        def widgetService = app.mainContext.widgetService
+        def releaseService = app.mainContext.releaseService
+        def sessionFactory = app.mainContext.sessionFactory
+        def securityService = app.mainContext.securityService
+        def uiDefinitionService = app.mainContext.uiDefinitionService
+        def springSecurityService = app.mainContext.springSecurityService
 
         // Users
         def usera, userz, userx
@@ -74,10 +76,10 @@ class DummyPopulator {
             usera = new User(username: "a", email: "a@gmail.com", firstName: "Roberto", password: springSecurityService.encodePassword('a'), preferences: new UserPreferences(language: 'en', activity: 'Consultant')).save(failOnError: true)
             userz = new User(username: "z", email: "z@gmail.com", firstName: "Bernardo", password: springSecurityService.encodePassword('z'), preferences: new UserPreferences(language: 'en', activity: 'WebDesigner', menu: ["feature": "1", "backlog": "2"])).save(failOnError: true)
             userx = new User(username: "x", email: "x@gmail.com", firstName: "Antonio", password: springSecurityService.encodePassword('x'), preferences: new UserPreferences(language: 'en', activity: 'Consultant')).save(failOnError: true)
-            def widget = new Widget(widgetDefinitionId:'notes', onRight:true, userPreferences: usera.preferences)
-            usera.preferences.addToWidgets(widget)
-            /*def widgetB = new Widget(widgetDefinitionId:'feed', onRight:true, userPreferences: usera.preferences)
-            usera.preferences.addToWidgets(widgetB)*/
+
+            widgetService.add(usera, uiDefinitionService.getWidgetDefinitionById('feed'), true)
+            widgetService.add(usera, uiDefinitionService.getWidgetDefinitionById('notes'), true)
+
             def randomMood = {
                 Random rand = new Random()
                 int randomNum = rand.nextInt(3);

@@ -198,57 +198,6 @@ class UserService extends IceScrumEventPublisher {
         }
     }
 
-    void updateWidgetPosition(User user, Widget widget, String position, boolean right) {
-        def currentWidgets
-        if (right) {
-            currentWidgets = Widget.findAllByOnRightAndUserPreferences(true, user.preferences)
-            if (!currentWidgets.contains(widget)) {
-                widget.onRight = right
-                widget.position = currentWidgets.size() + 1
-                def widgetsLeft = Widget.findAllByOnRightAndUserPreferences(false, user.preferences)
-                if (widgetsLeft.contains(widget)) {
-                    updateWidgetPosition(user, widget, (widgetsLeft.size() - 1).toString(), false)
-                }
-            }
-        } else {
-            currentWidgets = Widget.findAllByOnRightAndUserPreferences(false, user.preferences)
-            if (!currentWidgets.contains(widget)) {
-                widget.onRight = right
-                widget.position = currentWidgets.size() + 1
-                def widgetsRight = Widget.findAllByOnRightAndUserPreferences(true, user.preferences)
-                if (widgetsRight.contains(widget)) {
-                    updateWidgetPosition(user, widget, (widgetsRight.size() - 1).toString(), true)
-                }
-            }
-        }
-        def from = widget.position
-        from = from ?: 1
-        def to = position.toInteger()
-        if (from != to) {
-            if (from > to) {
-                currentWidgets.each { Widget it ->
-                    if (it.position >= to && it.position <= from && it.id != widget.id) {
-                        it.position++
-                    } else if (it.id == widget.id) {
-                        it.position = position.toInteger()
-                    }
-                }
-            } else {
-                currentWidgets.each { Widget it ->
-                    if (it.position <= to && it.position >= from && it.id != widget.id) {
-                        it.position--
-                    } else if (it.id == widget.id) {
-                        it.position = position.toInteger()
-                    }
-                }
-            }
-        }
-        user.lastUpdated = new Date()
-        if (!user.save()) {
-            throw new RuntimeException()
-        }
-    }
-
     void saveFeed(User user, Feed feed) {
         //user.preferences.feed = feed
         user.lastUpdated = new Date()
