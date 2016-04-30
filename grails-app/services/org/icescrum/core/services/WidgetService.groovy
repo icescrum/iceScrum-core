@@ -55,17 +55,19 @@ class WidgetService {
     }
 
     void update(Widget widget, Map props) {
+
         User user = widget.userPreferences.user
         if(props.position != widget.position || props.onRight != widget.onRight){
             updatePosition(widget, props.position, props.onRight)
         }
         try{
             uiDefinitionService.getWidgetDefinitionById(widget.widgetDefinitionId).onUpdate(widget, props.settings)
+            if(props.settings){
+                widget.setSettings(props.settings)
+            }
         } catch(Exception e){
+            log.debug(e)
             throw new RuntimeException()
-        }
-        if(props.settings){
-            widget.setSettings(props.settings)
         }
         if(!widget.save()){
             throw new RuntimeException()

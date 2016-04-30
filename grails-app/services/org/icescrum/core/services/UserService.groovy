@@ -198,28 +198,6 @@ class UserService extends IceScrumEventPublisher {
         }
     }
 
-    void saveFeed(User user, Feed feed) {
-        //user.preferences.feed = feed
-        user.lastUpdated = new Date()
-        if (!user.save()) {
-            throw new RuntimeException()
-        }
-    }
-
-    @Cacheable("feed")
-    def getFeedContent(def url){
-        def channel = new XmlSlurper().parse(url).channel
-        def contentFeed = [title: channel.title.text(), description: channel.description.text()]
-        contentFeed.items = channel.item.collect { xmlItem ->
-            return [feedTitle: channel.title.text(),
-                    link: xmlItem.link.text(),
-                    title: xmlItem.title.text(),
-                    description: xmlItem.description.text(),
-                    pubDate: Date.parse("EEE', 'dd' 'MMM' 'yyyy' 'HH:mm:ss' 'Z", xmlItem.pubDate.text()).time]
-        }
-        return contentFeed
-    }
-
     @Transactional(readOnly = true)
     def unMarshall(def user) {
         try {
