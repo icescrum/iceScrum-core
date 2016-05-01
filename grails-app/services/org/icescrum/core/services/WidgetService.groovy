@@ -33,7 +33,7 @@ class WidgetService {
 
     def uiDefinitionService
 
-    void add(User user, WidgetDefinition widgetDefinition, boolean onRight) {
+    Widget save(User user, WidgetDefinition widgetDefinition, boolean onRight) {
         int duplicate = Widget.countByUserPreferencesAndWidgetDefinitionId(user.preferences, widgetDefinition.id)
         if(duplicate && !widgetDefinition.allowDuplicate) {
             throw new RuntimeException()
@@ -52,6 +52,7 @@ class WidgetService {
         if (!user.save()) {
             throw new RuntimeException()
         }
+        return widget
     }
 
     void update(Widget widget, Map props) {
