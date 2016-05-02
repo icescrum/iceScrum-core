@@ -35,17 +35,17 @@ class WidgetService {
 
     Widget save(User user, WidgetDefinition widgetDefinition, boolean onRight) {
         int duplicate = Widget.countByUserPreferencesAndWidgetDefinitionId(user.preferences, widgetDefinition.id)
-        if(duplicate && !widgetDefinition.allowDuplicate) {
+        if (duplicate && !widgetDefinition.allowDuplicate) {
             throw new RuntimeException()
         }
         int count = Widget.countByUserPreferencesAndOnRight(user.preferences, onRight)
-        Widget widget = new Widget(position: count+1, widgetDefinitionId: widgetDefinition.id, userPreferences: user.preferences, settings: widgetDefinition.defaultSettings, onRight:onRight)
-        try{
+        Widget widget = new Widget(position: count + 1, widgetDefinitionId: widgetDefinition.id, userPreferences: user.preferences, settings: widgetDefinition.defaultSettings, onRight: onRight)
+        try {
             widgetDefinition.onSave(widget)
-        } catch(Exception e){
+        } catch (Exception e) {
             throw new RuntimeException()
         }
-        if(!widget.save()){
+        if (!widget.save()) {
             throw new RuntimeException()
         }
         user.lastUpdated = new Date()
@@ -58,19 +58,19 @@ class WidgetService {
     void update(Widget widget, Map props) {
 
         User user = widget.userPreferences.user
-        if(props.position != widget.position || props.onRight != widget.onRight){
+        if (props.position != widget.position || props.onRight != widget.onRight) {
             updatePosition(widget, props.position, props.onRight)
         }
-        try{
+        try {
             uiDefinitionService.getWidgetDefinitionById(widget.widgetDefinitionId).onUpdate(widget, props.settings)
-            if(props.settings){
+            if (props.settings) {
                 widget.setSettings(props.settings)
             }
-        } catch(Exception e){
+        } catch (Exception e) {
             log.debug(e)
             throw new RuntimeException()
         }
-        if(!widget.save()){
+        if (!widget.save()) {
             throw new RuntimeException()
         }
         user.lastUpdated = new Date()
@@ -82,12 +82,12 @@ class WidgetService {
     void delete(Widget widget) {
         User user = widget.userPreferences.user
         widget.delete()
-        Widget.findAllByOnRightAndUserPreferences(widget.onRight, widget.userPreferences, [sort:'position'])?.eachWithIndex{  it, index ->
+        Widget.findAllByOnRightAndUserPreferences(widget.onRight, widget.userPreferences, [sort: 'position'])?.eachWithIndex { it, index ->
             it.position = index + 1
         }
-        try{
+        try {
             uiDefinitionService.getWidgetDefinitionById(widget.widgetDefinitionId).onDelete(widget)
-        } catch(Exception e){
+        } catch (Exception e) {
             throw new RuntimeException()
         }
         user.lastUpdated = new Date()
