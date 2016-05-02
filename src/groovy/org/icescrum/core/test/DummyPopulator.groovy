@@ -77,8 +77,8 @@ class DummyPopulator {
             userz = new User(username: "z", email: "z@gmail.com", firstName: "Bernardo", password: springSecurityService.encodePassword('z'), preferences: new UserPreferences(language: 'en', activity: 'WebDesigner', menu: ["feature": "1", "backlog": "2"])).save(failOnError: true)
             userx = new User(username: "x", email: "x@gmail.com", firstName: "Antonio", password: springSecurityService.encodePassword('x'), preferences: new UserPreferences(language: 'en', activity: 'Consultant')).save(failOnError: true)
 
-            widgetService.add(usera, uiDefinitionService.getWidgetDefinitionById('feed'), true)
-            widgetService.add(usera, uiDefinitionService.getWidgetDefinitionById('notes'), true)
+            widgetService.save(usera, uiDefinitionService.getWidgetDefinitionById('feed'), true)
+            widgetService.save(usera, uiDefinitionService.getWidgetDefinitionById('notes'), true)
 
             def randomMood = {
                 Random rand = new Random()
