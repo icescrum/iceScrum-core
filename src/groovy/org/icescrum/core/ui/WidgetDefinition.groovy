@@ -40,6 +40,7 @@ class WidgetDefinition {
     String icon = ''
     String title = ''
     String context = null
+    String description = ''
     String pluginName = null
     String templatePath = null
     String secured = 'permitAll()'
@@ -82,6 +83,10 @@ class WidgetDefinition {
 
     void onDelete(Closure onDelete) {
         this.onDelete = onDelete
+    }
+
+    void description(String description) {
+        this.description = description
     }
 
     void allowRemove(boolean allowRemove) {
