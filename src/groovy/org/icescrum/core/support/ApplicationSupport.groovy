@@ -358,11 +358,12 @@ class ApplicationSupport {
         def context = Holders.grailsApplication.config.icescrum.contexts.find { id ? it.key == id : params."$it.key" }
         if (context) {
             def object = context.value.contextClass.get(params.long("$context.key"))
-            return object ? [name        : context.key,
-                             object      : object,
-                             config      : context.value.config(object),
-                             params      : context.value.params(object),
-                             indexScrumOS: context.value.indexScrumOS] : false
+            return object ? [name         : context.key,
+                             object       : object,
+                             contextScope : context.value.contextScope,
+                             config       : context.value.config(object),
+                             params       : context.value.params(object),
+                             indexScrumOS : context.value.indexScrumOS] : false
         }
     }
 }
