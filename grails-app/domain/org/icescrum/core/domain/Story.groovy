@@ -371,23 +371,14 @@ class Story extends BacklogElement implements Cloneable, Serializable {
         return true
     }
 
-    static search(product, options, projectionColor = false, rowCount = false) {
+    static search(product, options, rowCount = false) {
         List<Story> stories = []
         def criteria = {
-
-            if (projectionColor || rowCount) {
+            if (rowCount) {
                 projections {
-                    if (projectionColor) {
-                        feature {
-                            property("color")
-                        }
-                    }
-                    if (rowCount) {
-                        count()
-                    }
+                    count()
                 }
             }
-
             backlog {
                 eq 'id', product
             }
@@ -419,22 +410,17 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                         eq 'id', options.story.actor.toLong()
                     }
                 }
-                //case [2,3] or more
-                if (options.story?.state instanceof List && options.story.state.size() >= 2) {
+                if (options.story?.state instanceof List && options.story.state.size() >= 2) { //case [2,3] or more
                     or {
                         options.story.state.each {
                             eq 'state', it
                         }
                     }
-                //case [3]
-                } else if (options.story?.state instanceof List) {
+                } else if (options.story?.state instanceof List) { //case [3]
                     eq 'state', it[0]
-                }
-                //case 3
-                else if (options.story?.state) {
+                } else if (options.story?.state) { //case 3
                     eq 'state', options.story.state instanceof String ? options.story?.state.toInteger() : options.story?.state
                 }
-
                 if (options.story?.parentRelease?.isLong()) {
                     parentSprint {
                         parentRelease {
@@ -484,17 +470,11 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                 criteria.call()
             }
         }
-        if (stories && rowCount && stories instanceof List) {
-            return stories.get(0)
-        } else if (stories && !projectionColor) {
-            Map storiesGrouped = stories?.groupBy { it.feature }
-            stories = []
-            storiesGrouped?.each {
-                it.value?.sort { st -> st.state }
-                stories.addAll(it.value)
-            }
+        if (rowCount) {
+            return stories ? stories.get(0) : 0
+        } else {
+            return stories ?: Collections.EMPTY_LIST
         }
-        return stories ?: Collections.EMPTY_LIST
     }
 
     static searchByTermOrTag(productId, searchOptions, term) {

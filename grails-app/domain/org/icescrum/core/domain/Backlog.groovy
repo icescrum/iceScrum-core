@@ -54,7 +54,7 @@ class Backlog {
     }
 
     def getCount() {
-        return Story.search(product.id, JSON.parse(filter), false, true)
+        return Story.search(product.id, JSON.parse(filter), true)
     }
 
     def getIsDefault() {
