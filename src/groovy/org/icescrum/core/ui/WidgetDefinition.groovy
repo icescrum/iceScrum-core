@@ -43,6 +43,7 @@ class WidgetDefinition {
     String description = ''
     String pluginName = null
     String templatePath = null
+    String ngController = null
     String secured = 'permitAll()'
 
     Closure onSave    = { def widget -> }
@@ -85,12 +86,18 @@ class WidgetDefinition {
         this.onDelete = onDelete
     }
 
+
     void description(String description) {
         this.description = description
     }
 
     void allowRemove(boolean allowRemove) {
         this.allowRemove = allowRemove
+    }
+
+
+    void ngController(String ngController) {
+        this.ngController = ngController
     }
 
     void templatePath(String templatePath) {

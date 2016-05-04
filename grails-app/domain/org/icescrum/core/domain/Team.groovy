@@ -148,7 +148,7 @@ class Team implements Serializable, Comparable {
                         AND ac.className = 'org.icescrum.core.domain.Team'""", [sid: username], params ?: [:])[0]
     }
 
-    static List<Product> findAllActiveProductsByTeamOwner(String username, params) {
+    static List<Product> findAllActiveProductsByTeamOwner(String username, String term = '%%', params) {
         executeQuery("""SELECT DISTINCT p
                         FROM org.icescrum.core.domain.Product p,
                              org.icescrum.core.domain.Team t,
@@ -157,11 +157,12 @@ class Team implements Serializable, Comparable {
                              grails.plugin.springsecurity.acl.AclSid acl
                         INNER JOIN t.products p
                         WHERE p.preferences.archived = false
+                        AND lower(p.name) LIKE lower(:term)
                         AND t.id = ai.objectId
                         AND acl.id = ai.owner
                         AND ai.owner.sid = :sid
                         AND ai.aclClass = ac.id
-                        AND ac.className = 'org.icescrum.core.domain.Team'""", [sid: username], params ?: [:])
+                        AND ac.className = 'org.icescrum.core.domain.Team'""", [sid: username, term:term], params ?: [:])
     }
 
     static countByOwner(String user, params, String term = '%%') {

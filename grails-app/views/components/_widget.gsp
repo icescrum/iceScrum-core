@@ -18,7 +18,7 @@
   --}%
 %{-- widget --}%
 <div ng-controller="widgetCtrl" class="panel panel-light">
-    <div id="widget-${widgetDefinition.id}" class="widget widget-${widgetDefinition.id}">
+    <div ${widgetDefinition.ngController ? 'ng-controller="'+widgetDefinition.ngController+'"' : ''} id="widget-${widgetDefinition.id}" class="widget widget-${widgetDefinition.id}">
         <div class="panel-heading clearfix" as-sortable-item-handle>
             <h3 class="panel-title">
                 <i class="fa fa-${widgetDefinition.icon}"></i> <g:message code="${widgetDefinition.title}"/>
@@ -27,7 +27,7 @@
                         <button class="btn btn-default btn-sm"
                                 ng-click="toggleSettings(widget)"
                                 uib-tooltip="${message(code: 'todo.is.ui.setting')}">
-                            <i class="fa fa-cog"></i>
+                            <i class="fa" ng-class="{ 'fa-cog':!showSettings, 'fa-save':showSettings }"></i>
                         </button>
                     </g:if>
                     <g:if test="${widget && widgetDefinition.allowRemove}">
@@ -45,7 +45,11 @@
                 ${content}
             ${widgetDefinition.settings ? '</div>' : ''}
         <g:if test="${widgetDefinition.settings}">
-                <g:render template="/${widgetDefinition.id}/widget/settings" plugin="${widgetDefinition.pluginName}"/>
+                <form ng-switch-when="true"
+                      ng-submit="update(widget)"
+                      class="form-horizontal">
+                    <g:render template="/${widgetDefinition.id}/widget/settings" plugin="${widgetDefinition.pluginName}"/>
+                </form>
             </g:if>
         </div>
         <g:if test="${widgetDefinition.footer}">

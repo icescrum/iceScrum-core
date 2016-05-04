@@ -720,10 +720,9 @@ class ProductService extends IceScrumEventPublisher {
         manageInvitations(currentInvitations, newInvitations, type, product, null)
     }
 
-    List<Product> getAllActiveProductsByUser(String searchTerm = '') {
-        def user = springSecurityService.currentUser
+    List<Product> getAllActiveProductsByUser(User user, String searchTerm = '') {
         def projects = Product.findAllByUserAndActive(user, [sort: "name", order: "asc", cache:true], searchTerm)
-        def projectsOwnerOf = Team.findAllActiveProductsByTeamOwner(user.username, [sort: "name", order: "asc", cache:true]).findAll {
+        def projectsOwnerOf = Team.findAllActiveProductsByTeamOwner(user.username, searchTerm, [sort: "name", order: "asc", cache:true]).findAll {
             !(it in projects)
         }
         projects.addAll(projectsOwnerOf)
