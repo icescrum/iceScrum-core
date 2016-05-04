@@ -3,7 +3,7 @@ package org.icescrum.core.ui
 import org.slf4j.LoggerFactory
 
 /*
- * Copyright (c) 2012 Kagilum SAS
+ * Copyright (c) 2016 Kagilum SAS
  *
  * This file is part of iceScrum.
  *
@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory
  * Authors:
  *
  * Nicolas Noullet (nnoullet@kagilum.com)
- *
+ * Vincent Barrier (vbarrier@kagilum.com)
  */
 
 class WidgetDefinition {
@@ -37,6 +37,8 @@ class WidgetDefinition {
 
 
     String id
+    String name
+    String help = ''
     String icon = ''
     String title = ''
     String context = null
@@ -57,11 +59,17 @@ class WidgetDefinition {
         this.id = id
         this.disabled = disabled
         this.pluginName = pluginName
+        this.name = "is.ui.widget.${id}.name"
+        this.help = "is.ui.widget.${id}.help"
+        this.description = "is.ui.widget.${id}.description"
+
+        this.title = this.name
     }
 
     void icon(String icon) {
         this.icon = icon
     }
+
     void title(String title) {
         this.title = title
     }
@@ -86,15 +94,9 @@ class WidgetDefinition {
         this.onDelete = onDelete
     }
 
-
-    void description(String description) {
-        this.description = description
-    }
-
     void allowRemove(boolean allowRemove) {
         this.allowRemove = allowRemove
     }
-
 
     void ngController(String ngController) {
         this.ngController = ngController

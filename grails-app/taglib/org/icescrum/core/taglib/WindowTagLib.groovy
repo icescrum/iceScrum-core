@@ -39,7 +39,6 @@ class WindowTagLib {
 
     def widget = { attrs, body ->
         assert attrs.widgetDefinition
-
         out << g.render(template: '/components/widget', plugin: 'icescrum-core', model:[widgetDefinition:attrs.widgetDefinition, content:body()])
     }
 

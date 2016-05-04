@@ -36,13 +36,13 @@ class WindowDefinition {
 
     String id
     String icon = ''
+    String help = ''
     String title = ''
     String pluginName = null
     String templatePath = null
     String context = "product"
     String secured = 'permitAll()'
 
-    def help = null
     def options = [:]
     def exportFormats = []
 
