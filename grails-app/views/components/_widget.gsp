@@ -17,8 +17,8 @@
   - along with iceScrum.  If not, see <http://www.gnu.org/licenses/>.
   --}%
 %{-- widget --}%
-<div ng-controller="widgetCtrl" class="panel panel-light">
-    <div ${widgetDefinition.ngController ? 'ng-controller="'+widgetDefinition.ngController+'"' : ''} id="widget-${widgetDefinition.id}" class="widget widget-${widgetDefinition.id}">
+<div ng-controller="widgetCtrl" id="widget-${widgetDefinition.id}" class="panel panel-light widget widget-${widgetDefinition.id}">
+    <div ${widgetDefinition.ngController ? 'ng-controller="'+widgetDefinition.ngController+'"' : ''}>
         <div class="panel-heading clearfix" as-sortable-item-handle>
             <h3 class="panel-title">
                 <i class="fa fa-${widgetDefinition.icon}"></i> <g:message code="${widgetDefinition.title}"/>
