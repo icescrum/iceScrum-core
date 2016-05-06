@@ -28,8 +28,6 @@ import grails.util.Holders
 import org.hibernate.ObjectNotFoundException
 import org.icescrum.core.domain.security.Authority
 import org.icescrum.core.services.SecurityService
-import org.icescrum.core.event.IceScrumTeamEvent
-import org.icescrum.core.event.IceScrumEvent
 import org.icescrum.core.domain.Invitation.InvitationType
 import org.springframework.security.acls.domain.BasePermission
 import org.springframework.security.acls.model.Acl
@@ -247,18 +245,6 @@ class Team implements Serializable, Comparable {
         int result = 1
         result = prime * result + ((!name) ? 0 : name.hashCode())
         return result
-    }
-
-    def beforeDelete() {
-        withNewSession {
-            publishEvent(new IceScrumTeamEvent(this, this.class, User.get(SCH.context?.authentication?.principal?.id), IceScrumEvent.EVENT_BEFORE_DELETE, true))
-        }
-    }
-
-    def afterDelete() {
-        withNewSession {
-            publishEvent(new IceScrumTeamEvent(this, this.class, User.get(SCH.context?.authentication?.principal?.id), IceScrumEvent.EVENT_AFTER_DELETE, true))
-        }
     }
 
     def beforeValidate(){

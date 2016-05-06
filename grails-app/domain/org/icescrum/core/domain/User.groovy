@@ -33,8 +33,6 @@ import org.icescrum.plugins.attachmentable.interfaces.Attachmentable
 import org.icescrum.core.domain.preferences.UserPreferences
 import org.icescrum.core.domain.security.Authority
 import org.icescrum.core.domain.security.UserAuthority
-import org.icescrum.core.event.IceScrumUserEvent
-import org.icescrum.core.event.IceScrumEvent
 
 class User implements Serializable, Attachmentable {
 
@@ -152,18 +150,6 @@ class User implements Serializable, Attachmentable {
         //Create uid before first save object
         if (!this.id && !this.uid) {
             this.uid = (this.username + this.email).encodeAsMD5()
-        }
-    }
-
-    def beforeDelete() {
-        withNewSession {
-            publishEvent(new IceScrumUserEvent(this, this.class, User.get(SCH.context?.authentication?.principal?.id), IceScrumEvent.EVENT_BEFORE_DELETE, true))
-        }
-    }
-
-    def afterDelete() {
-        withNewSession {
-            publishEvent(new IceScrumUserEvent(this, this.class, User.get(SCH.context?.authentication?.principal?.id), IceScrumEvent.EVENT_AFTER_DELETE, true))
         }
     }
 

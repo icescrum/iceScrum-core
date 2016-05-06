@@ -36,7 +36,6 @@ import org.icescrum.core.domain.*
 import org.icescrum.core.domain.AcceptanceTest.AcceptanceTestState
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
-import org.icescrum.core.event.IceScrumStoryEvent
 import org.icescrum.core.support.ApplicationSupport
 import org.icescrum.plugins.attachmentable.domain.Attachment
 import org.springframework.security.access.prepost.PreAuthorize
@@ -505,7 +504,6 @@ class StoryService extends IceScrumEventPublisher {
             delete([story], feature)
             features << feature
             activityService.addActivity(feature, user, 'acceptAs', feature.name)
-            publishEvent(new IceScrumStoryEvent(feature, this.class, user, IceScrumStoryEvent.EVENT_ACCEPTED_AS_FEATURE))
         }
         return features
     }
@@ -561,7 +559,6 @@ class StoryService extends IceScrumEventPublisher {
             task.tags = story.tags
             tasks << task
             delete([story], task)
-            publishEvent(new IceScrumStoryEvent(task, this.class, (User) springSecurityService.currentUser, IceScrumStoryEvent.EVENT_ACCEPTED_AS_TASK))
         }
         return tasks
     }
@@ -632,7 +629,6 @@ class StoryService extends IceScrumEventPublisher {
             }
             User user = (User) springSecurityService.currentUser
             activityService.addActivity(story, user, 'unDone', story.name)
-            publishEvent(new IceScrumStoryEvent(story, this.class, user, IceScrumStoryEvent.EVENT_UNDONE))
         }
         if (stories) {
             clicheService.createOrUpdateDailyTasksCliche(stories[0]?.parentSprint)

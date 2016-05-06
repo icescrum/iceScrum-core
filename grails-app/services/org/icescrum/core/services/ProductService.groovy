@@ -127,11 +127,6 @@ class ProductService extends IceScrumEventPublisher {
                 securityService.changeOwner(u, product)
             }
 
-            /*publishEvent(new IceScrumProductEvent(product, this.class, (User) springSecurityService.currentUser, IceScrumEvent.EVENT_CREATED))
-            if (importPath){
-                def event = new IceScrumProductEvent(product, new File(importPath), this.class, (User) springSecurityService.currentUser, IceScrumProductEvent.EVENT_IMPORTED)
-                publishEvent(event)
-            }*/
         } catch (Exception e) {
             throw new RuntimeException(e)
         }

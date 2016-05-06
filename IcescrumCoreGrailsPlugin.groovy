@@ -48,7 +48,6 @@ import org.icescrum.core.support.ProgressSupport
 import org.icescrum.core.services.UiDefinitionService
 import org.icescrum.core.ui.UiDefinitionArtefactHandler
 import org.codehaus.groovy.grails.commons.ControllerArtefactHandler
-import org.icescrum.core.event.IceScrumApplicationEventMulticaster
 import org.icescrum.core.utils.XMLIceScrumDomainClassMarshaller
 import org.icescrum.core.support.ApplicationSupport
 
@@ -104,11 +103,6 @@ class IcescrumCoreGrailsPlugin {
     def controllersWithDownloadAndPreview = ['story', 'actor', 'task', 'feature', 'sprint', 'release', 'project']
 
     def doWithSpring = {
-        asyncApplicationEventMulticaster(IceScrumApplicationEventMulticaster) {
-			persistenceInterceptor = ref("persistenceInterceptor")
-            taskExecutor = java.util.concurrent.Executors.newCachedThreadPool()
-		}
-
         ApplicationSupport.createUUID()
         System.setProperty('lbdsl.home', "${application.config.icescrum.baseDir.toString()}${File.separator}lbdsl")
     }

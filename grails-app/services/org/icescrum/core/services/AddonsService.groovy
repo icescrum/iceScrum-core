@@ -4,8 +4,6 @@ import org.icescrum.core.domain.Actor
 import org.icescrum.core.domain.Feature
 import org.icescrum.core.domain.Release
 import org.icescrum.core.domain.Story
-import org.icescrum.core.event.IceScrumProductEvent
-import org.springframework.context.ApplicationListener
 import org.icescrum.core.domain.Product
 import org.icescrum.core.domain.User
 import grails.util.GrailsNameUtils
@@ -15,12 +13,12 @@ import org.grails.comments.CommentException
 import org.grails.comments.CommentLink
 import org.icescrum.core.domain.Task
 
-class AddonsService implements ApplicationListener<IceScrumProductEvent> {
+//TODO migrate to new event
+class AddonsService {
 
     def activityService
 
-    @Override
-    void onApplicationEvent(IceScrumProductEvent e) {
+/*    void onApplicationEvent(def e) {
         if (e.type == IceScrumProductEvent.EVENT_IMPORTED) {
             //Wait a small very small time to let hibernate do its job... well
             Thread.sleep(1000);
@@ -28,7 +26,9 @@ class AddonsService implements ApplicationListener<IceScrumProductEvent> {
         }
     }
 
-    void synchronisedDataImport(IceScrumProductEvent e) {
+    */
+
+    void synchronisedDataImport(def e) {
         Product p = (Product) e.source
         try{
             addAttachments(p, e.xml, e.importPath)

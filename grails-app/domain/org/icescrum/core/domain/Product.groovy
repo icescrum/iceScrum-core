@@ -31,8 +31,6 @@ import org.hibernate.ObjectNotFoundException
 import org.icescrum.core.domain.Invitation.InvitationType
 import org.icescrum.core.domain.preferences.ProductPreferences
 import org.icescrum.core.domain.security.Authority
-import org.icescrum.core.event.IceScrumEvent
-import org.icescrum.core.event.IceScrumProductEvent
 import org.icescrum.core.services.SecurityService
 import org.icescrum.plugins.attachmentable.interfaces.Attachmentable
 import org.springframework.security.acls.domain.BasePermission
@@ -285,18 +283,6 @@ class Product extends TimeBox implements Serializable, Attachmentable {
 
     Team getFirstTeam() {
         return this.teams ? this.teams.first() : null
-    }
-
-    def beforeDelete() {
-        withNewSession {
-            publishEvent(new IceScrumProductEvent(this, this.class, User.get(SCH.context?.authentication?.principal?.id), IceScrumEvent.EVENT_BEFORE_DELETE, true))
-        }
-    }
-
-    def afterDelete() {
-        withNewSession {
-            publishEvent(new IceScrumProductEvent(this, this.class, User.get(SCH.context?.authentication?.principal?.id), IceScrumEvent.EVENT_AFTER_DELETE, true))
-        }
     }
 
     def getVersions(def onlyFromSprints = false, def onlyDelivered = false) {

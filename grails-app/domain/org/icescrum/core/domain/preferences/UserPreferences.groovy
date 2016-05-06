@@ -25,7 +25,6 @@
 package org.icescrum.core.domain.preferences
 
 import grails.converters.JSON
-import org.icescrum.core.domain.Feed
 import org.icescrum.core.domain.User
 import org.icescrum.core.domain.Widget
 
