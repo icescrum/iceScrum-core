@@ -48,9 +48,9 @@ class Backlog {
     ]
 
     static constraints = {
-        owner(nullable:true)
-        code(blank: false, unique: 'product', matches: '[a-z0-9_]+')
-        name(blank: false, maxSize: 200)
+        owner(nullable: true)
+        code(blank: false, maxSize: 100, unique: 'product', matches: '[a-z0-9_]+')
+        name(blank: false, maxSize: 100)
     }
 
     def getCount() {

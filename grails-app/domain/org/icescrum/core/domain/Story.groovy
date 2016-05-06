@@ -438,8 +438,8 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                         eq 'id', options.story.creator.toLong()
                     }
                 }
-                if (options.story?.type?.isInteger()) {
-                    eq 'type', options.story.type.toInteger()
+                if (options.story?.type instanceof Integer || options.story?.type?.isInteger()) {
+                    eq 'type', options.story.type instanceof Integer ? options.story.type : options.story.type.toInteger()
                 }
                 if (options.story?.dependsOn?.isLong()) {
                     dependsOn {
