@@ -373,6 +373,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
 
     static search(product, options, rowCount = false) {
         List<Story> stories = []
+        def getList = { it instanceof  List || it instanceof Object[] ? it : [it] }
         def criteria = {
             if (rowCount) {
                 projections {
@@ -400,61 +401,97 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                         }
                     }
                 }
-                if (options.story?.feature?.isLong()) {
+                if (options.story?.feature) {
                     feature {
-                        eq 'id', options.story.feature.toLong()
-                    }
-                }
-                if (options.story?.actor?.isLong()) {
-                    actor {
-                        eq 'id', options.story.actor.toLong()
-                    }
-                }
-                if (options.story?.state instanceof List && options.story.state.size() >= 2) { //case [2,3] or more
-                    or {
-                        options.story.state.each {
-                            eq 'state', it
+                        or {
+                            getList(options.story.feature).each { feature ->
+                                eq 'id', feature instanceof String ? feature.toLong() : feature
+                            }
                         }
                     }
-                } else if (options.story?.state instanceof List) { //case [3]
-                    eq 'state', it[0]
-                } else if (options.story?.state) { //case 3
-                    eq 'state', options.story.state instanceof String ? options.story?.state.toInteger() : options.story?.state
                 }
-                if (options.story?.parentRelease?.isLong()) {
+                if (options.story?.actor) {
+                    actor {
+                        or {
+                            getList(options.story.actor).each { actor ->
+                                eq 'id', actor instanceof String ? actor.toLong() : actor
+                            }
+                        }
+                    }
+                }
+                if (options.story?.state) {
+                    or {
+                        getList(options.story.state).each { state ->
+                            eq 'state', state instanceof String ? state.toInteger() : state
+                        }
+                    }
+                }
+                if (options.story?.parentRelease) {
                     parentSprint {
                         parentRelease {
-                            eq 'id', options.story.parentRelease.toLong()
+                            or {
+                                getList(options.story.parentRelease).each { parentRelease ->
+                                    eq 'id', parentRelease instanceof String ? parentRelease.toLong() : parentRelease
+                                }
+                            }
                         }
                     }
                 }
-                if (options.story?.parentSprint?.isLong()) {
+                if (options.story?.parentSprint) {
                     parentSprint {
-                        eq 'id', options.story.parentSprint.toLong()
+                        or {
+                            getList(options.story.parentSprint).each { parentSprint ->
+                                eq 'id', parentSprint instanceof String ? parentSprint.toLong() : parentSprint
+                            }
+                        }
                     }
                 }
-                if (options.story?.creator?.isLong()) {
+                if (options.story?.creator) {
                     creator {
-                        eq 'id', options.story.creator.toLong()
+                        or {
+                            getList(options.story.creator).each { creator ->
+                                eq 'id', creator instanceof String ? creator.toLong() : creator
+                            }
+                        }
                     }
                 }
-                if (options.story?.type instanceof Integer || options.story?.type?.isInteger()) {
-                    eq 'type', options.story.type instanceof Integer ? options.story.type : options.story.type.toInteger()
+                if (options.story?.type) {
+                    or {
+                        getList(options.story.type).each { type ->
+                            eq 'type', type instanceof String ? type.toInteger() : type
+                        }
+                    }
                 }
-                if (options.story?.dependsOn?.isLong()) {
+                if (options.story?.dependsOn) {
                     dependsOn {
-                        eq 'id', options.story.dependsOn.toLong()
+                        or {
+                            getList(options.story.dependsOn).each { dependsOn ->
+                                eq 'id', dependsOn instanceof String ? dependsOn.toLong() : dependsOn
+                            }
+                        }
                     }
                 }
-                if (options.story?.effort?.isBigDecimal()) {
-                    eq 'effort', options.story.effort.toBigDecimal()
+                if (options.story?.effort) {
+                    or {
+                        getList(options.story.effort).each { effort ->
+                            eq 'effort', effort instanceof String ? effort.toBigDecimal() : effort
+                        }
+                    }
                 }
                 if (options.story?.affectedVersion) {
-                    eq 'affectVersion', options.story.affectedVersion
+                    or {
+                        getList(options.story.affectedVersion).each { affectedVersion ->
+                            eq 'affectVersion', affectedVersion
+                        }
+                    }
                 }
                 if (options.story?.deliveredVersion) {
                     parentSprint {
-                        eq 'deliveredVersion', options.story.deliveredVersion
+                        or {
+                            getList(options.story.deliveredVersion).each { deliveredVersion ->
+                                eq 'deliveredVersion', deliveredVersion
+                            }
+                        }
                     }
                 }
             }
