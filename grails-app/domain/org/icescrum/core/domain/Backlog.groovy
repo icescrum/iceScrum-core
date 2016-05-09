@@ -29,8 +29,9 @@ import grails.converters.JSON
 class Backlog {
 
     String  name
-    String  filter
     String  code
+    String  notes
+    String  filter
     User    owner
     boolean shared
 
@@ -41,6 +42,7 @@ class Backlog {
     static mapping = {
         cache true
         table 'icescrum2_backlog'
+        notes length: 5000
     }
 
     static transients = [
@@ -48,9 +50,10 @@ class Backlog {
     ]
 
     static constraints = {
-        owner(nullable: true)
-        code(blank: false, maxSize: 100, unique: 'product', matches: '[a-z0-9_]+')
         name(blank: false, maxSize: 100)
+        code(blank: false, maxSize: 100, unique: 'product', matches: '[a-z0-9_]+')
+        notes(maxSize: 5000, nullable: true)
+        owner(nullable: true)
     }
 
     def getCount() {
