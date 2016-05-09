@@ -33,7 +33,7 @@
                     <g:if test="${widget && widgetDefinition.allowRemove}">
                         <button class="btn btn-default btn-sm"
                                 ng-click="delete(widget)"
-                                uib-tooltip="${message(code: 'todo.is.ui.remove')}">
+                                uib-tooltip="${message(code: 'is.ui.widget.remove')}">
                             <i class="fa fa-times"></i>
                         </button>
                     </g:if>
