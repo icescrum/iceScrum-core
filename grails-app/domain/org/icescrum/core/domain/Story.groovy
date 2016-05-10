@@ -383,25 +383,25 @@ class Story extends BacklogElement implements Cloneable, Serializable {
             backlog {
                 eq 'id', product
             }
-            if (options.term || options.story) {
-                if (options.term) {
+            if (options.story) {
+                if (options.story.term) {
                     or {
-                        if (options.term instanceof List) {
-                            options.term.each {
+                        if (options.story.term instanceof List) {
+                            options.story.term.each {
                                 ilike 'name', '%' + it + '%'
                                 ilike 'description', '%' + it + '%'
                                 ilike 'notes', '%' + it + '%'
                             }
-                        } else if (options.term?.isInteger()) {
-                            eq 'uid', options.term.toInteger()
+                        } else if (options.story.term?.isInteger()) {
+                            eq 'uid', options.story.term.toInteger()
                         } else {
-                            ilike 'name', '%' + options.term + '%'
-                            ilike 'description', '%' + options.term + '%'
-                            ilike 'notes', '%' + options.term + '%'
+                            ilike 'name', '%' + options.story.term + '%'
+                            ilike 'description', '%' + options.story.term + '%'
+                            ilike 'notes', '%' + options.story.term + '%'
                         }
                     }
                 }
-                if (options.story?.feature) {
+                if (options.story.feature) {
                     feature {
                         or {
                             getList(options.story.feature).each { feature ->
@@ -410,7 +410,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                         }
                     }
                 }
-                if (options.story?.actor) {
+                if (options.story.actor) {
                     actor {
                         or {
                             getList(options.story.actor).each { actor ->
@@ -419,14 +419,14 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                         }
                     }
                 }
-                if (options.story?.state) {
+                if (options.story.state) {
                     or {
                         getList(options.story.state).each { state ->
                             eq 'state', state instanceof String ? state.toInteger() : state
                         }
                     }
                 }
-                if (options.story?.parentRelease) {
+                if (options.story.parentRelease) {
                     parentSprint {
                         parentRelease {
                             or {
@@ -437,7 +437,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                         }
                     }
                 }
-                if (options.story?.parentSprint) {
+                if (options.story.parentSprint) {
                     parentSprint {
                         or {
                             getList(options.story.parentSprint).each { parentSprint ->
@@ -446,7 +446,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                         }
                     }
                 }
-                if (options.story?.creator) {
+                if (options.story.creator) {
                     creator {
                         or {
                             getList(options.story.creator).each { creator ->
@@ -455,14 +455,14 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                         }
                     }
                 }
-                if (options.story?.type) {
+                if (options.story.type) {
                     or {
                         getList(options.story.type).each { type ->
                             eq 'type', type instanceof String ? type.toInteger() : type
                         }
                     }
                 }
-                if (options.story?.dependsOn) {
+                if (options.story.dependsOn) {
                     dependsOn {
                         or {
                             getList(options.story.dependsOn).each { dependsOn ->
@@ -471,21 +471,21 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                         }
                     }
                 }
-                if (options.story?.effort) {
+                if (options.story.effort) {
                     or {
                         getList(options.story.effort).each { effort ->
                             eq 'effort', effort instanceof String ? effort.toBigDecimal() : effort
                         }
                     }
                 }
-                if (options.story?.affectedVersion) {
+                if (options.story.affectedVersion) {
                     or {
                         getList(options.story.affectedVersion).each { affectedVersion ->
                             eq 'affectVersion', affectedVersion
                         }
                     }
                 }
-                if (options.story?.deliveredVersion) {
+                if (options.story.deliveredVersion) {
                     parentSprint {
                         or {
                             getList(options.story.deliveredVersion).each { deliveredVersion ->
@@ -496,16 +496,14 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                 }
             }
         }
-        if (options.tag) {
-            stories = Story.findAllByTagWithCriteria(options.tag) {
-                criteria.delegate = delegate
-                criteria.call()
-            }
-        } else if (options.term || options.story != null) {
-            stories = Story.createCriteria().list(options.list ?: [:]) {
-                criteria.delegate = delegate
-                criteria.call()
-            }
+        def criteriaCall = {
+            criteria.delegate = delegate
+            criteria.call()
+        }
+        if (options.story?.tag) {
+            stories = Story.findAllByTagWithCriteria(options.story.tag, criteriaCall)
+        } else if (options.story != null) {
+            stories = Story.createCriteria().list(options.list ?: [:], criteriaCall)
         }
         if (rowCount) {
             return stories ? stories.get(0) : 0
