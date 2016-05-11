@@ -455,7 +455,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                         }
                     }
                 }
-                if (options.story.type) {
+                if (options.story.type != null) { // Be careful type user story is 0 so it is falsy
                     or {
                         getList(options.story.type).each { type ->
                             eq 'type', type instanceof String ? type.toInteger() : type
