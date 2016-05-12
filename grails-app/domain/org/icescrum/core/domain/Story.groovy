@@ -474,7 +474,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                 if (options.story.effort) {
                     or {
                         getList(options.story.effort).each { effort ->
-                            eq 'effort', effort instanceof String ? effort.toBigDecimal() : effort
+                            eq 'effort', effort instanceof String ? effort.toBigDecimal() : new BigDecimal(effort) // Force BigDecimal if Integer or Double...
                         }
                     }
                 }
