@@ -130,8 +130,8 @@ class BundleUtils {
             (AcceptanceTestState.SUCCESS.id): 'is.acceptanceTest.state.success'
     ]
     static moodFeelings = [
-            (Mood.MOOD_GOOD): 'is.panel.mood.good',
-            (Mood.MOOD_MEH): 'is.panel.mood.meh',
-            (Mood.MOOD_BAD): 'is.panel.mood.bad'
+            (Mood.MOOD_GOOD): 'is.ui.widget.mood.good',
+            (Mood.MOOD_MEH): 'is.ui.widget.mood.meh',
+            (Mood.MOOD_BAD): 'is.ui.widget.mood.bad'
     ]
 }
