@@ -373,7 +373,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
 
     static search(product, options, rowCount = false) {
         List<Story> stories = []
-        def getList = { it instanceof  List || it instanceof Object[] ? it : [it] }
+        def getList = { it instanceof  List ? it : (it instanceof Object[] ? it as List : [it]) }
         def criteria = {
             if (rowCount) {
                 projections {
@@ -501,7 +501,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
             criteria.call()
         }
         if (options.story?.tag) {
-            stories = Story.findAllByTagWithCriteria(options.story.tag, criteriaCall)
+            stories = Story.findAllByTagsWithCriteria(getList(options.story.tag), criteriaCall)
         } else if (options.story != null) {
             stories = Story.createCriteria().list(options.list ?: [:], criteriaCall)
         }
