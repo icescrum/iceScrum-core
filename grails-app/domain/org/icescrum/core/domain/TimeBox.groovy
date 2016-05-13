@@ -83,6 +83,11 @@ class TimeBox implements Comparable<TimeBox>, Serializable {
         sort: orderNumber:'asc'
     }
 
+    def beforeValidate() {
+        startDate = startDate.clearTime()
+        endDate = endDate.clearTime()
+    }
+
     Integer getDuration() {
         def days = 0
         if (startDate != null && endDate != null){
