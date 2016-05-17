@@ -27,7 +27,6 @@ import org.icescrum.core.domain.Sprint
 import org.icescrum.core.domain.Task
 import org.icescrum.core.event.IceScrumEventType
 import org.icescrum.core.event.IceScrumListener
-import org.icescrum.core.utils.BundleUtils
 import org.icescrum.core.domain.Story
 import org.grails.comments.Comment
 import org.icescrum.core.domain.BacklogElement
@@ -269,7 +268,7 @@ class NotificationEmailService {
         def isProjectInvitation = invitation.type == Invitation.InvitationType.PRODUCT
         def invitedIn = isProjectInvitation ? invitation.product.name.encodeAsHTML() : invitation.team.name.encodeAsHTML()
         def locale = inviter.locale
-        def role = getMessage(BundleUtils.roles[invitation.futureRole], locale)
+        def role = getMessage(grailsApplication.config.icescrum.resourceBundles.roles[invitation.futureRole], locale)
         send([
                 to: invitation.email,
                 subject: grailsApplication.config.icescrum.alerts.subject_prefix + getMessage('is.template.email.user.invitation.subject', locale),
