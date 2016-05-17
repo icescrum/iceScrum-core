@@ -26,7 +26,6 @@ package org.icescrum.core.utils
 import org.icescrum.core.domain.AcceptanceTest.AcceptanceTestState
 import org.icescrum.core.domain.Actor
 import org.icescrum.core.domain.Feature
-import org.icescrum.core.domain.Mood
 import org.icescrum.core.domain.PlanningPokerGame
 import org.icescrum.core.domain.Story
 import org.icescrum.core.domain.Release
@@ -128,10 +127,5 @@ class BundleUtils {
             (AcceptanceTestState.TOCHECK.id): 'is.acceptanceTest.state.tocheck',
             (AcceptanceTestState.FAILED.id): 'is.acceptanceTest.state.failed',
             (AcceptanceTestState.SUCCESS.id): 'is.acceptanceTest.state.success'
-    ]
-    static moodFeelings = [
-            (Mood.MOOD_GOOD): 'is.ui.widget.mood.good',
-            (Mood.MOOD_MEH): 'is.ui.widget.mood.meh',
-            (Mood.MOOD_BAD): 'is.ui.widget.mood.bad'
     ]
 }

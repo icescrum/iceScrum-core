@@ -30,7 +30,6 @@ import grails.util.Holders
 import org.icescrum.core.domain.AcceptanceTest
 import org.icescrum.core.domain.Backlog
 import org.icescrum.core.domain.Sprint
-import org.icescrum.core.domain.Widget
 import org.springframework.security.core.context.SecurityContextHolder as SCH
 
 import org.icescrum.core.domain.preferences.ProductPreferences
@@ -48,7 +47,6 @@ import org.icescrum.core.domain.Team
 import org.icescrum.core.domain.User
 import grails.plugin.springsecurity.userdetails.GrailsUser
 import org.icescrum.core.domain.Actor
-import org.icescrum.core.domain.Mood
 
 class DummyPopulator {
 
@@ -76,23 +74,8 @@ class DummyPopulator {
             usera = new User(username: "a", email: "a@gmail.com", firstName: "Roberto", password: springSecurityService.encodePassword('a'), preferences: new UserPreferences(language: 'en', activity: 'Consultant')).save(failOnError: true)
             userz = new User(username: "z", email: "z@gmail.com", firstName: "Bernardo", password: springSecurityService.encodePassword('z'), preferences: new UserPreferences(language: 'en', activity: 'WebDesigner', menu: ["feature": "1", "backlog": "2"])).save(failOnError: true)
             userx = new User(username: "x", email: "x@gmail.com", firstName: "Antonio", password: springSecurityService.encodePassword('x'), preferences: new UserPreferences(language: 'en', activity: 'Consultant')).save(failOnError: true)
-
             widgetService.save(usera, uiDefinitionService.getWidgetDefinitionById('feed'), true)
             widgetService.save(usera, uiDefinitionService.getWidgetDefinitionById('notes'), true)
-
-            def randomMood = {
-                Random rand = new Random()
-                int randomNum = rand.nextInt(3);
-                def moodsByInt = [0: Mood.MOOD_BAD, 1: Mood.MOOD_MEH, 2: Mood.MOOD_GOOD]
-                return moodsByInt[randomNum]
-            }
-            for (int i = 10; i > 0 ; i--) {
-                def date = new Date() - i
-                def moodA = new Mood(feeling: randomMood(), feelingDay: date, user: usera)
-                moodA.save(failOnError: true)
-                def moodZ = new Mood(feeling: randomMood(), feelingDay: date, user: userz)
-                moodZ.save(failOnError: true)
-            }
         } else {
             usera = User.findByUsername("a")
             userz = User.findByUsername("z")
