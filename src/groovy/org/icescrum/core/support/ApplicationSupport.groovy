@@ -30,21 +30,31 @@ import grails.util.Holders
 import grails.util.Metadata
 import org.apache.commons.logging.LogFactory
 import org.apache.http.Consts
+import org.apache.http.HttpHost
 import org.apache.http.HttpResponse
 import org.apache.http.HttpStatus
+import org.apache.http.auth.AuthScope
+import org.apache.http.auth.UsernamePasswordCredentials
+import org.apache.http.client.AuthCache
 import org.apache.http.client.HttpClient
 import org.apache.http.client.methods.HttpGet
+import org.apache.http.client.methods.HttpPost
+import org.apache.http.client.protocol.ClientContext
 import org.apache.http.client.utils.URLEncodedUtils
+import org.apache.http.entity.StringEntity
+import org.apache.http.impl.auth.BasicScheme
+import org.apache.http.impl.client.BasicAuthCache
 import org.apache.http.impl.client.DefaultHttpClient
 import org.apache.http.message.BasicNameValuePair
+import org.apache.http.protocol.BasicHttpContext
 import org.apache.http.util.EntityUtils
 import org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib
 import org.icescrum.core.domain.User
 import org.icescrum.core.domain.preferences.UserPreferences
 import org.icescrum.core.security.WebScrumExpressionHandler
-import org.springframework.security.core.context.SecurityContextHolder as SCH
 import org.springframework.expression.Expression
 import org.springframework.security.access.expression.ExpressionUtils
+import org.springframework.security.core.context.SecurityContextHolder as SCH
 import org.springframework.security.web.FilterInvocation
 import org.springframework.security.web.access.WebInvocationPrivilegeEvaluator
 
@@ -62,26 +72,28 @@ class ApplicationSupport {
             doFilter: { req, res -> throw new UnsupportedOperationException() }
     ] as FilterChain
 
-    public static def controllerExist(def controllerName, def actionName = ''){
-        def controllerClass = Holders.grailsApplication.controllerClasses.find{ it.logicalPropertyName == controllerName }
+    public static def controllerExist(def controllerName, def actionName = '') {
+        def controllerClass = Holders.grailsApplication.controllerClasses.find {
+            it.logicalPropertyName == controllerName
+        }
         return actionName ? controllerClass?.metaClass?.respondsTo(actionName) : controllerClass
     }
 
     public static boolean isAllowed(def viewDefinition, def params, def widget = false) {
-        def grailsApplication  = Holders.grailsApplication
+        def grailsApplication = Holders.grailsApplication
         WebScrumExpressionHandler webExpressionHandler = (WebScrumExpressionHandler) grailsApplication.mainContext.getBean(WebScrumExpressionHandler.class)
         if (!viewDefinition || (viewDefinition.context && !params?."$viewDefinition.context")) {
             return false
         }
         //secured on uiDefinition
-        if(viewDefinition.secured){
+        if (viewDefinition.secured) {
             Expression expression = webExpressionHandler.expressionParser.parseExpression(viewDefinition.secured)
             FilterInvocation fi = new FilterInvocation(SRH.request, SRH.response, DUMMY_CHAIN)
             def ctx = webExpressionHandler.createEvaluationContext(SCH.context.getAuthentication(), fi)
             return ExpressionUtils.evaluateAsBoolean(expression, ctx)
         } else {
             //secured on controller
-            if(controllerExist(viewDefinition.id, widget ? 'widget' : 'window')) {
+            if (controllerExist(viewDefinition.id, widget ? 'widget' : 'window')) {
                 ApplicationTagLib g = (ApplicationTagLib) grailsApplication.mainContext.getBean(ApplicationTagLib.class)
                 WebInvocationPrivilegeEvaluator webInvocationPrivilegeEvaluator = (WebInvocationPrivilegeEvaluator) grailsApplication.mainContext.getBean(WebInvocationPrivilegeEvaluator.class)
                 def url = g.createLink(controller: viewDefinition.id, action: widget ? 'widget' : 'window')
@@ -358,13 +370,96 @@ class ApplicationSupport {
         def context = Holders.grailsApplication.config.icescrum.contexts.find { id ? it.key == id : params."$it.key" }
         if (context) {
             def object = context.value.contextClass.get(params.long("$context.key"))
-            return object ? [name         : context.key,
-                             object       : object,
-                             contextScope : context.value.contextScope,
-                             config       : context.value.config(object),
-                             params       : context.value.params(object),
-                             indexScrumOS : context.value.indexScrumOS] : false
+            return object ? [name        : context.key,
+                             object      : object,
+                             contextScope: context.value.contextScope,
+                             config      : context.value.config(object),
+                             params      : context.value.params(object),
+                             indexScrumOS: context.value.indexScrumOS] : false
         }
+    }
+
+    public static Map getJSON(String url, String username, String password, headers = [:]) {
+        DefaultHttpClient httpClient = new DefaultHttpClient()
+        Map resp = [:]
+        try {
+            // Build host
+            URI uri = new URI(url)
+            String host = uri.host
+            Integer port = uri.port
+            String scheme = uri.scheme
+            if (port == -1 && scheme == 'https') {
+                port = 443
+            }
+            HttpHost targetHost = new HttpHost(host, port, scheme)
+            // Configure preemptive basic auth
+            httpClient.credentialsProvider.setCredentials(new AuthScope(targetHost.hostName, targetHost.port), new UsernamePasswordCredentials(username, password))
+            AuthCache authCache = new BasicAuthCache()
+            authCache.put(targetHost, new BasicScheme())
+            BasicHttpContext localcontext = new BasicHttpContext()
+            localcontext.setAttribute(ClientContext.AUTH_CACHE, authCache)
+            // Build request
+            HttpGet httpGet = new HttpGet(uri.path)
+            headers.each { k, v ->
+                httpGet.setHeader(k, v)
+            }
+            // Execute request
+            HttpResponse response = httpClient.execute(targetHost, httpGet, localcontext)
+            resp.status = response.statusLine.statusCode
+            if (resp.status == HttpStatus.SC_OK) {
+                resp.data = JSON.parse(EntityUtils.toString(response.entity))
+            } else {
+                log.debug('Error ' + resp.status + ' get ' + uri.toString() + ' ' + EntityUtils.toString(response.entity))
+            }
+        } catch (Exception e) {
+            log.error(e.message)
+            e.printStackTrace()
+        } finally {
+            httpClient.connectionManager.shutdown()
+        }
+        return resp
+    }
+
+    public static Map postJSON(String url, String username, String password, JSON json, headers = [:]) {
+        DefaultHttpClient httpClient = new DefaultHttpClient()
+        Map resp = [:]
+        try {
+            // Build host
+            URI uri = new URI(url)
+            String host = uri.host
+            Integer port = uri.port
+            String scheme = uri.scheme
+            if (port == -1 && scheme == 'https') {
+                port = 443
+            }
+            HttpHost targetHost = new HttpHost(host, port, scheme)
+            // Configure preemptive basic auth
+            httpClient.credentialsProvider.setCredentials(new AuthScope(targetHost.hostName, targetHost.port), new UsernamePasswordCredentials(username, password))
+            AuthCache authCache = new BasicAuthCache()
+            authCache.put(targetHost, new BasicScheme())
+            BasicHttpContext localcontext = new BasicHttpContext()
+            localcontext.setAttribute(ClientContext.AUTH_CACHE, authCache)
+            // Build request
+            HttpPost httpPost = new HttpPost(uri.path)
+            headers.each { k, v ->
+                httpPost.setHeader(k, v)
+            }
+            httpPost.setEntity(new StringEntity(json.toString()));
+            // Execute request
+            HttpResponse response = httpClient.execute(targetHost, httpPost, localcontext)
+            resp.status = response.statusLine.statusCode
+            if (resp.status == HttpStatus.SC_OK) {
+                resp.data = JSON.parse(EntityUtils.toString(response.entity))
+            } else {
+                log.debug('Error ' + resp.status + ' post ' + uri.toString() + ' ' + json.toString(true) + ' ' + EntityUtils.toString(response.entity))
+            }
+        } catch (Exception e) {
+            log.error(e.message)
+            e.printStackTrace()
+        } finally {
+            httpClient.connectionManager.shutdown()
+        }
+        return resp
     }
 }
 

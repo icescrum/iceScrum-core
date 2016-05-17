@@ -35,8 +35,6 @@ import org.icescrum.core.services.StoryService
 import org.icescrum.core.utils.JSONIceScrumDomainClassMarshaller
 import org.icescrum.plugins.attachmentable.domain.Attachment
 import org.icescrum.plugins.attachmentable.services.AttachmentableService
-import org.springframework.context.ApplicationContext
-import org.icescrum.core.domain.Task
 import org.codehaus.groovy.grails.plugins.jasper.JasperReportDef
 import org.codehaus.groovy.grails.plugins.jasper.JasperExportFormat
 import org.springframework.transaction.support.TransactionCallback
@@ -48,7 +46,6 @@ import org.icescrum.core.support.ProgressSupport
 import org.icescrum.core.services.UiDefinitionService
 import org.icescrum.core.ui.UiDefinitionArtefactHandler
 import org.codehaus.groovy.grails.commons.ControllerArtefactHandler
-import org.icescrum.core.utils.XMLIceScrumDomainClassMarshaller
 import org.icescrum.core.support.ApplicationSupport
 
 import javax.servlet.http.HttpServletResponse
@@ -119,7 +116,6 @@ class IcescrumCoreGrailsPlugin {
         application.controllerClasses.each {
             addBroadcastMethods(it) // TODO Remove & don't forget to clean method calls (controllers & co)
             addErrorMethod(it)
-            addRenderRESTMethod(it)
             addJasperMethod(it, springSecurityService, jasperService)
 
             if (it.logicalPropertyName in controllersWithDownloadAndPreview){
@@ -145,18 +141,6 @@ class IcescrumCoreGrailsPlugin {
         Map properties = application.config?.icescrum?.marshaller
         WikiTextTagLib textileRenderer = (WikiTextTagLib)application.mainContext["grails.plugins.wikitext.WikiTextTagLib"]
         JSON.registerObjectMarshaller(new JSONIceScrumDomainClassMarshaller(application, false, true, properties, textileRenderer), 1)
-
-        XML.registerObjectMarshaller(new XMLIceScrumDomainClassMarshaller(application, true, properties), 1)
-
-        //TODO should be removed and merged with marshaller
-        properties = application.config?.icescrum?.restMarshaller
-        //For rest API
-        JSON.createNamedConfig('rest'){
-            it.registerObjectMarshaller(new JSONIceScrumDomainClassMarshaller(application, false, false, properties),2)
-        }
-        XML.createNamedConfig('rest'){
-            it.registerObjectMarshaller(new XMLIceScrumDomainClassMarshaller(application, false, properties), 2)
-        }
         applicationContext.bootStrapService.start()
     }
 
@@ -191,7 +175,6 @@ class IcescrumCoreGrailsPlugin {
                 addBroadcastMethods(event.source) // TODO Remove & don't forget to clean method calls (controllers & co)
 
                 addErrorMethod(event.source)
-                addRenderRESTMethod(event.source)
 
                 SpringSecurityService springSecurityService = event.ctx.getBean('springSecurityService')
                 JasperService jasperService = event.ctx.getBean('jasperService')
@@ -282,24 +265,7 @@ class IcescrumCoreGrailsPlugin {
             if (attrs.silent) {
                 error.silent = true
             }
-            withFormat {
-                html { render(status: 400, contentType: 'application/json', text:error as JSON) }
-                json { renderRESTJSON(text:error, status: 400) }
-                xml  { renderRESTXML(text:error, status: 400) }
-            }
-        }
-    }
-
-    private addRenderRESTMethod(source) {
-        source.metaClass.renderRESTJSON = { attrs ->
-            JSON.use('rest'){
-                render (status: attrs.status?:200, contentType: 'application/json', text: attrs.text as JSON)
-            }
-        }
-        source.metaClass.renderRESTXML = { attrs ->
-            XML.use('rest'){
-                render(status: attrs.status?:200, contentType: 'application/xml', text: attrs.text as XML)
-            }
+            render(status: 400, contentType: 'application/json', text:error as JSON)
         }
     }
 

@@ -46,6 +46,7 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
     private Map propertiesMap
     private WikiTextTagLib textileRenderer
     private boolean includeClass
+    private GrailsApplication grailsApplication
 
     public JSONIceScrumDomainClassMarshaller(GrailsApplication grailsApplication, boolean includeVersion, boolean includeClass, Map propertiesMap, WikiTextTagLib textileRenderer) {
         super(includeVersion, grailsApplication)
@@ -53,6 +54,7 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
         this.propertiesMap = propertiesMap
         this.includeClass = includeClass
         this.textileRenderer = textileRenderer
+        this.grailsApplication = grailsApplication
     }
 
     public JSONIceScrumDomainClassMarshaller(GrailsApplication grailsApplication, boolean includeVersion, boolean includeClass, Map propertiesMap) {
@@ -71,7 +73,7 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
         JSONWriter writer = json.getWriter()
         value = proxyHandler.unwrapIfProxy(value)
         Class<?> clazz = value.getClass()
-        GrailsDomainClass domainClass = Holders.grailsApplication.getDomainClass(clazz.getName())
+        GrailsDomainClass domainClass = grailsApplication.getDomainClass(clazz.getName())
         BeanWrapper beanWrapper = new BeanWrapperImpl(value)
         def configName = GrailsNameUtils.getShortName(clazz).toLowerCase()
 
@@ -181,18 +183,31 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
                 }
             }
         }
+
+        def user = grailsApplication.mainContext.springSecurityService.currentUser
+
         propertiesMap."${configName}"?.include?.each {
-            def val = value.properties."${it}"
-            if (val != null) {
-                writer.key(it);
-                json.convertAnother(val);
+            def granted = propertiesMap."${configName}".security?."${it}" != null ? propertiesMap."${configName}".security?."${it}" : true
+            granted = granted instanceof Closure ? granted(value, grailsApplication, user) : granted
+            if(granted){
+                def val = value.properties."${it}"
+                if (val != null) {
+                    writer.key(it);
+                    json.convertAnother(val);
+                }
             }
         }
+
+
         propertiesMap."${configName}"?.includeCount?.each {
-            def val = value.properties."${it}"
-            if (val instanceof Collection) {
-                Collection o = val
-                writer.key(it + "_count").value(o.size())
+            def granted = propertiesMap."${configName}".security?."${it}" != null ? propertiesMap."${configName}".security?."${it}" : true
+            granted = granted instanceof Closure ? granted(value, grailsApplication, user) : granted
+            if(granted) {
+                def val = value.properties."${it}"
+                if (val instanceof Collection) {
+                    Collection o = val
+                    writer.key(it + "_count").value(o.size())
+                }
             }
         }
         if (textileRenderer && propertiesMap."${configName}"?.textile) {
