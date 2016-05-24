@@ -40,6 +40,8 @@ class UserPreferences implements Serializable {
 
     boolean hideDoneState = false
     boolean displayWhatsNew = false
+    boolean displayWelcomeTour = true
+    boolean displayFullProjectTour = true
 
     Date lastReadActivities = new Date()
 
