@@ -52,7 +52,6 @@ class UserPreferences implements Serializable {
         activity nullable: true
         lastProductOpened nullable: true
         emailsSettingsData nullable: true
-        lastReadActivities nullable: true
     }
 
 
