@@ -405,7 +405,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                     feature {
                         or {
                             getList(options.story.feature).each { feature ->
-                                eq 'id', feature instanceof String ? feature.toLong() : feature
+                                eq 'id', new Long(feature)
                             }
                         }
                     }
@@ -414,7 +414,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                     actor {
                         or {
                             getList(options.story.actor).each { actor ->
-                                eq 'id', actor instanceof String ? actor.toLong() : actor
+                                eq 'id', new Long(actor)
                             }
                         }
                     }
@@ -422,7 +422,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                 if (options.story.state) {
                     or {
                         getList(options.story.state).each { state ->
-                            eq 'state', state instanceof String ? state.toInteger() : state
+                            eq 'state', new Integer(state)
                         }
                     }
                 }
@@ -431,7 +431,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                         parentRelease {
                             or {
                                 getList(options.story.parentRelease).each { parentRelease ->
-                                    eq 'id', parentRelease instanceof String ? parentRelease.toLong() : parentRelease
+                                    eq 'id', new Long(parentRelease)
                                 }
                             }
                         }
@@ -441,7 +441,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                     parentSprint {
                         or {
                             getList(options.story.parentSprint).each { parentSprint ->
-                                eq 'id', parentSprint instanceof String ? parentSprint.toLong() : parentSprint
+                                eq 'id', new Long(parentSprint)
                             }
                         }
                     }
@@ -450,7 +450,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                     creator {
                         or {
                             getList(options.story.creator).each { creator ->
-                                eq 'id', creator instanceof String ? creator.toLong() : creator
+                                eq 'id', new Long(creator)
                             }
                         }
                     }
@@ -458,7 +458,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                 if (options.story.type != null) { // Be careful type user story is 0 so it is falsy
                     or {
                         getList(options.story.type).each { type ->
-                            eq 'type', type instanceof String ? type.toInteger() : type
+                            eq 'type', new Integer(type)
                         }
                     }
                 }
@@ -466,7 +466,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                     dependsOn {
                         or {
                             getList(options.story.dependsOn).each { dependsOn ->
-                                eq 'id', dependsOn instanceof String ? dependsOn.toLong() : dependsOn
+                                eq 'id', new Long(dependsOn)
                             }
                         }
                     }
@@ -474,7 +474,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                 if (options.story.effort) {
                     or {
                         getList(options.story.effort).each { effort ->
-                            eq 'effort', effort instanceof String ? effort.toBigDecimal() : new BigDecimal(effort) // Force BigDecimal if Integer or Double...
+                            eq 'effort', new BigDecimal(effort)
                         }
                     }
                 }
