@@ -24,6 +24,8 @@
 package org.icescrum.core.event
 
 import org.codehaus.groovy.grails.commons.DefaultGrailsDomainClass
+import org.slf4j.LoggerFactory
+import org.slf4j.Logger
 
 abstract class IceScrumEventPublisher {
 
@@ -71,21 +73,24 @@ abstract class IceScrumEventPublisher {
     }
 
     private static void logEvent(IceScrumEventType type, object, Map dirtyProperties) {
-        def id = object.id ?: dirtyProperties.id
-        println "$type ${object.class.toString().split('\\.').last()} $id"
-        if (type == IceScrumEventType.UPDATE) {
-            dirtyProperties.each { dirtyProperty, oldValue ->
-                if (object.hasProperty("$dirtyProperty")){
-                    def newValue = object."$dirtyProperty"
-                    if (newValue != oldValue) {
-                        if (dirtyProperty == 'password') {
-                            oldValue = '*******************'
-                            newValue = oldValue
+        Logger log = LoggerFactory.getLogger(getClass())
+        if(log.isDebugEnabled()){
+            def id = object.id ?: dirtyProperties.id
+            log.debug("$type ${object.class.toString().split('\\.').last()} $id")
+            if (type == IceScrumEventType.UPDATE) {
+                dirtyProperties.each { dirtyProperty, oldValue ->
+                    if (object.hasProperty("$dirtyProperty")){
+                        def newValue = object."$dirtyProperty"
+                        if (newValue != oldValue) {
+                            if (dirtyProperty == 'password') {
+                                oldValue = '*******************'
+                                newValue = oldValue
+                            }
+                            log.debug("-- $dirtyProperty: \t" + oldValue + "\t-> " + newValue)
                         }
-                        println "-- $dirtyProperty: \t" + oldValue + "\t-> " + newValue
+                    } else {
+                        log.debug("-- $dirtyProperty: \t" + oldValue + "\t-> ")
                     }
-                } else {
-                    println "-- $dirtyProperty: \t" + oldValue + "\t-> "
                 }
             }
         }
