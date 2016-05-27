@@ -117,7 +117,7 @@ class ReleaseService extends IceScrumEventPublisher {
         }
         def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_UPDATE, release)
         if (!release.save(flush: true)) {
-            throw new RuntimeException()
+            throw new RuntimeException(release?.errors?.toString())
         }
         publishSynchronousEvent(IceScrumEventType.UPDATE, release, dirtyProperties)
     }
