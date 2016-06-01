@@ -35,48 +35,76 @@ import org.icescrum.core.event.IceScrumEventType
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.context.request.RequestContextHolder
 
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentMap
+import java.util.concurrent.ConcurrentSkipListSet
+import java.util.concurrent.CopyOnWriteArrayList
+
 @Transactional
 class PushService {
 
     def atmosphereMeteor
+    def disabledThreads = new CopyOnWriteArrayList<>()
 
     void broadcastToProductUsers(IceScrumEventType eventType, object, long productId) {
-        def channel = '/stream/app/product-' + productId
-        Broadcaster broadcaster = atmosphereMeteor.broadcasterFactory?.lookup(IceScrumBroadcaster.class, channel)
-        if (broadcaster) {
-            // toString() required to eagerly generate the String (lazy raise an error because no session in atmosphere thread)
-            def message = ([eventType: eventType.name(), object: object] as JSON).toString()
-            log.debug("broadcast to everybody on channel " + channel)
-            broadcaster.broadcast(message)
+        if(!isDisabledThread()){
+            def channel = '/stream/app/product-' + productId
+            Broadcaster broadcaster = atmosphereMeteor.broadcasterFactory?.lookup(IceScrumBroadcaster.class, channel)
+            if (broadcaster) {
+                // toString() required to eagerly generate the String (lazy raise an error because no session in atmosphere thread)
+                def message = ([eventType: eventType.name(), object: object] as JSON).toString()
+                log.debug("broadcast to everybody on channel " + channel)
+                broadcaster.broadcast(message)
+            }
         }
     }
 
     void broadcastToSingleUser(IceScrumEventType eventType, object, User user) {
-        def channel = '/stream/app/*'
-        Broadcaster broadcaster = atmosphereMeteor.broadcasterFactory?.lookup(IceScrumBroadcaster.class, channel)
-        if (broadcaster) {
-            Set<AtmosphereResource> resources = broadcaster.atmosphereResources?.findAll { AtmosphereResource resource ->
-                resource.request?.getAttribute(IceScrumAtmosphereEventListener.USER_CONTEXT)?.username == user.username
-            }
-            if (resources) {
-                log.debug('broadcast to ' + resources*.uuid().join(', ') + ' on channel ' + channel)
-                broadcaster.broadcast(([eventType: eventType.name(), object: object] as JSON).toString(), resources)
+        if(!isDisabledThread()){
+            def channel = '/stream/app/*'
+            Broadcaster broadcaster = atmosphereMeteor.broadcasterFactory?.lookup(IceScrumBroadcaster.class, channel)
+            if (broadcaster) {
+                Set<AtmosphereResource> resources = broadcaster.atmosphereResources?.findAll { AtmosphereResource resource ->
+                    resource.request?.getAttribute(IceScrumAtmosphereEventListener.USER_CONTEXT)?.username == user.username
+                }
+                if (resources) {
+                    log.debug('broadcast to ' + resources*.uuid().join(', ') + ' on channel ' + channel)
+                    broadcaster.broadcast(([eventType: eventType.name(), object: object] as JSON).toString(), resources)
+                }
             }
         }
     }
 
     void broadcastToUsers(IceScrumEventType eventType, object, Collection<User> user) {
-        def usernames = user*.username
-        AtmosphereResourceFactory atmosphereResourceFactory = atmosphereMeteor.framework?.atmosphereFactory()
-        if (atmosphereResourceFactory) {
-            def resources = atmosphereResourceFactory.findAll().findAll { AtmosphereResource resource ->
-                resource.request?.getAttribute(IceScrumAtmosphereEventListener.USER_CONTEXT)?.username in usernames
-            }
-            log.debug('broadcast to ' + resources*.uuid().join(', ') + ' on one of their broadcasters')
-            resources.each { AtmosphereResource resource ->
-                Broadcaster broadcaster = resource.broadcasters().first()
-                broadcaster.broadcast(([eventType: eventType.name(), object: object] as JSON).toString(), resource)
+        if(!isDisabledThread()) {
+            def usernames = user*.username
+            AtmosphereResourceFactory atmosphereResourceFactory = atmosphereMeteor.framework?.atmosphereFactory()
+            if (atmosphereResourceFactory) {
+                def resources = atmosphereResourceFactory.findAll().findAll { AtmosphereResource resource ->
+                    resource.request?.getAttribute(IceScrumAtmosphereEventListener.USER_CONTEXT)?.username in usernames
+                }
+                log.debug('broadcast to ' + resources*.uuid().join(', ') + ' on one of their broadcasters')
+                resources.each { AtmosphereResource resource ->
+                    Broadcaster broadcaster = resource.broadcasters().first()
+                    broadcaster.broadcast(([eventType: eventType.name(), object: object] as JSON).toString(), resource)
+                }
             }
         }
+    }
+
+    void disablePushForThisThread(){
+        if(!isDisabledThread()){
+            disabledThreads.add(Thread.currentThread().getId())
+        }
+    }
+
+    void enablePushForThisThread(){
+        if(isDisabledThread()){
+            disabledThreads.remove(Thread.currentThread().getId())
+        }
+    }
+
+    private boolean isDisabledThread() {
+        return disabledThreads.contains(Thread.currentThread().getId())
     }
 }
