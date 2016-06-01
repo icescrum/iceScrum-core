@@ -45,7 +45,7 @@ class WidgetService {
         } catch (Exception e) {
             throw new RuntimeException()
         }
-        if (!widget.save()) {
+        if (!widget.save(flush: true)) {
             throw new RuntimeException()
         }
         user.lastUpdated = new Date()
