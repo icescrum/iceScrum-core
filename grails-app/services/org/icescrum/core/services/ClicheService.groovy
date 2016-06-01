@@ -274,7 +274,7 @@ class ClicheService {
         }
         StreamingMarkupBuilder xmlBuilder = new StreamingMarkupBuilder()
         def today = new Date()
-        def lastCliche = sprint.cliches?.size() ? sprint.cliches.asList().last() : null
+        def lastCliche = sprint.cliches?.size() ? sprint.cliches.asList().sort { it.datePrise }.last() : null
         if (lastCliche) {
             def days = today - lastCliche.datePrise
             if (days < 1) {
