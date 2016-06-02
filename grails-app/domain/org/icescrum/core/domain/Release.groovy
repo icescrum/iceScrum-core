@@ -176,15 +176,7 @@ class Release extends TimeBox implements Cloneable, Attachmentable {
     }
 
     boolean getActivable() {
-        if (state == STATE_WAIT && parentProduct.releases?.find { it.state == STATE_INPROGRESS } == null) {
-            if (orderNumber >= 2 && parentProduct.releases.find { it.orderNumber == orderNumber - 1 }.state == STATE_DONE) {
-                return true
-            }
-            if (orderNumber == 1) {
-                return true
-            }
-        }
-        return false
+        return state == STATE_WAIT && (orderNumber == 1 || previousRelease && previousRelease.state == STATE_DONE)
     }
 
     Release getPreviousRelease() {

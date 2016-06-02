@@ -172,17 +172,30 @@ class ListenerService {
 
     @IceScrumListener(domain = 'sprint', eventType = IceScrumEventType.CREATE)
     void sprintCreate(Sprint sprint, Map dirtyProperties) {
-        pushService.broadcastToProductUsers(IceScrumEventType.CREATE, sprint, sprint.parentProduct.id)
+        def product = sprint.parentProduct
+        pushService.broadcastToProductUsers(IceScrumEventType.UPDATE, sprint.parentRelease, product.id) // Push parentRelease.closeable
+        pushService.broadcastToProductUsers(IceScrumEventType.CREATE, sprint, product.id)
     }
 
     @IceScrumListener(domain = 'sprint', eventType = IceScrumEventType.UPDATE)
     void sprintUpdate(Sprint sprint, Map dirtyProperties) {
-        pushService.broadcastToProductUsers(IceScrumEventType.UPDATE, sprint, sprint.parentProduct.id)
+        def product = sprint.parentProduct
+        if (dirtyProperties.containsKey('state') && sprint.state == Sprint.STATE_DONE) {
+            def nextSprintSameRelease = Sprint.findByParentReleaseAndOrderNumber(sprint.parentRelease, sprint.orderNumber + 1)
+            if (nextSprintSameRelease) {
+                pushService.broadcastToProductUsers(IceScrumEventType.UPDATE, nextSprintSameRelease, product.id) // Push nextSprint.activable
+            } else {
+                pushService.broadcastToProductUsers(IceScrumEventType.UPDATE, sprint.parentRelease, product.id) // Push parentRelease.closeable
+            }
+        }
+        pushService.broadcastToProductUsers(IceScrumEventType.UPDATE, sprint, product.id)
     }
 
     @IceScrumListener(domain = 'sprint', eventType = IceScrumEventType.DELETE)
     void sprintDelete(Sprint sprint, Map dirtyProperties) {
-        pushService.broadcastToProductUsers(IceScrumEventType.DELETE, [class: 'Sprint', id: dirtyProperties.id], dirtyProperties.parentRelease.parentProduct.id)
+        def product = dirtyProperties.parentRelease.parentProduct
+        pushService.broadcastToProductUsers(IceScrumEventType.UPDATE, dirtyProperties.parentRelease, product.id) // Push parentRelease.closeable
+        pushService.broadcastToProductUsers(IceScrumEventType.DELETE, [class: 'Sprint', id: dirtyProperties.id], product.id)
     }
 
     @IceScrumListener(domain = 'release', eventType = IceScrumEventType.CREATE)
@@ -192,7 +205,15 @@ class ListenerService {
 
     @IceScrumListener(domain = 'release', eventType = IceScrumEventType.UPDATE)
     void releaseUpdate(Release release, Map dirtyProperties) {
-        pushService.broadcastToProductUsers(IceScrumEventType.UPDATE, release, release.parentProduct.id)
+        def product = release.parentProduct
+        if (dirtyProperties.containsKey('state')) {
+            if (release.state == Release.STATE_DONE && release.nextRelease) {
+                pushService.broadcastToProductUsers(IceScrumEventType.UPDATE, release.nextRelease, product.id) // Push nextRelease.activable
+            } else if (release.state == Release.STATE_INPROGRESS && release.sprints) {
+                pushService.broadcastToProductUsers(IceScrumEventType.UPDATE, release.sprints.first(), product.id) // Push firstSprint.activable
+            }
+        }
+        pushService.broadcastToProductUsers(IceScrumEventType.UPDATE, release, product.id)
     }
 
     @IceScrumListener(domain = 'release', eventType = IceScrumEventType.DELETE)

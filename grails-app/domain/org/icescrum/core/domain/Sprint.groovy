@@ -23,8 +23,6 @@
  */
 
 
-
-
 package org.icescrum.core.domain
 
 import org.hibernate.ObjectNotFoundException
@@ -67,7 +65,7 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
     ]
 
     static namedQueries = {
-        getInProduct {p, id ->
+        getInProduct { p, id ->
             parentRelease {
                 parentProduct {
                     eq 'id', p
@@ -77,7 +75,7 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
             uniqueResult = true
         }
 
-        findCurrentSprint {p ->
+        findCurrentSprint { p ->
             parentRelease {
                 parentProduct {
                     eq 'id', p
@@ -89,7 +87,7 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
             uniqueResult = true
         }
 
-        findCurrentOrNextSprint {p ->
+        findCurrentOrNextSprint { p ->
             parentRelease {
                 parentProduct {
                     eq 'id', p
@@ -110,7 +108,7 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
             order("orderNumber", "asc")
         }
 
-        findCurrentOrLastSprint {p ->
+        findCurrentOrLastSprint { p ->
             parentRelease {
                 parentProduct {
                     eq 'id', p
@@ -149,15 +147,15 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
         inProgressDate nullable: true
         doneDate nullable: true
         initialRemainingTime nullable: true
-        endDate(validator:{ val, obj ->
+        endDate(validator: { val, obj ->
             if (val > obj.parentRelease.endDate)
                 return ['out.of.release.bounds']
             return true
         })
-        startDate(validator:{ val, obj ->
+        startDate(validator: { val, obj ->
             if (val < obj.parentRelease.startDate)
                 return ['out.of.release.bounds']
-            def previousSprint = obj.parentRelease.sprints?.find { it.orderNumber == obj.orderNumber - 1}
+            def previousSprint = obj.parentRelease.sprints?.find { it.orderNumber == obj.orderNumber - 1 }
             if (previousSprint && val <= previousSprint.endDate)
                 return ['previous.overlap']
             return true
@@ -168,15 +166,15 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
         this.state = Sprint.STATE_DONE
     }
 
-    static Sprint withSprint(long productId, long id){
+    static Sprint withSprint(long productId, long id) {
         Sprint sprint = (Sprint) getInProduct(productId, id).list()
         if (!sprint) {
-            throw new ObjectNotFoundException(id,'Sprint')
+            throw new ObjectNotFoundException(id, 'Sprint')
         }
         return sprint
     }
 
-    static List<Sprint> withSprints(def params, def id = 'id'){
+    static List<Sprint> withSprints(def params, def id = 'id') {
         def ids = params[id]?.contains(',') ? params[id].split(',')*.toLong() : params.list(id)
         List<Sprint> sprints = ids ? getAll(ids).findAll { it.parentProduct.id == params.product.toLong() } : null
         if (!sprints) {
@@ -288,31 +286,14 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
     }
 
     def getActivable() {
-        if (this.state != Sprint.STATE_WAIT)
-            return false
-        else if (this.parentRelease.state == Release.STATE_INPROGRESS && (this.orderNumber == 1 || this.orderNumber == Sprint.countByStateAndParentRelease(Sprint.STATE_DONE, this.parentRelease) + 1))
-            return true
-        else if (this.parentRelease.state == Release.STATE_WAIT && Release.countByStateAndParentProduct(Release.STATE_INPROGRESS, this.parentProduct) == 0 && this.orderNumber == 1)
-            return true
-        else if(Release.countByStateAndParentProduct(Release.STATE_INPROGRESS, this.parentProduct) == 1){
-            def previous = Release.findByStateAndParentProduct(Release.STATE_INPROGRESS, this.parentProduct)
-            if (!previous.sprints || previous.sprints.find{ it.state != Sprint.STATE_DONE }){
-                return false
-            }else if(this.parentRelease.state == Release.STATE_WAIT && this.orderNumber == 1){
-                return true
-            }
-        }
-        else
-            return false;
+        return state == STATE_WAIT && parentRelease.state == Release.STATE_INPROGRESS && (orderNumber == 1 || previousSprint && previousSprint.state == STATE_DONE)
     }
 
-    //Get the right endDate from the sprint state
-    Date getEffectiveEndDate(){
+    Date getEffectiveEndDate() {
         return this.state == STATE_DONE ? doneDate : endDate
     }
 
-    //Get the right startDate from the sprint state
-    Date getEffectiveStartDate(){
+    Date getEffectiveStartDate() {
         return this.state == STATE_WAIT ? startDate : inProgressDate
     }
 
@@ -320,7 +301,7 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
         (BigDecimal) tasks?.sum { Task t -> t.estimation ? t.estimation.toBigDecimal() : 0.0 } ?: 0.0
     }
 
-    def getParentProduct(){
+    def getParentProduct() {
         return this.parentRelease.parentProduct
     }
 
@@ -332,8 +313,8 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
         return parentRelease.name
     }
 
-    def xml(builder){
-        builder.sprint(id:this.id){
+    def xml(builder) {
+        builder.sprint(id: this.id) {
             state(this.state)
             endDate(this.endDate)
             velocity(this.velocity)
@@ -349,31 +330,28 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
             deliveredVersion(this.deliveredVersion)
             initialRemainingTime(this.initialRemainingTime)
 
-            goal { builder.mkp.yieldUnescaped("<![CDATA[${this.goal?:''}]]>") }
-            description { builder.mkp.yieldUnescaped("<![CDATA[${this.description?:''}]]>") }
-            retrospective { builder.mkp.yieldUnescaped("<![CDATA[${this.retrospective?:''}]]>") }
-            doneDefinition { builder.mkp.yieldUnescaped("<![CDATA[${this.doneDefinition?:''}]]>") }
+            goal { builder.mkp.yieldUnescaped("<![CDATA[${this.goal ?: ''}]]>") }
+            description { builder.mkp.yieldUnescaped("<![CDATA[${this.description ?: ''}]]>") }
+            retrospective { builder.mkp.yieldUnescaped("<![CDATA[${this.retrospective ?: ''}]]>") }
+            doneDefinition { builder.mkp.yieldUnescaped("<![CDATA[${this.doneDefinition ?: ''}]]>") }
 
-            attachments(){
+            attachments() {
                 this.attachments.each { _att ->
                     _att.xml(builder)
                 }
             }
-
-            stories(){
-                this.stories.each{ _story ->
+            stories() {
+                this.stories.each { _story ->
                     _story.xml(builder)
                 }
             }
-
-            tasks(){
-                this.tasks.each{ _task ->
+            tasks() {
+                this.tasks.each { _task ->
                     _task.xml(builder)
                 }
             }
-
-            cliches(){
-                this.cliches.each{ _cliche ->
+            cliches() {
+                this.cliches.each { _cliche ->
                     _cliche.xml(builder)
                 }
             }
