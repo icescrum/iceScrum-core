@@ -88,7 +88,7 @@ class UserPreferences implements Serializable {
         def settings = getEmailsSettings()
         if (settings) {
             settings.each { setting, projects ->
-                if (projects?.indexOf(pkey) >= 0) {
+                if (projects && projects.indexOf(pkey) >= 0) {
                     projects.remove(projects.indexOf(pkey))
                 }
             }
