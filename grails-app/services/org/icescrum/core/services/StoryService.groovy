@@ -442,6 +442,7 @@ class StoryService extends IceScrumEventPublisher {
             throw new IllegalStateException(g.message(code: 'is.story.error.dependsOn.suggested', args: [story.name, story.dependsOn.name]).toString())
         }
         resetRank(story)
+        def rank = newRank ?: ((Story.countAllAcceptedOrEstimated(story.backlog.id)?.list()[0] ?: 0) + 1)
         story.state = Story.STATE_ACCEPTED
         story.acceptedDate = new Date()
         if (((Product) story.backlog).preferences.noEstimation) {
@@ -449,7 +450,6 @@ class StoryService extends IceScrumEventPublisher {
             story.effort = 1
             story.state = Story.STATE_ESTIMATED
         }
-        def rank = newRank ?: ((Story.countAllAcceptedOrEstimated(story.backlog.id)?.list()[0] ?: 0) + 1)
         setRank(story, rank)
         update(story)
     }
