@@ -136,7 +136,6 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
         retrospective type: 'text'
         doneDefinition type: 'text'
         stories cascade: 'delete', batchSize: 15, cache: true
-        tasks cascade: 'all-delete-orphan', batchSize: 25
         orderNumber index: 's_order_index'
     }
 
