@@ -43,15 +43,11 @@ class WidgetService {
         try {
             widgetDefinition.onSave(widget)
         } catch (Exception e) {
-            throw new RuntimeException()
+            throw new RuntimeException(e)
         }
-        if (!widget.save(flush: true)) {
-            throw new RuntimeException()
-        }
+        widget.save(flush: true, failOnError: true)
         user.lastUpdated = new Date()
-        if (!user.save()) {
-            throw new RuntimeException()
-        }
+        user.save(failOnError: true)
         return widget
     }
 
@@ -68,15 +64,11 @@ class WidgetService {
             }
         } catch (Exception e) {
             log.debug(e)
-            throw new RuntimeException()
+            throw new RuntimeException(e)
         }
-        if (!widget.save()) {
-            throw new RuntimeException()
-        }
+        widget.save(failOnError: true)
         user.lastUpdated = new Date()
-        if (!user.save()) {
-            throw new RuntimeException()
-        }
+        user.save(failOnError: true)
     }
 
     void delete(Widget widget) {
@@ -88,12 +80,10 @@ class WidgetService {
         try {
             uiDefinitionService.getWidgetDefinitionById(widget.widgetDefinitionId).onDelete(widget)
         } catch (Exception e) {
-            throw new RuntimeException()
+            throw new RuntimeException(e)
         }
         user.lastUpdated = new Date()
-        if (!user.save()) {
-            throw new RuntimeException()
-        }
+        user.save(failOnError: true)
     }
 
     private updatePosition(Widget widget, int position, boolean onRight) {
@@ -142,8 +132,6 @@ class WidgetService {
             }
         }
         widget.userPreferences.user.lastUpdated = new Date()
-        if (!widget.userPreferences.user.save()) {
-            throw new RuntimeException()
-        }
+        widget.userPreferences.user.save(failOnError: true)
     }
 }

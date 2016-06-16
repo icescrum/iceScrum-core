@@ -23,7 +23,6 @@
 
 package org.icescrum.core.services
 
-import grails.plugin.cache.Cacheable
 import grails.plugin.springsecurity.SpringSecurityUtils
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.FilenameUtils
@@ -53,9 +52,7 @@ class UserService extends IceScrumEventPublisher {
             throw new RuntimeException()
         }
         user.password = springSecurityService.encodePassword(user.password)
-        if (!user.save()) {
-            throw new RuntimeException()
-        }
+        !user.save(failOnError: true)
         publishSynchronousEvent(IceScrumEventType.CREATE, user)
         if (token && grailsApplication.config.icescrum.invitation.enable) {
             def invitations = Invitation.findAllByToken(token)
@@ -121,9 +118,7 @@ class UserService extends IceScrumEventPublisher {
         }
         user.lastUpdated = new Date()
         def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_UPDATE, user)
-        if (!user.save()) {
-            throw new RuntimeException(user.errors?.toString())
-        }
+        user.save(failOnError: true)
         publishSynchronousEvent(IceScrumEventType.UPDATE, user, dirtyProperties)
     }
 
@@ -193,9 +188,7 @@ class UserService extends IceScrumEventPublisher {
             }
         }
         user.lastUpdated = new Date()
-        if (!user.save()) {
-            throw new RuntimeException()
-        }
+        user.save(failOnError: true)
     }
 
     @Transactional(readOnly = true)

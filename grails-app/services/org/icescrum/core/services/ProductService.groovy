@@ -50,9 +50,7 @@ class ProductService extends IceScrumEventPublisher {
     @PreAuthorize('isAuthenticated()')
     void save(Product product, productOwners, stakeHolders) {
         product.orderNumber = (Product.count() ?: 0) + 1
-        if (!product.save(flush: true)) {
-            throw new RuntimeException()
-        }
+        product.save(flush: true, failOnError: true)
         createDefaultBacklogs(product)
         securityService.secureDomain(product)
         if (productOwners){
@@ -108,9 +106,7 @@ class ProductService extends IceScrumEventPublisher {
                     it.save()
             }
 
-            if (!product.save(flush: true)) {
-                throw new RuntimeException()
-            }
+            product.save(flush: true, failOnError: true)
             securityService.secureDomain(product)
 
             if (productOwners) {
@@ -180,9 +176,7 @@ class ProductService extends IceScrumEventPublisher {
             }
         }
         def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_UPDATE, product)
-        if (!product.save(flush: true)) {
-            throw new RuntimeException()
-        }
+        product.save(flush: true, failOnError: true)
         publishSynchronousEvent(IceScrumEventType.UPDATE, product, dirtyProperties)
     }
 
@@ -565,9 +559,7 @@ class ProductService extends IceScrumEventPublisher {
     def archive(Product product) {
         product.preferences.archived = true
         def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_UPDATE, product)
-        if (!product.save(flush:true)){
-            throw new RuntimeException()
-        }
+        product.save(flush:true, failOnError: true)
         publishSynchronousEvent(IceScrumEventType.UPDATE, product, dirtyProperties)
     }
 
@@ -575,9 +567,7 @@ class ProductService extends IceScrumEventPublisher {
     def unArchive(Product product) {
         product.preferences.archived = false
         def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_UPDATE, product)
-        if (!product.save(flush:true)){
-            throw new RuntimeException()
-        }
+        product.save(flush:true, failOnError: true)
         publishSynchronousEvent(IceScrumEventType.UPDATE, product, dirtyProperties)
     }
 

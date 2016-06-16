@@ -47,9 +47,7 @@ class FeatureService extends IceScrumEventPublisher {
         feature.uid = Feature.findNextUId(product.id)
         feature.backlog = product
         product.addToFeatures(feature)
-        if (!feature.save(flush: true)) {
-            throw new RuntimeException()
-        }
+        feature.save(flush: true, failOnError: true)
         feature.refresh() // required to initialize collections to empty list
         publishSynchronousEvent(IceScrumEventType.CREATE, feature)
     }
@@ -58,14 +56,14 @@ class FeatureService extends IceScrumEventPublisher {
     void delete(Feature feature) {
         def product = feature.backlog
         def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_DELETE, feature)
-        feature.stories?.each{
+        feature.stories?.each {
             it.feature = null
             it.save()
         }
         product.removeFromFeatures(feature)
         product.features.each {
             if (it.rank > feature.rank) {
-                it.rank --
+                it.rank--
                 it.save() // TODO consider push
             }
         }
@@ -89,9 +87,7 @@ class FeatureService extends IceScrumEventPublisher {
         if (feature.isDirty('color')) {
             feature.stories*.lastUpdated = new Date()
         }
-        if (!feature.save(flush: true)) {
-            throw new RuntimeException()
-        }
+        feature.save(flush: true, failOnError: true)
         publishSynchronousEvent(IceScrumEventType.UPDATE, feature, dirtyProperties)
     }
 
@@ -107,7 +103,7 @@ class FeatureService extends IceScrumEventPublisher {
                     acceptedDate: new Date(),
                     state: Story.STATE_ACCEPTED,
                     feature: feature,
-                    creator: (User)springSecurityService.currentUser,
+                    creator: (User) springSecurityService.currentUser,
                     rank: (Story.countAllAcceptedOrEstimated(feature.backlog.id)?.list()[0] ?: 0) + 1,
                     backlog: feature.backlog,
                     uid: Story.findNextUId(feature.backlog.id)
@@ -123,14 +119,11 @@ class FeatureService extends IceScrumEventPublisher {
                 } else if (story.errors.getFieldError('name')?.defaultMessage?.contains("maximum size")) {
                     story.name = story.name[0..20]
                     story.validate()
-                }else {
+                } else {
                     throw new RuntimeException()
                 }
             }
-            if (!story.save()) {
-                throw new RuntimeException(story.errors.toString())
-            }
-            broadcast(function: 'add', message: story, channel:'product-'+story.backlog.id)
+            story.save(failOnError: true)
             stories << story
         }
         return stories
@@ -142,7 +135,7 @@ class FeatureService extends IceScrumEventPublisher {
             return 0d
         }
         double items = stories.size()
-        double itemsDone = stories.findAll {it.state == Story.STATE_DONE}.size()
+        double itemsDone = stories.findAll { it.state == Story.STATE_DONE }.size()
         return itemsDone / items
     }
 

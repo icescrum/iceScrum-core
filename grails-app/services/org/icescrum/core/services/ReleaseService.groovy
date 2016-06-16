@@ -52,9 +52,7 @@ class ReleaseService extends IceScrumEventPublisher {
             release.state = Release.STATE_INPROGRESS
         }
         release.orderNumber = (product.releases?.size() ?: 0) + 1
-        if (!release.save(flush: true)) {
-            throw new RuntimeException()
-        }
+        release.save(flush: true, failOnError: true)
         product.addToReleases(release)
         product.endDate = release.endDate
         publishSynchronousEvent(IceScrumEventType.CREATE, release)
@@ -116,9 +114,7 @@ class ReleaseService extends IceScrumEventPublisher {
             }
         }
         def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_UPDATE, release)
-        if (!release.save(flush: true)) {
-            throw new RuntimeException(release?.errors?.toString())
-        }
+        release.save(flush: true, failOnError: true)
         publishSynchronousEvent(IceScrumEventType.UPDATE, release, dirtyProperties)
     }
 
@@ -169,9 +165,7 @@ class ReleaseService extends IceScrumEventPublisher {
             }
             product.endDate = product.releases*.endDate.max()
         }
-        if (!product.save(flush: true)) {
-            throw new RuntimeException()
-        }
+        product.save(flush: true, failOnError: true)
         publishSynchronousEvent(IceScrumEventType.DELETE, release, dirtyProperties)
     }
 

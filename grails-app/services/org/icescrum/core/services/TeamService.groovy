@@ -61,9 +61,7 @@ class TeamService {
                     }
                 }
             }
-            if (!team.save(flush: true)) {
-                throw new RuntimeException()
-            }
+            team.save(flush: true, failOnError: true)
             team.products = [] // Grails does not initialize the collection and it is serialized as null instead of empty collection
         }
     }

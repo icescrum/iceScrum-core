@@ -45,9 +45,7 @@ class ActorService extends IceScrumEventPublisher {
         actor.uid = Actor.findNextUId(p.id)
         actor.backlog = p
         p.addToActors(actor)
-        if (!actor.save(flush: true)) {
-            throw new RuntimeException()
-        }
+        actor.save(flush: true, failOnError: true)
         actor.refresh() // required to initialize collections to empty list
         publishSynchronousEvent(IceScrumEventType.CREATE, actor)
     }
@@ -68,9 +66,7 @@ class ActorService extends IceScrumEventPublisher {
     void update(Actor actor) {
         actor.name = actor.name?.trim()
         def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_UPDATE, actor)
-        if (!actor.save(flush: true)) {
-            throw new RuntimeException()
-        }
+        actor.save(flush: true, failOnError: true)
         publishSynchronousEvent(IceScrumEventType.UPDATE, actor, dirtyProperties)
     }
 

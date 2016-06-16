@@ -89,13 +89,10 @@ class StoryService extends IceScrumEventPublisher {
         }
         def rank = story.sameBacklogStories ? story.sameBacklogStories.max { it.rank }.rank + 1 : 1
         setRank(story, rank)
-        if (story.save(flush: true)) {
-            story.refresh() // required to initialize collections to empty list
-            product.addToStories(story)
-            publishSynchronousEvent(IceScrumEventType.CREATE, story)
-        } else {
-            throw new RuntimeException(story.errors?.toString())
-        }
+        story.save(flush: true, failOnError: true)
+        story.refresh() // required to initialize collections to empty list
+        product.addToStories(story)
+        publishSynchronousEvent(IceScrumEventType.CREATE, story)
     }
 
     // TODO replace stories by a single one and call the service in a loop in story controller
@@ -187,9 +184,7 @@ class StoryService extends IceScrumEventPublisher {
             manageActors(story, product)
         }
         def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_UPDATE, story)
-        if (!story.save()) {
-            throw new RuntimeException(story.errors?.toString())
-        }
+        story.save(failOnError: true)
         publishSynchronousEvent(IceScrumEventType.UPDATE, story, dirtyProperties)
     }
 
@@ -583,9 +578,7 @@ class StoryService extends IceScrumEventPublisher {
             story.doneDate = new Date()
             story.parentSprint.velocity += story.effort
             def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_UPDATE, story)
-            if (!story.save()) {
-                throw new RuntimeException(story.errors?.toString())
-            }
+            story.save(failOnError: true)
             publishSynchronousEvent(IceScrumEventType.UPDATE, story, dirtyProperties)
             User user = (User) springSecurityService.currentUser
             activityService.addActivity(story, user, 'done', story.name)
@@ -624,9 +617,7 @@ class StoryService extends IceScrumEventPublisher {
             story.parentSprint.velocity -= story.effort
             //Move story to last rank of in progress stories in sprint
             updateRank(story, Story.countByParentSprintAndState(story.parentSprint, Story.STATE_INPROGRESS) + 1)
-            if (!story.save()) {
-                throw new RuntimeException()
-            }
+            story.save(failOnError: true)
             User user = (User) springSecurityService.currentUser
             activityService.addActivity(story, user, 'unDone', story.name)
         }
