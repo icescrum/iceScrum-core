@@ -24,7 +24,6 @@
 
 import com.quirklabs.hdimageutils.HdImageService
 import grails.converters.JSON
-import grails.converters.XML
 import grails.plugins.wikitext.WikiTextTagLib
 import org.codehaus.groovy.grails.commons.GrailsClassUtils
 import org.icescrum.core.cors.CorsFilter
@@ -114,7 +113,6 @@ class IcescrumCoreGrailsPlugin {
         uiDefinitionService.loadDefinitions()
 
         application.controllerClasses.each {
-            addBroadcastMethods(it) // TODO Remove & don't forget to clean method calls (controllers & co)
             addErrorMethod(it)
             addJasperMethod(it, springSecurityService, jasperService)
 
@@ -124,7 +122,6 @@ class IcescrumCoreGrailsPlugin {
         }
 
         application.serviceClasses.each {
-            addBroadcastMethods(it) // TODO Remove & don't forget to clean method calls (controllers & co)
             addListenerSupport(it, ctx)
         }
         // Old school because no GORM Static API at the point where it is called
@@ -172,10 +169,7 @@ class IcescrumCoreGrailsPlugin {
                 }
             }
             if (application.isControllerClass(event.source)) {
-                addBroadcastMethods(event.source) // TODO Remove & don't forget to clean method calls (controllers & co)
-
                 addErrorMethod(event.source)
-
                 SpringSecurityService springSecurityService = event.ctx.getBean('springSecurityService')
                 JasperService jasperService = event.ctx.getBean('jasperService')
                 addJasperMethod(event.source, springSecurityService, jasperService)
@@ -238,11 +232,6 @@ class IcescrumCoreGrailsPlugin {
             }
             clazz.registerMapping(actionName)
         }
-    }
-
-    // TODO Remove & don't forget to clean method calls (controllers & co)
-    private addBroadcastMethods(source) {
-        source.metaClass.broadcast = {}
     }
 
     private addErrorMethod(source) {
