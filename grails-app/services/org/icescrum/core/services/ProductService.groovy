@@ -156,7 +156,7 @@ class ProductService extends IceScrumEventPublisher {
     @PreAuthorize('scrumMaster(#product) and !archivedProduct(#product)')
     void update(Product product, boolean hasHiddenChanged, String pkeyChanged) {
         if (!product.name?.trim()) {
-            throw new BusinessException(code: "is.product.error.no.name")
+            throw new BusinessException(code: 'is.product.error.no.name')
         }
         if (hasHiddenChanged && product.preferences.hidden && !ApplicationSupport.booleanValue(grailsApplication.config.icescrum.project.private.enable)
               && !SpringSecurityUtils.ifAnyGranted(Authority.ROLE_ADMIN)) {

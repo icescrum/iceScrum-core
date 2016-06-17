@@ -23,6 +23,7 @@
 
 package org.icescrum.core.services
 
+import grails.validation.ValidationException
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
 import org.icescrum.core.error.BusinessException
@@ -221,7 +222,7 @@ class TaskService extends IceScrumEventPublisher {
                 clonedTask.name = clonedTask.name[0..20]
                 clonedTask.validate()
             } else {
-                throw new RuntimeException(clonedTask.errors.toString())
+                throw new ValidationException('Validation Error(s) occurred during save()', clonedTask.errors)
             }
         }
         save(clonedTask, user)

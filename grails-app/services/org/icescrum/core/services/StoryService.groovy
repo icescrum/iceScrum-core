@@ -26,6 +26,7 @@
 package org.icescrum.core.services
 
 import grails.util.GrailsNameUtils
+import grails.validation.ValidationException
 import org.apache.commons.io.FileUtils
 import org.grails.comments.Comment
 import org.grails.comments.CommentLink
@@ -487,7 +488,7 @@ class StoryService extends IceScrumEventPublisher {
                     feature.name = feature.name[0..20]
                     feature.validate()
                 } else {
-                    throw new RuntimeException()
+                    throw new ValidationException('Validation Error(s) occurred during save()', feature.errors)
                 }
             }
             featureService.save(feature, (Product) story.backlog)
@@ -532,7 +533,7 @@ class StoryService extends IceScrumEventPublisher {
                     task.name = task.name[0..20]
                     task.validate()
                 } else {
-                    throw new RuntimeException()
+                    throw new ValidationException('Validation Error(s) occurred during save()', task.errors)
                 }
             }
             if (story.feature) {
@@ -654,7 +655,7 @@ class StoryService extends IceScrumEventPublisher {
                     copiedStory.name = copiedStory.name[0..20]
                     copiedStory.validate()
                 } else {
-                    throw new RuntimeException()
+                    throw new ValidationException('Validation Error(s) occurred during save()', copiedStory.errors)
                 }
             }
             save(copiedStory, (Product) story.backlog, (User) springSecurityService.currentUser)
