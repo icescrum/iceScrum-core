@@ -30,9 +30,6 @@ import grails.validation.ValidationException
 import org.apache.commons.io.FileUtils
 import org.grails.comments.Comment
 import org.grails.comments.CommentLink
-import org.hibernate.exception.SQLGrammarException
-import org.hibernate.type.LongType
-import org.hibernate.type.StringType
 import org.icescrum.core.domain.*
 import org.icescrum.core.domain.AcceptanceTest.AcceptanceTestState
 import org.icescrum.core.event.IceScrumEventPublisher
@@ -742,10 +739,6 @@ class StoryService extends IceScrumEventPublisher {
                     actor.addToStories(story)
                 }
             }
-            if (xmlStory.textAs || xmlStory.textICan || xmlStory.textTo) {
-                def i18n = { g.message(code: "is.story.template." + it) }
-                migrateTemplatesOnStory(xmlStory.textAs.text().trim(), xmlStory.textICan.text().trim(), xmlStory.textTo.text().trim(), story, i18n)
-            }
             if (product) {
                 def user
                 if (!xmlStory.creator?.@uid?.isEmpty())
@@ -780,77 +773,6 @@ class StoryService extends IceScrumEventPublisher {
             if (log.debugEnabled) e.printStackTrace()
             throw new RuntimeException(e)
         }
-    }
-
-    void migrateTemplatesInDb() {
-        try {
-            if (!System.properties['icescrum.oracle']) {
-                def session = sessionFactory.getCurrentSession()
-                def storiesToMigrate = session.createSQLQuery("""SELECT id, text_as, textican, text_to
-                                                                 FROM icescrum2_story
-                                                                 WHERE text_as IS NOT NULL OR textican IS NOT NULL OR text_to IS NOT NULL""")
-                        .addScalar("id", LongType.INSTANCE)
-                        .addScalar("text_as", StringType.INSTANCE)
-                        .addScalar("textican", StringType.INSTANCE)
-                        .addScalar("text_to", StringType.INSTANCE)
-                        .list()
-                if (storiesToMigrate) {
-                    if (log.debugEnabled) {
-                        log.debug("Old story templates to migrate: " + storiesToMigrate.size())
-                    }
-                    def (iId, iAs, iIcan, iTo) = 0..3
-                    def i18n = { messageSource.getMessage("is.story.template." + it, null, null, new Locale("en")) }
-                    storiesToMigrate.each { storyToMigrate ->
-                        // Old school because no GORM Static API at the point where it is called in IcescrumCoreGrailsPlugin
-                        Story story = (Story) session.get(Story.class, storyToMigrate[iId])
-                        migrateTemplatesOnStory(storyToMigrate[iAs], storyToMigrate[iIcan], storyToMigrate[iTo], story, i18n)
-                        session.save(story)
-                    }
-                    def removeOldTemplates = session.createSQLQuery("UPDATE icescrum2_story SET text_as = NULL, textican = NULL, text_to = NULL")
-                    removeOldTemplates.executeUpdate()
-                    if (log.debugEnabled) {
-                        log.debug("Old story templates migrated")
-                    }
-                }
-            }
-        } catch (SQLGrammarException e) {
-            if (log.debugEnabled) {
-                log.debug("No old story template to migrate")
-            }
-        }
-    }
-
-    private void migrateTemplatesOnStory(oldAs, oldIcan, oldTo, story, i18n) {
-        def storyTemplateContent = [as: oldAs, ican: oldIcan, to: oldTo]
-        if (story.actor) {
-            def actor = story.actor
-            storyTemplateContent.as = oldAs.replaceAll(actor.name, 'A[' + actor.uid + '-' + actor.name + ']')
-        }
-        if (storyTemplateContent.values().any { it }) {
-            def storyTemplate = generateTemplateWithContent(storyTemplateContent, i18n)
-            if (!story.description) {
-                story.description = storyTemplate
-            } else if ((storyTemplate.size() + story.description.size()) < 3000) {
-                story.description += ("\n" + storyTemplate)
-            } else if (!story.notes) {
-                story.notes = storyTemplate
-            } else if ((storyTemplate.size() + story.notes.size()) < 5000) {
-                story.notes += ("\n" + storyTemplate)
-            } else {
-                def templateError = "Unable to migrate template: notes and description are full. STORY: $story.uid-$story.name TEMPLATE: $storyTemplate"
-                if (log.debugEnabled) {
-                    log.debug(templateError)
-                } else {
-                    println templateError
-                }
-            }
-        }
-    }
-
-    private String generateTemplateWithContent(Map fields, i18n) {
-        return ['as', 'ican', 'to'].collect {
-            i18n(it) + " " + (fields[it] ?: '')
-        }.join("\n")
     }
 
     private void manageActors(story, product) {

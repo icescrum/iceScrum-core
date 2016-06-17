@@ -30,14 +30,11 @@ import org.icescrum.core.cors.CorsFilter
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
 import org.icescrum.core.event.IceScrumListener
-import org.icescrum.core.services.StoryService
 import org.icescrum.core.utils.JSONIceScrumDomainClassMarshaller
 import org.icescrum.plugins.attachmentable.domain.Attachment
 import org.icescrum.plugins.attachmentable.services.AttachmentableService
 import org.codehaus.groovy.grails.plugins.jasper.JasperReportDef
 import org.codehaus.groovy.grails.plugins.jasper.JasperExportFormat
-import org.springframework.transaction.support.TransactionCallback
-import org.springframework.transaction.support.TransactionTemplate
 import org.springframework.web.servlet.support.RequestContextUtils as RCU
 import grails.plugin.springsecurity.SpringSecurityService
 import org.codehaus.groovy.grails.plugins.jasper.JasperService
@@ -122,13 +119,6 @@ class IcescrumCoreGrailsPlugin {
         application.serviceClasses.each {
             addListenerSupport(it, ctx)
         }
-        // Old school because no GORM Static API at the point where it is called
-        def transactionManager = ctx.getBean('transactionManager')
-        def migrateTemplates = {
-            StoryService storyService = ctx.getBean('storyService')
-            storyService.migrateTemplatesInDb()
-        }
-        new TransactionTemplate(transactionManager).execute(migrateTemplates as TransactionCallback)
     }
 
     def doWithApplicationContext = { applicationContext ->
