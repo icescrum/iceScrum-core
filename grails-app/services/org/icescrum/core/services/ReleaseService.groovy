@@ -53,7 +53,7 @@ class ReleaseService extends IceScrumEventPublisher {
             release.state = Release.STATE_INPROGRESS
         }
         release.orderNumber = (product.releases?.size() ?: 0) + 1
-        release.save(flush: true, failOnError: true)
+        release.save(flush: true)
         product.addToReleases(release)
         product.endDate = release.endDate
         publishSynchronousEvent(IceScrumEventType.CREATE, release)
@@ -115,7 +115,7 @@ class ReleaseService extends IceScrumEventPublisher {
             }
         }
         def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_UPDATE, release)
-        release.save(flush: true, failOnError: true)
+        release.save(flush: true)
         publishSynchronousEvent(IceScrumEventType.UPDATE, release, dirtyProperties)
     }
 
@@ -166,7 +166,7 @@ class ReleaseService extends IceScrumEventPublisher {
             }
             product.endDate = product.releases*.endDate.max()
         }
-        product.save(flush: true, failOnError: true)
+        product.save(flush: true)
         publishSynchronousEvent(IceScrumEventType.DELETE, release, dirtyProperties)
     }
 

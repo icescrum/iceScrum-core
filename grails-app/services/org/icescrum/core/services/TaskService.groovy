@@ -67,7 +67,7 @@ class TaskService extends IceScrumEventPublisher {
             task.rank = Task.countByBacklogAndTypeAndState(task.backlog, task.type, task.state) + 1
         }
         task.uid = Task.findNextUId(product.id)
-        task.save(flush: true, failOnError: true)
+        task.save(flush: true)
         if (sprint) {
             clicheService.createOrUpdateDailyTasksCliche(sprint)
         }
@@ -135,7 +135,7 @@ class TaskService extends IceScrumEventPublisher {
             updateRank(task, props.rank)
         }
         def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_UPDATE, task)
-        task.save(flush: true, failOnError: true)
+        task.save(flush: true)
         if (task.sprint) {
             task.sprint.lastUpdated = new Date()
             task.sprint.save()

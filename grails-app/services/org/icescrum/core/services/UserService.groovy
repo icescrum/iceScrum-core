@@ -50,7 +50,7 @@ class UserService extends IceScrumEventPublisher {
 
     void save(User user, String token = null) {
         user.password = springSecurityService.encodePassword(user.password)
-        !user.save(failOnError: true)
+        !user.save()
         publishSynchronousEvent(IceScrumEventType.CREATE, user)
         if (token && grailsApplication.config.icescrum.invitation.enable) {
             def invitations = Invitation.findAllByToken(token)
@@ -116,7 +116,7 @@ class UserService extends IceScrumEventPublisher {
         }
         user.lastUpdated = new Date()
         def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_UPDATE, user)
-        user.save(failOnError: true)
+        user.save()
         publishSynchronousEvent(IceScrumEventType.UPDATE, user, dirtyProperties)
     }
 
@@ -186,7 +186,7 @@ class UserService extends IceScrumEventPublisher {
             }
         }
         user.lastUpdated = new Date()
-        user.save(failOnError: true)
+        user.save()
     }
 
     @Transactional(readOnly = true)

@@ -43,7 +43,7 @@ class AcceptanceTestService extends IceScrumEventPublisher {
         acceptanceTest.creator = user
         acceptanceTest.uid = AcceptanceTest.findNextUId(parentStory.backlog.id)
         acceptanceTest.parentStory = parentStory
-        acceptanceTest.save(failOnError: true)
+        acceptanceTest.save()
         publishSynchronousEvent(IceScrumEventType.CREATE, acceptanceTest)
         def storyService = (StoryService) grailsApplication.mainContext.getBean('storyService')
         storyService.update(parentStory)
@@ -53,7 +53,7 @@ class AcceptanceTestService extends IceScrumEventPublisher {
     //@PreAuthorize('inProduct(#acceptanceTest.parentProduct) and !archivedProduct(#acceptanceTest.parentProduct)')
     void update(AcceptanceTest acceptanceTest) {
         def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_UPDATE, acceptanceTest)
-        acceptanceTest.save(failOnError: true)
+        acceptanceTest.save()
         publishSynchronousEvent(IceScrumEventType.UPDATE, acceptanceTest, dirtyProperties)
         def storyService = (StoryService) grailsApplication.mainContext.getBean('storyService')
         storyService.update(acceptanceTest.parentStory)

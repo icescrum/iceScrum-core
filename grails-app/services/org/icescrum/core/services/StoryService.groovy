@@ -90,7 +90,7 @@ class StoryService extends IceScrumEventPublisher {
         }
         def rank = story.sameBacklogStories ? story.sameBacklogStories.max { it.rank }.rank + 1 : 1
         setRank(story, rank)
-        story.save(flush: true, failOnError: true)
+        story.save(flush: true)
         story.refresh() // required to initialize collections to empty list
         product.addToStories(story)
         publishSynchronousEvent(IceScrumEventType.CREATE, story)
@@ -185,7 +185,7 @@ class StoryService extends IceScrumEventPublisher {
             manageActors(story, product)
         }
         def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_UPDATE, story)
-        story.save(failOnError: true)
+        story.save()
         publishSynchronousEvent(IceScrumEventType.UPDATE, story, dirtyProperties)
     }
 
@@ -577,7 +577,7 @@ class StoryService extends IceScrumEventPublisher {
             story.doneDate = new Date()
             story.parentSprint.velocity += story.effort
             def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_UPDATE, story)
-            story.save(failOnError: true)
+            story.save()
             publishSynchronousEvent(IceScrumEventType.UPDATE, story, dirtyProperties)
             User user = (User) springSecurityService.currentUser
             activityService.addActivity(story, user, 'done', story.name)
@@ -616,7 +616,7 @@ class StoryService extends IceScrumEventPublisher {
             story.parentSprint.velocity -= story.effort
             //Move story to last rank of in progress stories in sprint
             updateRank(story, Story.countByParentSprintAndState(story.parentSprint, Story.STATE_INPROGRESS) + 1)
-            story.save(failOnError: true)
+            story.save()
             User user = (User) springSecurityService.currentUser
             activityService.addActivity(story, user, 'unDone', story.name)
         }

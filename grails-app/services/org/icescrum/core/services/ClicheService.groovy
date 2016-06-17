@@ -36,7 +36,7 @@ class ClicheService {
 
     private static void save(Cliche cliche, TimeBox timeBox) {
         timeBox.addToCliches(cliche)
-        cliche.save(failOnError: true)
+        cliche.save()
     }
 
     /**

@@ -45,9 +45,9 @@ class WidgetService {
         } catch (Exception e) {
             throw new RuntimeException(e)
         }
-        widget.save(flush: true, failOnError: true)
+        widget.save(flush: true)
         user.lastUpdated = new Date()
-        user.save(failOnError: true)
+        user.save()
         return widget
     }
 
@@ -66,9 +66,9 @@ class WidgetService {
             log.debug(e)
             throw new RuntimeException(e)
         }
-        widget.save(failOnError: true)
+        widget.save()
         user.lastUpdated = new Date()
-        user.save(failOnError: true)
+        user.save()
     }
 
     void delete(Widget widget) {
@@ -83,7 +83,7 @@ class WidgetService {
             throw new RuntimeException(e)
         }
         user.lastUpdated = new Date()
-        user.save(failOnError: true)
+        user.save()
     }
 
     private updatePosition(Widget widget, int position, boolean onRight) {
@@ -132,6 +132,6 @@ class WidgetService {
             }
         }
         widget.userPreferences.user.lastUpdated = new Date()
-        widget.userPreferences.user.save(failOnError: true)
+        widget.userPreferences.user.save()
     }
 }

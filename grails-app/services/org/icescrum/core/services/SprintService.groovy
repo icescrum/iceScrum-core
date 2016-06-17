@@ -51,7 +51,7 @@ class SprintService extends IceScrumEventPublisher {
         }
         sprint.orderNumber = (release.sprints?.size() ?: 0) + 1
         release.addToSprints(sprint)
-        sprint.save(failOnError: true)
+        sprint.save()
         publishSynchronousEvent(IceScrumEventType.CREATE, sprint)
     }
 
@@ -90,9 +90,9 @@ class SprintService extends IceScrumEventPublisher {
         def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_UPDATE, sprint)
         if (updateRelease) {
             sprint.parentRelease.lastUpdated = new Date()
-            sprint.parentRelease.save(flush: true, failOnError: true)
+            sprint.parentRelease.save(flush: true)
         } else {
-            sprint.save(failOnError: true)
+            sprint.save()
         }
         publishSynchronousEvent(IceScrumEventType.UPDATE, sprint, dirtyProperties)
     }

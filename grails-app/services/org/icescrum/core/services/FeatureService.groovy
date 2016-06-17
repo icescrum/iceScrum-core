@@ -47,7 +47,7 @@ class FeatureService extends IceScrumEventPublisher {
         feature.uid = Feature.findNextUId(product.id)
         feature.backlog = product
         product.addToFeatures(feature)
-        feature.save(flush: true, failOnError: true)
+        feature.save(flush: true)
         feature.refresh() // required to initialize collections to empty list
         publishSynchronousEvent(IceScrumEventType.CREATE, feature)
     }
@@ -87,7 +87,7 @@ class FeatureService extends IceScrumEventPublisher {
         if (feature.isDirty('color')) {
             feature.stories*.lastUpdated = new Date()
         }
-        feature.save(flush: true, failOnError: true)
+        feature.save(flush: true)
         publishSynchronousEvent(IceScrumEventType.UPDATE, feature, dirtyProperties)
     }
 
@@ -123,7 +123,7 @@ class FeatureService extends IceScrumEventPublisher {
                     throw new RuntimeException()
                 }
             }
-            story.save(failOnError: true)
+            story.save()
             stories << story
         }
         return stories
