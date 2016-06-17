@@ -25,6 +25,7 @@ package org.icescrum.core.services
 
 import org.icescrum.core.domain.User
 import org.icescrum.core.domain.Widget
+import org.icescrum.core.error.BusinessException
 import org.icescrum.core.ui.WidgetDefinition
 import org.springframework.transaction.annotation.Transactional
 
@@ -36,7 +37,7 @@ class WidgetService {
     Widget save(User user, WidgetDefinition widgetDefinition, boolean onRight) {
         int duplicate = Widget.countByUserPreferencesAndWidgetDefinitionId(user.preferences, widgetDefinition.id)
         if (duplicate && !widgetDefinition.allowDuplicate) {
-            throw new RuntimeException()
+            throw new BusinessException(code: 'is.widget.error.duplicate')
         }
         int count = Widget.countByUserPreferencesAndOnRight(user.preferences, onRight)
         Widget widget = new Widget(position: count + 1, widgetDefinitionId: widgetDefinition.id, userPreferences: user.preferences, settings: widgetDefinition.defaultSettings, onRight: onRight)
