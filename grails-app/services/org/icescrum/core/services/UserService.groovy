@@ -36,7 +36,6 @@ import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
 import org.icescrum.core.support.ApplicationSupport
 import org.icescrum.core.error.BusinessException
-import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.transaction.annotation.Transactional
 
 @Transactional
@@ -118,18 +117,6 @@ class UserService extends IceScrumEventPublisher {
         def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_UPDATE, user)
         user.save()
         publishSynchronousEvent(IceScrumEventType.UPDATE, user, dirtyProperties)
-    }
-
-    @PreAuthorize("ROLE_ADMIN")
-    boolean delete(User user) {
-        try {
-            def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_DELETE, user)
-            user.delete()
-            publishSynchronousEvent(IceScrumEventType.DELETE, user, dirtyProperties)
-            return true
-        } catch (Exception e) {
-            return false
-        }
     }
 
     def resetPassword(User user) {
