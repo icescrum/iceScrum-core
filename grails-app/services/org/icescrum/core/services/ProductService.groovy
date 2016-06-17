@@ -26,6 +26,7 @@ package org.icescrum.core.services
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
 import org.icescrum.core.utils.ServicesUtils
+import org.icescrum.core.exception.BusinessException
 import java.text.SimpleDateFormat
 import org.icescrum.core.domain.preferences.ProductPreferences
 import org.icescrum.core.domain.security.Authority
@@ -133,7 +134,7 @@ class ProductService extends IceScrumEventPublisher {
         def oldMembers = getAllMembersProductByRole(product)
         product.addToTeams(team)
         if (!product.save()) {
-            throw new IllegalStateException('Product not saved')
+            throw new BusinessException(code: 'Product not saved')
         }
         manageProductEvents(product, oldMembers)
     }
@@ -155,7 +156,7 @@ class ProductService extends IceScrumEventPublisher {
     @PreAuthorize('scrumMaster(#product) and !archivedProduct(#product)')
     void update(Product product, boolean hasHiddenChanged, String pkeyChanged) {
         if (!product.name?.trim()) {
-            throw new IllegalStateException("is.product.error.no.name")
+            throw new BusinessException(code: "is.product.error.no.name")
         }
         if (hasHiddenChanged && product.preferences.hidden && !ApplicationSupport.booleanValue(grailsApplication.config.icescrum.project.private.enable)
               && !SpringSecurityUtils.ifAnyGranted(Authority.ROLE_ADMIN)) {
@@ -753,7 +754,7 @@ class ProductService extends IceScrumEventPublisher {
                 try {
                     notificationEmailService.sendInvitation(invitation, springSecurityService.currentUser)
                 } catch (MailException) {
-                    throw new IllegalStateException('is.mail.invitation.error')
+                    throw new BusinessException(code: 'is.mail.invitation.error')
                 }
             }
         }

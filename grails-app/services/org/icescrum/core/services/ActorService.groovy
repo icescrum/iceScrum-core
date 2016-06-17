@@ -31,6 +31,7 @@ import org.icescrum.core.event.IceScrumEventType
 import java.text.SimpleDateFormat
 import org.icescrum.core.domain.Actor
 import org.icescrum.core.domain.Product
+import org.icescrum.core.exception.BusinessException
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.transaction.annotation.Transactional
 
@@ -55,7 +56,7 @@ class ActorService extends IceScrumEventPublisher {
         Product product = (Product) actor.backlog
         def stillHasPbi = product.stories.any { it.actor?.id == actor.id }
         if (stillHasPbi) {
-            throw new RuntimeException('is.actor.error.still.hasStories')
+            throw new BusinessException(code: 'is.actor.error.still.hasStories')
         }
         def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_DELETE, actor)
         product.removeFromActors(actor)

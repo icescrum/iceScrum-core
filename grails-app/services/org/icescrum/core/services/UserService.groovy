@@ -35,6 +35,7 @@ import org.icescrum.core.domain.security.UserAuthority
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
 import org.icescrum.core.support.ApplicationSupport
+import org.icescrum.core.exception.BusinessException
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.transaction.annotation.Transactional
 
@@ -114,7 +115,7 @@ class UserService extends IceScrumEventPublisher {
         }
         catch (RuntimeException e) {
             if (log.debugEnabled) e.printStackTrace()
-            throw new RuntimeException('is.convert.image.error')
+            throw new BusinessException(code: 'is.convert.image.error')
         }
         user.lastUpdated = new Date()
         def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_UPDATE, user)

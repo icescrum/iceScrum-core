@@ -26,6 +26,7 @@ package org.icescrum.core.services
 
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
+import org.icescrum.core.exception.BusinessException
 
 import java.text.SimpleDateFormat
 import org.icescrum.core.utils.ServicesUtils
@@ -46,7 +47,7 @@ class SprintService extends IceScrumEventPublisher {
     @PreAuthorize('(productOwner(#release.parentProduct) or scrumMaster(#release.parentProduct)) and !archivedProduct(#release.parentProduct)')
     void save(Sprint sprint, Release release) {
         if (release.state == Release.STATE_DONE) {
-            throw new IllegalStateException('is.sprint.error.release.done')
+            throw new BusinessException(code: 'is.sprint.error.release.done')
         }
         sprint.orderNumber = (release.sprints?.size() ?: 0) + 1
         release.addToSprints(sprint)
@@ -60,11 +61,11 @@ class SprintService extends IceScrumEventPublisher {
             if (sprint.state == Sprint.STATE_DONE) {
                 def illegalDirtyProperties = sprint.dirtyPropertyNames - ['goal', 'deliveredVersion', 'retrospective', 'doneDefinition']
                 if (illegalDirtyProperties) {
-                    throw new IllegalStateException('is.sprint.error.update.done')
+                    throw new BusinessException(code: 'is.sprint.error.update.done')
                 }
             }
             if (sprint.state == Sprint.STATE_INPROGRESS && startDate && sprint.startDate != startDate) {
-                throw new IllegalStateException('is.sprint.error.update.startdate.inprogress')
+                throw new BusinessException(code: 'is.sprint.error.update.startdate.inprogress')
             }
         }
         if (startDate && endDate) {
@@ -99,7 +100,7 @@ class SprintService extends IceScrumEventPublisher {
     @PreAuthorize('(productOwner(#sprint.parentRelease.parentProduct) or scrumMaster(#sprint.parentRelease.parentProduct)) and !archivedProduct(#sprint.parentRelease.parentProduct)')
     void delete(Sprint sprint) {
         if (sprint.state >= Sprint.STATE_INPROGRESS) {
-            throw new IllegalStateException('is.sprint.error.delete.inprogress')
+            throw new BusinessException(code: 'is.sprint.error.delete.inprogress')
         }
         def release = sprint.parentRelease
         def nextSprints = release.sprints.findAll { it.orderNumber > sprint.orderNumber }
@@ -119,7 +120,7 @@ class SprintService extends IceScrumEventPublisher {
     @PreAuthorize('(productOwner(#release.parentProduct) or scrumMaster(#release.parentProduct)) and !archivedProduct(#release.parentProduct)')
     def generateSprints(Release release, Date startDate = release.startDate) {
         if (release.state == Release.STATE_DONE) {
-            throw new IllegalStateException('is.sprint.error.release.done')
+            throw new BusinessException(code: 'is.sprint.error.release.done')
         }
         if (release.sprints) {
             startDate = release.sprints*.endDate.max() + 1
@@ -128,7 +129,7 @@ class SprintService extends IceScrumEventPublisher {
         int sprintDuration = release.parentProduct.preferences.estimatedSprintsDuration
         int nbNewSprints = Math.floor(freeDays / sprintDuration)
         if (nbNewSprints == 0) {
-            throw new IllegalStateException('is.release.sprints.not.enough.time')
+            throw new BusinessException(code: 'is.release.sprints.not.enough.time')
         }
         def newSprints = []
         nbNewSprints.times {
@@ -144,13 +145,13 @@ class SprintService extends IceScrumEventPublisher {
     @PreAuthorize('(productOwner(#sprint.parentRelease.parentProduct) or scrumMaster(#sprint.parentRelease.parentProduct)) and !archivedProduct(#sprint.parentRelease.parentProduct)')
     void activate(Sprint sprint) {
         if (sprint.parentRelease.state != Release.STATE_INPROGRESS) {
-            throw new IllegalStateException('is.sprint.error.activate.release.not.inprogress')
+            throw new BusinessException(code: 'is.sprint.error.activate.release.not.inprogress')
         }
         sprint.parentRelease.sprints.each {
             if (it.state == Sprint.STATE_INPROGRESS) {
-                throw new IllegalStateException('is.sprint.error.activate.other.inprogress')
+                throw new BusinessException(code: 'is.sprint.error.activate.other.inprogress')
             } else if (it.orderNumber < sprint.orderNumber && it.state < Sprint.STATE_DONE) {
-                throw new IllegalStateException('is.sprint.error.activate.previous.not.closed')
+                throw new BusinessException(code: 'is.sprint.error.activate.previous.not.closed')
             }
         }
         def autoCreateTaskOnEmptyStory = sprint.parentRelease.parentProduct.preferences.autoCreateTaskOnEmptyStory
@@ -177,7 +178,7 @@ class SprintService extends IceScrumEventPublisher {
     @PreAuthorize('(productOwner(#sprint.parentRelease.parentProduct) or scrumMaster(#sprint.parentRelease.parentProduct)) and !archivedProduct(#sprint.parentRelease.parentProduct)')
     void close(Sprint sprint) {
         if (sprint.state != Sprint.STATE_INPROGRESS) {
-            throw new IllegalStateException('is.sprint.error.close.not.inprogress')
+            throw new BusinessException(code: 'is.sprint.error.close.not.inprogress')
         }
         def nextSprint = sprint.nextSprint
         if (nextSprint) {
@@ -327,15 +328,15 @@ class SprintService extends IceScrumEventPublisher {
     // TODO check rights
     def copyRecurrentTasksFromPreviousSprint(Sprint sprint) {
         if (sprint.orderNumber == 1 && sprint.parentRelease.orderNumber == 1) {
-            throw new IllegalStateException('is.sprint.copyRecurrentTasks.error.no.sprint.before')
+            throw new BusinessException(code: 'is.sprint.copyRecurrentTasks.error.no.sprint.before')
         }
         if (sprint.state == Sprint.STATE_DONE) {
-            throw new IllegalStateException('is.sprint.copyRecurrentTasks.error.sprint.done')
+            throw new BusinessException(code: 'is.sprint.copyRecurrentTasks.error.sprint.done')
         }
         def previousSprint = sprint.previousSprint
         def tasks = previousSprint.tasks.findAll { it.type == Task.TYPE_RECURRENT }
         if (!tasks) {
-            throw new IllegalStateException('is.sprint.copyRecurrentTasks.error.no.recurrent.tasks')
+            throw new BusinessException(code: 'is.sprint.copyRecurrentTasks.error.no.recurrent.tasks')
         }
         def copiedTasks = []
         tasks.each { it ->

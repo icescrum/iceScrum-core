@@ -25,6 +25,7 @@ package org.icescrum.core.services
 
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
+import org.icescrum.core.exception.BusinessException
 
 import java.text.SimpleDateFormat
 import org.springframework.context.ApplicationContext
@@ -49,7 +50,7 @@ class TaskService extends IceScrumEventPublisher {
         }
         Sprint sprint = task.sprint
         if (!task.id && sprint?.state == Sprint.STATE_DONE) {
-            throw new IllegalStateException('is.task.error.not.saved')
+            throw new BusinessException(code: 'is.task.error.not.saved')
         }
         if (task.estimation == 0f && task.state != Task.STATE_DONE) {
             task.estimation = null
@@ -80,14 +81,14 @@ class TaskService extends IceScrumEventPublisher {
         }
         def sprint = task.sprint
         if (sprint?.state == Sprint.STATE_DONE) {
-            throw new IllegalStateException('is.sprint.error.state.not.inProgress')
+            throw new BusinessException(code: 'is.sprint.error.state.not.inProgress')
         }
         Product product = task.parentProduct
         if (task.type == Task.TYPE_URGENT
                 && task.state == Task.STATE_BUSY
                 && product.preferences.limitUrgentTasks != 0
                 && product.preferences.limitUrgentTasks >= sprint.tasks?.findAll { it.type == Task.TYPE_URGENT && it.state == Task.STATE_BUSY && it.id != task.id }?.size()) {
-            throw new IllegalStateException('is.task.error.limitTasksUrgent')
+            throw new BusinessException(code: 'is.task.error.limitTasksUrgent')
         }
         if (task.state != Task.STATE_DONE || !task.doneDate) {
             if (force || task.responsible?.id?.equals(user.id) || task.creator.id.equals(user.id) || securityService.scrumMaster(null, springSecurityService.authentication)) {
@@ -101,7 +102,7 @@ class TaskService extends IceScrumEventPublisher {
                 } else if (task.doneDate) {
                     def story = task.type ? null : Story.get(task.parentStory?.id)
                     if (story && story.state == Story.STATE_DONE) {
-                        throw new IllegalStateException('is.story.error.done')
+                        throw new BusinessException(code: 'is.story.error.done')
                     }
                     if (task.estimation == 0f) {
                         task.estimation = null
@@ -120,7 +121,7 @@ class TaskService extends IceScrumEventPublisher {
                 }
             }
         } else {
-            throw new IllegalStateException('is.task.error.done')
+            throw new BusinessException(code: 'is.task.error.done')
         }
         if (task.isDirty('state') || task.isDirty('parentStory') || task.isDirty('type')) {
             if (props.rank == null) {
@@ -164,10 +165,10 @@ class TaskService extends IceScrumEventPublisher {
         boolean scrumMaster = securityService.scrumMaster(null, springSecurityService.authentication)
         boolean productOwner = securityService.productOwner(task.parentProduct, springSecurityService.authentication)
         if (task.state == Task.STATE_DONE && !scrumMaster && !productOwner) {
-            throw new IllegalStateException('is.task.error.delete.not.scrumMaster')
+            throw new BusinessException(code: 'is.task.error.delete.not.scrumMaster')
         }
         if (sprint && sprint.state == Sprint.STATE_DONE) {
-            throw new IllegalStateException('is.task.error.delete.sprint.done')
+            throw new BusinessException(code: 'is.task.error.delete.sprint.done')
         }
         if (task.responsible && task.responsible.id.equals(user.id) || task.creator.id.equals(user.id) || productOwner || scrumMaster) {
             resetRank(task)
@@ -191,7 +192,7 @@ class TaskService extends IceScrumEventPublisher {
     @PreAuthorize('inProduct(#task.parentProduct) and !archivedProduct(#task.parentProduct)')
     def copy(Task task, User user, def clonedState = Task.STATE_WAIT) {
         if (task.sprint?.state == Sprint.STATE_DONE) {
-            throw new IllegalStateException('is.task.error.copy.done')
+            throw new BusinessException(code: 'is.task.error.copy.done')
         }
         def clonedTask = new Task(
                 name: task.name + '_1',
@@ -233,12 +234,12 @@ class TaskService extends IceScrumEventPublisher {
     private void state(Task task, Integer newState, User user) {
         def product = task.parentProduct
         if (task.sprint?.state != Sprint.STATE_INPROGRESS && newState >= Task.STATE_BUSY) {
-            throw new IllegalStateException('is.sprint.error.state.not.inProgress')
+            throw new BusinessException(code: 'is.sprint.error.state.not.inProgress')
         }
         if (task.state == Task.STATE_DONE && task.doneDate && newState == Task.STATE_DONE) {
             def story = task.type ? null : Story.get(task.parentStory?.id)
             if (story && story.state == Story.STATE_DONE) {
-                throw new IllegalStateException('is.story.error.done')
+                throw new BusinessException(code: 'is.story.error.done')
             }
             task.doneDate = null
         } else {

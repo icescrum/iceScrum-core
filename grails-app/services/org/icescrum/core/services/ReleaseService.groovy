@@ -26,6 +26,7 @@ package org.icescrum.core.services
 
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
+import org.icescrum.core.exception.BusinessException
 
 import java.text.SimpleDateFormat
 import org.icescrum.core.support.ProgressSupport
@@ -63,7 +64,7 @@ class ReleaseService extends IceScrumEventPublisher {
         if (checkIntegrity && release.state == Release.STATE_DONE) {
             def illegalDirtyProperties = release.dirtyPropertyNames - ['name', 'vision']
             if (illegalDirtyProperties) {
-                throw new IllegalStateException('is.release.error.update.state.done')
+                throw new BusinessException(code: 'is.release.error.update.state.done')
             }
         }
         startDate = startDate ?: release.startDate
@@ -72,7 +73,7 @@ class ReleaseService extends IceScrumEventPublisher {
         if (nextRelease && nextRelease.startDate <= endDate) {
             def nextStartDate = endDate + 1
             if (nextStartDate >= nextRelease.endDate) {
-                throw new IllegalStateException('is.release.error.endDate.after.next.release')
+                throw new BusinessException(code: 'is.release.error.endDate.after.next.release')
             }
             update(nextRelease, nextStartDate) // cascade the update of next releases recursively
         }
@@ -81,7 +82,7 @@ class ReleaseService extends IceScrumEventPublisher {
             def firstSprint = release.sprints.min { it.startDate }
             if (firstSprint.startDate.before(startDate)) {
                 if (firstSprint.state >= Sprint.STATE_INPROGRESS) {
-                    throw new IllegalStateException('is.release.error.startDate.after.inprogress.sprint')
+                    throw new BusinessException(code: 'is.release.error.startDate.after.inprogress.sprint')
                 }
                 sprintService.update(firstSprint, startDate, (startDate + firstSprint.duration - 1), false, false)
             }
@@ -92,14 +93,14 @@ class ReleaseService extends IceScrumEventPublisher {
                 }
                 if (sprints) {
                     def sprintNames = sprints.collect { Sprint sprint -> g.message(code: 'is.sprint') + ' ' + sprint.orderNumber }.join(', ')
-                    throw new IllegalStateException(g.message(code: 'is.release.error.sprint.tasks', args: [sprintNames]))
+                    throw new BusinessException(code: 'is.release.error.sprint.tasks', args: [sprintNames])
                 }
                 sprintService.delete(outOfBoundsSprints.min { it.startDate })
             }
             def overlappingSprint = release.sprints.find { it.endDate.after(endDate) }
             if (overlappingSprint) {
                 if (overlappingSprint.state > Sprint.STATE_INPROGRESS) {
-                    throw new IllegalStateException('is.release.error.endDate.before.inprogress.sprint')
+                    throw new BusinessException(code: 'is.release.error.endDate.before.inprogress.sprint')
                 }
                 sprintService.update(overlappingSprint, overlappingSprint.startDate, endDate, false, false)
             }
@@ -121,15 +122,15 @@ class ReleaseService extends IceScrumEventPublisher {
     @PreAuthorize('(productOwner(#release.parentProduct) or scrumMaster(#release.parentProduct)) and !archivedProduct(#release.parentProduct)')
     void activate(Release release) {
         if (release.state != Release.STATE_WAIT) {
-            throw new IllegalStateException('is.release.error.not.state.wait')
+            throw new BusinessException(code: 'is.release.error.not.state.wait')
         }
         def product = release.parentProduct
         if (product.releases.find { it.state == Release.STATE_INPROGRESS }) {
-            throw new IllegalStateException('is.release.error.already.active')
+            throw new BusinessException(code: 'is.release.error.already.active')
         }
         def lastRelease = product.releases.findAll { it.state == Release.STATE_DONE }.max { it.orderNumber }
         if (lastRelease.orderNumber + 1 != release.orderNumber) {
-            throw new IllegalStateException('is.release.error.not.next')
+            throw new BusinessException(code: 'is.release.error.not.next')
         }
         release.inProgressDate = new Date()
         release.state = Release.STATE_INPROGRESS
@@ -139,7 +140,7 @@ class ReleaseService extends IceScrumEventPublisher {
     @PreAuthorize('(productOwner(#release.parentProduct) or scrumMaster(#release.parentProduct)) and !archivedProduct(#release.parentProduct)')
     void close(Release release) {
         if (release.state != Release.STATE_INPROGRESS) {
-            throw new IllegalStateException('is.release.error.not.state.wait')
+            throw new BusinessException(code: 'is.release.error.not.state.wait')
         }
         release.doneDate = new Date()
         release.state = Release.STATE_DONE
@@ -150,7 +151,7 @@ class ReleaseService extends IceScrumEventPublisher {
     @PreAuthorize('(productOwner(#release.parentProduct) or scrumMaster(#release.parentProduct)) and !archivedProduct(#release.parentProduct)')
     void delete(Release release) {
         if (release.state >= Release.STATE_INPROGRESS) {
-            throw new IllegalStateException("is.release.error.not.deleted")
+            throw new BusinessException(code: 'is.release.error.not.deleted')
         }
         def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_DELETE, release)
         if (release.sprints) {

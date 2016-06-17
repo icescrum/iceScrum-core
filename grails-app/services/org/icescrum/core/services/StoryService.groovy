@@ -37,6 +37,7 @@ import org.icescrum.core.domain.AcceptanceTest.AcceptanceTestState
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
 import org.icescrum.core.support.ApplicationSupport
+import org.icescrum.core.exception.BusinessException
 import org.icescrum.plugins.attachmentable.domain.Attachment
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.transaction.annotation.Transactional
@@ -106,7 +107,7 @@ class StoryService extends IceScrumEventPublisher {
                 dirtyProperties.newObject = newObject
             }
             if (story.state >= Story.STATE_PLANNED) {
-                throw new IllegalStateException('is.story.error.not.deleted.state')
+                throw new BusinessException(code: 'is.story.error.not.deleted.state')
             }
             if (!springSecurityService.isLoggedIn()) {
                 throw new IllegalAccessException()
@@ -199,25 +200,25 @@ class StoryService extends IceScrumEventPublisher {
     public void plan(Sprint sprint, Story story, Long newRank = null) {
         if (story.dependsOn) {
             if (story.dependsOn.state < Story.STATE_PLANNED) {
-                throw new IllegalStateException(g.message(code: 'is.story.error.dependsOn.notPlanned', args: [story.name, story.dependsOn.name]).toString())
+                throw new BusinessException(code: 'is.story.error.dependsOn.notPlanned', args: [story.name, story.dependsOn.name])
             } else if (story.dependsOn.parentSprint.startDate > sprint.startDate) {
-                throw new IllegalStateException(g.message(code: 'is.story.error.dependsOn.beforePlanned', args: [story.name, story.dependsOn.name]).toString())
+                throw new BusinessException(code: 'is.story.error.dependsOn.beforePlanned', args: [story.name, story.dependsOn.name])
             }
         }
         if (story.dependences) {
             def startDate = story.dependences.findAll { it.parentSprint }?.collect { it.parentSprint.startDate }?.min()
             if (startDate && sprint.startDate > startDate) {
-                throw new IllegalStateException(g.message(code: 'is.story.error.dependences.beforePlanned', args: [story.name]).toString())
+                throw new BusinessException(code: 'is.story.error.dependences.beforePlanned', args: [story.name])
             }
         }
         if (sprint.state == Sprint.STATE_DONE) {
-            throw new IllegalStateException('is.sprint.error.associate.done')
+            throw new BusinessException(code: 'is.sprint.error.associate.done')
         }
         if (story.state < Story.STATE_ESTIMATED) {
-            throw new IllegalStateException('is.sprint.error.associate.story.noEstimated')
+            throw new BusinessException(code: 'is.sprint.error.associate.story.noEstimated')
         }
         if (story.state == Story.STATE_DONE) {
-            throw new IllegalStateException('is.sprint.error.associate.story.done')
+            throw new BusinessException(code: 'is.sprint.error.associate.story.done')
         }
         if (story.parentSprint != null) {
             unPlan(story, false)
@@ -261,15 +262,13 @@ class StoryService extends IceScrumEventPublisher {
     public void unPlan(Story story, Boolean fullUnPlan = true) {
         def sprint = story.parentSprint
         if (!sprint) {
-            throw new RuntimeException('is.story.error.not.associated')
+            throw new BusinessException(code: 'is.story.error.not.associated')
         }
         if (story.state == Story.STATE_DONE) {
-            throw new IllegalStateException('is.sprint.error.dissociate.story.done')
+            throw new BusinessException(code: 'is.sprint.error.dissociate.story.done')
         }
         if (fullUnPlan && story.dependences?.find { it.state > Story.STATE_ESTIMATED }) {
-            throw new RuntimeException(g.message(code: 'is.story.error.dependences.dissociate', args: [story.name, story.dependences.find {
-                it.state > Story.STATE_ESTIMATED
-            }.name]).toString())
+            throw new BusinessException(code: 'is.story.error.dependences.dissociate', args: [story.name, story.dependences.find { it.state > Story.STATE_ESTIMATED }.name])
         }
         resetRank(story)
         sprint.removeFromStories(story)
@@ -409,7 +408,7 @@ class StoryService extends IceScrumEventPublisher {
             return
         }
         if (story.state == Story.STATE_DONE) {
-            throw new IllegalStateException(g.message(code: 'is.story.rank.error').toString())
+            throw new BusinessException(code: 'is.story.rank.error')
         }
         def stories = story.sameBacklogStories
         if (story.state == Story.STATE_INPROGRESS) {
@@ -431,10 +430,10 @@ class StoryService extends IceScrumEventPublisher {
     @PreAuthorize('productOwner(#story.backlog) and !archivedProduct(#story.backlog)')
     def acceptToBacklog(Story story, Long newRank = null) {
         if (story.state > Story.STATE_SUGGESTED) {
-            throw new IllegalStateException('is.story.error.not.state.suggested')
+            throw new BusinessException(code: 'is.story.error.not.state.suggested')
         }
         if (story.dependsOn?.state == Story.STATE_SUGGESTED) {
-            throw new IllegalStateException(g.message(code: 'is.story.error.dependsOn.suggested', args: [story.name, story.dependsOn.name]).toString())
+            throw new BusinessException(code: 'is.story.error.dependsOn.suggested', args: [story.name, story.dependsOn.name])
         }
         resetRank(story)
         def rank = newRank ?: ((Story.countAllAcceptedOrEstimated(story.backlog.id)?.list()[0] ?: 0) + 1)
@@ -452,7 +451,7 @@ class StoryService extends IceScrumEventPublisher {
     @PreAuthorize('productOwner(#story.backlog) and !archivedProduct(#story.backlog)')
     void returnToSandbox(Story story, Long newRank) {
         if (!(story.state in [Story.STATE_ESTIMATED, Story.STATE_ACCEPTED])) {
-            throw new IllegalStateException('is.story.error.not.in.backlog')
+            throw new BusinessException(code: 'is.story.error.not.in.backlog')
         }
         resetRank(story)
         story.state = Story.STATE_SUGGESTED
@@ -469,7 +468,7 @@ class StoryService extends IceScrumEventPublisher {
         def features = []
         stories.each { story ->
             if (story.state > Story.STATE_SUGGESTED) {
-                throw new IllegalStateException('is.story.error.not.state.suggested')
+                throw new BusinessException(code: 'is.story.error.not.state.suggested')
             }
             User user = (User) springSecurityService.currentUser
             def storyProperties = [:] << story.properties
@@ -509,7 +508,7 @@ class StoryService extends IceScrumEventPublisher {
         def product = stories[0].backlog
         stories.each { story ->
             if (story.state > Story.STATE_SUGGESTED) {
-                throw new IllegalStateException('is.story.error.not.state.suggested')
+                throw new BusinessException(code: 'is.story.error.not.state.suggested')
             }
             def storyProperties = [:] << story.properties
             storyProperties.remove('activities')
@@ -519,7 +518,7 @@ class StoryService extends IceScrumEventPublisher {
             task.description = (story.affectVersion ? g.message(code: 'is.story.affectVersion') + ': ' + story.affectVersion : '') + (task.description ?: '')
             def sprint = (Sprint) Sprint.findCurrentSprint(product.id).list()
             if (!sprint) {
-                throw new IllegalStateException('is.story.error.not.acceptedAsUrgentTask')
+                throw new BusinessException(code: 'is.story.error.not.acceptedAsUrgentTask')
             }
             task.backlog = sprint
             task.validate()
@@ -567,10 +566,10 @@ class StoryService extends IceScrumEventPublisher {
     void done(List<Story> stories) {
         stories.each { story ->
             if (story.parentSprint.state != Sprint.STATE_INPROGRESS) {
-                throw new IllegalStateException('is.sprint.error.declareAsDone.state.not.inProgress')
+                throw new BusinessException(code: 'is.sprint.error.declareAsDone.state.not.inProgress')
             }
             if (story.state != Story.STATE_INPROGRESS) {
-                throw new IllegalStateException('is.story.error.declareAsDone.state.not.inProgress')
+                throw new BusinessException(code: 'is.story.error.declareAsDone.state.not.inProgress')
             }
             //Move story to last rank in sprint
             updateRank(story, Story.countByParentSprint(story.parentSprint))
@@ -606,10 +605,10 @@ class StoryService extends IceScrumEventPublisher {
     void unDone(List<Story> stories) {
         stories.each { story ->
             if (story.state != Story.STATE_DONE) {
-                throw new IllegalStateException('is.story.error.declareAsUnDone.state.not.done')
+                throw new BusinessException(code: 'is.story.error.declareAsUnDone.state.not.done')
             }
             if (story.parentSprint.state != Sprint.STATE_INPROGRESS) {
-                throw new IllegalStateException('is.sprint.error.declareAsUnDone.state.not.inProgress')
+                throw new BusinessException(code: 'is.sprint.error.declareAsUnDone.state.not.inProgress')
             }
             story.state = Story.STATE_INPROGRESS
             story.inProgressDate = new Date()

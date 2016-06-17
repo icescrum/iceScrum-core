@@ -28,6 +28,7 @@ import org.icescrum.core.domain.Product
 import org.icescrum.core.domain.Team
 import org.icescrum.core.domain.User
 import org.icescrum.core.support.ProgressSupport
+import org.icescrum.core.exception.BusinessException
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.transaction.annotation.Transactional
 import org.icescrum.core.support.ApplicationSupport
@@ -41,10 +42,10 @@ class TeamService {
 
     void save(Team team, List members, List scrumMasters) {
         if (!team) {
-            throw new RuntimeException('is.team.error.not.exist')
+            throw new BusinessException(code: 'is.team.error.not.exist')
         }
         if (!team.save()) {
-            throw new RuntimeException('is.team.error.not.saved')
+            throw new BusinessException(code: 'is.team.error.not.saved')
         } else {
             securityService.secureDomain(team)
             if (members) {
@@ -69,7 +70,7 @@ class TeamService {
     @PreAuthorize('owner(#team)')
     void delete(Team team) {
         if (team.products) {
-            throw new RuntimeException('is.team.error.delete.has.products')
+            throw new BusinessException(code: 'is.team.error.delete.has.products')
         }
         def teamMembersIds = team.members*.id
         teamMembersIds.each { Long id ->
@@ -84,10 +85,10 @@ class TeamService {
     @PreAuthorize('isAuthenticated()')
     void saveImport(Team team) {
         if (!team) {
-            throw new IllegalStateException('is.team.error.not.exist')
+            throw new BusinessException(code: 'is.team.error.not.exist')
         }
         if (!team.save()) {
-            throw new RuntimeException('is.team.error.not.saved')
+            throw new BusinessException(code: 'is.team.error.not.saved')
         }
         securityService.secureDomain(team)
         def scrumMasters = team.scrumMasters
