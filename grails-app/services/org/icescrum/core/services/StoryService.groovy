@@ -152,7 +152,7 @@ class StoryService extends IceScrumEventPublisher {
             if (props.effort != story.effort) {
                 // TODO check TM or SM
                 if (story.state < Story.STATE_ACCEPTED || story.state == Story.STATE_DONE) {
-                    throw new BusinessException('is.story.error.not.estimated.state')
+                    throw new BusinessException(code: 'is.story.error.not.estimated.state')
                 }
                 if (story.state == Story.STATE_ACCEPTED) {
                     story.state = Story.STATE_ESTIMATED
@@ -170,7 +170,7 @@ class StoryService extends IceScrumEventPublisher {
                 story.effort = null
                 story.estimatedDate = null
             } else {
-                throw new BusinessException('is.story.error.not.unestimated.state')
+                throw new BusinessException(code: 'is.story.error.not.unestimated.state')
             }
         }
         if (story.type != Story.TYPE_DEFECT) {
