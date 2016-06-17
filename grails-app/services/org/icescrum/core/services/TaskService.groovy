@@ -25,7 +25,7 @@ package org.icescrum.core.services
 
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
-import org.icescrum.core.exception.BusinessException
+import org.icescrum.core.error.BusinessException
 
 import java.text.SimpleDateFormat
 import org.springframework.context.ApplicationContext

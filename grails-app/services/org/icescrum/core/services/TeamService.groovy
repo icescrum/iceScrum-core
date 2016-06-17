@@ -28,7 +28,7 @@ import org.icescrum.core.domain.Product
 import org.icescrum.core.domain.Team
 import org.icescrum.core.domain.User
 import org.icescrum.core.support.ProgressSupport
-import org.icescrum.core.exception.BusinessException
+import org.icescrum.core.error.BusinessException
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.transaction.annotation.Transactional
 import org.icescrum.core.support.ApplicationSupport

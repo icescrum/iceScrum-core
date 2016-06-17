@@ -37,7 +37,7 @@ import org.icescrum.core.domain.AcceptanceTest.AcceptanceTestState
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
 import org.icescrum.core.support.ApplicationSupport
-import org.icescrum.core.exception.BusinessException
+import org.icescrum.core.error.BusinessException
 import org.icescrum.plugins.attachmentable.domain.Attachment
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.transaction.annotation.Transactional

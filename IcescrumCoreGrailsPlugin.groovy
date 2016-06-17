@@ -113,9 +113,7 @@ class IcescrumCoreGrailsPlugin {
         uiDefinitionService.loadDefinitions()
 
         application.controllerClasses.each {
-            addErrorMethod(it)
             addJasperMethod(it, springSecurityService, jasperService)
-
             if (it.logicalPropertyName in controllersWithDownloadAndPreview){
                 addDownloadAndPreviewMethods(it, attachmentableService, hdImageService)
             }
@@ -169,7 +167,6 @@ class IcescrumCoreGrailsPlugin {
                 }
             }
             if (application.isControllerClass(event.source)) {
-                addErrorMethod(event.source)
                 SpringSecurityService springSecurityService = event.ctx.getBean('springSecurityService')
                 JasperService jasperService = event.ctx.getBean('jasperService')
                 addJasperMethod(event.source, springSecurityService, jasperService)
@@ -231,35 +228,6 @@ class IcescrumCoreGrailsPlugin {
                 actionClosure
             }
             clazz.registerMapping(actionName)
-        }
-    }
-
-    private addErrorMethod(source) {
-        source.metaClass.returnError = { attrs ->
-            def error = attrs.errors ? attrs.errors.allErrors.collect { [code: "${controllerName}.${it.field}", text: message(error: it)] } :
-                        attrs.code ? [text: message(code: attrs.code)] :
-                        attrs.text ? [text: attrs.text] :
-                        attrs.exception?.message ? [text: attrs.exception.message] :
-                        [text: 'An unexpected error has occurred']
-            if (attrs.exception) {
-                if (delegate.log.debugEnabled) {
-                    delegate.log.debug(attrs.exception)
-                    delegate.log.debug(attrs.exception.cause)
-                    attrs.exception.stackTrace.each {
-                        delegate.log.debug(it)
-                    }
-                } else if (delegate.log.errorEnabled) {
-                    delegate.log.error(attrs.exception)
-                    delegate.log.error(attrs.exception.cause)
-                    attrs.exception.stackTrace.each {
-                        delegate.log.error(it)
-                    }
-                }
-            }
-            if (attrs.silent) {
-                error.silent = true
-            }
-            render(status: 400, contentType: 'application/json', text:error as JSON)
         }
     }
 

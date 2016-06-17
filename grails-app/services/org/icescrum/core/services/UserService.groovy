@@ -35,7 +35,7 @@ import org.icescrum.core.domain.security.UserAuthority
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
 import org.icescrum.core.support.ApplicationSupport
-import org.icescrum.core.exception.BusinessException
+import org.icescrum.core.error.BusinessException
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.transaction.annotation.Transactional
 
@@ -49,9 +49,6 @@ class UserService extends IceScrumEventPublisher {
     def notificationEmailService
 
     void save(User user, String token = null) {
-        if (!user.validate()) {
-            throw new RuntimeException()
-        }
         user.password = springSecurityService.encodePassword(user.password)
         !user.save(failOnError: true)
         publishSynchronousEvent(IceScrumEventType.CREATE, user)

@@ -1,4 +1,4 @@
-package org.icescrum.core.exception
+package org.icescrum.core.error
 
 /*
  * Copyright (c) 2016 Kagilum.
