@@ -296,9 +296,6 @@ class AddonsService {
         if (i > -1)
             posterClass = posterClass[0..i - 1]
         def c = new Comment(body: body, posterId: poster.id, posterClass: posterClass)
-        if (!c.validate()) {
-            throw new CommentException("Cannot create comment for arguments [$poster, $body], they are invalid.")
-        }
         c.save()
         def link = new CommentLink(comment: c, commentRef: object.id, type: GrailsNameUtils.getPropertyName(object.class))
         link.save()

@@ -24,6 +24,8 @@
 
 package org.icescrum.core.services
 
+import grails.validation.ValidationException
+import org.icescrum.core.error.BusinessException
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
 
@@ -79,7 +81,7 @@ class FeatureService extends IceScrumEventPublisher {
             def oldRank = feature.getPersistentValue('rank') // must be stored here or it will be flushed by the count
             def maxRank = Feature.countByBacklog(product)
             if (!(feature.rank in 1..maxRank)) {
-                throw new RuntimeException()
+                throw new BusinessException(code: 'is.feature.error.rank.out.of.bound')
             }
             rank(feature, oldRank)
         }
@@ -120,7 +122,7 @@ class FeatureService extends IceScrumEventPublisher {
                     story.name = story.name[0..20]
                     story.validate()
                 } else {
-                    throw new RuntimeException()
+                    throw new ValidationException('Validation Error(s) occurred during save()', story.errors)
                 }
             }
             story.save()

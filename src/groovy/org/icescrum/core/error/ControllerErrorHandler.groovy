@@ -44,7 +44,7 @@ trait ControllerErrorHandler {
     def objectNotFoundException(ObjectNotFoundException objectNotFoundException) {
         def identifierString = "unknown"
         try {
-            identifierString = objectNotFoundException.identifier.join(', ')
+            identifierString = objectNotFoundException.identifier instanceof String ? objectNotFoundException.identifier : objectNotFoundException.identifier.join(', ')
         } catch (Throwable) {}
         returnError(text: message(code: 'is.error.object.not.found', args: [objectNotFoundException.entityName, identifierString]))
     }
