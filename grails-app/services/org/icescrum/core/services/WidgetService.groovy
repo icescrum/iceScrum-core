@@ -44,8 +44,12 @@ class WidgetService {
         try {
             widgetDefinition.onSave(widget)
         } catch (Exception e) {
-            if (log.errorEnabled) log.error(e.message, e)
-            throw new BusinessException(code: 'is.widget.error.save')
+            if (e instanceof BusinessException) {
+                throw e
+            } else {
+                if (log.errorEnabled) log.error(e.message, e)
+                throw new BusinessException(code: 'is.widget.error.save')
+            }
         }
         widget.save(flush: true)
         user.lastUpdated = new Date()
@@ -65,8 +69,12 @@ class WidgetService {
                 widget.setSettings(props.settings)
             }
         } catch (Exception e) {
-            if (log.errorEnabled) log.error(e.message, e)
-            throw new BusinessException(code: 'is.widget.error.update')
+            if (e instanceof BusinessException) {
+                throw e
+            } else {
+                if (log.errorEnabled) log.error(e.message, e)
+                throw new BusinessException(code: 'is.widget.error.update')
+            }
         }
         widget.save()
         user.lastUpdated = new Date()
@@ -82,8 +90,12 @@ class WidgetService {
         try {
             uiDefinitionService.getWidgetDefinitionById(widget.widgetDefinitionId).onDelete(widget)
         } catch (Exception e) {
-            if (log.errorEnabled) log.error(e.message, e)
-            throw new BusinessException(code: 'is.widget.error.delete')
+            if (e instanceof BusinessException) {
+                throw e
+            } else {
+                if (log.errorEnabled) log.error(e.message, e)
+                throw new BusinessException(code: 'is.widget.error.delete')
+            }
         }
         user.lastUpdated = new Date()
         user.save()
