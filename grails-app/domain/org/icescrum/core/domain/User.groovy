@@ -112,8 +112,9 @@ class User implements Serializable, Attachmentable {
 
     static User withUser(long id){
         User user = get(id)
-        if (!user)
-            throw new ObjectNotFoundException(id,'User')
+        if (!user) {
+            throw new ObjectNotFoundException(id, 'User')
+        }
         return user
     }
 

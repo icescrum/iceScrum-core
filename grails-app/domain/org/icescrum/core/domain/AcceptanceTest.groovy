@@ -85,8 +85,9 @@ class AcceptanceTest implements Serializable {
 
     static AcceptanceTest withAcceptanceTest(long productId, long id){
         AcceptanceTest acceptanceTest = getInProduct(productId, id)
-        if (!acceptanceTest)
-            throw new ObjectNotFoundException(id,'AcceptanceTest')
+        if (!acceptanceTest) {
+            throw new ObjectNotFoundException(id, 'AcceptanceTest')
+        }
         return acceptanceTest
     }
 

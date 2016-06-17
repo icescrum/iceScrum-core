@@ -32,7 +32,6 @@ import org.icescrum.core.domain.Invitation.InvitationType
 import org.springframework.security.acls.domain.BasePermission
 import org.springframework.security.acls.model.Acl
 import org.springframework.security.acls.model.NotFoundException
-import org.springframework.security.core.context.SecurityContextHolder as SCH
 import grails.plugin.springsecurity.acl.AclUtilService
 
 class Team implements Serializable, Comparable {
@@ -279,8 +278,9 @@ class Team implements Serializable, Comparable {
 
     static Team withTeam(long id){
         Team team = get(id)
-        if (!team)
-            throw new ObjectNotFoundException(id,'Product')
+        if (!team) {
+            throw new ObjectNotFoundException(id, 'Team')
+        }
         return team
     }
 

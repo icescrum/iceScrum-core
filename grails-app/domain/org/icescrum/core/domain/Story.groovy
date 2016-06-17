@@ -284,14 +284,15 @@ class Story extends BacklogElement implements Cloneable, Serializable {
 
     static Story withStory(long productId, long id) {
         Story story = (Story) getInProduct(productId, id).list()
-        if (!story)
+        if (!story) {
             throw new ObjectNotFoundException(id, 'Story')
+        }
         return story
     }
 
     static List<Story> withStories(def params, def id = 'id') {
         def ids = params[id]?.contains(',') ? params[id].split(',')*.toLong() : params.list(id)
-        List<Story> stories = ids ? getAll(ids).findAll { it.backlog.id == params.product.toLong() } : null
+        List<Story> stories = ids ? getAll(ids).findAll { it && it.backlog.id == params.product.toLong() } : null
         if (!stories) {
             throw new ObjectNotFoundException(ids, 'Story')
         }

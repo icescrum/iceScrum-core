@@ -85,16 +85,18 @@ class Actor extends BacklogElement implements Serializable, Comparable<Actor> {
 
     static Actor withActor(long product, long id){
         Actor actor = (Actor) getInProduct(product, id).list()
-        if (!actor)
-            throw new ObjectNotFoundException(id,'Actor')
+        if (!actor) {
+            throw new ObjectNotFoundException(id, 'Actor')
+        }
         return actor
     }
 
     static List<Actor> withActors(def params, def id = 'id'){
         def ids = params[id]?.contains(',') ? params[id].split(',')*.toLong() : params.list(id)
-        List<Actor> actors = ids ? Actor.getAll(ids) : null
-        if (!actors)
-            throw new ObjectNotFoundException(ids,'Actor')
+        List<Actor> actors = ids ? Actor.getAll(ids).findAll { it } : null
+        if (!actors) {
+            throw new ObjectNotFoundException(ids, 'Actor')
+        }
         return actors
     }
 
