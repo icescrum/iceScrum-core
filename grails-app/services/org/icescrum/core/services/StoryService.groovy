@@ -111,10 +111,10 @@ class StoryService extends IceScrumEventPublisher {
                 throw new BusinessException(code: 'is.story.error.not.deleted.state')
             }
             if (!springSecurityService.isLoggedIn()) {
-                throw new IllegalAccessException()
+                throw new BusinessException(code: 'is.story.error.not.deleted.permission')
             }
             if (!(story.creator.id == springSecurityService.currentUser?.id) && !securityService.productOwner(product.id, springSecurityService.authentication)) {
-                throw new IllegalAccessException()
+                throw new BusinessException(code: 'is.story.error.not.deleted.permission')
             }
             if (story.actor) {
                 story.actor.removeFromStories(story)
@@ -152,7 +152,7 @@ class StoryService extends IceScrumEventPublisher {
             if (props.effort != story.effort) {
                 // TODO check TM or SM
                 if (story.state < Story.STATE_ACCEPTED || story.state == Story.STATE_DONE) {
-                    throw new IllegalStateException() // TODO validation
+                    throw new BusinessException('is.story.error.not.estimated.state')
                 }
                 if (story.state == Story.STATE_ACCEPTED) {
                     story.state = Story.STATE_ESTIMATED
@@ -170,7 +170,7 @@ class StoryService extends IceScrumEventPublisher {
                 story.effort = null
                 story.estimatedDate = null
             } else {
-                throw new IllegalStateException() // TODO validation
+                throw new BusinessException('is.story.error.not.unestimated.state')
             }
         }
         if (story.type != Story.TYPE_DEFECT) {
