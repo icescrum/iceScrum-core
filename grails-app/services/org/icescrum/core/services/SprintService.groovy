@@ -42,7 +42,6 @@ class SprintService extends IceScrumEventPublisher {
     def taskService
     def storyService
     def springSecurityService
-    def g = new org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib()
 
     @PreAuthorize('(productOwner(#release.parentProduct) or scrumMaster(#release.parentProduct)) and !archivedProduct(#release.parentProduct)')
     void save(Sprint sprint, Release release) {
