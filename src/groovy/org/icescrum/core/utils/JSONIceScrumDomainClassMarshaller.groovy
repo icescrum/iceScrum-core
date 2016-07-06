@@ -213,10 +213,7 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
         if (textileRenderer && propertiesMap."${configName}"?.textile) {
             propertiesMap."${configName}"?.textile?.each {
                 def val = value.properties."${it}"
-                if (val != null) {
-                    writer.key(it + "_html")
-                    json.convertAnother(textileRenderer.renderHtml([markup: "Textile"], val))
-                }
+                writer.key(it + "_html").value(val != null ? textileRenderer.renderHtml([markup: "Textile"], val) : val)
             }
         }
         writer.endObject()
