@@ -148,21 +148,11 @@ class Product extends TimeBox implements Serializable, Attachmentable {
     }
 
     static recentActivity(Product currentProductInstance) {
-        // Really ugly hack to force the execution plan by separating the query into 2 queries
-        // because MySQL would often mess up and join all the entries before applying the where restrictions
-        // leading to catastrophic performances when there is a lot of activities
-        def activityLinksIds = executeQuery("""SELECT a.id
-                                               FROM grails.plugin.fluxiable.ActivityLink as a
-                                               WHERE a.type = 'product'
-                                               AND a.activityRef = :p""", [p: currentProductInstance.id])
-        if (activityLinksIds) {
-            return executeQuery("""SELECT a.activity
-                                   FROM grails.plugin.fluxiable.ActivityLink as a
-                                   WHERE a.id IN(:ids)
-                                   ORDER BY a.activity.dateCreated DESC""", [ids: activityLinksIds], [max: 15])
-        } else {
-            return []
-        }
+        return executeQuery("""SELECT a.activity
+                               FROM grails.plugin.fluxiable.ActivityLink as a
+                               WHERE a.type = 'product'
+                               AND a.activityRef = :p
+                               ORDER BY a.activity.dateCreated DESC""", [p: currentProductInstance.id], [max: 15])
     }
 
     static allProductsByUser(long userid, params) {

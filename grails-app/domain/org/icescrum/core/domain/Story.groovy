@@ -454,18 +454,13 @@ class Story extends BacklogElement implements Cloneable, Serializable {
     }
 
     static recentActivity(Product currentProductInstance) {
-        // Really ugly hack to force the execution plan by separating the query into 2 queries
-        // because MySQL would often mess up and join all the entries before applying the where restrictions
-        // leading to catastrophic performances when there is a lot of activities
         return executeQuery("""SELECT a.activity
-                               FROM grails.plugin.fluxiable.ActivityLink as a
-                               WHERE a.id IN (SELECT a2.id
-                                              FROM grails.plugin.fluxiable.ActivityLink as a2,
-                                                   org.icescrum.core.domain.Story as s
-                                              WHERE a2.type = 'story'
-                                              AND s.backlog = :p
-                                              AND s.id = a2.activityRef
-                                              AND NOT (a2.activity.code LIKE 'task'))
+                               FROM grails.plugin.fluxiable.ActivityLink as a,
+                                    org.icescrum.core.domain.Story as s
+                               WHERE a.type = 'story'
+                               AND s.backlog = :p
+                               AND s.id = a.activityRef
+                               AND NOT (a.activity.code LIKE 'task')
                                ORDER BY a.activity.dateCreated DESC""", [p: currentProductInstance], [max: 15])
     }
 
