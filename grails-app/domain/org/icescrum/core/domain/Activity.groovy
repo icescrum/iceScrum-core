@@ -49,7 +49,7 @@ class Activity implements Serializable, Comparable {
     static constraints = {
         code blank: false
         label blank: false
-        field(nullable: true, validator: { newField, activity -> (activity.beforeValue == null && activity.afterValue == null) || newField != null }) // TODO custom message
+        field(nullable: true, validator: { newField, activity -> (activity.beforeValue == null && activity.afterValue == null) || newField != null ?: 'invalid' })
         beforeValue nullable: true
         afterValue nullable: true
         parentType blank: false

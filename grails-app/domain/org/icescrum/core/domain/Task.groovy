@@ -73,18 +73,18 @@ class Task extends BacklogElement implements Serializable {
     }
 
     static constraints = {
-        type nullable: true, validator: { newType, task -> task.parentStory == null ? newType in [TYPE_URGENT, TYPE_RECURRENT] : newType == null }
+        type nullable: true, validator: { newType, task -> (task.parentStory == null ? newType in [TYPE_URGENT, TYPE_RECURRENT] : newType == null) ?: 'invalid' }
         color nullable: true
-        blocked validator: { newBlocked, task -> !newBlocked || task.backlog.state == Sprint.STATE_INPROGRESS }
+        blocked validator: { newBlocked, task -> !newBlocked || task.backlog.state == Sprint.STATE_INPROGRESS ?: 'invalid' }
         initial nullable: true
         backlog nullable: true
         doneDate nullable: true
-        estimation nullable: true, validator: { newEffort, task -> newEffort == null || newEffort >= 0 }
+        estimation nullable: true, validator: { newEffort, task -> newEffort == null || newEffort >= 0 ?: 'invalid' }
         impediment nullable: true
         name unique: 'parentStory'
         responsible nullable: true
         parentStory nullable: true
-        parentProduct validator: { newParentProduct, task -> newParentProduct == task.backlog?.parentProduct || newParentProduct == task.parentStory?.backlog }
+        parentProduct validator: { newParentProduct, task -> newParentProduct == task.backlog?.parentProduct || newParentProduct == task.parentStory?.backlog ?: 'invalid' }
         inProgressDate nullable: true
     }
 
