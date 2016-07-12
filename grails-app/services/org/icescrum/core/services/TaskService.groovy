@@ -88,8 +88,8 @@ class TaskService extends IceScrumEventPublisher {
         if (task.type == Task.TYPE_URGENT
                 && task.state == Task.STATE_BUSY
                 && product.preferences.limitUrgentTasks != 0
-                && product.preferences.limitUrgentTasks >= sprint.tasks?.findAll { it.type == Task.TYPE_URGENT && it.state == Task.STATE_BUSY && it.id != task.id }?.size()) {
-            throw new BusinessException(code: 'is.task.error.limitTasksUrgent')
+                && sprint.tasks?.findAll { it.type == Task.TYPE_URGENT && it.state == Task.STATE_BUSY && it.id != task.id }?.size() >= product.preferences.limitUrgentTasks) {
+            throw new BusinessException(code: 'is.task.error.limitTasksUrgent', args: [product.preferences.limitUrgentTasks])
         }
         if (task.state != Task.STATE_DONE || !task.doneDate) {
             if (force || task.responsible?.id?.equals(user.id) || task.creator.id.equals(user.id) || securityService.scrumMaster(null, springSecurityService.authentication)) {
