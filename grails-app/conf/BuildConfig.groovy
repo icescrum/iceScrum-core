@@ -27,7 +27,7 @@ grails.project.test.reports.dir = "target/test-reports"
 grails.project.dependency.resolver = "maven"
 
 grails.project.dependency.resolution = {
-    inherits("global") { }
+    inherits("global") {}
     log "warn"
     repositories {
         grailsPlugins()
