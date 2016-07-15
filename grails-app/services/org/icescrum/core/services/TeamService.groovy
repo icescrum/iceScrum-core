@@ -27,6 +27,8 @@ package org.icescrum.core.services
 import org.icescrum.core.domain.Product
 import org.icescrum.core.domain.Team
 import org.icescrum.core.domain.User
+import org.icescrum.core.event.IceScrumEventPublisher
+import org.icescrum.core.event.IceScrumEventType
 import org.icescrum.core.support.ProgressSupport
 import org.icescrum.core.error.BusinessException
 import org.springframework.security.access.prepost.PreAuthorize
@@ -34,7 +36,7 @@ import org.springframework.transaction.annotation.Transactional
 import org.icescrum.core.support.ApplicationSupport
 
 @Transactional
-class TeamService {
+class TeamService extends IceScrumEventPublisher {
 
     def springSecurityService
     def securityService
@@ -64,6 +66,7 @@ class TeamService {
             }
             team.save(flush: true)
             team.products = [] // Grails does not initialize the collection and it is serialized as null instead of empty collection
+            publishSynchronousEvent(IceScrumEventType.CREATE, team)
         }
     }
 
@@ -72,6 +75,7 @@ class TeamService {
         if (team.products) {
             throw new BusinessException(code: 'is.team.error.delete.has.products')
         }
+        def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_DELETE, team)
         def teamMembersIds = team.members*.id
         teamMembersIds.each { Long id ->
             removeMemberOrScrumMaster(team, User.get(id))
@@ -80,6 +84,7 @@ class TeamService {
         team.invitedScrumMasters*.delete()
         team.delete()
         securityService.unsecureDomain(team)
+        publishSynchronousEvent(IceScrumEventType.DELETE, team, dirtyProperties)
     }
 
     @PreAuthorize('isAuthenticated()')
