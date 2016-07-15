@@ -128,11 +128,25 @@ class Task extends BacklogElement implements Serializable {
                         AND t.id = :id""", [pid: pid, id:id], [max:1])[0]
     }
 
+    static Task getInProductByUid(Long pid, int uid) {
+        executeQuery("""SELECT t
+                        FROM org.icescrum.core.domain.Task as t
+                        WHERE t.parentProduct.id = :pid
+                        AND t.uid = :uid""", [pid: pid, uid:uid], [max:1])[0]
+    }
+
     static List<Task> getAllInProduct(Long pid, List id) {
         executeQuery("""SELECT t
                         FROM org.icescrum.core.domain.Task as t
                         WHERE t.parentProduct.id = :pid
                         AND t.id IN (:id) """, [pid: pid, id:id])
+    }
+
+    static List<Task> getAllInProductUID(Long pid, List uid) {
+        executeQuery("""SELECT t
+                        FROM org.icescrum.core.domain.Task as t
+                        WHERE t.parentProduct.id = :pid
+                        AND t.uid IN (:uid)""", [pid: pid, uid:uid])
     }
 
     static List<Task> getAllInProduct(Long pid) {
