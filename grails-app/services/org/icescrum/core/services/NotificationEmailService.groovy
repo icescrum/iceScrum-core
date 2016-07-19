@@ -162,7 +162,7 @@ class NotificationEmailService {
                     emails: group*.email.toArray(),
                     subject: grailsApplication.config.icescrum.alerts.subject_prefix + getMessage('is.template.email.story.changedState.subject', (Locale) locale, subjectArgs),
                     view: '/emails-templates/storyChangedState',
-                    model: [state: getMessage('is.template.email.story.changedState.' + eventLabel.toLowerCase(), (Locale) locale), locale: locale, storyName: story.name, permalink: permalink, linkName: product.name, link: projectLink],
+                    model: [state: getMessage(grailsApplication.config.icescrum.resourceBundles.storyStates[story.state], (Locale) locale), locale: locale, storyName: story.name, permalink: permalink, linkName: product.name, link: projectLink],
                     async: true
             ])
         }
