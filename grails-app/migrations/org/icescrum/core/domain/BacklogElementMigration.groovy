@@ -107,6 +107,17 @@ class BacklogElementMigration {
         changeSet(id:'story_effort_from_integer_to_numeric', author:'vbarrier', filePath:filePath) {
             modifyDataType(tableName:"icescrum2_story", columnName:'effort', newDataType:'NUMERIC(5,2)')
         }
+
+        changeSet(id:'add_IX_fluxiable_activity_link_activity_ref', author:'vbarrier', filePath:filePath) {
+            preConditions(onFail:"MARK_RAN") {
+                not {
+                    dbms(type:'oracle')
+                }
+            }
+            createIndex(indexName: 'IX_fluxiable_activity_link_activity_ref', tableName: 'fluxiable_activity_link') {
+                column(name:'activity_ref', type:'BIGINT')
+            }
+        }
     }
 
     static def getFilePath(){
