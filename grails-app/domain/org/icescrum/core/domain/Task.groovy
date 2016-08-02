@@ -75,7 +75,6 @@ class Task extends BacklogElement implements Serializable {
     static constraints = {
         type nullable: true, validator: { newType, task -> (task.parentStory == null ? newType in [TYPE_URGENT, TYPE_RECURRENT] : newType == null) ?: 'invalid' }
         color nullable: true
-        blocked validator: { newBlocked, task -> !newBlocked || task.backlog.state == Sprint.STATE_INPROGRESS ?: 'invalid' }
         initial nullable: true
         backlog nullable: true
         doneDate nullable: true
