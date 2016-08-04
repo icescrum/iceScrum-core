@@ -7,7 +7,14 @@ import org.springframework.orm.hibernate4.HibernateOptimisticLockingFailureExcep
 
 trait ControllerErrorHandler {
 
-    // Error rendering
+    /**
+     * Error handling for controllers and rendering to the user
+     * @param text      Text message to return to the user, don't provide i18n but use directly the "code" shorthand instead
+     * @param code      i18n message code to be formatted and returned to the user
+     * @param exception Exception to log, useful for unexpected errors (e.g. from third party service) but not for business errors that would pollute the logs
+     * @param errors    Grails domain validation errors to be formatted and returned to the user
+     * @param silent    Option to return the error to the browser but don't display it to the user, useful for custom display or to swallow the error
+     */
     def returnError = { Map attrs ->
         def error = attrs.errors ? attrs.errors.allErrors.collect { [code: "${controllerName}.${it.field}", text: message(error: it)] } :
                 attrs.code ? [text: message(code: attrs.code)] :
