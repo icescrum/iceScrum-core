@@ -16,7 +16,7 @@ trait ControllerErrorHandler {
      * @param silent    Option to return the error to the browser but don't display it to the user, useful for custom display or to swallow the error
      */
     def returnError = { Map attrs ->
-        def error = attrs.errors ? attrs.errors.allErrors.collect { [code: "${controllerName}.${it.field}", text: message(error: it)] } :
+        def error = attrs.errors ? attrs.errors.allErrors.collect { [text: message(error: it)] } :
                 attrs.code ? [text: message(code: attrs.code)] :
                         attrs.text ? [text: attrs.text] :
                                 attrs.exception?.message ? [text: attrs.exception.message] :
