@@ -22,17 +22,23 @@
 Bonjour,<br/>
 <br/>
 Nouveau rapport d'erreur :<br/>
-------------------------------------------------------------------------------<br/>
-Erreur :<br/>
-${error}<br/>
+
+Message :<br/>
+${message}<br/>
 
 ------------------------------------------------------------------------------<br/>
-Commentaire :<br/>
-${comment}<br/>
+
+StackTrace :<br/>
+${stackTrace}<br/>
+
+------------------------------------------------------------------------------<br/>
+
+Params :<br/>
+${params}<br/>
 
 
 ------------------------------------------------------------------------------<br/>
 ip : ${ip}<br/>
-date : ${date}<br/>
-version : ${version}<br/>
 appID : ${appID}<br/>
+version : ${version}<br/>
+User : ${sec.loggedInUserInfo([field:'fullName'])}
