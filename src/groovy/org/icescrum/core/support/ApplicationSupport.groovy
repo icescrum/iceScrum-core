@@ -52,6 +52,7 @@ import org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib
 import org.icescrum.core.domain.User
 import org.icescrum.core.domain.preferences.UserPreferences
 import org.icescrum.core.security.WebScrumExpressionHandler
+import org.icescrum.core.ui.WindowDefinition
 import org.springframework.expression.Expression
 import org.springframework.security.access.expression.ExpressionUtils
 import org.springframework.security.core.context.SecurityContextHolder as SCH
@@ -460,6 +461,30 @@ class ApplicationSupport {
             httpClient.connectionManager.shutdown()
         }
         return resp
+    }
+
+    public static def getUserMenusContext(Map windowDefinitions, Map params) {
+        def menus = []
+        windowDefinitions.each { String windowDefinitionId, WindowDefinition windowDefinition ->
+            def menu = windowDefinition.menu
+            if (menu && windowDefinition?.context) {
+                menu.show = isAllowed(windowDefinition, params) ? menuPositionFromUserPreferences(windowDefinition) ?: [visible: menu.defaultVisibility, pos: menu.defaultPosition] : false
+            }
+            def show = menu?.show
+            if (show in Closure) {
+                show.delegate = delegate
+                show = show()
+            }
+            if (show) {
+                menus << [title: menu?.title,
+                          id: windowDefinitionId,
+                          shortcut: "ctrl+" + (menus.size() + 1),
+                          icon: windowDefinition.icon,
+                          position: show instanceof Map ? show.pos.toInteger() ?: 1 : 1,
+                          visible: show.visible]
+            }
+        }
+        return menus
     }
 }
 
