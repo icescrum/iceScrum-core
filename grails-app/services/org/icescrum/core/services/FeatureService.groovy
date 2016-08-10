@@ -69,7 +69,7 @@ class FeatureService extends IceScrumEventPublisher {
                 it.save() // TODO consider push
             }
         }
-        product.save()
+        product.save(flush: true)
         publishSynchronousEvent(IceScrumEventType.DELETE, feature, dirtyProperties)
     }
 
