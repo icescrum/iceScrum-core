@@ -24,7 +24,6 @@ package org.icescrum.core.utils
 
 import grails.converters.JSON
 import grails.plugins.wikitext.WikiTextTagLib
-import grails.util.Holders
 import org.codehaus.groovy.grails.commons.DomainClassArtefactHandler
 import org.codehaus.groovy.grails.commons.GrailsApplication
 import org.codehaus.groovy.grails.commons.GrailsClassUtils
