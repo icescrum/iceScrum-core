@@ -82,8 +82,8 @@ class NotificationEmailService {
     void taskCreate(Task task, Map dirtyProperties) {
         if (task.type == Task.TYPE_URGENT && task.sprint.state == Sprint.STATE_INPROGRESS) {
             try {
-                sendAlertNewUrgentTask(task, (User) springSecurityService.currentUser) }
-            catch (Exception e) {
+                sendAlertNewUrgentTask(task, (User) springSecurityService.currentUser)
+            } catch (Exception e) {
                 if (log.debugEnabled) {
                     e.printStackTrace()
                 }
@@ -101,18 +101,18 @@ class NotificationEmailService {
         def permalink = baseUrl + '-' + story.uid
         def projectLink = baseUrl + '#project'
         def eventLabel = EVENT_LABELS[type]
-        def description = type == IceScrumEventType.DELETE ? story.description?:"" : null
-        def listTo = (type == IceScrumEventType.CREATE) ? receiversByLocale(product.allUsers, user.id, [type:'onStory',pkey:product.pkey]) : receiversByLocale(story.followers, user.id)
+        def description = type == IceScrumEventType.DELETE ? story.description ?: "" : null
+        def listTo = (type == IceScrumEventType.CREATE) ? receiversByLocale(product.allUsers, user?.id, [type: 'onStory', pkey: product.pkey]) : receiversByLocale(story.followers, user?.id)
         listTo?.each { locale, group ->
             if (log.debugEnabled) {
                 log.debug "Send email, event:$eventLabel to : ${group*.email.toArray()} with locale : ${locale}"
             }
             send([
-                    emails: group*.email.toArray(),
+                    emails : group*.email.toArray(),
                     subject: grailsApplication.config.icescrum.alerts.subject_prefix + getMessage('is.template.email.story.' + eventLabel.toLowerCase() + '.subject', (Locale) locale, subjectArgs),
-                    view: '/emails-templates/story' + eventLabel,
-                    model: [locale: locale, storyName: story.name, permalink: permalink, linkName: product.name, link: projectLink, description: description],
-                    async: true
+                    view   : '/emails-templates/story' + eventLabel,
+                    model  : [locale: locale, storyName: story.name, permalink: permalink, linkName: product.name, link: projectLink, description: description],
+                    async  : true
             ])
         }
     }
@@ -126,17 +126,17 @@ class NotificationEmailService {
         def baseUrl = grailsApplication.config.grails.serverURL + '/p/' + product.pkey
         def permalink = baseUrl + '-T' + task.uid
         def projectLink = baseUrl + '#project'
-        def listTo = receiversByLocale(product.allUsers, user.id, [type:'onUrgentTask',pkey:product.pkey])
+        def listTo = receiversByLocale(product.allUsers, user?.id, [type: 'onUrgentTask', pkey: product.pkey])
         listTo?.each { locale, group ->
             if (log.debugEnabled) {
                 log.debug "Send email, event urgent task created to : ${group*.email.toArray()} with locale : ${locale}"
             }
             send([
-                    emails: group*.email.toArray(),
+                    emails : group*.email.toArray(),
                     subject: grailsApplication.config.icescrum.alerts.subject_prefix + getMessage('is.template.email.task.created.subject', (Locale) locale, subjectArgs),
-                    view: '/emails-templates/taskCreated',
-                    model: [locale: locale, taskName: task.name, permalink: permalink, linkName: product.name, link: projectLink, description: task.description],
-                    async: true
+                    view   : '/emails-templates/taskCreated',
+                    model  : [locale: locale, taskName: task.name, permalink: permalink, linkName: product.name, link: projectLink, description: task.description],
+                    async  : true
             ])
         }
     }
@@ -151,17 +151,17 @@ class NotificationEmailService {
         def permalink = baseUrl + '-' + story.uid
         def projectLink = baseUrl + '#project'
         def eventLabel = EVENT_LABELS[type]
-        def listTo = receiversByLocale(story.followers, user.id)
+        def listTo = receiversByLocale(story.followers, user?.id)
         listTo?.each { locale, group ->
             if (log.debugEnabled) {
                 log.debug "Send email, event:$eventLabel to : ${group*.email.toArray()} with locale : ${locale}"
             }
             send([
-                    emails: group*.email.toArray(),
+                    emails : group*.email.toArray(),
                     subject: grailsApplication.config.icescrum.alerts.subject_prefix + getMessage('is.template.email.story.changedState.subject', (Locale) locale, subjectArgs),
-                    view: '/emails-templates/storyChangedState',
-                    model: [state: getMessage(grailsApplication.config.icescrum.resourceBundles.storyStates[story.state], (Locale) locale), locale: locale, storyName: story.name, permalink: permalink, linkName: product.name, link: projectLink],
-                    async: true
+                    view   : '/emails-templates/storyChangedState',
+                    model  : [state: getMessage(grailsApplication.config.icescrum.resourceBundles.storyStates[story.state], (Locale) locale), locale: locale, storyName: story.name, permalink: permalink, linkName: product.name, link: projectLink],
+                    async  : true
             ])
         }
     }
@@ -177,17 +177,17 @@ class NotificationEmailService {
         def permalink = baseUrl + '-' + story.uid
         def projectLink = baseUrl + '#project'
         String text = ServicesUtils.textileToHtml(comment.body)
-        def listTo = receiversByLocale(story.followers, user.id)
+        def listTo = receiversByLocale(story.followers, user?.id)
         listTo?.each { locale, group ->
             if (log.debugEnabled) {
                 log.debug "Send email, event: comment added to : ${group*.email.toArray()} with locale : ${locale}"
             }
             send([
-                    emails: group*.email.toArray(),
+                    emails : group*.email.toArray(),
                     subject: grailsApplication.config.icescrum.alerts.subject_prefix + getMessage('is.template.email.story.commented.subject', (Locale) locale, subjectArgs),
-                    view: '/emails-templates/storyCommented',
-                    model: [by: comment.poster.firstName + " " + comment.poster.lastName, comment: text, locale: locale, storyName: story.name, permalink: permalink, linkName: product.name, link: projectLink],
-                    async: true
+                    view   : '/emails-templates/storyCommented',
+                    model  : [by: comment.poster.firstName + " " + comment.poster.lastName, comment: text, locale: locale, storyName: story.name, permalink: permalink, linkName: product.name, link: projectLink],
+                    async  : true
             ])
         }
     }
@@ -202,17 +202,17 @@ class NotificationEmailService {
         def baseUrl = grailsApplication.config.grails.serverURL + '/p/' + product.pkey
         def permalink = baseUrl + '-' + story.uid
         def projectLink = baseUrl + '#project'
-        def listTo = receiversByLocale(story.followers, user.id)
+        def listTo = receiversByLocale(story.followers, user?.id)
         listTo?.each { locale, group ->
             if (log.debugEnabled) {
                 log.debug "Send email, event: comment updated to : ${group*.email.toArray()} with locale : ${locale}"
             }
             send([
-                    emails: group*.email.toArray(),
+                    emails : group*.email.toArray(),
                     subject: grailsApplication.config.icescrum.alerts.subject_prefix + getMessage('is.template.email.story.commentEdited.subject', (Locale) locale, subjectArgs),
-                    view: '/emails-templates/storyCommentEdited',
-                    model: [by: user.firstName + " " + user.lastName, locale: locale, storyName: story.name, permalink: permalink, linkName: product.name, link: projectLink],
-                    async: true
+                    view   : '/emails-templates/storyCommentEdited',
+                    model  : [by: user.firstName + " " + user.lastName, locale: locale, storyName: story.name, permalink: permalink, linkName: product.name, link: projectLink],
+                    async  : true
             ])
         }
     }
@@ -224,7 +224,7 @@ class NotificationEmailService {
         def product = element instanceof Feature ? element.backlog : element.backlog.parentRelease.parentProduct
         def subjectArgs = [product.name, element.name]
         def projectLink = grailsApplication.config.grails.serverURL + '/p/' + product.pkey + '#project'
-        def listTo = receiversByLocale(followers, user.id)
+        def listTo = receiversByLocale(followers, user?.id)
         listTo?.each { locale, group ->
             def acceptedAs = getMessage(element instanceof Feature ? 'is.feature' : 'is.task', (Locale) locale)
             subjectArgs << acceptedAs
@@ -232,11 +232,11 @@ class NotificationEmailService {
                 log.debug "Send email, event: accepted as to : ${group*.email.toArray()} with locale : ${locale}"
             }
             send([
-                    emails: group*.email.toArray(),
+                    emails : group*.email.toArray(),
                     subject: grailsApplication.config.icescrum.alerts.subject_prefix + getMessage('is.template.email.story.acceptedAs.subject', (Locale) locale, subjectArgs),
-                    view: '/emails-templates/storyAcceptedAs',
-                    model: [acceptedAs: acceptedAs, locale: locale, elementName: element.name, linkName: product.name, link: projectLink],
-                    async: true
+                    view   : '/emails-templates/storyAcceptedAs',
+                    model  : [acceptedAs: acceptedAs, locale: locale, elementName: element.name, linkName: product.name, link: projectLink],
+                    async  : true
             ])
         }
     }
@@ -248,10 +248,10 @@ class NotificationEmailService {
             log.debug "Send email, retrieve password to : ${user.email} (${user.username})"
         }
         send([
-                to: user.email,
+                to     : user.email,
                 subject: grailsApplication.config.icescrum.alerts.subject_prefix + getMessage('is.template.email.user.retrieve.subject', user.locale, [user.username]),
-                view: "/emails-templates/retrieve",
-                model: [locale: user.locale, user: user, password: password, ip: request.getHeader('X-Forwarded-For') ?: request.getRemoteAddr(), link: link]
+                view   : "/emails-templates/retrieve",
+                model  : [locale: user.locale, user: user, password: password, ip: request.getHeader('X-Forwarded-For') ?: request.getRemoteAddr(), link: link]
         ])
     }
 
@@ -262,10 +262,10 @@ class NotificationEmailService {
         def locale = inviter.locale
         def role = getMessage(grailsApplication.config.icescrum.resourceBundles.roles[invitation.futureRole], locale)
         send([
-                to: invitation.email,
+                to     : invitation.email,
                 subject: grailsApplication.config.icescrum.alerts.subject_prefix + getMessage('is.template.email.user.invitation.subject', locale),
-                view: "/emails-templates/invitation",
-                model: [inviter: inviter, locale: locale, link: link, isProjectInvitation: isProjectInvitation, invitedIn: invitedIn, role: role]
+                view   : "/emails-templates/invitation",
+                model  : [inviter: inviter, locale: locale, link: link, isProjectInvitation: isProjectInvitation, invitedIn: invitedIn, role: role]
         ])
         if (log.debugEnabled) {
             log.debug "Send invitation to: $invitation.email"
@@ -293,7 +293,7 @@ class NotificationEmailService {
                 }
             }
         } else {
-            options.bcc = options.emails?:options.bcc
+            options.bcc = options.emails ?: options.bcc
             mailService.sendMail {
                 if (options.async) // Warning : if async then error cannot be caught
                     async true
@@ -319,7 +319,7 @@ class NotificationEmailService {
         return messageSource.getMessage(code, args ? args.toArray() : null, defaultCode ?: code, locale)
     }
 
-    private static Map receiversByLocale(candidates, long senderId, Map options = null) {
+    private static Map receiversByLocale(candidates, Long senderId, Map options = null) {
         candidates?.findAll { User candidate ->
             candidate.enabled && (candidate.id != senderId) && (!options || (options.pkey in candidate.preferences.emailsSettings[options.type]))
         }?.collect { User receiver ->
