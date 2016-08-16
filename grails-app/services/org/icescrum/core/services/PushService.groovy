@@ -27,17 +27,12 @@ import grails.converters.JSON
 import org.atmosphere.cpr.AtmosphereResource
 import org.atmosphere.cpr.AtmosphereResourceFactory
 import org.atmosphere.cpr.Broadcaster
-import org.atmosphere.cpr.HeaderConfig
 import org.icescrum.atmosphere.IceScrumAtmosphereEventListener
 import org.icescrum.atmosphere.IceScrumBroadcaster
 import org.icescrum.core.domain.User
 import org.icescrum.core.event.IceScrumEventType
 import org.springframework.transaction.annotation.Transactional
-import org.springframework.web.context.request.RequestContextHolder
 
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ConcurrentMap
-import java.util.concurrent.ConcurrentSkipListSet
 import java.util.concurrent.CopyOnWriteArrayList
 
 @Transactional
@@ -47,7 +42,7 @@ class PushService {
     def disabledThreads = new CopyOnWriteArrayList<>()
 
     void broadcastToProductUsers(IceScrumEventType eventType, object, long productId) {
-        if(!isDisabledThread()){
+        if (!isDisabledThread()) {
             def channel = '/stream/app/product-' + productId
             Broadcaster broadcaster = atmosphereMeteor.broadcasterFactory?.lookup(IceScrumBroadcaster.class, channel)
             if (broadcaster) {
@@ -60,7 +55,7 @@ class PushService {
     }
 
     void broadcastToSingleUser(IceScrumEventType eventType, object, User user) {
-        if(!isDisabledThread()){
+        if (!isDisabledThread()) {
             def channel = '/stream/app/*'
             Broadcaster broadcaster = atmosphereMeteor.broadcasterFactory?.lookup(IceScrumBroadcaster.class, channel)
             if (broadcaster) {
@@ -76,7 +71,7 @@ class PushService {
     }
 
     void broadcastToUsers(IceScrumEventType eventType, object, Collection<User> user) {
-        if(!isDisabledThread()) {
+        if (!isDisabledThread()) {
             def usernames = user*.username
             AtmosphereResourceFactory atmosphereResourceFactory = atmosphereMeteor.framework?.atmosphereFactory()
             if (atmosphereResourceFactory) {
@@ -92,14 +87,14 @@ class PushService {
         }
     }
 
-    void disablePushForThisThread(){
-        if(!isDisabledThread()){
+    void disablePushForThisThread() {
+        if (!isDisabledThread()) {
             disabledThreads.add(Thread.currentThread().getId())
         }
     }
 
-    void enablePushForThisThread(){
-        if(isDisabledThread()){
+    void enablePushForThisThread() {
+        if (isDisabledThread()) {
             disabledThreads.remove(Thread.currentThread().getId())
         }
     }

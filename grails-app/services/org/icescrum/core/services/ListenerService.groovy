@@ -36,7 +36,7 @@ class ListenerService {
     @IceScrumListener(domain = 'story', eventType = IceScrumEventType.CREATE)
     void storyCreate(Story story, Map dirtyProperties) {
         def user = (User) springSecurityService.currentUser
-        activityService.addActivity(story, user, Activity.CODE_SAVE, story.name)
+        activityService.addActivity(story, user ?: story.creator, Activity.CODE_SAVE, story.name)
         pushService.broadcastToProductUsers(IceScrumEventType.CREATE, story, story.backlog.id)
     }
 
