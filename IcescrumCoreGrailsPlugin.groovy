@@ -24,7 +24,6 @@
 
 import com.quirklabs.hdimageutils.HdImageService
 import grails.converters.JSON
-import grails.plugins.wikitext.WikiTextTagLib
 import org.codehaus.groovy.grails.commons.GrailsClassUtils
 import org.icescrum.core.cors.CorsFilter
 import org.icescrum.core.event.IceScrumEventPublisher
@@ -124,8 +123,7 @@ class IcescrumCoreGrailsPlugin {
     def doWithApplicationContext = { applicationContext ->
         //For iceScrum internal
         Map properties = application.config?.icescrum?.marshaller
-        WikiTextTagLib textileRenderer = (WikiTextTagLib)application.mainContext["grails.plugins.wikitext.WikiTextTagLib"]
-        JSON.registerObjectMarshaller(new JSONIceScrumDomainClassMarshaller(application, false, true, properties, textileRenderer), 1)
+        JSON.registerObjectMarshaller(new JSONIceScrumDomainClassMarshaller(application, false, true, properties), 1)
         applicationContext.bootStrapService.start()
     }
 

@@ -23,7 +23,6 @@
 package org.icescrum.core.utils
 
 import grails.converters.JSON
-import grails.plugins.wikitext.WikiTextTagLib
 import org.codehaus.groovy.grails.commons.DomainClassArtefactHandler
 import org.codehaus.groovy.grails.commons.GrailsApplication
 import org.codehaus.groovy.grails.commons.GrailsClassUtils
@@ -43,24 +42,15 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
 
     private ProxyHandler proxyHandler
     private Map propertiesMap
-    private WikiTextTagLib textileRenderer
     private boolean includeClass
     private GrailsApplication grailsApplication
-
-    public JSONIceScrumDomainClassMarshaller(GrailsApplication grailsApplication, boolean includeVersion, boolean includeClass, Map propertiesMap, WikiTextTagLib textileRenderer) {
-        super(includeVersion, grailsApplication)
-        this.proxyHandler = new DefaultProxyHandler()
-        this.propertiesMap = propertiesMap
-        this.includeClass = includeClass
-        this.textileRenderer = textileRenderer
-        this.grailsApplication = grailsApplication
-    }
 
     public JSONIceScrumDomainClassMarshaller(GrailsApplication grailsApplication, boolean includeVersion, boolean includeClass, Map propertiesMap) {
         super(includeVersion, grailsApplication)
         this.proxyHandler = new DefaultProxyHandler()
         this.propertiesMap = propertiesMap
         this.includeClass = includeClass
+        this.grailsApplication = grailsApplication
     }
 
     public boolean supports(Object object) {
@@ -209,11 +199,9 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
                 }
             }
         }
-        if (textileRenderer && propertiesMap."${configName}"?.textile) {
-            propertiesMap."${configName}"?.textile?.each {
-                def val = value.properties."${it}"
-                writer.key(it + "_html").value(val != null ? textileRenderer.renderHtml([markup: "Textile"], val) : val)
-            }
+        propertiesMap."${configName}"?.textile?.each {
+            def val = value.properties."${it}"
+            writer.key(it + "_html").value(ServicesUtils.textileToHtml(val))
         }
         writer.endObject()
     }

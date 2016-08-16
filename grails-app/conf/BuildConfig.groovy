@@ -40,6 +40,7 @@ grails.project.dependency.resolution = {
         mavenRepo "http://repo.icescrum.org/artifactory/plugins-release/"
         mavenRepo "http://repo.icescrum.org/artifactory/plugins-snapshot/"
         mavenRepo "http://jaspersoft.artifactoryonline.com/jaspersoft/third-party-ce-artifacts/" // Because Jasper depends on olap4j which is not available anymore the repositories
+        mavenRepo "https://repo.eclipse.org/content/repositories/mylyn/" // For wikitext
     }
     dependencies {
         compile 'org.atmosphere:atmosphere-runtime:2.4.5', {
@@ -48,6 +49,8 @@ grails.project.dependency.resolution = {
         compile('org.codehaus.groovy.modules.http-builder:http-builder:0.7.2') {
             excludes 'commons-logging', 'xml-apis', 'groovy'
         }
+        compile 'org.eclipse.mylyn.docs:org.eclipse.mylyn.wikitext.core:2.8.0-SNAPSHOT' // Cannot use 2.9 or above because it is compiled with Java 8 so it won't work with Java 7
+        compile 'org.eclipse.mylyn.docs:org.eclipse.mylyn.wikitext.textile.core:2.8.0-SNAPSHOT'
     }
     plugins {
         compile ':atmosphere-meteor:1.0.5'
@@ -59,7 +62,6 @@ grails.project.dependency.resolution = {
         compile ':mail:1.0.7'
         compile ':jasper:1.11.0'
         compile ':rollback-on-exception:0.1'
-        compile ':wikitext:0.1.2'
         compile ':feeds:1.6'
         compile ':cache:1.1.8'
         compile ':cache-ehcache:1.0.5'

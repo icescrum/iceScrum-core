@@ -31,12 +31,10 @@ import org.icescrum.core.domain.Story
 import org.grails.comments.Comment
 import org.icescrum.core.domain.BacklogElement
 import org.icescrum.core.domain.User
+import org.icescrum.core.utils.ServicesUtils
 import org.springframework.web.context.request.RequestContextHolder as RCH
 import org.icescrum.core.domain.Feature
 import org.icescrum.core.support.ApplicationSupport
-import org.eclipse.mylyn.wikitext.core.util.ServiceLocator
-import org.eclipse.mylyn.wikitext.core.parser.builder.HtmlDocumentBuilder
-import org.eclipse.mylyn.wikitext.core.parser.MarkupParser
 
 class NotificationEmailService {
 
@@ -178,13 +176,7 @@ class NotificationEmailService {
         def baseUrl = grailsApplication.config.grails.serverURL + '/p/' + product.pkey
         def permalink = baseUrl + '-' + story.uid
         def projectLink = baseUrl + '#project'
-        StringWriter text = new StringWriter()
-        HtmlDocumentBuilder builder = new HtmlDocumentBuilder(text)
-        builder.emitAsDocument = false
-        MarkupParser parser = new MarkupParser()
-        parser.markupLanguage = ServiceLocator.instance.getMarkupLanguage('Textile')
-        parser.builder = builder
-        parser.parse(comment.body).encodeAsHTML()
+        String text = ServicesUtils.textileToHtml(comment.body)
         def listTo = receiversByLocale(story.followers, user.id)
         listTo?.each { locale, group ->
             if (log.debugEnabled) {
