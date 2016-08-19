@@ -65,6 +65,6 @@ trait ControllerErrorHandler {
     }
 
     def businessException(BusinessException businessException) {
-        returnError(text: message(code: businessException.code, args: businessException.args ?: []))
+        returnError(text: businessException.text ?: message(code: businessException.code, args: businessException.args ?: []))
     }
 }

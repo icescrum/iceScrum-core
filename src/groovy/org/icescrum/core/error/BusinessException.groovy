@@ -23,7 +23,14 @@ package org.icescrum.core.error
  * Nicolas Noullet (nnoullet@kagilum.com)
  */
 
+/**
+ * Exception that don't represent a bug but rather incorrect values or behavior from the user
+ * @param text Text message to return to the user, don't provide i18n but use directly the "code" shorthand instead
+ * @param code i18n message code to be formatted and returned to the user, used only if no text provided
+ * @param args arguments for the i18n message
+ */
 class BusinessException extends RuntimeException {
+    String text
     String code
     List<String> args
 }
