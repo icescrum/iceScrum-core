@@ -23,6 +23,8 @@
 
 package org.icescrum.core.domain
 
+import grails.converters.JSON
+
 class Template implements Serializable {
 
     String name
@@ -30,6 +32,8 @@ class Template implements Serializable {
     String serializedData
 
     static belongsTo = [parentProduct: Product]
+
+    static transients = ['data']
 
     static constraints = {
         name blank: false, unique: 'parentProduct'
@@ -41,5 +45,9 @@ class Template implements Serializable {
         cache true
         serializedData type: "text"
         table 'icescrum2_template'
+    }
+
+    Map getData() {
+        return JSON.parse(serializedData) as Map
     }
 }
