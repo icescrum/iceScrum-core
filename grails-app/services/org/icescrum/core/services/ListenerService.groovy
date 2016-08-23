@@ -133,7 +133,7 @@ class ListenerService {
     @IceScrumListener(domain = 'task', eventType = IceScrumEventType.CREATE)
     void taskCreate(Task task, Map dirtyProperties) {
         def user = (User) springSecurityService.currentUser
-        activityService.addActivity(task, user, 'taskSave', task.name)
+        activityService.addActivity(task, user ?: task.creator, 'taskSave', task.name)
         pushService.broadcastToProductUsers(IceScrumEventType.CREATE, task, task.parentProduct.id)
     }
 
@@ -233,7 +233,7 @@ class ListenerService {
     @IceScrumListener(domain = 'acceptanceTest', eventType = IceScrumEventType.CREATE)
     void acceptanceTestCreate(AcceptanceTest acceptanceTest, Map dirtyProperties) {
         def user = (User) springSecurityService.currentUser
-        activityService.addActivity(acceptanceTest, user, 'acceptanceTestSave', acceptanceTest.name)
+        activityService.addActivity(acceptanceTest, user ?: acceptanceTest.parentStory.creator, 'acceptanceTestSave', acceptanceTest.name)
         pushService.broadcastToProductUsers(IceScrumEventType.CREATE, acceptanceTest, acceptanceTest.parentProduct.id)
     }
 
