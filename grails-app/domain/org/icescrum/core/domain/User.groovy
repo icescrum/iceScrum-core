@@ -23,16 +23,14 @@
  */
 
 
-
-
 package org.icescrum.core.domain
 
 import org.hibernate.ObjectNotFoundException
-import org.springframework.security.core.context.SecurityContextHolder as SCH
-import org.icescrum.plugins.attachmentable.interfaces.Attachmentable
 import org.icescrum.core.domain.preferences.UserPreferences
 import org.icescrum.core.domain.security.Authority
 import org.icescrum.core.domain.security.UserAuthority
+import org.icescrum.plugins.attachmentable.interfaces.Attachmentable
+import org.springframework.security.core.context.SecurityContextHolder as SCH
 
 class User implements Serializable, Attachmentable {
 
@@ -50,7 +48,6 @@ class User implements Serializable, Attachmentable {
 
     UserPreferences preferences
     String uid
-
 
 
     boolean enabled = true
@@ -97,25 +94,72 @@ class User implements Serializable, Attachmentable {
     }
 
     static findUsersLike(term, exCurrentUser, showDisabled, params) {
-        executeQuery("SELECT DISTINCT u " +
-                "FROM org.icescrum.core.domain.User as u " +
-                "WHERE ${showDisabled == false ? 'u.enabled = true and ' : ''} ${exCurrentUser ? 'u.id != ' + SCH.context.authentication.principal?.id + ' and ' : ''}" +
-                "( lower(u.email) like lower(:term) " +
-                "or lower(u.username) like lower(:term) " +
-                "or lower(u.firstName) like lower(:term) " +
-                "or lower(u.lastName) like lower(:term) " +
-                "or lower(concat(u.firstName,' ', u.lastName)) like lower(:term)" +
-                "or lower(concat(u.lastName,' ', u.firstName)) like lower(:term)) " +
-                "ORDER BY u.username ASC",
-                [term: "%$term%"], params ?: [:])
+        executeQuery("""SELECT DISTINCT u
+                        FROM org.icescrum.core.domain.User AS u
+                        WHERE ${showDisabled == false ? 'u.enabled = true AND ' : ''} ${exCurrentUser ? 'u.id != ' + SCH.context.authentication.principal?.id + ' AND ' : ''}
+                        ( lower(u.email) LIKE lower(:term)
+                        OR lower(u.username) LIKE lower(:term)
+                        OR lower(u.firstName) LIKE lower(:term)
+                        OR lower(u.lastName) LIKE lower(:term)
+                        OR lower(concat(u.firstName,' ', u.lastName)) LIKE lower(:term)
+                        OR lower(concat(u.lastName,' ', u.firstName)) LIKE lower(:term))
+                        ORDER BY u.username ASC""", [term: "%$term%"], params ?: [:])
     }
 
-    static User withUser(long id){
+    static countUsersLike(exCurrentUser, term, params) {
+        executeQuery("""SELECT COUNT(DISTINCT u)
+                        FROM org.icescrum.core.domain.User AS u
+                        WHERE ${exCurrentUser ? 'u.id != ' + SCH.context.authentication.principal?.id + ' AND ' : ''}
+                        ( lower(u.email) LIKE lower(:term)
+                        OR lower(u.username) LIKE lower(:term)
+                        OR lower(u.firstName) LIKE lower(:term)
+                        OR lower(u.lastName) LIKE lower(:term)
+                        OR lower(concat(u.firstName,' ', u.lastName)) LIKE lower(:term)
+                        OR lower(concat(u.lastName,' ', u.firstName)) LIKE lower(:term))""", [term: "%$term%"], params ?: [:])[0]
+    }
+
+    static findUsersLikeAndEnabled(excludeCurrentUser, term, enabled, params) {
+        executeQuery("""SELECT DISTINCT u
+                        FROM org.icescrum.core.domain.User AS u
+                        WHERE ${excludeCurrentUser ? 'u.id != ' + SCH.context.authentication.principal?.id + ' AND ' : ''}
+                        ( lower(u.email) LIKE lower(:term)
+                        OR lower(u.username) LIKE lower(:term)
+                        OR lower(u.firstName) LIKE lower(:term)
+                        OR lower(u.lastName) LIKE lower(:term)
+                        OR lower(concat(u.firstName,' ', u.lastName)) LIKE lower(:term)
+                        OR lower(concat(u.lastName,' ', u.firstName)) LIKE lower(:term))
+                        AND enabled = :enabled
+                        ORDER BY u.username ASC""", [term: "%$term%", enabled: enabled], params ?: [:])
+    }
+
+    static countUsersLikeAndEnabled(excludeCurrentUser, term, enabled, params) {
+        executeQuery("""SELECT COUNT(DISTINCT u)
+                        FROM org.icescrum.core.domain.User AS u
+                        WHERE ${excludeCurrentUser ? 'u.id != ' + SCH.context.authentication.principal?.id + ' AND ' : ''}
+                        ( lower(u.email) LIKE lower(:term)
+                        OR lower(u.username) LIKE lower(:term)
+                        OR lower(u.firstName) LIKE lower(:term)
+                        OR lower(u.lastName) LIKE lower(:term)
+                        OR lower(concat(u.firstName,' ', u.lastName)) LIKE lower(:term)
+                        OR lower(concat(u.lastName,' ', u.firstName)) LIKE lower(:term))
+                        AND enabled = :enabled """, [term: "%$term%", enabled: enabled], params ?: [:])[0]
+    }
+
+    static User withUser(long id) {
         User user = get(id)
         if (!user) {
             throw new ObjectNotFoundException(id, 'User')
         }
         return user
+    }
+
+    static List<User> withUsers(def params, def id = 'id') {
+        def ids = params[id]?.contains(',') ? params[id].split(',')*.toLong() : params.list(id)
+        List<User> users = ids ? getAll(ids) : null
+        if (!users) {
+            throw new ObjectNotFoundException(ids, 'User')
+        }
+        return users
     }
 
     Set<Authority> getAuthorities() {
@@ -159,7 +203,7 @@ class User implements Serializable, Attachmentable {
     }
 
     def xml(builder) {
-        builder.user(uid:this.uid) {
+        builder.user(uid: this.uid) {
             email(this.email)
             enabled(this.enabled)
             username(this.username)
@@ -174,7 +218,7 @@ class User implements Serializable, Attachmentable {
 
             preferences.xml(builder)
 
-            teams(){
+            teams() {
                 this.teams.each { _team ->
                     team(uid: _team.uid)
                 }
