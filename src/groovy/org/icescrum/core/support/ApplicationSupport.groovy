@@ -150,19 +150,22 @@ class ApplicationSupport {
         def filePath = config.icescrum.baseDir.toString() + File.separator + "appID.txt"
         def fileID = new File(filePath)
         def line = fileID.exists() ?  fileID.readLines()[0] : null
-
-        if (!line || line == 'd41d8cd9-8f00-b204-e980-0998ecf8427e') {
+        boolean change = false
+        change == (line in ['dde5840d-2193-ead2-f4f3-5c131453d19d', '48e1b46b-68ba-8fad-1e7f-9807d121a81d']) || config.icescrum.environment == 'docker'
+        if (!line || line == 'd41d8cd9-8f00-b204-e980-0998ecf8427e' || change) {
             def uid
-            try {
-                uid = NetworkInterface.networkInterfaces?.nextElement()?.hardwareAddress
-                if (uid) {
-                    MessageDigest md = MessageDigest.getInstance("MD5")
-                    md.update(uid)
-                    uid = new BigInteger(1, md.digest() ).toString(16).padLeft(32, '0')
-                    uid = uid.substring(0,8) +'-'+ uid.substring(8,12) +'-'+ uid.substring(12,16) +'-'+ uid.substring(16,20) +'-'+ uid.substring(20,32)
+            if (!change) {
+                try {
+                    uid = NetworkInterface.networkInterfaces?.nextElement()?.hardwareAddress
+                    if (uid) {
+                        MessageDigest md = MessageDigest.getInstance("MD5")
+                        md.update(uid)
+                        uid = new BigInteger(1, md.digest() ).toString(16).padLeft(32, '0')
+                        uid = uid.substring(0,8) +'-'+ uid.substring(8,12) +'-'+ uid.substring(12,16) +'-'+ uid.substring(16,20) +'-'+ uid.substring(20,32)
+                    }
+                } catch (IOException ioe) {
+                    if (log.debugEnabled) log.debug "Warning could not access network interfaces, message: $ioe.message"
                 }
-            } catch (IOException ioe) {
-                if (log.debugEnabled) log.debug "Warning could not access network interfaces, message: $ioe.message"
             }
             config.icescrum.appID = uid ?: UUID.randomUUID()
             if (log.debugEnabled) log.debug "Generated (${uid?'m':'r'}) appID: $config.icescrum.appID"
