@@ -284,6 +284,7 @@ class IcescrumCoreGrailsPlugin {
             taskExecutor = java.util.concurrent.Executors.newCachedThreadPool()
 		}
 
+        ApplicationSupport.initEnvironment(application.config)
         ApplicationSupport.createUUID()
         //Fix for 1.7 with Grails 1.3.9 and NoSuchFieldException
         System.setProperty("stringchararrayaccessor.disabled", "true")
