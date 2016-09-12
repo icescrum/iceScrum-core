@@ -163,10 +163,11 @@ class SprintService extends IceScrumEventPublisher {
                 taskService.save(newTask, (User) springSecurityService.currentUser)
             }
         }
+        def previousSprintDoneDefinition = sprint.previousSprint?.doneDefinition // Before updating sprint properties because "previouSprint" flushes the session and clean dirtyProperties
         sprint.state = Sprint.STATE_INPROGRESS
         sprint.inProgressDate = new Date()
-        if (sprint.previousSprint?.doneDefinition && !sprint.doneDefinition) {
-            sprint.doneDefinition = sprint.previousSprint.doneDefinition
+        if (previousSprintDoneDefinition && !sprint.doneDefinition) {
+            sprint.doneDefinition = previousSprintDoneDefinition
         }
         sprint.initialRemainingTime = sprint.totalRemaining
         update(sprint)
