@@ -51,7 +51,8 @@ grails.project.dependency.resolution = {
         }
         compile 'org.eclipse.mylyn.docs:org.eclipse.mylyn.wikitext.core:2.8.0-SNAPSHOT' // Cannot use 2.9 or above because it is compiled with Java 8 so it won't work with Java 7
         compile 'org.eclipse.mylyn.docs:org.eclipse.mylyn.wikitext.textile.core:2.8.0-SNAPSHOT'
-        compile 'com.google.guava:guava:15.0'// For wikitext (was previously brought by asset-pipeline but they left the dependency: https://github.com/bertramdev/asset-pipeline/pull/117)
+//        compile 'com.google.guava:guava:15.0'// For wikitext (was previously brought by asset-pipeline but they left the dependency: https://github.com/bertramdev/asset-pipeline/pull/117)
+        compile 'org.json:json:20141113' // Temporary stuff to check build, not a real dependency
     }
     plugins {
         compile ':atmosphere-meteor:1.0.5'
