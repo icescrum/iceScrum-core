@@ -2,6 +2,7 @@ package org.icescrum.core.utils
 
 import org.eclipse.mylyn.wikitext.core.parser.MarkupParser
 import org.eclipse.mylyn.wikitext.textile.core.TextileLanguage
+import org.eclipse.mylyn.wikitext.tracwiki.core.TracWikiLanguage
 
 import java.text.SimpleDateFormat
 import javax.crypto.SecretKey
@@ -85,6 +86,6 @@ class ServicesUtils {
     }
 
     public static String textileToHtml(String text) {
-        return text ? new MarkupParser(markupLanguage: new TextileLanguage()).parseToHtml(text) : ''
+        return text ? new MarkupParser(markupLanguage: new TextileLanguage()).parseToHtml(text) : new MarkupParser(markupLanguage: new TracWikiLanguage()).parseToHtml('')
     }
 }
