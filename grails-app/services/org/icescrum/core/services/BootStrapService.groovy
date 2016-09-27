@@ -18,13 +18,13 @@
  * Authors:
  * Vincent Barrier (vbarrier@kagilum.com)
  * Stéphane Maldini (stephane.maldini@icescrum.com)
+ * Nicolas Noullet (nnoullet@kagilum.com)
  */
 
 
 package org.icescrum.core.services
 
 import grails.util.Environment
-import org.icescrum.core.security.AuthorityManager
 import org.icescrum.core.support.ApplicationSupport
 import org.icescrum.core.test.DummyPopulator
 
@@ -32,11 +32,17 @@ class BootStrapService {
 
     def pluginManager
     def grailsApplication
+    def authorityService
 
     void start() {
-        AuthorityManager.initSecurity(grailsApplication)
 
+        def dev = Environment.current == Environment.DEVELOPMENT && !System.properties['icescrum.noDummyze']
         def config = grailsApplication.config
+        if (!config.icescrum.createDefaultAdmin) {
+            config.icescrum.createDefaultAdmin = dev
+        }
+        authorityService.initSecurity()
+
         ApplicationSupport.checkInitialConfig(config)
         ApplicationSupport.generateFolders(config)
         ApplicationSupport.initEnvironment(config)
@@ -50,7 +56,7 @@ class BootStrapService {
             pluginManager.informPluginsOfConfigChange()
         }
 
-        if (Environment.current == Environment.DEVELOPMENT && !System.properties['icescrum.fixtures']) {
+        if (dev) {
             DummyPopulator.dummyze()
         }
     }

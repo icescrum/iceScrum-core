@@ -18,33 +18,36 @@
  * Authors:
  * Vincent Barrier (vbarrier@kagilum.com)
  * Stéphane Maldini (stephane.maldini@icescrum.com)
+ * Nicolas Noullet (nnoullet@kagilum.com)
  */
 
-package org.icescrum.core.security
+package org.icescrum.core.services
 
 import org.icescrum.core.domain.User
 import org.icescrum.core.domain.preferences.UserPreferences
 import org.icescrum.core.domain.security.Authority
 import org.icescrum.core.domain.security.UserAuthority
 
-class AuthorityManager {
+class AuthorityService {
 
-    static public makeAdmin = { user ->
+    def securityService
+    def grailsApplication
+    def springSecurityService
+
+    void makeAdmin(User user) {
         UserAuthority.create(user, Authority.findByAuthority(Authority.ROLE_ADMIN), false)
         UserAuthority.create(user, Authority.findByAuthority(Authority.ROLE_PERMISSION), true)
     }
 
-    static public makeUnAdmin = { user ->
+    void makeUnAdmin(User user) {
         UserAuthority.remove(user, Authority.findByAuthority(Authority.ROLE_ADMIN), false)
         UserAuthority.remove(user, Authority.findByAuthority(Authority.ROLE_PERMISSION), true)
     }
 
-    static public initSecurity = { def grailsApplication ->
+    void initSecurity() {
         def ctx = grailsApplication.mainContext
-        def securityService = ctx.securityService
         ctx.webExpressionHandler?.securityService = securityService
         ctx.expressionHandler?.securityService = securityService
-        def springSecurityService = ctx.springSecurityService
         if (Authority.count() == 0) {
             new Authority(authority: Authority.ROLE_ADMIN).save()
             new Authority(authority: Authority.ROLE_PERMISSION).save()
@@ -56,7 +59,7 @@ class AuthorityManager {
                         lastName: "Admin",
                         password: springSecurityService.encodePassword('adminadmin!'),
                         preferences: new UserPreferences(language: "en")
-                ).save(flush:true)
+                ).save(flush: true)
                 makeAdmin(admin)
             }
         }
