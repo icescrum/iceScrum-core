@@ -40,7 +40,9 @@
                 </div>
             </h3>
         </div>
-        <div class="panel-body" ${widgetDefinition.settings ? 'ng-switch="showSettings"' : ''}>
+        <div class="panel-body"
+             ${widgetDefinition.settings ? 'ng-switch="showSettings"' : ''}
+             ng-class="showSettings ? 'widget-settings' : 'widget-content'">
             ${widgetDefinition.settings ? '<div ng-switch-default>' : ''}
                 ${content}
             ${widgetDefinition.settings ? '</div>' : ''}
