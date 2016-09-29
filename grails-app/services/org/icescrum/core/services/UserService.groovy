@@ -24,18 +24,22 @@
 package org.icescrum.core.services
 
 import grails.plugin.springsecurity.SpringSecurityUtils
+import grails.plugin.springsecurity.acl.AclSid
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.FilenameUtils
 import org.apache.commons.io.filefilter.WildcardFileFilter
-import org.icescrum.core.domain.*
+import org.icescrum.core.domain.Invitation
 import org.icescrum.core.domain.Invitation.InvitationType
+import org.icescrum.core.domain.Product
+import org.icescrum.core.domain.Team
+import org.icescrum.core.domain.User
 import org.icescrum.core.domain.preferences.UserPreferences
 import org.icescrum.core.domain.security.Authority
 import org.icescrum.core.domain.security.UserAuthority
+import org.icescrum.core.error.BusinessException
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
 import org.icescrum.core.support.ApplicationSupport
-import org.icescrum.core.error.BusinessException
 import org.springframework.transaction.annotation.Transactional
 
 @Transactional
@@ -46,6 +50,7 @@ class UserService extends IceScrumEventPublisher {
     def grailsApplication
     def springSecurityService
     def notificationEmailService
+    def aclCache
 
     void save(User user, String token = null) {
         user.password = springSecurityService.encodePassword(user.password)
@@ -78,7 +83,6 @@ class UserService extends IceScrumEventPublisher {
     }
 
     void update(User user, Map props) {
-
         if (props.pwd) {
             user.password = springSecurityService.encodePassword(props.pwd)
         }
@@ -108,14 +112,21 @@ class UserService extends IceScrumEventPublisher {
                     it.delete()
                 }
             }
-        }
-        catch (RuntimeException e) {
+        } catch (RuntimeException e) {
             if (log.debugEnabled) e.printStackTrace()
             throw new BusinessException(code: 'is.convert.image.error')
         }
         user.lastUpdated = new Date()
         def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_UPDATE, user)
-        user.save()
+        user.save(flush: true)
+        if (dirtyProperties.containsKey('username')) {
+            def aclSid = AclSid.findBySidAndPrincipal(dirtyProperties.username, true)
+            if (aclSid) {
+                aclSid.sid = user.username
+                aclSid.save(flush: true)
+                aclCache.clearCache()
+            }
+        }
         publishSynchronousEvent(IceScrumEventType.UPDATE, user, dirtyProperties)
     }
 
