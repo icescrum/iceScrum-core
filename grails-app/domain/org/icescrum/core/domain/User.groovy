@@ -93,10 +93,10 @@ class User implements Serializable, Attachmentable {
                         "WHERE t.id = :t) ", [uid: SCH.context.authentication.principal?.id, t: id, term: "%$term%"], params ?: [:])
     }
 
-    static findUsersLike(term, exCurrentUser, showDisabled, params) {
+    static findUsersLike(term, excludeCurrentUser, showDisabled, params) {
         executeQuery("""SELECT DISTINCT u
                         FROM org.icescrum.core.domain.User AS u
-                        WHERE ${showDisabled == false ? 'u.enabled = true AND ' : ''} ${exCurrentUser ? 'u.id != ' + SCH.context.authentication.principal?.id + ' AND ' : ''}
+                        WHERE ${showDisabled == false ? 'u.enabled = true AND ' : ''} ${excludeCurrentUser ? 'u.id != ' + SCH.context.authentication.principal?.id + ' AND ' : ''}
                         ( lower(u.email) LIKE lower(:term)
                         OR lower(u.username) LIKE lower(:term)
                         OR lower(u.firstName) LIKE lower(:term)
@@ -106,10 +106,10 @@ class User implements Serializable, Attachmentable {
                         ORDER BY u.username ASC""", [term: "%$term%"], params ?: [:])
     }
 
-    static countUsersLike(exCurrentUser, term, params) {
+    static countUsersLike(excludeCurrentUser, term, params) {
         executeQuery("""SELECT COUNT(DISTINCT u)
                         FROM org.icescrum.core.domain.User AS u
-                        WHERE ${exCurrentUser ? 'u.id != ' + SCH.context.authentication.principal?.id + ' AND ' : ''}
+                        WHERE ${excludeCurrentUser ? 'u.id != ' + SCH.context.authentication.principal?.id + ' AND ' : ''}
                         ( lower(u.email) LIKE lower(:term)
                         OR lower(u.username) LIKE lower(:term)
                         OR lower(u.firstName) LIKE lower(:term)
