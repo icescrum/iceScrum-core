@@ -97,6 +97,6 @@ class TimeBox implements Comparable<TimeBox>, Serializable {
     }
 
     int compareTo(TimeBox o) {
-        return orderNumber <=> o?.orderNumber
+        return orderNumber <=> o?.orderNumber ?: id <=> o?.id
     }
 }
