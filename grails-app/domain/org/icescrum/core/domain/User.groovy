@@ -25,10 +25,12 @@
 
 package org.icescrum.core.domain
 
+import grails.util.Holders
 import org.hibernate.ObjectNotFoundException
 import org.icescrum.core.domain.preferences.UserPreferences
 import org.icescrum.core.domain.security.Authority
 import org.icescrum.core.domain.security.UserAuthority
+import org.icescrum.core.services.SecurityService
 import org.icescrum.plugins.attachmentable.interfaces.Attachmentable
 import org.springframework.security.core.context.SecurityContextHolder as SCH
 
@@ -56,7 +58,7 @@ class User implements Serializable, Attachmentable {
     boolean accountLocked
     boolean passwordExpired
 
-    static transients = ['locale']
+    static transients = ['locale', 'admin']
 
     static hasMany = [
             teams: Team
@@ -200,6 +202,11 @@ class User implements Serializable, Attachmentable {
 
     Locale getLocale() {
         new Locale(*preferences.language.split('_', 3))
+    }
+
+    boolean getAdmin() {
+        def securityService = (SecurityService) Holders.grailsApplication.mainContext.getBean('securityService')
+        return securityService.hasRoleAdmin(this)
     }
 
     def xml(builder) {
