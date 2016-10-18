@@ -60,7 +60,7 @@ grails.project.dependency.resolution = {
         compile ':hd-image-utils:1.1'
         compile 'org.icescrum:taggable:1.1.3'
         compile ':jdbc-pool:7.0.47'
-        compile ':mail:1.0.7'
+        compile 'org.icescrum:mail:1.0.9' // Forked because of https://github.com/gpc/grails-mail/issues/32 which prevents config change
         compile ':jasper:1.11.0'
         compile ':rollback-on-exception:0.1'
         compile ':feeds:1.6'
