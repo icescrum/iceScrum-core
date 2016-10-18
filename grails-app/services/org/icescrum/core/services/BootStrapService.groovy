@@ -52,6 +52,7 @@ class BootStrapService {
         config.grails.mail.default.from = config.icescrum.alerts.default.from
 
         if (config.grails.mail.props && config.grails.mail.props instanceof String) {
+            config.grails.mail = config.grails.mail.clone() // Make MailGrailsPlugin onConfigChange see a new hashcode and take the update into account (just changing the props don't change the hashcode)
             config.grails.mail.props = ApplicationSupport.stringToMap(config.grails.mail.props)
             pluginManager.informPluginsOfConfigChange()
         }
