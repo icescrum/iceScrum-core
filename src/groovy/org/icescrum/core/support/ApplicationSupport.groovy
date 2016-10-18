@@ -370,7 +370,7 @@ class ApplicationSupport {
     public static getCurrentContext(def params, def id = null) {
         def context = Holders.grailsApplication.config.icescrum.contexts.find { id ? it.key == id : params."$it.key" }
         if (context) {
-            def object = context.value.contextClass.get(params.long("$context.key"))
+            def object = params.long("$context.key") ? context.value.contextClass.get(params.long("$context.key")) : null
             return object ? [name        : context.key,
                              object      : object,
                              contextScope: context.value.contextScope,
