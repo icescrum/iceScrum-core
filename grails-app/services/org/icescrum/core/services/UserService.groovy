@@ -82,7 +82,7 @@ class UserService extends IceScrumEventPublisher {
         }
     }
 
-    void update(User user, Map props) {
+    void update(User user, Map props = [:]) {
         if (props.pwd) {
             user.password = springSecurityService.encodePassword(props.pwd)
         }
