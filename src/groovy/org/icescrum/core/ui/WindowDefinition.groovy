@@ -61,6 +61,7 @@ class WindowDefinition {
         menuClosure.resolveStrategy = Closure.DELEGATE_FIRST
         menuClosure()
         this.menu = menu
+        this.menu.title = this.title
     }
 
     void icon(String icon) {

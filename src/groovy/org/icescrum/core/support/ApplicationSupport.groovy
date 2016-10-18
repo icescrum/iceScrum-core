@@ -82,6 +82,7 @@ class ApplicationSupport {
 
     public static boolean isAllowed(def viewDefinition, def params, def widget = false) {
         def grailsApplication = Holders.grailsApplication
+
         WebScrumExpressionHandler webExpressionHandler = (WebScrumExpressionHandler) grailsApplication.mainContext.getBean(WebScrumExpressionHandler.class)
         if (!viewDefinition || (viewDefinition.context && !params?."$viewDefinition.context")) {
             return false
@@ -467,9 +468,7 @@ class ApplicationSupport {
         def menus = []
         windowDefinitions.each { String windowDefinitionId, WindowDefinition windowDefinition ->
             def menu = windowDefinition.menu
-            if (menu && windowDefinition?.context) {
-                menu.show = isAllowed(windowDefinition, params) ? menuPositionFromUserPreferences(windowDefinition) ?: [visible: menu.defaultVisibility, pos: menu.defaultPosition] : false
-            }
+            menu?.show = menu ? isAllowed(windowDefinition, params) ? menuPositionFromUserPreferences(windowDefinition) ?: [visible: menu.defaultVisibility, pos: menu.defaultPosition] : false : false
             def show = menu?.show
             if (show in Closure) {
                 show.delegate = delegate
