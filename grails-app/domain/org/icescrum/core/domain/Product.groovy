@@ -160,6 +160,20 @@ class Product extends TimeBox implements Serializable, Attachmentable {
         return users.unique()
     }
 
+    static List<Product> findAllLike(String term = '%%', params = [:]) {
+        return executeQuery("""SELECT p
+                               FROM org.icescrum.core.domain.Product as p
+                               WHERE lower(p.name) LIKE lower(:term)
+                               OR lower(p.key) LIKE lower(:term)""", [term: term], params)
+    }
+
+    static Integer countAllLike(String term = '%%', params = [:]) {
+        return executeQuery("""SELECT count(*)
+                               FROM org.icescrum.core.domain.Product as p
+                               WHERE lower(p.name) LIKE lower(:term)
+                               OR lower(p.key) LIKE lower(:term)""", [term: term], params)[0]
+    }
+
     static findAllByRole(User user, List<BasePermission> permission, params, members = true, archived = true, String term = '%%') {
         def vars = [sid: user?.username ?: '', p: permission*.mask, term: term]
         if (members) {
