@@ -41,4 +41,4 @@ ${params}<br/>
 ip : ${ip}<br/>
 appID : ${appID}<br/>
 version : ${version}<br/>
-User : ${sec.loggedInUserInfo([field:'fullName'])}
+User : ${sec.loggedInUserInfo([field:'fullName'])} (${sec.loggedInUserInfo([field:'email'])})
