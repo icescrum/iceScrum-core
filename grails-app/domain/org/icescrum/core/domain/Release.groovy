@@ -38,6 +38,7 @@ class Release extends TimeBox implements Cloneable, Attachmentable {
     static final int STATE_DONE = 3
 
     int state = Release.STATE_WAIT
+    int firstSprintIndex = 1
     String vision = "" // Beware of distinct, it won't work in MSSQL since this attribute is TEXT
     String name = "R"
     SortedSet<Sprint> sprints
@@ -203,6 +204,7 @@ class Release extends TimeBox implements Cloneable, Attachmentable {
             lastUpdated(this.lastUpdated)
             dateCreated(this.dateCreated)
             inProgressDate(this.inProgressDate)
+            firstSprintIndex(this.firstSprintIndex)
             name { builder.mkp.yieldUnescaped("<![CDATA[${this.name}]]>") }
             goal { builder.mkp.yieldUnescaped("<![CDATA[${this.goal ?: ''}]]>") }
             vision { builder.mkp.yieldUnescaped("<![CDATA[${this.vision ?: ''}]]>") }
