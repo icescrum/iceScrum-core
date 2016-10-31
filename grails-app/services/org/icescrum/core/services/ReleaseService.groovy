@@ -92,7 +92,7 @@ class ReleaseService extends IceScrumEventPublisher {
                     return sprint.tasks || sprint.stories?.any { Story story -> story.tasks }
                 }
                 if (sprints) {
-                    def sprintNames = sprints.collect { Sprint sprint -> g.message(code: 'is.sprint') + ' ' + sprint.orderNumber }.join(', ')
+                    def sprintNames = sprints.collect { Sprint sprint -> g.message(code: 'is.sprint') + ' ' + sprint.index }.join(', ')
                     throw new BusinessException(code: 'is.release.error.sprint.tasks', args: [sprintNames])
                 }
                 sprintService.delete(outOfBoundsSprints.min { it.startDate })
@@ -230,6 +230,7 @@ class ReleaseService extends IceScrumEventPublisher {
                     inProgressDate: inProgressDate,
                     endDate: new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(release.endDate.text()),
                     orderNumber: release.orderNumber.text().toInteger(),
+                    firstSprintIndex: release.firstSprintIndex.text() ? release.firstSprintIndex.toInteger() : 1,
                     description: release.description.text(),
                     vision: release.vision.text(),
                     goal: release.goal?.text() ?: '',
