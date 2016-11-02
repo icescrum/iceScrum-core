@@ -60,7 +60,7 @@ class Activity implements Serializable, Comparable {
         beforeValue type: "text" // TODO check if relevant
         afterValue type: "text" // TODO check if relevant
         cache true
-        table 'icescrum2_activity'
+        table 'is_activity'
     }
 
     @Override

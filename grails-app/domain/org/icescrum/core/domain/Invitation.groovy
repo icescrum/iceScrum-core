@@ -49,7 +49,7 @@ class Invitation implements Serializable {
 
     static mapping = {
         cache true
-        table 'icescrum2_invitation'
+        table 'is_invitation'
     }
 
     enum InvitationType {

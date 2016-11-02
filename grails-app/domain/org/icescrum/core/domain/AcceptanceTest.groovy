@@ -49,6 +49,11 @@ class AcceptanceTest implements Serializable {
         name(blank: false)
     }
 
+    static mapping = {
+        cache true
+        table 'is_acceptance_test'
+    }
+
     static transients = ['parentProduct', 'stateEnum']
 
     static int findNextUId(Long pid) {

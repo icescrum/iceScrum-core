@@ -69,7 +69,7 @@ class ProductPreferences implements Serializable{
 
     static mapping = {
         cache true
-        table 'icescrum2_product_preferences'
+        table 'is_product_preferences'
     }
     
     def xml(builder){

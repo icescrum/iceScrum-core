@@ -22,7 +22,7 @@ class Widget implements Serializable {
     static mapping = {
         cache true
         settingsData type: 'text'
-        table 'icescrum2_up_widgets'
+        table 'is_up_widgets'
         userPreferences index:'up_wdi_index'
         widgetDefinitionId index:'up_wdi_index'
     }

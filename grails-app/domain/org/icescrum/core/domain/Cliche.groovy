@@ -38,7 +38,7 @@ class Cliche implements Serializable {
     static mapping = {
         cache true
         data type: 'text'
-        table 'icescrum2_cliches'
+        table 'is_cliche'
         sort: datePrise:'asc'
     }
 

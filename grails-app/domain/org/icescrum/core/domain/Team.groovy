@@ -64,7 +64,7 @@ class Team implements Serializable, Comparable {
 
     static mapping = {
         cache true
-        table 'icescrum2_team'
+        table 'is_team'
     }
 
     static members(Team team, params) {

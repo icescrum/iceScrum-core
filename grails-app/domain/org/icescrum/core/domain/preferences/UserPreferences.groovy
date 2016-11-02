@@ -68,7 +68,7 @@ class UserPreferences implements Serializable {
     static mapping = {
         cache true
         emailsSettingsData type: "text"
-        table System.properties['icescrum.oracle'] ? 'icescrum2_u_pref' : 'icescrum2_user_preferences'
+        table System.properties['icescrum.oracle'] ? 'is_u_pref' : 'is_user_preferences'
     }
 
     public void setEmailsSettings(Map settings) {

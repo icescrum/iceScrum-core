@@ -56,8 +56,7 @@ class Task extends BacklogElement implements Serializable {
             creator: User,
             responsible: User,
             parentStory: Story,
-            parentProduct: Product,
-            impediment: Impediment
+            parentProduct: Product
     ]
 
     static hasMany = [participants: User]
@@ -66,7 +65,7 @@ class Task extends BacklogElement implements Serializable {
 
     static mapping = {
         cache true
-        table 'icescrum2_task'
+        table 'is_task'
         participants cache: true
         name index: 't_name_index'
         parentStory index: 't_name_index'
@@ -79,7 +78,6 @@ class Task extends BacklogElement implements Serializable {
         backlog nullable: true
         doneDate nullable: true
         estimation nullable: true, validator: { newEffort, task -> newEffort == null || newEffort >= 0 ?: 'invalid' }
-        impediment nullable: true
         name unique: 'parentStory'
         responsible nullable: true
         parentStory nullable: true

@@ -44,7 +44,7 @@ class Template implements Serializable {
     static mapping = {
         cache true
         serializedData type: "text"
-        table 'icescrum2_template'
+        table 'is_template'
     }
 
     Map getData() {

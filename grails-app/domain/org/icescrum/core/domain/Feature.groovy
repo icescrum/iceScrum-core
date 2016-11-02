@@ -46,7 +46,6 @@ class Feature extends BacklogElement implements Serializable {
     static transients = ['countDoneStories', 'state', 'effort', 'inProgressDate', 'doneDate']
 
     static belongsTo = [
-            parentDomain: Domain,
             parentRelease: Release
     ]
 
@@ -56,13 +55,12 @@ class Feature extends BacklogElement implements Serializable {
 
     static mapping = {
         cache true
-        table 'icescrum2_feature'
+        table 'is_feature'
         stories cascade: "refresh", sort: 'rank', 'name': 'asc', cache: true
         sort "id"
     }
 
     static constraints = {
-        parentDomain(nullable: true)
         parentRelease(nullable: true)
         value(nullable: true)
     }

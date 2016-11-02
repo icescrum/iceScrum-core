@@ -55,7 +55,7 @@ class Release extends TimeBox implements Cloneable, Attachmentable {
 
     static mapping = {
         cache true
-        table 'icescrum2_release'
+        table 'is_release'
         vision type: 'text'
         name index: 'rel_name_index'
         sprints cascade: 'all-delete-orphan', cache: true

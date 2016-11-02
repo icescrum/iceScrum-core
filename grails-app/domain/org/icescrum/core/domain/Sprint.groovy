@@ -132,7 +132,7 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
 
     static mapping = {
         cache true
-        table 'icescrum2_sprint'
+        table 'is_sprint'
         retrospective type: 'text'
         doneDefinition type: 'text'
         stories cascade: 'delete', batchSize: 15, cache: true

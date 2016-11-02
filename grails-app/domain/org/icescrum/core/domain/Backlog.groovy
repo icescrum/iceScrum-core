@@ -41,7 +41,7 @@ class Backlog {
 
     static mapping = {
         cache true
-        table 'icescrum2_backlog'
+        table 'is_backlog'
         notes length: 5000
     }
 

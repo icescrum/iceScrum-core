@@ -132,7 +132,6 @@ class ClicheService {
                     break
             }
         }
-        def unresolvedImpediments = product.impediments.findAll { it.state != Impediment.SOLVED }?.size() ?: 0
         def clicheData = {
             cliche {
                 "${Cliche.SPRINT_ID}"("R${release.orderNumber}S${sprint.orderNumber}")
@@ -178,8 +177,6 @@ class ClicheService {
                 "${Cliche.ESTIMATED_STORIES}"(estimatedCount)
                 "${Cliche.ACCEPTED_STORIES}"(acceptedCount)
                 "${Cliche.SUGGESTED_STORIES}"(suggestedCount)
-                // Impediments
-                "${Cliche.UNRESOLVED_IMPEDIMENTS}"(unresolvedImpediments)
             }
         }
         StreamingMarkupBuilder xmlBuilder = new StreamingMarkupBuilder()

@@ -75,7 +75,7 @@ class TimeBox implements Comparable<TimeBox>, Serializable {
 
     static mapping = {
         cache true
-        table 'icescrum2_timebox'
+        table 'is_timebox'
         goal type: 'text'
         description type: 'text'
         tablePerHierarchy false
