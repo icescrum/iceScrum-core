@@ -45,9 +45,11 @@ import org.springframework.transaction.annotation.Transactional
 @Transactional
 class UserService extends IceScrumEventPublisher {
 
+    def widgetService
     def productService
     def hdImageService
     def grailsApplication
+    def uiDefinitionService
     def springSecurityService
     def notificationEmailService
     def aclCache
@@ -80,6 +82,9 @@ class UserService extends IceScrumEventPublisher {
                 }
             }
         }
+        widgetService.save(user, uiDefinitionService.getWidgetDefinitionById('feed'), true)
+        widgetService.save(user, uiDefinitionService.getWidgetDefinitionById('notes'), false)
+        widgetService.save(user, uiDefinitionService.getWidgetDefinitionById('tasks'), true)
     }
 
     void update(User user, Map props = [:]) {
