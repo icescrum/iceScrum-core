@@ -82,9 +82,9 @@ class ApplicationSupport {
 
     public static boolean isAllowed(def viewDefinition, def params, def widget = false) {
         def grailsApplication = Holders.grailsApplication
-
         WebScrumExpressionHandler webExpressionHandler = (WebScrumExpressionHandler) grailsApplication.mainContext.getBean(WebScrumExpressionHandler.class)
-        if (!viewDefinition || (viewDefinition.context && !params?."$viewDefinition.context")) {
+        def contexts = viewDefinition?.context ? (viewDefinition.context instanceof String) ? [viewDefinition.context] : viewDefinition.context : [null]
+        if (!viewDefinition || !((getCurrentContext(params)?.name?:null) in contexts)) {
             return false
         }
         //secured on uiDefinition
