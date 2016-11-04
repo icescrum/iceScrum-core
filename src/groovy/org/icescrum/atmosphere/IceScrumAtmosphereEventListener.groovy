@@ -21,7 +21,6 @@
  */
 package org.icescrum.atmosphere
 
-import grails.converters.JSON
 import grails.util.Holders
 import org.apache.commons.logging.LogFactory
 import org.atmosphere.cpr.AtmosphereResourceEvent
@@ -46,15 +45,12 @@ class IceScrumAtmosphereEventListener implements AtmosphereResourceEventListener
         def user = getUserFromAtmosphereResource(event.resource)
         request.setAttribute(USER_CONTEXT, user)
         String[] decodedPath = request.pathInfo ? request.pathInfo.split("/") : []
-        Broadcaster broadcaster
         def broadcasters = ["default channel"]
-        if (atmosphereMeteor.broadcasterFactory){
-            if (decodedPath.length > 0) {
-                def channel = "/stream/app/" + decodedPath[decodedPath.length - 1]
-                broadcaster = atmosphereMeteor.broadcasterFactory.lookup(channel, true)
-                broadcaster.addAtmosphereResource(event.resource)
-                broadcasters << channel
-            }
+        if (atmosphereMeteor.broadcasterFactory && decodedPath.length > 0) {
+            def channel = "/stream/app/" + decodedPath[decodedPath.length - 1]
+            Broadcaster broadcaster = atmosphereMeteor.broadcasterFactory.lookup(channel, true)
+            broadcaster.addAtmosphereResource(event.resource)
+            broadcasters << channel
         }
         if (log.isDebugEnabled()) {
             log.debug("add user ${user.username} with UUID ${event.resource.uuid()} to broadcasters: " + broadcasters.join(', '))

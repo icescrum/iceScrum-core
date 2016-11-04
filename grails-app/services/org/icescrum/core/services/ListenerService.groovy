@@ -37,7 +37,7 @@ class ListenerService {
     void storyCreate(Story story, Map dirtyProperties) {
         def user = (User) springSecurityService.currentUser
         activityService.addActivity(story, user ?: story.creator, Activity.CODE_SAVE, story.name)
-        pushService.broadcastToProductUsers(IceScrumEventType.CREATE, story, story.backlog.id)
+        pushService.broadcastToProductChannel(IceScrumEventType.CREATE, story, story.backlog.id)
     }
 
     @IceScrumListener(domain = 'story', eventType = IceScrumEventType.UPDATE)
@@ -53,25 +53,25 @@ class ListenerService {
                         oldProperty.lastUpdated = new Date()
                         oldProperty.save(flush: true)
                         oldProperty.refresh()
-                        pushService.broadcastToProductUsers(IceScrumEventType.UPDATE, oldProperty, product.id)
+                        pushService.broadcastToProductChannel(IceScrumEventType.UPDATE, oldProperty, product.id)
                     }
                     if (newProperty != null) {
                         newProperty.lastUpdated = new Date()
                         newProperty.lastUpdated = new Date()
                         newProperty.save(flush: true)
                         newProperty.refresh()
-                        pushService.broadcastToProductUsers(IceScrumEventType.UPDATE, newProperty, product.id)
+                        pushService.broadcastToProductChannel(IceScrumEventType.UPDATE, newProperty, product.id)
                         newUpdatedProperties[property] = true
                     }
                 }
             }
             if (dirtyProperties.containsKey('state') && Story.STATE_DONE in [dirtyProperties.state, story.state] && story.feature && !newUpdatedProperties['feature']) {
                 story.feature.lastUpdated = new Date()
-                pushService.broadcastToProductUsers(IceScrumEventType.UPDATE, story.feature, product.id)
+                pushService.broadcastToProductChannel(IceScrumEventType.UPDATE, story.feature, product.id)
             }
             if (dirtyProperties.containsKey('state') && Story.STATE_DONE in [dirtyProperties.state, story.state] && story.parentSprint && !newUpdatedProperties['parentSprint']) {
                 story.parentSprint.lastUpdated = new Date()
-                pushService.broadcastToProductUsers(IceScrumEventType.UPDATE, story.parentSprint, product.id)
+                pushService.broadcastToProductChannel(IceScrumEventType.UPDATE, story.parentSprint, product.id)
             }
             def user = (User) springSecurityService.currentUser
             ['name', 'type'].each { property ->
@@ -89,52 +89,52 @@ class ListenerService {
                     activityService.addActivity(story, user, Activity.CODE_UPDATE, story.name, property)
                 }
             }
-            pushService.broadcastToProductUsers(IceScrumEventType.UPDATE, story, product.id)
+            pushService.broadcastToProductChannel(IceScrumEventType.UPDATE, story, product.id)
         }
     }
 
     @IceScrumListener(domain = 'story', eventType = IceScrumEventType.DELETE)
     void storyDelete(Story story, Map dirtyProperties) {
-        pushService.broadcastToProductUsers(IceScrumEventType.DELETE, [class: 'Story', id: dirtyProperties.id, state: dirtyProperties.state], dirtyProperties.backlog.id)
+        pushService.broadcastToProductChannel(IceScrumEventType.DELETE, [class: 'Story', id: dirtyProperties.id, state: dirtyProperties.state], dirtyProperties.backlog.id)
     }
 
     @IceScrumListener(domain = 'actor', eventType = IceScrumEventType.CREATE)
     void actorCreate(Actor actor, Map dirtyProperties) {
-        pushService.broadcastToProductUsers(IceScrumEventType.CREATE, actor, actor.backlog.id)
+        pushService.broadcastToProductChannel(IceScrumEventType.CREATE, actor, actor.backlog.id)
     }
 
     @IceScrumListener(domain = 'actor', eventType = IceScrumEventType.UPDATE)
     void actorUpdate(Actor actor, Map dirtyProperties) {
-        pushService.broadcastToProductUsers(IceScrumEventType.UPDATE, actor, actor.backlog.id)
+        pushService.broadcastToProductChannel(IceScrumEventType.UPDATE, actor, actor.backlog.id)
     }
 
     @IceScrumListener(domain = 'actor', eventType = IceScrumEventType.DELETE)
     void actorDelete(Actor actor, Map dirtyProperties) {
-        pushService.broadcastToProductUsers(IceScrumEventType.DELETE, [class: 'Actor', id: dirtyProperties.id], dirtyProperties.backlog.id)
+        pushService.broadcastToProductChannel(IceScrumEventType.DELETE, [class: 'Actor', id: dirtyProperties.id], dirtyProperties.backlog.id)
     }
 
     @IceScrumListener(domain = 'feature', eventType = IceScrumEventType.CREATE)
     void featureCreate(Feature feature, Map dirtyProperties) {
-        pushService.broadcastToProductUsers(IceScrumEventType.CREATE, feature, feature.backlog.id)
+        pushService.broadcastToProductChannel(IceScrumEventType.CREATE, feature, feature.backlog.id)
     }
 
     @IceScrumListener(domain = 'feature', eventType = IceScrumEventType.UPDATE)
     void featureUpdate(Feature feature, Map dirtyProperties) {
         def productId = feature.backlog.id
-        pushService.broadcastToProductUsers(IceScrumEventType.UPDATE, feature, productId)
+        pushService.broadcastToProductChannel(IceScrumEventType.UPDATE, feature, productId)
     }
 
     @IceScrumListener(domain = 'feature', eventType = IceScrumEventType.DELETE)
     void featureDelete(Feature feature, Map dirtyProperties) {
         def productId = dirtyProperties.backlog.id
-        pushService.broadcastToProductUsers(IceScrumEventType.DELETE, [class: 'Feature', id: dirtyProperties.id], productId)
+        pushService.broadcastToProductChannel(IceScrumEventType.DELETE, [class: 'Feature', id: dirtyProperties.id], productId)
     }
 
     @IceScrumListener(domain = 'task', eventType = IceScrumEventType.CREATE)
     void taskCreate(Task task, Map dirtyProperties) {
         def user = (User) springSecurityService.currentUser
         activityService.addActivity(task, user ?: task.creator, 'taskSave', task.name)
-        pushService.broadcastToProductUsers(IceScrumEventType.CREATE, task, task.parentProduct.id)
+        pushService.broadcastToProductChannel(IceScrumEventType.CREATE, task, task.parentProduct.id)
     }
 
     @IceScrumListener(domain = 'task', eventType = IceScrumEventType.UPDATE)
@@ -147,34 +147,34 @@ class ListenerService {
                 oldStory.lastUpdated = new Date()
                 oldStory.save(flush: true)
                 oldStory.refresh()
-                pushService.broadcastToProductUsers(IceScrumEventType.UPDATE, oldStory, product.id)
+                pushService.broadcastToProductChannel(IceScrumEventType.UPDATE, oldStory, product.id)
             }
             def newStory = task.parentStory
             if (newStory != null) {
                 newStory.lastUpdated = new Date()
                 newStory.save(flush: true)
                 newStory.refresh()
-                pushService.broadcastToProductUsers(IceScrumEventType.UPDATE, newStory, product.id)
+                pushService.broadcastToProductChannel(IceScrumEventType.UPDATE, newStory, product.id)
                 newStoryUpdated = true;
             }
         }
         if (dirtyProperties.containsKey('state') && Task.STATE_DONE in [dirtyProperties.state, task.state] && task.parentStory && !newStoryUpdated) {
             task.parentStory.lastUpdated = new Date()
-            pushService.broadcastToProductUsers(IceScrumEventType.UPDATE, task.parentStory, product.id)
+            pushService.broadcastToProductChannel(IceScrumEventType.UPDATE, task.parentStory, product.id)
         }
-        pushService.broadcastToProductUsers(IceScrumEventType.UPDATE, task, product.id)
+        pushService.broadcastToProductChannel(IceScrumEventType.UPDATE, task, product.id)
     }
 
     @IceScrumListener(domain = 'task', eventType = IceScrumEventType.DELETE)
     void taskDelete(Task task, Map dirtyProperties) {
-        pushService.broadcastToProductUsers(IceScrumEventType.DELETE, [class: 'Task', id: dirtyProperties.id], dirtyProperties.parentProduct.id)
+        pushService.broadcastToProductChannel(IceScrumEventType.DELETE, [class: 'Task', id: dirtyProperties.id], dirtyProperties.parentProduct.id)
     }
 
     @IceScrumListener(domain = 'sprint', eventType = IceScrumEventType.CREATE)
     void sprintCreate(Sprint sprint, Map dirtyProperties) {
         def product = sprint.parentProduct
-        pushService.broadcastToProductUsers(IceScrumEventType.UPDATE, sprint.parentRelease, product.id) // Push parentRelease.closeable
-        pushService.broadcastToProductUsers(IceScrumEventType.CREATE, sprint, product.id)
+        pushService.broadcastToProductChannel(IceScrumEventType.UPDATE, sprint.parentRelease, product.id) // Push parentRelease.closeable
+        pushService.broadcastToProductChannel(IceScrumEventType.CREATE, sprint, product.id)
     }
 
     @IceScrumListener(domain = 'sprint', eventType = IceScrumEventType.UPDATE)
@@ -183,24 +183,24 @@ class ListenerService {
         if (dirtyProperties.containsKey('state') && sprint.state == Sprint.STATE_DONE) {
             def nextSprintSameRelease = Sprint.findByParentReleaseAndOrderNumber(sprint.parentRelease, sprint.orderNumber + 1)
             if (nextSprintSameRelease) {
-                pushService.broadcastToProductUsers(IceScrumEventType.UPDATE, nextSprintSameRelease, product.id) // Push nextSprint.activable
+                pushService.broadcastToProductChannel(IceScrumEventType.UPDATE, nextSprintSameRelease, product.id) // Push nextSprint.activable
             } else {
-                pushService.broadcastToProductUsers(IceScrumEventType.UPDATE, sprint.parentRelease, product.id) // Push parentRelease.closeable
+                pushService.broadcastToProductChannel(IceScrumEventType.UPDATE, sprint.parentRelease, product.id) // Push parentRelease.closeable
             }
         }
-        pushService.broadcastToProductUsers(IceScrumEventType.UPDATE, sprint, product.id)
+        pushService.broadcastToProductChannel(IceScrumEventType.UPDATE, sprint, product.id)
     }
 
     @IceScrumListener(domain = 'sprint', eventType = IceScrumEventType.DELETE)
     void sprintDelete(Sprint sprint, Map dirtyProperties) {
         def product = dirtyProperties.parentRelease.parentProduct
-        pushService.broadcastToProductUsers(IceScrumEventType.UPDATE, dirtyProperties.parentRelease, product.id) // Push parentRelease.closeable
-        pushService.broadcastToProductUsers(IceScrumEventType.DELETE, [class: 'Sprint', id: dirtyProperties.id], product.id)
+        pushService.broadcastToProductChannel(IceScrumEventType.UPDATE, dirtyProperties.parentRelease, product.id) // Push parentRelease.closeable
+        pushService.broadcastToProductChannel(IceScrumEventType.DELETE, [class: 'Sprint', id: dirtyProperties.id], product.id)
     }
 
     @IceScrumListener(domain = 'release', eventType = IceScrumEventType.CREATE)
     void releaseCreate(Release release, Map dirtyProperties) {
-        pushService.broadcastToProductUsers(IceScrumEventType.CREATE, release, release.parentProduct.id)
+        pushService.broadcastToProductChannel(IceScrumEventType.CREATE, release, release.parentProduct.id)
     }
 
     @IceScrumListener(domain = 'release', eventType = IceScrumEventType.UPDATE)
@@ -208,17 +208,17 @@ class ListenerService {
         def product = release.parentProduct
         if (dirtyProperties.containsKey('state')) {
             if (release.state == Release.STATE_DONE && release.nextRelease) {
-                pushService.broadcastToProductUsers(IceScrumEventType.UPDATE, release.nextRelease, product.id) // Push nextRelease.activable
+                pushService.broadcastToProductChannel(IceScrumEventType.UPDATE, release.nextRelease, product.id) // Push nextRelease.activable
             } else if (release.state == Release.STATE_INPROGRESS && release.sprints) {
-                pushService.broadcastToProductUsers(IceScrumEventType.UPDATE, release.sprints.first(), product.id) // Push firstSprint.activable
+                pushService.broadcastToProductChannel(IceScrumEventType.UPDATE, release.sprints.first(), product.id) // Push firstSprint.activable
             }
         }
-        pushService.broadcastToProductUsers(IceScrumEventType.UPDATE, release, product.id)
+        pushService.broadcastToProductChannel(IceScrumEventType.UPDATE, release, product.id)
     }
 
     @IceScrumListener(domain = 'release', eventType = IceScrumEventType.DELETE)
     void releaseDelete(Release release, Map dirtyProperties) {
-        pushService.broadcastToProductUsers(IceScrumEventType.DELETE, [class: 'Release', id: dirtyProperties.id], dirtyProperties.parentProduct.id)
+        pushService.broadcastToProductChannel(IceScrumEventType.DELETE, [class: 'Release', id: dirtyProperties.id], dirtyProperties.parentProduct.id)
     }
 
     @IceScrumListener(domain = 'activity', eventType = IceScrumEventType.CREATE)
@@ -234,7 +234,7 @@ class ListenerService {
     void acceptanceTestCreate(AcceptanceTest acceptanceTest, Map dirtyProperties) {
         def user = (User) springSecurityService.currentUser
         activityService.addActivity(acceptanceTest, user ?: acceptanceTest.parentStory.creator, 'acceptanceTestSave', acceptanceTest.name)
-        pushService.broadcastToProductUsers(IceScrumEventType.CREATE, acceptanceTest, acceptanceTest.parentProduct.id)
+        pushService.broadcastToProductChannel(IceScrumEventType.CREATE, acceptanceTest, acceptanceTest.parentProduct.id)
     }
 
     @IceScrumListener(domain = 'acceptanceTest', eventType = IceScrumEventType.UPDATE)
@@ -242,14 +242,14 @@ class ListenerService {
         def user = (User) springSecurityService.currentUser
         def activityType = 'acceptanceTest' + (dirtyProperties.containsKey('state') ? acceptanceTest.stateEnum.name().toLowerCase().capitalize() : 'Update')
         activityService.addActivity(acceptanceTest, user, activityType, acceptanceTest.name)
-        pushService.broadcastToProductUsers(IceScrumEventType.UPDATE, acceptanceTest, acceptanceTest.parentProduct.id)
+        pushService.broadcastToProductChannel(IceScrumEventType.UPDATE, acceptanceTest, acceptanceTest.parentProduct.id)
     }
 
     @IceScrumListener(domain = 'acceptanceTest', eventType = IceScrumEventType.DELETE)
     void acceptanceTestDelete(AcceptanceTest acceptanceTest, Map dirtyProperties) {
         def product = dirtyProperties.parentStory.backlog
         activityService.addActivity(dirtyProperties.parentStory, springSecurityService.currentUser, 'acceptanceTestDelete', acceptanceTest.name)
-        pushService.broadcastToProductUsers(IceScrumEventType.DELETE, [class: 'AcceptanceTest', id: dirtyProperties.id], product.id)
+        pushService.broadcastToProductChannel(IceScrumEventType.DELETE, [class: 'AcceptanceTest', id: dirtyProperties.id], product.id)
     }
 
     @IceScrumListener(domain = 'product', eventType = IceScrumEventType.UPDATE)
@@ -262,26 +262,26 @@ class ListenerService {
                 if (oldMembers.containsKey(newMember)) {
                     def oldRole = oldMembers[newMember]
                     if (role != oldRole) {
-                        pushService.broadcastToSingleUser(IceScrumEventType.UPDATE, [class: 'User', id: newMember.id, updatedRole: [role: role, oldRole: oldRole, product: shortProduct]], newMember)
+                        pushService.broadcastToUsers(IceScrumEventType.UPDATE, [class: 'User', id: newMember.id, updatedRole: [role: role, oldRole: oldRole, product: shortProduct]], [newMember])
                     }
                 } else {
-                    pushService.broadcastToSingleUser(IceScrumEventType.UPDATE, [class: 'User', id: newMember.id, updatedRole: [role: role, product: shortProduct]], newMember)
+                    pushService.broadcastToUsers(IceScrumEventType.UPDATE, [class: 'User', id: newMember.id, updatedRole: [role: role, product: shortProduct]], [newMember])
                 }
             }
             oldMembers.each { User oldMember, int role ->
                 if (!newMembers.containsKey(oldMember)) {
                     oldMember.preferences.removeEmailsSettings(product.pkey)
-                    pushService.broadcastToSingleUser(IceScrumEventType.UPDATE, [class: 'User', id: oldMember.id, updatedRole: [product: shortProduct]], oldMember)
+                    pushService.broadcastToUsers(IceScrumEventType.UPDATE, [class: 'User', id: oldMember.id, updatedRole: [product: shortProduct]], [oldMember])
                 }
             }
         } else {
-            pushService.broadcastToProductUsers(IceScrumEventType.UPDATE, product, product.id)
+            pushService.broadcastToProductChannel(IceScrumEventType.UPDATE, product, product.id)
         }
     }
 
     @IceScrumListener(domain = 'product', eventType = IceScrumEventType.DELETE)
     void productDelete(Product product, Map dirtyProperties) {
-        pushService.broadcastToProductUsers(IceScrumEventType.DELETE, [class: 'Product', id: dirtyProperties.id], dirtyProperties.id)
+        pushService.broadcastToProductChannel(IceScrumEventType.DELETE, [class: 'Product', id: dirtyProperties.id], dirtyProperties.id)
     }
 
     // SHARED LISTENERS

@@ -24,8 +24,8 @@
 package org.icescrum.core.services
 
 import grails.converters.JSON
+import grails.util.GrailsNameUtils
 import org.atmosphere.cpr.AtmosphereResource
-import org.atmosphere.cpr.AtmosphereResourceFactory
 import org.atmosphere.cpr.Broadcaster
 import org.icescrum.atmosphere.IceScrumAtmosphereEventListener
 import org.icescrum.atmosphere.IceScrumBroadcaster
@@ -41,49 +41,42 @@ class PushService {
     def atmosphereMeteor
     def disabledThreads = new CopyOnWriteArrayList<>()
 
-    void broadcastToProductUsers(IceScrumEventType eventType, object, long productId) {
+    void broadcastToChannel(String namespace, String eventType, object, String channel = '/stream/app/*') {
+        Broadcaster broadcaster = atmosphereMeteor.broadcasterFactory?.lookup(IceScrumBroadcaster.class, channel)
+        if (broadcaster) {
+            log.debug("Broadcast to everybody on channel " + channel)
+            broadcaster.broadcast(buildMessage(namespace, eventType, object))
+        }
+    }
+
+    void broadcastToProductChannel(String namespace, String eventType, object, long productId) {
+        def channel = '/stream/app/product-' + productId
+        broadcastToChannel(namespace, eventType, object, channel)
+    }
+
+    void broadcastToProductChannel(IceScrumEventType eventType, object, long productId) {
         if (!isDisabledThread()) {
-            def channel = '/stream/app/product-' + productId
-            Broadcaster broadcaster = atmosphereMeteor.broadcasterFactory?.lookup(IceScrumBroadcaster.class, channel)
-            if (broadcaster) {
-                // toString() required to eagerly generate the String (lazy raise an error because no session in atmosphere thread)
-                def message = ([eventType: eventType.name(), object: object] as JSON).toString()
-                log.debug("broadcast to everybody on channel " + channel)
-                broadcaster.broadcast(message)
+            broadcastToProductChannel(getNamespaceFromDomain(object), eventType.name(), object, productId)
+        }
+    }
+
+    void broadcastToUsers(String namespace, String eventType, object, Collection<String> usernames) {
+        def channel = '/stream/app/*'
+        Broadcaster broadcaster = atmosphereMeteor.broadcasterFactory?.lookup(IceScrumBroadcaster.class, channel)
+        if (broadcaster) {
+            Set<AtmosphereResource> resources = broadcaster.atmosphereResources?.findAll { AtmosphereResource resource ->
+                resource.request?.getAttribute(IceScrumAtmosphereEventListener.USER_CONTEXT)?.username in usernames
+            }
+            if (resources) {
+                log.debug('Broadcast to ' + resources*.uuid().join(', ') + ' on channel ' + channel)
+                broadcaster.broadcast(buildMessage(namespace, eventType, object), resources)
             }
         }
     }
 
-    void broadcastToSingleUser(IceScrumEventType eventType, object, User user) {
+    void broadcastToUsers(IceScrumEventType eventType, object, Collection<User> users) {
         if (!isDisabledThread()) {
-            def channel = '/stream/app/*'
-            Broadcaster broadcaster = atmosphereMeteor.broadcasterFactory?.lookup(IceScrumBroadcaster.class, channel)
-            if (broadcaster) {
-                Set<AtmosphereResource> resources = broadcaster.atmosphereResources?.findAll { AtmosphereResource resource ->
-                    resource.request?.getAttribute(IceScrumAtmosphereEventListener.USER_CONTEXT)?.username == user.username
-                }
-                if (resources) {
-                    log.debug('broadcast to ' + resources*.uuid().join(', ') + ' on channel ' + channel)
-                    broadcaster.broadcast(([eventType: eventType.name(), object: object] as JSON).toString(), resources)
-                }
-            }
-        }
-    }
-
-    void broadcastToUsers(IceScrumEventType eventType, object, Collection<User> user) {
-        if (!isDisabledThread()) {
-            def usernames = user*.username
-            AtmosphereResourceFactory atmosphereResourceFactory = atmosphereMeteor.framework?.atmosphereFactory()
-            if (atmosphereResourceFactory) {
-                def resources = atmosphereResourceFactory.findAll().findAll { AtmosphereResource resource ->
-                    resource.request?.getAttribute(IceScrumAtmosphereEventListener.USER_CONTEXT)?.username in usernames
-                }
-                log.debug('broadcast to ' + resources*.uuid().join(', ') + ' on one of their broadcasters')
-                resources.each { AtmosphereResource resource ->
-                    Broadcaster broadcaster = resource.broadcasters().first()
-                    broadcaster.broadcast(([eventType: eventType.name(), object: object] as JSON).toString(), resource)
-                }
-            }
+            broadcastToUsers(getNamespaceFromDomain(object), eventType.name(), object, users*.username)
         }
     }
 
@@ -101,5 +94,13 @@ class PushService {
 
     private boolean isDisabledThread() {
         return disabledThreads.contains(Thread.currentThread().getId())
+    }
+
+    private getNamespaceFromDomain(domain) {
+        return GrailsNameUtils.getShortName(domain.class).toLowerCase()
+    }
+
+    private String buildMessage(String namespace, String eventType, object) {
+        return ([namespace: namespace, eventType: eventType, object: object] as JSON).toString() // toString() required to serialize eagerly (otherwise error because no session in atmosphere thread)
     }
 }
