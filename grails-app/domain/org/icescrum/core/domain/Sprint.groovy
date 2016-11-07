@@ -288,14 +288,6 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
         return state == STATE_WAIT && parentRelease.state == Release.STATE_INPROGRESS && (orderNumber == 1 || previousSprint && previousSprint.state == STATE_DONE)
     }
 
-    Date getEffectiveEndDate() {
-        return this.state == STATE_DONE ? doneDate : endDate
-    }
-
-    Date getEffectiveStartDate() {
-        return this.state == STATE_WAIT ? startDate : inProgressDate
-    }
-
     BigDecimal getTotalRemaining() {
         (BigDecimal) tasks?.sum { Task t -> t.estimation ? t.estimation.toBigDecimal() : 0.0 } ?: 0.0
     }
