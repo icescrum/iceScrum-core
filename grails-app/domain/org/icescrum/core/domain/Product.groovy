@@ -36,7 +36,6 @@ import org.icescrum.plugins.attachmentable.interfaces.Attachmentable
 import org.springframework.security.acls.domain.BasePermission
 import org.springframework.security.acls.model.Acl
 import org.springframework.security.acls.model.NotFoundException
-import org.springframework.security.core.context.SecurityContextHolder as SCH
 
 class Product extends TimeBox implements Serializable, Attachmentable {
 
@@ -53,7 +52,8 @@ class Product extends TimeBox implements Serializable, Attachmentable {
             stories: Story,
             releases: Release,
             teams: Team,
-            backlogs: Backlog
+            backlogs: Backlog,
+            tasks: Task
     ]
 
     static mappedBy = [
@@ -61,7 +61,8 @@ class Product extends TimeBox implements Serializable, Attachmentable {
             actors: "backlog",
             stories: "backlog",
             releases: "parentProduct",
-            backlogs: "product"
+            backlogs: "product",
+            tasks: "parentProduct"
     ]
 
     static transients = [
@@ -89,6 +90,7 @@ class Product extends TimeBox implements Serializable, Attachmentable {
         features cascade: 'all-delete-orphan', sort: 'rank', batchSize: 10, cache: true
         stories cascade: 'all-delete-orphan', sort: 'rank', 'label': 'asc', batchSize: 25, cache: true
         releases cascade: 'all-delete-orphan', batchSize: 10, cache: true
+        tasks cascade: 'all-delete-orphan', batchSize: 10, cache: true
         pkey(index: 'p_key_index')
         name(index: 'p_name_index')
         preferences lazy: true

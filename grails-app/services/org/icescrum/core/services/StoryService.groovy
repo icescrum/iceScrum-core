@@ -52,7 +52,6 @@ class StoryService extends IceScrumEventPublisher {
     def securityService
     def acceptanceTestService
     def sessionFactory
-    def messageSource
     def activityService
 
     def g = new org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib()
