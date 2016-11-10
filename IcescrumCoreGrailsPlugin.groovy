@@ -324,12 +324,12 @@ class IcescrumCoreGrailsPlugin {
                     def publisherService = ctx.getBean(domain + 'Service')
                     if (publisherService && publisherService instanceof IceScrumEventPublisher) {
                         if (listener.eventType() == IceScrumEventType.UGLY_HACK_BECAUSE_ANNOTATION_CANT_BE_NULL) {
-                            println 'Add listener on all ' + domain + ' events: ' + serviceGrailsClass.propertyName + '.' + method.name
+//                            println 'Add listener on all ' + domain + ' events: ' + serviceGrailsClass.propertyName + '.' + method.name
                             publisherService.registerListener { eventType, object, dirtyProperties ->
                                 listenerService."$method.name"(eventType, object, dirtyProperties)
                             }
                         } else {
-                            println 'Add listener on ' + domain + ' ' + listener.eventType().toString() + ' events: ' + serviceGrailsClass.propertyName + '.' + method.name
+//                            println 'Add listener on ' + domain + ' ' + listener.eventType().toString() + ' events: ' + serviceGrailsClass.propertyName + '.' + method.name
                             publisherService.registerListener(listener.eventType()) { eventType, object, dirtyProperties ->
                                 listenerService."$method.name"(object, dirtyProperties)
                             }
