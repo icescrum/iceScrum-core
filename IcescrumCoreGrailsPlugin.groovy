@@ -50,7 +50,7 @@ class IcescrumCoreGrailsPlugin {
     def groupId = 'org.icescrum'
     def version = "1.7-SNAPSHOT"
     def grailsVersion = "2.5 > *"
-    def artefacts = [new UiDefinitionArtefactHandler()]
+    def artefacts = [UiDefinitionArtefactHandler]
     def watchedResources = [
             "file:./grails-app/conf/*UiDefinition.groovy",
             "file:./plugins/*/grails-app/conf/*UiDefinition.groovy"
