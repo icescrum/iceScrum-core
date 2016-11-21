@@ -190,6 +190,10 @@ class SprintService extends IceScrumEventPublisher {
             def notDoneStories = sprint.stories.findAll { it.state != Story.STATE_DONE }
             storyService.plan(nextSprint, notDoneStories)
         } else {
+            sprint.tasks.findAll { it.type == Task.TYPE_URGENT && it.state != Task.STATE_DONE }?.each { Task task ->
+                task.state = Task.STATE_DONE
+                taskService.update(task, springSecurityService.currentUser)
+            }
             storyService.unPlanAll([sprint])
         }
         def doneStories = sprint.stories.findAll { it.state == Story.STATE_DONE }
