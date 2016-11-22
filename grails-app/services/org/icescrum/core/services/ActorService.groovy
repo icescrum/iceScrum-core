@@ -87,7 +87,9 @@ class ActorService extends IceScrumEventPublisher {
             )
             return a
         } catch (Exception e) {
-            if (log.debugEnabled) e.printStackTrace()
+            if (log.debugEnabled) {
+                e.printStackTrace()
+            }
             throw new RuntimeException(e)
         }
     }

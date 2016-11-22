@@ -80,8 +80,7 @@ class AddonsService {
         }
     }
     void addTags(Product p, def root) {
-        if (log.debugEnabled)
-            log.debug("start import tags")
+        log.debug("start import tags")
         root.'**'.findAll { it.name() in ["story", "actor", "task", "feature"] }.each { element ->
             def elemt = null
             def tasksCache = []
@@ -106,13 +105,11 @@ class AddonsService {
                 elemt.tags = element.tags.text().replaceAll(' ', '').replace('[', '').replace(']', '').split(',')
             }
         }
-        if (log.debugEnabled)
-            log.debug("end import tags")
+        log.debug("end import tags")
     }
 
     void addDependsOn(Product p, def root) {
-        if (log.debugEnabled)
-            log.debug("start import dependsOn")
+        log.debug("start import dependsOn")
         root.'**'.findAll { it.name() == "story" }.each { element ->
             if (!element.dependsOn?.@uid?.isEmpty() && p) {
                 def dependsOn = Story.findByBacklogAndUid(p, element.dependsOn.@uid.text().toInteger())
@@ -126,16 +123,14 @@ class AddonsService {
                 }
             }
         }
-        if (log.debugEnabled)
-            log.debug("end import dependsOn")
+        log.debug("end import dependsOn")
     }
 
     void addAttachments(Product p, def root, File importPath) {
         def defaultU = p.productOwners.first()
         def tasksCache = []
         def sprintsCache = []
-        if (log.debugEnabled)
-            log.debug("start import files")
+        log.debug("start import files")
         root.'**'.findAll {
             it.name() in ["story", "actor", "task", "feature", "release", "sprint", "product"]
         }.each { element ->
@@ -190,14 +185,12 @@ class AddonsService {
                 }
             }
         }
-        if (log.debugEnabled)
-            log.debug("end import files")
+        log.debug("end import files")
     }
 
     void addComments(Product p, def root) {
         def defaultU = p.productOwners.first()
-        if (log.debugEnabled)
-            log.debug("start import comments")
+        log.debug("start import comments")
         root.'**'.findAll { it.name() == "story" }.each { story ->
             def s = null
             if (story.comments.comment.text()) {
@@ -240,14 +233,12 @@ class AddonsService {
                 }
             }
         }
-        if (log.debugEnabled)
-            log.debug("end import comments")
+        log.debug("end import comments")
     }
 
     void addActivities(Product p, def root) {
         def defaultU = p.productOwners.first()
-        if (log.debugEnabled)
-            log.debug("start import activities")
+        log.debug("start import activities")
         root.'**'.findAll { it.name() == "story" }.each { story ->
             def s = null
             if (story.activities.activity.text()) {
@@ -284,9 +275,7 @@ class AddonsService {
                                                 activity.cachedDescription?.text() ?: activity.description.text())
             a.dateCreated = new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(activity.dateCreated.text())
         }
-
-        if (log.debugEnabled)
-            log.debug("end import activities")
+        log.debug("end import activities")
     }
 
 

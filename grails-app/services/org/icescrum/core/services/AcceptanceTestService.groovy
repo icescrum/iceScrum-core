@@ -88,7 +88,9 @@ class AcceptanceTestService extends IceScrumEventPublisher {
             return at
 
         } catch (Exception e) {
-            if (log.debugEnabled) e.printStackTrace()
+            if (log.debugEnabled) {
+                e.printStackTrace()
+            }
             throw new RuntimeException(e)
         }
     }

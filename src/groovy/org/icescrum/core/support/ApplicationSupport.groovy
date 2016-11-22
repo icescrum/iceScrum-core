@@ -220,7 +220,7 @@ class ApplicationSupport {
     }
 
     static public createUUID = {
-        if (log.debugEnabled) log.debug "Retrieving appID..."
+        log.debug "Retrieving appID..."
         def config = Holders.grailsApplication.config
         def filePath = config.icescrum.baseDir.toString() + File.separator + "appID.txt"
         def fileID = new File(filePath)
@@ -237,10 +237,14 @@ class ApplicationSupport {
                     uid = uid.substring(0, 8) + '-' + uid.substring(8, 12) + '-' + uid.substring(12, 16) + '-' + uid.substring(16, 20) + '-' + uid.substring(20, 32)
                 }
             } catch (IOException ioe) {
-                if (log.debugEnabled) log.debug "Warning could not access network interfaces, message: $ioe.message"
+                if (log.debugEnabled) {
+                    log.debug "Warning could not access network interfaces, message: $ioe.message"
+                }
             }
             config.icescrum.appID = uid ?: UUID.randomUUID()
-            if (log.debugEnabled) log.debug "Generated (${uid ? 'm' : 'r'}) appID: $config.icescrum.appID"
+            if (log.debugEnabled) {
+                log.debug "Generated (${uid ? 'm' : 'r'}) appID: $config.icescrum.appID"
+            }
             try {
                 if (!fileID.exists()) fileID.parentFile.mkdirs()
                 if (fileID.exists()) fileID.delete()
@@ -255,7 +259,9 @@ class ApplicationSupport {
             }
         } else {
             config.icescrum.appID = line
-            if (log.debugEnabled) log.debug "Retrieved appID: $config.icescrum.appID"
+            if (log.debugEnabled) {
+                log.debug "Retrieved appID: $config.icescrum.appID"
+            }
         }
     }
 
@@ -515,7 +521,7 @@ class CheckerTimerTask extends TimerTask {
                         log.debug('Automatic check update - A new version is available : ' + resp.data.version)
                     }
                     return
-                } else if (log.debugEnabled) {
+                } else {
                     log.debug('Automatic check update - iceScrum is up to date')
                 }
             }
@@ -523,9 +529,7 @@ class CheckerTimerTask extends TimerTask {
                 //Back to normal delay
                 this.cancel()
                 timer.scheduleAtFixedRate(new CheckerTimerTask(timer, configInterval), configInterval, configInterval)
-                if (log.debugEnabled) {
-                    log.debug('Automatic check update - back to normal delay')
-                }
+                log.debug('Automatic check update - back to normal delay')
             }
         } catch (ex) {
             if (interval == configInterval) {
