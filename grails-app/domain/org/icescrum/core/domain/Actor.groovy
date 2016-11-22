@@ -37,18 +37,22 @@ class Actor implements Serializable, Comparable<Actor> {
     static mappedBy = [stories: "actor"]
     static belongsTo = [parentProduct: Product]
 
+    static constraints = {
+        name(blank: false, unique: 'parentProduct', maxSize: 100)
+    }
+
     static mapping = {
         cache true
         table 'is_actor'
-        name index: 'be_name_index'
-        parentProduct index: 'be_name_index'
+        name index: 'act_name_index'
+        parentProduct index: 'act_name_index'
         stories cascade: "refresh, evict", cache: true
     }
 
     static namedQueries = {
 
         getInProduct {p, id ->
-            product {
+            parentProduct {
                 eq 'id', p
             }
             and {
@@ -84,10 +88,10 @@ class Actor implements Serializable, Comparable<Actor> {
         if (getClass() != obj.getClass())
             return false
         final Actor other = (Actor) obj
-        if (product == null) {
-            if (other.product != null)
+        if (parentProduct == null) {
+            if (other.parentProduct != null)
                 return false
-        } else if (!product.equals(other.product))
+        } else if (!parentProduct.equals(other.parentProduct))
             return false
         if (name != other.name)
             return false
