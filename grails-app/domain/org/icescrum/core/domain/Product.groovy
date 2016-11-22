@@ -156,18 +156,24 @@ class Product extends TimeBox implements Serializable, Attachmentable {
         return users.unique()
     }
 
-    static List<Product> findAllLike(String term = '', params = [:]) {
-        return executeQuery("""SELECT p
-                               FROM org.icescrum.core.domain.Product as p
-                               WHERE lower(p.name) LIKE lower(:term)
-                               OR lower(p.pkey) LIKE lower(:term)""", [term: "%$term%"], params)
-    }
-
-    static Integer countAllLike(String term = '', params = [:]) {
-        return executeQuery("""SELECT count(*)
-                               FROM org.icescrum.core.domain.Product as p
-                               WHERE lower(p.name) LIKE lower(:term)
-                               OR lower(p.pkey) LIKE lower(:term)""", [term: "%$term%"], params)[0]
+    static List<Product> findAllByTermAndFilter(params = [:], String term = '', String filter = '') {
+        return createCriteria().list(params) {
+            if (filter) {
+                preferences {
+                    if (filter == 'archived' || filter == 'active') {
+                        eq 'archived', filter == 'archived'
+                    } else if (filter == 'hidden' || filter == 'public') {
+                        eq 'hidden', filter == 'hidden'
+                    }
+                }
+            }
+            if (term) {
+                or {
+                    ilike 'name', "%${term}%"
+                    ilike 'pkey', "%${term}%"
+                }
+            }
+        }
     }
 
     static findAllByRole(User user, List<BasePermission> permission, params, members = true, archived = true, String term = '%%') {
