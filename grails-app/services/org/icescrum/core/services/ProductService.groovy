@@ -23,6 +23,7 @@
 
 package org.icescrum.core.services
 
+import groovy.xml.MarkupBuilder
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
 import org.icescrum.core.utils.ServicesUtils
@@ -798,6 +799,14 @@ class ProductService extends IceScrumEventPublisher {
             usersByRole[stakeHolder] = Authority.STAKEHOLDER
         }
         return usersByRole
+    }
+
+    def export(StringWriter writer, Product product, String version){
+        def builder = new MarkupBuilder(writer)
+        builder.mkp.xmlDeclaration(version: "1.0", encoding: "UTF-8")
+        builder.export(version: version) {
+            product.xml(builder)
+        }
     }
 
     private void createDefaultBacklogs(Product product) {

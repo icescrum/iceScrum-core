@@ -58,10 +58,10 @@ class Product extends TimeBox implements Serializable, Attachmentable {
 
     static mappedBy = [
             features: "backlog",
-            actors: "backlog",
             stories: "backlog",
             releases: "parentProduct",
             backlogs: "product",
+            actors: "parentProduct",
             tasks: "parentProduct"
     ]
 
@@ -341,7 +341,7 @@ class Product extends TimeBox implements Serializable, Attachmentable {
             planningPokerGameType(this.planningPokerGameType)
             name { builder.mkp.yieldUnescaped("<![CDATA[${this.name}]]>") }
             description { builder.mkp.yieldUnescaped("<![CDATA[${this.description ?: ''}]]>") }
-            this.preferences.xml(builder)
+            preferences.xml(builder)
             teams() {
                 this.teams.each { _team ->
                     _team.xml(builder)

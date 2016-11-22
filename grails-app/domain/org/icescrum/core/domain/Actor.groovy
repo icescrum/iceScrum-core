@@ -29,51 +29,26 @@ package org.icescrum.core.domain
 import org.hibernate.ObjectNotFoundException
 
 
-class Actor extends BacklogElement implements Serializable, Comparable<Actor> {
-
+class Actor implements Serializable, Comparable<Actor> {
     static final long serialVersionUID = 2762136778121132424L
 
-    static final int NUMBER_INSTANCES_INTERVAL_1 = 0
-    static final int NUMBER_INSTANCES_INTERVAL_2 = 1
-    static final int NUMBER_INSTANCES_INTERVAL_3 = 2
-    static final int NUMBER_INSTANCES_INTERVAL_4 = 3
-    static final int NUMBER_INSTANCES_INTERVAL_5 = 4
-
-    static final int EXPERTNESS_LEVEL_LOW = 0
-    static final int EXPERTNESS_LEVEL_MEDIUM = 1
-    static final int EXPERTNESS_LEVEL_HIGH = 2
-
-    static final int USE_FREQUENCY_HOUR = 0
-    static final int USE_FREQUENCY_DAY = 1
-    static final int USE_FREQUENCY_WEEK = 2
-    static final int USE_FREQUENCY_MONTH = 3
-    static final int USE_FREQUENCY_TRIMESTER = 4
-
-    String satisfactionCriteria
-
-    int instances = Actor.NUMBER_INSTANCES_INTERVAL_1
-    int expertnessLevel = Actor.EXPERTNESS_LEVEL_MEDIUM
-    int useFrequency = Actor.USE_FREQUENCY_WEEK
-
-
+    String name
     static hasMany = [stories: Story]
-
     static mappedBy = [stories: "actor"]
+    static belongsTo = [parentProduct: Product]
 
     static mapping = {
         cache true
         table 'is_actor'
+        name index: 'be_name_index'
+        parentProduct index: 'be_name_index'
         stories cascade: "refresh, evict", cache: true
-    }
-
-    static constraints = {
-        satisfactionCriteria(nullable: true)
     }
 
     static namedQueries = {
 
         getInProduct {p, id ->
-            backlog {
+            product {
                 eq 'id', p
             }
             and {
@@ -109,39 +84,21 @@ class Actor extends BacklogElement implements Serializable, Comparable<Actor> {
         if (getClass() != obj.getClass())
             return false
         final Actor other = (Actor) obj
-        if (backlog == null) {
-            if (other.backlog != null)
+        if (product == null) {
+            if (other.product != null)
                 return false
-        } else if (!backlog.equals(other.backlog))
+        } else if (!product.equals(other.product))
             return false
         if (name != other.name)
             return false
-        if (instances != other.instances)
-            return false
-        if (description != other.description)
-            return false
-        if (satisfactionCriteria != other.satisfactionCriteria)
-            return false
-        if (expertnessLevel != other.expertnessLevel)
-            return false
-        if (useFrequency != other.useFrequency)
-            return false
         return true
-    }
-
-    static int findNextUId(Long pid) {
-        (executeQuery(
-                """SELECT MAX(a.uid)
-                   FROM org.icescrum.core.domain.Actor as a, org.icescrum.core.domain.Product as p
-                   WHERE a.backlog = p
-                   AND p.id = :pid """, [pid: pid])[0]?:0) + 1
     }
 
     @Override
     int hashCode() {
         final int prime = 31
         int result = 1
-        result = prime * result + ((backlog == null) ? 0 : backlog.hashCode())
+        result = prime * result + ((parentProduct == null) ? 0 : parentProduct.hashCode())
         result = prime * result + (name ? name.hashCode() : 0)
         return result
     }
@@ -152,39 +109,15 @@ class Actor extends BacklogElement implements Serializable, Comparable<Actor> {
 
     static search(product, options){
         def criteria = {
-            backlog {
+            parentProduct {
                 eq 'id', product
             }
-            if (options.term || options.actor){
-                if(options.term) {
-                    or {
-                        if (options.term?.isInteger()){
-                            eq 'uid', options.term.toInteger()
-                        }else{
-                            ilike 'name', '%'+options.term+'%'
-                            ilike 'description', '%'+options.term+'%'
-                            ilike 'notes', '%'+options.term+'%'
-                            ilike 'satisfactionCriteria', '%'+options.term+'%'
-                        }
-                    }
-                }
-                if (options.actor?.frequency?.isInteger()){
-                    eq 'useFrequency', options.actor.frequency.toInteger()
-                }
-                if (options.actor?.level?.isInteger()){
-                    eq 'expertnessLevel', options.actor.level.toInteger()
-                }
-                if (options.actor?.instance?.isInteger()){
-                    eq 'instances', options.actor.instance.toInteger()
-                }
+            if (options.term){
+                ilike 'name', '%'+options.term+'%'
             }
         }
-        if (options.tag){
-            return Actor.findAllByTagWithCriteria(options.tag) {
-                criteria.delegate = delegate
-                criteria.call()
-            }
-        } else if(options.term || options.actor != null) {
+
+        if(options.term) {
             return Actor.createCriteria().list {
                 criteria.delegate = delegate
                 criteria.call()
@@ -204,27 +137,11 @@ class Actor extends BacklogElement implements Serializable, Comparable<Actor> {
     }
 
     def xml(def builder){
-        builder.actor(uid:this.uid){
-            uid(this.uid)
-            instances(this.instances)
-            useFrequency(this.useFrequency)
-            todoDate(this.todoDate)
-            expertnessLevel(this.expertnessLevel)
-            tags { builder.mkp.yieldUnescaped("<![CDATA[${this.tags}]]>") }
+        builder.actor(){
             name { builder.mkp.yieldUnescaped("<![CDATA[${this.name}]]>") }
-            notes { builder.mkp.yieldUnescaped("<![CDATA[${this.notes?:''}]]>") }
-            description { builder.mkp.yieldUnescaped("<![CDATA[${this.description?:''}]]>") }
-            satisfactionCriteria { builder.mkp.yieldUnescaped("<![CDATA[${this.satisfactionCriteria?:''}]]>") }
-
             stories(){
                 this.stories.each{ _story ->
                     story(uid: _story.uid)
-                }
-            }
-
-            attachments(){
-                this.attachments.each { _att ->
-                    _att.xml(builder)
                 }
             }
         }

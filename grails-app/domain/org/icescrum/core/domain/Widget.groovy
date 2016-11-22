@@ -40,4 +40,13 @@ class Widget implements Serializable {
     public Map getSettings() {
         settingsData ? JSON.parse(settingsData) as Map : [:]
     }
+
+    def xml = { builder ->
+        builder.widget() {
+            onRight(this.onRight)
+            position(this.position)
+            widgetDefinitionId(this.widgetDefinitionId)
+            settingsData{ builder.mkp.yieldUnescaped("<![CDATA[${this.settingsData}]]>") }
+        }
+    }
 }

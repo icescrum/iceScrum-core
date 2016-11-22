@@ -75,10 +75,6 @@ class Story extends BacklogElement implements Cloneable, Serializable {
             dependences: Story
     ]
 
-    static mappedBy = [
-            tasks: 'parentStory' // Todo check if can be removed, probably yes because there is no ambiguity in mapping: task is related to story only with "parentStory"
-    ]
-
     static transients = [
             'deliveredVersion', 'testState', 'testStateEnum', 'activity', 'liked', 'followed', 'sameBacklogStories', 'countDoneTasks'
     ]
@@ -101,7 +97,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
         doneDate(nullable: true)
         parentSprint(nullable: true, validator: { newSprint, story -> newSprint == null || newSprint.parentProduct.id == story.backlog.id ?: 'invalid'})
         feature(nullable: true, validator: { newFeature, story -> newFeature == null || newFeature.backlog.id == story.backlog.id ?: 'invalid' })
-        actor(nullable: true, validator: { newActor, story -> newActor == null || newActor.backlog.id == story.backlog.id ?: 'invalid' })
+        actor(nullable: true, validator: { newActor, story -> newActor == null || newActor.parentProduct.id == story.backlog.id ?: 'invalid' })
         affectVersion(nullable: true)
         effort(nullable: true, validator: { newEffort, story -> newEffort == null || (newEffort >= 0 && newEffort < 1000) ?: 'invalid' })
         creator(nullable: true) // in case of a user deletion, the story can remain without owner
@@ -598,6 +594,9 @@ class Story extends BacklogElement implements Cloneable, Serializable {
             plannedDate(this.plannedDate)
             acceptedDate(this.acceptedDate)
             todoDate(this.todoDate)
+            lastUpdated(this.lastUpdated)
+            dateCreated(this.dateCreated)
+            affectVersion(this.affectVersion)
             suggestedDate(this.suggestedDate)
             estimatedDate(this.estimatedDate)
             inProgressDate(this.inProgressDate)
@@ -605,6 +604,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
             tags { builder.mkp.yieldUnescaped("<![CDATA[${this.tags}]]>") }
             name { builder.mkp.yieldUnescaped("<![CDATA[${this.name}]]>") }
             notes { builder.mkp.yieldUnescaped("<![CDATA[${this.notes ?: ''}]]>") }
+            origin { builder.mkp.yieldUnescaped("<![CDATA[${this.origin?: ''}]]>") }
             description { builder.mkp.yieldUnescaped("<![CDATA[${this.description ?: ''}]]>") }
 
             creator(uid: this.creator.uid)
@@ -612,7 +612,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                 feature(uid: this.feature.uid)
             }
             if (this.actor) {
-                actor(uid: this.actor.uid)
+                actor(id: this.actor.id)
             }
             if (dependsOn) {
                 dependsOn(uid: this.dependsOn.uid)
@@ -644,6 +644,21 @@ class Story extends BacklogElement implements Cloneable, Serializable {
             acceptanceTests() {
                 this.acceptanceTests.each { _acceptanceTest ->
                     _acceptanceTest.xml(builder)
+                }
+            }
+            likers() {
+                this.likers.each { _liker ->
+                    user(uid:_liker.id)
+                }
+            }
+            followers() {
+                this.followers.each { _follower ->
+                    user(uid:_follower.id)
+                }
+            }
+            tasks() {
+                this.followers.each { _tasks ->
+                    _tasks.xml(builder)
                 }
             }
             attachments() {

@@ -135,11 +135,11 @@ class DummyPopulator {
             def feature2 = new Feature(uid: 2, name: randomWords(15,  5, 200), value: 1, description: randomWords(50, 10, 2900), backlog: product, rank: 2, color: '#f0679e').save(failOnError: true)
             def feature3 = new Feature(uid: 3, name: randomWords(15,  5, 200), value: 1, description: randomWords(50, 10, 2900), backlog: product, rank: 3, color: '#a0dffa').save(failOnError: true)
             // Actors
-            def actor = new Actor(uid: 1, name: randomWords(15,  5, 200), description: randomWords(50, 10, 2900), backlog: product).save(failOnError: true)
-            def actor2 = new Actor(uid: 2, name: randomWords(15,  5, 200), description: randomWords(50, 10, 2900), backlog: product).save(failOnError: true)
-            def actor3 = new Actor(uid: 3, name: randomWords(15,  5, 200), description: randomWords(50, 10, 2900), backlog: product).save(failOnError: true)
-            def actor4 = new Actor(uid: 4, name: randomWords(15,  5, 200), description: randomWords(50, 10, 2900), backlog: product).save(failOnError: true)
-            def actor5 = new Actor(uid: 5, name: randomWords(15,  5, 200), description: randomWords(50, 10, 2900), backlog: product).save(failOnError: true)
+            def actor = new Actor(name: randomWords(15,  5, 200), parentProduct: product).save(failOnError: true)
+            def actor2 = new Actor(name: randomWords(15,  5, 200), parentProduct: product).save(failOnError: true)
+            def actor3 = new Actor(name: randomWords(15,  5, 200), parentProduct: product).save(failOnError: true)
+            def actor4 = new Actor(name: randomWords(15,  5, 200), parentProduct: product).save(failOnError: true)
+            def actor5 = new Actor(name: randomWords(15,  5, 200), parentProduct: product).save(failOnError: true)
             product.addToActors(actor).addToActors(actor2).addToActors(actor3).addToActors(actor4).addToActors(actor5).save(failOnError: true)
             // Stories
             def _storyCount = 0
@@ -160,7 +160,7 @@ class DummyPopulator {
                         state: state,
                         creator: usera,
                         rank: _storyCount++,
-                        description: "As a A[${_act.uid}-${_act.name}], ${randomWords(30, 15, 2500)}",
+                        description: "As a A[${_act.id}-${_act.name}], ${randomWords(30, 15, 2500)}",
                         notes: "${randomWords(3, 1)} *Un texte en gras* hahaha ! ${randomWords(5, 2)} _et en italique_ ${randomWords(20, 10)}"
                 ).save(failOnError: true)
                 addStoryActivity(story, usera, Activity.CODE_SAVE)

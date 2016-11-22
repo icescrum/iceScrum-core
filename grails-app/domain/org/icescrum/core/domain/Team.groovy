@@ -67,14 +67,6 @@ class Team implements Serializable, Comparable {
         table 'is_team'
     }
 
-    static members(Team team, params) {
-        executeQuery('select distinct t.members as m from org.icescrum.core.domain.Team as t where t.id=:id', [id: team.id], params ?: [:])
-    }
-
-    static products(Team team, params) {
-        executeQuery('select distinct t.products as p from org.icescrum.core.domain.Team as t where t.id=:id', [id: team.id], params ?: [:])
-    }
-
     static findExceptProduct(Long id, term, params) {
         executeQuery(
                 "SELECT DISTINCT t " +
@@ -288,6 +280,7 @@ class Team implements Serializable, Comparable {
         builder.team(uid:this.uid) {
             velocity(this.velocity)
             dateCreated(this.dateCreated)
+            lastUpdated(this.lastUpdated)
             name { builder.mkp.yieldUnescaped("<![CDATA[${this.name}]]>") }
             description { builder.mkp.yieldUnescaped("<![CDATA[${this.description?:''}]]>") }
 
@@ -301,6 +294,9 @@ class Team implements Serializable, Comparable {
                 this.members?.each { _user ->
                     _user.xml(builder)
                 }
+            }
+            owner() {
+                this.owner.xml(builder)
             }
         }
     }
