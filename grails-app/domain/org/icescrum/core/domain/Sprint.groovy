@@ -341,7 +341,7 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
                 }
             }
             tasks() {
-                this.tasks.each { _task ->
+                this.tasks.findAll{ it.parentStory == null }.each { _task ->
                     _task.xml(builder)
                 }
             }

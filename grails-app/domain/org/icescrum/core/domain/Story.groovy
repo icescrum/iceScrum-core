@@ -657,7 +657,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                 }
             }
             tasks() {
-                this.followers.each { _tasks ->
+                this.tasks.each { _tasks ->
                     _tasks.xml(builder)
                 }
             }
