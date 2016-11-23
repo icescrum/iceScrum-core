@@ -56,7 +56,7 @@ class StoryService extends IceScrumEventPublisher {
 
     def g = new org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib()
 
-    @PreAuthorize('!archivedProduct(#product)')
+    @PreAuthorize('isAuthenticated() and !archivedProduct(#product)')
     void save(Story story, Product product, User user) {
         if (!story.effort) {
             story.effort = null
@@ -94,7 +94,7 @@ class StoryService extends IceScrumEventPublisher {
     }
 
     // TODO replace stories by a single one and call the service in a loop in story controller
-    @PreAuthorize('!archivedProduct(#stories[0].backlog)')
+    @PreAuthorize('isAuthenticated() and !archivedProduct(#stories[0].backlog)')
     void delete(Collection<Story> stories, newObject = null, reason = null) {
         def product = stories[0].backlog
         stories.each { story ->
@@ -105,9 +105,6 @@ class StoryService extends IceScrumEventPublisher {
             }
             if (story.state >= Story.STATE_PLANNED) {
                 throw new BusinessException(code: 'is.story.error.not.deleted.state')
-            }
-            if (!springSecurityService.isLoggedIn()) {
-                throw new BusinessException(code: 'is.story.error.not.deleted.permission')
             }
             if (!(story.creator.id == springSecurityService.currentUser?.id) && !securityService.productOwner(product.id, springSecurityService.authentication)) {
                 throw new BusinessException(code: 'is.story.error.not.deleted.permission')
