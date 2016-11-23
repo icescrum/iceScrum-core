@@ -111,33 +111,19 @@ class Actor implements Serializable, Comparable<Actor> {
         return name.compareTo(cr.name)
     }
 
-    static search(product, options){
-        def criteria = {
+    static search(product, term){
+        return Actor.createCriteria().list {
             parentProduct {
                 eq 'id', product
             }
-            if (options.term){
-                ilike 'name', '%'+options.term+'%'
+            if (term){
+                ilike 'name', '%'+term+'%'
             }
         }
-
-        if(options.term) {
-            return Actor.createCriteria().list {
-                criteria.delegate = delegate
-                criteria.call()
-            }
-        } else {
-            return Collections.EMPTY_LIST
-        }
-    }
-
-    static searchByTermOrTag(productId, searchOptions, term) {
-        search(productId, addTermOrTagToSearch(searchOptions, term))
     }
 
     static searchAllByTermOrTag(productId, term) {
-        def searchOptions = [actor: [:]]
-        searchByTermOrTag(productId, searchOptions, term)
+        search(productId, term)
     }
 
     def xml(def builder){
