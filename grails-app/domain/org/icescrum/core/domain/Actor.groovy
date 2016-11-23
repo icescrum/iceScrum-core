@@ -30,11 +30,15 @@ import org.hibernate.ObjectNotFoundException
 
 
 class Actor implements Serializable, Comparable<Actor> {
+
     static final long serialVersionUID = 2762136778121132424L
 
     String name
+
     static hasMany = [stories: Story]
+
     static mappedBy = [stories: "actor"]
+
     static belongsTo = [parentProduct: Product]
 
     static constraints = {
