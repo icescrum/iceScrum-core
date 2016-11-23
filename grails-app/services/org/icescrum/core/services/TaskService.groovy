@@ -23,7 +23,10 @@
 
 package org.icescrum.core.services
 
+import grails.util.GrailsNameUtils
 import grails.validation.ValidationException
+import org.grails.comments.Comment
+import org.grails.comments.CommentLink
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
 import org.icescrum.core.error.BusinessException
@@ -43,6 +46,7 @@ class TaskService extends IceScrumEventPublisher {
     def securityService
     def activityService
     def grailsApplication
+    def attachmentableService
 
     @PreAuthorize('(inProduct(#task.backlog?.parentProduct) or inProduct(#task.parentStory?.parentProduct)) and (!archivedProduct(#task.backlog?.parentProduct) or !archivedProduct(#task.parentStory?.parentProduct))')
     void save(Task task, User user) {
@@ -188,6 +192,45 @@ class TaskService extends IceScrumEventPublisher {
             task.delete()
             publishSynchronousEvent(IceScrumEventType.DELETE, task, dirtyProperties)
         }
+    }
+
+    @PreAuthorize('isAuthenticated() and !archivedProduct(#task.parentProduct)')
+    def makeStory(Task task) {
+        Story story = new Story()
+        ['name', 'description', 'notes'].each { property ->
+            story[property] = task[property]
+        }
+        Product product = task.parentProduct
+        story.backlog = product // Duplicate with what is done in StoryService but required to allow unique name validation
+        story.validate()
+        def i = 1
+        while (story.hasErrors() && story.errors.getFieldError('name')) {
+            if (story.errors.getFieldError('name')?.defaultMessage?.contains("unique")) {
+                i += 1
+                story.name = story.name + '_' + i
+                story.validate()
+            } else if (task.errors.getFieldError('name')?.defaultMessage?.contains("maximum size")) {
+                story.name = story.name[0..20]
+                story.validate()
+            } else {
+                throw new ValidationException('Validation Error(s) occurred during save()', story.errors)
+            }
+        }
+        grailsApplication.mainContext.getBean("storyService").save(story, product, springSecurityService.currentUser)
+        task.attachments.each { attachment ->
+            story.addAttachment(task.creator, attachmentableService.getFile(attachment), attachment.filename)
+        }
+        task.comments.each { Comment comment ->
+            def commentLink = CommentLink.findByComment(comment)
+            if (commentLink) {
+                commentLink.commentRef = story.id
+                commentLink.type = GrailsNameUtils.getPropertyName(story.class)
+                commentLink.save()
+            }
+        }
+        story.tags = task.tags
+        delete(task, springSecurityService.currentUser)
+        return story
     }
 
     @PreAuthorize('inProduct(#task.parentProduct) and !archivedProduct(#task.parentProduct)')
