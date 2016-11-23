@@ -74,7 +74,7 @@ class IcescrumCoreGrailsPlugin {
         }
     }
 
-    def controllersWithDownloadAndPreview = ['story', 'actor', 'task', 'feature', 'sprint', 'release', 'project']
+    def controllersWithDownloadAndPreview = ['story', 'task', 'feature', 'sprint', 'release', 'project']
 
     def doWithSpring = {
         ApplicationSupport.createUUID()

@@ -28,7 +28,6 @@ package org.icescrum.core.services
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
 
-import java.text.SimpleDateFormat
 import org.icescrum.core.domain.Actor
 import org.icescrum.core.domain.Product
 import org.icescrum.core.error.BusinessException
@@ -43,17 +42,16 @@ class ActorService extends IceScrumEventPublisher {
     @PreAuthorize('productOwner(#p) and !archivedProduct(#p)')
     void save(Actor actor, Product p) {
         actor.name = actor.name?.trim()
-        actor.uid = Actor.findNextUId(p.id)
-        actor.backlog = p
+        actor.parentProduct = p
         p.addToActors(actor)
         actor.save(flush: true)
         actor.refresh() // required to initialize collections to empty list
         publishSynchronousEvent(IceScrumEventType.CREATE, actor)
     }
 
-    @PreAuthorize('productOwner(#actor.backlog) and !archivedProduct(#actor.backlog)')
+    @PreAuthorize('productOwner(#actor.parentProduct) and !archivedProduct(#actor.parentProduct)')
     void delete(Actor actor) {
-        Product product = (Product) actor.backlog
+        Product product = (Product) actor.parentProduct
         def stillHasPbi = product.stories.any { it.actor?.id == actor.id }
         if (stillHasPbi) {
             throw new BusinessException(code: 'is.actor.error.still.hasStories')
@@ -63,7 +61,7 @@ class ActorService extends IceScrumEventPublisher {
         publishSynchronousEvent(IceScrumEventType.DELETE, actor, dirtyProperties)
     }
 
-    @PreAuthorize('productOwner(#actor.backlog) and !archivedProduct(#actor.backlog)')
+    @PreAuthorize('productOwner(#actor.parentProduct) and !archivedProduct(#actor.parentProduct)')
     void update(Actor actor) {
         actor.name = actor.name?.trim()
         def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_UPDATE, actor)
@@ -74,17 +72,7 @@ class ActorService extends IceScrumEventPublisher {
     @Transactional(readOnly = true)
     def unMarshall(def actor) {
         try {
-            def a = new Actor(
-                    name: actor."${'name'}".text(),
-                    description: actor.description.text(),
-                    notes: actor.notes.text(),
-                    todoDate: new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(actor.todoDate.text()),
-                    instances: (actor.instances.text().isNumber()) ? actor.instances.text().toInteger() : 0,
-                    useFrequency: (actor.useFrequency.text().isNumber()) ? actor.useFrequency.text().toInteger() : 2,
-                    expertnessLevel: (actor.expertnessLevel.text().isNumber()) ? actor.expertnessLevel.text().toInteger() : 1,
-                    satisfactionCriteria: actor.satisfactionCriteria.text(),
-                    uid: actor.@uid.text()?.isEmpty() ? actor.@id.text().toInteger() : actor.@uid.text().toInteger()
-            )
+            def a = new Actor(name: actor."${'name'}".text())
             return a
         } catch (Exception e) {
             if (log.debugEnabled) {

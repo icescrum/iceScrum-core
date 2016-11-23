@@ -46,11 +46,11 @@ class ListenerService {
             def product = story.backlog
             if(dirtyProperties.containsKey('rank')){
                 //if others stories have been updated
-                story.sameBacklogStories.findAll{ it.isDirty('rank') && it.id != dirtyProperties.id }.each{
+                story.sameBacklogStories.findAll { it.isDirty('rank') && it.id != dirtyProperties.id }.each {
                     pushService.broadcastToProductChannel(IceScrumEventType.UPDATE, [class: 'Story', id: it.id, rank: it.rank], product.id)
                 }
                 //if only rank have been update return...
-                if(dirtyProperties.size() == 1){
+                if (dirtyProperties.size() == 1) {
                     pushService.broadcastToProductChannel(IceScrumEventType.UPDATE, [class: 'Story', id: story.id, rank: dirtyProperties.rank], product.id)
                     return
                 }
@@ -115,12 +115,12 @@ class ListenerService {
 
     @IceScrumListener(domain = 'actor', eventType = IceScrumEventType.CREATE)
     void actorCreate(Actor actor, Map dirtyProperties) {
-        pushService.broadcastToProductChannel(IceScrumEventType.CREATE, actor, actor.backlog.id)
+        pushService.broadcastToProductChannel(IceScrumEventType.CREATE, actor, actor.parentProduct.id)
     }
 
     @IceScrumListener(domain = 'actor', eventType = IceScrumEventType.UPDATE)
     void actorUpdate(Actor actor, Map dirtyProperties) {
-        pushService.broadcastToProductChannel(IceScrumEventType.UPDATE, actor, actor.backlog.id)
+        pushService.broadcastToProductChannel(IceScrumEventType.UPDATE, actor, actor.parentProduct.id)
     }
 
     @IceScrumListener(domain = 'actor', eventType = IceScrumEventType.DELETE)
@@ -332,7 +332,7 @@ class ListenerService {
 
     // SHARED LISTENERS
     // TODO test product
-    @IceScrumListener(domains = ['actor', 'story', 'feature', 'task', 'sprint', 'release', 'product'], eventType = IceScrumEventType.BEFORE_DELETE)
+    @IceScrumListener(domains = ['story', 'feature', 'task', 'sprint', 'release', 'product'], eventType = IceScrumEventType.BEFORE_DELETE)
     void backlogElementBeforeDelete(object, Map dirtyProperties) {
         object.removeAllAttachments()
         activityService.removeAllActivities(object)

@@ -1,6 +1,5 @@
 package org.icescrum.core.services
 
-import org.icescrum.core.domain.Actor
 import org.icescrum.core.domain.Feature
 import org.icescrum.core.domain.Release
 import org.icescrum.core.domain.Story
@@ -9,7 +8,6 @@ import org.icescrum.core.domain.User
 import grails.util.GrailsNameUtils
 import java.text.SimpleDateFormat
 import org.grails.comments.Comment
-import org.grails.comments.CommentException
 import org.grails.comments.CommentLink
 import org.icescrum.core.domain.Task
 
@@ -81,16 +79,13 @@ class AddonsService {
     }
     void addTags(Product p, def root) {
         log.debug("start import tags")
-        root.'**'.findAll { it.name() in ["story", "actor", "task", "feature"] }.each { element ->
+        root.'**'.findAll { it.name() in ["story", "task", "feature"] }.each { element ->
             def elemt = null
             def tasksCache = []
             if (element.tags.text()) {
                 switch (element.name()) {
                     case 'story':
                         elemt = Story.findByBacklogAndUid(p, element.@uid.text().toInteger()) ?: null
-                        break
-                    case 'actor':
-                        elemt = Actor.findByBacklogAndUid(p, element.@uid.text().toInteger()) ?: null
                         break
                     case 'task':
                         tasksCache = tasksCache ?: Task.getAllInProduct(p.id)
@@ -132,16 +127,13 @@ class AddonsService {
         def sprintsCache = []
         log.debug("start import files")
         root.'**'.findAll {
-            it.name() in ["story", "actor", "task", "feature", "release", "sprint", "product"]
+            it.name() in ["story", "task", "feature", "release", "sprint", "product"]
         }.each { element ->
             def elemt = null
             if (element.attachments.attachment.text()) {
                 switch (element.name()) {
                     case 'story':
                         elemt = Story.findByBacklogAndUid(p, element.@uid.text().toInteger()) ?: null
-                        break
-                    case 'actor':
-                        elemt = Actor.findByBacklogAndUid(p, element.@uid.text().toInteger()) ?: null
                         break
                     case 'task':
                         tasksCache = tasksCache ?: Task.getAllInProduct(p.id)
