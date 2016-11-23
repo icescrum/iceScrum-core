@@ -44,6 +44,17 @@ class ListenerService {
     void storyUpdate(Story story, Map dirtyProperties) {
         if (dirtyProperties) {
             def product = story.backlog
+            if(dirtyProperties.containsKey('rank')){
+                //if others stories have been updated
+                story.sameBacklogStories.findAll{ it.isDirty('rank') && it.id != dirtyProperties.id }.each{
+                    pushService.broadcastToProductChannel(IceScrumEventType.UPDATE, [class: 'Story', id: it.id, rank: it.rank], product.id)
+                }
+                //if only rank have been update return...
+                if(dirtyProperties.size() == 1){
+                    pushService.broadcastToProductChannel(IceScrumEventType.UPDATE, [class: 'Story', id: story.id, rank: dirtyProperties.rank], product.id)
+                    return
+                }
+            }
             def newUpdatedProperties = [:]
             ['feature', 'dependsOn', 'actor', 'parentSprint'].each { property ->
                 if (dirtyProperties.containsKey(property)) {
@@ -95,7 +106,11 @@ class ListenerService {
 
     @IceScrumListener(domain = 'story', eventType = IceScrumEventType.DELETE)
     void storyDelete(Story story, Map dirtyProperties) {
-        pushService.broadcastToProductChannel(IceScrumEventType.DELETE, [class: 'Story', id: dirtyProperties.id, state: dirtyProperties.state], dirtyProperties.backlog.id)
+        def product = Product.get(dirtyProperties.backlog.id)
+        product.stories.findAll{ it.isDirty('rank') && it.id != dirtyProperties.id }.each{
+            pushService.broadcastToProductChannel(IceScrumEventType.UPDATE, [class: 'Story', id: it.id, rank: it.rank], product.id)
+        }
+        pushService.broadcastToProductChannel(IceScrumEventType.DELETE, [class: 'Story', id: dirtyProperties.id, state: dirtyProperties.state], product.id)
     }
 
     @IceScrumListener(domain = 'actor', eventType = IceScrumEventType.CREATE)
@@ -120,14 +135,28 @@ class ListenerService {
 
     @IceScrumListener(domain = 'feature', eventType = IceScrumEventType.UPDATE)
     void featureUpdate(Feature feature, Map dirtyProperties) {
-        def productId = feature.backlog.id
-        pushService.broadcastToProductChannel(IceScrumEventType.UPDATE, feature, productId)
+        def product = feature.backlog
+        if(dirtyProperties.containsKey('rank')){
+            //if others features have been updated
+            product.findAll{ it.isDirty('rank') }.each{
+                pushService.broadcastToProductChannel(IceScrumEventType.UPDATE, [class: 'Feature', id: it.id, rank: it.rank], product.id)
+            }
+            //if only rank have been update return...
+            if(dirtyProperties.size() == 1){
+                pushService.broadcastToProductChannel(IceScrumEventType.UPDATE, [class: 'Feature', id: feature.id, rank: dirtyProperties.rank], product.id)
+                return
+            }
+        }
+        pushService.broadcastToProductChannel(IceScrumEventType.UPDATE, feature, product.id)
     }
 
     @IceScrumListener(domain = 'feature', eventType = IceScrumEventType.DELETE)
     void featureDelete(Feature feature, Map dirtyProperties) {
-        def productId = dirtyProperties.backlog.id
-        pushService.broadcastToProductChannel(IceScrumEventType.DELETE, [class: 'Feature', id: dirtyProperties.id], productId)
+        def product = Product.get(dirtyProperties.backlog.id)
+        product.features.findAll{ it.isDirty('rank') && it.id != dirtyProperties.id }.each{
+            pushService.broadcastToProductChannel(IceScrumEventType.UPDATE, [class: 'Feature', id: it.id, rank: it.rank], product.id)
+        }
+        pushService.broadcastToProductChannel(IceScrumEventType.DELETE, [class: 'Feature', id: dirtyProperties.id], product.id)
     }
 
     @IceScrumListener(domain = 'task', eventType = IceScrumEventType.CREATE)
@@ -141,6 +170,18 @@ class ListenerService {
     void taskUpdate(Task task, Map dirtyProperties) {
         def product = task.parentProduct
         def newStoryUpdated = false
+        if(dirtyProperties.containsKey('rank')){
+            def container = task.parentStory ?: task.backlog
+            //if others tasks have been updated
+            container.tasks.findAll{ it.isDirty('rank') && it.id != dirtyProperties.id }.each{
+                pushService.broadcastToProductChannel(IceScrumEventType.UPDATE, [class: 'Task', id: it.id, rank: it.rank], product.id)
+            }
+            //if only rank have been update return...
+            if(dirtyProperties.size() == 1){
+                pushService.broadcastToProductChannel(IceScrumEventType.UPDATE, [class: 'Task', id: task.id, rank: dirtyProperties.rank], product.id)
+                return
+            }
+        }
         if (dirtyProperties.containsKey('parentStory')) {
             def oldStory = dirtyProperties.parentStory
             if (oldStory != null) {
@@ -167,6 +208,11 @@ class ListenerService {
 
     @IceScrumListener(domain = 'task', eventType = IceScrumEventType.DELETE)
     void taskDelete(Task task, Map dirtyProperties) {
+        def container = dirtyProperties.backlog ?: dirtyProperties.parentStory
+        //if others tasks have been updated
+        container.tasks.findAll{ it.isDirty('rank') && task.id != dirtyProperties.id }.each{
+            pushService.broadcastToProductChannel(IceScrumEventType.UPDATE, [class: 'Task', id: it.id, rank: it.rank], product.id)
+        }
         pushService.broadcastToProductChannel(IceScrumEventType.DELETE, [class: 'Task', id: dirtyProperties.id], dirtyProperties.parentProduct.id)
     }
 
