@@ -44,13 +44,9 @@ class ListenerService {
     void storyUpdate(Story story, Map dirtyProperties) {
         if (dirtyProperties) {
             def product = story.backlog
-            if (dirtyProperties.containsKey('rank')) {
-                story.sameBacklogStories.findAll { it.isDirty('rank') && it.id != story.id }.each { // If others stories have been updated, push them
+            if (dirtyProperties.containsKey('rank') || dirtyProperties.containsKey('state')) {
+                product.stories.findAll { it.isDirty('rank') && it.id != story.id }.each { // If others stories have been updated, push them
                     pushService.broadcastToProductChannel(IceScrumEventType.UPDATE, [class: 'Story', id: it.id, rank: it.rank], product.id)
-                }
-                if (dirtyProperties.size() == 1) { // If only rank has been updated, return...
-                    pushService.broadcastToProductChannel(IceScrumEventType.UPDATE, [class: 'Story', id: story.id, rank: story.rank], product.id)
-                    return
                 }
             }
             def newUpdatedProperties = [:]
