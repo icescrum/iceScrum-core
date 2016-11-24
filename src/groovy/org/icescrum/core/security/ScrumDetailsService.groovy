@@ -25,7 +25,7 @@ import grails.plugin.springsecurity.SpringSecurityUtils
 import grails.plugin.springsecurity.userdetails.GrailsUserDetailsService;
 import org.icescrum.core.domain.security.Authority
 import org.slf4j.LoggerFactory
-import org.springframework.security.core.authority.GrantedAuthorityImpl
+import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.security.core.userdetails.UsernameNotFoundException
 import org.springframework.transaction.annotation.Transactional
@@ -33,7 +33,7 @@ import org.springframework.transaction.annotation.Transactional
 class ScrumDetailsService implements GrailsUserDetailsService {
 
     def grailsApplication
-    static final List NO_ROLES = [new GrantedAuthorityImpl(Authority.ROLE_USER)]
+    static final List NO_ROLES = [new SimpleGrantedAuthority(Authority.ROLE_USER)]
 
     UserDetails loadUserByUsername(String username, boolean loadRoles)
             throws UsernameNotFoundException {
@@ -54,7 +54,7 @@ class ScrumDetailsService implements GrailsUserDetailsService {
         }
 
         def authorities = user.authorities.collect {
-            new GrantedAuthorityImpl(it.authority)
+            new SimpleGrantedAuthority(it.authority)
         }
 
         return new ScrumUserDetails(user.username, user.password,
