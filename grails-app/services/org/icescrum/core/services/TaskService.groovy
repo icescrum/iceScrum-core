@@ -333,7 +333,7 @@ class TaskService extends IceScrumEventPublisher {
             it != task && it.rank in affectedRange && it.type == task.type && it.state == task.state
         }.each {
             it.rank += delta
-            it.save() // consider push
+            it.save()
         }
         task.rank = newRank
     }

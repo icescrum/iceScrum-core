@@ -66,7 +66,7 @@ class FeatureService extends IceScrumEventPublisher {
         product.features.each {
             if (it.rank > feature.rank) {
                 it.rank--
-                it.save() // TODO consider push
+                it.save()
             }
         }
         product.save(flush: true)
@@ -148,7 +148,7 @@ class FeatureService extends IceScrumEventPublisher {
             it != feature && it.rank in affectedRange
         }.each {
             it.rank += delta
-            it.save() // consider push
+            it.save()
         }
     }
 

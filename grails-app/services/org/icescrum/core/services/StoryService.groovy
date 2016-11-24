@@ -415,7 +415,7 @@ class StoryService extends IceScrumEventPublisher {
         int delta = affectedRange.isReverse() ? 1 : -1
         stories.findAll { it != story && it.rank in affectedRange }.each {
             it.rank += delta
-            it.save() // consider push
+            it.save()
         }
         story.rank = rank
         cleanRanks(stories)
