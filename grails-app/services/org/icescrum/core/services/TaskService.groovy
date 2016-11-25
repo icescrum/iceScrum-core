@@ -140,7 +140,7 @@ class TaskService extends IceScrumEventPublisher {
             updateRank(task, props.rank)
         }
         def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_UPDATE, task)
-        task.save(flush: true)
+        task.save()
         if (task.sprint) {
             task.sprint.lastUpdated = new Date()
             task.sprint.save()
@@ -176,8 +176,8 @@ class TaskService extends IceScrumEventPublisher {
             throw new BusinessException(code: 'is.task.error.delete.sprint.done')
         }
         if (task.responsible && task.responsible.id.equals(user.id) || task.creator.id.equals(user.id) || productOwner || scrumMaster) {
-            resetRank(task)
             def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_DELETE, task)
+            resetRank(task)
             if (task.parentStory) {
                 dirtyProperties.parentStory = task.parentStory
                 activityService.addActivity(task.parentStory, user, 'taskDelete', task.name)
