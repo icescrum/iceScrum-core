@@ -25,7 +25,6 @@
 package org.icescrum.core.services
 
 import grails.validation.ValidationException
-import org.icescrum.core.error.BusinessException
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
 
@@ -69,27 +68,21 @@ class FeatureService extends IceScrumEventPublisher {
                 it.save()
             }
         }
-        product.save(flush: true)
+        product.save()
         publishSynchronousEvent(IceScrumEventType.DELETE, feature, dirtyProperties)
     }
 
     @PreAuthorize('productOwner(#feature.backlog) and !archivedProduct(#feature.backlog)')
     void update(Feature feature) {
         feature.name = feature.name.trim()
-        def product = feature.backlog
         if (feature.isDirty('rank')) {
-            def oldRank = feature.getPersistentValue('rank') // must be stored here or it will be flushed by the count
-            def maxRank = Feature.countByBacklog(product)
-            if (!(feature.rank in 1..maxRank)) {
-                throw new BusinessException(code: 'is.feature.error.rank.out.of.bound')
-            }
-            rank(feature, oldRank)
+            rank(feature)
         }
         def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_UPDATE, feature)
         if (feature.isDirty('color')) {
             feature.stories*.lastUpdated = new Date()
         }
-        feature.save(flush: true)
+        feature.save()
         publishSynchronousEvent(IceScrumEventType.UPDATE, feature, dirtyProperties)
     }
 
@@ -141,8 +134,8 @@ class FeatureService extends IceScrumEventPublisher {
         return itemsDone / items
     }
 
-    private void rank(Feature feature, Long oldRank) {
-        Range affectedRange = oldRank..feature.rank
+    private void rank(Feature feature) {
+        Range affectedRange = feature.getPersistentValue('rank')..feature.rank
         int delta = affectedRange.isReverse() ? 1 : -1
         feature.backlog.features.findAll {
             it != feature && it.rank in affectedRange

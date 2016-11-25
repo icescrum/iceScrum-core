@@ -129,9 +129,9 @@ class ListenerService {
 
     @IceScrumListener(domain = 'feature', eventType = IceScrumEventType.UPDATE)
     void featureUpdate(Feature feature, Map dirtyProperties) {
-        def product = feature.backlog
+        Product product = feature.backlog
         if (dirtyProperties.containsKey('rank')) {
-            product.findAll { it.isDirty('rank') && it.id != feature.id }.each { // If others features have been updated, push them
+            product.features.findAll { it.isDirty('rank') && it.id != feature.id }.each { // If others features have been updated, push them
                 pushService.broadcastToProductChannel(IceScrumEventType.UPDATE, [class: 'Feature', id: it.id, rank: it.rank], product.id)
             }
             if (dirtyProperties.size() == 1) { // If only rank has been updated, return...
