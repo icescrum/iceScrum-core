@@ -551,12 +551,12 @@ class StoryService extends IceScrumEventPublisher {
         return tasks
     }
 
-    @PreAuthorize('inProduct(#story.backlog) and !archivedProduct(#story.backlog)')
+    @PreAuthorize('(productOwner(#story.backlog) or scrumMaster(#story.backlog)) and !archivedProduct(#story.backlog)')
     void done(Story story) {
         done([story])
     }
 
-    @PreAuthorize('productOwner(#stories[0].backlog) and !archivedProduct(#stories[0].backlog)')
+    @PreAuthorize('(productOwner(#stories[0].backlog) or scrumMaster(#stories[0].backlog)) and !archivedProduct(#stories[0].backlog)')
     void done(List<Story> stories) {
         stories.each { story ->
             if (story.parentSprint.state != Sprint.STATE_INPROGRESS) {
@@ -595,7 +595,7 @@ class StoryService extends IceScrumEventPublisher {
         unDone([story])
     }
 
-    @PreAuthorize('productOwner(#stories[0].backlog) and !archivedProduct(#stories[0].backlog)')
+    @PreAuthorize('(productOwner(#stories[0].backlog) or scrumMaster(#stories[0].backlog)) and !archivedProduct(#stories[0].backlog)')
     void unDone(List<Story> stories) {
         stories.each { story ->
             if (story.state != Story.STATE_DONE) {
