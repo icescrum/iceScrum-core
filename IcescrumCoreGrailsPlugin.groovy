@@ -46,6 +46,7 @@ import org.icescrum.core.utils.JSONIceScrumDomainClassMarshaller
 import org.icescrum.plugins.attachmentable.domain.Attachment
 import org.icescrum.plugins.attachmentable.services.AttachmentableService
 import org.springframework.web.servlet.support.RequestContextUtils as RCU
+import org.springframework.web.context.request.RequestContextHolder as RCH
 
 import javax.servlet.http.HttpServletResponse
 import java.lang.reflect.Method
@@ -88,7 +89,9 @@ class IcescrumCoreGrailsPlugin {
         //init config.icescrum.export for plugins to be able to register without an if exist / create test
         application.config?.icescrum?.export = [:]
         application.domainClasses.each{
-            application.config?.icescrum?.export."${it.propertyName}" = []
+            if(it.metaClass.getMetaMethod("xml")){
+                application.config?.icescrum?.export."${it.propertyName}" = []
+            }
         }
         println '... finished configuring iceScrum plugin core'
     }
@@ -212,6 +215,18 @@ class IcescrumCoreGrailsPlugin {
     private void addExportDomainsPlugins(source, config){
         source.metaClass.exportDomainsPlugins = { builder ->
             def domainObject = delegate
+            def progress = RCH.currentRequestAttributes().getSession()?.progress
+            if(progress){
+                if(!progress.buffer?.contains(source.propertyName)){
+                    //init
+                    if(!progress.buffer){
+                        progress.buffer = []
+                    }
+                    progress.buffer << source.propertyName
+                    def newValue = (progress.buffer.size() * 90) / (config.size() * progress.multiple)
+                    progress.updateProgress(newValue, source.propertyName)
+                }
+            }
             config[source.propertyName]?.each{ closure ->
                 closure.delegate = domainObject
                 closure(domainObject, builder)

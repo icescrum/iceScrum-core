@@ -23,8 +23,10 @@
 package org.icescrum.core.support
 
 class ProgressSupport implements Serializable{
-  int value = 0
+  def buffer
+  float value = 0.0f
   String label = '%'
+  int multiple = 1
   Boolean error = false
   Boolean complete = false
 
