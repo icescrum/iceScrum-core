@@ -278,26 +278,27 @@ class Team implements Serializable, Comparable {
 
     def xml(builder) {
         builder.team(uid:this.uid) {
-            velocity(this.velocity)
-            dateCreated(this.dateCreated)
-            lastUpdated(this.lastUpdated)
-            name { builder.mkp.yieldUnescaped("<![CDATA[${this.name}]]>") }
-            description { builder.mkp.yieldUnescaped("<![CDATA[${this.description?:''}]]>") }
+            builder.velocity(this.velocity)
+            builder.dateCreated(this.dateCreated)
+            builder.lastUpdated(this.lastUpdated)
+            builder.name { builder.mkp.yieldUnescaped("<![CDATA[${this.name}]]>") }
+            builder.description { builder.mkp.yieldUnescaped("<![CDATA[${this.description?:''}]]>") }
 
-            scrumMasters() {
+            builder.scrumMasters() {
                 this.scrumMasters?.each { _user ->
-                    user(uid: _user.uid)
+                    builder.user(uid: _user.uid)
                 }
             }
 
-            members() {
+            builder.members() {
                 this.members?.each { _user ->
                     _user.xml(builder)
                 }
             }
-            owner() {
+            builder.owner() {
                 this.owner.xml(builder)
             }
+            exportDomainsPlugins(builder)
         }
     }
 }

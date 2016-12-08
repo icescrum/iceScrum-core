@@ -50,4 +50,13 @@ class Template implements Serializable {
     Map getData() {
         return JSON.parse(serializedData) as Map
     }
+
+    def xml(builder) {
+        builder.template(){
+            builder.name{ builder.mkp.yieldUnescaped("<![CDATA[${this.name ?: ''}]]>") }
+            builder.itemClass(this.itemClass)
+            builder.serializedData{ builder.mkp.yieldUnescaped("<![CDATA[${this.serializedData ?: ''}]]>") }
+            exportDomainsPlugins(builder)
+        }
+    }
 }

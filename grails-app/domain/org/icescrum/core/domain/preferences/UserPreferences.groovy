@@ -97,22 +97,23 @@ class UserPreferences implements Serializable {
 
     def xml = { builder ->
         builder.preferences(id: this.id) {
-            menu(this.menu)
-            language(this.language)
-            activity(this.activity)
-            filterTask(this.filterTask)
-            menuHidden(this.menuHidden)
-            displayWhatsNew(this.displayWhatsNew)
-            lastProductOpened(this.lastProductOpened)
-            emailsSettingsData(this.lastProductOpened)
-            displayWelcomeTour(this.displayWelcomeTour)
-            lastReadActivities(this.lastReadActivities)
-            displayFullProjectTour(this.displayFullProjectTour)
-            widgets() {
+            builder.menu(this.menu)
+            builder.language(this.language)
+            builder.activity(this.activity)
+            builder.filterTask(this.filterTask)
+            builder.menuHidden(this.menuHidden)
+            builder.displayWhatsNew(this.displayWhatsNew)
+            builder.lastProductOpened(this.lastProductOpened)
+            builder.emailsSettingsData(this.lastProductOpened)
+            builder.displayWelcomeTour(this.displayWelcomeTour)
+            builder.lastReadActivities(this.lastReadActivities)
+            builder.displayFullProjectTour(this.displayFullProjectTour)
+            builder.widgets() {
                 this.widgets?.each { _widget ->
                     _widget.xml(builder)
                 }
             }
+            exportDomainsPlugins(builder)
         }
     }
 }

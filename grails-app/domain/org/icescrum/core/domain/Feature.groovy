@@ -214,27 +214,28 @@ class Feature extends BacklogElement implements Serializable {
 
     def xml(builder) {
         builder.feature(uid: this.uid) {
-            type(this.type)
-            rank(this.rank)
-            color(this.color)
-            value(this.value)
-            todoDate(this.todoDate)
-            tags { builder.mkp.yieldUnescaped("<![CDATA[${this.tags}]]>") }
-            name { builder.mkp.yieldUnescaped("<![CDATA[${this.name}]]>") }
-            notes { builder.mkp.yieldUnescaped("<![CDATA[${this.notes ?: ''}]]>") }
-            description { builder.mkp.yieldUnescaped("<![CDATA[${this.description ?: ''}]]>") }
+            builder.type(this.type)
+            builder.rank(this.rank)
+            builder.color(this.color)
+            builder.value(this.value)
+            builder.todoDate(this.todoDate)
+            builder.tags { builder.mkp.yieldUnescaped("<![CDATA[${this.tags}]]>") }
+            builder.name { builder.mkp.yieldUnescaped("<![CDATA[${this.name}]]>") }
+            builder.notes { builder.mkp.yieldUnescaped("<![CDATA[${this.notes ?: ''}]]>") }
+            builder.description { builder.mkp.yieldUnescaped("<![CDATA[${this.description ?: ''}]]>") }
 
-            stories() {
+            builder.stories() {
                 this.stories.each { _story ->
                     story(uid: _story.uid)
                 }
             }
 
-            attachments() {
+            builder.attachments() {
                 this.attachments.each { _att ->
                     _att.xml(builder)
                 }
             }
+            exportDomainsPlugins(builder)
         }
     }
 

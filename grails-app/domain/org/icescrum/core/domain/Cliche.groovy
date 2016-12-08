@@ -152,10 +152,11 @@ class Cliche implements Serializable {
 
     def xml(builder){
         builder.cliche(id:this.id){
-            id(this.id)
-            type(this.type)
-            datePrise(this.datePrise)
-            data { builder.mkp.yieldUnescaped("<![CDATA[${this.data}]]>") }
+            builder.id(this.id)
+            builder.type(this.type)
+            builder.datePrise(this.datePrise)
+            builder.data { builder.mkp.yieldUnescaped("<![CDATA[${this.data}]]>") }
+            exportDomainsPlugins(builder)
         }
     }
 }

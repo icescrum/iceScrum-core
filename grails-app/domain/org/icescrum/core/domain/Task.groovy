@@ -311,44 +311,52 @@ class Task extends BacklogElement implements Serializable {
 
     def xml(builder){
         builder.task(uid:this.uid){
-            type(this.type)
-            rank(this.rank)
-            color(this.color)
-            state(this.state)
-            blocked(this.blocked)
-            initial(this.initial)
-            doneDate(this.doneDate)
-            estimation(this.estimation)
-            todoDate(this.todoDate)
-            inProgressDate(this.inProgressDate)
+            builder.type(this.type)
+            builder.rank(this.rank)
+            builder.color(this.color)
+            builder.state(this.state)
+            builder.blocked(this.blocked)
+            builder.initial(this.initial)
+            builder.doneDate(this.doneDate)
+            builder.estimation(this.estimation)
+            builder.todoDate(this.todoDate)
+            builder.inProgressDate(this.inProgressDate)
 
-            creator(uid:this.creator.uid)
+            builder.creator(uid:this.creator.uid)
 
             if (this.responsible){
-                responsible(uid:this.responsible.uid)
+                builder.responsible(uid:this.responsible.uid)
             }
 
-            tags { builder.mkp.yieldUnescaped("<![CDATA[${this.tags}]]>") }
-            name { builder.mkp.yieldUnescaped("<![CDATA[${this.name}]]>") }
-            notes { builder.mkp.yieldUnescaped("<![CDATA[${this.notes?:''}]]>") }
-            description { builder.mkp.yieldUnescaped("<![CDATA[${this.description?:''}]]>") }
+            builder.tags { builder.mkp.yieldUnescaped("<![CDATA[${this.tags}]]>") }
+            builder.name { builder.mkp.yieldUnescaped("<![CDATA[${this.name}]]>") }
+            builder.notes { builder.mkp.yieldUnescaped("<![CDATA[${this.notes?:''}]]>") }
+            builder.description { builder.mkp.yieldUnescaped("<![CDATA[${this.description?:''}]]>") }
 
-            attachments(){
+            builder.attachments(){
                 this.attachments.each { _att ->
                     _att.xml(builder)
                 }
             }
 
-            comments(){
+            builder.comments(){
                 this.comments.each { _comment ->
-                    comment(){
-                        dateCreated(_comment.dateCreated)
-                        posterId(_comment.posterId)
-                        posterClass(_comment.posterClass)
-                        body { builder.mkp.yieldUnescaped("<![CDATA[${_comment.body}]]>") }
+                    builder.comment(){
+                        builder.dateCreated(_comment.dateCreated)
+                        builder.posterId(_comment.posterId)
+                        builder.posterClass(_comment.posterClass)
+                        builder.body { builder.mkp.yieldUnescaped("<![CDATA[${_comment.body}]]>") }
                     }
                 }
             }
+
+            builder.activities() {
+                this.activities.each { _activity ->
+                    _activity.xml(builder)
+                }
+            }
+
+            exportDomainsPlugins(builder)
         }
     }
 }

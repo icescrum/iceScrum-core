@@ -69,4 +69,16 @@ class Backlog {
     def getIsDefault() {
         return owner == null
     }
+
+    def xml(builder){
+        builder.backlog(id:this.id){
+            builder.name { builder.mkp.yieldUnescaped("<![CDATA[${this.name}]]>") }
+            builder.code(this.code)
+            builder.shared(this.shared)
+            builder.filter(this.filter)
+            builder.notes{ builder.mkp.yieldUnescaped("<![CDATA[${this.notes ?: ''}]]>") }
+            builder.owner(uid: this.owner.uid)
+            exportDomainsPlugins(builder)
+        }
+    }
 }

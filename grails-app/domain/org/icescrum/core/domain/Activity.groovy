@@ -111,4 +111,18 @@ class Activity implements Serializable, Comparable {
                         AND s.backlog = :p
                         ORDER BY a.dateCreated DESC""", [p: product], [max: 15])
     }
+
+    def xml(builder) {
+        builder.poster(uid: this.poster.uid)
+        builder.dateCreated(this.dateCreated)
+        builder.lastUpdated(this.lastUpdated)
+        builder.code(this.code)
+        builder.label { builder.mkp.yieldUnescaped("<![CDATA[${this.label}]]>") }
+        builder.field { this.field }
+        builder.beforeValue { builder.mkp.yieldUnescaped("<![CDATA[${this.beforeValue}]]>") }
+        builder.afterValue { builder.mkp.yieldUnescaped("<![CDATA[${this.afterValue}]]>") }
+        builder.parentRef(this.parentRef)
+        builder.parentType(this.parentRef)
+        exportDomainsPlugins(builder)
+    }
 }

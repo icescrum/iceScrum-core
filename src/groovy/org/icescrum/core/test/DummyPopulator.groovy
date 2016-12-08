@@ -147,10 +147,16 @@ class DummyPopulator {
                 def _act = _storyCount % 5 == 0 ? actor4 : _storyCount % 4 == 0 ? actor : _storyCount % 3 == 0 ? actor3 : actor
                 def value = _storyCount % 5
                 def effort = 4 + _storyCount % 2
+
+                def name = randomWords(15, 6, 200)
+                while(Story.countByNameAndBacklog(name, product)){
+                    name = randomWords(15, 6, 200)
+                }
+
                 def story = new Story(backlog: product,
                         feature: _storyCount % 4 == 0 ? feature : _storyCount % 3 == 0 ? feature3 : feature2,
                         actor: _act,
-                        name: randomWords(15, 6, 200),
+                        name: name,
                         effort: effort,
                         value: value,
                         uid: _storyCount + 1,

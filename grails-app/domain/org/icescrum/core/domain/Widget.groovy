@@ -43,10 +43,11 @@ class Widget implements Serializable {
 
     def xml = { builder ->
         builder.widget() {
-            onRight(this.onRight)
-            position(this.position)
-            widgetDefinitionId(this.widgetDefinitionId)
-            settingsData{ builder.mkp.yieldUnescaped("<![CDATA[${this.settingsData}]]>") }
+            builder.onRight(this.onRight)
+            builder.position(this.position)
+            builder.widgetDefinitionId(this.widgetDefinitionId)
+            builder.settingsData{ builder.mkp.yieldUnescaped("<![CDATA[${this.settingsData}]]>") }
+            exportDomainsPlugins(builder)
         }
     }
 }

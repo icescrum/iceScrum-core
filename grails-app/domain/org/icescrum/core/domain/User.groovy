@@ -211,27 +211,28 @@ class User implements Serializable, Attachmentable {
 
     def xml(builder) {
         builder.user(uid: this.uid) {
-            email(this.email)
-            enabled(this.enabled)
-            username(this.username)
-            password(this.password)
-            lastLogin(this.lastLogin)
-            dateCreated(this.dateCreated)
-            lastUpdated(this.lastUpdated)
-            accountLocked(this.accountLocked)
-            accountExpired(this.accountExpired)
-            passwordExpired(this.passwordExpired)
-            accountExternal(this.accountExternal)
-            lastName { builder.mkp.yieldUnescaped("<![CDATA[${this.lastName}]]>") }
-            firstName { builder.mkp.yieldUnescaped("<![CDATA[${this.firstName}]]>") }
+            builder.email(this.email)
+            builder.enabled(this.enabled)
+            builder.username(this.username)
+            builder.password(this.password)
+            builder.lastLogin(this.lastLogin)
+            builder.dateCreated(this.dateCreated)
+            builder.lastUpdated(this.lastUpdated)
+            builder.accountLocked(this.accountLocked)
+            builder.accountExpired(this.accountExpired)
+            builder.passwordExpired(this.passwordExpired)
+            builder.accountExternal(this.accountExternal)
+            builder.lastName { builder.mkp.yieldUnescaped("<![CDATA[${this.lastName}]]>") }
+            builder.firstName { builder.mkp.yieldUnescaped("<![CDATA[${this.firstName}]]>") }
 
             preferences.xml(builder)
 
-            teams() {
+            builder.teams() {
                 this.teams.each { _team ->
                     team(uid: _team.uid)
                 }
             }
+            exportDomainsPlugins(builder)
         }
     }
 }

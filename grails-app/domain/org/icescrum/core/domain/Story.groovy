@@ -585,87 +585,82 @@ class Story extends BacklogElement implements Cloneable, Serializable {
 
     def xml(builder) {
         builder.story(uid: this.uid) {
-            type(this.type)
-            rank(this.rank)
-            state(this.state)
-            value(this.value)
-            effort(this.effort)
-            doneDate(this.doneDate)
-            plannedDate(this.plannedDate)
-            acceptedDate(this.acceptedDate)
-            todoDate(this.todoDate)
-            lastUpdated(this.lastUpdated)
-            dateCreated(this.dateCreated)
-            affectVersion(this.affectVersion)
-            suggestedDate(this.suggestedDate)
-            estimatedDate(this.estimatedDate)
-            inProgressDate(this.inProgressDate)
+            builder.type(this.type)
+            builder.rank(this.rank)
+            builder.state(this.state)
+            builder.value(this.value)
+            builder.effort(this.effort)
+            builder.doneDate(this.doneDate)
+            builder.plannedDate(this.plannedDate)
+            builder.acceptedDate(this.acceptedDate)
+            builder.todoDate(this.todoDate)
+            builder.lastUpdated(this.lastUpdated)
+            builder.dateCreated(this.dateCreated)
+            builder.affectVersion(this.affectVersion)
+            builder.suggestedDate(this.suggestedDate)
+            builder.estimatedDate(this.estimatedDate)
+            builder.inProgressDate(this.inProgressDate)
 
-            tags { builder.mkp.yieldUnescaped("<![CDATA[${this.tags}]]>") }
-            name { builder.mkp.yieldUnescaped("<![CDATA[${this.name}]]>") }
-            notes { builder.mkp.yieldUnescaped("<![CDATA[${this.notes ?: ''}]]>") }
-            origin { builder.mkp.yieldUnescaped("<![CDATA[${this.origin?: ''}]]>") }
-            description { builder.mkp.yieldUnescaped("<![CDATA[${this.description ?: ''}]]>") }
+            builder.tags { builder.mkp.yieldUnescaped("<![CDATA[${this.tags}]]>") }
+            builder.name { builder.mkp.yieldUnescaped("<![CDATA[${this.name}]]>") }
+            builder.notes { builder.mkp.yieldUnescaped("<![CDATA[${this.notes ?: ''}]]>") }
+            builder.origin { builder.mkp.yieldUnescaped("<![CDATA[${this.origin?: ''}]]>") }
+            builder.description { builder.mkp.yieldUnescaped("<![CDATA[${this.description ?: ''}]]>") }
 
-            creator(uid: this.creator.uid)
+            builder.creator(uid: this.creator.uid)
             if (this.feature) {
-                feature(uid: this.feature.uid)
+                builder.feature(uid: this.feature.uid)
             }
             if (this.actor) {
-                actor(id: this.actor.id)
+                builder.actor(id: this.actor.id)
             }
             if (dependsOn) {
-                dependsOn(uid: this.dependsOn.uid)
+                builder.dependsOn(uid: this.dependsOn.uid)
             }
 
-            comments() {
+            builder.comments() {
                 this.comments.each { _comment ->
-                    comment() {
-                        dateCreated(_comment.dateCreated)
-                        posterId(_comment.posterId)
-                        posterClass(_comment.posterClass)
-                        body { builder.mkp.yieldUnescaped("<![CDATA[${_comment.body}]]>") }
+                    builder.comment() {
+                        builder.dateCreated(_comment.dateCreated)
+                        builder.posterId(_comment.posterId)
+                        builder.posterClass(_comment.posterClass)
+                        builder.body { builder.mkp.yieldUnescaped("<![CDATA[${_comment.body}]]>") }
                     }
                 }
             }
-            activities() {
+            builder.activities() {
                 this.activities.each { _activity ->
-                    activity() {
-                        code(_activity.code)
-                        poster(uid: _activity.poster.uid)
-                        dateCreated(_activity.dateCreated)
-                        label { builder.mkp.yieldUnescaped("<![CDATA[${_activity.label}]]>") }
-                        field { _activity.field }
-                        beforeValue { builder.mkp.yieldUnescaped("<![CDATA[${_activity.beforeValue}]]>") }
-                        afterValue { builder.mkp.yieldUnescaped("<![CDATA[${_activity.afterValue}]]>") }
+                    builder.activity() {
+                        _activity.xml(builder)
                     }
                 }
             }
-            acceptanceTests() {
+            builder.acceptanceTests() {
                 this.acceptanceTests.each { _acceptanceTest ->
                     _acceptanceTest.xml(builder)
                 }
             }
-            likers() {
+            builder.likers() {
                 this.likers.each { _liker ->
-                    user(uid:_liker.id)
+                    builder.user(uid:_liker.id)
                 }
             }
-            followers() {
+            builder.followers() {
                 this.followers.each { _follower ->
-                    user(uid:_follower.id)
+                    builder.user(uid:_follower.id)
                 }
             }
-            tasks() {
+            builder.tasks() {
                 this.tasks.each { _tasks ->
                     _tasks.xml(builder)
                 }
             }
-            attachments() {
+            builder.attachments() {
                 this.attachments.each { _att ->
                     _att.xml(builder)
                 }
             }
+            exportDomainsPlugins(builder)
         }
     }
 }

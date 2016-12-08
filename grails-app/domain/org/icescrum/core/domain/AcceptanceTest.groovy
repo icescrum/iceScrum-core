@@ -156,10 +156,16 @@ class AcceptanceTest implements Serializable {
 
     def xml(builder){
         builder.acceptanceTest(uid:this.uid){
-            state(this.state)
-            creator(uid:this.creator.uid)
-            name { builder.mkp.yieldUnescaped("<![CDATA[${this.name}]]>") }
-            description { builder.mkp.yieldUnescaped("<![CDATA[${this.description?:''}]]>") }
+            builder.state(this.state)
+            builder.creator(uid:this.creator.uid)
+            builder.name { builder.mkp.yieldUnescaped("<![CDATA[${this.name}]]>") }
+            builder.description { builder.mkp.yieldUnescaped("<![CDATA[${this.description?:''}]]>") }
+            builder.activities() {
+                this.activities.each { _activity ->
+                    _activity.xml(builder)
+                }
+            }
+            exportDomainsPlugins(builder)
         }
     }
 }

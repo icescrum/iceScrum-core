@@ -195,40 +195,41 @@ class Release extends TimeBox implements Cloneable, Attachmentable {
 
     def xml(builder) {
         builder.release(id: this.id) {
-            state(this.state)
-            endDate(this.endDate)
-            todoDate(this.todoDate)
-            doneDate(this.doneDate)
-            startDate(this.startDate)
-            orderNumber(this.orderNumber)
-            lastUpdated(this.lastUpdated)
-            dateCreated(this.dateCreated)
-            inProgressDate(this.inProgressDate)
-            firstSprintIndex(this.firstSprintIndex)
-            name { builder.mkp.yieldUnescaped("<![CDATA[${this.name}]]>") }
-            goal { builder.mkp.yieldUnescaped("<![CDATA[${this.goal ?: ''}]]>") }
-            vision { builder.mkp.yieldUnescaped("<![CDATA[${this.vision ?: ''}]]>") }
-            description { builder.mkp.yieldUnescaped("<![CDATA[${this.description ?: ''}]]>") }
-            sprints() {
+            builder.state(this.state)
+            builder.endDate(this.endDate)
+            builder.todoDate(this.todoDate)
+            builder.doneDate(this.doneDate)
+            builder.startDate(this.startDate)
+            builder.orderNumber(this.orderNumber)
+            builder.lastUpdated(this.lastUpdated)
+            builder.dateCreated(this.dateCreated)
+            builder.inProgressDate(this.inProgressDate)
+            builder.firstSprintIndex(this.firstSprintIndex)
+            builder.name { builder.mkp.yieldUnescaped("<![CDATA[${this.name}]]>") }
+            builder.goal { builder.mkp.yieldUnescaped("<![CDATA[${this.goal ?: ''}]]>") }
+            builder.vision { builder.mkp.yieldUnescaped("<![CDATA[${this.vision ?: ''}]]>") }
+            builder.description { builder.mkp.yieldUnescaped("<![CDATA[${this.description ?: ''}]]>") }
+            builder.sprints() {
                 this.sprints.each { _sprint ->
                     _sprint.xml(builder)
                 }
             }
-            features() {
+            builder.features() {
                 this.features.each { _feature ->
                     feature(uid: _feature.uid)
                 }
             }
-            attachments() {
+            builder.attachments() {
                 this.attachments.each { _att ->
                     _att.xml(builder)
                 }
             }
-            cliches() {
+            builder.cliches() {
                 this.cliches.each { _cliche ->
                     _cliche.xml(builder)
                 }
             }
+            exportDomainsPlugins(builder)
         }
     }
 }

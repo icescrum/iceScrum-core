@@ -30,7 +30,11 @@ import org.codehaus.groovy.grails.commons.GrailsClassUtils
 import org.codehaus.groovy.grails.plugins.jasper.JasperExportFormat
 import org.codehaus.groovy.grails.plugins.jasper.JasperReportDef
 import org.codehaus.groovy.grails.plugins.jasper.JasperService
+import org.grails.taggable.Tag
+import org.grails.taggable.TagException
+import org.grails.taggable.TagLink
 import org.icescrum.core.cors.CorsFilter
+import org.icescrum.core.domain.Product
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
 import org.icescrum.core.event.IceScrumListener
@@ -77,8 +81,16 @@ class IcescrumCoreGrailsPlugin {
     def controllersWithDownloadAndPreview = ['story', 'task', 'feature', 'sprint', 'release', 'project']
 
     def doWithSpring = {
+        println '\nConfiguring iceScrum plugin core ...'
         ApplicationSupport.createUUID()
         System.setProperty('lbdsl.home', "${application.config.icescrum.baseDir.toString()}${File.separator}lbdsl")
+
+        //init config.icescrum.export for plugins to be able to register without an if exist / create test
+        application.config?.icescrum?.export = [:]
+        application.domainClasses.each{
+            application.config?.icescrum?.export."${it.propertyName}" = []
+        }
+        println '... finished configuring iceScrum plugin core'
     }
 
     def doWithDynamicMethods = { ctx ->
@@ -89,6 +101,7 @@ class IcescrumCoreGrailsPlugin {
         JasperService jasperService = ctx.getBean('jasperService')
         UiDefinitionService uiDefinitionService = ctx.getBean('uiDefinitionService')
         uiDefinitionService.loadDefinitions()
+
         application.controllerClasses.each {
             addJasperMethod(it, springSecurityService, jasperService)
             if (it.logicalPropertyName in controllersWithDownloadAndPreview) {
@@ -97,6 +110,9 @@ class IcescrumCoreGrailsPlugin {
         }
         application.serviceClasses.each {
             addListenerSupport(it, ctx)
+        }
+        application.domainClasses.each {
+            addExportDomainsPlugins(it, application.config.icescrum.export)
         }
     }
 
@@ -190,6 +206,16 @@ class IcescrumCoreGrailsPlugin {
                 actionClosure
             }
             clazz.registerMapping(actionName)
+        }
+    }
+
+    private void addExportDomainsPlugins(source, config){
+        source.metaClass.exportDomainsPlugins = { builder ->
+            def domainObject = delegate
+            config[source.propertyName]?.each{ closure ->
+                closure.delegate = domainObject
+                closure(domainObject, builder)
+            }
         }
     }
 

@@ -332,51 +332,62 @@ class Product extends TimeBox implements Serializable, Attachmentable {
 
     def xml(builder) {
         builder.product(id: this.id) {
-            pkey(this.pkey)
-            endDate(this.endDate)
-            todoDate(this.todoDate)
-            startDate(this.startDate)
-            lastUpdated(this.lastUpdated)
-            dateCreated(this.dateCreated)
-            planningPokerGameType(this.planningPokerGameType)
-            name { builder.mkp.yieldUnescaped("<![CDATA[${this.name}]]>") }
-            description { builder.mkp.yieldUnescaped("<![CDATA[${this.description ?: ''}]]>") }
+            builder.pkey(this.pkey)
+            builder.endDate(this.endDate)
+            builder.todoDate(this.todoDate)
+            builder.startDate(this.startDate)
+            builder.lastUpdated(this.lastUpdated)
+            builder.dateCreated(this.dateCreated)
+            builder.planningPokerGameType(this.planningPokerGameType)
+            builder.name { builder.mkp.yieldUnescaped("<![CDATA[${this.name}]]>") }
+            builder.description { builder.mkp.yieldUnescaped("<![CDATA[${this.description ?: ''}]]>") }
             preferences.xml(builder)
-            teams() {
+            builder.teams() {
                 this.teams.each { _team ->
                     _team.xml(builder)
                 }
             }
-            productOwners() {
+            builder.productOwners() {
                 this.productOwners.each { _user ->
                     _user.xml(builder)
                 }
             }
-            features() {
+            builder.features() {
                 this.features.each { _feature ->
                     _feature.xml(builder)
                 }
             }
-            stories() {
+            builder.stories() {
                 this.stories.findAll { it.parentSprint == null }.each { _story ->
                     _story.xml(builder)
                 }
             }
-            releases() {
+            builder.releases() {
                 this.releases.each { _release ->
                     _release.xml(builder)
                 }
             }
-            attachments() {
+            builder.attachments() {
                 this.attachments.each { _att ->
                     _att.xml(builder)
                 }
             }
-            cliches() {
+            builder.cliches() {
                 this.cliches.each { _cliche ->
                     _cliche.xml(builder)
                 }
             }
+            builder.templates() {
+                Template.findAllByParentProduct(this)?.each{ _templates ->
+                    _templates.xml(builder)
+                }
+            }
+            builder.activities() {
+                this.activities.each { _activity ->
+                    _activity.xml(builder)
+                }
+            }
+            exportDomainsPlugins(builder)
         }
     }
 }
