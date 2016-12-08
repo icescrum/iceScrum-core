@@ -28,6 +28,7 @@ import grails.plugin.springsecurity.web.SecurityRequestHolder as SRH
 import grails.util.Environment
 import grails.util.Holders
 import grails.util.Metadata
+import groovy.xml.MarkupBuilder
 import org.apache.commons.logging.LogFactory
 import org.apache.http.Consts
 import org.apache.http.HttpHost
@@ -49,6 +50,7 @@ import org.apache.http.message.BasicNameValuePair
 import org.apache.http.protocol.BasicHttpContext
 import org.apache.http.util.EntityUtils
 import org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib
+import org.icescrum.core.domain.Product
 import org.icescrum.core.domain.User
 import org.icescrum.core.domain.preferences.UserPreferences
 import org.icescrum.core.security.WebScrumExpressionHandler
@@ -490,6 +492,36 @@ class ApplicationSupport {
             }
         }
         return menus
+    }
+
+    public static void exportProductZIP(Product product, def outputStream) {
+        def attachmentableService = Holders.applicationContext.getBean("attachmentableService")
+        def projectName = "${product.name.replaceAll("[^a-zA-Z\\s]", "").replaceAll(" ", "")}-${new Date().format('yyyy-MM-dd')}"
+        def tempdir = System.getProperty("java.io.tmpdir");
+        tempdir = (tempdir.endsWith("/") || tempdir.endsWith("\\")) ? tempdir : tempdir + System.getProperty("file.separator")
+        def xml = new File(tempdir + projectName + '.xml')
+        try {
+            xml.withWriter('UTF-8') { writer ->
+                def builder = new MarkupBuilder(writer)
+                product.xml(builder)
+            }
+            def files = []
+            product.stories*.attachments.findAll{ it.size() > 0 }?.each{ it?.each{ att -> files << attachmentableService.getFile(att) } }
+            product.features*.attachments.findAll{ it.size() > 0 }?.each{ it?.each{ att -> files << attachmentableService.getFile(att) } }
+            product.releases*.attachments.findAll{ it.size() > 0 }?.each{ it?.each{ att -> files << attachmentableService.getFile(att) } }
+            product.sprints*.attachments.findAll{ it.size() > 0 }?.each{ it?.each{ att -> files << attachmentableService.getFile(att) } }
+            product.attachments.each{ it?.each{ att -> files << attachmentableService.getFile(att) } }
+            def tasks = []
+            product.releases*.each{ it.sprints*.each{ s -> tasks.addAll(s.tasks) } }
+            tasks*.attachments.findAll{ it.size() > 0 }?.each{ it?.each{ att -> files << attachmentableService.getFile(att) } }
+            zipExportFile(outputStream, files, xml, 'attachments')
+        } catch (Exception e) {
+            if (log.debugEnabled) {
+                e.printStackTrace()
+            }
+        } finally {
+            xml.delete()
+        }
     }
 }
 
