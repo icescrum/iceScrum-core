@@ -64,6 +64,7 @@ class WindowTagLib {
             if (attrs.button) {
                 attrs.button.each { button ->
                     out << "<button type='${button.type ?: 'button'}' " +
+                            "ng-click='${button.action ?: 'button'}' " +
                             "class='btn btn-${button.color ?: 'primary'} ${button.class ?: ''}'>${button.text}</button>"
                 }
             }
