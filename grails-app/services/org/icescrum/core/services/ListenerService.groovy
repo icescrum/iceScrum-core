@@ -50,7 +50,7 @@ class ListenerService {
                 }
             }
             def newUpdatedProperties = [:]
-            ['feature', 'dependsOn', 'actor', 'parentSprint'].each { property ->
+            ['feature', 'dependsOn', 'parentSprint'].each { property ->
                 if (dirtyProperties.containsKey(property)) {
                     def oldProperty = dirtyProperties[property]
                     def newProperty = story."$property"
@@ -61,7 +61,6 @@ class ListenerService {
                         pushService.broadcastToProductChannel(IceScrumEventType.UPDATE, oldProperty, product.id)
                     }
                     if (newProperty != null) {
-                        newProperty.lastUpdated = new Date()
                         newProperty.lastUpdated = new Date()
                         newProperty.save(flush: true)
                         newProperty.refresh()
@@ -119,7 +118,7 @@ class ListenerService {
 
     @IceScrumListener(domain = 'actor', eventType = IceScrumEventType.DELETE)
     void actorDelete(Actor actor, Map dirtyProperties) {
-        pushService.broadcastToProductChannel(IceScrumEventType.DELETE, [class: 'Actor', id: dirtyProperties.id], dirtyProperties.backlog.id)
+        pushService.broadcastToProductChannel(IceScrumEventType.DELETE, [class: 'Actor', id: dirtyProperties.id], dirtyProperties.parentProduct.id)
     }
 
     @IceScrumListener(domain = 'feature', eventType = IceScrumEventType.CREATE)
@@ -318,7 +317,7 @@ class ListenerService {
         activityService.removeAllActivities(object)
     }
 
-    @IceScrumListener(domains = ['actor', 'story', 'feature', 'task', 'sprint', 'release', 'acceptanceTest', 'product'], eventType = IceScrumEventType.BEFORE_UPDATE)
+    @IceScrumListener(domains = ['story', 'feature', 'task', 'sprint', 'release', 'acceptanceTest', 'product'], eventType = IceScrumEventType.BEFORE_UPDATE)
     void invalidCacheBeforeUpdate(object, Map dirtyProperties) {
         object.lastUpdated = new Date()
     }

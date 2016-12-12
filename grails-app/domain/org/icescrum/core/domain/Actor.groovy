@@ -84,20 +84,26 @@ class Actor implements Serializable, Comparable<Actor> {
 
     @Override
     boolean equals(Object obj) {
-        if (this.is(obj))
+        if (this.is(obj)) {
             return true
-        if (obj == null)
+        }
+        if (obj == null) {
             return false
-        if (getClass() != obj.getClass())
+        }
+        if (getClass() != obj.getClass()) {
             return false
+        }
         final Actor other = (Actor) obj
         if (parentProduct == null) {
-            if (other.parentProduct != null)
+            if (other.parentProduct != null) {
                 return false
-        } else if (!parentProduct.equals(other.parentProduct))
+            }
+        } else if (!parentProduct.equals(other.parentProduct)) {
             return false
-        if (name != other.name)
+        }
+        if (name != other.name) {
             return false
+        }
         return true
     }
 
@@ -123,10 +129,6 @@ class Actor implements Serializable, Comparable<Actor> {
                 ilike 'name', '%' + term + '%'
             }
         }
-    }
-
-    static searchAllByTermOrTag(productId, term) {
-        search(productId, term)
     }
 
     def xml(def builder) {

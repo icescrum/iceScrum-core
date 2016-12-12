@@ -25,12 +25,11 @@
 
 package org.icescrum.core.services
 
-import org.icescrum.core.event.IceScrumEventPublisher
-import org.icescrum.core.event.IceScrumEventType
-
 import org.icescrum.core.domain.Actor
 import org.icescrum.core.domain.Product
 import org.icescrum.core.error.BusinessException
+import org.icescrum.core.event.IceScrumEventPublisher
+import org.icescrum.core.event.IceScrumEventType
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.transaction.annotation.Transactional
 
@@ -52,8 +51,8 @@ class ActorService extends IceScrumEventPublisher {
     @PreAuthorize('productOwner(#actor.parentProduct) and !archivedProduct(#actor.parentProduct)')
     void delete(Actor actor) {
         Product product = (Product) actor.parentProduct
-        def stillHasPbi = product.stories.any { it.actor?.id == actor.id }
-        if (stillHasPbi) {
+        def hasStories = product.stories.any { it.actor?.id == actor.id }
+        if (hasStories) {
             throw new BusinessException(code: 'is.actor.error.still.hasStories')
         }
         def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_DELETE, actor)
