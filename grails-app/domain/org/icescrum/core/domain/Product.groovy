@@ -47,22 +47,22 @@ class Product extends TimeBox implements Serializable, Attachmentable {
     SortedSet<Release> releases
 
     static hasMany = [
-            actors: Actor,
+            actors  : Actor,
             features: Feature,
-            stories: Story,
+            stories : Story,
             releases: Release,
-            teams: Team,
+            teams   : Team,
             backlogs: Backlog,
-            tasks: Task
+            tasks   : Task
     ]
 
     static mappedBy = [
             features: "backlog",
-            stories: "backlog",
+            stories : "backlog",
             releases: "parentProduct",
             backlogs: "product",
-            actors: "parentProduct",
-            tasks: "parentProduct"
+            actors  : "parentProduct",
+            tasks   : "parentProduct"
     ]
 
     static transients = [
@@ -378,7 +378,7 @@ class Product extends TimeBox implements Serializable, Attachmentable {
                 }
             }
             builder.templates() {
-                Template.findAllByParentProduct(this)?.each{ _templates ->
+                Template.findAllByParentProduct(this)?.each { _templates ->
                     _templates.xml(builder)
                 }
             }

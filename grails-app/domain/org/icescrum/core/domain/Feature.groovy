@@ -223,13 +223,11 @@ class Feature extends BacklogElement implements Serializable {
             builder.name { builder.mkp.yieldUnescaped("<![CDATA[${this.name}]]>") }
             builder.notes { builder.mkp.yieldUnescaped("<![CDATA[${this.notes ?: ''}]]>") }
             builder.description { builder.mkp.yieldUnescaped("<![CDATA[${this.description ?: ''}]]>") }
-
             builder.stories() {
                 this.stories.each { _story ->
                     story(uid: _story.uid)
                 }
             }
-
             builder.attachments() {
                 this.attachments.each { _att ->
                     _att.xml(builder)

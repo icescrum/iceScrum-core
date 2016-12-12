@@ -86,7 +86,7 @@ class ApplicationSupport {
         def grailsApplication = Holders.grailsApplication
         WebScrumExpressionHandler webExpressionHandler = (WebScrumExpressionHandler) grailsApplication.mainContext.getBean(WebScrumExpressionHandler.class)
         def contexts = viewDefinition?.context ? (viewDefinition.context instanceof String) ? [viewDefinition.context] : viewDefinition.context : [null]
-        if (!viewDefinition || !((getCurrentContext(params)?.name?:null) in contexts)) {
+        if (!viewDefinition || !((getCurrentContext(params)?.name ?: null) in contexts)) {
             return false
         }
         //secured on uiDefinition
@@ -483,12 +483,12 @@ class ApplicationSupport {
                 show = show()
             }
             if (show) {
-                menus << [title: menu?.title,
-                          id: windowDefinitionId,
+                menus << [title   : menu?.title,
+                          id      : windowDefinitionId,
                           shortcut: "ctrl+" + (menus.size() + 1),
-                          icon: windowDefinition.icon,
+                          icon    : windowDefinition.icon,
                           position: show instanceof Map ? show.pos.toInteger() ?: 1 : 1,
-                          visible: show.visible]
+                          visible : show.visible]
             }
         }
         return menus
@@ -506,14 +506,14 @@ class ApplicationSupport {
                 product.xml(builder)
             }
             def files = []
-            product.stories*.attachments.findAll{ it.size() > 0 }?.each{ it?.each{ att -> files << attachmentableService.getFile(att) } }
-            product.features*.attachments.findAll{ it.size() > 0 }?.each{ it?.each{ att -> files << attachmentableService.getFile(att) } }
-            product.releases*.attachments.findAll{ it.size() > 0 }?.each{ it?.each{ att -> files << attachmentableService.getFile(att) } }
-            product.sprints*.attachments.findAll{ it.size() > 0 }?.each{ it?.each{ att -> files << attachmentableService.getFile(att) } }
-            product.attachments.each{ it?.each{ att -> files << attachmentableService.getFile(att) } }
+            product.stories*.attachments.findAll { it.size() > 0 }?.each { it?.each { att -> files << attachmentableService.getFile(att) } }
+            product.features*.attachments.findAll { it.size() > 0 }?.each { it?.each { att -> files << attachmentableService.getFile(att) } }
+            product.releases*.attachments.findAll { it.size() > 0 }?.each { it?.each { att -> files << attachmentableService.getFile(att) } }
+            product.sprints*.attachments.findAll { it.size() > 0 }?.each { it?.each { att -> files << attachmentableService.getFile(att) } }
+            product.attachments.each { it?.each { att -> files << attachmentableService.getFile(att) } }
             def tasks = []
-            product.releases*.each{ it.sprints*.each{ s -> tasks.addAll(s.tasks) } }
-            tasks*.attachments.findAll{ it.size() > 0 }?.each{ it?.each{ att -> files << attachmentableService.getFile(att) } }
+            product.releases*.each { it.sprints*.each { s -> tasks.addAll(s.tasks) } }
+            tasks*.attachments.findAll { it.size() > 0 }?.each { it?.each { att -> files << attachmentableService.getFile(att) } }
             zipExportFile(outputStream, files, xml, 'attachments')
         } catch (Exception e) {
             if (log.debugEnabled) {

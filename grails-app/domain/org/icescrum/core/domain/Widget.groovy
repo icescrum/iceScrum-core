@@ -13,7 +13,7 @@ class Widget implements Serializable {
     String settingsData
     String widgetDefinitionId
 
-    static belongsTo = [userPreferences:UserPreferences]
+    static belongsTo = [userPreferences: UserPreferences]
 
     static constraints = {
         settingsData nullable: true
@@ -23,8 +23,8 @@ class Widget implements Serializable {
         cache true
         settingsData type: 'text'
         table 'is_up_widgets'
-        userPreferences index:'up_wdi_index'
-        widgetDefinitionId index:'up_wdi_index'
+        userPreferences index: 'up_wdi_index'
+        widgetDefinitionId index: 'up_wdi_index'
     }
 
     def beforeInsert() {
@@ -46,7 +46,7 @@ class Widget implements Serializable {
             builder.onRight(this.onRight)
             builder.position(this.position)
             builder.widgetDefinitionId(this.widgetDefinitionId)
-            builder.settingsData{ builder.mkp.yieldUnescaped("<![CDATA[${this.settingsData}]]>") }
+            builder.settingsData { builder.mkp.yieldUnescaped("<![CDATA[${this.settingsData}]]>") }
             exportDomainsPlugins(builder)
         }
     }

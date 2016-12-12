@@ -21,7 +21,6 @@
  */
 
 
-
 package org.icescrum.core.domain.security
 
 import org.icescrum.core.domain.Product

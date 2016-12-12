@@ -22,7 +22,6 @@
  */
 
 
-
 package org.icescrum.core.domain
 
 class Cliche implements Serializable {
@@ -150,8 +149,8 @@ class Cliche implements Serializable {
         return hash
     }
 
-    def xml(builder){
-        builder.cliche(id:this.id){
+    def xml(builder) {
+        builder.cliche(id: this.id) {
             builder.id(this.id)
             builder.type(this.type)
             builder.datePrise(this.datePrise)

@@ -23,7 +23,6 @@
  */
 
 
-
 package org.icescrum.core.domain
 
 import grails.util.GrailsNameUtils
@@ -53,9 +52,9 @@ class Task extends BacklogElement implements Serializable {
     int state = Task.STATE_WAIT
 
     static belongsTo = [
-            creator: User,
-            responsible: User,
-            parentStory: Story,
+            creator      : User,
+            responsible  : User,
+            parentStory  : Story,
             parentProduct: Product
     ]
 
@@ -105,7 +104,7 @@ class Task extends BacklogElement implements Serializable {
                 eq 'id', s
             }
         }
-        findLastUpdated {storyId ->
+        findLastUpdated { storyId ->
             parentStory {
                 eq 'id', storyId
             }
@@ -122,28 +121,28 @@ class Task extends BacklogElement implements Serializable {
         executeQuery("""SELECT t
                         FROM org.icescrum.core.domain.Task as t
                         WHERE t.parentProduct.id = :pid
-                        AND t.id = :id""", [pid: pid, id:id], [max:1])[0]
+                        AND t.id = :id""", [pid: pid, id: id], [max: 1])[0]
     }
 
     static Task getInProductByUid(Long pid, int uid) {
         executeQuery("""SELECT t
                         FROM org.icescrum.core.domain.Task as t
                         WHERE t.parentProduct.id = :pid
-                        AND t.uid = :uid""", [pid: pid, uid:uid], [max:1])[0]
+                        AND t.uid = :uid""", [pid: pid, uid: uid], [max: 1])[0]
     }
 
     static List<Task> getAllInProduct(Long pid, List id) {
         executeQuery("""SELECT t
                         FROM org.icescrum.core.domain.Task as t
                         WHERE t.parentProduct.id = :pid
-                        AND t.id IN (:id) """, [pid: pid, id:id])
+                        AND t.id IN (:id) """, [pid: pid, id: id])
     }
 
     static List<Task> getAllInProductUID(Long pid, List uid) {
         executeQuery("""SELECT t
                         FROM org.icescrum.core.domain.Task as t
                         WHERE t.parentProduct.id = :pid
-                        AND t.uid IN (:uid)""", [pid: pid, uid:uid])
+                        AND t.uid IN (:uid)""", [pid: pid, uid: uid])
     }
 
     static List<Task> getAllInProduct(Long pid) {
@@ -168,22 +167,22 @@ class Task extends BacklogElement implements Serializable {
         (executeQuery(
                 """SELECT MAX(t.uid)
                    FROM org.icescrum.core.domain.Task as t
-                   WHERE t.parentProduct.id = :pid""", [pid: pid])[0]?:0) + 1
+                   WHERE t.parentProduct.id = :pid""", [pid: pid])[0] ?: 0) + 1
     }
 
     static findLastUpdatedComment(def element) {
         executeQuery("SELECT c.lastUpdated " +
-            "FROM org.grails.comments.Comment as c, org.grails.comments.CommentLink as cl, ${element.class.name} as b " +
-            "WHERE c = cl.comment " +
-            "AND cl.commentRef = b " +
-            "AND cl.type = :type " +
-            "AND b.id = :id " +
-            "ORDER BY c.lastUpdated DESC",
-            [id: element.id, type: GrailsNameUtils.getPropertyName(element.class)],
-            [max: 1])[0]
+                "FROM org.grails.comments.Comment as c, org.grails.comments.CommentLink as cl, ${element.class.name} as b " +
+                "WHERE c = cl.comment " +
+                "AND cl.commentRef = b " +
+                "AND cl.type = :type " +
+                "AND b.id = :id " +
+                "ORDER BY c.lastUpdated DESC",
+                [id: element.id, type: GrailsNameUtils.getPropertyName(element.class)],
+                [max: 1])[0]
     }
 
-    static Task withTask(long productId, long id){
+    static Task withTask(long productId, long id) {
         Task task = (Task) getInProduct(productId, id)
         if (!task) {
             throw new ObjectNotFoundException(id, 'Task')
@@ -191,7 +190,7 @@ class Task extends BacklogElement implements Serializable {
         return task
     }
 
-    static List<Task> withTasks(def params, def id = 'id'){
+    static List<Task> withTasks(def params, def id = 'id') {
         def ids = params[id]?.contains(',') ? params[id].split(',')*.toLong() : params.list(id)*.toLong()
         List<Task> tasks = ids ? getAllInProduct(params.product.toLong(), ids) : null
         if (!tasks) {
@@ -228,69 +227,67 @@ class Task extends BacklogElement implements Serializable {
         return true
     }
 
-    Sprint getSprint(){
-        if (this.getBacklog()?.id)
-            return (Sprint)this.getBacklog()
-        return null
+    Sprint getSprint() {
+        return this.getBacklog()?.id ? (Sprint) this.getBacklog() : null
     }
 
-    def getActivity(){
-        return activities.sort { a, b-> b.dateCreated <=> a.dateCreated }
+    def getActivity() {
+        return activities.sort { a, b -> b.dateCreated <=> a.dateCreated }
     }
 
-    static search(product, options){
+    static search(product, options) {
         def criteria = {
             backlog {
-                if (options.task?.parentSprint?.isLong() && options.task.parentSprint.toLong() in product.releases*.sprints*.id.flatten()){
+                if (options.task?.parentSprint?.isLong() && options.task.parentSprint.toLong() in product.releases*.sprints*.id.flatten()) {
                     eq 'id', options.task.parentSprint.toLong()
-                } else if (options.task?.parentRelease?.isLong() && options.task.parentRelease.toLong() in product.releases*.id){
-                    'in' 'id', product.releases.find{it.id == options.task.parentRelease.toLong()}.sprints*.id
+                } else if (options.task?.parentRelease?.isLong() && options.task.parentRelease.toLong() in product.releases*.id) {
+                    'in' 'id', product.releases.find { it.id == options.task.parentRelease.toLong() }.sprints*.id
                 } else {
                     'in' 'id', product.releases*.sprints*.id.flatten()
                 }
             }
 
-            if (options.term || options.task != null){
-                if (options.term){
+            if (options.term || options.task != null) {
+                if (options.term) {
                     or {
-                        if (options.term?.isInteger()){
+                        if (options.term?.isInteger()) {
                             eq 'uid', options.term.toInteger()
-                        }else{
-                            ilike 'name', '%'+options.term+'%'
-                            ilike 'description', '%'+options.term+'%'
-                            ilike 'notes', '%'+options.term+'%'
+                        } else {
+                            ilike 'name', '%' + options.term + '%'
+                            ilike 'description', '%' + options.term + '%'
+                            ilike 'notes', '%' + options.term + '%'
                         }
                     }
                 }
-                if (options.task?.type?.isInteger()){
+                if (options.task?.type?.isInteger()) {
                     eq 'type', options.task.type.toInteger()
                 }
-                if (options.task?.state?.isInteger()){
+                if (options.task?.state?.isInteger()) {
                     eq 'state', options.task.state.toInteger()
                 }
-                if (options.task?.parentStory?.isLong()){
-                    parentStory{
+                if (options.task?.parentStory?.isLong()) {
+                    parentStory {
                         eq 'id', options.task.parentStory.toLong()
                     }
                 }
-                if (options.task?.creator?.isLong()){
+                if (options.task?.creator?.isLong()) {
                     creator {
                         eq 'id', options.task.creator.toLong()
                     }
                 }
-                if (options.task?.responsible?.isLong()){
+                if (options.task?.responsible?.isLong()) {
                     responsible {
                         eq 'id', options.task.responsible.toLong()
                     }
                 }
             }
         }
-        if (options.tag){
+        if (options.tag) {
             return Task.findAllByTagWithCriteria(options.tag) {
                 criteria.delegate = delegate
                 criteria.call()
             }
-        } else if(options.term || options.task)  {
+        } else if (options.term || options.task) {
             return Task.createCriteria().list {
                 criteria.delegate = delegate
                 criteria.call()
@@ -309,8 +306,8 @@ class Task extends BacklogElement implements Serializable {
         searchByTermOrTag(product, searchOptions, term)
     }
 
-    def xml(builder){
-        builder.task(uid:this.uid){
+    def xml(builder) {
+        builder.task(uid: this.uid) {
             builder.type(this.type)
             builder.rank(this.rank)
             builder.color(this.color)
@@ -322,26 +319,26 @@ class Task extends BacklogElement implements Serializable {
             builder.todoDate(this.todoDate)
             builder.inProgressDate(this.inProgressDate)
 
-            builder.creator(uid:this.creator.uid)
+            builder.creator(uid: this.creator.uid)
 
-            if (this.responsible){
-                builder.responsible(uid:this.responsible.uid)
+            if (this.responsible) {
+                builder.responsible(uid: this.responsible.uid)
             }
 
             builder.tags { builder.mkp.yieldUnescaped("<![CDATA[${this.tags}]]>") }
             builder.name { builder.mkp.yieldUnescaped("<![CDATA[${this.name}]]>") }
-            builder.notes { builder.mkp.yieldUnescaped("<![CDATA[${this.notes?:''}]]>") }
-            builder.description { builder.mkp.yieldUnescaped("<![CDATA[${this.description?:''}]]>") }
+            builder.notes { builder.mkp.yieldUnescaped("<![CDATA[${this.notes ?: ''}]]>") }
+            builder.description { builder.mkp.yieldUnescaped("<![CDATA[${this.description ?: ''}]]>") }
 
-            builder.attachments(){
+            builder.attachments() {
                 this.attachments.each { _att ->
                     _att.xml(builder)
                 }
             }
 
-            builder.comments(){
+            builder.comments() {
                 this.comments.each { _comment ->
-                    builder.comment(){
+                    builder.comment() {
                         builder.dateCreated(_comment.dateCreated)
                         builder.posterId(_comment.posterId)
                         builder.posterClass(_comment.posterClass)

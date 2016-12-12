@@ -79,7 +79,7 @@ class Activity implements Serializable, Comparable {
 
     // May not work on ORACLE
     static List<List> storyActivities(User user) {
-        def products = Product.findAllByRole(user, [BasePermission.WRITE,BasePermission.READ] , [cache:true], true, false)
+        def products = Product.findAllByRole(user, [BasePermission.WRITE, BasePermission.READ], [cache: true], true, false)
         def activitiesAndStories = []
         if (products) {
             activitiesAndStories = executeQuery("""SELECT DISTINCT a, s
@@ -87,8 +87,8 @@ class Activity implements Serializable, Comparable {
                         WHERE a.parentType = 'story'
                         AND a.poster.id != :uid
                         AND a.parentRef = s.id
-                        AND s.backlog.id in (${ products*.id.join(',')})
-                        ORDER BY a.dateCreated DESC""", [uid: user.id], [cache:true])
+                        AND s.backlog.id in (${products*.id.join(',')})
+                        ORDER BY a.dateCreated DESC""", [uid: user.id], [cache: true])
             activitiesAndStories = activitiesAndStories.findAll { it[0].important }
         }
         activitiesAndStories

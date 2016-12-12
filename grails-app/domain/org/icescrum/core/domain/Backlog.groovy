@@ -36,7 +36,7 @@ class Backlog {
     boolean shared
 
     static belongsTo = [
-        product: Product
+            product: Product
     ]
 
     static mapping = {
@@ -46,7 +46,7 @@ class Backlog {
     }
 
     static transients = [
-        'count', 'isDefault'
+            'count', 'isDefault'
     ]
 
     static constraints = {
@@ -70,13 +70,13 @@ class Backlog {
         return owner == null
     }
 
-    def xml(builder){
-        builder.backlog(id:this.id){
+    def xml(builder) {
+        builder.backlog(id: this.id) {
             builder.name { builder.mkp.yieldUnescaped("<![CDATA[${this.name}]]>") }
             builder.code(this.code)
             builder.shared(this.shared)
             builder.filter(this.filter)
-            builder.notes{ builder.mkp.yieldUnescaped("<![CDATA[${this.notes ?: ''}]]>") }
+            builder.notes { builder.mkp.yieldUnescaped("<![CDATA[${this.notes ?: ''}]]>") }
             builder.owner(uid: this.owner.uid)
             exportDomainsPlugins(builder)
         }

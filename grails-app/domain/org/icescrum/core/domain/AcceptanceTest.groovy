@@ -38,8 +38,8 @@ class AcceptanceTest implements Serializable {
     SortedSet<Activity> activities
 
     static belongsTo = [
-        creator: User,
-        parentStory: Story
+            creator    : User,
+            parentStory: Story
     ]
 
     static hasMany = [activities: Activity]
@@ -61,7 +61,7 @@ class AcceptanceTest implements Serializable {
                 """SELECT MAX(t.uid)
                    FROM org.icescrum.core.domain.AcceptanceTest as t, org.icescrum.core.domain.Story as s
                    WHERE t.parentStory = s
-                   AND s.backlog.id = :pid """, [pid: pid])[0]?:0) + 1
+                   AND s.backlog.id = :pid """, [pid: pid])[0] ?: 0) + 1
     }
 
     static AcceptanceTest getInProduct(productId, id) {
@@ -88,7 +88,7 @@ class AcceptanceTest implements Serializable {
                    AND at.parentStory.id = :sid """, [sid: storyId, pid: productId])
     }
 
-    static AcceptanceTest withAcceptanceTest(long productId, long id){
+    static AcceptanceTest withAcceptanceTest(long productId, long id) {
         AcceptanceTest acceptanceTest = getInProduct(productId, id)
         if (!acceptanceTest) {
             throw new ObjectNotFoundException(id, 'AcceptanceTest')
@@ -123,7 +123,7 @@ class AcceptanceTest implements Serializable {
         return result;
     }
 
-    def getParentProduct(){
+    def getParentProduct() {
         return this.parentStory.backlog
     }
 
@@ -154,12 +154,12 @@ class AcceptanceTest implements Serializable {
         state = stateEnum.id
     }
 
-    def xml(builder){
-        builder.acceptanceTest(uid:this.uid){
+    def xml(builder) {
+        builder.acceptanceTest(uid: this.uid) {
             builder.state(this.state)
-            builder.creator(uid:this.creator.uid)
+            builder.creator(uid: this.creator.uid)
             builder.name { builder.mkp.yieldUnescaped("<![CDATA[${this.name}]]>") }
-            builder.description { builder.mkp.yieldUnescaped("<![CDATA[${this.description?:''}]]>") }
+            builder.description { builder.mkp.yieldUnescaped("<![CDATA[${this.description ?: ''}]]>") }
             builder.activities() {
                 this.activities.each { _activity ->
                     _activity.xml(builder)

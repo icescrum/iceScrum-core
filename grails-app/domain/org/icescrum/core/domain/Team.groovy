@@ -21,18 +21,17 @@
  */
 
 
-
 package org.icescrum.core.domain
 
+import grails.plugin.springsecurity.acl.AclUtilService
 import grails.util.Holders
 import org.hibernate.ObjectNotFoundException
+import org.icescrum.core.domain.Invitation.InvitationType
 import org.icescrum.core.domain.security.Authority
 import org.icescrum.core.services.SecurityService
-import org.icescrum.core.domain.Invitation.InvitationType
 import org.springframework.security.acls.domain.BasePermission
 import org.springframework.security.acls.model.Acl
 import org.springframework.security.acls.model.NotFoundException
-import grails.plugin.springsecurity.acl.AclUtilService
 
 class Team implements Serializable, Comparable {
 
@@ -48,7 +47,7 @@ class Team implements Serializable, Comparable {
 
     static hasMany = [
             products: Product,
-            members: User
+            members : User
     ]
 
     static transients = ['scrumMasters', 'owner', 'invitedScrumMasters', 'invitedMembers']
@@ -151,7 +150,7 @@ class Team implements Serializable, Comparable {
                         AND acl.id = ai.owner
                         AND ai.owner.sid = :sid
                         AND ai.aclClass = ac.id
-                        AND ac.className = 'org.icescrum.core.domain.Team'""", [sid: username, term:term], params ?: [:])
+                        AND ac.className = 'org.icescrum.core.domain.Team'""", [sid: username, term: term], params ?: [:])
     }
 
     static countByOwner(String user, params, String term = '%%') {
@@ -170,7 +169,7 @@ class Team implements Serializable, Comparable {
 
     static namedQueries = {
 
-        productTeam {p, u ->
+        productTeam { p, u ->
             products {
                 idEq(p)
             }
@@ -180,7 +179,7 @@ class Team implements Serializable, Comparable {
         }
 
 
-        teamLike {term ->
+        teamLike { term ->
             ilike("name", "%$term%")
         }
 
@@ -193,11 +192,12 @@ class Team implements Serializable, Comparable {
             this.scrumMasters
         } else if (this.id) {
             def acl = aclUtilService.readAcl(this.getClass(), this.id)
-            def users = acl.entries.findAll{it.permission in SecurityService.scrumMasterPermissions}*.sid*.principal;
-            if (users)
-                return User.findAll("from User as u where u.username in (:users)",[users:users], [cache: true])
-            else
+            def users = acl.entries.findAll { it.permission in SecurityService.scrumMasterPermissions }*.sid*.principal;
+            if (users) {
+                return User.findAll("from User as u where u.username in (:users)", [users: users], [cache: true])
+            } else {
                 return []
+            }
         } else {
             []
         }
@@ -206,7 +206,7 @@ class Team implements Serializable, Comparable {
     def getOwner() {
         if (this.id) {
             def acl = retrieveAclTeam()
-            return User.findByUsername(acl.owner.principal,[cache: true])
+            return User.findByUsername(acl.owner.principal, [cache: true])
         } else {
             null
         }
@@ -238,9 +238,9 @@ class Team implements Serializable, Comparable {
         return result
     }
 
-    def beforeValidate(){
-        //Create uid before first save object
-        if (!this.id && !this.uid){
+    def beforeValidate() {
+        // Create uid before first save object
+        if (!this.id && !this.uid) {
             this.uid = (this.name).encodeAsMD5()
         }
     }
@@ -268,7 +268,7 @@ class Team implements Serializable, Comparable {
         return acl
     }
 
-    static Team withTeam(long id){
+    static Team withTeam(long id) {
         Team team = get(id)
         if (!team) {
             throw new ObjectNotFoundException(id, 'Team')
@@ -277,13 +277,12 @@ class Team implements Serializable, Comparable {
     }
 
     def xml(builder) {
-        builder.team(uid:this.uid) {
+        builder.team(uid: this.uid) {
             builder.velocity(this.velocity)
             builder.dateCreated(this.dateCreated)
             builder.lastUpdated(this.lastUpdated)
             builder.name { builder.mkp.yieldUnescaped("<![CDATA[${this.name}]]>") }
-            builder.description { builder.mkp.yieldUnescaped("<![CDATA[${this.description?:''}]]>") }
-
+            builder.description { builder.mkp.yieldUnescaped("<![CDATA[${this.description ?: ''}]]>") }
             builder.scrumMasters() {
                 this.scrumMasters?.each { _user ->
                     builder.user(uid: _user.uid)

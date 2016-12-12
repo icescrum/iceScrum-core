@@ -21,7 +21,6 @@
  */
 
 
-
 package org.icescrum.core.domain.security
 
 import org.apache.commons.lang.builder.HashCodeBuilder

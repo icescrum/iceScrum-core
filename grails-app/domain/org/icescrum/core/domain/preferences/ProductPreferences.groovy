@@ -21,13 +21,11 @@
  */
 
 
-
-
 package org.icescrum.core.domain.preferences
 
 import org.icescrum.core.domain.Product
 
-class ProductPreferences implements Serializable{
+class ProductPreferences implements Serializable {
 
     static final long serialVersionUID = 813639045272950126L
 
@@ -71,9 +69,9 @@ class ProductPreferences implements Serializable{
         cache true
         table 'is_product_preferences'
     }
-    
-    def xml(builder){
-        builder.preferences(id:this.id){
+
+    def xml(builder) {
+        builder.preferences(id: this.id) {
             builder.hidden(this.hidden)
             builder.timezone(this.timezone)
             builder.hideWeekend(this.hideWeekend)

@@ -30,11 +30,7 @@ import org.codehaus.groovy.grails.commons.GrailsClassUtils
 import org.codehaus.groovy.grails.plugins.jasper.JasperExportFormat
 import org.codehaus.groovy.grails.plugins.jasper.JasperReportDef
 import org.codehaus.groovy.grails.plugins.jasper.JasperService
-import org.grails.taggable.Tag
-import org.grails.taggable.TagException
-import org.grails.taggable.TagLink
 import org.icescrum.core.cors.CorsFilter
-import org.icescrum.core.domain.Product
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
 import org.icescrum.core.event.IceScrumListener
@@ -45,8 +41,8 @@ import org.icescrum.core.ui.UiDefinitionArtefactHandler
 import org.icescrum.core.utils.JSONIceScrumDomainClassMarshaller
 import org.icescrum.plugins.attachmentable.domain.Attachment
 import org.icescrum.plugins.attachmentable.services.AttachmentableService
-import org.springframework.web.servlet.support.RequestContextUtils as RCU
 import org.springframework.web.context.request.RequestContextHolder as RCH
+import org.springframework.web.servlet.support.RequestContextUtils as RCU
 
 import javax.servlet.http.HttpServletResponse
 import java.lang.reflect.Method
@@ -85,11 +81,10 @@ class IcescrumCoreGrailsPlugin {
         println '\nConfiguring iceScrum plugin core ...'
         ApplicationSupport.createUUID()
         System.setProperty('lbdsl.home', "${application.config.icescrum.baseDir.toString()}${File.separator}lbdsl")
-
-        //init config.icescrum.export for plugins to be able to register without an if exist / create test
+        // Init config.icescrum.export for plugins to be able to register without an if exist / create test
         application.config?.icescrum?.export = [:]
-        application.domainClasses.each{
-            if(it.metaClass.getMetaMethod("xml")){
+        application.domainClasses.each {
+            if (it.metaClass.getMetaMethod("xml")) {
                 application.config?.icescrum?.export."${it.propertyName}" = []
             }
         }
@@ -104,7 +99,6 @@ class IcescrumCoreGrailsPlugin {
         JasperService jasperService = ctx.getBean('jasperService')
         UiDefinitionService uiDefinitionService = ctx.getBean('uiDefinitionService')
         uiDefinitionService.loadDefinitions()
-
         application.controllerClasses.each {
             addJasperMethod(it, springSecurityService, jasperService)
             if (it.logicalPropertyName in controllersWithDownloadAndPreview) {
@@ -142,7 +136,6 @@ class IcescrumCoreGrailsPlugin {
             def controller = application.getControllerClass(event.source?.name)
             HdImageService hdImageService = event.ctx.getBean('hdImageService')
             AttachmentableService attachmentableService = event.ctx.getBean('attachmentableService')
-
             if (uiDefinitionService.hasWindowDefinition(controller.logicalPropertyName)) {
                 if (controller.logicalPropertyName in controllersWithDownloadAndPreview) {
                     addDownloadAndPreviewMethods(controller, attachmentableService, hdImageService)
@@ -212,14 +205,13 @@ class IcescrumCoreGrailsPlugin {
         }
     }
 
-    private void addExportDomainsPlugins(source, config){
+    private void addExportDomainsPlugins(source, config) {
         source.metaClass.exportDomainsPlugins = { builder ->
             def domainObject = delegate
             def progress = RCH.currentRequestAttributes().getSession()?.progress
-            if(progress){
-                if(!progress.buffer?.contains(source.propertyName)){
-                    //init
-                    if(!progress.buffer){
+            if (progress) {
+                if (!progress.buffer?.contains(source.propertyName)) {
+                    if (!progress.buffer) {
                         progress.buffer = []
                     }
                     progress.buffer << source.propertyName
@@ -227,7 +219,7 @@ class IcescrumCoreGrailsPlugin {
                     progress.updateProgress(newValue, source.propertyName)
                 }
             }
-            config[source.propertyName]?.each{ closure ->
+            config[source.propertyName]?.each { closure ->
                 closure.delegate = domainObject
                 closure(domainObject, builder)
             }

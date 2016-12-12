@@ -76,8 +76,8 @@ class Invitation implements Serializable {
         return [id: null, firstName: firstName, lastName: lastName, email: email]
     }
 
-    def xml(builder){
-        builder.invitation(){
+    def xml(builder) {
+        builder.invitation() {
             builder.type(this.type)
             builder.email(this.email)
             builder.dateCreated(this.dateCreated)

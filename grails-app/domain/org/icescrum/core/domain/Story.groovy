@@ -60,19 +60,19 @@ class Story extends BacklogElement implements Cloneable, Serializable {
     String affectVersion
 
     static belongsTo = [
-            creator: User,
-            feature: Feature,
+            creator     : User,
+            feature     : Feature,
             parentSprint: Sprint,
-            actor: Actor,
-            dependsOn: Story
+            actor       : Actor,
+            dependsOn   : Story
     ]
 
     static hasMany = [
-            tasks: Task,
+            tasks          : Task,
             acceptanceTests: AcceptanceTest,
-            likers: User,
-            followers: User,
-            dependences: Story
+            likers         : User,
+            followers      : User,
+            dependences    : Story
     ]
 
     static transients = [
@@ -95,7 +95,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
         plannedDate(nullable: true)
         inProgressDate(nullable: true)
         doneDate(nullable: true)
-        parentSprint(nullable: true, validator: { newSprint, story -> newSprint == null || newSprint.parentProduct.id == story.backlog.id ?: 'invalid'})
+        parentSprint(nullable: true, validator: { newSprint, story -> newSprint == null || newSprint.parentProduct.id == story.backlog.id ?: 'invalid' })
         feature(nullable: true, validator: { newFeature, story -> newFeature == null || newFeature.backlog.id == story.backlog.id ?: 'invalid' })
         actor(nullable: true, validator: { newActor, story -> newActor == null || newActor.parentProduct.id == story.backlog.id ?: 'invalid' })
         affectVersion(nullable: true)
@@ -305,14 +305,14 @@ class Story extends BacklogElement implements Cloneable, Serializable {
 
     static findLastUpdatedComment(def element) {
         executeQuery("SELECT c.lastUpdated " +
-            "FROM org.grails.comments.Comment as c, org.grails.comments.CommentLink as cl, ${element.class.name} as b " +
-            "WHERE c = cl.comment " +
-            "AND cl.commentRef = b " +
-            "AND cl.type = :type " +
-            "AND b.id = :id " +
-            "ORDER BY c.lastUpdated DESC",
-            [id: element.id, type: GrailsNameUtils.getPropertyName(element.class)],
-            [max: 1])[0]
+                "FROM org.grails.comments.Comment as c, org.grails.comments.CommentLink as cl, ${element.class.name} as b " +
+                "WHERE c = cl.comment " +
+                "AND cl.commentRef = b " +
+                "AND cl.type = :type " +
+                "AND b.id = :id " +
+                "ORDER BY c.lastUpdated DESC",
+                [id: element.id, type: GrailsNameUtils.getPropertyName(element.class)],
+                [max: 1])[0]
     }
 
     int compareTo(Story o) {
@@ -370,7 +370,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
 
     static search(product, options, rowCount = false) {
         List<Story> stories = []
-        def getList = { it instanceof  List ? it : (it instanceof Object[] ? it as List : [it]) }
+        def getList = { it instanceof List ? it : (it instanceof Object[] ? it as List : [it]) }
         def criteria = {
             if (rowCount) {
                 projections {
@@ -604,7 +604,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
             builder.tags { builder.mkp.yieldUnescaped("<![CDATA[${this.tags}]]>") }
             builder.name { builder.mkp.yieldUnescaped("<![CDATA[${this.name}]]>") }
             builder.notes { builder.mkp.yieldUnescaped("<![CDATA[${this.notes ?: ''}]]>") }
-            builder.origin { builder.mkp.yieldUnescaped("<![CDATA[${this.origin?: ''}]]>") }
+            builder.origin { builder.mkp.yieldUnescaped("<![CDATA[${this.origin ?: ''}]]>") }
             builder.description { builder.mkp.yieldUnescaped("<![CDATA[${this.description ?: ''}]]>") }
 
             builder.creator(uid: this.creator.uid)
@@ -642,12 +642,12 @@ class Story extends BacklogElement implements Cloneable, Serializable {
             }
             builder.likers() {
                 this.likers.each { _liker ->
-                    builder.user(uid:_liker.id)
+                    builder.user(uid: _liker.id)
                 }
             }
             builder.followers() {
                 this.followers.each { _follower ->
-                    builder.user(uid:_follower.id)
+                    builder.user(uid: _follower.id)
                 }
             }
             builder.tasks() {

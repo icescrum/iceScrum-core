@@ -52,10 +52,10 @@ class Template implements Serializable {
     }
 
     def xml(builder) {
-        builder.template(){
-            builder.name{ builder.mkp.yieldUnescaped("<![CDATA[${this.name ?: ''}]]>") }
+        builder.template() {
+            builder.name { builder.mkp.yieldUnescaped("<![CDATA[${this.name ?: ''}]]>") }
             builder.itemClass(this.itemClass)
-            builder.serializedData{ builder.mkp.yieldUnescaped("<![CDATA[${this.serializedData ?: ''}]]>") }
+            builder.serializedData { builder.mkp.yieldUnescaped("<![CDATA[${this.serializedData ?: ''}]]>") }
             exportDomainsPlugins(builder)
         }
     }

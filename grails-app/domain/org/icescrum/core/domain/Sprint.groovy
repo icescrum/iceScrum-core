@@ -48,12 +48,12 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
 
     static mappedBy = [
             stories: "parentSprint",
-            tasks: "backlog"
+            tasks  : "backlog"
     ]
 
     static hasMany = [
             stories: Story,
-            tasks: Task,
+            tasks  : Task,
     ]
 
     static belongsTo = [
@@ -341,7 +341,7 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
                 }
             }
             builder.tasks() {
-                this.tasks.findAll{ it.parentStory == null }.each { _task ->
+                this.tasks.findAll { it.parentStory == null }.each { _task ->
                     _task.xml(builder)
                 }
             }

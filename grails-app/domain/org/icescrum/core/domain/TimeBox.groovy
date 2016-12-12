@@ -21,7 +21,6 @@
  */
 
 
-
 package org.icescrum.core.domain
 
 class TimeBox implements Comparable<TimeBox>, Serializable {
@@ -40,29 +39,29 @@ class TimeBox implements Comparable<TimeBox>, Serializable {
     SortedSet<Activity> activities
 
     static hasMany = [
-        cliches: Cliche,
-        activities: Activity
+            cliches   : Cliche,
+            activities: Activity
     ]
 
     static mappedBy = [
-        cliches: "parentTimeBox"
+            cliches: "parentTimeBox"
     ]
 
     static constraints = {
-        startDate(validator:{ val, obj ->
-            if(val == obj.endDate){
+        startDate(validator: { val, obj ->
+            if (val == obj.endDate) {
                 return ['equals.endDate']
             }
-            if(val.after(obj.endDate)){
+            if (val.after(obj.endDate)) {
                 return ['after.endDate']
             }
             return true
         })
-        endDate(validator:{ val, obj ->
-            if(val == obj.startDate){
+        endDate(validator: { val, obj ->
+            if (val == obj.startDate) {
                 return ['equals.startDate']
             }
-            if(val.before(obj.startDate)){
+            if (val.before(obj.startDate)) {
                 return ['before.startDate']
             }
             return true
@@ -90,7 +89,7 @@ class TimeBox implements Comparable<TimeBox>, Serializable {
 
     Integer getDuration() {
         def days = 0
-        if (startDate != null && endDate != null){
+        if (startDate != null && endDate != null) {
             days = this.endDate - this.startDate + 1
         }
         return days

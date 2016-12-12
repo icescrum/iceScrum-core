@@ -23,7 +23,6 @@
  */
 
 
-
 package org.icescrum.core.domain
 
 import org.hibernate.ObjectNotFoundException
@@ -55,7 +54,7 @@ class Actor implements Serializable, Comparable<Actor> {
 
     static namedQueries = {
 
-        getInProduct {p, id ->
+        getInProduct { p, id ->
             parentProduct {
                 eq 'id', p
             }
@@ -66,7 +65,7 @@ class Actor implements Serializable, Comparable<Actor> {
         }
     }
 
-    static Actor withActor(long product, long id){
+    static Actor withActor(long product, long id) {
         Actor actor = (Actor) getInProduct(product, id).list()
         if (!actor) {
             throw new ObjectNotFoundException(id, 'Actor')
@@ -74,7 +73,7 @@ class Actor implements Serializable, Comparable<Actor> {
         return actor
     }
 
-    static List<Actor> withActors(def params, def id = 'id'){
+    static List<Actor> withActors(def params, def id = 'id') {
         def ids = params[id]?.contains(',') ? params[id].split(',')*.toLong() : params.list(id)
         List<Actor> actors = ids ? Actor.getAll(ids).findAll { it } : null
         if (!actors) {
@@ -115,13 +114,13 @@ class Actor implements Serializable, Comparable<Actor> {
         return name.compareTo(cr.name)
     }
 
-    static search(product, term){
+    static search(product, term) {
         return Actor.createCriteria().list {
             parentProduct {
                 eq 'id', product
             }
-            if (term){
-                ilike 'name', '%'+term+'%'
+            if (term) {
+                ilike 'name', '%' + term + '%'
             }
         }
     }
@@ -130,11 +129,11 @@ class Actor implements Serializable, Comparable<Actor> {
         search(productId, term)
     }
 
-    def xml(def builder){
-        builder.actor(){
+    def xml(def builder) {
+        builder.actor() {
             builder.name { builder.mkp.yieldUnescaped("<![CDATA[${this.name}]]>") }
-            builder.stories(){
-                this.stories.each{ _story ->
+            builder.stories() {
+                this.stories.each { _story ->
                     story(uid: _story.uid)
                 }
             }
