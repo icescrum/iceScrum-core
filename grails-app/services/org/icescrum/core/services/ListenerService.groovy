@@ -83,7 +83,7 @@ class ListenerService {
                     activityService.addActivity(story, user, Activity.CODE_UPDATE, story.name, property, dirtyProperties[property]?.toString(), story."$property"?.toString())
                 }
             }
-            ['actor', 'feature', 'dependsOn'].each { property ->
+            ['feature', 'dependsOn'].each { property ->
                 if (dirtyProperties.containsKey(property)) {
                     activityService.addActivity(story, user, Activity.CODE_UPDATE, story.name, property, dirtyProperties[property]?.uid?.toString(), story."$property"?.uid?.toString())
                 }
