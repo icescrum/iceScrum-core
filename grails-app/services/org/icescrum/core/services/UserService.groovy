@@ -86,7 +86,7 @@ class UserService extends IceScrumEventPublisher {
         widgetService.save(user, uiDefinitionService.getWidgetDefinitionById('quickProjects'), false)
         Widget notesWidget = widgetService.save(user, uiDefinitionService.getWidgetDefinitionById('notes'), false)
         def noteProperties = notesWidget.properties.collectEntries { key, val -> [(key): val] }
-        noteProperties.settings = [text: 'Welcome to iceScrum R7! Here is your home, where you can add your widgets, such as this one which allows you to write your personal notes, try updating this text!\n\nWe have also created a "Peetic" project so you can explore iceScrum, try opening it!']
+        noteProperties.settings = [text: 'Welcome to iceScrum 7! Here is your home, where you can add your widgets, such as this one which allows you to write your personal notes, try updating this text!\n\nWe have also created a "Peetic" project so you can explore iceScrum, try opening it!']
         widgetService.update(notesWidget, noteProperties)
         widgetService.save(user, uiDefinitionService.getWidgetDefinitionById('feed'), true)
         widgetService.save(user, uiDefinitionService.getWidgetDefinitionById('tasks'), true)
