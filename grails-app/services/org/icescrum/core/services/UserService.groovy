@@ -33,6 +33,7 @@ import org.icescrum.core.domain.Invitation.InvitationType
 import org.icescrum.core.domain.Product
 import org.icescrum.core.domain.Team
 import org.icescrum.core.domain.User
+import org.icescrum.core.domain.Widget
 import org.icescrum.core.domain.preferences.UserPreferences
 import org.icescrum.core.domain.security.Authority
 import org.icescrum.core.domain.security.UserAuthority
@@ -82,8 +83,12 @@ class UserService extends IceScrumEventPublisher {
                 }
             }
         }
+        widgetService.save(user, uiDefinitionService.getWidgetDefinitionById('quickProjects'), false)
+        Widget notesWidget = widgetService.save(user, uiDefinitionService.getWidgetDefinitionById('notes'), false)
+        def noteProperties = notesWidget.properties.collectEntries { key, val -> [(key): val] }
+        noteProperties.settings = [text: 'Welcome to iceScrum R7! Here is your home, where you can add your widgets, such as this one which allows you to write your personal notes, try updating this text!\n\nWe have also created a "Peetic" project so you can explore iceScrum, try opening it!']
+        widgetService.update(notesWidget, noteProperties)
         widgetService.save(user, uiDefinitionService.getWidgetDefinitionById('feed'), true)
-        widgetService.save(user, uiDefinitionService.getWidgetDefinitionById('notes'), false)
         widgetService.save(user, uiDefinitionService.getWidgetDefinitionById('tasks'), true)
     }
 
