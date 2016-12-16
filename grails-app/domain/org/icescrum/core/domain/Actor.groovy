@@ -33,6 +33,7 @@ class Actor implements Serializable, Comparable<Actor> {
     static final long serialVersionUID = 2762136778121132424L
 
     String name
+    int uid
 
     static hasMany = [stories: Story]
 
@@ -120,6 +121,14 @@ class Actor implements Serializable, Comparable<Actor> {
         return name.compareTo(cr.name)
     }
 
+    static int findNextUId(Long pid) {
+        (executeQuery(
+                """SELECT MAX(a.uid)
+                   FROM org.icescrum.core.domain.Actor as a, org.icescrum.core.domain.Product as p
+                   WHERE a.parentProduct = p
+                   AND p.id = :pid """, [pid: pid])[0]?:0) + 1
+    }
+
     static search(product, term) {
         return Actor.createCriteria().list {
             parentProduct {
@@ -132,7 +141,7 @@ class Actor implements Serializable, Comparable<Actor> {
     }
 
     def xml(def builder) {
-        builder.actor() {
+        builder.actor(uid: this.uid) {
             builder.name { builder.mkp.yieldUnescaped("<![CDATA[${this.name}]]>") }
             builder.stories() {
                 this.stories.each { _story ->

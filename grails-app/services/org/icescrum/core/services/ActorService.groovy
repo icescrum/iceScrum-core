@@ -42,6 +42,7 @@ class ActorService extends IceScrumEventPublisher {
     void save(Actor actor, Product p) {
         actor.name = actor.name?.trim()
         actor.parentProduct = p
+        actor.uid = Actor.findNextUId(p.id)
         p.addToActors(actor)
         actor.save(flush: true)
         actor.refresh() // required to initialize collections to empty list

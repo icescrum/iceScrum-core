@@ -776,9 +776,9 @@ class StoryService extends IceScrumEventPublisher {
         if (story.description) {
             def actorIdMatcher = story.description =~ /A\[(.+?)-.*?\]/
             if (actorIdMatcher) {
-                def idString = actorIdMatcher[0][1]
-                if (idString.isLong()) {
-                    newActor = product.actors.find { it.id == idString.toLong() }
+                def uidString = actorIdMatcher[0][1]
+                if (uidString.isInteger()) {
+                    newActor = product.actors.find { it.uid == uidString.toInteger() }
                 }
             }
         }
