@@ -73,6 +73,9 @@ class IcescrumCoreGrailsPlugin {
         if (cors.enable) {
             addCorsSupport(xml, cors)
         }
+        // That's the earliest I found after ConfigurationHelper.loadConfigFromClasspath
+        // We must ensure that it's before the serverURL is used anywhere (e.g. in AssetPipelineGrailsPlugin.groovy::doWithSpring)
+        application.config.grails.serverURL = System.getProperty('icescrum.serverURL') ?: application.config.grails.serverURL
     }
 
     def controllersWithDownloadAndPreview = ['story', 'task', 'feature', 'sprint', 'release', 'project']
