@@ -27,7 +27,7 @@ package org.icescrum.core.services
 
 import groovy.xml.StreamingMarkupBuilder
 import org.icescrum.core.domain.*
-import org.springframework.transaction.annotation.Transactional
+import grails.transaction.Transactional
 
 import java.text.SimpleDateFormat
 
@@ -292,13 +292,21 @@ class ClicheService {
         save(cliche, sprint)
     }
 
-    @Transactional(readOnly = true)
-    def unMarshall(def xmlCliche) {
-        def cliche = new Cliche(
-                type: xmlCliche.type.text().toInteger(),
-                datePrise: new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(xmlCliche.datePrise.text()),
-                data: xmlCliche.data.text()
-        )
-        return cliche
+    def unMarshall(def clicheXml, def options) {
+        def timebox = options.timebox
+        Cliche.withTransaction(readOnly:!options.save) { transaction ->
+            def cliche = new Cliche(
+                    type: clicheXml.type.text().toInteger(),
+                    datePrise: new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(clicheXml.datePrise.text()),
+                    data: clicheXml.data.text()
+            )
+            if (timebox) {
+                timebox.addToCliches(cliche)
+            }
+            if (options.save) {
+                cliche.save()
+            }
+            return (Cliche)importDomainsPlugins(cliche, options)
+        }
     }
 }

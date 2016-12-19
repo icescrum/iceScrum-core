@@ -30,7 +30,7 @@ import org.icescrum.core.event.IceScrumEventType
 
 import java.text.SimpleDateFormat
 import org.springframework.security.access.prepost.PreAuthorize
-import org.springframework.transaction.annotation.Transactional
+import grails.transaction.Transactional
 import org.icescrum.core.domain.*
 
 @Transactional
@@ -163,24 +163,39 @@ class FeatureService extends IceScrumEventPublisher {
         return values
     }
 
-    @Transactional(readOnly = true)
-    def unMarshall(def feat) {
-        try {
-            def f = new Feature(
-                    name: feat."${'name'}".text(),
-                    description: feat.description.text(),
-                    notes: feat.notes.text(),
-                    color: feat.color.text(),
-                    todoDate: new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(feat.todoDate.text()),
-                    value: feat.value.text().toInteger(),
-                    type: feat.type.text().toInteger(),
-                    rank: feat.rank.text()?.toInteger(),
-                    uid: feat.@uid.text()?.isEmpty() ? feat.@id.text().toInteger() : feat.@uid.text().toInteger()
-            )
-            return f
-        } catch (Exception e) {
-            if (log.debugEnabled) e.printStackTrace()
-            throw new RuntimeException(e)
+    def unMarshall(def featureXml, def options) {
+        Product product = options.product
+        Feature.withTransaction(readOnly:!options.save) { transaction ->
+            try {
+                def todoDate = null
+                if (featureXml.todoDate?.text() && featureXml.todoDate?.text() != "") {
+                    todoDate = new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(featureXml.todoDate.text())
+                } else if (product) {
+                    todoDate = product.todoDate
+                }
+                def feature = new Feature(
+                        name: featureXml."${'name'}".text(),
+                        description: featureXml.description.text(),
+                        notes: featureXml.notes.text(),
+                        color: featureXml.color.text(),
+                        todoDate: todoDate,
+                        value: featureXml.value.text().toInteger(),
+                        type: featureXml.type.text().toInteger(),
+                        rank: featureXml.rank.text()?.toInteger(),
+                        uid: featureXml.@uid.text()?.isEmpty() ? featureXml.@id.text().toInteger() : featureXml.@uid.text().toInteger()
+                )
+                //references on other objects
+                if (product) {
+                    product.addToFeatures(feature)
+                }
+                if (options.save) {
+                    feature.save()
+                }
+                return (Feature)importDomainsPlugins(feature, options)
+            } catch (Exception e) {
+                if (log.debugEnabled) e.printStackTrace()
+                throw new RuntimeException(e)
+            }
         }
     }
 }

@@ -26,12 +26,15 @@
 package org.icescrum.core.services
 
 import org.icescrum.core.domain.Actor
+import org.icescrum.core.domain.Feature
 import org.icescrum.core.domain.Product
+import org.icescrum.core.domain.Sprint
+import org.icescrum.core.domain.Story
 import org.icescrum.core.error.BusinessException
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
 import org.springframework.security.access.prepost.PreAuthorize
-import org.springframework.transaction.annotation.Transactional
+import grails.transaction.Transactional
 
 @Transactional
 class ActorService extends IceScrumEventPublisher {
@@ -69,16 +72,24 @@ class ActorService extends IceScrumEventPublisher {
         publishSynchronousEvent(IceScrumEventType.UPDATE, actor, dirtyProperties)
     }
 
-    @Transactional(readOnly = true)
-    def unMarshall(def actor) {
-        try {
-            def a = new Actor(name: actor."${'name'}".text())
-            return a
-        } catch (Exception e) {
-            if (log.debugEnabled) {
-                e.printStackTrace()
+    def unMarshall(def actorXml, def options) {
+        Product product = options.product
+        Actor.withTransaction(readOnly:!options.save) { transaction ->
+            try {
+                def actor = new Actor(name: actorXml."${'name'}".text())
+                if(product){
+                    product.addToActors(actor)
+                }
+                if(options.save){
+                    actor.save()
+                }
+                return (Actor)importDomainsPlugins(actor, options)
+            } catch (Exception e) {
+                if (log.debugEnabled) {
+                    e.printStackTrace()
+                }
+                throw new RuntimeException(e)
             }
-            throw new RuntimeException(e)
         }
     }
 }

@@ -25,9 +25,10 @@ package org.icescrum.core.services
 
 import org.icescrum.core.domain.User
 import org.icescrum.core.domain.Widget
+import org.icescrum.core.domain.preferences.UserPreferences
 import org.icescrum.core.error.BusinessException
 import org.icescrum.core.ui.WidgetDefinition
-import org.springframework.transaction.annotation.Transactional
+import grails.transaction.Transactional
 
 @Transactional
 class WidgetService {
@@ -148,5 +149,36 @@ class WidgetService {
         }
         widget.userPreferences.user.lastUpdated = new Date()
         widget.userPreferences.user.save()
+    }
+
+    def unMarshall(def widgetXml, def options) {
+        def user = options.user
+        Widget.withTransaction(readOnly:!options.save) { transaction ->
+            try {
+
+                def widget = new Widget(
+                        position: widgetXml.position.toInteger(),
+                        onRight: widgetXml.onRight.toBoolean(),
+                        settingsData: widgetXml.settingsData.toText(),
+                        widgetDefinitionId: widgetXml.widgetDefinitionId.toText())
+
+                //reference on other object
+                if (user?.userPreferences) {
+                    widget.userPreferences = userPreferences
+                }
+
+                if (options.save) {
+                    widget.save()
+                }
+
+                return (WidgetService)importDomainsPlugins(widget, options)
+
+            } catch (Exception e) {
+                if (log.debugEnabled) {
+                    e.printStackTrace()
+                }
+                throw new RuntimeException(e)
+            }
+        }
     }
 }

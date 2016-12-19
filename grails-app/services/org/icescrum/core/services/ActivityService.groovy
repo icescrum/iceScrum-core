@@ -24,11 +24,16 @@
 package org.icescrum.core.services
 
 import org.hibernate.proxy.HibernateProxyHelper
+import org.icescrum.core.domain.AcceptanceTest
 import org.icescrum.core.domain.Activity
+import org.icescrum.core.domain.Product
 import org.icescrum.core.domain.User
 import grails.util.GrailsNameUtils
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
+import grails.transaction.Transactional
+
+import java.text.SimpleDateFormat
 
 class ActivityService extends IceScrumEventPublisher {
 
@@ -53,6 +58,48 @@ class ActivityService extends IceScrumEventPublisher {
             activitiesToDelete.each { activity ->
                 item.removeFromActivities(activity)
                 activity.delete()
+            }
+        }
+    }
+
+    def unMarshall(def activityXml, def options) {
+        def parent = options.parent
+        def product = options.product
+        Activity.withTransaction(readOnly:!options.save) { transaction ->
+            try {
+                def activity = new Activity(
+                        dateCreated: new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(activityXml.dateCreated.text()),
+                        lastUpdated: new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(activityXml.lastUpdated.text()),
+                        code: activityXml.code.text(),
+                        label: activityXml.label.text(),
+                        field: activityXml.field.text(),
+                        afterValue: activityXml.afterValue.text(),
+                        beforeValue: activityXml.beforeValue.text(),
+                        parentType: activityXml.parentType.text()
+                )
+                //references to object
+                if (product) {
+                    def u = ((User) product.getAllUsers().find { it.uid == activityXml.poster.@uid.text() }) ?: null
+                    activity.poster = (User) (u ?: product.productOwners.first())
+                }
+                //save before some hibernate stuff
+                if (options.save) {
+                    activity.save()
+                }
+                if (parent) {
+                    activity.parentRef = parent.id
+                    parent.addToActivities(activity)
+                }
+                if(options.save){
+                    activity.save()
+                }
+                return (Activity)importDomainsPlugins(activity, options)
+
+            } catch (Exception e) {
+                if (log.debugEnabled) {
+                    e.printStackTrace()
+                }
+                throw new RuntimeException(e)
             }
         }
     }

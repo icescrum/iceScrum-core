@@ -31,7 +31,7 @@ import org.icescrum.atmosphere.IceScrumAtmosphereEventListener
 import org.icescrum.atmosphere.IceScrumBroadcaster
 import org.icescrum.core.domain.User
 import org.icescrum.core.event.IceScrumEventType
-import org.springframework.transaction.annotation.Transactional
+import grails.transaction.Transactional
 
 import java.util.concurrent.CopyOnWriteArrayList
 

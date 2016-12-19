@@ -38,7 +38,7 @@ import org.icescrum.core.support.ApplicationSupport
 import org.icescrum.core.error.BusinessException
 import org.icescrum.plugins.attachmentable.domain.Attachment
 import org.springframework.security.access.prepost.PreAuthorize
-import org.springframework.transaction.annotation.Transactional
+import grails.transaction.Transactional
 
 import java.text.SimpleDateFormat
 
@@ -670,104 +670,129 @@ class StoryService extends IceScrumEventPublisher {
         return copiedStories
     }
 
-    @Transactional(readOnly = true)
-    def unMarshall(def xmlStory, Product product = null, Sprint sprint = null) {
-        try {
-            def acceptedDate = null
-            if (xmlStory.acceptedDate?.text() && xmlStory.acceptedDate?.text() != "") {
-                acceptedDate = new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(xmlStory.acceptedDate.text()) ?: null
-            }
-            def estimatedDate = null
-            if (xmlStory.estimatedDate?.text() && xmlStory.estimatedDate?.text() != "") {
-                estimatedDate = new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(xmlStory.estimatedDate.text()) ?: null
-            }
-            def plannedDate = null
-            if (xmlStory.plannedDate?.text() && xmlStory.plannedDate?.text() != "") {
-                plannedDate = new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(xmlStory.plannedDate.text()) ?: null
-            }
-            def inProgressDate = null
-            if (xmlStory.inProgressDate?.text() && xmlStory.inProgressDate?.text() != "") {
-                inProgressDate = new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(xmlStory.inProgressDate.text()) ?: null
-            }
-            def doneDate = null
-            if (xmlStory.doneDate?.text() && xmlStory.doneDate?.text() != "") {
-                doneDate = new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(xmlStory.doneDate.text()) ?: null
-            }
-            def story = new Story(
-                    name: xmlStory."${'name'}".text(),
-                    description: xmlStory.description.text(),
-                    notes: xmlStory.notes.text(),
-                    todoDate: new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(xmlStory.todoDate.text()),
-                    effort: xmlStory.effort.text().isEmpty() ? null : xmlStory.effort.text().toBigDecimal(),
-                    value: xmlStory.value.text().isEmpty() ? null : xmlStory.value.text().toInteger(),
-                    rank: xmlStory.rank.text().toInteger(),
-                    state: xmlStory.state.text().toInteger(),
-                    suggestedDate: new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(xmlStory.suggestedDate.text()),
-                    acceptedDate: acceptedDate,
-                    estimatedDate: estimatedDate,
-                    plannedDate: plannedDate,
-                    inProgressDate: inProgressDate,
-                    doneDate: doneDate,
-                    type: xmlStory.type.text().toInteger(),
-                    affectVersion: xmlStory.affectVersion.text(),
-                    uid: xmlStory.@uid.text()?.isEmpty() ? xmlStory.@id.text().toInteger() : xmlStory.@uid.text().toInteger(),
-                    origin: xmlStory.origin.text()
-            )
-            if (!xmlStory.feature?.@uid?.isEmpty() && product) {
-                def feature = product.features.find { it.uid == xmlStory.feature.@uid.text().toInteger() } ?: null
-                if (feature) {
-                    feature.addToStories(story)
+    def unMarshall(def storyXml, def options) {
+        Product product = options.product
+        Sprint sprint = options.sprint
+        Story.withTransaction(readOnly:!options.save) { transaction ->
+            try {
+                def todoDate = null
+                if (storyXml.todoDate?.text() && storyXml.todoDate?.text() != "") {
+                    todoDate = new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(storyXml.todoDate.text())
+                } else if (sprint || product) {
+                    todoDate = sprint?.todoDate ?: product.todoDate
                 }
-            } else if (!xmlStory.feature?.@id?.isEmpty() && product) {
-                def feature = product.features.find { it.uid == xmlStory.feature.@id.text().toInteger() } ?: null
-                if (feature) {
-                    feature.addToStories(story)
+                def acceptedDate = null
+                if (storyXml.acceptedDate?.text() && storyXml.acceptedDate?.text() != "") {
+                    acceptedDate = new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(storyXml.acceptedDate.text()) ?: null
                 }
-            }
-            if (!xmlStory.actor?.@uid?.isEmpty() && product) {
-                def actor = product.actors.find { it.uid == xmlStory.actor.@uid.text().toInteger() } ?: null
-                if (actor) {
-                    actor.addToStories(story)
+                def estimatedDate = null
+                if (storyXml.estimatedDate?.text() && storyXml.estimatedDate?.text() != "") {
+                    estimatedDate = new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(storyXml.estimatedDate.text()) ?: null
                 }
-            } else if (!xmlStory.actor?.@id?.isEmpty() && product) {
-                def actor = product.actors.find { it.uid == xmlStory.actor.@id.text().toInteger() } ?: null
-                if (actor) {
-                    actor.addToStories(story)
+                def plannedDate = null
+                if (storyXml.plannedDate?.text() && storyXml.plannedDate?.text() != "") {
+                    plannedDate = new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(storyXml.plannedDate.text()) ?: null
                 }
-            }
-            if (product) {
-                def user
-                if (!xmlStory.creator?.@uid?.isEmpty())
-                    user = ((User) product.getAllUsers().find { it.uid == xmlStory.creator.@uid.text() }) ?: null
-                else {
-                    user = ApplicationSupport.findUserUIDOldXMl(xmlStory, 'creator', product.getAllUsers())
+                def inProgressDate = null
+                if (storyXml.inProgressDate?.text() && storyXml.inProgressDate?.text() != "") {
+                    inProgressDate = new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(storyXml.inProgressDate.text()) ?: null
                 }
-                if (user)
-                    story.creator = user
-                else
-                    story.creator = product.productOwners.first()
-            }
-            xmlStory.tasks?.task?.each {
-                def task = taskService.unMarshall(it, product)
+                def doneDate = null
+                if (storyXml.doneDate?.text() && storyXml.doneDate?.text() != "") {
+                    doneDate = new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(storyXml.doneDate.text()) ?: null
+                }
+                def story = new Story(
+                        type: storyXml.type.text().toInteger(),
+                        suggestedDate: new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(storyXml.suggestedDate.text()),
+                        acceptedDate: acceptedDate,
+                        estimatedDate: estimatedDate,
+                        plannedDate: plannedDate,
+                        inProgressDate: inProgressDate,
+                        doneDate: doneDate,
+                        origin: storyXml.origin.text(),
+                        effort: storyXml.effort.text().isEmpty() ? null : storyXml.effort.text().toBigDecimal(),
+                        rank: storyXml.rank.text().toInteger(),
+                        state: storyXml.state.text().toInteger(),
+                        value: storyXml.value.text().isEmpty() ? 0 : storyXml.value.text().toInteger(),
+                        affectVersion: storyXml.affectVersion.text(),
+                        //backlogElement
+                        name: storyXml."${'name'}".text(),
+                        description: storyXml.description.text(),
+                        notes: storyXml.notes.text(),
+                        todoDate: todoDate,
+                        uid: storyXml.@uid.text()?.isEmpty() ? storyXml.@id.text().toInteger() : storyXml.@uid.text().toInteger(),
+                )
+
+                //references on other objects
+                if (product) {
+                    if (!storyXml.feature?.@uid?.isEmpty() && product) {
+                        def feature = product.features.find {
+                            it.uid == storyXml.feature.@uid.text().toInteger()
+                        } ?: null
+                        if (feature) {
+                            feature.addToStories(story)
+                        }
+                    } else if (!storyXml.feature?.@id?.isEmpty() && product) {
+                        def feature = product.features.find {
+                            it.uid == storyXml.feature.@id.text().toInteger()
+                        } ?: null
+                        if (feature) {
+                            feature.addToStories(story)
+                        }
+                    }
+                    if (!storyXml.actor?.@uid?.isEmpty() && product) {
+                        def actor = product.actors.find { it.uid == storyXml.actor.@uid.text().toInteger() } ?: null
+                        if (actor) {
+                            actor.addToStories(story)
+                        }
+                    } else if (!storyXml.actor?.@id?.isEmpty() && product) {
+                        def actor = product.actors.find { it.uid == storyXml.actor.@id.text().toInteger() } ?: null
+                        if (actor) {
+                            actor.addToStories(story)
+                        }
+                    }
+                    def user
+                    if (!storyXml.creator?.@uid?.isEmpty())
+                        user = ((User) product.getAllUsers().find { it.uid == storyXml.creator.@uid.text() }) ?: null
+                    else {
+                        user = ApplicationSupport.findUserUIDOldXMl(storyXml, 'creator', product.getAllUsers())
+                    }
+                    if (user)
+                        story.creator = user
+                    else
+                        story.creator = (User) product.productOwners.first()
+
+                    product.addToStories(story)
+                }
+
                 if (sprint) {
-                    task.backlog = sprint
-                    story.addToTasks(task)
+                    sprint.addToStories(story)
                 }
+
+                //save before some hibernate stuff
+                if (options.save) {
+                    story.save()
+                }
+
+                options.story = story
+
+                //child objects
+                storyXml.tasks?.task?.each {
+                    taskService.unMarshall(it, options)
+                }
+                storyXml.acceptanceTests?.acceptanceTest?.each {
+                    acceptanceTestService.unMarshall(it, options)
+                }
+
+                if (options.save) {
+                    story.save()
+                }
+                options.story = null
+                return (Story)importDomainsPlugins(story, options)
+            } catch (Exception e) {
+                if (log.debugEnabled) e.printStackTrace()
+                throw new RuntimeException(e)
             }
-            xmlStory.acceptanceTests?.acceptanceTest?.each {
-                def acceptanceTest = acceptanceTestService.unMarshall(it, product, story)
-                story.addToAcceptanceTests(acceptanceTest)
-            }
-            if (product) {
-                product.addToStories(story)
-            }
-            if (sprint) {
-                sprint.addToStories(story)
-            }
-            return story
-        } catch (Exception e) {
-            if (log.debugEnabled) e.printStackTrace()
-            throw new RuntimeException(e)
         }
     }
 

@@ -29,10 +29,9 @@ import org.icescrum.core.domain.Team
 import org.icescrum.core.domain.User
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
-import org.icescrum.core.support.ProgressSupport
 import org.icescrum.core.error.BusinessException
 import org.springframework.security.access.prepost.PreAuthorize
-import org.springframework.transaction.annotation.Transactional
+import grails.transaction.Transactional
 import org.icescrum.core.support.ApplicationSupport
 
 @Transactional
@@ -146,84 +145,84 @@ class TeamService extends IceScrumEventPublisher {
         }
     }
 
-    @Transactional(readOnly = true)
-    def unMarshall(def team, Product p = null, ProgressSupport progress = null) {
-        def g = grailsApplication.mainContext.getBean('org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib')
-        try {
-            def existingTeam = true
-            def t = new Team(
-                    name: team."${'name'}".text(),
-                    velocity: (team.velocity.text().isNumber()) ? team.velocity.text().toInteger() : 0,
-                    description: team.description.text(),
-                    uid: team.@uid.text() ?: (team."${'name'}".text()).encodeAsMD5()
-            )
+    def unMarshall(def teamXml, def options) {
+        Product product = options.product
+        Team.withTransaction(readOnly:!options.save) { transaction ->
+            try {
+                def existingTeam = true
+                def team = new Team(
+                        name: teamXml."${'name'}".text(),
+                        velocity: (teamXml.velocity.text().isNumber()) ? teamXml.velocity.text().toInteger() : 0,
+                        description: teamXml.description.text(),
+                        uid: teamXml.@uid.text() ?: (teamXml."${'name'}".text()).encodeAsMD5()
+                )
 
-            def userService = (UserService) grailsApplication.mainContext.getBean('userService')
-            team.members.user.eachWithIndex { user, index ->
-                User u = userService.unMarshall(user)
-                if (!u.id) {
-                    existingTeam = false
+                def userService = (UserService) grailsApplication.mainContext.getBean('userService')
+                teamXml.members.user.eachWithIndex { user, index ->
+                    User u = userService.unMarshall(user, options)
+                    if (!u.id) {
+                        existingTeam = false
+                    }
+                    if (product) {
+                        def uu = (User) team.members.find { it.uid == u.uid } ?: null
+                        uu ? team.addToMembers(uu) : team.addToMembers(u)
+                    } else {
+                        team.addToMembers(u)
+                    }
                 }
-                if (p) {
-                    def uu = (User) t.members.find { it.uid == u.uid } ?: null
-                    uu ? t.addToMembers(uu) : t.addToMembers(u)
-                } else {
-                    t.addToMembers(u)
-                }
-                progress?.updateProgress((team.members.user.size() * (index + 1) / 100).toInteger(), g.message(code: 'is.parse', args: [g.message(code: 'is.user')]))
-            }
-            def scrumMastersList = []
+                def scrumMastersList = []
 
-            //fix between R6#x and R7
-            def sm = team.scrumMasters.scrumMaster ?: team.scrumMasters.user
-            sm.eachWithIndex { user, index ->
-                def u
-                if (!user.@uid?.isEmpty()) {
-                    u = ((User) t.members.find { it.uid == user.@uid.text() }) ?: null
-                } else {
-                    u = ApplicationSupport.findUserUIDOldXMl(user, null, t.members)
+                //fix between R6#x and R7
+                def sm = teamXml.scrumMasters.scrumMaster ?: teamXml.scrumMasters.user
+                sm.eachWithIndex { user, index ->
+                    def u
+                    if (!user.@uid?.isEmpty()) {
+                        u = ((User) team.members.find { it.uid == user.@uid.text() }) ?: null
+                    } else {
+                        u = ApplicationSupport.findUserUIDOldXMl(user, null, team.members)
+                    }
+                    if (u) {
+                        scrumMastersList << u
+                    }
                 }
-                if (u) {
-                    scrumMastersList << u
-                }
-                progress?.updateProgress((team.members.user.size() * (index + 1) / 100).toInteger(), g.message(code: 'is.parse', args: [g.message(code: 'is.user')]))
-            }
-            t.scrumMasters = scrumMastersList
+                team.scrumMasters = scrumMastersList
 
-            if (existingTeam) {
-                Team dbTeam = Team.findByName(t.name)
-                if (dbTeam) {
-                    if (dbTeam.members.size() != t.members.size()) existingTeam = false
-                    if (existingTeam) {
-                        for (member in dbTeam.members) {
-                            def u = t.members.find { member.uid == it.uid }
-                            if (!u) {
-                                existingTeam = false
-                                break
+                if (existingTeam) {
+                    Team dbTeam = Team.findByName(team.name)
+                    if (dbTeam) {
+                        if (dbTeam.members.size() != team.members.size()) existingTeam = false
+                        if (existingTeam) {
+                            for (member in dbTeam.members) {
+                                def u = team.members.find { member.uid == it.uid }
+                                if (!u) {
+                                    existingTeam = false
+                                    break
+                                }
                             }
                         }
+                        team = dbTeam
                     }
-                } else {
-                    existingTeam = false
                 }
-                if (existingTeam) {
-                    //Remove "tmp" team because team already exist
-                    dbTeam.members?.each { member ->
-                        member.removeFromTeams(t)
+
+                //reference on other object
+                if (product) {
+                    product.addToTeams(team)
+                }
+
+                if (options.save) {
+                    team.members.each { user ->
+                        user.save()
                     }
-                    t.scrumMasters = null
-                    t.delete()
-                    return dbTeam
-                } else {
-                    return t
+                    team.scrumMasters.each { user ->
+                        user.save()
+                    }
+                    team.save()
                 }
-            } else {
-                return t
+                return (Team)importDomainsPlugins(team, options)
+            } catch (Exception e) {
+                if (log.debugEnabled) e.printStackTrace()
+                throw new RuntimeException(e)
             }
-        } catch (Exception e) {
-            if (log.debugEnabled) e.printStackTrace()
-            progress?.progressError(g.message(code: 'is.parse.error', args: [g.message(code: 'is.team')]))
-            throw new RuntimeException(e)
         }
     }
 }

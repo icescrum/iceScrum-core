@@ -143,11 +143,6 @@ class Actor implements Serializable, Comparable<Actor> {
     def xml(def builder) {
         builder.actor(uid: this.uid) {
             builder.name { builder.mkp.yieldUnescaped("<![CDATA[${this.name}]]>") }
-            builder.stories() {
-                this.stories.each { _story ->
-                    story(uid: _story.uid)
-                }
-            }
             exportDomainsPlugins(builder)
         }
     }

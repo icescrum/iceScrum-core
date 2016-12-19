@@ -24,13 +24,15 @@ package org.icescrum.core.services
 
 import org.icescrum.core.domain.AcceptanceTest
 import org.icescrum.core.domain.AcceptanceTest.AcceptanceTestState
+import org.icescrum.core.domain.Sprint
+import org.icescrum.core.domain.Template
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
 import org.springframework.security.access.prepost.PreAuthorize
 import org.icescrum.core.domain.Story
 import org.icescrum.core.domain.User
 import org.icescrum.core.domain.Product
-import org.springframework.transaction.annotation.Transactional
+import grails.transaction.Transactional
 
 @Transactional
 class AcceptanceTestService extends IceScrumEventPublisher {
@@ -67,31 +69,48 @@ class AcceptanceTestService extends IceScrumEventPublisher {
         publishSynchronousEvent(IceScrumEventType.DELETE, acceptanceTest, dirtyProperties)
     }
 
-    def unMarshall(def acceptanceTest, Product product, Story story) {
-        try {
-            def state = acceptanceTest."${'state'}".text()
-            if (state) {
-                state = state.toInteger()
-            } else {
-                state = (story.state < Story.STATE_DONE) ? AcceptanceTestState.TOCHECK.id : AcceptanceTestState.SUCCESS.id
-            }
-            def at = new AcceptanceTest(
-                name: acceptanceTest."${'name'}".text(),
-                description: acceptanceTest."${'description'}".text(),
-                state: state,
-                uid: acceptanceTest.@uid.text().toInteger()
-            )
-            if (product) {
-                def u = ((User) product.getAllUsers().find { it.uid == acceptanceTest.creator.@uid.text() }) ?: null
-                at.creator = u ?: product.productOwners.first()
-            }
-            return at
+    def unMarshall(def acceptanceTestXml, def options) {
+        Product product = options.product
+        Story story = options.story
+        AcceptanceTest.withTransaction(readOnly:!options.save) { transaction ->
+            try {
+                def state = acceptanceTestXml."${'state'}".text()
+                if (state) {
+                    state = state.toInteger()
+                } else {
+                    state = (story.state < Story.STATE_DONE) ? AcceptanceTestState.TOCHECK.id : AcceptanceTestState.SUCCESS.id
+                }
+                def acceptanceTest = new AcceptanceTest(
+                        name: acceptanceTestXml."${'name'}".text(),
+                        description: acceptanceTestXml."${'description'}".text(),
+                        state: state,
+                        uid: acceptanceTestXml.@uid.text().toInteger()
+                )
 
-        } catch (Exception e) {
-            if (log.debugEnabled) {
-                e.printStackTrace()
+                //references on other objects
+                if (product) {
+                    def u = ((User) product.getAllUsers().find {
+                        it.uid == acceptanceTestXml.creator.@uid.text()
+                    }) ?: null
+                    acceptanceTest.creator = (User) (u ?: product.productOwners.first())
+                }
+
+                if (story) {
+                    story.addToAcceptanceTests(acceptanceTest)
+                }
+
+                if (options.save) {
+                    acceptanceTest.save()
+                }
+
+                return (AcceptanceTest)importDomainsPlugins(acceptanceTest, options)
+
+            } catch (Exception e) {
+                if (log.debugEnabled) {
+                    e.printStackTrace()
+                }
+                throw new RuntimeException(e)
             }
-            throw new RuntimeException(e)
         }
     }
 }

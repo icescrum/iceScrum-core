@@ -91,8 +91,13 @@ class IcescrumCoreGrailsPlugin {
         // Init config.icescrum.export for plugins to be able to register without an if exist / create test
         application.config?.icescrum?.export = [:]
         application.domainClasses.each {
-            if (it.metaClass.getMetaMethod("xml")) {
+            if (it.metaClass.methods*.name.any{it=='xml'}) {
                 application.config?.icescrum?.export."${it.propertyName}" = []
+            }
+        }
+        application.serviceClasses.each {
+            if (it.metaClass.methods*.name.any{it=='unMarshall'}) {
+                application.config?.icescrum?.import."${it.logicalPropertyName}" = []
             }
         }
         println '... finished configuring iceScrum plugin core'
@@ -117,6 +122,9 @@ class IcescrumCoreGrailsPlugin {
         }
         application.domainClasses.each {
             addExportDomainsPlugins(it, application.config.icescrum.export)
+        }
+        application.serviceClasses.each {
+            addImportDomainsPlugins(it, application.config.icescrum.import)
         }
     }
 
@@ -230,6 +238,27 @@ class IcescrumCoreGrailsPlugin {
                 closure.delegate = domainObject
                 closure(domainObject, builder)
             }
+        }
+    }
+
+    private void addImportDomainsPlugins(source, config) {
+        def name = source.logicalPropertyName
+        source.metaClass.importDomainsPlugins = { domainObject, options ->
+            def progress = RCH.currentRequestAttributes().getSession()?.progress
+            if (progress) {
+                if (!progress.buffer?.contains(name)) {
+                    if (!progress.buffer) {
+                        progress.buffer = []
+                    }
+                    progress.buffer << name
+                    def newValue = (progress.buffer.size() * 90) / (config.size() * progress.multiple)
+                    progress.updateProgress(newValue, name)
+                }
+            }
+            config[name]?.each { closure ->
+                closure(domainObject, options)
+            }
+            return domainObject
         }
     }
 

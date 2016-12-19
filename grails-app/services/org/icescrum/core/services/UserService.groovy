@@ -41,7 +41,7 @@ import org.icescrum.core.error.BusinessException
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
 import org.icescrum.core.support.ApplicationSupport
-import org.springframework.transaction.annotation.Transactional
+import grails.transaction.Transactional
 
 @Transactional
 class UserService extends IceScrumEventPublisher {
@@ -197,50 +197,55 @@ class UserService extends IceScrumEventPublisher {
         user.save()
     }
 
-    @Transactional(readOnly = true)
-    def unMarshall(def user) {
-        try {
-            def u
-            if (user.@uid.text()) {
-                u = User.findByUid(user.@uid.text())
-            } else {
-                u = ApplicationSupport.findUserUIDOldXMl(user, null, null)
-            }
-            if (!u) {
-                u = new User(
-                        lastName: user.lastName.text(),
-                        firstName: user.firstName.text(),
-                        username: user.username.text(),
-                        email: user.email.text(),
-                        password: user.password.text(),
-                        enabled: user.enabled.text().toBoolean() ?: true,
-                        accountExpired: user.accountExpired.text().toBoolean() ?: false,
-                        accountLocked: user.accountLocked.text().toBoolean() ?: false,
-                        passwordExpired: user.passwordExpired.text().toBoolean() ?: false,
-                        accountExternal: user.accountExternal?.text()?.toBoolean() ?: false,
-                        uid: user.@uid.text() ?: (user.username.text() + user.email.text()).encodeAsMD5()
-                )
 
-                def language = user.preferences.language.text()
-                if (language == "en") {
-                    def version = ApplicationSupport.findIceScrumVersionFromXml(user)
-                    if (version == null || version < "R6#2") {
-                        language = "en_US"
-                    }
+    User unMarshall(def userXml, def options) {
+        User.withTransaction(readOnly:!options.save) { transaction ->
+            try {
+                def user
+                if (userXml.@uid.text()) {
+                    user = User.findByUid(userXml.@uid.text())
+                } else {
+                    user = ApplicationSupport.findUserUIDOldXMl(userXml, null, null)
                 }
-                u.preferences = new UserPreferences(
-                        language: language,
-                        activity: user.preferences.activity.text(),
-                        filterTask: user.preferences.filterTask.text(),
-                        menu: user.preferences.menu.text(),
-                        menuHidden: user.preferences.menuHidden.text(),
-                        hideDoneState: user.preferences.hideDoneState.text()?.toBoolean() ?: false
-                )
+                if (!user) {
+                    user = new User(
+                            lastName: userXml.lastName.text(),
+                            firstName: userXml.firstName.text(),
+                            username: userXml.username.text(),
+                            email: userXml.email.text(),
+                            password: userXml.password.text(),
+                            enabled: userXml.enabled.text().toBoolean() ?: true,
+                            accountExpired: userXml.accountExpired.text().toBoolean() ?: false,
+                            accountLocked: userXml.accountLocked.text().toBoolean() ?: false,
+                            passwordExpired: userXml.passwordExpired.text().toBoolean() ?: false,
+                            accountExternal: userXml.accountExternal?.text()?.toBoolean() ?: false,
+                            uid: userXml.@uid.text() ?: (userXml.username.text() + userXml.email.text()).encodeAsMD5()
+                    )
+
+                    def language = userXml.preferences.language.text()
+                    if (language == "en") {
+                        def version = ApplicationSupport.findIceScrumVersionFromXml(userXml)
+                        if (version == null || version < "R6#2") {
+                            language = "en_US"
+                        }
+                    }
+                    user.preferences = new UserPreferences(
+                            language: language,
+                            activity: userXml.preferences.activity.text(),
+                            filterTask: userXml.preferences.filterTask.text(),
+                            user: user,
+                            menu: user.preferences.menu.text()?:[:],
+                            menuHidden: user.preferences.menuHidden.text()?:[:]
+                    )
+                }
+                if (options.save) {
+                    user.save()
+                }
+                return (User)importDomainsPlugins(user, options)
+            } catch (Exception e) {
+                if (log.debugEnabled) e.printStackTrace()
+                throw new RuntimeException(e)
             }
-            return u
-        } catch (Exception e) {
-            if (log.debugEnabled) e.printStackTrace()
-            throw new RuntimeException(e)
         }
     }
 }

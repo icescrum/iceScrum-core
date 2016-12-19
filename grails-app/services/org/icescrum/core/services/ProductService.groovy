@@ -23,6 +23,7 @@
 
 package org.icescrum.core.services
 
+import grails.transaction.Transactional
 import groovy.xml.MarkupBuilder
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
@@ -31,9 +32,7 @@ import org.icescrum.core.error.BusinessException
 import java.text.SimpleDateFormat
 import org.icescrum.core.domain.preferences.ProductPreferences
 import org.icescrum.core.domain.security.Authority
-import org.icescrum.core.support.ProgressSupport
 import org.springframework.security.access.prepost.PreAuthorize
-import org.springframework.transaction.annotation.Transactional
 import org.icescrum.core.domain.*
 import org.icescrum.core.support.ApplicationSupport
 import grails.plugin.springsecurity.SpringSecurityUtils
@@ -71,63 +70,6 @@ class ProductService extends IceScrumEventPublisher {
         }
         manageProductEvents(product, [:])
         publishSynchronousEvent(IceScrumEventType.CREATE, product)
-    }
-
-    @PreAuthorize('isAuthenticated()')
-    void saveImport(Product product, String importPath, boolean erase) {
-        product.orderNumber = (Product.count() ?: 0) + 1
-
-        if (erase && Product.countByName(product.name)) {
-            def p = Product.findByName(product.name)
-            p.teams.each{ it.removeFromProducts(p) }
-            securityService.unsecureDomain(p)
-            p.delete(flush: true)
-        }
-
-        try {
-            product.teams.each { t ->
-                //save users before team
-                t.members?.each {
-                    if (it.id == null)
-                        it.save()
-                }
-
-                if (t.id == null)
-                    teamService.saveImport(t)
-                else {
-                    def ts = Team.get(t.id)
-                    ts.removeFromProducts(product)
-                    ts.addToProducts(product)
-                }
-            }
-
-            def productOwners = product.productOwners
-
-            productOwners?.each {
-                if (it.id == null)
-                    it.save()
-            }
-
-            product.save(flush: true)
-            securityService.secureDomain(product)
-
-            if (productOwners) {
-                productOwners?.eachWithIndex {it, index ->
-                    it = User.get(it.id)
-                    securityService.createProductOwnerPermissions(it, product)
-                }
-                def u = productOwners.first()
-                u = User.get(u.id)
-                securityService.changeOwner(u, product)
-            } else {
-                def u = User.get(springSecurityService.principal.id)
-                securityService.createProductOwnerPermissions(u, product)
-                securityService.changeOwner(u, product)
-            }
-
-        } catch (Exception e) {
-            throw new RuntimeException(e)
-        }
     }
 
     @PreAuthorize('owner(#team) and !archivedProduct(#product)')
@@ -206,6 +148,7 @@ class ProductService extends IceScrumEventPublisher {
 
     @PreAuthorize('stakeHolder(#product) or inProduct(#product)')
     def productBurnupValues(Product product) {
+
         def values = []
         product.releases?.sort {a, b -> a.orderNumber <=> b.orderNumber}?.each {
             Cliche.findAllByParentTimeBoxAndType(it, Cliche.TYPE_ACTIVATION, [sort: "datePrise", order: "asc"])?.each { cliche ->
@@ -304,160 +247,230 @@ class ProductService extends IceScrumEventPublisher {
     }
 
     @PreAuthorize('isAuthenticated()')
-    @Transactional(readOnly = true)
-    Product unMarshall(def product, ProgressSupport progress = null) {
-        def g = grailsApplication.mainContext.getBean('org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib')
-        try {
-            def p = new Product(
-                    name: product."${'name'}".text(),
-                    pkey: product.pkey.text(),
-                    description: product.description.text(),
-                    dateCreated: product.dateCreated.text() ? new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(product.dateCreated.text()) : new Date(),
-                    lastUpdated: product.lastUpdated.text() ? new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(product.lastUpdated.text()) : new Date(),
-                    todoDate: new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(product.todoDate.text()),
-                    startDate: new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(product.startDate.text()),
-                    endDate: new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(product.endDate.text()),
-                    planningPokerGameType: product.planningPokerGameType.text().toInteger()
-            )
-            p.preferences = new ProductPreferences(
-                    hidden: product.preferences.hidden.text().toBoolean(),
-                    assignOnBeginTask: product.preferences.assignOnBeginTask.text().toBoolean(),
-                    assignOnCreateTask: product.preferences.assignOnCreateTask.text().toBoolean(),
-                    autoCreateTaskOnEmptyStory: product.preferences.autoCreateTaskOnEmptyStory.text().toBoolean(),
-                    autoDoneStory: product.preferences.autoDoneStory.text().toBoolean(),
-                    noEstimation: product.preferences.noEstimation.text().toBoolean(),
-                    limitUrgentTasks: product.preferences.limitUrgentTasks.text().toInteger(),
-                    estimatedSprintsDuration: product.preferences.estimatedSprintsDuration.text().toInteger(),
-                    displayUrgentTasks: product.preferences.displayUrgentTasks.text().toBoolean(),
-                    displayRecurrentTasks: product.preferences.displayRecurrentTasks.text().toBoolean(),
-                    hideWeekend: product.preferences.hideWeekend.text()?.toBoolean() ?: false,
-                    releasePlanningHour: product.preferences.releasePlanningHour.text() ?: "9:00",
-                    sprintPlanningHour: product.preferences.sprintPlanningHour.text() ?: "9:00",
-                    dailyMeetingHour: product.preferences.dailyMeetingHour.text() ?: "11:00",
-                    sprintReviewHour: product.preferences.sprintReviewHour.text() ?: "14:00",
-                    sprintRetrospectiveHour: product.preferences.sprintRetrospectiveHour.text() ?: "16:00",
-                    timezone: product.preferences?.timezone?.text() ?: grailsApplication.config.icescrum.timezone.default
-            )
+    Product unMarshall(def productXml, def options) {
+        Product.withTransaction(readOnly:!options.save) { transaction ->
+            try {
+                def product = new Product(
+                        name: productXml."${'name'}".text(),
+                        pkey: productXml.pkey.text(),
+                        description: productXml.description.text(),
+                        lastUpdated: productXml.lastUpdated.text() ? new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(productXml.lastUpdated.text()) : new Date(),
+                        todoDate: new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(productXml.todoDate?.text() ?: productXml.dateCreated.text()),
+                        startDate: new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(productXml.startDate.text()),
+                        endDate: new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(productXml.endDate.text()),
+                        planningPokerGameType: productXml.planningPokerGameType.text().toInteger())
 
-            Product pExist = (Product) Product.findByPkey(p.pkey)
-            if (pExist && securityService.productOwner(pExist, springSecurityService.authentication)) {
-                p.erasableByUser = true
-            }
+                product.preferences = new ProductPreferences(
+                        hidden: productXml.preferences.hidden.text().toBoolean(),
+                        assignOnBeginTask: productXml.preferences.assignOnBeginTask.text().toBoolean(),
+                        assignOnCreateTask: productXml.preferences.assignOnCreateTask.text().toBoolean(),
+                        autoCreateTaskOnEmptyStory: productXml.preferences.autoCreateTaskOnEmptyStory.text().toBoolean(),
+                        autoDoneStory: productXml.preferences.autoDoneStory.text().toBoolean(),
+                        noEstimation: productXml.preferences.noEstimation.text().toBoolean(),
+                        limitUrgentTasks: productXml.preferences.limitUrgentTasks.text().toInteger(),
+                        estimatedSprintsDuration: productXml.preferences.estimatedSprintsDuration.text().toInteger(),
+                        displayUrgentTasks: productXml.preferences.displayUrgentTasks.text().toBoolean(),
+                        displayRecurrentTasks: productXml.preferences.displayRecurrentTasks.text().toBoolean(),
+                        hideWeekend: productXml.preferences.hideWeekend.text()?.toBoolean() ?: false,
+                        releasePlanningHour: productXml.preferences.releasePlanningHour.text() ?: "9:00",
+                        sprintPlanningHour: productXml.preferences.sprintPlanningHour.text() ?: "9:00",
+                        dailyMeetingHour: productXml.preferences.dailyMeetingHour.text() ?: "11:00",
+                        sprintReviewHour: productXml.preferences.sprintReviewHour.text() ?: "14:00",
+                        sprintRetrospectiveHour: productXml.preferences.sprintRetrospectiveHour.text() ?: "16:00",
+                        timezone: productXml.preferences?.timezone?.text() ?: grailsApplication.config.icescrum.timezone.default)
 
-            product.teams.team.eachWithIndex { it, index ->
-                def t = teamService.unMarshall(it, p, progress)
-                p.addToTeams(t)
-                progress?.updateProgress((product.teams.team.size() * (index + 1) / 100).toInteger(), g.message(code: 'is.parse', args: [g.message(code: 'is.team')]))
-            }
+                options.product = product
 
-            def productOwnersList = []
-            product.productOwners.user.eachWithIndex {productOwner, index ->
-                def u
-                if (!productOwner.@uid?.isEmpty())
-                    u = ((User) p.getAllUsers().find { it.uid == productOwner.@uid.text() } ) ?: null
-                else{
-                    u = ApplicationSupport.findUserUIDOldXMl(productOwner,null,p.getAllUsers())
+                productXml.teams.team.eachWithIndex { it, index ->
+                    teamService.unMarshall(it, options)
                 }
-                if (!u) {
-                    u = User.findByUsernameAndEmail(productOwner.username.text(), productOwner.email.text())
+
+                Product pExist = (Product) Product.findByPkey(product.pkey)
+                if (pExist && securityService.productOwner(pExist, springSecurityService.authentication)) {
+                    product.erasableByUser = true
+                }
+
+                def productOwnersList = []
+                productXml.productOwners.user.eachWithIndex { productOwner, index ->
+                    User u
+                    if (!productOwner.@uid?.isEmpty())
+                        u = ((User) product.getAllUsers().find { it.uid == productOwner.@uid.text() }) ?: null
+                    else {
+                        u = ApplicationSupport.findUserUIDOldXMl(productOwner, null, product.getAllUsers())
+                    }
                     if (!u) {
-                        def userService = (UserService) grailsApplication.mainContext.getBean('userService')
-                        u = userService.unMarshall(productOwner)
+                        u = User.findByUsernameAndEmail(productOwner.username.text(), productOwner.email.text())
+                        if (!u) {
+                            def userService = (UserService) grailsApplication.mainContext.getBean('userService')
+                            userService.unMarshall(productOwner, options)
+                        }
+                    }
+                    productOwnersList << u
+                }
+                product.productOwners = productOwnersList
+
+                def erase = options.changes?.erase ? true : false
+                if (options.changes) {
+                    def team = product.teams[0]
+                    if (options.changes?.team?.name) {
+                        team.name = options.changes.team.name
+                    }
+                    if (options.changes?.users) {
+                        team.members?.each {
+                            if (options.changes.users."${it.uid}") {
+                                it.username = options.changes.users."${it.uid}"
+                            }
+                        }
+                        team.scrumMasters?.each {
+                            if (options.changes.users."${it.uid}") {
+                                it.username = options.changes.users."${it.uid}"
+                            }
+                        }
+                        product.productOwners?.each {
+                            if (options.changes.users."${it.uid}") {
+                                it.username = options.changes.users."${it.uid}"
+                            }
+                        }
+                    }
+                    product.pkey = !erase && options.changes?.product?.pkey != null ? options.changes.product.pkey : product.pkey
+                    product.name = !erase && options.changes?.product?.name != null ? options.changes.product.name : product.name
+                }
+
+                if(options.validate) {
+                    options.changesNeeded = validate(product, erase)
+                    if (options.changesNeeded){
+                        return null
                     }
                 }
-                productOwnersList << u
-            }
-            p.productOwners = productOwnersList
 
-            def featureService = (FeatureService) grailsApplication.mainContext.getBean('featureService')
-            product.features.feature.eachWithIndex { it, index ->
-                def f = featureService.unMarshall(it)
-                p.addToFeatures(f)
-                progress?.updateProgress((product.features.feature.size() * (index + 1) / 100).toInteger(), g.message(code: 'is.parse', args: [g.message(code: 'is.feature')]))
-            }
-
-            product.actors.actor.eachWithIndex { it, index ->
-                def a = actorService.unMarshall(it)
-                p.addToActors(a)
-                progress?.updateProgress((product.actors.actor.size() * (index + 1) / 100).toInteger(), g.message(code: 'is.parse', args: [g.message(code: 'is.actor')]))
-            }
-
-            def storyService = (StoryService) grailsApplication.mainContext.getBean('storyService')
-            product.stories.story.eachWithIndex { it, index ->
-                storyService.unMarshall(it, p)
-                progress?.updateProgress((product.stories.story.size() * (index + 1) / 100).toInteger(), g.message(code: 'is.parse', args: [g.message(code: 'is.story')]))
-            }
-            // ensure rank for stories in backlog
-            def stories = p.stories.findAll {it.state == Story.STATE_ACCEPTED || it.state == Story.STATE_ESTIMATED}.sort{ a, b -> a.rank <=> b.rank }
-            stories.eachWithIndex {it, index ->
-                it.rank = index + 1
-            }
-
-            def releaseService = (ReleaseService) grailsApplication.mainContext.getBean('releaseService')
-            product.releases.release.eachWithIndex { it, index ->
-                releaseService.unMarshall(it, p, progress)
-                progress?.updateProgress((product.releases.release.size() * (index + 1) / 100).toInteger(), g.message(code: 'is.parse', args: [g.message(code: 'is.release')]))
-            }
-            // ensure rank for stories in each sprint
-            p.releases.each{Release release ->
-                release.sprints.each{Sprint sprint ->
-                    // first ranks for planned and in progress stories
-                    stories = sprint.stories.findAll { Story story -> story.state == Story.STATE_PLANNED || story.state == Story.STATE_INPROGRESS}.sort({ a, b -> a.rank <=> b.rank } as Comparator)
-                    stories.eachWithIndex {Story story, index ->
-                        story.rank = index + 1
+                if(options.save){
+                    if(erase && pExist){
+                        delete(pExist)
                     }
-                    // lask ranks for done stories
-                    def maxRank = stories.size()
-                    stories = sprint.stories.findAll { Story story -> story.state == Story.STATE_DONE}.sort({ a, b -> a.rank <=> b.rank } as Comparator)
-                    stories.each {Story story ->
-                        story.rank = ++maxRank
+                    product.save()
+                    product.teams.each { t ->
+                        //save users before team
+                        t.members?.each {
+                            if (it.id == null)
+                                it.save()
+                        }
+
+                        if (t.id == null)
+                            teamService.saveImport(t)
+                        else {
+                            def ts = Team.get(t.id)
+                            ts.removeFromProducts(product)
+                            ts.addToProducts(product)
+                        }
+                    }
+                    securityService.secureDomain(product)
+                    if (product.productOwners) {
+                        product.productOwners?.eachWithIndex {user, index ->
+                            user = User.get(user.id)
+                            securityService.createProductOwnerPermissions(user, product)
+                        }
+                        def user = product.productOwners.first()
+                        user = User.get(user.id)
+                        securityService.changeOwner(user, product)
+                    } else {
+                        def user = User.get(springSecurityService.principal.id)
+                        securityService.createProductOwnerPermissions(user, product)
+                        securityService.changeOwner(user, product)
                     }
                 }
+
+                //child objects
+                def featureService = (FeatureService) grailsApplication.mainContext.getBean('featureService')
+                productXml.features.feature.eachWithIndex { it, index ->
+                    featureService.unMarshall(it, options)
+                }
+
+                productXml.actors.actor.eachWithIndex { it, index ->
+                    actorService.unMarshall(it, options)
+                }
+
+                def storyService = (StoryService) grailsApplication.mainContext.getBean('storyService')
+                productXml.stories.story.eachWithIndex { it, index ->
+                    storyService.unMarshall(it, options)
+                }
+                // ensure rank for stories in backlog
+                def stories = product.stories.findAll {
+                    it.state == Story.STATE_ACCEPTED || it.state == Story.STATE_ESTIMATED
+                }.sort { a, b -> a.rank <=> b.rank }
+                stories.eachWithIndex { it, index ->
+                    it.rank = index + 1
+                    if (options.save) {
+                        it.save()
+                    }
+                }
+
+                def releaseService = (ReleaseService) grailsApplication.mainContext.getBean('releaseService')
+                productXml.releases.release.eachWithIndex { it, index ->
+                    releaseService.unMarshall(it, options)
+                }
+                // ensure rank for stories in each sprint
+                product.releases.each { Release release ->
+                    release.sprints.each { Sprint sprint ->
+                        // first ranks for planned and in progress stories
+                        stories = sprint.stories.findAll { Story story -> story.state == Story.STATE_PLANNED || story.state == Story.STATE_INPROGRESS }.sort { a, b -> a.rank <=> b.rank }
+                        stories.eachWithIndex { Story story, index ->
+                            story.rank = index + 1
+                            if (options.save) {
+                                story.save()
+                            }
+                        }
+                        // lask ranks for done stories
+                        def maxRank = stories.size()
+                        stories = sprint.stories.findAll { Story story -> story.state == Story.STATE_DONE }.sort { a, b -> a.rank <=> b.rank }
+                        stories.each { Story story ->
+                            story.rank = ++maxRank
+                            if (options.save) {
+                                story.save()
+                            }
+                        }
+                    }
+                }
+                if(options.save){
+                    product.save()
+                }
+                options.product = null
+                return (Product)importDomainsPlugins(product, options)
+            } catch (Exception e) {
+                if (log.debugEnabled) e.printStackTrace()
+                throw new RuntimeException(e)
             }
-            createDefaultBacklogs(p)
-            return p
-        } catch (Exception e) {
-            if (log.debugEnabled) e.printStackTrace()
-            progress?.progressError(g.message(code: 'is.parse.error', args: [g.message(code: 'is.product')]))
-            throw new RuntimeException(e)
         }
     }
 
     @PreAuthorize('isAuthenticated()')
-    @Transactional(readOnly = true)
-    def parseXML(File file, ProgressSupport progress = null) {
-        def g = grailsApplication.mainContext.getBean('org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib')
-        String xmlText = file.getText()
-        String cleanedXmlText = ServicesUtils.cleanXml(xmlText)
-        def prod = new XmlSlurper().parseText(cleanedXmlText)
-
-        progress?.updateProgress(0, g.message(code: 'is.parse', args: [g.message(code: 'is.product')]))
-        def Product p
-        try {
-            def product = prod
-
-            //be compatible with xml without export tag
-            if (prod.find{it.name == 'export'}){ product = prod.product }
-
-            p = this.unMarshall(product, progress)
-        } catch (RuntimeException e) {
-            if (log.debugEnabled)
-                e.printStackTrace()
-            progress?.progressError(g.message(code: 'is.parse.error', args: [g.message(code: 'is.product')]))
-            return
+    def importXML(File file, def options) {
+        Product.withTransaction(readOnly:!options.save){
+            String xmlText = file.getText()
+            String cleanedXmlText = ServicesUtils.cleanXml(xmlText)
+            def _productXml = new XmlSlurper().parseText(cleanedXmlText)
+            def Product product = null
+            try {
+                def productXml = _productXml
+                //be compatible with xml without export tag
+                if (_productXml.find{it.name == 'export'}){ productXml = _productXml.product }
+                product = this.unMarshall(productXml, options)
+            } catch (RuntimeException e) {
+                if (log.debugEnabled)
+                    e.printStackTrace()
+            }
+            if(product?.id && options.save){
+                product.save(flush:true)
+            }
+            return product
         }
-        progress.completeProgress(g.message(code: 'is.validate.complete'))
-        return p
     }
 
     @PreAuthorize('isAuthenticated()')
-    @Transactional(readOnly = true)
-    def validate(Product p, ProgressSupport progress = null, boolean erase = false) {
+    def validate(Product product, boolean erase = false) {
         def changes = [:]
-        def g = grailsApplication.mainContext.getBean('org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib')
         try {
             Product.withNewSession {
-                p.teams.eachWithIndex { team, index ->
+                product.teams.eachWithIndex { team, index ->
                     team.validate()
                     if (team.errors.errorCount == 1) {
                         changes.team = [:]
@@ -473,7 +486,6 @@ class ProductService extends IceScrumEventPublisher {
                             log.info("Team validation error (${team.name}): " + team.errors)
                         throw new RuntimeException()
                     }
-                    progress?.updateProgress((p.teams.size() * (index + 1) / 100).toInteger(), g.message(code: 'is.validate', args: [g.message(code: 'is.team')]))
                     team.members.eachWithIndex { member, index2 ->
                         member.validate()
                         if (member.errors.errorCount == 1) {
@@ -490,10 +502,9 @@ class ProductService extends IceScrumEventPublisher {
                                 log.info("User validation error (${member.username}): " + member.errors)
                             throw new RuntimeException()
                         }
-                        progress?.updateProgress((team.members.size() * (index2 + 1) / 100).toInteger(), g.message(code: 'is.validate', args: [g.message(code: 'is.user')]))
                     }
                 }
-                p.productOwners?.eachWithIndex{ productOwner, index ->
+                product.productOwners?.eachWithIndex{ productOwner, index ->
                     productOwner.validate()
                     if (productOwner.errors.errorCount == 1) {
                         changes.users = changes.users ?: [:]
@@ -509,33 +520,30 @@ class ProductService extends IceScrumEventPublisher {
                             log.info("User validation error (${productOwner.username}): " + productOwner.errors)
                         throw new RuntimeException()
                     }
-                    progress?.updateProgress((p.productOwners.size() * (index + 1) / 100).toInteger(), g.message(code: 'is.validate', args: [g.message(code: 'is.user')]))
                 }
-                p.validate()
-                if (p.errors.errorCount && p.errors.errorCount <= 2 && !erase) {
+                product.validate()
+                if (product.errors.errorCount && product.errors.errorCount <= 2 && !erase) {
                     changes.product = [:]
-                    p.errors.fieldErrors*.field.each{ field ->
+                    product.errors.fieldErrors*.field.each{ field ->
                         if(!(field in ['pkey', 'name'])){
                             if (log.infoEnabled)
-                                log.info("Product validation error (${p.name}): " + p.errors)
+                                log.info("Product validation error (${product.name}): " + product.errors)
                             throw new RuntimeException()
                         } else {
-                            changes.product[field] = p[field]
+                            changes.product[field] = product[field]
                         }
                     }
-                    changes.erasable = p.erasableByUser
-                } else if (p.errors.errorCount > 2) {
+                    changes.erasable = product.erasableByUser
+                } else if (product.errors.errorCount > 2) {
                     if (log.infoEnabled)
-                        log.info("Product validation error (${p.name}): " + p.errors)
+                        log.info("Product validation error (${product.name}): " + product.errors)
                     throw new RuntimeException()
                 }
-                progress?.updateProgress(100, g.message(code: 'is.validate', args: [g.message(code: 'is.product')]))
                 return changes
             }
         } catch (Exception e) {
             if (log.debugEnabled)
                 e.printStackTrace()
-            progress?.progressError(g.message(code: 'is.validate.error', args: [g.message(code: 'is.product')]))
         }
     }
 

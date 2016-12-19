@@ -34,7 +34,7 @@ import org.icescrum.core.error.BusinessException
 import java.text.SimpleDateFormat
 import org.springframework.context.ApplicationContext
 import org.springframework.security.access.prepost.PreAuthorize
-import org.springframework.transaction.annotation.Transactional
+import grails.transaction.Transactional
 import org.icescrum.core.domain.*
 import org.icescrum.core.support.ApplicationSupport
 
@@ -338,63 +338,86 @@ class TaskService extends IceScrumEventPublisher {
         task.rank = newRank
     }
 
-    @Transactional(readOnly = true)
-    def unMarshall(def task, Product p = null) {
-        try {
-            def inProgressDate = null
-            if (task.inProgressDate?.text() && task.inProgressDate?.text() != "") {
-                inProgressDate = new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(task.inProgressDate.text()) ?: null
-            }
-            def doneDate = null
-            if (task.doneDate?.text() && task.doneDate?.text() != "") {
-                doneDate = new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(task.doneDate.text()) ?: null
-            }
-            def t = new Task(
-                    type: (task.type.text().isNumber()) ? task.type.text().toInteger() : null,
-                    description: task.description.text(),
-                    notes: task.notes.text(),
-                    estimation: (task.estimation.text().isNumber()) ? task.estimation.text().toFloat() : null,
-                    initial: (task.initial.text().isNumber()) ? task.initial.text().toFloat() : null,
-                    rank: task.rank.text().toInteger(),
-                    name: task."${'name'}".text(),
-                    doneDate: doneDate,
-                    inProgressDate: inProgressDate,
-                    state: task.state.text().toInteger(),
-                    todoDate: new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(task.todoDate.text()),
-                    blocked: task.blocked.text()?.toBoolean() ?: false,
-                    uid: task.@uid.text()?.isEmpty() ? task.@id.text().toInteger() : task.@uid.text().toInteger(),
-                    color: task?.color?.text() ?: "yellow"
-            )
-            if (p) {
-                def u
-                if (!task.creator?.@uid?.isEmpty()) {
-                    u = ((User) p.getAllUsers().find { it.uid == task.creator.@uid.text() }) ?: null
-                } else {
-                    u = ApplicationSupport.findUserUIDOldXMl(task, 'creator', p.getAllUsers())
+    def unMarshall(def taskXml, def options) {
+        Product product = options.product
+        Sprint sprint = options.sprint
+        Story story = options.story
+        Task.withTransaction(readOnly:options.save) { transaction ->
+            try {
+                def inProgressDate = null
+                if (taskXml.inProgressDate?.text() && taskXml.inProgressDate?.text() != "") {
+                    inProgressDate = new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(taskXml.inProgressDate.text()) ?: null
                 }
-                if (u) {
-                    t.creator = u
-                } else {
-                    t.creator = p.productOwners.first()
+                def doneDate = null
+                if (taskXml.doneDate?.text() && taskXml.doneDate?.text() != "") {
+                    doneDate = new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(taskXml.doneDate.text()) ?: null
                 }
+                def todoDate = null
+                if (taskXml.todoDate?.text() && taskXml.todoDate?.text() != "") {
+                    todoDate = new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(taskXml.todoDate.text())
+                } else if (sprint || story) {
+                    todoDate = sprint?.todoDate ?: story.todoDate
+                }
+                def task = new Task(
+                        type: (taskXml.type.text().isNumber()) ? taskXml.type.text().toInteger() : null,
+                        description: taskXml.description.text(),
+                        notes: taskXml.notes.text(),
+                        estimation: (taskXml.estimation.text().isNumber()) ? taskXml.estimation.text().toFloat() : null,
+                        initial: (taskXml.initial.text().isNumber()) ? taskXml.initial.text().toFloat() : null,
+                        rank: taskXml.rank.text().toInteger(),
+                        name: taskXml."${'name'}".text(),
+                        todoDate: todoDate,
+                        inProgressDate: inProgressDate,
+                        doneDate: doneDate,
+                        state: taskXml.state.text().toInteger(),
+                        blocked: taskXml.blocked.text()?.toBoolean() ?: false,
+                        uid: taskXml.@uid.text()?.isEmpty() ? taskXml.@id.text().toInteger() : taskXml.@uid.text().toInteger(),
+                        color: taskXml?.color?.text() ?: "yellow")
+
+                if (product) {
+                    def u
+                    if (!taskXml.creator?.@uid?.isEmpty()) {
+                        u = ((User) product.getAllUsers().find { it.uid == taskXml.creator.@uid.text() }) ?: null
+                    } else {
+                        u = ApplicationSupport.findUserUIDOldXMl(taskXml, 'creator', product.getAllUsers())
+                    }
+                    if (u) {
+                        task.creator = u
+                    } else {
+                        task.creator = (User) product.productOwners.first()
+                    }
+                    product.addToTasks(task)
+                }
+
+                if ((!taskXml.responsible?.@uid?.isEmpty() || !taskXml.responsible?.@id?.isEmpty()) && product) {
+                    def u
+                    if (!taskXml.responsible?.@uid?.isEmpty()) {
+                        u = ((User) product.getAllUsers().find { it.uid == taskXml.responsible.@uid.text() }) ?: null
+                    } else {
+                        u = ApplicationSupport.findUserUIDOldXMl(taskXml, 'responsible', product.getAllUsers())
+                    }
+                    if (u) {
+                        task.responsible = u
+                    } else {
+                        task.responsible = (User) product.productOwners.first()
+                    }
+                }
+                if (sprint) {
+                    sprint.addToTasks(task)
+                }
+                if (story) {
+                    story.addToTasks(task)
+                }
+
+                if (options.save) {
+                    task.save()
+                }
+
+                return (Task)importDomainsPlugins(task, options)
+            } catch (Exception e) {
+                if (log.debugEnabled) e.printStackTrace()
+                throw new RuntimeException(e)
             }
-            if ((!task.responsible?.@uid?.isEmpty() || !task.responsible?.@id?.isEmpty()) && p) {
-                def u
-                if (!task.responsible?.@uid?.isEmpty()) {
-                    u = ((User) p.getAllUsers().find { it.uid == task.responsible.@uid.text() }) ?: null
-                } else {
-                    u = ApplicationSupport.findUserUIDOldXMl(task, 'responsible', p.getAllUsers())
-                }
-                if (u) {
-                    t.responsible = u
-                } else {
-                    t.responsible = p.productOwners.first()
-                }
-            }
-            return t
-        } catch (Exception e) {
-            if (log.debugEnabled) e.printStackTrace()
-            throw new RuntimeException(e)
         }
     }
 }

@@ -26,7 +26,6 @@ package org.icescrum.core.services
 
 import grails.util.Environment
 import org.icescrum.core.support.ApplicationSupport
-import org.icescrum.core.test.DummyPopulator
 
 class BootStrapService {
 
@@ -35,7 +34,6 @@ class BootStrapService {
     def authorityService
 
     void start() {
-
         def dev = Environment.current == Environment.DEVELOPMENT && !System.properties['icescrum.noDummyze']
         def config = grailsApplication.config
         if (!config.icescrum.createDefaultAdmin) {
@@ -55,10 +53,6 @@ class BootStrapService {
             config.grails.mail = config.grails.mail.clone() // Make MailGrailsPlugin onConfigChange see a new hashcode and take the update into account (just changing the props don't change the hashcode)
             config.grails.mail.props = ApplicationSupport.stringToMap(config.grails.mail.props)
             pluginManager.informPluginsOfConfigChange()
-        }
-
-        if (dev) {
-            DummyPopulator.dummyze()
         }
     }
 }

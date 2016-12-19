@@ -24,14 +24,14 @@
 
 package org.icescrum.core.services
 
+import grails.transaction.Transactional
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
 import org.icescrum.core.error.BusinessException
 
 import java.text.SimpleDateFormat
-import org.icescrum.core.support.ProgressSupport
+
 import org.springframework.security.access.prepost.PreAuthorize
-import org.springframework.transaction.annotation.Transactional
 import org.icescrum.core.domain.*
 
 @Transactional
@@ -207,60 +207,79 @@ class ReleaseService extends IceScrumEventPublisher {
         labels
     }
 
-    @Transactional(readOnly = true)
-    def unMarshall(def release, Product p = null, ProgressSupport progress) {
-        def g = grailsApplication.mainContext.getBean('org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib')
-        try {
-            def inProgressDate = null
-            if (release.inProgressDate?.text() && release.inProgressDate?.text() != "") {
-                inProgressDate = new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(release.inProgressDate.text()) ?: null
-            }
-            def doneDate = null
-            if (release.doneDate?.text() && release.doneDate?.text() != "") {
-                doneDate = new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(release.doneDate.text()) ?: null
-            }
-            def r = new Release(
-                    state: release.state.text().toInteger(),
-                    name: release.name.text(),
-                    dateCreated: release.dateCreated.text() ? new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(release.dateCreated.text()) : new Date(),
-                    lastUpdated: release.lastUpdated.text() ? new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(release.lastUpdated.text()) : new Date(),
-                    todoDate: new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(release.todoDate.text()),
-                    startDate: new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(release.startDate.text()),
-                    doneDate: doneDate,
-                    inProgressDate: inProgressDate,
-                    endDate: new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(release.endDate.text()),
-                    orderNumber: release.orderNumber.text().toInteger(),
-                    firstSprintIndex: release.firstSprintIndex.text() ? release.firstSprintIndex.toInteger() : 1,
-                    description: release.description.text(),
-                    vision: release.vision.text(),
-                    goal: release.goal?.text() ?: '',
-            )
-
-            release.cliches.cliche.each {
-                def c = clicheService.unMarshall(it)
-                r.addToCliches(c)
-            }
-
-            if (p) {
-                def sprintService = (SprintService) grailsApplication.mainContext.getBean('sprintService')
-                release.sprints.sprint.eachWithIndex { it, index ->
-                    def s = sprintService.unMarshall(it, p)
-                    r.addToSprints(s)
-                    progress?.updateProgress((release.sprints.sprint.size() * (index + 1) / 100).toInteger(), g.message(code: 'is.parse', args: [g.message(code: 'is.sprint')]))
+    def unMarshall(def releaseXml, def options) {
+        Product product = options.product
+        Release.withTransaction(readOnly:!options.save) { transaction ->
+            try {
+                def inProgressDate = null
+                if (releaseXml.inProgressDate?.text() && releaseXml.inProgressDate?.text() != "") {
+                    inProgressDate = new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(releaseXml.inProgressDate.text()) ?: null
                 }
-                p.addToReleases(r)
-                release.features?.feature?.each { feature ->
-                    def f = p.features.find { it.uid == feature.@uid.text().toInteger() } ?: null
-                    if (f) {
-                        r.addToFeatures(f)
+                def doneDate = null
+                if (releaseXml.doneDate?.text() && releaseXml.doneDate?.text() != "") {
+                    doneDate = new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(releaseXml.doneDate.text()) ?: null
+                }
+                def todoDate = null
+                if (releaseXml.todoDate?.text() && releaseXml.todoDate?.text() != "") {
+                    todoDate = new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(releaseXml.todoDate.text())
+                } else if (releaseXml.dateCreated?.text() && releaseXml.dateCreated?.text() != "") {
+                    todoDate = new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(releaseXml.dateCreated.text())
+                } else if (product) {
+                    todoDate = product.todoDate
+                }
+                def release = new Release(
+                        state: releaseXml.state.text().toInteger(),
+                        name: releaseXml.name.text(),
+                        lastUpdated: releaseXml.lastUpdated.text() ? new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(releaseXml.lastUpdated.text()) : new Date(),
+                        todoDate: todoDate,
+                        startDate: new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(releaseXml.startDate.text()),
+                        doneDate: doneDate,
+                        inProgressDate: inProgressDate,
+                        endDate: new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(releaseXml.endDate.text()),
+                        orderNumber: releaseXml.orderNumber.text().toInteger(),
+                        firstSprintIndex: releaseXml.firstSprintIndex.text() ? releaseXml.firstSprintIndex.toInteger() : 1,
+                        description: releaseXml.description.text(),
+                        vision: releaseXml.vision.text(),
+                        goal: releaseXml.goal?.text() ?: '')
+
+                options.release = release
+
+                if (product) {
+                    product.addToReleases(release)
+
+                    //save before some hibernate stuff
+                    if (options.save) {
+                        release.save()
+                    }
+                    def sprintService = (SprintService) grailsApplication.mainContext.getBean('sprintService')
+                    releaseXml.sprints.sprint.eachWithIndex { it, index ->
+                        sprintService.unMarshall(it, options)
+                    }
+                    releaseXml.features?.feature?.each { feature ->
+                        def f = product.features.find { it.uid == feature.@uid.text().toInteger() } ?: null
+                        if (f) {
+                            release.addToFeatures(f)
+                        }
                     }
                 }
+
+                //child objects
+                options.timebox = release
+                releaseXml.cliches.cliche.each {
+                    clicheService.unMarshall(it, options)
+                }
+                options.timebox = null
+
+                if (options.save) {
+                    release.save()
+                }
+
+                options.release = null
+                return (Release)importDomainsPlugins(release, options)
+            } catch (Exception e) {
+                if (log.debugEnabled) e.printStackTrace()
+                throw new RuntimeException(e)
             }
-            return r
-        } catch (Exception e) {
-            if (log.debugEnabled) e.printStackTrace()
-            progress?.progressError(g.message(code: 'is.parse.error', args: [g.message(code: 'is.sprint')]))
-            throw new RuntimeException(e)
         }
     }
 }

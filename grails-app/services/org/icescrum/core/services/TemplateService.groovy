@@ -24,11 +24,17 @@
 package org.icescrum.core.services
 
 import grails.converters.JSON
+import org.icescrum.core.domain.Activity
+import org.icescrum.core.domain.Product
 import org.icescrum.core.domain.Story
+import org.icescrum.core.domain.Task
 import org.icescrum.core.domain.Template
+import org.icescrum.core.domain.User
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
-import org.springframework.transaction.annotation.Transactional
+import grails.transaction.Transactional
+
+import java.text.SimpleDateFormat
 
 @Transactional
 class TemplateService extends IceScrumEventPublisher {
@@ -66,5 +72,33 @@ class TemplateService extends IceScrumEventPublisher {
         def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_DELETE, template)
         template.delete(flush: true)
         publishSynchronousEvent(IceScrumEventType.DELETE, template, dirtyProperties)
+    }
+
+    def unMarshall(def templateXml, def options) {
+        def product = options.product
+        Template.withTransaction(readOnly:!options.save) { transaction ->
+            try {
+                def template = new Template(
+                        serializedData: templateXml.serializedData.text(),
+                        itemClass: templateXml.itemClass.text())
+
+                //reference on other object
+                if (product) {
+                    template.parentProduct = product
+                }
+
+                if (options.save) {
+                    template.save()
+                }
+
+                return (Template)importDomainsPlugins(template, options)
+
+            } catch (Exception e) {
+                if (log.debugEnabled) {
+                    e.printStackTrace()
+                }
+                throw new RuntimeException(e)
+            }
+        }
     }
 }

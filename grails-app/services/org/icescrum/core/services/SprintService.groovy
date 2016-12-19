@@ -31,7 +31,7 @@ import org.icescrum.core.error.BusinessException
 import java.text.SimpleDateFormat
 import org.icescrum.core.utils.ServicesUtils
 import org.springframework.security.access.prepost.PreAuthorize
-import org.springframework.transaction.annotation.Transactional
+import grails.transaction.Transactional
 import org.icescrum.core.domain.*
 import org.icescrum.core.support.ApplicationSupport
 
@@ -359,59 +359,83 @@ class SprintService extends IceScrumEventPublisher {
         return copiedTasks
     }
 
-    @Transactional(readOnly = true)
-    def unMarshall(def sprint, Product p = null) {
-        try {
-            def inProgressDate = null
-            if (sprint.inProgressDate?.text() && sprint.inProgressDate?.text() != "")
-                inProgressDate = new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(sprint.inProgressDate.text()) ?: null
-            if (!inProgressDate && sprint.state.text().toInteger() >= Sprint.STATE_INPROGRESS) {
-                inProgressDate = new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(sprint.startDate.text())
-            }
-            def doneDate = null
-            if (sprint.doneDate?.text() && sprint.doneDate?.text() != "")
-                doneDate = new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(sprint.doneDate.text()) ?: null
-            if (!doneDate && sprint.state.text().toInteger() == Sprint.STATE_INPROGRESS) {
-                doneDate = new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(sprint.endDate.text())
-            }
-            def s = new Sprint(
-                    retrospective: sprint.retrospective.text(),
-                    doneDefinition: sprint.doneDefinition.text(),
-                    inProgressDate: inProgressDate,
-                    doneDate: doneDate,
-                    state: sprint.state.text().toInteger(),
-                    velocity: (sprint.velocity.text().isNumber()) ? sprint.velocity.text().toDouble() : 0d,
-                    dailyWorkTime: (sprint.dailyWorkTime.text().isNumber()) ? sprint.dailyWorkTime.text().toDouble() : 8d,
-                    capacity: (sprint.capacity.text().isNumber()) ? sprint.capacity.text().toDouble() : 0d,
-                    dateCreated: sprint.dateCreated.text() ? new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(sprint.dateCreated.text()) : new Date(),
-                    lastUpdated: sprint.lastUpdated.text() ? new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(sprint.lastUpdated.text()) : new Date(),
-                    todoDate: new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(sprint.todoDate.text()),
-                    startDate: new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(sprint.startDate.text()),
-                    endDate: new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(sprint.endDate.text()),
-                    orderNumber: sprint.orderNumber.text().toInteger(),
-                    description: sprint.description.text() ?: '',
-                    goal: sprint.goal?.text() ?: '',
-                    deliveredVersion: sprint.deliveredVersion?.text() ?: '',
-                    initialRemainingTime: sprint.initialRemainingTime?.text()?.isNumber() ? sprint.initialRemainingTime.text().toFloat() : sprint.initialRemainingHours?.text()?.isNumber() ? sprint.initialRemainingHours.text().toFloat() : null
-            )
+    def unMarshall(def sprintXml, def options) {
+        def product = options.product
+        def release = options.release
+        Sprint.withTransaction(readOnly:!options.save) { transaction ->
+            try {
+                def inProgressDate = null
+                if (sprintXml.inProgressDate?.text() && sprintXml.inProgressDate?.text() != "")
+                    inProgressDate = new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(sprintXml.inProgressDate.text()) ?: null
+                if (!inProgressDate && sprintXml.state.text().toInteger() >= Sprint.STATE_INPROGRESS) {
+                    inProgressDate = new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(sprintXml.startDate.text())
+                }
+                def doneDate = null
+                if (sprintXml.doneDate?.text() && sprintXml.doneDate?.text() != "")
+                    doneDate = new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(sprintXml.doneDate.text()) ?: null
+                if (!doneDate && sprintXml.state.text().toInteger() == Sprint.STATE_INPROGRESS) {
+                    doneDate = new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(sprintXml.endDate.text())
+                }
 
-            sprint.cliches.cliche.each {
-                def c = clicheService.unMarshall(it)
-                ((TimeBox) s).addToCliches(c)
-            }
-            if (p) {
-                sprint.stories.story.each {
-                    storyService.unMarshall(it, p, s)
+                def todoDate = null
+                if (sprintXml.todoDate?.text() && sprintXml.todoDate?.text() != "") {
+                    todoDate = new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(sprintXml.todoDate.text())
+                } else if (release) {
+                    todoDate = release.todoDate
                 }
-                sprint.tasks.task.each {
-                    def t = taskService.unMarshall(it, p)
-                    s.addToTasks(t)
+
+                def sprint = new Sprint(
+                        retrospective: sprintXml.retrospective.text(),
+                        doneDefinition: sprintXml.doneDefinition.text(),
+                        inProgressDate: inProgressDate,
+                        doneDate: doneDate,
+                        state: sprintXml.state.text().toInteger(),
+                        velocity: (sprintXml.velocity.text().isNumber()) ? sprintXml.velocity.text().toDouble() : 0d,
+                        dailyWorkTime: (sprintXml.dailyWorkTime.text().isNumber()) ? sprintXml.dailyWorkTime.text().toDouble() : 8d,
+                        capacity: (sprintXml.capacity.text().isNumber()) ? sprintXml.capacity.text().toDouble() : 0d,
+                        lastUpdated: sprintXml.lastUpdated.text() ? new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(sprintXml.lastUpdated.text()) : new Date(),
+                        todoDate: todoDate,
+                        startDate: new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(sprintXml.startDate.text()),
+                        endDate: new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(sprintXml.endDate.text()),
+                        orderNumber: sprintXml.orderNumber.text().toInteger(),
+                        description: sprintXml.description.text() ?: '',
+                        goal: sprintXml.goal?.text() ?: '',
+                        deliveredVersion: sprintXml.deliveredVersion?.text() ?: '',
+                        initialRemainingTime: sprintXml.initialRemainingTime?.text()?.isNumber() ? sprintXml.initialRemainingTime.text().toFloat() : sprintXml.initialRemainingHours?.text()?.isNumber() ? sprintXml.initialRemainingHours.text().toFloat() : null
+                )
+
+                //references other objects
+                if (release) {
+                    release.addToSprints(sprint)
                 }
+                //save before some hibernate stuff
+                if (options.save) {
+                    sprint.save()
+                }
+                options.sprint = sprint
+                options.timebox = sprint
+                //child objects
+                sprintXml.cliches.cliche.each {
+                    clicheService.unMarshall(it, options)
+                }
+                options.timebox = null
+                if (product) {
+                    sprintXml.stories.story.each {
+                        storyService.unMarshall(it, options)
+                    }
+                    sprintXml.tasks.task.each {
+                        taskService.unMarshall(it, options)
+                    }
+                }
+                if (options.save) {
+                    sprint.save()
+                }
+                options.sprint = null
+                return (Sprint)importDomainsPlugins(sprint, options)
+            } catch (Exception e) {
+                if (log.debugEnabled) e.printStackTrace()
+                throw new RuntimeException(e)
             }
-            return s
-        } catch (Exception e) {
-            if (log.debugEnabled) e.printStackTrace()
-            throw new RuntimeException(e)
         }
     }
 }
