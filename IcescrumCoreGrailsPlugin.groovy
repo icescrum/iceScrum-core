@@ -75,13 +75,17 @@ class IcescrumCoreGrailsPlugin {
         }
         // That's the earliest I found after ConfigurationHelper.loadConfigFromClasspath
         // We must ensure that it's before the serverURL is used anywhere (e.g. in AssetPipelineGrailsPlugin.groovy::doWithSpring)
-        application.config.grails.serverURL = System.getProperty('icescrum.serverURL') ?: application.config.grails.serverURL
+        def iceScrumURL = System.getProperty('icescrum.serverURL')
+        if (iceScrumURL) {
+            println "Overriding grails.serverURL with URL: " +  iceScrumURL
+            application.config.grails.serverURL = iceScrumURL
+        }
     }
 
     def controllersWithDownloadAndPreview = ['story', 'task', 'feature', 'sprint', 'release', 'project']
 
     def doWithSpring = {
-        println '\nConfiguring iceScrum plugin core ...'
+        println '\nConfiguring iceScrum plugin core...'
         ApplicationSupport.createUUID()
         System.setProperty('lbdsl.home', "${application.config.icescrum.baseDir.toString()}${File.separator}lbdsl")
         // Init config.icescrum.export for plugins to be able to register without an if exist / create test
