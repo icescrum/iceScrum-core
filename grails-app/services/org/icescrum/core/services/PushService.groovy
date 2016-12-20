@@ -24,6 +24,7 @@
 package org.icescrum.core.services
 
 import grails.converters.JSON
+import grails.transaction.Transactional
 import grails.util.GrailsNameUtils
 import org.atmosphere.cpr.AtmosphereResource
 import org.atmosphere.cpr.Broadcaster
@@ -31,7 +32,6 @@ import org.icescrum.atmosphere.IceScrumAtmosphereEventListener
 import org.icescrum.atmosphere.IceScrumBroadcaster
 import org.icescrum.core.domain.User
 import org.icescrum.core.event.IceScrumEventType
-import grails.transaction.Transactional
 
 import java.util.concurrent.CopyOnWriteArrayList
 

@@ -23,15 +23,12 @@
  */
 package org.icescrum.core.services
 
-import org.hibernate.proxy.HibernateProxyHelper
-import org.icescrum.core.domain.AcceptanceTest
-import org.icescrum.core.domain.Activity
-import org.icescrum.core.domain.Product
-import org.icescrum.core.domain.User
 import grails.util.GrailsNameUtils
+import org.hibernate.proxy.HibernateProxyHelper
+import org.icescrum.core.domain.Activity
+import org.icescrum.core.domain.User
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
-import grails.transaction.Transactional
 
 import java.text.SimpleDateFormat
 
@@ -44,7 +41,7 @@ class ActivityService extends IceScrumEventPublisher {
         def itemClass = HibernateProxyHelper.getClassWithoutInitializingProxy(item)
         def itemType = GrailsNameUtils.getPropertyName(itemClass)
         def activity = new Activity(poster: poster, parentRef: item.id, parentType: itemType,
-                                    code: code, label: label, field:field, beforeValue: beforeValue, afterValue: afterValue)
+                                    code: code, label: label, field: field, beforeValue: beforeValue, afterValue: afterValue)
         activity.save()
         item.addToActivities(activity)
         publishSynchronousEvent(IceScrumEventType.CREATE, activity)
@@ -65,7 +62,7 @@ class ActivityService extends IceScrumEventPublisher {
     def unMarshall(def activityXml, def options) {
         def parent = options.parent
         def product = options.product
-        Activity.withTransaction(readOnly:!options.save) { transaction ->
+        Activity.withTransaction(readOnly: !options.save) { transaction ->
             try {
                 def activity = new Activity(
                         dateCreated: new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(activityXml.dateCreated.text()),
@@ -77,12 +74,12 @@ class ActivityService extends IceScrumEventPublisher {
                         beforeValue: activityXml.beforeValue.text(),
                         parentType: activityXml.parentType.text()
                 )
-                //references to object
+                // References to object
                 if (product) {
                     def u = ((User) product.getAllUsers().find { it.uid == activityXml.poster.@uid.text() }) ?: null
                     activity.poster = (User) (u ?: product.productOwners.first())
                 }
-                //save before some hibernate stuff
+                // Save before some hibernate stuff
                 if (options.save) {
                     activity.save()
                 }
@@ -90,11 +87,10 @@ class ActivityService extends IceScrumEventPublisher {
                     activity.parentRef = parent.id
                     parent.addToActivities(activity)
                 }
-                if(options.save){
+                if (options.save) {
                     activity.save()
                 }
-                return (Activity)importDomainsPlugins(activity, options)
-
+                return (Activity) importDomainsPlugins(activity, options)
             } catch (Exception e) {
                 if (log.debugEnabled) {
                     e.printStackTrace()

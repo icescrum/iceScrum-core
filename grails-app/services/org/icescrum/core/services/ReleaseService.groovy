@@ -25,14 +25,13 @@
 package org.icescrum.core.services
 
 import grails.transaction.Transactional
+import org.icescrum.core.domain.*
+import org.icescrum.core.error.BusinessException
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
-import org.icescrum.core.error.BusinessException
+import org.springframework.security.access.prepost.PreAuthorize
 
 import java.text.SimpleDateFormat
-
-import org.springframework.security.access.prepost.PreAuthorize
-import org.icescrum.core.domain.*
 
 @Transactional
 class ReleaseService extends IceScrumEventPublisher {
@@ -177,10 +176,10 @@ class ReleaseService extends IceScrumEventPublisher {
             def xmlRoot = new XmlSlurper().parseText(cliche.data)
             if (xmlRoot) {
                 def sprintEntry = [
-                        label: xmlRoot."${Cliche.SPRINT_ID}".toString(),
-                        userstories: xmlRoot."${Cliche.FUNCTIONAL_STORY_PRODUCT_REMAINING_POINTS}".toBigDecimal(),
+                        label           : xmlRoot."${Cliche.SPRINT_ID}".toString(),
+                        userstories     : xmlRoot."${Cliche.FUNCTIONAL_STORY_PRODUCT_REMAINING_POINTS}".toBigDecimal(),
                         technicalstories: xmlRoot."${Cliche.TECHNICAL_STORY_PRODUCT_REMAINING_POINTS}".toBigDecimal(),
-                        defectstories: xmlRoot."${Cliche.DEFECT_STORY_PRODUCT_REMAINING_POINTS}".toBigDecimal()
+                        defectstories   : xmlRoot."${Cliche.DEFECT_STORY_PRODUCT_REMAINING_POINTS}".toBigDecimal()
                 ]
                 sprintEntry << computeLabelsForSprintEntry(sprintEntry)
                 values << sprintEntry
@@ -209,7 +208,7 @@ class ReleaseService extends IceScrumEventPublisher {
 
     def unMarshall(def releaseXml, def options) {
         Product product = options.product
-        Release.withTransaction(readOnly:!options.save) { transaction ->
+        Release.withTransaction(readOnly: !options.save) { transaction ->
             try {
                 def inProgressDate = null
                 if (releaseXml.inProgressDate?.text() && releaseXml.inProgressDate?.text() != "") {
@@ -241,13 +240,10 @@ class ReleaseService extends IceScrumEventPublisher {
                         description: releaseXml.description.text(),
                         vision: releaseXml.vision.text(),
                         goal: releaseXml.goal?.text() ?: '')
-
                 options.release = release
-
                 if (product) {
                     product.addToReleases(release)
-
-                    //save before some hibernate stuff
+                    // Save before some hibernate stuff
                     if (options.save) {
                         release.save()
                     }
@@ -262,8 +258,7 @@ class ReleaseService extends IceScrumEventPublisher {
                         }
                     }
                 }
-
-                //child objects
+                // Child objects
                 options.timebox = release
                 releaseXml.cliches.cliche.each {
                     clicheService.unMarshall(it, options)
@@ -273,9 +268,8 @@ class ReleaseService extends IceScrumEventPublisher {
                 if (options.save) {
                     release.save()
                 }
-
                 options.release = null
-                return (Release)importDomainsPlugins(release, options)
+                return (Release) importDomainsPlugins(release, options)
             } catch (Exception e) {
                 if (log.debugEnabled) e.printStackTrace()
                 throw new RuntimeException(e)

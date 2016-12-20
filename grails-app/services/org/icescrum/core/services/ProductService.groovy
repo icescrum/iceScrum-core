@@ -54,15 +54,15 @@ class ProductService extends IceScrumEventPublisher {
         product.save(flush: true)
         createDefaultBacklogs(product)
         securityService.secureDomain(product)
-        if (productOwners){
-            for(productOwner in User.getAll(productOwners*.toLong())){
+        if (productOwners) {
+            for (productOwner in User.getAll(productOwners*.toLong())) {
                 if (productOwner) {
                     addRole(product, productOwner, Authority.PRODUCTOWNER)
                 }
             }
         }
-        if (stakeHolders && product.preferences.hidden){
-            for(stakeHolder in User.getAll(stakeHolders*.toLong())){
+        if (stakeHolders && product.preferences.hidden) {
+            for (stakeHolder in User.getAll(stakeHolders*.toLong())) {
                 if (stakeHolder) {
                     addRole(product, stakeHolder, Authority.STAKEHOLDER)
                 }
@@ -102,18 +102,18 @@ class ProductService extends IceScrumEventPublisher {
             throw new BusinessException(code: 'is.product.error.no.name')
         }
         if (hasHiddenChanged && product.preferences.hidden && !ApplicationSupport.booleanValue(grailsApplication.config.icescrum.project.private.enable)
-              && !SpringSecurityUtils.ifAnyGranted(Authority.ROLE_ADMIN)) {
+                && !SpringSecurityUtils.ifAnyGranted(Authority.ROLE_ADMIN)) {
             product.preferences.hidden = false
         }
         if (hasHiddenChanged && !product.preferences.hidden) {
             product.stakeHolders?.each {
-                removeStakeHolder(product,it)
+                removeStakeHolder(product, it)
             }
             product.invitedStakeHolders?.each {
                 it.delete()
             }
         }
-        if (pkeyChanged){
+        if (pkeyChanged) {
             UserPreferences.findAllByLastProductOpened(pkeyChanged)?.each {
                 it.lastProductOpened = product.pkey
                 it.save()
@@ -127,18 +127,18 @@ class ProductService extends IceScrumEventPublisher {
     @PreAuthorize('stakeHolder(#product) or inProduct(#product)')
     def cumulativeFlowValues(Product product) {
         def values = []
-        product.releases?.sort {a, b -> a.orderNumber <=> b.orderNumber}?.each {
+        product.releases?.sort { a, b -> a.orderNumber <=> b.orderNumber }?.each {
             Cliche.findAllByParentTimeBoxAndType(it, Cliche.TYPE_ACTIVATION, [sort: "datePrise", order: "asc"])?.each { cliche ->
                 def xmlRoot = new XmlSlurper().parseText(cliche.data)
                 if (xmlRoot) {
                     values << [
-                            suggested: xmlRoot."${Cliche.SUGGESTED_STORIES}".toInteger(),
-                            accepted: xmlRoot."${Cliche.ACCEPTED_STORIES}".toInteger(),
-                            estimated: xmlRoot."${Cliche.ESTIMATED_STORIES}".toInteger(),
-                            planned: xmlRoot."${Cliche.PLANNED_STORIES}".toInteger(),
+                            suggested : xmlRoot."${Cliche.SUGGESTED_STORIES}".toInteger(),
+                            accepted  : xmlRoot."${Cliche.ACCEPTED_STORIES}".toInteger(),
+                            estimated : xmlRoot."${Cliche.ESTIMATED_STORIES}".toInteger(),
+                            planned   : xmlRoot."${Cliche.PLANNED_STORIES}".toInteger(),
                             inprogress: xmlRoot."${Cliche.INPROGRESS_STORIES}".toInteger(),
-                            done: xmlRoot."${Cliche.FINISHED_STORIES}".toInteger(),
-                            label: xmlRoot."${Cliche.SPRINT_ID}".toString()
+                            done      : xmlRoot."${Cliche.FINISHED_STORIES}".toInteger(),
+                            label     : xmlRoot."${Cliche.SPRINT_ID}".toString()
                     ]
                 }
             }
@@ -148,21 +148,17 @@ class ProductService extends IceScrumEventPublisher {
 
     @PreAuthorize('stakeHolder(#product) or inProduct(#product)')
     def productBurnupValues(Product product) {
-
         def values = []
-        product.releases?.sort {a, b -> a.orderNumber <=> b.orderNumber}?.each {
+        product.releases?.sort { a, b -> a.orderNumber <=> b.orderNumber }?.each {
             Cliche.findAllByParentTimeBoxAndType(it, Cliche.TYPE_ACTIVATION, [sort: "datePrise", order: "asc"])?.each { cliche ->
-
                 def xmlRoot = new XmlSlurper().parseText(cliche.data)
                 if (xmlRoot) {
-
                     def a = xmlRoot."${Cliche.PRODUCT_BACKLOG_POINTS}".toBigDecimal()
                     def b = xmlRoot."${Cliche.PRODUCT_REMAINING_POINTS}".toBigDecimal()
                     def c = a - b
-
                     values << [
-                            all: xmlRoot."${Cliche.PRODUCT_BACKLOG_POINTS}".toBigDecimal(),
-                            done: c,
+                            all  : xmlRoot."${Cliche.PRODUCT_BACKLOG_POINTS}".toBigDecimal(),
+                            done : c,
                             label: xmlRoot."${Cliche.SPRINT_ID}".toString()
                     ]
                 }
@@ -175,7 +171,7 @@ class ProductService extends IceScrumEventPublisher {
     def productBurndownValues(Product product) {
         def values = []
         def releaseService = (ReleaseService) grailsApplication.mainContext.getBean('releaseService')
-        product.releases?.sort {a, b -> a.orderNumber <=> b.orderNumber}?.each { Release release ->
+        product.releases?.sort { a, b -> a.orderNumber <=> b.orderNumber }?.each { Release release ->
             values.addAll(releaseService.releaseBurndownValues(release))
         }
         return values
@@ -184,15 +180,15 @@ class ProductService extends IceScrumEventPublisher {
     @PreAuthorize('stakeHolder(#product) or inProduct(#product)')
     def productVelocityValues(Product product) {
         def values = []
-        product.releases?.sort {a, b -> a.orderNumber <=> b.orderNumber}?.each {
+        product.releases?.sort { a, b -> a.orderNumber <=> b.orderNumber }?.each {
             Cliche.findAllByParentTimeBoxAndType(it, Cliche.TYPE_CLOSE, [sort: "datePrise", order: "asc"])?.each { cliche ->
                 def xmlRoot = new XmlSlurper().parseText(cliche.data)
                 if (xmlRoot) {
                     def sprintEntry = [
-                            userstories: xmlRoot."${Cliche.FUNCTIONAL_STORY_VELOCITY}".toBigDecimal(),
-                            defectstories: xmlRoot."${Cliche.DEFECT_STORY_VELOCITY}".toBigDecimal(),
+                            userstories     : xmlRoot."${Cliche.FUNCTIONAL_STORY_VELOCITY}".toBigDecimal(),
+                            defectstories   : xmlRoot."${Cliche.DEFECT_STORY_VELOCITY}".toBigDecimal(),
                             technicalstories: xmlRoot."${Cliche.TECHNICAL_STORY_VELOCITY}".toBigDecimal(),
-                            label: xmlRoot."${Cliche.SPRINT_ID}".toString()
+                            label           : xmlRoot."${Cliche.SPRINT_ID}".toString()
                     ]
                     sprintEntry << computeLabelsForSprintEntry(sprintEntry)
                     values << sprintEntry
@@ -206,7 +202,7 @@ class ProductService extends IceScrumEventPublisher {
     def productVelocityCapacityValues(Product product) {
         def values = []
         def capacity = 0, label = ""
-        product.releases?.sort {a, b -> a.orderNumber <=> b.orderNumber}?.each {
+        product.releases?.sort { a, b -> a.orderNumber <=> b.orderNumber }?.each {
             Cliche.findAllByParentTimeBox(it, [sort: "datePrise", order: "asc"])?.each { cliche ->
                 def xmlRoot = new XmlSlurper().parseText(cliche.data)
                 if (xmlRoot) {
@@ -218,9 +214,8 @@ class ProductService extends IceScrumEventPublisher {
                         values << [
                                 capacity: capacity,
                                 velocity: xmlRoot."${Cliche.SPRINT_VELOCITY}".toBigDecimal(),
-                                label: label
+                                label   : label
                         ]
-
                     }
                 }
             }
@@ -248,7 +243,7 @@ class ProductService extends IceScrumEventPublisher {
 
     @PreAuthorize('isAuthenticated()')
     Product unMarshall(def productXml, def options) {
-        Product.withTransaction(readOnly:!options.save) { transaction ->
+        Product.withTransaction(readOnly: !options.save) { transaction ->
             try {
                 def product = new Product(
                         name: productXml."${'name'}".text(),
@@ -335,21 +330,19 @@ class ProductService extends IceScrumEventPublisher {
                     product.pkey = !erase && options.changes?.product?.pkey != null ? options.changes.product.pkey : product.pkey
                     product.name = !erase && options.changes?.product?.name != null ? options.changes.product.name : product.name
                 }
-
-                if(options.validate) {
+                if (options.validate) {
                     options.changesNeeded = validate(product, erase)
-                    if (options.changesNeeded){
+                    if (options.changesNeeded) {
                         return null
                     }
                 }
-
-                if(options.save){
-                    if(erase && pExist){
+                if (options.save) {
+                    if (erase && pExist) {
                         delete(pExist)
                     }
                     product.save()
                     product.teams.each { t ->
-                        //save users before team
+                        // Save users before team
                         t.members?.each {
                             if (it.id == null)
                                 it.save()
@@ -365,7 +358,7 @@ class ProductService extends IceScrumEventPublisher {
                     }
                     securityService.secureDomain(product)
                     if (product.productOwners) {
-                        product.productOwners?.eachWithIndex {user, index ->
+                        product.productOwners?.eachWithIndex { user, index ->
                             user = User.get(user.id)
                             securityService.createProductOwnerPermissions(user, product)
                         }
@@ -379,21 +372,19 @@ class ProductService extends IceScrumEventPublisher {
                     }
                 }
 
-                //child objects
+                // Child objects
                 def featureService = (FeatureService) grailsApplication.mainContext.getBean('featureService')
                 productXml.features.feature.eachWithIndex { it, index ->
                     featureService.unMarshall(it, options)
                 }
-
                 productXml.actors.actor.eachWithIndex { it, index ->
                     actorService.unMarshall(it, options)
                 }
-
                 def storyService = (StoryService) grailsApplication.mainContext.getBean('storyService')
                 productXml.stories.story.eachWithIndex { it, index ->
                     storyService.unMarshall(it, options)
                 }
-                // ensure rank for stories in backlog
+                // Ensure rank for stories in backlog
                 def stories = product.stories.findAll {
                     it.state == Story.STATE_ACCEPTED || it.state == Story.STATE_ESTIMATED
                 }.sort { a, b -> a.rank <=> b.rank }
@@ -408,10 +399,10 @@ class ProductService extends IceScrumEventPublisher {
                 productXml.releases.release.eachWithIndex { it, index ->
                     releaseService.unMarshall(it, options)
                 }
-                // ensure rank for stories in each sprint
+                // Ensure rank for stories in each sprint
                 product.releases.each { Release release ->
                     release.sprints.each { Sprint sprint ->
-                        // first ranks for planned and in progress stories
+                        // First ranks for planned and in progress stories
                         stories = sprint.stories.findAll { Story story -> story.state == Story.STATE_PLANNED || story.state == Story.STATE_INPROGRESS }.sort { a, b -> a.rank <=> b.rank }
                         stories.eachWithIndex { Story story, index ->
                             story.rank = index + 1
@@ -419,7 +410,7 @@ class ProductService extends IceScrumEventPublisher {
                                 story.save()
                             }
                         }
-                        // lask ranks for done stories
+                        // Lask ranks for done stories
                         def maxRank = stories.size()
                         stories = sprint.stories.findAll { Story story -> story.state == Story.STATE_DONE }.sort { a, b -> a.rank <=> b.rank }
                         stories.each { Story story ->
@@ -430,13 +421,15 @@ class ProductService extends IceScrumEventPublisher {
                         }
                     }
                 }
-                if(options.save){
+                if (options.save) {
                     product.save()
                 }
                 options.product = null
-                return (Product)importDomainsPlugins(product, options)
+                return (Product) importDomainsPlugins(product, options)
             } catch (Exception e) {
-                if (log.debugEnabled) e.printStackTrace()
+                if (log.debugEnabled) {
+                    e.printStackTrace()
+                }
                 throw new RuntimeException(e)
             }
         }
@@ -444,22 +437,25 @@ class ProductService extends IceScrumEventPublisher {
 
     @PreAuthorize('isAuthenticated()')
     def importXML(File file, def options) {
-        Product.withTransaction(readOnly:!options.save){
+        Product.withTransaction(readOnly: !options.save) {
             String xmlText = file.getText()
             String cleanedXmlText = ServicesUtils.cleanXml(xmlText)
             def _productXml = new XmlSlurper().parseText(cleanedXmlText)
             def Product product = null
             try {
                 def productXml = _productXml
-                //be compatible with xml without export tag
-                if (_productXml.find{it.name == 'export'}){ productXml = _productXml.product }
+                // Be compatible with xml without export tag
+                if (_productXml.find { it.name == 'export' }) {
+                    productXml = _productXml.product
+                }
                 product = this.unMarshall(productXml, options)
             } catch (RuntimeException e) {
-                if (log.debugEnabled)
+                if (log.debugEnabled) {
                     e.printStackTrace()
+                }
             }
-            if(product?.id && options.save){
-                product.save(flush:true)
+            if (product?.id && options.save) {
+                product.save(flush: true)
             }
             return product
         }
@@ -474,60 +470,67 @@ class ProductService extends IceScrumEventPublisher {
                     team.validate()
                     if (team.errors.errorCount == 1) {
                         changes.team = [:]
-                        if(team.errors.fieldErrors[0]?.field == 'name'){
+                        if (team.errors.fieldErrors[0]?.field == 'name') {
                             changes.team.name = team.name
                         } else {
-                            if (log.infoEnabled)
+                            if (log.infoEnabled) {
                                 log.info("Team validation error (${team.name}): " + team.errors)
+                            }
                             throw new RuntimeException()
                         }
                     } else if (team.errors.errorCount > 1) {
-                        if (log.infoEnabled)
+                        if (log.infoEnabled) {
                             log.info("Team validation error (${team.name}): " + team.errors)
+                        }
                         throw new RuntimeException()
                     }
                     team.members.eachWithIndex { member, index2 ->
                         member.validate()
                         if (member.errors.errorCount == 1) {
                             changes.users = changes.users ?: [:]
-                            if(member.errors.fieldErrors[0]?.field == 'username'){
+                            if (member.errors.fieldErrors[0]?.field == 'username') {
                                 changes.users."$member.uid" = member.username
                             } else {
-                                if (log.infoEnabled)
+                                if (log.infoEnabled) {
                                     log.info("User validation error (${member.username}): " + member.errors)
+                                }
                                 throw new RuntimeException()
                             }
                         } else if (member.errors.errorCount > 1) {
-                            if (log.infoEnabled)
+                            if (log.infoEnabled) {
                                 log.info("User validation error (${member.username}): " + member.errors)
+                            }
                             throw new RuntimeException()
                         }
                     }
                 }
-                product.productOwners?.eachWithIndex{ productOwner, index ->
+                product.productOwners?.eachWithIndex { productOwner, index ->
                     productOwner.validate()
                     if (productOwner.errors.errorCount == 1) {
                         changes.users = changes.users ?: [:]
-                        if(productOwner.errors.fieldErrors[0]?.field == 'username' && !(productOwner.username in changes.users)){
+                        if (productOwner.errors.fieldErrors[0]?.field == 'username' && !(productOwner.username in changes.users)) {
                             changes.users."$productOwner.uid" = productOwner.username
                         } else {
-                            if (log.infoEnabled)
+                            if (log.infoEnabled) {
                                 log.info("User validation error (${productOwner.username}): " + productOwner.errors)
+                            }
                             throw new RuntimeException()
                         }
                     } else if (productOwner.errors.errorCount > 1) {
-                        if (log.infoEnabled)
+                        if (log.infoEnabled) {
                             log.info("User validation error (${productOwner.username}): " + productOwner.errors)
+                        }
                         throw new RuntimeException()
                     }
                 }
                 product.validate()
                 if (product.errors.errorCount && product.errors.errorCount <= 2 && !erase) {
                     changes.product = [:]
-                    product.errors.fieldErrors*.field.each{ field ->
-                        if(!(field in ['pkey', 'name'])){
-                            if (log.infoEnabled)
+                    product.errors.fieldErrors*.field.each { field ->
+                        if (!(field in ['pkey', 'name'])) {
+                            if (log.infoEnabled) {
                                 log.info("Product validation error (${product.name}): " + product.errors)
+                            }
                             throw new RuntimeException()
                         } else {
                             changes.product[field] = product[field]
@@ -535,33 +538,35 @@ class ProductService extends IceScrumEventPublisher {
                     }
                     changes.erasable = product.erasableByUser
                 } else if (product.errors.errorCount > 2) {
-                    if (log.infoEnabled)
+                    if (log.infoEnabled) {
                         log.info("Product validation error (${product.name}): " + product.errors)
+                    }
                     throw new RuntimeException()
                 }
                 return changes
             }
         } catch (Exception e) {
-            if (log.debugEnabled)
+            if (log.debugEnabled) {
                 e.printStackTrace()
+            }
         }
     }
 
     @PreAuthorize('owner(#p.firstTeam)')
     def delete(Product p) {
         def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_DELETE, p)
-        p.allUsers.each{ it.preferences.removeEmailsSettings(p.pkey) } // must be before unsecure to have POs
+        p.allUsers.each { it.preferences.removeEmailsSettings(p.pkey) } // must be before unsecure to have POs
         p.invitedStakeHolders*.delete()
         p.invitedProductOwners*.delete()
         securityService.unsecureDomain p
         UserPreferences.findAllByLastProductOpened(p.pkey)?.each {
             it.lastProductOpened = null
         }
-        p.teams.each{
+        p.teams.each {
             it.removeFromProducts(p)
         }
         p.removeAllAttachments()
-        p.delete(flush:true)
+        p.delete(flush: true)
         publishSynchronousEvent(IceScrumEventType.DELETE, p, dirtyProperties)
     }
 
@@ -569,7 +574,7 @@ class ProductService extends IceScrumEventPublisher {
     def archive(Product product) {
         product.preferences.archived = true
         def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_UPDATE, product)
-        product.save(flush:true)
+        product.save(flush: true)
         publishSynchronousEvent(IceScrumEventType.UPDATE, product, dirtyProperties)
     }
 
@@ -577,7 +582,7 @@ class ProductService extends IceScrumEventPublisher {
     def unArchive(Product product) {
         product.preferences.archived = false
         def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_UPDATE, product)
-        product.save(flush:true)
+        product.save(flush: true)
         publishSynchronousEvent(IceScrumEventType.UPDATE, product, dirtyProperties)
     }
 
@@ -611,7 +616,7 @@ class ProductService extends IceScrumEventPublisher {
         team.products.each { Product product ->
             oldMembersByProduct[product.id] = getAllMembersProductByRole(product)
         }
-        def currentMembers = team.scrumMasters.collect { [id: it.id, role: Authority.SCRUMMASTER]}
+        def currentMembers = team.scrumMasters.collect { [id: it.id, role: Authority.SCRUMMASTER] }
         team.members.each { member ->
             if (!currentMembers.any { it.id == member.id }) {
                 currentMembers << [id: member.id, role: Authority.MEMBER]
@@ -626,7 +631,7 @@ class ProductService extends IceScrumEventPublisher {
 
     void updateProductMembers(Product product, List newMembers) {
         def oldMembers = getAllMembersProductByRole(product)
-        def currentMembers = product.stakeHolders.collect { [id: it.id, role: Authority.STAKEHOLDER]} + product.productOwners.collect { [id: it.id, role: Authority.PRODUCTOWNER]}
+        def currentMembers = product.stakeHolders.collect { [id: it.id, role: Authority.STAKEHOLDER] } + product.productOwners.collect { [id: it.id, role: Authority.PRODUCTOWNER] }
         updateMembers(product, currentMembers, newMembers)
         manageProductEvents(product, oldMembers)
     }
@@ -673,7 +678,7 @@ class ProductService extends IceScrumEventPublisher {
     }
 
     private void addStakeHolder(Product product, User stakeHolder) {
-        if (product.preferences.hidden){
+        if (product.preferences.hidden) {
             securityService.createStakeHolderPermissions stakeHolder, product
         }
     }
@@ -716,8 +721,8 @@ class ProductService extends IceScrumEventPublisher {
     }
 
     List<Product> getAllActiveProductsByUser(User user, String searchTerm = '') {
-        def projects = Product.findAllByUserAndActive(user, [sort: "name", order: "asc", cache:true], searchTerm)
-        def projectsOwnerOf = Team.findAllActiveProductsByTeamOwner(user.username, searchTerm, [sort: "name", order: "asc", cache:true]).findAll {
+        def projects = Product.findAllByUserAndActive(user, [sort: "name", order: "asc", cache: true], searchTerm)
+        def projectsOwnerOf = Team.findAllActiveProductsByTeamOwner(user.username, searchTerm, [sort: "name", order: "asc", cache: true]).findAll {
             !(it in projects)
         }
         projects.addAll(projectsOwnerOf)
@@ -809,7 +814,7 @@ class ProductService extends IceScrumEventPublisher {
         return usersByRole
     }
 
-    def export(StringWriter writer, Product product, String version){
+    def export(StringWriter writer, Product product, String version) {
         def builder = new MarkupBuilder(writer)
         builder.mkp.xmlDeclaration(version: "1.0", encoding: "UTF-8")
         builder.export(version: version) {

@@ -126,7 +126,7 @@ class Actor implements Serializable, Comparable<Actor> {
                 """SELECT MAX(a.uid)
                    FROM org.icescrum.core.domain.Actor as a, org.icescrum.core.domain.Product as p
                    WHERE a.parentProduct = p
-                   AND p.id = :pid """, [pid: pid])[0]?:0) + 1
+                   AND p.id = :pid """, [pid: pid])[0] ?: 0) + 1
     }
 
     static search(product, term) {

@@ -24,15 +24,15 @@
 
 package org.icescrum.core.services
 
+import grails.transaction.Transactional
 import org.icescrum.core.domain.Product
 import org.icescrum.core.domain.Team
 import org.icescrum.core.domain.User
+import org.icescrum.core.error.BusinessException
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
-import org.icescrum.core.error.BusinessException
-import org.springframework.security.access.prepost.PreAuthorize
-import grails.transaction.Transactional
 import org.icescrum.core.support.ApplicationSupport
+import org.springframework.security.access.prepost.PreAuthorize
 
 @Transactional
 class TeamService extends IceScrumEventPublisher {
@@ -147,7 +147,7 @@ class TeamService extends IceScrumEventPublisher {
 
     def unMarshall(def teamXml, def options) {
         Product product = options.product
-        Team.withTransaction(readOnly:!options.save) { transaction ->
+        Team.withTransaction(readOnly: !options.save) { transaction ->
             try {
                 def existingTeam = true
                 def team = new Team(
@@ -171,8 +171,7 @@ class TeamService extends IceScrumEventPublisher {
                     }
                 }
                 def scrumMastersList = []
-
-                //fix between R6#x and R7
+                // Fix between R6#x and R7
                 def sm = teamXml.scrumMasters.scrumMaster ?: teamXml.scrumMasters.user
                 sm.eachWithIndex { user, index ->
                     def u
@@ -186,7 +185,6 @@ class TeamService extends IceScrumEventPublisher {
                     }
                 }
                 team.scrumMasters = scrumMastersList
-
                 if (existingTeam) {
                     Team dbTeam = Team.findByName(team.name)
                     if (dbTeam) {
@@ -203,12 +201,10 @@ class TeamService extends IceScrumEventPublisher {
                         team = dbTeam
                     }
                 }
-
-                //reference on other object
+                // Reference on other object
                 if (product) {
                     product.addToTeams(team)
                 }
-
                 if (options.save) {
                     team.members.each { user ->
                         user.save()
@@ -218,7 +214,7 @@ class TeamService extends IceScrumEventPublisher {
                     }
                     team.save()
                 }
-                return (Team)importDomainsPlugins(team, options)
+                return (Team) importDomainsPlugins(team, options)
             } catch (Exception e) {
                 if (log.debugEnabled) e.printStackTrace()
                 throw new RuntimeException(e)

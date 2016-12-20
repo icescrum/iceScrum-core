@@ -25,9 +25,9 @@
 
 package org.icescrum.core.services
 
+import grails.transaction.Transactional
 import groovy.xml.StreamingMarkupBuilder
 import org.icescrum.core.domain.*
-import grails.transaction.Transactional
 
 import java.text.SimpleDateFormat
 
@@ -81,11 +81,11 @@ class ClicheService {
             }
         }
         [
-                compteurUS: cUS,
-                compteurDefect: cDefect,
-                compteurTechnical: cTechnical,
-                compteurUSFinish: cUSDone,
-                compteurDefectFinish: cDefectDone,
+                compteurUS             : cUS,
+                compteurDefect         : cDefect,
+                compteurTechnical      : cTechnical,
+                compteurUSFinish       : cUSDone,
+                compteurDefectFinish   : cDefectDone,
                 compteurTechnicalFinish: cTechnicalDone
         ]
     }
@@ -294,7 +294,7 @@ class ClicheService {
 
     def unMarshall(def clicheXml, def options) {
         def timebox = options.timebox
-        Cliche.withTransaction(readOnly:!options.save) { transaction ->
+        Cliche.withTransaction(readOnly: !options.save) { transaction ->
             def cliche = new Cliche(
                     type: clicheXml.type.text().toInteger(),
                     datePrise: new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(clicheXml.datePrise.text()),
@@ -306,7 +306,7 @@ class ClicheService {
             if (options.save) {
                 cliche.save()
             }
-            return (Cliche)importDomainsPlugins(cliche, options)
+            return (Cliche) importDomainsPlugins(cliche, options)
         }
     }
 }

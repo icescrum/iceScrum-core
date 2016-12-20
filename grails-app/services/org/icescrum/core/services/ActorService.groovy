@@ -25,16 +25,13 @@
 
 package org.icescrum.core.services
 
+import grails.transaction.Transactional
 import org.icescrum.core.domain.Actor
-import org.icescrum.core.domain.Feature
 import org.icescrum.core.domain.Product
-import org.icescrum.core.domain.Sprint
-import org.icescrum.core.domain.Story
 import org.icescrum.core.error.BusinessException
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
 import org.springframework.security.access.prepost.PreAuthorize
-import grails.transaction.Transactional
 
 @Transactional
 class ActorService extends IceScrumEventPublisher {
@@ -74,16 +71,16 @@ class ActorService extends IceScrumEventPublisher {
 
     def unMarshall(def actorXml, def options) {
         Product product = options.product
-        Actor.withTransaction(readOnly:!options.save) { transaction ->
+        Actor.withTransaction(readOnly: !options.save) { transaction ->
             try {
                 def actor = new Actor(name: actorXml."${'name'}".text())
-                if(product){
+                if (product) {
                     product.addToActors(actor)
                 }
-                if(options.save){
+                if (options.save) {
                     actor.save()
                 }
-                return (Actor)importDomainsPlugins(actor, options)
+                return (Actor) importDomainsPlugins(actor, options)
             } catch (Exception e) {
                 if (log.debugEnabled) {
                     e.printStackTrace()

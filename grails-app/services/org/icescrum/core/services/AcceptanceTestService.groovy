@@ -22,17 +22,15 @@
  */
 package org.icescrum.core.services
 
+import grails.transaction.Transactional
 import org.icescrum.core.domain.AcceptanceTest
 import org.icescrum.core.domain.AcceptanceTest.AcceptanceTestState
-import org.icescrum.core.domain.Sprint
-import org.icescrum.core.domain.Template
+import org.icescrum.core.domain.Product
+import org.icescrum.core.domain.Story
+import org.icescrum.core.domain.User
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
 import org.springframework.security.access.prepost.PreAuthorize
-import org.icescrum.core.domain.Story
-import org.icescrum.core.domain.User
-import org.icescrum.core.domain.Product
-import grails.transaction.Transactional
 
 @Transactional
 class AcceptanceTestService extends IceScrumEventPublisher {
@@ -72,7 +70,7 @@ class AcceptanceTestService extends IceScrumEventPublisher {
     def unMarshall(def acceptanceTestXml, def options) {
         Product product = options.product
         Story story = options.story
-        AcceptanceTest.withTransaction(readOnly:!options.save) { transaction ->
+        AcceptanceTest.withTransaction(readOnly: !options.save) { transaction ->
             try {
                 def state = acceptanceTestXml."${'state'}".text()
                 if (state) {
@@ -86,25 +84,20 @@ class AcceptanceTestService extends IceScrumEventPublisher {
                         state: state,
                         uid: acceptanceTestXml.@uid.text().toInteger()
                 )
-
-                //references on other objects
+                // References on other objects
                 if (product) {
                     def u = ((User) product.getAllUsers().find {
                         it.uid == acceptanceTestXml.creator.@uid.text()
                     }) ?: null
                     acceptanceTest.creator = (User) (u ?: product.productOwners.first())
                 }
-
                 if (story) {
                     story.addToAcceptanceTests(acceptanceTest)
                 }
-
                 if (options.save) {
                     acceptanceTest.save()
                 }
-
-                return (AcceptanceTest)importDomainsPlugins(acceptanceTest, options)
-
+                return (AcceptanceTest) importDomainsPlugins(acceptanceTest, options)
             } catch (Exception e) {
                 if (log.debugEnabled) {
                     e.printStackTrace()

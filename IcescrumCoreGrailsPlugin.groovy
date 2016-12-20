@@ -77,7 +77,7 @@ class IcescrumCoreGrailsPlugin {
         // We must ensure that it's before the serverURL is used anywhere (e.g. in AssetPipelineGrailsPlugin.groovy::doWithSpring)
         def iceScrumURL = System.getProperty('icescrum.serverURL')
         if (iceScrumURL) {
-            println "Overriding grails.serverURL with URL: " +  iceScrumURL
+            println "Overriding grails.serverURL with URL: " + iceScrumURL
             application.config.grails.serverURL = iceScrumURL
         }
     }
@@ -91,12 +91,12 @@ class IcescrumCoreGrailsPlugin {
         // Init config.icescrum.export for plugins to be able to register without an if exist / create test
         application.config?.icescrum?.export = [:]
         application.domainClasses.each {
-            if (it.metaClass.methods*.name.any{it=='xml'}) {
+            if (it.metaClass.methods*.name.any { it == 'xml' }) {
                 application.config?.icescrum?.export."${it.propertyName}" = []
             }
         }
         application.serviceClasses.each {
-            if (it.metaClass.methods*.name.any{it=='unMarshall'}) {
+            if (it.metaClass.methods*.name.any { it == 'unMarshall' }) {
                 application.config?.icescrum?.import."${it.logicalPropertyName}" = []
             }
         }

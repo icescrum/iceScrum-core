@@ -22,13 +22,13 @@
 package org.icescrum.core.security
 
 import grails.plugin.springsecurity.SpringSecurityUtils
-import grails.plugin.springsecurity.userdetails.GrailsUserDetailsService;
+import grails.plugin.springsecurity.userdetails.GrailsUserDetailsService
+import grails.transaction.Transactional
 import org.icescrum.core.domain.security.Authority
 import org.slf4j.LoggerFactory
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.security.core.userdetails.UsernameNotFoundException
-import grails.transaction.Transactional
 
 class ScrumDetailsService implements GrailsUserDetailsService {
 
@@ -40,30 +40,26 @@ class ScrumDetailsService implements GrailsUserDetailsService {
         return loadUserByUsername(username)
     }
 
-    @Transactional(readOnly=true, noRollbackFor=[IllegalArgumentException, UsernameNotFoundException])
+    @Transactional(readOnly = true, noRollbackFor = [IllegalArgumentException, UsernameNotFoundException])
     UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         def user = findUser(username, false)
-
-        if (!user && grailsApplication.mainContext['ldapUserDetailsMapper']?.isEnabled()){
+        if (!user && grailsApplication.mainContext['ldapUserDetailsMapper']?.isEnabled()) {
             user = findUser(username, true)
         }
-
-        if (!user){
+        if (!user) {
             LoggerFactory.getLogger(getClass()).warn "User not found: $username"
             throw new UsernameNotFoundException('User not found', username)
         }
-
         def authorities = user.authorities.collect {
             new SimpleGrantedAuthority(it.authority)
         }
-
         return new ScrumUserDetails(user.username, user.password,
                 user.enabled, !user.accountExpired, !user.passwordExpired,
                 !user.accountLocked, authorities ?: NO_ROLES, user.id,
                 user.firstName + " " + user.lastName)
     }
 
-    def findUser(username, external){
+    def findUser(username, external) {
         def conf = SpringSecurityUtils.securityConfig
         Class<?> User = grailsApplication.getDomainClass(conf.userLookup.userDomainClassName).clazz
         return User.createCriteria().get {

@@ -25,6 +25,7 @@ package org.icescrum.core.services
 
 import grails.plugin.springsecurity.SpringSecurityUtils
 import grails.plugin.springsecurity.acl.AclSid
+import grails.transaction.Transactional
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.FilenameUtils
 import org.apache.commons.io.filefilter.WildcardFileFilter
@@ -41,7 +42,6 @@ import org.icescrum.core.error.BusinessException
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
 import org.icescrum.core.support.ApplicationSupport
-import grails.transaction.Transactional
 
 @Transactional
 class UserService extends IceScrumEventPublisher {
@@ -199,7 +199,7 @@ class UserService extends IceScrumEventPublisher {
 
 
     User unMarshall(def userXml, def options) {
-        User.withTransaction(readOnly:!options.save) { transaction ->
+        User.withTransaction(readOnly: !options.save) { transaction ->
             try {
                 def user
                 if (userXml.@uid.text()) {
@@ -234,14 +234,14 @@ class UserService extends IceScrumEventPublisher {
                             activity: userXml.preferences.activity.text(),
                             filterTask: userXml.preferences.filterTask.text(),
                             user: user,
-                            menu: user.preferences.menu.text()?:[:],
-                            menuHidden: user.preferences.menuHidden.text()?:[:]
+                            menu: user.preferences.menu.text() ?: [:],
+                            menuHidden: user.preferences.menuHidden.text() ?: [:]
                     )
                 }
                 if (options.save) {
                     user.save()
                 }
-                return (User)importDomainsPlugins(user, options)
+                return (User) importDomainsPlugins(user, options)
             } catch (Exception e) {
                 if (log.debugEnabled) e.printStackTrace()
                 throw new RuntimeException(e)

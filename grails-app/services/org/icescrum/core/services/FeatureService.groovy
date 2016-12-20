@@ -24,14 +24,14 @@
 
 package org.icescrum.core.services
 
+import grails.transaction.Transactional
 import grails.validation.ValidationException
+import org.icescrum.core.domain.*
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
+import org.springframework.security.access.prepost.PreAuthorize
 
 import java.text.SimpleDateFormat
-import org.springframework.security.access.prepost.PreAuthorize
-import grails.transaction.Transactional
-import org.icescrum.core.domain.*
 
 @Transactional
 class FeatureService extends IceScrumEventPublisher {
@@ -165,7 +165,7 @@ class FeatureService extends IceScrumEventPublisher {
 
     def unMarshall(def featureXml, def options) {
         Product product = options.product
-        Feature.withTransaction(readOnly:!options.save) { transaction ->
+        Feature.withTransaction(readOnly: !options.save) { transaction ->
             try {
                 def todoDate = null
                 if (featureXml.todoDate?.text() && featureXml.todoDate?.text() != "") {
@@ -184,14 +184,14 @@ class FeatureService extends IceScrumEventPublisher {
                         rank: featureXml.rank.text()?.toInteger(),
                         uid: featureXml.@uid.text()?.isEmpty() ? featureXml.@id.text().toInteger() : featureXml.@uid.text().toInteger()
                 )
-                //references on other objects
+                // References on other objects
                 if (product) {
                     product.addToFeatures(feature)
                 }
                 if (options.save) {
                     feature.save()
                 }
-                return (Feature)importDomainsPlugins(feature, options)
+                return (Feature) importDomainsPlugins(feature, options)
             } catch (Exception e) {
                 if (log.debugEnabled) e.printStackTrace()
                 throw new RuntimeException(e)

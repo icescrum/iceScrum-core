@@ -342,7 +342,7 @@ class TaskService extends IceScrumEventPublisher {
         Product product = options.product
         Sprint sprint = options.sprint
         Story story = options.story
-        Task.withTransaction(readOnly:options.save) { transaction ->
+        Task.withTransaction(readOnly: options.save) { transaction ->
             try {
                 def inProgressDate = null
                 if (taskXml.inProgressDate?.text() && taskXml.inProgressDate?.text() != "") {
@@ -373,7 +373,6 @@ class TaskService extends IceScrumEventPublisher {
                         blocked: taskXml.blocked.text()?.toBoolean() ?: false,
                         uid: taskXml.@uid.text()?.isEmpty() ? taskXml.@id.text().toInteger() : taskXml.@uid.text().toInteger(),
                         color: taskXml?.color?.text() ?: "yellow")
-
                 if (product) {
                     def u
                     if (!taskXml.creator?.@uid?.isEmpty()) {
@@ -388,7 +387,6 @@ class TaskService extends IceScrumEventPublisher {
                     }
                     product.addToTasks(task)
                 }
-
                 if ((!taskXml.responsible?.@uid?.isEmpty() || !taskXml.responsible?.@id?.isEmpty()) && product) {
                     def u
                     if (!taskXml.responsible?.@uid?.isEmpty()) {
@@ -408,12 +406,10 @@ class TaskService extends IceScrumEventPublisher {
                 if (story) {
                     story.addToTasks(task)
                 }
-
                 if (options.save) {
                     task.save()
                 }
-
-                return (Task)importDomainsPlugins(task, options)
+                return (Task) importDomainsPlugins(task, options)
             } catch (Exception e) {
                 if (log.debugEnabled) e.printStackTrace()
                 throw new RuntimeException(e)

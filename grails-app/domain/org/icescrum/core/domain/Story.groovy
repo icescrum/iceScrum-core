@@ -612,7 +612,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                 builder.feature(uid: this.feature.uid)
             }
             if (this.actor) {
-                builder.actor(uid: this.actor.id)
+                builder.actor(uid: this.actor.uid)
             }
             if (dependsOn) {
                 builder.dependsOn(uid: this.dependsOn.uid)

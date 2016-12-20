@@ -673,7 +673,7 @@ class StoryService extends IceScrumEventPublisher {
     def unMarshall(def storyXml, def options) {
         Product product = options.product
         Sprint sprint = options.sprint
-        Story.withTransaction(readOnly:!options.save) { transaction ->
+        Story.withTransaction(readOnly: !options.save) { transaction ->
             try {
                 def todoDate = null
                 if (storyXml.todoDate?.text() && storyXml.todoDate?.text() != "") {
@@ -722,8 +722,7 @@ class StoryService extends IceScrumEventPublisher {
                         todoDate: todoDate,
                         uid: storyXml.@uid.text()?.isEmpty() ? storyXml.@id.text().toInteger() : storyXml.@uid.text().toInteger(),
                 )
-
-                //references on other objects
+                // References on other objects
                 if (product) {
                     if (!storyXml.feature?.@uid?.isEmpty() && product) {
                         def feature = product.features.find {
@@ -764,19 +763,15 @@ class StoryService extends IceScrumEventPublisher {
 
                     product.addToStories(story)
                 }
-
                 if (sprint) {
                     sprint.addToStories(story)
                 }
-
-                //save before some hibernate stuff
+                // Save before some hibernate stuff
                 if (options.save) {
                     story.save()
                 }
-
                 options.story = story
-
-                //child objects
+                // Child objects
                 storyXml.tasks?.task?.each {
                     taskService.unMarshall(it, options)
                 }
@@ -788,7 +783,7 @@ class StoryService extends IceScrumEventPublisher {
                     story.save()
                 }
                 options.story = null
-                return (Story)importDomainsPlugins(story, options)
+                return (Story) importDomainsPlugins(story, options)
             } catch (Exception e) {
                 if (log.debugEnabled) e.printStackTrace()
                 throw new RuntimeException(e)
