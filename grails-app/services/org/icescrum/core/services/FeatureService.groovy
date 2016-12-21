@@ -37,6 +37,7 @@ import java.text.SimpleDateFormat
 class FeatureService extends IceScrumEventPublisher {
 
     def springSecurityService
+    def grailsApplication
 
     @PreAuthorize('productOwner(#product) and !archivedProduct(#product)')
     void save(Feature feature, Product product) {
@@ -86,10 +87,10 @@ class FeatureService extends IceScrumEventPublisher {
         publishSynchronousEvent(IceScrumEventType.UPDATE, feature, dirtyProperties)
     }
 
-    // TODO check content of this method...
     @PreAuthorize('productOwner(#features[0].backlog) and !archivedProduct(#features[0].backlog)')
     def copyToBacklog(List<Feature> features) {
         def stories = []
+        StoryService storyService = (StoryService) grailsApplication.mainContext.getBean('storyService')
         features.each { Feature feature ->
             def story = new Story(
                     name: feature.name,
@@ -98,9 +99,9 @@ class FeatureService extends IceScrumEventPublisher {
                     acceptedDate: new Date(),
                     state: Story.STATE_ACCEPTED,
                     feature: feature,
-                    creator: (User) springSecurityService.currentUser,
+                    creator: (User) springSecurityService.currentUser, // Will be set again by storyService but required to pass validation
                     rank: (Story.countAllAcceptedOrEstimated(feature.backlog.id)?.list()[0] ?: 0) + 1,
-                    backlog: feature.backlog,
+                    backlog: feature.backlog, // Will be set again by storyService but required to pass validation
                     uid: Story.findNextUId(feature.backlog.id)
             )
             feature.addToStories(story)
@@ -118,7 +119,7 @@ class FeatureService extends IceScrumEventPublisher {
                     throw new ValidationException('Validation Error(s) occurred during save()', story.errors)
                 }
             }
-            story.save()
+            storyService.save(story, story.backlog, story.creator)
             stories << story
         }
         return stories
