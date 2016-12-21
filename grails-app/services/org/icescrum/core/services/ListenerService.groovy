@@ -258,8 +258,11 @@ class ListenerService {
     @IceScrumListener(domain = 'acceptanceTest', eventType = IceScrumEventType.CREATE)
     void acceptanceTestCreate(AcceptanceTest acceptanceTest, Map dirtyProperties) {
         def user = (User) springSecurityService.currentUser
+        def product = acceptanceTest.parentProduct
         activityService.addActivity(acceptanceTest, user ?: acceptanceTest.parentStory.creator, 'acceptanceTestSave', acceptanceTest.name)
-        pushService.broadcastToProductChannel(IceScrumEventType.CREATE, acceptanceTest, acceptanceTest.parentProduct.id)
+        pushService.broadcastToProductChannel(IceScrumEventType.CREATE, acceptanceTest, product.id)
+        // TODO remove when using a proper AT cache on the client side. Required to update acceptanceTests_count because we can't use client side "sync".
+        pushService.broadcastToProductChannel(IceScrumEventType.UPDATE, acceptanceTest.parentStory, product.id)
     }
 
     @IceScrumListener(domain = 'acceptanceTest', eventType = IceScrumEventType.UPDATE)
@@ -280,6 +283,8 @@ class ListenerService {
         def product = dirtyProperties.parentStory.backlog
         activityService.addActivity(dirtyProperties.parentStory, springSecurityService.currentUser, 'acceptanceTestDelete', acceptanceTest.name)
         pushService.broadcastToProductChannel(IceScrumEventType.DELETE, [class: 'AcceptanceTest', id: dirtyProperties.id], product.id)
+        // TODO remove when using a proper AT cache on the client side. Required to update acceptanceTests_count because we can't use client side "sync".
+        pushService.broadcastToProductChannel(IceScrumEventType.UPDATE, dirtyProperties.parentStory, product.id)
     }
 
     @IceScrumListener(domain = 'product', eventType = IceScrumEventType.UPDATE)
