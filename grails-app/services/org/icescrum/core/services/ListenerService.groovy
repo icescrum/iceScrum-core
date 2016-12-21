@@ -265,9 +265,14 @@ class ListenerService {
     @IceScrumListener(domain = 'acceptanceTest', eventType = IceScrumEventType.UPDATE)
     void acceptanceTestUpdate(AcceptanceTest acceptanceTest, Map dirtyProperties) {
         def user = (User) springSecurityService.currentUser
+        def product = acceptanceTest.parentProduct
         def activityType = 'acceptanceTest' + (dirtyProperties.containsKey('state') ? acceptanceTest.stateEnum.name().toLowerCase().capitalize() : 'Update')
         activityService.addActivity(acceptanceTest, user, activityType, acceptanceTest.name)
-        pushService.broadcastToProductChannel(IceScrumEventType.UPDATE, acceptanceTest, acceptanceTest.parentProduct.id)
+        if (dirtyProperties.containsKey('state')) {
+            acceptanceTest.parentStory.lastUpdated = new Date()
+            pushService.broadcastToProductChannel(IceScrumEventType.UPDATE, acceptanceTest.parentStory, product.id) // push story.testState
+        }
+        pushService.broadcastToProductChannel(IceScrumEventType.UPDATE, acceptanceTest, product.id)
     }
 
     @IceScrumListener(domain = 'acceptanceTest', eventType = IceScrumEventType.DELETE)

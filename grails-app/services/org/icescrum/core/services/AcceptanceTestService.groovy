@@ -49,8 +49,7 @@ class AcceptanceTestService extends IceScrumEventPublisher {
         storyService.update(parentStory)
     }
 
-    //TODO Fix security on this
-    //@PreAuthorize('inProduct(#acceptanceTest.parentProduct) and !archivedProduct(#acceptanceTest.parentProduct)')
+    @PreAuthorize('inProduct(#acceptanceTest.parentProduct) and !archivedProduct(#acceptanceTest.parentProduct)')
     void update(AcceptanceTest acceptanceTest) {
         def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_UPDATE, acceptanceTest)
         acceptanceTest.save()
