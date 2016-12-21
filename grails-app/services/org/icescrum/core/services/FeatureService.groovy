@@ -96,13 +96,9 @@ class FeatureService extends IceScrumEventPublisher {
                     name: feature.name,
                     description: feature.description,
                     suggestedDate: new Date(),
-                    acceptedDate: new Date(),
-                    state: Story.STATE_ACCEPTED,
+                    acceptedDate: new Date(), // The proper state will be set automatically
                     feature: feature,
-                    creator: (User) springSecurityService.currentUser, // Will be set again by storyService but required to pass validation
-                    rank: (Story.countAllAcceptedOrEstimated(feature.backlog.id)?.list()[0] ?: 0) + 1,
                     backlog: feature.backlog, // Will be set again by storyService but required to pass validation
-                    uid: Story.findNextUId(feature.backlog.id)
             )
             feature.addToStories(story)
             story.validate()
@@ -119,7 +115,7 @@ class FeatureService extends IceScrumEventPublisher {
                     throw new ValidationException('Validation Error(s) occurred during save()', story.errors)
                 }
             }
-            storyService.save(story, story.backlog, story.creator)
+            storyService.save(story, story.backlog, (User) springSecurityService.currentUser)
             stories << story
         }
         return stories
