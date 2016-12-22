@@ -228,14 +228,14 @@ class ReleaseService {
             cliches.add(lastClicheActivation)
         }
 
-        cliches?.each { it ->
+        cliches?.eachWithIndex { it, index ->
             def xmlRoot = new XmlSlurper().parseText(it.data)
             if (xmlRoot) {
                 def sprintEntry = [
-                        label: xmlRoot."${Cliche.SPRINT_ID}".toString(),
                         userstories: xmlRoot."${Cliche.FUNCTIONAL_STORY_PRODUCT_REMAINING_POINTS}".toBigDecimal(),
                         technicalstories: xmlRoot."${Cliche.TECHNICAL_STORY_PRODUCT_REMAINING_POINTS}".toBigDecimal(),
-                        defectstories: xmlRoot."${Cliche.DEFECT_STORY_PRODUCT_REMAINING_POINTS}".toBigDecimal()
+                        defectstories: xmlRoot."${Cliche.DEFECT_STORY_PRODUCT_REMAINING_POINTS}".toBigDecimal(),
+                        label: index == 0 ? "Start" : xmlRoot."${Cliche.SPRINT_ID}".toString()+"${cliche.type == Cliche.TYPE_ACTIVATION ? " (activation)" : ""}"
                 ]
                 sprintEntry << computeLabelsForSprintEntry(sprintEntry)
                 values << sprintEntry
