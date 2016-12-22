@@ -47,6 +47,9 @@ class ProductService extends IceScrumEventPublisher {
     def actorService
     def grailsApplication
     def notificationEmailService
+    def templateService
+
+    def g = new org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib()
 
     @PreAuthorize('isAuthenticated()')
     void save(Product product, productOwners, stakeHolders) {
@@ -68,6 +71,9 @@ class ProductService extends IceScrumEventPublisher {
                 }
             }
         }
+        def bugStory = new Story(type: Story.TYPE_DEFECT, backlog: product)
+        templateService.save(new Template(name: g.message(code: 'is.ui.sandbox.story.template.default.defect')), bugStory)
+        bugStory.delete()
         manageProductEvents(product, [:])
         publishSynchronousEvent(IceScrumEventType.CREATE, product)
     }
