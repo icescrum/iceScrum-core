@@ -48,7 +48,7 @@ class TaskService extends IceScrumEventPublisher {
     def grailsApplication
     def attachmentableService
 
-    @PreAuthorize('(inProduct(#task.backlog?.parentProduct) or inProduct(#task.parentStory?.parentProduct)) and (!archivedProduct(#task.backlog?.parentProduct) or !archivedProduct(#task.parentStory?.parentProduct))')
+    @PreAuthorize('(inProduct(#task.backlog?.parentProduct) or inProduct(#task.parentStory?.backlog)) and (!archivedProduct(#task.backlog?.parentProduct) or !archivedProduct(#task.parentStory?.backlog))')
     void save(Task task, User user) {
         if (task.parentStory?.parentSprint && !task.backlog) {
             task.backlog = task.parentStory.parentSprint
