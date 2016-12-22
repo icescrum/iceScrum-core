@@ -255,7 +255,7 @@ class ProductService {
                 cliches.add(lastClicheActivation)
             }
 
-            cliches?.eachWithIndex { cliche ->
+            cliches?.eachWithIndex { cliche, index ->
                 def xmlRoot = new XmlSlurper().parseText(cliche.data)
                 if (xmlRoot) {
                     values << [
