@@ -220,10 +220,10 @@ class ReleaseService {
             cliches.add(firstClicheActivation)
 
         //others cliches
-        cliches.addAll(Cliche.findAllByParentTimeBoxAndType(it, Cliche.TYPE_CLOSE, [sort: "datePrise", order: "asc"]))
+        cliches.addAll(Cliche.findAllByParentTimeBoxAndType(release, Cliche.TYPE_CLOSE, [sort: "datePrise", order: "asc"]))
 
         //last more useful cliche
-        def lastClicheActivation = Cliche.findByParentTimeBoxAndType(it, Cliche.TYPE_ACTIVATION, [sort: "datePrise", order: "desc"])
+        def lastClicheActivation = Cliche.findByParentTimeBoxAndType(release, Cliche.TYPE_ACTIVATION, [sort: "datePrise", order: "desc"])
         if(lastClicheActivation && (!cliches || lastClicheActivation.datePrise.after(cliches.last().datePrise))){
             cliches.add(lastClicheActivation)
         }
