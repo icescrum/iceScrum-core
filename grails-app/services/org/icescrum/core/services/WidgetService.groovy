@@ -81,6 +81,16 @@ class WidgetService {
         user.save()
     }
 
+    void initUserWidgets(User user) {
+        save(user, uiDefinitionService.getWidgetDefinitionById('quickProjects'), false)
+        Widget notesWidget = save(user, uiDefinitionService.getWidgetDefinitionById('notes'), false)
+        def noteProperties = notesWidget.properties.collectEntries { key, val -> [(key): val] }
+        noteProperties.settings = [text: 'Welcome to iceScrum 7! Here is your home, where you can add your widgets, such as this one which allows you to write your personal notes, try updating this text!\n\nWe have also created a "Peetic" project so you can explore iceScrum, try opening it!']
+        update(notesWidget, noteProperties)
+        save(user, uiDefinitionService.getWidgetDefinitionById('feed'), true)
+        save(user, uiDefinitionService.getWidgetDefinitionById('tasks'), true)
+    }
+
     void delete(Widget widget) {
         User user = widget.userPreferences.user
         widget.delete()
