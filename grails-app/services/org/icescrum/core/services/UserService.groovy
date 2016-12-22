@@ -52,7 +52,6 @@ class UserService extends IceScrumEventPublisher {
     def springSecurityService
     def notificationEmailService
     def aclCache
-    def dummyService
 
     void save(User user, String token = null) {
         user.password = springSecurityService.encodePassword(user.password)
@@ -83,16 +82,6 @@ class UserService extends IceScrumEventPublisher {
             }
         }
         widgetService.initUserWidgets(user)
-        try {
-            if (grailsApplication.config.icescrum.user.createSampleProject) {
-                SpringSecurityUtils.doWithAuth(user.username) {
-                    dummyService.createSampleProject(user)
-                }
-            }
-        } catch(Exception e) {
-            e.printStackTrace()
-            println e.message
-        }
     }
 
     void update(User user, Map props = [:]) {
