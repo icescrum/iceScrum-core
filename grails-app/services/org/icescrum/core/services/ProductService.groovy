@@ -572,6 +572,7 @@ class ProductService extends IceScrumEventPublisher {
             it.removeFromProducts(p)
         }
         p.removeAllAttachments()
+        Template.findAllByParentProduct(p)*.delete()
         p.delete(flush: true)
         publishSynchronousEvent(IceScrumEventType.DELETE, p, dirtyProperties)
     }
