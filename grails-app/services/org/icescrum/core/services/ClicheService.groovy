@@ -111,6 +111,15 @@ class ClicheService {
     }
 
     void createSprintCliche(Sprint s, Date d, int type) {
+        Cliche c = new Cliche(
+                type: type,
+                datePrise: d,
+                data: generateSprintClicheData(s, type)
+        )
+        save(c, s.parentRelease)
+    }
+
+    def generateSprintClicheData(Sprint s, int type) {
         // Retrieve the current release and the current sprint
         Release r = s.parentRelease
         Product p = r.parentProduct
@@ -164,7 +173,7 @@ class ClicheService {
             }
         }
 
-        def unresolvedImpediments = p.impediments.findAll {it.state != Impediment.SOLVED }?.size() ?: 0
+        def unresolvedImpediments = p.impediments.findAll { it.state != Impediment.SOLVED }?.size() ?: 0
 
         def clicheData = {
             cliche {
@@ -224,13 +233,7 @@ class ClicheService {
             }
         }
         StreamingMarkupBuilder xmlBuilder = new StreamingMarkupBuilder()
-
-        Cliche c = new Cliche(
-                type: type,
-                datePrise: d,
-                data: xmlBuilder.bind(clicheData).toString()
-        )
-        save(c, r)
+        return xmlBuilder.bind(clicheData).toString()
     }
 
     void createOrUpdateDailyTasksCliche(Sprint s) {

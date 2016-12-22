@@ -240,7 +240,12 @@ class ProductService {
     def cumulativeFlowValues(Product product) {
         def values = []
         product.releases?.sort {a, b -> a.orderNumber <=> b.orderNumber}?.each {
-            Cliche.findAllByParentTimeBoxAndType(it, Cliche.TYPE_ACTIVATION, [sort: "datePrise", order: "asc"])?.each { cliche ->
+            def cliches = Cliche.findAllByParentTimeBoxAndType(it, Cliche.TYPE_CLOSE, [sort: "datePrise", order: "asc"])
+            def lastClicheActivation = Cliche.findByParentTimeBoxAndType(it, Cliche.TYPE_ACTIVATION, [sort: "datePrise", order: "desc"])
+            if(lastClicheActivation && (!cliches || lastClicheActivation.datePrise.after(cliches.last().datePrise))){
+                cliches << lastClicheActivation
+            }
+            cliches?.each { cliche ->
                 def xmlRoot = new XmlSlurper().parseText(cliche.data)
                 if (xmlRoot) {
                     values << [
@@ -262,7 +267,22 @@ class ProductService {
     def productBurnupValues(Product product) {
         def values = []
         product.releases?.sort {a, b -> a.orderNumber <=> b.orderNumber}?.each {
-            Cliche.findAllByParentTimeBoxAndType(it, Cliche.TYPE_ACTIVATION, [sort: "datePrise", order: "asc"])?.each { cliche ->
+            def cliches = []
+            //begin of project
+            def firstClicheActivation = Cliche.findByParentTimeBoxAndType(it, Cliche.TYPE_ACTIVATION, [sort: "datePrise", order: "asc"])
+            if(firstClicheActivation)
+                cliches.add(firstClicheActivation)
+
+            //others cliches
+            cliches.addAll(Cliche.findAllByParentTimeBoxAndType(it, Cliche.TYPE_CLOSE, [sort: "datePrise", order: "asc"]))
+
+            //last more useful cliche
+            def lastClicheActivation = Cliche.findByParentTimeBoxAndType(it, Cliche.TYPE_ACTIVATION, [sort: "datePrise", order: "desc"])
+            if(lastClicheActivation && (!cliches || lastClicheActivation.datePrise.after(cliches.last().datePrise))){
+                cliches.add(lastClicheActivation)
+            }
+
+            cliches?.eachWithIndex { cliche, index ->
 
                 def xmlRoot = new XmlSlurper().parseText(cliche.data)
                 if (xmlRoot) {
@@ -274,7 +294,7 @@ class ProductService {
                     values << [
                             all: xmlRoot."${Cliche.PRODUCT_BACKLOG_POINTS}".toBigDecimal(),
                             done: c,
-                            label: xmlRoot."${Cliche.SPRINT_ID}".toString()
+                            label: index == 0 ? "Start" : xmlRoot."${Cliche.SPRINT_ID}".toString()+"${cliche.type == Cliche.TYPE_ACTIVATION ? " (activation)" : ""}"
                     ]
                 }
             }
@@ -286,7 +306,22 @@ class ProductService {
     def productBurndownValues(Product product) {
         def values = []
         product.releases?.sort {a, b -> a.orderNumber <=> b.orderNumber}?.each {
-            Cliche.findAllByParentTimeBoxAndType(it, Cliche.TYPE_ACTIVATION, [sort: "datePrise", order: "asc"])?.each { cliche ->
+            def cliches = []
+            //begin of project
+            def firstClicheActivation = Cliche.findByParentTimeBoxAndType(it, Cliche.TYPE_ACTIVATION, [sort: "datePrise", order: "asc"])
+            if(firstClicheActivation)
+                cliches.add(firstClicheActivation)
+
+            //others cliches
+            cliches.addAll(Cliche.findAllByParentTimeBoxAndType(it, Cliche.TYPE_CLOSE, [sort: "datePrise", order: "asc"]))
+
+            //last more useful cliche
+            def lastClicheActivation = Cliche.findByParentTimeBoxAndType(it, Cliche.TYPE_ACTIVATION, [sort: "datePrise", order: "desc"])
+            if(lastClicheActivation && (!cliches || lastClicheActivation.datePrise.after(cliches.last().datePrise))){
+                cliches.add(lastClicheActivation)
+            }
+
+            cliches?.each { cliche ->
                 def xmlRoot = new XmlSlurper().parseText(cliche.data)
                 if (xmlRoot) {
                     def sprintEntry = [

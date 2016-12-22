@@ -213,7 +213,22 @@ class ReleaseService {
 
     def releaseBurndownValues(Release release) {
         def values = []
-        Cliche.findAllByParentTimeBoxAndType(release, Cliche.TYPE_ACTIVATION, [sort: "datePrise", order: "asc"])?.each { it ->
+        def cliches = []
+        //begin of project
+        def firstClicheActivation = Cliche.findByParentTimeBoxAndType(release, Cliche.TYPE_ACTIVATION, [sort: "datePrise", order: "asc"])
+        if(firstClicheActivation)
+            cliches.add(firstClicheActivation)
+
+        //others cliches
+        cliches.addAll(Cliche.findAllByParentTimeBoxAndType(it, Cliche.TYPE_CLOSE, [sort: "datePrise", order: "asc"]))
+
+        //last more useful cliche
+        def lastClicheActivation = Cliche.findByParentTimeBoxAndType(it, Cliche.TYPE_ACTIVATION, [sort: "datePrise", order: "desc"])
+        if(lastClicheActivation && (!cliches || lastClicheActivation.datePrise.after(cliches.last().datePrise))){
+            cliches.add(lastClicheActivation)
+        }
+
+        cliches?.each { it ->
             def xmlRoot = new XmlSlurper().parseText(it.data)
             if (xmlRoot) {
                 def sprintEntry = [
