@@ -38,54 +38,46 @@ class DummyService {
     def releaseService
     def sessionFactory
     def securityService
-    def templateService
     def grailsApplication
     def actorService
     def storyService
+    def productService
+    def teamService
+    def featureService
+    def acceptanceTestService
+    def taskService
 
     void createSampleProject(User user) {
-        // Project
+        // Project & team
         def projectName = ("Peetic " + user.username).take(100)
         def startDate = new Date() - 16
         startDate.clearTime()
-        def product = new Product(name: projectName, pkey: toPkey(user), startDate: startDate, endDate: startDate + 102)
+        Product product = new Product(name: projectName, pkey: toPkey(user), startDate: startDate, endDate: startDate + 102)
         product.description = '''*Peetic* is a dating website for your pets! Don't you think that they deserve to find their soul mate?\n\nThis project is yours: browse it and play with it to discover *iceScrum 7*!\n\nPeetic is inspired by this free "template":https://github.com/pablopernot/peetic.'''
         product.preferences = new ProductPreferences(webservices: true, hidden: true)
-        product.save()
-        // Backlogs
-        new Backlog(product: product, shared: true, filter: '{"story":{"state":1}}', name: 'is.ui.sandbox', code: 'sandbox').save()
-        new Backlog(product: product, shared: true, filter: '{"story":{"state":[2,3]}}', name: 'is.ui.backlog', code: 'backlog').save()
-        new Backlog(product: product, shared: true, filter: '{"story":{"state":7}}', name: 'todo.is.ui.backlog.done', code: 'done').save()
-        new Backlog(product: product, shared: true, filter: '{"story":{}}', name: 'todo.is.ui.backlog.all', code: 'all').save()
-        securityService.secureDomain(product)
-        // Team
-        def team = new Team(name: projectName + ' Team').addToProducts(product).addToMembers(user)
-        team.save()
-        securityService.secureDomain(team)
-        securityService.createProductOwnerPermissions(user, product)
-        securityService.createScrumMasterPermissions(user, team)
-        securityService.changeOwner(user, product)
-        securityService.changeOwner(user, team)
-        // Releases
-        def release1 = new Release(startDate: startDate, endDate: startDate + 64, name: 'Peetic core', vision: 'Easily create and manage your pet profile and find its soul mate. Who knows, you could find yours in the process.', todoDate: startDate)
-        def release2 = new Release(startDate: startDate + 65, endDate: startDate + 115, name: 'Peetic premium', vision: 'Premium features for paying accounts', todoDate: startDate)
+        Team team = new Team(name: projectName + ' Team')
+        teamService.save(team, [], [user.id])
+        productService.save(product, [user.id], [])
+        productService.addTeamToProduct(product, team)
+        // Releases & sprints
+        Release release1 = new Release(startDate: startDate, endDate: startDate + 64, name: 'Peetic core', vision: 'Easily create and manage your pet profile and find its soul mate. Who knows, you could find yours in the process.', todoDate: startDate)
+        Release release2 = new Release(startDate: startDate + 65, endDate: startDate + 115, name: 'Peetic premium', vision: 'Premium features for paying accounts', todoDate: startDate)
         releaseService.save(release1, product)
         release1.inProgressDate = startDate
         release1.save()
         releaseService.save(release2, product)
-        // Sprints
         sprintService.generateSprints(release1)
         // Features
-        def featureProperties = [
+        def features = []
+        [
                 [name: 'Administration', value: 2, description: 'Administrate and moderate content created by the users'],
                 [name: 'Pet profile', value: 4, description: 'Manage the profile of a pet', color: '#d91a2f'],
                 [name: 'Advertising', value: 3, description: 'Advertise products related to the profile of pets', color: '#ba48c7'],
                 [name: 'Search', value: 4, description: 'Search other pets to find the best match', color: '#a0dffa']
-        ]
-        def features = []
-        featureProperties.eachWithIndex { featureProps, index ->
-            def defaultProperties = [backlog: product, uid: index + 1, rank: index + 1]
-            features << new Feature(defaultProperties + featureProps).save()
+        ].each { featureProperties ->
+            Feature feature = new Feature(featureProperties)
+            featureService.save(feature, product)
+            features << feature
         }
         def featureAdmin = features[0]
         def featurePetProfile = features[1]
@@ -99,10 +91,6 @@ class DummyService {
         actorService.save(administrator, product)
         def administratorTag = "A[$administrator.uid-$administrator.name]"
         // Stories
-        def g = grailsApplication.mainContext.getBean('org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib')
-        def bugStory = new Story(type: Story.TYPE_DEFECT, backlog: product)
-        templateService.save(new Template(name: g.message(code: 'is.ui.sandbox.story.template.default.defect')), bugStory)
-        bugStory.delete()
         def sandboxStoryProperties = [
                 [name: 'Email product digest', description: '', feature: featureAdvertising, value: 2, type: Story.TYPE_USER_STORY, state: Story.STATE_SUGGESTED],
                 [name: 'Automatically detect location', description: '', feature: featureSearch, value: 3, type: Story.TYPE_USER_STORY, state: Story.STATE_SUGGESTED],
@@ -119,49 +107,34 @@ class DummyService {
         ]
         def storyPropertiesBySprint = [
                 0: [
-                    [name: 'Setup CI & SCM', description: 'Create projects on SCM and build it automatically after each commit', value: 5, type: Story.TYPE_TECHNICAL_STORY, effort: 5, state: Story.STATE_PLANNED],
-                    [name: 'Create a pet profile', description: "As a $petOwnerTag\nI can create a profile for my pet \nIn order for it to be found by the owner of its soul mate", value: 6, type: Story.TYPE_USER_STORY, effort: 3, state: Story.STATE_PLANNED],
-                    [name: 'Display a pet profile', description: "As a $petOwnerTag\nI can display the profile of other pets \nIn order to find the soul mate of mine", value: 6, type: Story.TYPE_USER_STORY, effort: 3, state: Story.STATE_PLANNED],
-                    [name: 'Spike advertising', description: 'Validate the business model by contacting advertising plaforms and pet products brands', feature: featureAdvertising, value: 5, type: Story.TYPE_TECHNICAL_STORY, effort: 2, state: Story.STATE_PLANNED],
+                    [name: 'Setup CI & SCM', description: 'Create projects on SCM and build it automatically after each commit', value: 5, type: Story.TYPE_TECHNICAL_STORY, effort: 5, state: Story.STATE_ESTIMATED],
+                    [name: 'Create a pet profile', description: "As a $petOwnerTag\nI can create a profile for my pet \nIn order for it to be found by the owner of its soul mate", feature: featurePetProfile,  value: 6, type: Story.TYPE_USER_STORY, effort: 3, state: Story.STATE_ESTIMATED],
+                    [name: 'Display a pet profile', description: "As a $petOwnerTag\nI can display the profile of other pets \nIn order to find the soul mate of mine", value: 6, feature: featurePetProfile, type: Story.TYPE_USER_STORY, effort: 3, state: Story.STATE_ESTIMATED],
+                    [name: 'Spike advertising', description: 'Validate the business model by contacting advertising plaforms and pet products brands', feature: featureAdvertising, value: 5, type: Story.TYPE_TECHNICAL_STORY, effort: 2, state: Story.STATE_ESTIMATED],
                 ],
                 1: [
-                    [name: 'Contact a pet owner', description: "As a $petOwnerTag\nI can contact another pet owner \nIn order to arrange a meeting for our pets", feature: featurePetProfile, value: 5, type: Story.TYPE_USER_STORY, effort: 2, state: Story.STATE_PLANNED],
-                    [name: 'Authenticate', description: "As a $petOwnerTag\nI can be recognized as my pet owner on the website \nIn order to manage my pet profile and prevent others to do so", feature: featurePetProfile, value: 5, type: Story.TYPE_USER_STORY, effort: 8, state: Story.STATE_PLANNED],
-                    [name: 'Search profiles by race', description: "As a $petOwnerTag\nI can search other pets by race \nIn order to find the right partner for my pets", feature: featureSearch, value: 5, type: Story.TYPE_USER_STORY, effort: 3, state: Story.STATE_PLANNED],
-                    [name: 'Basic advertising', description: "As an $administratorTag\nI can offer pet product ads to my users\nIn order to earn money", feature: featureAdvertising, value: 4, type: Story.TYPE_USER_STORY, effort: 5, state: Story.STATE_PLANNED],
+                    [name: 'Contact a pet owner', description: "As a $petOwnerTag\nI can contact another pet owner \nIn order to arrange a meeting for our pets", feature: featurePetProfile, value: 5, type: Story.TYPE_USER_STORY, effort: 2, state: Story.STATE_ESTIMATED],
+                    [name: 'Authenticate', description: "As a $petOwnerTag\nI can be recognized as my pet owner on the website \nIn order to manage my pet profile and prevent others to do so", feature: featurePetProfile, value: 5, type: Story.TYPE_USER_STORY, effort: 8, state: Story.STATE_ESTIMATED],
+                    [name: 'Search profiles by race', description: "As a $petOwnerTag\nI can search other pets by race \nIn order to find the right partner for my pets", feature: featureSearch, value: 5, type: Story.TYPE_USER_STORY, effort: 3, state: Story.STATE_ESTIMATED],
+                    [name: 'Basic advertising', description: "As an $administratorTag\nI can offer pet product ads to my users\nIn order to earn money", feature: featureAdvertising, value: 4, type: Story.TYPE_USER_STORY, effort: 5, state: Story.STATE_ESTIMATED],
                 ],
                 2: [
-                    [name: 'Add photos to my pet profile', description: "As a $petOwnerTag\nI can add photos to my pet profile \nIn order show how it is gorgeous to the other pet owners and make them choose it", feature: featurePetProfile, value: 5, type: Story.TYPE_USER_STORY, effort: 3, state: Story.STATE_PLANNED],
-                    [name: 'Delete my pet profile', description: "As a $petOwnerTag\nI can delete my pet profile \nIn order to stop dating if it has found its soul mate", feature: featurePetProfile, value: 5, type: Story.TYPE_USER_STORY, effort: 2, state: Story.STATE_PLANNED],
-                    [name: 'Advertise according to the race of the pet', description: "As an $administratorTag\nI can advertise according to the race of the pet \nIn order to increase the click rates", feature: featureAdvertising, value: 4, type: Story.TYPE_USER_STORY, effort: 5, state: Story.STATE_PLANNED],
-                    [name: 'Update my pet profile', description: "As a $petOwnerTag\nI can update my pet profile \nIn order to add information and correct mistakes", feature: featurePetProfile, value: 4, type: Story.TYPE_USER_STORY, effort: 8, state: Story.STATE_PLANNED],
-                    [name: 'Advertise according to visited profiles', description: "As an $administratorTag\nI can advertise according to visited profile \nIn order to increase the click rates", feature: featureAdvertising, value: 3, type: Story.TYPE_USER_STORY, effort: 2, state: Story.STATE_PLANNED]
+                    [name: 'Add photos to my pet profile', description: "As a $petOwnerTag\nI can add photos to my pet profile \nIn order show how it is gorgeous to the other pet owners and make them choose it", feature: featurePetProfile, value: 5, type: Story.TYPE_USER_STORY, effort: 3, state: Story.STATE_ESTIMATED],
+                    [name: 'Delete my pet profile', description: "As a $petOwnerTag\nI can delete my pet profile \nIn order to stop dating if it has found its soul mate", feature: featurePetProfile, value: 5, type: Story.TYPE_USER_STORY, effort: 2, state: Story.STATE_ESTIMATED],
+                    [name: 'Advertise according to the race of the pet', description: "As an $administratorTag\nI can advertise according to the race of the pet \nIn order to increase the click rates", feature: featureAdvertising, value: 4, type: Story.TYPE_USER_STORY, effort: 5, state: Story.STATE_ESTIMATED],
+                    [name: 'Update my pet profile', description: "As a $petOwnerTag\nI can update my pet profile \nIn order to add information and correct mistakes", feature: featurePetProfile, value: 4, type: Story.TYPE_USER_STORY, effort: 8, state: Story.STATE_ESTIMATED],
+                    [name: 'Advertise according to visited profiles', description: "As an $administratorTag\nI can advertise according to visited profile \nIn order to increase the click rates", feature: featureAdvertising, value: 3, type: Story.TYPE_USER_STORY, effort: 2, state: Story.STATE_ESTIMATED]
                 ]
         ]
-        def rankByIndex = { collection -> collection.eachWithIndex { item, index -> item.rank = index + 1 } }
-        rankByIndex(sandboxStoryProperties)
-        rankByIndex(backlogStoryProperties)
-        storyPropertiesBySprint.each { sprintIndex, storyProperties -> rankByIndex(storyProperties) }
-        def _storyCount = 0
         def createStory = { properties ->
-            def suggestedDate = startDate
-            def acceptedDate = startDate + 1
-            def estimatedDate = startDate + 2
-            def defaultProperties = [backlog: product, uid: _storyCount + 1, suggestedDate: suggestedDate, estimatedDate: estimatedDate, creator: user]
-            def story = new Story(defaultProperties + properties).save()
-            addStoryActivity(story, user, Activity.CODE_SAVE, suggestedDate)
+            Story story = new Story([suggestedDate: startDate] + properties)
             if (story.state >= Story.STATE_ACCEPTED) {
-                story.acceptedDate = acceptedDate
-                addStoryActivity(story, user, 'acceptAs', acceptedDate)
+                story.acceptedDate = startDate + 1
             }
-            if (story.state < Story.STATE_ESTIMATED) {
-                story.estimatedDate = null
-                story.effort = null
-            } else {
-                addStoryActivity(story, user, 'estimate', estimatedDate)
+            if (story.state >= Story.STATE_ESTIMATED) {
+                story.estimatedDate = startDate + 2
             }
-            _storyCount ++
-            storyService.manageActors(story, product)
+            storyService.save(story, product, user)
             return story
         }
         // Create stories
@@ -175,30 +148,23 @@ class DummyService {
         sessionFactory.currentSession.flush()
         // Plan Stories
         storiesBySprint.each { sprintIndex, stories ->
-            Date plannedDate = startDate + 2
             Sprint sprint = release1.sprints[sprintIndex]
             stories.each { Story story ->
                 sprint.addToStories(story)
                 story.parentSprint = sprint
-                addStoryActivity(story, user, 'estimate', plannedDate)
-                story.plannedDate = new Date()
+                story.plannedDate = startDate + 2
+                story.state = Story.STATE_PLANNED
             }
             sprint.capacity = sprint.totalEffort
             sprint.save(flush: true)
         }
         product.save()
         // Tasks and sprint progression
-        int nextTaskUid = 1
         product.stories.findAll { it.state < Story.STATE_PLANNED }.eachWithIndex { Story story, int i ->
             if (i % 4 == 0) {
                 (i % 7).times {
-                    def task = new Task(parentProduct: product, uid: nextTaskUid, rank: it + 1, type: null, estimation: 3, name: randomWords(15, 5, 200), description: randomWords(50, 0, 2900), creator: user, responsible: user, parentStory: story)
-                    task.save()
-                    addTaskActivity(task, task.creator, 'taskSave')
-                    story.addToTasks(task)
-                    nextTaskUid++
+                    taskService.save(new Task(estimation: 3, name: randomWords(15, 5, 200), description: randomWords(50, 0, 2900), responsible: user, parentStory: story), user)
                 }
-                story.save()
             }
         }
         product.refresh()
@@ -209,27 +175,14 @@ class DummyService {
             sprint.doneDefinition = "* All tasks are done\n* All code is merged in master branch\n* All acceptance tests pass\n* There are automated unit tests\n* There are automated functional tests\n* Implemented web UI features are compatible with modern browsers"
             sprint.stories.each { story ->
                 (sprint.orderNumber).times {
-                    def task = new Task(parentProduct: product, uid: nextTaskUid, rank: it + 1, type: null, estimation: 3, name: randomWords(15, 5, 200), description: randomWords(50, 0, 2900), creator: user, responsible: user, parentStory: story, backlog: sprint)
-                    task.save()
-                    addTaskActivity(task, task.creator, 'taskSave')
-                    story.addToTasks(task)
-                    sprint.addToTasks(task)
-                    nextTaskUid++
+                    taskService.save(new Task(estimation: 3, name: randomWords(15, 5, 200), description: randomWords(50, 0, 2900), responsible: user, parentStory: story, backlog: sprint), user)
                 }
             }
             2.times {
-                def task = new Task(parentProduct: product, uid: nextTaskUid, rank: it + 1, type: Task.TYPE_RECURRENT, estimation: 5, name: randomWords(15, 5, 200), description: randomWords(50, 0, 2900), creator: user, responsible: user, parentStory: null, backlog: sprint)
-                sprint.addToTasks(task)
-                task.save()
-                addTaskActivity(task, task.creator, 'taskSave')
-                nextTaskUid++
+                taskService.save(new Task(type: Task.TYPE_RECURRENT, estimation: 5, name: randomWords(15, 5, 200), description: randomWords(50, 0, 2900), responsible: user, backlog: sprint), user)
             }
             5.times {
-                def task2 = new Task(parentProduct: product, uid: nextTaskUid, rank: it + 1, type: Task.TYPE_URGENT, estimation: 4, name: randomWords(15, 5, 200), description: randomWords(50, 0, 2900), creator: user, responsible: user, parentStory: null, backlog: sprint)
-                sprint.addToTasks(task2)
-                task2.save()
-                addTaskActivity(task2, task2.creator, 'taskSave')
-                nextTaskUid++
+                taskService.save(new Task(type: Task.TYPE_URGENT, estimation: 4, name: randomWords(15, 5, 200), description: randomWords(50, 0, 2900), responsible: user, backlog: sprint), user)
             }
             if (sprint.orderNumber < 3) {
                 sprint.save(flush: true)
@@ -325,48 +278,30 @@ class DummyService {
 
     private void createAcceptanceTests(Product product, User user) {
         product.stories.findAll { it.state == Story.STATE_SUGGESTED }.asList().eachWithIndex { Story story, index ->
-            def acceptanceTest = new AcceptanceTest(name: randomWords(15, 5, 200), description: randomWords(30, 5), creator: user, parentStory: story)
-            acceptanceTest.save()
-            addAcceptanceTestActivity(acceptanceTest, user)
+            acceptanceTestService.save(new AcceptanceTest(name: randomWords(15, 5, 200), description: randomWords(30, 5)), story, user)
             if (index % 2 == 0) {
-                def acceptanceTest2 = new AcceptanceTest(name: randomWords(15, 5, 200), description: randomWords(30, 5), creator: user, parentStory: story)
-                acceptanceTest2.save()
-                addAcceptanceTestActivity(acceptanceTest2, user)
+                acceptanceTestService.save(new AcceptanceTest(name: randomWords(15, 5, 200), description: randomWords(30, 5)), story, user)
             }
         }
         product.stories.findAll { it.state == Story.STATE_ACCEPTED }.asList().eachWithIndex { Story story, index ->
-            def acceptanceTest = new AcceptanceTest(name: randomWords(15, 5, 200), description: randomWords(30, 5), creator: user, parentStory: story)
-            acceptanceTest.save()
-            addAcceptanceTestActivity(acceptanceTest, user)
+            acceptanceTestService.save(new AcceptanceTest(name: randomWords(15, 5, 200), description: randomWords(30, 5)), story, user)
             if (index % 2 == 0) {
-                def acceptanceTest2 = new AcceptanceTest(name: randomWords(15, 5, 200), description: randomWords(30, 5), creator: user, parentStory: story)
-                acceptanceTest2.save()
-                addAcceptanceTestActivity(acceptanceTest2, user)
+                acceptanceTestService.save(new AcceptanceTest(name: randomWords(15, 5, 200), description: randomWords(30, 5)), story, user)
             }
         }
         product.stories.findAll { it.state == Story.STATE_INPROGRESS }.asList().eachWithIndex { Story story, index ->
-            def acceptanceTest = new AcceptanceTest(name: randomWords(15, 5, 200), description: randomWords(30, 5), creator: user, parentStory: story, state: AcceptanceTest.AcceptanceTestState.SUCCESS.id)
-            acceptanceTest.save()
-            addAcceptanceTestActivity(acceptanceTest, user)
+            acceptanceTestService.save(new AcceptanceTest(name: randomWords(15, 5, 200), description: randomWords(30, 5), state: AcceptanceTest.AcceptanceTestState.SUCCESS.id), story, user)
             if (index % 2 == 0) {
-                def acceptanceTest2 = new AcceptanceTest(name: randomWords(15, 5, 200), description: randomWords(30, 5), creator: user, parentStory: story, state: AcceptanceTest.AcceptanceTestState.FAILED.id)
-                acceptanceTest2.save()
-                addAcceptanceTestActivity(acceptanceTest2, user)
+                acceptanceTestService.save(new AcceptanceTest(name: randomWords(15, 5, 200), description: randomWords(30, 5), state: AcceptanceTest.AcceptanceTestState.FAILED.id), story, user)
             }
             if (index % 3 == 0) {
-                def acceptanceTest3 = new AcceptanceTest(name: randomWords(10, 2), description: randomWords(30, 5), creator: user, parentStory: story, state: AcceptanceTest.AcceptanceTestState.TOCHECK.id)
-                acceptanceTest3.save()
-                addAcceptanceTestActivity(acceptanceTest3, user)
+                acceptanceTestService.save(new AcceptanceTest(name: randomWords(10, 2), description: randomWords(30, 5), state: AcceptanceTest.AcceptanceTestState.TOCHECK.id), story, user)
             }
         }
         product.stories.findAll { it.state == Story.STATE_DONE }.asList().eachWithIndex { Story story, index ->
-            def acceptanceTest = new AcceptanceTest(name: randomWords(15, 5, 200), description: randomWords(30, 5), creator: user, parentStory: story, state: AcceptanceTest.AcceptanceTestState.SUCCESS.id)
-            acceptanceTest.save()
-            addAcceptanceTestActivity(acceptanceTest, user)
+            acceptanceTestService.save(new AcceptanceTest(name: randomWords(15, 5, 200), description: randomWords(30, 5), state: AcceptanceTest.AcceptanceTestState.SUCCESS.id), story, user)
             if (index % 2 == 0) {
-                def acceptanceTest2 = new AcceptanceTest(name: randomWords(15, 5, 200), description: randomWords(30, 5), creator: user, parentStory: story, state: AcceptanceTest.AcceptanceTestState.SUCCESS.id)
-                acceptanceTest2.save()
-                addAcceptanceTestActivity(acceptanceTest2, user)
+                acceptanceTestService.save(new AcceptanceTest(name: randomWords(15, 5, 200), description: randomWords(30, 5), state: AcceptanceTest.AcceptanceTestState.SUCCESS.id), story, user)
             }
         }
     }
@@ -381,12 +316,6 @@ class DummyService {
         def activity = new Activity(poster: poster, parentRef: task.id, parentType: 'task', code: code, label: task.name)
         activity.save()
         task.addToActivities(activity)
-    }
-
-    private addAcceptanceTestActivity(AcceptanceTest acceptanceTest, User poster) {
-        def activity = new Activity(poster: poster, parentRef: acceptanceTest.id, parentType: 'acceptanceTest', code: 'acceptanceTestSave', label: acceptanceTest.name)
-        activity.save()
-        acceptanceTest.addToActivities(activity)
     }
 
     private randomWords(int max = 1, int min = -1, int maxChar = 0) {
