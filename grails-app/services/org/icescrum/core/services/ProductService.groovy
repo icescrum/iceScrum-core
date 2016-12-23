@@ -160,7 +160,7 @@ class ProductService extends IceScrumEventPublisher {
                             planned   : xmlRoot."${Cliche.PLANNED_STORIES}".toInteger(),
                             inprogress: xmlRoot."${Cliche.INPROGRESS_STORIES}".toInteger(),
                             done      : xmlRoot."${Cliche.FINISHED_STORIES}".toInteger(),
-                            label: index == 0 ? "Start" : xmlRoot."${Cliche.SPRINT_ID}".toString()+"${cliche.type == Cliche.TYPE_ACTIVATION ? " (progress)" : ""}"
+                            label: index == 0 ? "Start" : xmlRoot."${Cliche.SPRINT_ID}".toString()+"${cliche.id ?: " (progress)"}"
                     ]
                 }
             }
@@ -196,7 +196,7 @@ class ProductService extends IceScrumEventPublisher {
                     values << [
                             all  : xmlRoot."${Cliche.PRODUCT_BACKLOG_POINTS}".toBigDecimal(),
                             done : c,
-                            label: index == 0 ? "Start" : xmlRoot."${Cliche.SPRINT_ID}".toString()+"${cliche.type == Cliche.TYPE_ACTIVATION ? " (progress)" : ""}"
+                            label: index == 0 ? "Start" : xmlRoot."${Cliche.SPRINT_ID}".toString()+"${cliche.id ?: " (progress)"}"
                     ]
                 }
             }
