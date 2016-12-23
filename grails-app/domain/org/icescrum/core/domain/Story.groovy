@@ -70,13 +70,13 @@ class Story extends BacklogElement implements Cloneable, Serializable {
     static hasMany = [
             tasks          : Task,
             acceptanceTests: AcceptanceTest,
-            likers         : User,
+            voters         : User,
             followers      : User,
             dependences    : Story
     ]
 
     static transients = [
-            'deliveredVersion', 'testState', 'testStateEnum', 'activity', 'liked', 'followed', 'sameBacklogStories', 'countDoneTasks'
+            'deliveredVersion', 'testState', 'testStateEnum', 'activity', 'followed', 'sameBacklogStories', 'countDoneTasks'
     ]
 
     static mapping = {
@@ -136,11 +136,6 @@ class Story extends BacklogElement implements Cloneable, Serializable {
 
     int getTestState() {
         getTestStateEnum().id
-    }
-
-    boolean getLiked() {
-        def springSecurityService = (SpringSecurityService) Holders.grailsApplication.mainContext.getBean('springSecurityService')
-        return likers ? likers.contains(springSecurityService.currentUser) : false
     }
 
     boolean getFollowed() {
@@ -640,9 +635,9 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                     _acceptanceTest.xml(builder)
                 }
             }
-            builder.likers() {
-                this.likers.each { _liker ->
-                    builder.user(uid: _liker.id)
+            builder.voters() {
+                this.voters.each { _voter ->
+                    builder.user(uid: _voter.id)
                 }
             }
             builder.followers() {
