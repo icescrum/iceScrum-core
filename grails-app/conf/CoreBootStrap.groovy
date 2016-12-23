@@ -21,14 +21,26 @@
  */
 
 import grails.util.Environment
+import grails.util.Holders
+import org.icescrum.core.domain.User
+import org.icescrum.core.domain.preferences.UserPreferences
 import org.icescrum.core.test.DummyPopulator
+import org.springframework.security.core.context.SecurityContextHolder
 
 class CoreBootStrap {
+    def userService
     def init = { servletContext ->
 
         def dev = Environment.current == Environment.DEVELOPMENT && !System.properties['icescrum.noDummyze']
         if(dev){
-            DummyPopulator.dummyze()
+            println "Dummy Data loading...."
+            if (User.count() <= 1) {
+                def usera = new User(username: "a", email: "a@gmail.com", firstName: "Roberto", password: "a", preferences: new UserPreferences(language: 'en', activity: 'Consultant'))
+                def userz = new User(username: "z", email: "z@gmail.com", firstName: "Bernardo", password: "z", preferences: new UserPreferences(language: 'en', activity: 'WebDesigner', menu: ["feature": "1", "backlog": "2"]))
+                userService.save(usera)
+                userService.save(userz)
+            }
         }
+
     }
 }
