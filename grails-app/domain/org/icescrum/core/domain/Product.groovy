@@ -377,11 +377,6 @@ class Product extends TimeBox implements Serializable, Attachmentable {
                     _cliche.xml(builder)
                 }
             }
-            builder.templates() {
-                Template.findAllByParentProduct(this)?.each { _templates ->
-                    _templates.xml(builder)
-                }
-            }
             builder.activities() {
                 this.activities.each { _activity ->
                     _activity.xml(builder)

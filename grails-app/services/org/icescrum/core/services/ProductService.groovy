@@ -48,7 +48,6 @@ class ProductService extends IceScrumEventPublisher {
     def grailsApplication
     def clicheService
     def notificationEmailService
-    def templateService
 
     def g = new org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib()
 
@@ -72,9 +71,6 @@ class ProductService extends IceScrumEventPublisher {
                 }
             }
         }
-        def bugStory = new Story(type: Story.TYPE_DEFECT, backlog: product)
-        templateService.save(new Template(name: g.message(code: 'is.ui.sandbox.story.template.default.defect')), bugStory)
-        bugStory.delete()
         manageProductEvents(product, [:])
         publishSynchronousEvent(IceScrumEventType.CREATE, product)
     }
@@ -603,7 +599,6 @@ class ProductService extends IceScrumEventPublisher {
             it.removeFromProducts(p)
         }
         p.removeAllAttachments()
-        Template.findAllByParentProduct(p)*.delete()
         p.delete(flush: true)
         publishSynchronousEvent(IceScrumEventType.DELETE, p, dirtyProperties)
     }
