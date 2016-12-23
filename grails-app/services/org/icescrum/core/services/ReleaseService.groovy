@@ -172,14 +172,29 @@ class ReleaseService extends IceScrumEventPublisher {
     @PreAuthorize('stakeHolder(#release.parentProduct) or inProduct(#release.parentProduct)')
     def releaseBurndownValues(Release release) {
         def values = []
-        Cliche.findAllByParentTimeBoxAndType(release, Cliche.TYPE_ACTIVATION, [sort: "datePrise", order: "asc"])?.each { cliche ->
+        def cliches = []
+        //begin of project
+        def firstClicheActivation = Cliche.findByParentTimeBoxAndType(release, Cliche.TYPE_ACTIVATION, [sort: "datePrise", order: "asc"])
+        if(firstClicheActivation)
+            cliches.add(firstClicheActivation)
+        //others cliches
+        cliches.addAll(Cliche.findAllByParentTimeBoxAndType(release, Cliche.TYPE_CLOSE, [sort: "datePrise", order: "asc"]))
+        //transient cliche
+        if(release.state == Release.STATE_INPROGRESS){
+            def sprint = null
+            sprint = release.sprints.find{it.state == Sprint.STATE_INPROGRESS}
+            if(sprint){
+                cliches << [data:clicheService.generateSprintClicheData(sprint, Cliche.TYPE_CLOSE)]
+            }
+        }
+        cliches?.eachWithIndex { cliche, index ->
             def xmlRoot = new XmlSlurper().parseText(cliche.data)
             if (xmlRoot) {
                 def sprintEntry = [
-                        label           : xmlRoot."${Cliche.SPRINT_ID}".toString(),
                         userstories     : xmlRoot."${Cliche.FUNCTIONAL_STORY_PRODUCT_REMAINING_POINTS}".toBigDecimal(),
                         technicalstories: xmlRoot."${Cliche.TECHNICAL_STORY_PRODUCT_REMAINING_POINTS}".toBigDecimal(),
-                        defectstories   : xmlRoot."${Cliche.DEFECT_STORY_PRODUCT_REMAINING_POINTS}".toBigDecimal()
+                        defectstories   : xmlRoot."${Cliche.DEFECT_STORY_PRODUCT_REMAINING_POINTS}".toBigDecimal(),
+                        label: index == 0 ? "Start" : xmlRoot."${Cliche.SPRINT_ID}".toString()+"${cliche.type == Cliche.TYPE_ACTIVATION ? " (progress)" : ""}"
                 ]
                 sprintEntry << computeLabelsForSprintEntry(sprintEntry)
                 values << sprintEntry

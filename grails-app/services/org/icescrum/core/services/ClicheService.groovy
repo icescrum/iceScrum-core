@@ -90,7 +90,18 @@ class ClicheService {
         ]
     }
 
-    void createSprintCliche(Sprint sprint, Date date, int clicheType) {
+
+
+    void createSprintCliche(Sprint s, Date d, int type) {
+        Cliche c = new Cliche(
+                type: type,
+                datePrise: d,
+                data: generateSprintClicheData(s, type)
+        )
+        save(c, s.parentRelease)
+    }
+
+    def generateSprintClicheData(Sprint sprint, int clicheType) {
         // Retrieve the current release and the current sprint
         Release release = sprint.parentRelease
         Product product = release.parentProduct
@@ -180,12 +191,7 @@ class ClicheService {
             }
         }
         StreamingMarkupBuilder xmlBuilder = new StreamingMarkupBuilder()
-        Cliche cliche = new Cliche(
-                type: clicheType,
-                datePrise: date,
-                data: xmlBuilder.bind(clicheData).toString()
-        )
-        save(cliche, release)
+        return xmlBuilder.bind(clicheData).toString()
     }
 
     void createOrUpdateDailyTasksCliche(Sprint sprint) {

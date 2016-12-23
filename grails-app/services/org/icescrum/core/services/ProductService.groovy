@@ -46,6 +46,7 @@ class ProductService extends IceScrumEventPublisher {
     def teamService
     def actorService
     def grailsApplication
+    def clicheService
     def notificationEmailService
     def templateService
 
@@ -133,8 +134,23 @@ class ProductService extends IceScrumEventPublisher {
     @PreAuthorize('stakeHolder(#product) or inProduct(#product)')
     def cumulativeFlowValues(Product product) {
         def values = []
-        product.releases?.sort { a, b -> a.orderNumber <=> b.orderNumber }?.each {
-            Cliche.findAllByParentTimeBoxAndType(it, Cliche.TYPE_ACTIVATION, [sort: "datePrise", order: "asc"])?.each { cliche ->
+        product.releases?.sort { a, b -> a.orderNumber <=> b.orderNumber }?.each { Release release ->
+            def cliches = []
+            //begin of project
+            def firstClicheActivation = Cliche.findByParentTimeBoxAndType(release, Cliche.TYPE_ACTIVATION, [sort: "datePrise", order: "asc"])
+            if(firstClicheActivation)
+                cliches.add(firstClicheActivation)
+            //others cliches
+            cliches.addAll(Cliche.findAllByParentTimeBoxAndType(release, Cliche.TYPE_CLOSE, [sort: "datePrise", order: "asc"]))
+            //transient cliche
+            if(release.state == Release.STATE_INPROGRESS){
+                def sprint = null
+                sprint = release.sprints.find{it.state == Sprint.STATE_INPROGRESS}
+                if(sprint){
+                    cliches << [data:clicheService.generateSprintClicheData(sprint, Cliche.TYPE_CLOSE)]
+                }
+            }
+            cliches?.eachWithIndex { cliche, index ->
                 def xmlRoot = new XmlSlurper().parseText(cliche.data)
                 if (xmlRoot) {
                     values << [
@@ -144,7 +160,7 @@ class ProductService extends IceScrumEventPublisher {
                             planned   : xmlRoot."${Cliche.PLANNED_STORIES}".toInteger(),
                             inprogress: xmlRoot."${Cliche.INPROGRESS_STORIES}".toInteger(),
                             done      : xmlRoot."${Cliche.FINISHED_STORIES}".toInteger(),
-                            label     : xmlRoot."${Cliche.SPRINT_ID}".toString()
+                            label: index == 0 ? "Start" : xmlRoot."${Cliche.SPRINT_ID}".toString()+"${cliche.type == Cliche.TYPE_ACTIVATION ? " (progress)" : ""}"
                     ]
                 }
             }
@@ -155,8 +171,23 @@ class ProductService extends IceScrumEventPublisher {
     @PreAuthorize('stakeHolder(#product) or inProduct(#product)')
     def productBurnupValues(Product product) {
         def values = []
-        product.releases?.sort { a, b -> a.orderNumber <=> b.orderNumber }?.each {
-            Cliche.findAllByParentTimeBoxAndType(it, Cliche.TYPE_ACTIVATION, [sort: "datePrise", order: "asc"])?.each { cliche ->
+        product.releases?.sort { a, b -> a.orderNumber <=> b.orderNumber }?.each {Release release ->
+            def cliches = []
+            //begin of project
+            def firstClicheActivation = Cliche.findByParentTimeBoxAndType(release, Cliche.TYPE_ACTIVATION, [sort: "datePrise", order: "asc"])
+            if(firstClicheActivation)
+                cliches.add(firstClicheActivation)
+            //others cliches
+            cliches.addAll(Cliche.findAllByParentTimeBoxAndType(release, Cliche.TYPE_CLOSE, [sort: "datePrise", order: "asc"]))
+            //transient cliche
+            if(release.state == Release.STATE_INPROGRESS){
+                def sprint = null
+                sprint = release.sprints.find{it.state == Sprint.STATE_INPROGRESS}
+                if(sprint){
+                    cliches << [data:clicheService.generateSprintClicheData(sprint, Cliche.TYPE_CLOSE)]
+                }
+            }
+            cliches?.eachWithIndex { cliche, index ->
                 def xmlRoot = new XmlSlurper().parseText(cliche.data)
                 if (xmlRoot) {
                     def a = xmlRoot."${Cliche.PRODUCT_BACKLOG_POINTS}".toBigDecimal()
@@ -165,7 +196,7 @@ class ProductService extends IceScrumEventPublisher {
                     values << [
                             all  : xmlRoot."${Cliche.PRODUCT_BACKLOG_POINTS}".toBigDecimal(),
                             done : c,
-                            label: xmlRoot."${Cliche.SPRINT_ID}".toString()
+                            label: index == 0 ? "Start" : xmlRoot."${Cliche.SPRINT_ID}".toString()+"${cliche.type == Cliche.TYPE_ACTIVATION ? " (progress)" : ""}"
                     ]
                 }
             }
