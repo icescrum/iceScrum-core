@@ -130,7 +130,7 @@ class ApplicationSupport {
 
     public static String getNormalisedVersion() {
         def version = Metadata.current['app.version']
-        return version.substring(0, version.indexOf(" ") > 0 ? version.indexOf(" ") : version.length()).toLowerCase().replaceAll('#', '')
+        return version.substring(0, version.indexOf(" ") > 0 ? version.indexOf(" ") : version.length()).toLowerCase()
     }
 
     static public checkInitialConfig = { def config ->
@@ -595,7 +595,7 @@ class CheckerTimerTask extends TimerTask {
         def configInterval = computeInterval(config.icescrum.check.interval ?: 1440)
         try {
             def headers = ['User-Agent': 'iceScrum-Agent/1.0', 'Referer': config.grails.serverURL]
-            def vers = Metadata.current['app.version'].replace('#', '.').replaceFirst('R', '').replace('.', '-').replace(' ', '%20')
+            def vers = Metadata.current['app.version'].replace('.', '-').replace(' ', '%20')
             def params = ['http.connection.timeout': config.icescrum.check.timeout ?: 5000, 'http.socket.timeout': config.icescrum.check.timeout ?: 5000]
             def queryParams = [environment: config.icescrum.environment]
             def resp = getJSON(config.icescrum.check.url, config.icescrum.check.path + "/" + config.icescrum.appID + "/" + vers, queryParams, headers, params)
@@ -603,7 +603,7 @@ class CheckerTimerTask extends TimerTask {
                 if (!resp.data.up_to_date) {
                     ApplicationSupport.addWarning('version',
                             'cloud-download',
-                            [code: 'is.warning.version', args: [resp.data.version.replaceFirst('\\.', '#')]],
+                            [code: 'is.warning.version', args: [resp.data.version]],
                             [code: 'is.warning.version.download', args: [resp.data.message, resp.data.url]])
                     if (log.debugEnabled) {
                         log.debug('Automatic check update - A new version is available : ' + resp.data.version)
