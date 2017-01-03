@@ -386,6 +386,11 @@ class ApplicationSupport {
         }
     }
 
+    public static Map getJSON(String url, String authenticationBearer, headers = [:]) {
+        headers.Authorization = "Bearer $authenticationBearer"
+        return getJSON(url, null, null, headers);
+    }
+
     public static Map getJSON(String url, String username, String password, headers = [:]) {
         DefaultHttpClient httpClient = new DefaultHttpClient()
         Map resp = [:]
@@ -400,18 +405,22 @@ class ApplicationSupport {
             }
             HttpHost targetHost = new HttpHost(host, port, scheme)
             // Configure preemptive basic auth
-            httpClient.credentialsProvider.setCredentials(new AuthScope(targetHost.hostName, targetHost.port), new UsernamePasswordCredentials(username, password))
-            AuthCache authCache = new BasicAuthCache()
-            authCache.put(targetHost, new BasicScheme())
-            BasicHttpContext localcontext = new BasicHttpContext()
-            localcontext.setAttribute(ClientContext.AUTH_CACHE, authCache)
+            BasicHttpContext localcontext = null
+            if (!headers.Authorization) {
+                httpClient.credentialsProvider.setCredentials(new AuthScope(targetHost.hostName, targetHost.port), new UsernamePasswordCredentials(username, password))
+                AuthCache authCache = new BasicAuthCache()
+                authCache.put(targetHost, new BasicScheme())
+                localcontext = new BasicHttpContext()
+                localcontext.setAttribute(ClientContext.AUTH_CACHE, authCache)
+            }
             // Build request
             HttpGet httpGet = new HttpGet(uri.path)
             headers.each { k, v ->
                 httpGet.setHeader(k, v)
             }
             // Execute request
-            HttpResponse response = httpClient.execute(targetHost, httpGet, localcontext)
+            HttpResponse response = localcontext ? httpClient.execute(targetHost, httpGet, localcontext) : httpClient.execute(targetHost, httpGet)
+
             resp.status = response.statusLine.statusCode
             if (resp.status == HttpStatus.SC_OK) {
                 resp.data = JSON.parse(EntityUtils.toString(response.entity))
@@ -427,6 +436,11 @@ class ApplicationSupport {
         return resp
     }
 
+    public static Map postJSON(String url, String authenticationBearer, JSON json, headers = [:]) {
+        headers.Authorization = "Bearer $authenticationBearer"
+        return postJSON(url, null, null, json, headers);
+    }
+
     public static Map postJSON(String url, String username, String password, JSON json, headers = [:]) {
         DefaultHttpClient httpClient = new DefaultHttpClient()
         Map resp = [:]
@@ -440,12 +454,15 @@ class ApplicationSupport {
                 port = 443
             }
             HttpHost targetHost = new HttpHost(host, port, scheme)
-            // Configure preemptive basic auth
-            httpClient.credentialsProvider.setCredentials(new AuthScope(targetHost.hostName, targetHost.port), new UsernamePasswordCredentials(username, password))
-            AuthCache authCache = new BasicAuthCache()
-            authCache.put(targetHost, new BasicScheme())
-            BasicHttpContext localcontext = new BasicHttpContext()
-            localcontext.setAttribute(ClientContext.AUTH_CACHE, authCache)
+            // Configure basic auth
+            BasicHttpContext localcontext = null
+            if(!headers.Authorization){
+                httpClient.credentialsProvider.setCredentials(new AuthScope(targetHost.hostName, targetHost.port), new UsernamePasswordCredentials(username, password))
+                AuthCache authCache = new BasicAuthCache()
+                authCache.put(targetHost, new BasicScheme())
+                localcontext = new BasicHttpContext()
+                localcontext.setAttribute(ClientContext.AUTH_CACHE, authCache)
+            }
             // Build request
             HttpPost httpPost = new HttpPost(uri.path)
             headers.each { k, v ->
@@ -453,7 +470,7 @@ class ApplicationSupport {
             }
             httpPost.setEntity(new StringEntity(json.toString()));
             // Execute request
-            HttpResponse response = httpClient.execute(targetHost, httpPost, localcontext)
+            HttpResponse response = localcontext ? httpClient.execute(targetHost, httpPost, localcontext) : httpClient.execute(targetHost, httpPost)
             resp.status = response.statusLine.statusCode
             if (resp.status == HttpStatus.SC_OK) {
                 resp.data = JSON.parse(EntityUtils.toString(response.entity))
