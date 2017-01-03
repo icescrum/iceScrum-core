@@ -30,13 +30,11 @@ class CoreBootStrap {
     def userService
 
     def init = { servletContext ->
-        def dev = Environment.current == Environment.DEVELOPMENT && !System.properties['icescrum.noDummyze']
-        if (dev) {
-            println "Dummy Data loading...."
-            if (User.count() <= 1) {
-                userService.save(new User(username: "a", email: "a@gmail.com", firstName: "Roberto", password: "a", preferences: new UserPreferences(language: 'en', activity: 'Consultant')))
-                userService.save(new User(username: "z", email: "z@gmail.com", firstName: "Bernardo", password: "z", preferences: new UserPreferences(language: 'en', activity: 'WebDesigner', menu: ["feature": "1", "backlog": "2"])))
-            }
+        if (Environment.current == Environment.DEVELOPMENT && !System.properties['icescrum.noDummyze'] && User.count() <= 1) {
+            println "Creating dummy users"
+            userService.save(new User(username: "a", email: "a@gmail.com", firstName: "Roberto", password: "a", preferences: new UserPreferences(language: 'en', activity: 'Consultant')))
+            userService.save(new User(username: "z", email: "z@gmail.com", firstName: "Bernardo", password: "z", preferences:
+                             new UserPreferences(language: 'en', activity: 'WebDesigner', menu: ["taskBoard": "1",  "planning": "2", "backlog": "3", "feature": "4", "project": "5"])))
         }
     }
 }
