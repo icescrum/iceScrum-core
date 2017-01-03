@@ -134,16 +134,14 @@ class ApplicationSupport {
     }
 
     static public checkInitialConfig = { def config ->
-        //check if Tomcat version is compatible
         try {
-            ApplicationSupport.forName("javax.servlet.http.Part")
+            ApplicationSupport.forName("javax.servlet.http.Part") // Check if Tomcat version is compatible
         } catch (ClassNotFoundException e) {
-            addWarningMessage('http-error', 'warning', [code: 'is.warning.httpPart.title'], [code: 'is.warning.httpPart.message'])
+            addWarning('http-error', 'warning', [code: 'is.warning.httpPart.title'], [code: 'is.warning.httpPart.message'])
             config.icescrum.push.enable = false;
         }
-        //check if serverURL is valid
         if (config.grails.serverURL.contains('localhost') && Environment.current != Environment.DEVELOPMENT) {
-            addWarningMessage('serverUrl', 'warning', [code: 'is.warning.serverUrl.title'], [code: 'is.warning.serverUrl.message', args: [config.grails.serverURL]])
+            addWarning('serverUrl', 'warning', [code: 'is.warning.serverUrl.title'], [code: 'is.warning.serverUrl.message', args: [config.grails.serverURL]])
         }
     }
 
@@ -456,7 +454,7 @@ class ApplicationSupport {
             HttpHost targetHost = new HttpHost(host, port, scheme)
             // Configure basic auth
             BasicHttpContext localcontext = null
-            if(!headers.Authorization){
+            if (!headers.Authorization) {
                 httpClient.credentialsProvider.setCredentials(new AuthScope(targetHost.hostName, targetHost.port), new UsernamePasswordCredentials(username, password))
                 AuthCache authCache = new BasicAuthCache()
                 authCache.put(targetHost, new BasicScheme())
@@ -554,26 +552,29 @@ class ApplicationSupport {
         return config;
     }
 
-    static void addWarningMessage(String id, String icon, Map title, Map message, boolean hideable = false) {
-        def errors = Holders.grailsApplication.config.icescrum.errors
-        def exist = errors.find { it.id == id } ?: false
-        if (!exist) {
-            errors << [id: id, title: title, message: message, icon: icon, silent: false, hideable: hideable]
+    static void addWarning(String id, String icon, Map title, Map message, boolean hideable = false) {
+        def warnings = Holders.grailsApplication.config.icescrum.warnings
+        if (!warnings.find { it.id == id }) {
+            def newWarning = [id: id, title: title, message: message, icon: icon, silent: false, hideable: hideable]
+            if (log.debugEnabled) {
+                log.debug('Adding warning ' + newWarning.inspect())
+            }
+            warnings << newWarning
         }
     }
 
-    static def toggleSilentWarningMessage(String id) {
-        def warning = Holders.grailsApplication.config.icescrum.errors.find { it.id == id && it.hideable }
+    static def toggleSilentWarning(String id) {
+        def warning = Holders.grailsApplication.config.icescrum.warnings.find { it.id == id && it.hideable }
         warning?.silent = !warning.silent
         return warning
     }
 
     static def getLastWarning() {
         def g = Holders.grailsApplication.mainContext.getBean('org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib')
-        def warning = Holders.grailsApplication.config.icescrum.errors?.reverse()?.find { it ->
+        def lastWarning = Holders.grailsApplication.config.icescrum.warnings?.reverse()?.find { it ->
             !it.silent
         }
-        return warning ? [id: warning.id, icon: warning.icon, title: g.message(warning.title), message: g.message(warning.message), hideable: warning.hideable, silent: warning.silent] : null
+        return lastWarning ? [id: lastWarning.id, icon: lastWarning.icon, title: g.message(lastWarning.title), message: g.message(lastWarning.message), hideable: lastWarning.hideable, silent: lastWarning.silent] : null
     }
 }
 
@@ -600,7 +601,7 @@ class CheckerTimerTask extends TimerTask {
             def resp = getJSON(config.icescrum.check.url, config.icescrum.check.path + "/" + config.icescrum.appID + "/" + vers, queryParams, headers, params)
             if (resp.status == 200) {
                 if (!resp.data.up_to_date) {
-                    ApplicationSupport.addWarningMessage('version',
+                    ApplicationSupport.addWarning('version',
                             'cloud-download',
                             [code: 'is.warning.version', args: [resp.data.version.replaceFirst('\\.', '#')]],
                             [code: 'is.warning.version.download', args: [resp.data.message, resp.data.url]])
