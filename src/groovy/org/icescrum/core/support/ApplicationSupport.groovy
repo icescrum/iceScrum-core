@@ -384,12 +384,12 @@ class ApplicationSupport {
         }
     }
 
-    public static Map getJSON(String url, String authenticationBearer, headers = [:]) {
+    public static Map getJSON(String url, String authenticationBearer, headers = [:], params = [:]) {
         headers.Authorization = "Bearer $authenticationBearer"
-        return getJSON(url, null, null, headers);
+        return getJSON(url, null, null, headers, params);
     }
 
-    public static Map getJSON(String url, String username, String password, headers = [:]) {
+    public static Map getJSON(String url, String username, String password, headers = [:], params = [:]) {
         DefaultHttpClient httpClient = new DefaultHttpClient()
         Map resp = [:]
         try {
@@ -404,7 +404,7 @@ class ApplicationSupport {
             HttpHost targetHost = new HttpHost(host, port, scheme)
             // Configure preemptive basic auth
             BasicHttpContext localcontext = null
-            if (!headers.Authorization) {
+            if (!headers.Authorization && username && password) {
                 httpClient.credentialsProvider.setCredentials(new AuthScope(targetHost.hostName, targetHost.port), new UsernamePasswordCredentials(username, password))
                 AuthCache authCache = new BasicAuthCache()
                 authCache.put(targetHost, new BasicScheme())
@@ -416,6 +416,10 @@ class ApplicationSupport {
             headers.each { k, v ->
                 httpGet.setHeader(k, v)
             }
+            params.each { k, v ->
+                httpGet.params.setParameter(k, v)
+            }
+
             // Execute request
             HttpResponse response = localcontext ? httpClient.execute(targetHost, httpGet, localcontext) : httpClient.execute(targetHost, httpGet)
 
@@ -434,12 +438,12 @@ class ApplicationSupport {
         return resp
     }
 
-    public static Map postJSON(String url, String authenticationBearer, JSON json, headers = [:]) {
+    public static Map postJSON(String url, String authenticationBearer, JSON json, headers = [:], params = [:]) {
         headers.Authorization = "Bearer $authenticationBearer"
-        return postJSON(url, null, null, json, headers);
+        return postJSON(url, null, null, json, headers, params);
     }
 
-    public static Map postJSON(String url, String username, String password, JSON json, headers = [:]) {
+    public static Map postJSON(String url, String username, String password, JSON json, headers = [:], params = [:]) {
         DefaultHttpClient httpClient = new DefaultHttpClient()
         Map resp = [:]
         try {
@@ -454,7 +458,7 @@ class ApplicationSupport {
             HttpHost targetHost = new HttpHost(host, port, scheme)
             // Configure basic auth
             BasicHttpContext localcontext = null
-            if (!headers.Authorization) {
+            if (!headers.Authorization && username && password) {
                 httpClient.credentialsProvider.setCredentials(new AuthScope(targetHost.hostName, targetHost.port), new UsernamePasswordCredentials(username, password))
                 AuthCache authCache = new BasicAuthCache()
                 authCache.put(targetHost, new BasicScheme())
@@ -466,6 +470,10 @@ class ApplicationSupport {
             headers.each { k, v ->
                 httpPost.setHeader(k, v)
             }
+            params.each { k, v ->
+                httpPost.params.setParameter(k, v)
+            }
+
             httpPost.setEntity(new StringEntity(json.toString()));
             // Execute request
             HttpResponse response = localcontext ? httpClient.execute(targetHost, httpPost, localcontext) : httpClient.execute(targetHost, httpPost)
@@ -594,11 +602,18 @@ class CheckerTimerTask extends TimerTask {
         def config = Holders.grailsApplication.config
         def configInterval = computeInterval(config.icescrum.check.interval ?: 1440)
         try {
-            def headers = ['User-Agent': 'iceScrum-Agent/1.0', 'Referer': config.grails.serverURL]
-            def vers = Metadata.current['app.version'].replace('.', '-').replace(' ', '%20')
+            def headers = ['User-Agent': 'iceScrum-Agent/1.0', 'Referer': config.grails.serverURL, 'Content-Type': 'application/json', 'Accept': 'application/json']
             def params = ['http.connection.timeout': config.icescrum.check.timeout ?: 5000, 'http.socket.timeout': config.icescrum.check.timeout ?: 5000]
-            def queryParams = [environment: config.icescrum.environment]
-            def resp = getJSON(config.icescrum.check.url, config.icescrum.check.path + "/" + config.icescrum.appID + "/" + vers, queryParams, headers, params)
+            def url = config.icescrum.check.url + "/" + config.icescrum.check.path
+
+            def data = [
+                    server_id:config.icescrum.appID,
+                    version:Metadata.current['app.version'].split("\\s+")[0],
+                    pro:(Metadata.current['app.version']).contains('Pro'),
+                    environment:config.icescrum.environment
+            ] as JSON
+
+            def resp = ApplicationSupport.postJSON(url, null, null, data, headers, params)
             if (resp.status == 200) {
                 if (!resp.data.up_to_date) {
                     ApplicationSupport.addWarning('version',
@@ -635,29 +650,5 @@ class CheckerTimerTask extends TimerTask {
 
     public static computeInterval(int interval) {
         return 1000 * 60 * interval
-    }
-
-    private static Map getJSON(String domain, String path, queryParams = [:], headers = [:], params = [:]) {
-        HttpClient httpclient = new DefaultHttpClient();
-        Map resp = [data: '']
-        try {
-            String url = domain + '/' + path
-            if (queryParams) {
-                // Don't use URIBuilder because of bug : https://issues.apache.org/jira/browse/HTTPCLIENT-1195
-                url += ('?' + URLEncodedUtils.format(queryParams.collect { k, v -> new BasicNameValuePair(k, v) }, Consts.UTF_8))
-            }
-            HttpGet httpget = new HttpGet(url);
-            headers.each { k, v -> httpget.setHeader(k, v) }
-            params.each { k, v -> httpget.params.setParameter(k, v) }
-            HttpResponse response = httpclient.execute(httpget);
-            resp.status = response.statusLine.statusCode
-            def data = EntityUtils.toString(response.entity)
-            if (resp.status == HttpStatus.SC_OK && data) {
-                resp.data = JSON.parse(data)
-            }
-        } finally {
-            httpclient.getConnectionManager().shutdown();
-        }
-        return resp
     }
 }
