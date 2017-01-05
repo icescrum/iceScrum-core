@@ -419,15 +419,14 @@ class ApplicationSupport {
             params.each { k, v ->
                 httpGet.params.setParameter(k, v)
             }
-
             // Execute request
             HttpResponse response = localcontext ? httpClient.execute(targetHost, httpGet, localcontext) : httpClient.execute(targetHost, httpGet)
-
+            // Gather results
             resp.status = response.statusLine.statusCode
-            if (resp.status == HttpStatus.SC_OK) {
-                resp.data = JSON.parse(EntityUtils.toString(response.entity))
-            } else {
-                log.debug('Error ' + resp.status + ' get ' + uri.toString() + ' ' + EntityUtils.toString(response.entity))
+            def responseText = EntityUtils.toString(response.entity)
+            resp.data = JSON.parse(responseText)
+            if (resp.status != HttpStatus.SC_OK && log.debugEnabled) {
+                log.debug('Error ' + resp.status + ' get ' + uri.toString() + ' ' + responseText)
             }
         } catch (Exception e) {
             log.error(e.message)
@@ -473,15 +472,15 @@ class ApplicationSupport {
             params.each { k, v ->
                 httpPost.params.setParameter(k, v)
             }
-
             httpPost.setEntity(new StringEntity(json.toString()));
             // Execute request
             HttpResponse response = localcontext ? httpClient.execute(targetHost, httpPost, localcontext) : httpClient.execute(targetHost, httpPost)
+            // Gather results
             resp.status = response.statusLine.statusCode
-            if (resp.status == HttpStatus.SC_OK) {
-                resp.data = JSON.parse(EntityUtils.toString(response.entity))
-            } else {
-                log.debug('Error ' + resp.status + ' post ' + uri.toString() + ' ' + json.toString(true) + ' ' + EntityUtils.toString(response.entity))
+            def responseText = EntityUtils.toString(response.entity)
+            resp.data = JSON.parse(responseText)
+            if (resp.status != HttpStatus.SC_OK && log.debugEnabled) {
+                log.debug('Error ' + resp.status + ' post ' + uri.toString() + ' ' + json.toString(true) + ' ' + responseText)
             }
         } catch (Exception e) {
             log.error(e.message)
