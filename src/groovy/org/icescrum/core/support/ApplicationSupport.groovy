@@ -30,27 +30,24 @@ import grails.util.Holders
 import grails.util.Metadata
 import groovy.xml.MarkupBuilder
 import org.apache.commons.logging.LogFactory
-import org.apache.http.Consts
 import org.apache.http.HttpHost
 import org.apache.http.HttpResponse
 import org.apache.http.HttpStatus
 import org.apache.http.auth.AuthScope
 import org.apache.http.auth.UsernamePasswordCredentials
 import org.apache.http.client.AuthCache
-import org.apache.http.client.HttpClient
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.client.methods.HttpPost
 import org.apache.http.client.protocol.ClientContext
-import org.apache.http.client.utils.URLEncodedUtils
 import org.apache.http.entity.StringEntity
 import org.apache.http.impl.auth.BasicScheme
 import org.apache.http.impl.client.BasicAuthCache
 import org.apache.http.impl.client.DefaultHttpClient
-import org.apache.http.message.BasicNameValuePair
 import org.apache.http.protocol.BasicHttpContext
 import org.apache.http.util.EntityUtils
 import org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib
 import org.icescrum.core.domain.Product
+import org.icescrum.core.domain.Team
 import org.icescrum.core.domain.User
 import org.icescrum.core.domain.preferences.UserPreferences
 import org.icescrum.core.security.WebScrumExpressionHandler
@@ -153,17 +150,17 @@ class ApplicationSupport {
         println dirPath
         config.icescrum.images.users.dir = dirPath
 
-        dirPath = config.icescrum.baseDir.toString() + File.separator + "images" + File.separator + "products" + File.separator
+        dirPath = config.icescrum.baseDir.toString() + File.separator + "images" + File.separator + "projects" + File.separator
         dir = new File(dirPath)
         if (!dir.exists())
             dir.mkdirs()
-        config.icescrum.products.users.dir = dirPath
+        config.icescrum.projects.users.dir = dirPath
 
         dirPath = config.icescrum.baseDir.toString() + File.separator + "images" + File.separator + "teams" + File.separator
         dir = new File(dirPath)
         if (!dir.exists())
             dir.mkdirs()
-        config.icescrum.products.teams.dir = dirPath
+        config.icescrum.projects.teams.dir = dirPath
     }
 
     static public initEnvironment = { def config ->
@@ -208,12 +205,14 @@ class ApplicationSupport {
         }
     }
 
-    static public checkNewVersion = { def config ->
-        if (booleanValue(config.icescrum.check.enable)) {
-            def timer = new Timer()
-            def interval = CheckerTimerTask.computeInterval(config.icescrum.check.interval ?: 360)
-            timer.scheduleAtFixedRate(new CheckerTimerTask(timer, interval), 60000, interval)
-        }
+    static public checkForUpdateAndReportUsage = { def config ->
+        def timer = new Timer()
+        //CheckForUpdate
+        def interval = CheckerTimerTask.computeInterval(config.icescrum.check.interval ?: 360)
+        timer.scheduleAtFixedRate(new CheckerTimerTask(timer, interval), 60000, interval)
+        //ReportUsage at least 6hours after first launch?
+        def intervalReport = CheckerTimerTask.computeInterval(config.icescrum.report.interval ?: 360)
+        timer.scheduleAtFixedRate(new ReportUsageTimerTask(timer, interval), 60000*60*6, intervalReport)
     }
 
     static public createUUID = {
@@ -532,7 +531,9 @@ class ApplicationSupport {
             product.attachments.each { it?.each { att -> files << attachmentableService.getFile(att) } }
             def tasks = []
             product.releases*.each { it.sprints*.each { s -> tasks.addAll(s.tasks) } }
-            tasks*.attachments.findAll { it.size() > 0 }?.each { it?.each { att -> files << attachmentableService.getFile(att) } }
+            tasks*.attachments.findAll { it.size() > 0 }?.each {
+                it?.each { att -> files << attachmentableService.getFile(att) }
+            }
             zipExportFile(outputStream, files, xml, 'attachments')
         } catch (Exception e) {
             if (log.debugEnabled) {
@@ -585,6 +586,7 @@ class ApplicationSupport {
     }
 }
 
+
 class CheckerTimerTask extends TimerTask {
 
     private static final log = LogFactory.getLog(this)
@@ -598,18 +600,26 @@ class CheckerTimerTask extends TimerTask {
 
     @Override
     void run() {
-        def config = Holders.grailsApplication.config
-        def configInterval = computeInterval(config.icescrum.check.interval ?: 1440)
+        def config = Holders.grailsApplication.config.icescrum.check
+        def configInterval = computeInterval(config.interval ?: 1440)
+        def serverID = Holders.grailsApplication.config.icescrum.appID
+        def referer = Holders.grailsApplication.config.grails.serverURL
+        def environment = Holders.grailsApplication.config.icescrum.environment
         try {
-            def headers = ['User-Agent': 'iceScrum-Agent/1.0', 'Referer': config.grails.serverURL, 'Content-Type': 'application/json', 'Accept': 'application/json']
-            def params = ['http.connection.timeout': config.icescrum.check.timeout ?: 5000, 'http.socket.timeout': config.icescrum.check.timeout ?: 5000]
-            def url = config.icescrum.check.url + "/" + config.icescrum.check.path
+
+            if (!config.enable) {
+                return
+            }
+
+            def headers = ['User-Agent': 'iceScrum-Agent/1.0', 'Referer': referer, 'Content-Type': 'application/json', 'Accept': 'application/json']
+            def params = ['http.connection.timeout': config.timeout ?: 5000, 'http.socket.timeout': config.timeout ?: 5000]
+            def url = config.url + "/" + config.path
 
             def data = [
-                    server_id:config.icescrum.appID,
-                    version:Metadata.current['app.version'].split("\\s+")[0],
-                    pro:(Metadata.current['app.version']).contains('Pro'),
-                    environment:config.icescrum.environment
+                    server_id  : serverID,
+                    environment: environment,
+                    version    : Metadata.current['app.version'].split("\\s+")[0],
+                    pro        : (Metadata.current['app.version']).contains('Pro'),
             ] as JSON
 
             def resp = ApplicationSupport.postJSON(url, null, null, data, headers, params)
@@ -620,29 +630,142 @@ class CheckerTimerTask extends TimerTask {
                             [code: 'is.warning.version', args: [resp.data.version]],
                             [code: 'is.warning.version.download', args: [resp.data.message, resp.data.url]])
                     if (log.debugEnabled) {
-                        log.debug('Automatic check update - A new version is available : ' + resp.data.version)
+                        log.debug('Automatic check for update - A new version is available : ' + resp.data.version)
                     }
-                    return
                 } else {
-                    log.debug('Automatic check update - iceScrum is up to date')
+                    if (log.debugEnabled) {
+                        log.debug('Automatic check for update - iceScrum is up to date')
+                    }
                 }
             }
             if (interval != configInterval) {
                 //Back to normal delay
                 this.cancel()
                 timer.scheduleAtFixedRate(new CheckerTimerTask(timer, configInterval), configInterval, configInterval)
-                log.debug('Automatic check update - back to normal delay')
+                if (log.debugEnabled) {
+                    log.debug('Automatic check for update - back to normal delay')
+                }
             }
         } catch (ex) {
             if (interval == configInterval) {
                 //Setup new timer with a long delay
                 if (log.debugEnabled) {
-                    log.debug('Automatic check update error - new timer delay')
+                    log.debug('Automatic check for update error - new timer delay')
                     log.debug(ex.message)
                 }
                 this.cancel()
                 def longInterval = configInterval >= 1440 ? configInterval * 2 : computeInterval(1440)
                 timer.scheduleAtFixedRate(new CheckerTimerTask(timer, longInterval), longInterval, longInterval)
+            }
+        }
+    }
+
+    public static computeInterval(int interval) {
+        return 1000 * 60 * interval
+    }
+}
+
+class ReportUsageTimerTask extends TimerTask {
+
+    private static final log = LogFactory.getLog(this)
+    private Timer timer
+    private int interval
+
+    ReportUsageTimerTask(Timer timer, int interval) {
+        this.timer = timer
+        this.interval = interval
+    }
+
+    @Override
+    void run() {
+        def config = Holders.grailsApplication.config.icescrum.reportUsage
+        def configInterval = computeInterval(config.interval ?: 1440)
+        def serverID = Holders.grailsApplication.config.icescrum.appID
+        def referer = Holders.grailsApplication.config.grails.serverURL
+        def environment = Holders.grailsApplication.config.icescrum.environment
+        try {
+
+            if (!config.enable) {
+                return
+            }
+
+            def headers = ['User-Agent': 'iceScrum-Agent/1.0', 'Referer': referer, 'Content-Type': 'application/json', 'Accept': 'application/json']
+            def params = ['http.connection.timeout': config.timeout ?: 5000, 'http.socket.timeout': config.timeout ?: 5000]
+            def url = config.url + "/" + config.path
+
+            def data = [:]
+            User.withNewSession {
+                data = [
+                        users   : User.count(),
+                        teams   : Team.getAll().collect({ team ->
+                            [members     : team.members.size() ?: 0,
+                             projects    : [
+                                     all     : team.projects.size(),
+                                     archived: team.projects.countBy { project -> project.preferences.archived }
+                             ],
+                             scrumMasters: team.scrumMasters.size() ?: 0]
+                        }),
+                        projects: Product.getAll().collect { project ->
+                            [users        : project.allUsers.size() ?: 0,
+                             productOwners: project.productOwners.size() ?: 0,
+                             tasks        : project.tasks.size(),
+                             stories      : [
+                                     type  : project.stories.countBy { story -> story.type },
+                                     states: project.stories.countBy { story -> story.state }
+                             ],
+                             features     : [
+                                     type  : project.features.countBy { feature -> feature.type },
+                                     states: project.features.countBy { feature -> feature.state }
+                             ],
+                             releases     : project.releases.collect { release ->
+                                 [
+                                         sprints : release.sprints.collect { sprint ->
+                                             [state         : sprint.state,
+                                              capacity      : sprint.capacity,
+                                              velocity      : sprint.velocity,
+                                              retrospective : !sprint.retrospective.isEmpty(),
+                                              duration      : sprint.duration,
+                                              tasks         : sprint.tasks.size(),
+                                              stories       : sprint.stories.size(),
+                                              urgentTasks   : sprint.urgentTasks.size(),
+                                              recurrentTasks: sprint.recurrentTasks.size()]
+                                         },
+                                         state   : release.state,
+                                         vision  : !release.vision.isEmpty(),
+                                         duration: release.duration]
+                             }]
+                        },
+                        server_id    : serverID,
+                        environment  : environment,
+                        java_version : System.getProperty("java.version"),
+                        OS           : "${System.getProperty('os.name')} / ${System.getProperty('os.arch')} / ${System.getProperty('os.version')}"
+                ] as JSON
+            }
+
+            def resp = ApplicationSupport.postJSON(url, null, null, data, headers, params)
+            if (resp.status == 200) {
+                if (log.debugEnabled) {
+                    log.debug('Automatic report usage - report sent')
+                }
+            }
+            if (interval != configInterval) {
+                //Back to normal delay
+                this.cancel()
+                timer.scheduleAtFixedRate(new CheckerTimerTask(timer, configInterval), configInterval, configInterval)
+                if (log.debugEnabled) {
+                    log.debug('Automatic report usage - back to normal delay')
+                }
+            }
+        } catch (ex) {
+            if (interval == configInterval) {
+                //Setup new timer with a long delay
+                if (log.debugEnabled) {
+                    log.debug('Automatic report usage error - new timer delay')
+                    log.debug(ex.message)
+                }
+                this.cancel()
+                def longInterval = configInterval >= 1440 ? configInterval * 2 : computeInterval(1440)
+                timer.scheduleAtFixedRate(new ReportUsageTimerTask(timer, longInterval), longInterval, longInterval)
             }
         }
     }
