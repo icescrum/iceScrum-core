@@ -150,17 +150,17 @@ class ApplicationSupport {
         println dirPath
         config.icescrum.images.users.dir = dirPath
 
-        dirPath = config.icescrum.baseDir.toString() + File.separator + "images" + File.separator + "projects" + File.separator
+        dirPath = config.icescrum.baseDir.toString() + File.separator + "images" + File.separator + "products" + File.separator
         dir = new File(dirPath)
         if (!dir.exists())
             dir.mkdirs()
-        config.icescrum.projects.users.dir = dirPath
+        config.icescrum.products.users.dir = dirPath
 
         dirPath = config.icescrum.baseDir.toString() + File.separator + "images" + File.separator + "teams" + File.separator
         dir = new File(dirPath)
         if (!dir.exists())
             dir.mkdirs()
-        config.icescrum.projects.teams.dir = dirPath
+        config.icescrum.products.teams.dir = dirPath
     }
 
     static public initEnvironment = { def config ->
@@ -693,7 +693,7 @@ class ReportUsageTimerTask extends TimerTask {
             def params = ['http.connection.timeout': config.timeout ?: 5000, 'http.socket.timeout': config.timeout ?: 5000]
             def url = config.url + "/" + config.path
 
-            def data = [:]
+            JSON data
             User.withNewSession {
                 data = [
                         users   : User.count(),
