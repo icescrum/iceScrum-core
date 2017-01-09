@@ -104,7 +104,7 @@ class UserPreferences implements Serializable {
             builder.menuHidden(this.menuHidden)
             builder.displayWhatsNew(this.displayWhatsNew)
             builder.lastProductOpened(this.lastProductOpened)
-            builder.emailsSettingsData(this.lastProductOpened)
+            builder.emailsSettingsData(this.emailsSettingsData)
             builder.displayWelcomeTour(this.displayWelcomeTour)
             builder.lastReadActivities(this.lastReadActivities)
             builder.displayFullProjectTour(this.displayFullProjectTour)
