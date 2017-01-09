@@ -36,7 +36,7 @@ class Backlog {
     boolean shared
 
     static belongsTo = [
-            product: Product
+            project: Project
     ]
 
     static mapping = {
@@ -51,7 +51,7 @@ class Backlog {
 
     static constraints = {
         name(blank: false, maxSize: 100)
-        code(blank: false, maxSize: 100, unique: 'product', matches: '[a-z0-9_]+')
+        code(blank: false, maxSize: 100, unique: 'project', matches: '[a-z0-9_]+')
         notes(maxSize: 5000, nullable: true)
         owner(nullable: true)
     }
@@ -59,7 +59,7 @@ class Backlog {
     def getCount() {
         def count
         try {
-            count = Story.search(product.id, JSON.parse(filter), true)
+            count = Story.search(project.id, JSON.parse(filter), true)
         } catch (RuntimeException e) {
             count = 0
         }

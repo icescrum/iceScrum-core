@@ -17,7 +17,7 @@
     <resource>org.icescrum.core.domain.Feature</resource>
     <resource>org.icescrum.core.domain.Impediment</resource>
     <resource>org.icescrum.core.domain.Invitation</resource>
-    <resource>org.icescrum.core.domain.Product</resource>
+    <resource>org.icescrum.core.domain.Project</resource>
     <resource>org.icescrum.core.domain.Release</resource>
     <resource>org.icescrum.core.domain.Sprint</resource>
     <resource>org.icescrum.core.domain.Story</resource>
@@ -26,19 +26,19 @@
     <resource>org.icescrum.core.domain.Template</resource>
     <resource>org.icescrum.core.domain.TimeBox</resource>
     <resource>org.icescrum.core.domain.User</resource>
-    <resource>org.icescrum.core.domain.preferences.ProductPreferences</resource>
+    <resource>org.icescrum.core.domain.preferences.ProjectPreferences</resource>
     <resource>org.icescrum.core.domain.preferences.UserPreferences</resource>
     <resource>org.icescrum.core.domain.security.Authority</resource>
     <resource>org.icescrum.core.domain.security.UserAuthority</resource>
     <resource>org.icescrum.core.domain.BacklogElementMigration</resource>
-    <resource>org.icescrum.core.domain.ProductTeamsAndFluxiableMigration</resource>
+    <resource>org.icescrum.core.domain.ProjectTeamsAndFluxiableMigration</resource>
     <resource>org.icescrum.core.domain.ReleaseMigration</resource>
     <resource>org.icescrum.core.domain.SprintMigration</resource>
     <resource>org.icescrum.core.domain.TaskMigration</resource>
     <resource>org.icescrum.core.domain.TeamMigration</resource>
     <resource>org.icescrum.core.domain.TimeboxMigration</resource>
     <resource>org.icescrum.core.domain.UserMigration</resource>
-    <resource>org.icescrum.core.domain.preferences.ProductPreferencesMigration</resource>
+    <resource>org.icescrum.core.domain.preferences.ProjectPreferencesMigration</resource>
     <resource>org.icescrum.core.domain.preferences.UserPreferencesMigration</resource>
     <resource>org.icescrum.core.services.AcceptanceTestService</resource>
     <resource>org.icescrum.core.services.ActivityService</resource>
@@ -49,7 +49,7 @@
     <resource>org.icescrum.core.services.FeatureService</resource>
     <resource>org.icescrum.core.services.ListenerService</resource>
     <resource>org.icescrum.core.services.NotificationEmailService</resource>
-    <resource>org.icescrum.core.services.ProductService</resource>
+    <resource>org.icescrum.core.services.ProjectService</resource>
     <resource>org.icescrum.core.services.ReleaseService</resource>
     <resource>org.icescrum.core.services.SecurityService</resource>
     <resource>org.icescrum.core.services.SprintService</resource>

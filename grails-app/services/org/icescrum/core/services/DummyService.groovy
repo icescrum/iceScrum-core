@@ -27,7 +27,7 @@ package org.icescrum.core.services
 import de.svenjacobs.loremipsum.LoremIpsum
 import grails.transaction.Transactional
 import org.icescrum.core.domain.*
-import org.icescrum.core.domain.preferences.ProductPreferences
+import org.icescrum.core.domain.preferences.ProjectPreferences
 
 import java.text.Normalizer
 
@@ -41,7 +41,7 @@ class DummyService {
     def grailsApplication
     def actorService
     def storyService
-    def productService
+    def projectService
     def teamService
     def featureService
     def acceptanceTestService
@@ -52,31 +52,31 @@ class DummyService {
         def projectName = ("Peetic " + user.username).take(100)
         def startDate = new Date() - 16
         startDate.clearTime()
-        Product product = new Product(name: projectName, pkey: toPkey(user), startDate: startDate, endDate: startDate + 102)
-        product.description = '''*Peetic* is a dating website for your pets! Don't you think that they deserve to find their soul mate?\n\nThis project is yours: browse it and play with it to discover *iceScrum 7*!\n\nPeetic is inspired by this free "template":https://github.com/pablopernot/peetic.'''
-        product.preferences = new ProductPreferences(webservices: true, hidden: true)
+        Project project = new Project(name: projectName, pkey: toPkey(user), startDate: startDate, endDate: startDate + 102)
+        project.description = '''*Peetic* is a dating website for your pets! Don't you think that they deserve to find their soul mate?\n\nThis project is yours: browse it and play with it to discover *iceScrum 7*!\n\nPeetic is inspired by this free "template":https://github.com/pablopernot/peetic.'''
+        project.preferences = new ProjectPreferences(webservices: true, hidden: true)
         Team team = new Team(name: projectName + ' Team')
         teamService.save(team, [], [user.id])
-        productService.save(product, [user.id], [])
-        productService.addTeamToProduct(product, team)
+        projectService.save(project, [user.id], [])
+        projectService.addTeamToProject(project, team)
         // Releases & sprints
         Release release1 = new Release(startDate: startDate, endDate: startDate + 64, name: 'Peetic core', vision: 'Easily create and manage your pet profile and find its soul mate. Who knows, you could find yours in the process.', todoDate: startDate)
         Release release2 = new Release(startDate: startDate + 65, endDate: startDate + 115, name: 'Peetic premium', vision: 'Premium features for paying accounts', todoDate: startDate)
-        releaseService.save(release1, product)
+        releaseService.save(release1, project)
         release1.inProgressDate = startDate
         release1.save()
-        releaseService.save(release2, product)
+        releaseService.save(release2, project)
         sprintService.generateSprints(release1)
         // Features
         def features = []
         [
                 [name: 'Administration', value: 2, description: 'Administrate and moderate content created by the users'],
                 [name: 'Pet profile', value: 4, description: 'Manage the profile of a pet', color: '#d91a2f'],
-                [name: 'Advertising', value: 3, description: 'Advertise products related to the profile of pets', color: '#ba48c7'],
+                [name: 'Advertising', value: 3, description: 'Advertise projects related to the profile of pets', color: '#ba48c7'],
                 [name: 'Search', value: 4, description: 'Search other pets to find the best match', color: '#a0dffa']
         ].each { featureProperties ->
             Feature feature = new Feature(featureProperties)
-            featureService.save(feature, product)
+            featureService.save(feature, project)
             features << feature
         }
         def featureAdmin = features[0]
@@ -85,14 +85,14 @@ class DummyService {
         def featureSearch = features[3]
         // Actors
         Actor petOwner = new Actor(name: 'Pet Owner')
-        actorService.save(petOwner, product)
+        actorService.save(petOwner, project)
         def petOwnerTag = "A[$petOwner.uid-$petOwner.name]"
         Actor administrator = new Actor(name: 'Administrator')
-        actorService.save(administrator, product)
+        actorService.save(administrator, project)
         def administratorTag = "A[$administrator.uid-$administrator.name]"
         // Stories
         def sandboxStoryProperties = [
-                [name: 'Email product digest', description: '', feature: featureAdvertising, value: 2, type: Story.TYPE_USER_STORY, state: Story.STATE_SUGGESTED],
+                [name: 'Email project digest', description: '', feature: featureAdvertising, value: 2, type: Story.TYPE_USER_STORY, state: Story.STATE_SUGGESTED],
                 [name: 'Automatically detect location', description: '', feature: featureSearch, value: 3, type: Story.TYPE_USER_STORY, state: Story.STATE_SUGGESTED],
                 [name: 'Batch delete pet profiles', description: '', feature: featureAdmin, value: 1, type: Story.TYPE_USER_STORY, state: Story.STATE_SUGGESTED],
                 [name: 'Search by behavior', description: '', feature: featureSearch, type: Story.TYPE_USER_STORY, state: Story.STATE_SUGGESTED]
@@ -110,13 +110,13 @@ class DummyService {
                     [name: 'Setup CI & SCM', description: 'Create projects on SCM and build it automatically after each commit', value: 5, type: Story.TYPE_TECHNICAL_STORY, effort: 5, state: Story.STATE_ESTIMATED],
                     [name: 'Create a pet profile', description: "As a $petOwnerTag\nI can create a profile for my pet \nIn order for it to be found by the owner of its soul mate", feature: featurePetProfile,  value: 6, type: Story.TYPE_USER_STORY, effort: 3, state: Story.STATE_ESTIMATED],
                     [name: 'Display a pet profile', description: "As a $petOwnerTag\nI can display the profile of other pets \nIn order to find the soul mate of mine", value: 6, feature: featurePetProfile, type: Story.TYPE_USER_STORY, effort: 3, state: Story.STATE_ESTIMATED],
-                    [name: 'Spike advertising', description: 'Validate the business model by contacting advertising plaforms and pet products brands', feature: featureAdvertising, value: 5, type: Story.TYPE_TECHNICAL_STORY, effort: 2, state: Story.STATE_ESTIMATED],
+                    [name: 'Spike advertising', description: 'Validate the business model by contacting advertising plaforms and pet projects brands', feature: featureAdvertising, value: 5, type: Story.TYPE_TECHNICAL_STORY, effort: 2, state: Story.STATE_ESTIMATED],
                 ],
                 1: [
                     [name: 'Contact a pet owner', description: "As a $petOwnerTag\nI can contact another pet owner \nIn order to arrange a meeting for our pets", feature: featurePetProfile, value: 5, type: Story.TYPE_USER_STORY, effort: 2, state: Story.STATE_ESTIMATED],
                     [name: 'Authenticate', description: "As a $petOwnerTag\nI can be recognized as my pet owner on the website \nIn order to manage my pet profile and prevent others to do so", feature: featurePetProfile, value: 5, type: Story.TYPE_USER_STORY, effort: 8, state: Story.STATE_ESTIMATED],
                     [name: 'Search profiles by race', description: "As a $petOwnerTag\nI can search other pets by race \nIn order to find the right partner for my pets", feature: featureSearch, value: 5, type: Story.TYPE_USER_STORY, effort: 3, state: Story.STATE_ESTIMATED],
-                    [name: 'Basic advertising', description: "As an $administratorTag\nI can offer pet product ads to my users\nIn order to earn money", feature: featureAdvertising, value: 4, type: Story.TYPE_USER_STORY, effort: 5, state: Story.STATE_ESTIMATED],
+                    [name: 'Basic advertising', description: "As an $administratorTag\nI can offer pet project ads to my users\nIn order to earn money", feature: featureAdvertising, value: 4, type: Story.TYPE_USER_STORY, effort: 5, state: Story.STATE_ESTIMATED],
                 ],
                 2: [
                     [name: 'Add photos to my pet profile', description: "As a $petOwnerTag\nI can add photos to my pet profile \nIn order show how it is gorgeous to the other pet owners and make them choose it", feature: featurePetProfile, value: 5, type: Story.TYPE_USER_STORY, effort: 3, state: Story.STATE_ESTIMATED],
@@ -134,7 +134,7 @@ class DummyService {
             if (story.state >= Story.STATE_ESTIMATED) {
                 story.estimatedDate = startDate + 2
             }
-            storyService.save(story, product, user)
+            storyService.save(story, project, user)
             return story
         }
         // Create stories
@@ -144,7 +144,7 @@ class DummyService {
         }
         backlogStoryProperties.each { createStory(it) }
         sandboxStoryProperties.each { createStory(it) }
-        product.save()
+        project.save()
         sessionFactory.currentSession.flush()
         // Plan Stories
         storiesBySprint.each { sprintIndex, stories ->
@@ -158,16 +158,16 @@ class DummyService {
             sprint.capacity = sprint.totalEffort
             sprint.save(flush: true)
         }
-        product.save()
+        project.save()
         // Tasks and sprint progression
-        product.stories.findAll { it.state < Story.STATE_PLANNED }.eachWithIndex { Story story, int i ->
+        project.stories.findAll { it.state < Story.STATE_PLANNED }.eachWithIndex { Story story, int i ->
             if (i % 4 == 0) {
                 (i % 7).times {
                     taskService.save(new Task(estimation: 3, name: randomWords(15, 5, 200), description: randomWords(50, 0, 2900), responsible: user, parentStory: story), user)
                 }
             }
         }
-        product.refresh()
+        project.refresh()
         release1.sprints.each { sprint ->
             sprint.todoDate = startDate
             sprint.goal = ''
@@ -209,12 +209,12 @@ class DummyService {
                     }
                 }
                 sprint.save(flush: true)
-                product.refresh()
+                project.refresh()
             }
         }
         // Acceptance tests
-        product.refresh()
-        createAcceptanceTests(product, user)
+        project.refresh()
+        createAcceptanceTests(project, user)
         sessionFactory.currentSession.flush()
     }
 
@@ -276,20 +276,20 @@ class DummyService {
         sprint.tasks.findAll { it.parentStory != null }.groupBy { "$it.parentStory.id" + "$it.state" }.each(rankTasks)
     }
 
-    private void createAcceptanceTests(Product product, User user) {
-        product.stories.findAll { it.state == Story.STATE_SUGGESTED }.asList().eachWithIndex { Story story, index ->
+    private void createAcceptanceTests(Project project, User user) {
+        project.stories.findAll { it.state == Story.STATE_SUGGESTED }.asList().eachWithIndex { Story story, index ->
             acceptanceTestService.save(new AcceptanceTest(name: randomWords(15, 5, 200), description: randomWords(30, 5)), story, user)
             if (index % 2 == 0) {
                 acceptanceTestService.save(new AcceptanceTest(name: randomWords(15, 5, 200), description: randomWords(30, 5)), story, user)
             }
         }
-        product.stories.findAll { it.state == Story.STATE_ACCEPTED }.asList().eachWithIndex { Story story, index ->
+        project.stories.findAll { it.state == Story.STATE_ACCEPTED }.asList().eachWithIndex { Story story, index ->
             acceptanceTestService.save(new AcceptanceTest(name: randomWords(15, 5, 200), description: randomWords(30, 5)), story, user)
             if (index % 2 == 0) {
                 acceptanceTestService.save(new AcceptanceTest(name: randomWords(15, 5, 200), description: randomWords(30, 5)), story, user)
             }
         }
-        product.stories.findAll { it.state == Story.STATE_INPROGRESS }.asList().eachWithIndex { Story story, index ->
+        project.stories.findAll { it.state == Story.STATE_INPROGRESS }.asList().eachWithIndex { Story story, index ->
             acceptanceTestService.save(new AcceptanceTest(name: randomWords(15, 5, 200), description: randomWords(30, 5), state: AcceptanceTest.AcceptanceTestState.SUCCESS.id), story, user)
             if (index % 2 == 0) {
                 acceptanceTestService.save(new AcceptanceTest(name: randomWords(15, 5, 200), description: randomWords(30, 5), state: AcceptanceTest.AcceptanceTestState.FAILED.id), story, user)
@@ -298,7 +298,7 @@ class DummyService {
                 acceptanceTestService.save(new AcceptanceTest(name: randomWords(10, 2), description: randomWords(30, 5), state: AcceptanceTest.AcceptanceTestState.TOCHECK.id), story, user)
             }
         }
-        product.stories.findAll { it.state == Story.STATE_DONE }.asList().eachWithIndex { Story story, index ->
+        project.stories.findAll { it.state == Story.STATE_DONE }.asList().eachWithIndex { Story story, index ->
             acceptanceTestService.save(new AcceptanceTest(name: randomWords(15, 5, 200), description: randomWords(30, 5), state: AcceptanceTest.AcceptanceTestState.SUCCESS.id), story, user)
             if (index % 2 == 0) {
                 acceptanceTestService.save(new AcceptanceTest(name: randomWords(15, 5, 200), description: randomWords(30, 5), state: AcceptanceTest.AcceptanceTestState.SUCCESS.id), story, user)
@@ -342,7 +342,7 @@ class DummyService {
     private String toPkey(User user) {
         String pkey = 'PET' + Normalizer.normalize(user.username, Normalizer.Form.NFD).replaceAll("[^\\p{ASCII}]", "").toUpperCase().replaceAll("[^A-Z0-9]+","")
         pkey = pkey.take(10)
-        def countTaken = Product.countByPkey(pkey)
+        def countTaken = Project.countByPkey(pkey)
         if (countTaken > 0) {
             pkey = pkey.take(countTaken < 10 ? 9 : 8) + countTaken
         }

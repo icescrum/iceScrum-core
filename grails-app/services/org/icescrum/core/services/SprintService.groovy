@@ -43,7 +43,7 @@ class SprintService extends IceScrumEventPublisher {
     def storyService
     def springSecurityService
 
-    @PreAuthorize('(productOwner(#release.parentProduct) or scrumMaster(#release.parentProduct)) and !archivedProduct(#release.parentProduct)')
+    @PreAuthorize('(productOwner(#release.parentProject) or scrumMaster(#release.parentProject)) and !archivedProject(#release.parentProject)')
     void save(Sprint sprint, Release release) {
         if (release.state == Release.STATE_DONE) {
             throw new BusinessException(code: 'is.sprint.error.release.done')
@@ -54,7 +54,7 @@ class SprintService extends IceScrumEventPublisher {
         publishSynchronousEvent(IceScrumEventType.CREATE, sprint)
     }
 
-    @PreAuthorize('(productOwner(#sprint.parentRelease.parentProduct) or scrumMaster(#sprint.parentRelease.parentProduct)) and !archivedProduct(#sprint.parentRelease.parentProduct)')
+    @PreAuthorize('(productOwner(#sprint.parentRelease.parentProject) or scrumMaster(#sprint.parentRelease.parentProject)) and !archivedProject(#sprint.parentRelease.parentProject)')
     void update(Sprint sprint, Date startDate = null, Date endDate = null, def checkIntegrity = true, boolean updateRelease = true) {
         if (checkIntegrity) {
             if (sprint.state == Sprint.STATE_DONE) {
@@ -96,7 +96,7 @@ class SprintService extends IceScrumEventPublisher {
         publishSynchronousEvent(IceScrumEventType.UPDATE, sprint, dirtyProperties)
     }
 
-    @PreAuthorize('(productOwner(#sprint.parentRelease.parentProduct) or scrumMaster(#sprint.parentRelease.parentProduct)) and !archivedProduct(#sprint.parentRelease.parentProduct)')
+    @PreAuthorize('(productOwner(#sprint.parentRelease.parentProject) or scrumMaster(#sprint.parentRelease.parentProject)) and !archivedProject(#sprint.parentRelease.parentProject)')
     void delete(Sprint sprint) {
         if (sprint.state >= Sprint.STATE_INPROGRESS) {
             throw new BusinessException(code: 'is.sprint.error.delete.inprogress')
@@ -116,7 +116,7 @@ class SprintService extends IceScrumEventPublisher {
         publishSynchronousEvent(IceScrumEventType.DELETE, sprint, dirtyProperties)
     }
 
-    @PreAuthorize('(productOwner(#release.parentProduct) or scrumMaster(#release.parentProduct)) and !archivedProduct(#release.parentProduct)')
+    @PreAuthorize('(productOwner(#release.parentProject) or scrumMaster(#release.parentProject)) and !archivedProject(#release.parentProject)')
     def generateSprints(Release release, Date startDate = release.startDate) {
         if (release.state == Release.STATE_DONE) {
             throw new BusinessException(code: 'is.sprint.error.release.done')
@@ -125,7 +125,7 @@ class SprintService extends IceScrumEventPublisher {
             startDate = release.sprints*.endDate.max() + 1
         }
         int freeDays = ApplicationSupport.getMidnightTime(release.endDate) - ApplicationSupport.getMidnightTime(startDate) + 1
-        int sprintDuration = release.parentProduct.preferences.estimatedSprintsDuration
+        int sprintDuration = release.parentProject.preferences.estimatedSprintsDuration
         int nbNewSprints = Math.floor(freeDays / sprintDuration)
         if (nbNewSprints == 0) {
             throw new BusinessException(code: 'is.release.sprints.not.enough.time')
@@ -141,7 +141,7 @@ class SprintService extends IceScrumEventPublisher {
         return newSprints
     }
 
-    @PreAuthorize('(productOwner(#sprint.parentRelease.parentProduct) or scrumMaster(#sprint.parentRelease.parentProduct)) and !archivedProduct(#sprint.parentRelease.parentProduct)')
+    @PreAuthorize('(productOwner(#sprint.parentRelease.parentProject) or scrumMaster(#sprint.parentRelease.parentProject)) and !archivedProject(#sprint.parentRelease.parentProject)')
     void activate(Sprint sprint) {
         if (sprint.parentRelease.state != Release.STATE_INPROGRESS) {
             throw new BusinessException(code: 'is.sprint.error.activate.release.not.inprogress')
@@ -153,7 +153,7 @@ class SprintService extends IceScrumEventPublisher {
                 throw new BusinessException(code: 'is.sprint.error.activate.previous.not.closed')
             }
         }
-        def autoCreateTaskOnEmptyStory = sprint.parentRelease.parentProduct.preferences.autoCreateTaskOnEmptyStory
+        def autoCreateTaskOnEmptyStory = sprint.parentRelease.parentProject.preferences.autoCreateTaskOnEmptyStory
         sprint.stories?.each { Story story ->
             story.state = Story.STATE_INPROGRESS
             story.inProgressDate = new Date()
@@ -175,7 +175,7 @@ class SprintService extends IceScrumEventPublisher {
         clicheService.createOrUpdateDailyTasksCliche(sprint)
     }
 
-    @PreAuthorize('(productOwner(#sprint.parentRelease.parentProduct) or scrumMaster(#sprint.parentRelease.parentProduct)) and !archivedProduct(#sprint.parentRelease.parentProduct)')
+    @PreAuthorize('(productOwner(#sprint.parentRelease.parentProject) or scrumMaster(#sprint.parentRelease.parentProject)) and !archivedProject(#sprint.parentRelease.parentProject)')
     void close(Sprint sprint) {
         if (sprint.state != Sprint.STATE_INPROGRESS) {
             throw new BusinessException(code: 'is.sprint.error.close.not.inprogress')
@@ -221,7 +221,7 @@ class SprintService extends IceScrumEventPublisher {
                 if (xmlRoot) {
                     lastDaycliche = cliche.datePrise
                     def currentRemaining = xmlRoot."${Cliche.REMAINING_TIME}".toFloat()
-                    if ((ServicesUtils.isDateWeekend(lastDaycliche) && !sprint.parentRelease.parentProduct.preferences.hideWeekend) || !ServicesUtils.isDateWeekend(lastDaycliche))
+                    if ((ServicesUtils.isDateWeekend(lastDaycliche) && !sprint.parentRelease.parentProject.preferences.hideWeekend) || !ServicesUtils.isDateWeekend(lastDaycliche))
                         values << [
                                 remainingTime: currentRemaining,
                                 label        : lastDaycliche.clone().clearTime().time
@@ -232,7 +232,7 @@ class SprintService extends IceScrumEventPublisher {
         if (Sprint.STATE_INPROGRESS == sprint.state) {
             def nbDays = sprint.endDate - lastDaycliche
             nbDays.times {
-                if ((ServicesUtils.isDateWeekend(lastDaycliche + (it + 1)) && !sprint.parentRelease.parentProduct.preferences.hideWeekend) || !ServicesUtils.isDateWeekend(lastDaycliche + (it + 1)))
+                if ((ServicesUtils.isDateWeekend(lastDaycliche + (it + 1)) && !sprint.parentRelease.parentProject.preferences.hideWeekend) || !ServicesUtils.isDateWeekend(lastDaycliche + (it + 1)))
                     values << [
                             remainingTime: null,
                             label        : (lastDaycliche + (it + 1)).clearTime().time
@@ -259,7 +259,7 @@ class SprintService extends IceScrumEventPublisher {
                 def xmlRoot = new XmlSlurper().parseText(cliche.data)
                 if (xmlRoot) {
                     lastDaycliche = cliche.datePrise
-                    if ((ServicesUtils.isDateWeekend(lastDaycliche) && !sprint.parentRelease.parentProduct.preferences.hideWeekend) || !ServicesUtils.isDateWeekend(lastDaycliche)) {
+                    if ((ServicesUtils.isDateWeekend(lastDaycliche) && !sprint.parentRelease.parentProject.preferences.hideWeekend) || !ServicesUtils.isDateWeekend(lastDaycliche)) {
                         values << [
                                 tasksDone: xmlRoot."${Cliche.TASKS_DONE}".toInteger(),
                                 tasks    : xmlRoot."${Cliche.TOTAL_TASKS}".toInteger(),
@@ -273,7 +273,7 @@ class SprintService extends IceScrumEventPublisher {
         if (Sprint.STATE_INPROGRESS == sprint.state) {
             def nbDays = sprint.endDate - lastDaycliche
             nbDays.times {
-                if ((ServicesUtils.isDateWeekend(lastDaycliche + (it + 1)) && !sprint.parentRelease.parentProduct.preferences.hideWeekend) || !ServicesUtils.isDateWeekend(lastDaycliche + (it + 1))) {
+                if ((ServicesUtils.isDateWeekend(lastDaycliche + (it + 1)) && !sprint.parentRelease.parentProject.preferences.hideWeekend) || !ServicesUtils.isDateWeekend(lastDaycliche + (it + 1))) {
                     values << [
                             tasksDone: null,
                             tasks    : null,
@@ -296,7 +296,7 @@ class SprintService extends IceScrumEventPublisher {
                 def xmlRoot = new XmlSlurper().parseText(cliche.data)
                 if (xmlRoot) {
                     lastDaycliche = cliche.datePrise
-                    if ((ServicesUtils.isDateWeekend(lastDaycliche) && !sprint.parentRelease.parentProduct.preferences.hideWeekend) || !ServicesUtils.isDateWeekend(lastDaycliche)) {
+                    if ((ServicesUtils.isDateWeekend(lastDaycliche) && !sprint.parentRelease.parentProject.preferences.hideWeekend) || !ServicesUtils.isDateWeekend(lastDaycliche)) {
                         values << [
                                 storiesDone: xmlRoot."${Cliche.STORIES_DONE}".toInteger(),
                                 stories    : xmlRoot."${Cliche.TOTAL_STORIES}".toInteger(),
@@ -311,7 +311,7 @@ class SprintService extends IceScrumEventPublisher {
         if (Sprint.STATE_INPROGRESS == sprint.state) {
             def nbDays = sprint.endDate - lastDaycliche
             nbDays.times {
-                if ((ServicesUtils.isDateWeekend(lastDaycliche + (it + 1)) && !sprint.parentRelease.parentProduct.preferences.hideWeekend) || !ServicesUtils.isDateWeekend(lastDaycliche + (it + 1))) {
+                if ((ServicesUtils.isDateWeekend(lastDaycliche + (it + 1)) && !sprint.parentRelease.parentProject.preferences.hideWeekend) || !ServicesUtils.isDateWeekend(lastDaycliche + (it + 1))) {
                     values << [
                             storiesDone: null,
                             stories    : null,
@@ -356,7 +356,7 @@ class SprintService extends IceScrumEventPublisher {
     }
 
     def unMarshall(def sprintXml, def options) {
-        def product = options.product
+        def project = options.project
         def release = options.release
         Sprint.withTransaction(readOnly: !options.save) { transaction ->
             try {
@@ -412,7 +412,7 @@ class SprintService extends IceScrumEventPublisher {
                     clicheService.unMarshall(it, options)
                 }
                 options.timebox = null
-                if (product) {
+                if (project) {
                     sprintXml.stories.story.each {
                         storyService.unMarshall(it, options)
                     }

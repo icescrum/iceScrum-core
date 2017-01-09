@@ -22,7 +22,7 @@
 package org.icescrum.core.services
 
 import org.icescrum.core.domain.Invitation
-import org.icescrum.core.domain.Product
+import org.icescrum.core.domain.Project
 import org.icescrum.core.domain.Sprint
 import org.icescrum.core.domain.Task
 import org.icescrum.core.event.IceScrumEventType
@@ -95,14 +95,14 @@ class NotificationEmailService {
         if (!ApplicationSupport.booleanValue(grailsApplication.config.icescrum.alerts.enable)) {
             return
         }
-        Product product = (Product) story.backlog
-        def subjectArgs = [product.name, story.name]
-        def baseUrl = grailsApplication.config.grails.serverURL + '/p/' + product.pkey
+        Project project = (Project) story.backlog
+        def subjectArgs = [project.name, story.name]
+        def baseUrl = grailsApplication.config.grails.serverURL + '/p/' + project.pkey
         def permalink = baseUrl + '-' + story.uid
         def projectLink = baseUrl + '#project'
         def eventLabel = EVENT_LABELS[type]
         def description = type == IceScrumEventType.DELETE ? story.description ?: "" : null
-        def listTo = (type == IceScrumEventType.CREATE) ? receiversByLocale(product.allUsers, user?.id, [type: 'onStory', pkey: product.pkey]) : receiversByLocale(story.followers, user?.id)
+        def listTo = (type == IceScrumEventType.CREATE) ? receiversByLocale(project.allUsers, user?.id, [type: 'onStory', pkey: project.pkey]) : receiversByLocale(story.followers, user?.id)
         listTo?.each { locale, group ->
             if (log.debugEnabled) {
                 log.debug "Send email, event:$eventLabel to : ${group*.email.toArray()} with locale : ${locale}"
@@ -111,7 +111,7 @@ class NotificationEmailService {
                     emails : group*.email.toArray(),
                     subject: grailsApplication.config.icescrum.alerts.subject_prefix + getMessage('is.template.email.story.' + eventLabel.toLowerCase() + '.subject', (Locale) locale, subjectArgs),
                     view   : '/emails-templates/story' + eventLabel,
-                    model  : [locale: locale, storyName: story.name, permalink: permalink, linkName: product.name, link: projectLink, description: description],
+                    model  : [locale: locale, storyName: story.name, permalink: permalink, linkName: project.name, link: projectLink, description: description],
                     async  : true
             ])
         }
@@ -121,12 +121,12 @@ class NotificationEmailService {
         if (!ApplicationSupport.booleanValue(grailsApplication.config.icescrum.alerts.enable)) {
             return
         }
-        Product product = task.parentProduct
-        def subjectArgs = [product.name, task.name]
-        def baseUrl = grailsApplication.config.grails.serverURL + '/p/' + product.pkey
+        Project project = task.parentProject
+        def subjectArgs = [project.name, task.name]
+        def baseUrl = grailsApplication.config.grails.serverURL + '/p/' + project.pkey
         def permalink = baseUrl + '-T' + task.uid
         def projectLink = baseUrl + '#project'
-        def listTo = receiversByLocale(product.allUsers, user?.id, [type: 'onUrgentTask', pkey: product.pkey])
+        def listTo = receiversByLocale(project.allUsers, user?.id, [type: 'onUrgentTask', pkey: project.pkey])
         listTo?.each { locale, group ->
             if (log.debugEnabled) {
                 log.debug "Send email, event urgent task created to : ${group*.email.toArray()} with locale : ${locale}"
@@ -135,7 +135,7 @@ class NotificationEmailService {
                     emails : group*.email.toArray(),
                     subject: grailsApplication.config.icescrum.alerts.subject_prefix + getMessage('is.template.email.task.created.subject', (Locale) locale, subjectArgs),
                     view   : '/emails-templates/taskCreated',
-                    model  : [locale: locale, taskName: task.name, permalink: permalink, linkName: product.name, link: projectLink, description: task.description],
+                    model  : [locale: locale, taskName: task.name, permalink: permalink, linkName: project.name, link: projectLink, description: task.description],
                     async  : true
             ])
         }
@@ -145,9 +145,9 @@ class NotificationEmailService {
         if (!ApplicationSupport.booleanValue(grailsApplication.config.icescrum.alerts.enable)) {
             return
         }
-        def product = story.backlog
-        def subjectArgs = [product.name, story.name]
-        def baseUrl = grailsApplication.config.grails.serverURL + '/p/' + product.pkey
+        def project = story.backlog
+        def subjectArgs = [project.name, story.name]
+        def baseUrl = grailsApplication.config.grails.serverURL + '/p/' + project.pkey
         def permalink = baseUrl + '-' + story.uid
         def projectLink = baseUrl + '#project'
         def eventLabel = EVENT_LABELS[type]
@@ -160,7 +160,7 @@ class NotificationEmailService {
                     emails : group*.email.toArray(),
                     subject: grailsApplication.config.icescrum.alerts.subject_prefix + getMessage('is.template.email.story.changedState.subject', (Locale) locale, subjectArgs),
                     view   : '/emails-templates/storyChangedState',
-                    model  : [state: getMessage(grailsApplication.config.icescrum.resourceBundles.storyStates[story.state], (Locale) locale), locale: locale, storyName: story.name, permalink: permalink, linkName: product.name, link: projectLink],
+                    model  : [state: getMessage(grailsApplication.config.icescrum.resourceBundles.storyStates[story.state], (Locale) locale), locale: locale, storyName: story.name, permalink: permalink, linkName: project.name, link: projectLink],
                     async  : true
             ])
         }
@@ -171,9 +171,9 @@ class NotificationEmailService {
             return
         }
         def user = springSecurityService.currentUser
-        def product = story.backlog
-        def subjectArgs = [product.name, story.name]
-        def baseUrl = grailsApplication.config.grails.serverURL + '/p/' + product.pkey
+        def project = story.backlog
+        def subjectArgs = [project.name, story.name]
+        def baseUrl = grailsApplication.config.grails.serverURL + '/p/' + project.pkey
         def permalink = baseUrl + '-' + story.uid
         def projectLink = baseUrl + '#project'
         String text = ServicesUtils.textileToHtml(comment.body)
@@ -186,7 +186,7 @@ class NotificationEmailService {
                     emails : group*.email.toArray(),
                     subject: grailsApplication.config.icescrum.alerts.subject_prefix + getMessage('is.template.email.story.commented.subject', (Locale) locale, subjectArgs),
                     view   : '/emails-templates/storyCommented',
-                    model  : [by: comment.poster.firstName + " " + comment.poster.lastName, comment: text, locale: locale, storyName: story.name, permalink: permalink, linkName: product.name, link: projectLink],
+                    model  : [by: comment.poster.firstName + " " + comment.poster.lastName, comment: text, locale: locale, storyName: story.name, permalink: permalink, linkName: project.name, link: projectLink],
                     async  : true
             ])
         }
@@ -197,9 +197,9 @@ class NotificationEmailService {
             return
         }
         def user = springSecurityService.currentUser
-        def product = story.backlog
-        def subjectArgs = [product.name, story.name]
-        def baseUrl = grailsApplication.config.grails.serverURL + '/p/' + product.pkey
+        def project = story.backlog
+        def subjectArgs = [project.name, story.name]
+        def baseUrl = grailsApplication.config.grails.serverURL + '/p/' + project.pkey
         def permalink = baseUrl + '-' + story.uid
         def projectLink = baseUrl + '#project'
         def listTo = receiversByLocale(story.followers, user?.id)
@@ -211,7 +211,7 @@ class NotificationEmailService {
                     emails : group*.email.toArray(),
                     subject: grailsApplication.config.icescrum.alerts.subject_prefix + getMessage('is.template.email.story.commentEdited.subject', (Locale) locale, subjectArgs),
                     view   : '/emails-templates/storyCommentEdited',
-                    model  : [by: user.firstName + " " + user.lastName, locale: locale, storyName: story.name, permalink: permalink, linkName: product.name, link: projectLink],
+                    model  : [by: user.firstName + " " + user.lastName, locale: locale, storyName: story.name, permalink: permalink, linkName: project.name, link: projectLink],
                     async  : true
             ])
         }
@@ -221,9 +221,9 @@ class NotificationEmailService {
         if (!ApplicationSupport.booleanValue(grailsApplication.config.icescrum.alerts.enable)) {
             return
         }
-        def product = element instanceof Feature ? element.backlog : element.backlog.parentRelease.parentProduct
-        def subjectArgs = [product.name, element.name]
-        def projectLink = grailsApplication.config.grails.serverURL + '/p/' + product.pkey + '#project'
+        def project = element instanceof Feature ? element.backlog : element.backlog.parentRelease.parentProject
+        def subjectArgs = [project.name, element.name]
+        def projectLink = grailsApplication.config.grails.serverURL + '/p/' + project.pkey + '#project'
         def listTo = receiversByLocale(followers, user?.id)
         listTo?.each { locale, group ->
             def acceptedAs = getMessage(element instanceof Feature ? 'is.feature' : 'is.task', (Locale) locale)
@@ -235,7 +235,7 @@ class NotificationEmailService {
                     emails : group*.email.toArray(),
                     subject: grailsApplication.config.icescrum.alerts.subject_prefix + getMessage('is.template.email.story.acceptedAs.subject', (Locale) locale, subjectArgs),
                     view   : '/emails-templates/storyAcceptedAs',
-                    model  : [acceptedAs: acceptedAs, locale: locale, elementName: element.name, linkName: product.name, link: projectLink],
+                    model  : [acceptedAs: acceptedAs, locale: locale, elementName: element.name, linkName: project.name, link: projectLink],
                     async  : true
             ])
         }
@@ -257,8 +257,8 @@ class NotificationEmailService {
 
     void sendInvitation(Invitation invitation, User inviter) {
         def link = grailsApplication.config.grails.serverURL + '/#/user/register/' + invitation.token
-        def isProjectInvitation = invitation.type == Invitation.InvitationType.PRODUCT
-        def invitedIn = isProjectInvitation ? invitation.product.name.encodeAsHTML() : invitation.team.name.encodeAsHTML()
+        def isProjectInvitation = invitation.type == Invitation.InvitationType.PROJECT
+        def invitedIn = isProjectInvitation ? invitation.project.name.encodeAsHTML() : invitation.team.name.encodeAsHTML()
         def locale = inviter.locale
         def role = getMessage(grailsApplication.config.icescrum.resourceBundles.roles[invitation.futureRole], locale)
         send([

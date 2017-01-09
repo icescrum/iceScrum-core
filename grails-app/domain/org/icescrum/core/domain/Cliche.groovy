@@ -69,16 +69,16 @@ class Cliche implements Serializable {
     static final TECHNICAL_STORY_VELOCITY = 'technicalStoryVelocity'
     static final DONE_DATE = 'closeDate'
 
-    // Backlog points
-    static final PRODUCT_BACKLOG_POINTS = 'productBacklogPoints'
-    static final FUNCTIONAL_STORY_BACKLOG_POINTS = 'functionalStoryBacklogPoints'
-    static final DEFECT_STORY_BACKLOG_POINTS = 'defectStoryBacklogPoints'
-    static final TECHNICAL_STORY_BACKLOG_POINTS = 'technicalStoryBacklogPoints'
-    // Product Remaining Points
-    static final PRODUCT_REMAINING_POINTS = 'productRemainingBacklogPoints'
-    static final FUNCTIONAL_STORY_PRODUCT_REMAINING_POINTS = 'functionalStoryProductRemainingPoints'
-    static final DEFECT_STORY_PRODUCT_REMAINING_POINTS = 'defectStoryProductRemainingPoints'
-    static final TECHNICAL_STORY_PRODUCT_REMAINING_POINTS = 'technicalStoryProductRemainingPoints'
+    // Project Total points
+    static final PROJECT_POINTS = 'productBacklogPoints'
+    static final FUNCTIONAL_STORY_PROJECT_POINTS = 'functionalStoryBacklogPoints'
+    static final DEFECT_STORY_PROJECT_POINTS = 'defectStoryBacklogPoints'
+    static final TECHNICAL_STORY_PROJECT_POINTS = 'technicalStoryBacklogPoints'
+    // Project Remaining Points
+    static final PROJECT_REMAINING_POINTS = 'productRemainingBacklogPoints'
+    static final FUNCTIONAL_STORY_PROJECT_REMAINING_POINTS = 'functionalStoryProductRemainingPoints'
+    static final DEFECT_STORY_PROJECT_REMAINING_POINTS = 'defectStoryProductRemainingPoints'
+    static final TECHNICAL_STORY_PROJECT_REMAINING_POINTS = 'technicalStoryProductRemainingPoints'
     // Release Remaining Points
     static final RELEASE_REMAINING_POINTS = 'functionalStoryReleaseRemainingPoints'
     static final FUNCTIONAL_STORY_RELEASE_REMAINING_POINTS = 'functionalStoryReleaseRemainingPoints'

@@ -48,7 +48,7 @@ class TaskService extends IceScrumEventPublisher {
     def grailsApplication
     def attachmentableService
 
-    @PreAuthorize('(inProduct(#task.backlog?.parentProduct) or inProduct(#task.parentStory?.backlog)) and (!archivedProduct(#task.backlog?.parentProduct) or !archivedProduct(#task.parentStory?.backlog))')
+    @PreAuthorize('(inProject(#task.backlog?.parentProject) or inProject(#task.parentStory?.backlog)) and (!archivedProject(#task.backlog?.parentProject) or !archivedProject(#task.parentStory?.backlog))')
     void save(Task task, User user) {
         if (task.parentStory?.parentSprint && !task.backlog) {
             task.backlog = task.parentStory.parentSprint
@@ -60,18 +60,18 @@ class TaskService extends IceScrumEventPublisher {
         if (task.estimation == 0f && task.state != Task.STATE_DONE) {
             task.estimation = null
         }
-        Product product = sprint ? sprint.parentProduct : (Product) task.parentStory.backlog
-        if (product.preferences.assignOnCreateTask) {
+        Project project = sprint ? sprint.parentProject : (Project) task.parentStory.backlog
+        if (project.preferences.assignOnCreateTask) {
             task.responsible = user
         }
-        task.parentProduct = product
+        task.parentProject = project
         task.creator = user
         if (task.parentStory) {
             task.rank = Task.countByParentStoryAndState(task.parentStory, task.state) + 1
         } else {
             task.rank = Task.countByBacklogAndTypeAndState(task.backlog, task.type, task.state) + 1
         }
-        task.uid = Task.findNextUId(product.id)
+        task.uid = Task.findNextUId(project.id)
         task.save(flush: true)
         if (sprint) {
             clicheService.createOrUpdateDailyTasksCliche(sprint)
@@ -79,7 +79,7 @@ class TaskService extends IceScrumEventPublisher {
         publishSynchronousEvent(IceScrumEventType.CREATE, task)
     }
 
-    @PreAuthorize('inProduct(#task.parentProduct) and !archivedProduct(#task.parentProduct)')
+    @PreAuthorize('inProject(#task.parentProject) and !archivedProject(#task.parentProject)')
     void update(Task task, User user, boolean force = false, props = [:]) {
         if (props.state != null) {
             state(task, props.state, user)
@@ -88,12 +88,12 @@ class TaskService extends IceScrumEventPublisher {
         if (sprint?.state == Sprint.STATE_DONE) {
             throw new BusinessException(code: 'is.sprint.error.state.not.inProgress')
         }
-        Product product = task.parentProduct
+        Project project = task.parentProject
         if (task.type == Task.TYPE_URGENT
                 && task.state == Task.STATE_BUSY
-                && product.preferences.limitUrgentTasks != 0
-                && sprint.tasks?.findAll { it.type == Task.TYPE_URGENT && it.state == Task.STATE_BUSY && it.id != task.id }?.size() >= product.preferences.limitUrgentTasks) {
-            throw new BusinessException(code: 'is.task.error.limitTasksUrgent', args: [product.preferences.limitUrgentTasks])
+                && project.preferences.limitUrgentTasks != 0
+                && sprint.tasks?.findAll { it.type == Task.TYPE_URGENT && it.state == Task.STATE_BUSY && it.id != task.id }?.size() >= project.preferences.limitUrgentTasks) {
+            throw new BusinessException(code: 'is.task.error.limitTasksUrgent', args: [project.preferences.limitUrgentTasks])
         }
         if (task.state != Task.STATE_DONE || !task.doneDate) {
             if (force || task.responsible?.id?.equals(user.id) || task.creator.id.equals(user.id) || securityService.scrumMaster(null, springSecurityService.authentication)) {
@@ -114,7 +114,7 @@ class TaskService extends IceScrumEventPublisher {
                     }
                     task.doneDate = null
                 } else if (task.estimation == 0f && sprint.state == Sprint.STATE_INPROGRESS) {
-                    if (product.preferences.assignOnBeginTask && !task.responsible) {
+                    if (project.preferences.assignOnBeginTask && !task.responsible) {
                         task.responsible = user
                     }
                     task.state = Task.STATE_DONE
@@ -154,7 +154,7 @@ class TaskService extends IceScrumEventPublisher {
         task.blocked = false
         task.doneDate = new Date()
         def story = task.type ? null : Story.get(task.parentStory?.id)
-        if (story && task.parentProduct.preferences.autoDoneStory && !story.tasks.any { it.state != Task.STATE_DONE } && story.state != Story.STATE_DONE) {
+        if (story && task.parentProject.preferences.autoDoneStory && !story.tasks.any { it.state != Task.STATE_DONE } && story.state != Story.STATE_DONE) {
             ApplicationContext ctx = (ApplicationContext) grailsApplication.mainContext
             StoryService service = (StoryService) ctx.getBean("storyService")
             service.done(story)
@@ -164,11 +164,11 @@ class TaskService extends IceScrumEventPublisher {
         }
     }
 
-    @PreAuthorize('inProduct(#task.parentProduct) and !archivedProduct(#task.parentProduct)')
+    @PreAuthorize('inProject(#task.parentProject) and !archivedProject(#task.parentProject)')
     void delete(Task task, User user) {
         def sprint = task.sprint
         boolean scrumMaster = securityService.scrumMaster(null, springSecurityService.authentication)
-        boolean productOwner = securityService.productOwner(task.parentProduct, springSecurityService.authentication)
+        boolean productOwner = securityService.productOwner(task.parentProject, springSecurityService.authentication)
         if (task.state == Task.STATE_DONE && !scrumMaster && !productOwner) {
             throw new BusinessException(code: 'is.task.error.delete.not.scrumMaster')
         }
@@ -194,14 +194,14 @@ class TaskService extends IceScrumEventPublisher {
         }
     }
 
-    @PreAuthorize('isAuthenticated() and !archivedProduct(#task.parentProduct)')
+    @PreAuthorize('isAuthenticated() and !archivedProject(#task.parentProject)')
     def makeStory(Task task) {
         Story story = new Story()
         ['name', 'description', 'notes'].each { property ->
             story[property] = task[property]
         }
-        Product product = task.parentProduct
-        story.backlog = product // Duplicate with what is done in StoryService but required to allow unique name validation
+        Project project = task.parentProject
+        story.backlog = project // Duplicate with what is done in StoryService but required to allow unique name validation
         story.validate()
         def i = 1
         while (story.hasErrors() && story.errors.getFieldError('name')) {
@@ -216,7 +216,7 @@ class TaskService extends IceScrumEventPublisher {
                 throw new ValidationException('Validation Error(s) occurred during save()', story.errors)
             }
         }
-        grailsApplication.mainContext.getBean("storyService").save(story, product, springSecurityService.currentUser)
+        grailsApplication.mainContext.getBean("storyService").save(story, project, springSecurityService.currentUser)
         task.attachments.each { attachment ->
             story.addAttachment(task.creator, attachmentableService.getFile(attachment), attachment.filename)
         }
@@ -233,7 +233,7 @@ class TaskService extends IceScrumEventPublisher {
         return story
     }
 
-    @PreAuthorize('inProduct(#task.parentProduct) and !archivedProduct(#task.parentProduct)')
+    @PreAuthorize('inProject(#task.parentProject) and !archivedProject(#task.parentProject)')
     def copy(Task task, User user, def clonedState = Task.STATE_WAIT) {
         if (task.sprint?.state == Sprint.STATE_DONE) {
             throw new BusinessException(code: 'is.task.error.copy.done')
@@ -248,7 +248,7 @@ class TaskService extends IceScrumEventPublisher {
                 dateCreated: new Date(),
                 backlog: task.parentStory ? task.parentStory.parentSprint : task.backlog,
                 parentStory: task.parentStory ?: null,
-                parentProduct: task.parentProduct,
+                parentProject: task.parentProject,
                 type: task.type
         )
         task.participants?.each {
@@ -276,7 +276,7 @@ class TaskService extends IceScrumEventPublisher {
     }
 
     private void state(Task task, Integer newState, User user) {
-        def product = task.parentProduct
+        def project = task.parentProject
         if (task.sprint?.state != Sprint.STATE_INPROGRESS && newState >= Task.STATE_BUSY) {
             throw new BusinessException(code: 'is.sprint.error.state.not.inProgress')
         }
@@ -287,12 +287,12 @@ class TaskService extends IceScrumEventPublisher {
             }
             task.doneDate = null
         } else {
-            if (task.responsible == null && product.preferences.assignOnBeginTask && newState >= Task.STATE_BUSY) {
+            if (task.responsible == null && project.preferences.assignOnBeginTask && newState >= Task.STATE_BUSY) {
                 task.responsible = user
             }
             if ((task.responsible && user.id.equals(task.responsible.id))
                     || user.id.equals(task.creator.id)
-                    || securityService.productOwner(product, springSecurityService.authentication)
+                    || securityService.productOwner(project, springSecurityService.authentication)
                     || securityService.scrumMaster(null, springSecurityService.authentication)) {
                 if (newState == Task.STATE_BUSY && task.state != Task.STATE_BUSY) {
                     activityService.addActivity(task, user, 'taskInprogress', task.name)
@@ -339,7 +339,7 @@ class TaskService extends IceScrumEventPublisher {
     }
 
     def unMarshall(def taskXml, def options) {
-        Product product = options.product
+        Project project = options.project
         Sprint sprint = options.sprint
         Story story = options.story
         Task.withTransaction(readOnly: options.save) { transaction ->
@@ -373,31 +373,31 @@ class TaskService extends IceScrumEventPublisher {
                         blocked: taskXml.blocked.text()?.toBoolean() ?: false,
                         uid: taskXml.@uid.text()?.isEmpty() ? taskXml.@id.text().toInteger() : taskXml.@uid.text().toInteger(),
                         color: taskXml?.color?.text() ?: "yellow")
-                if (product) {
+                if (project) {
                     def u
                     if (!taskXml.creator?.@uid?.isEmpty()) {
-                        u = ((User) product.getAllUsers().find { it.uid == taskXml.creator.@uid.text() }) ?: null
+                        u = ((User) project.getAllUsers().find { it.uid == taskXml.creator.@uid.text() }) ?: null
                     } else {
-                        u = ApplicationSupport.findUserUIDOldXMl(taskXml, 'creator', product.getAllUsers())
+                        u = ApplicationSupport.findUserUIDOldXMl(taskXml, 'creator', project.getAllUsers())
                     }
                     if (u) {
                         task.creator = u
                     } else {
-                        task.creator = (User) product.productOwners.first()
+                        task.creator = (User) project.productOwners.first()
                     }
-                    product.addToTasks(task)
+                    project.addToTasks(task)
                 }
-                if ((!taskXml.responsible?.@uid?.isEmpty() || !taskXml.responsible?.@id?.isEmpty()) && product) {
+                if ((!taskXml.responsible?.@uid?.isEmpty() || !taskXml.responsible?.@id?.isEmpty()) && project) {
                     def u
                     if (!taskXml.responsible?.@uid?.isEmpty()) {
-                        u = ((User) product.getAllUsers().find { it.uid == taskXml.responsible.@uid.text() }) ?: null
+                        u = ((User) project.getAllUsers().find { it.uid == taskXml.responsible.@uid.text() }) ?: null
                     } else {
-                        u = ApplicationSupport.findUserUIDOldXMl(taskXml, 'responsible', product.getAllUsers())
+                        u = ApplicationSupport.findUserUIDOldXMl(taskXml, 'responsible', project.getAllUsers())
                     }
                     if (u) {
                         task.responsible = u
                     } else {
-                        task.responsible = (User) product.productOwners.first()
+                        task.responsible = (User) project.productOwners.first()
                     }
                 }
                 if (sprint) {

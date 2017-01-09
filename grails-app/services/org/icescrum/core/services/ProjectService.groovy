@@ -30,7 +30,7 @@ import org.icescrum.core.event.IceScrumEventType
 import org.icescrum.core.utils.ServicesUtils
 import org.icescrum.core.error.BusinessException
 import java.text.SimpleDateFormat
-import org.icescrum.core.domain.preferences.ProductPreferences
+import org.icescrum.core.domain.preferences.ProjectPreferences
 import org.icescrum.core.domain.security.Authority
 import org.springframework.security.access.prepost.PreAuthorize
 import org.icescrum.core.domain.*
@@ -39,7 +39,7 @@ import grails.plugin.springsecurity.SpringSecurityUtils
 import org.icescrum.core.domain.preferences.UserPreferences
 
 @Transactional
-class ProductService extends IceScrumEventPublisher {
+class ProjectService extends IceScrumEventPublisher {
 
     def springSecurityService
     def securityService
@@ -52,85 +52,85 @@ class ProductService extends IceScrumEventPublisher {
     def g = new org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib()
 
     @PreAuthorize('isAuthenticated()')
-    void save(Product product, productOwners, stakeHolders) {
-        product.orderNumber = (Product.count() ?: 0) + 1
-        product.save(flush: true)
-        createDefaultBacklogs(product)
-        securityService.secureDomain(product)
+    void save(Project project, productOwners, stakeHolders) {
+        project.orderNumber = (Project.count() ?: 0) + 1
+        project.save(flush: true)
+        createDefaultBacklogs(project)
+        securityService.secureDomain(project)
         if (productOwners) {
             for (productOwner in User.getAll(productOwners*.toLong())) {
                 if (productOwner) {
-                    addRole(product, productOwner, Authority.PRODUCTOWNER)
+                    addRole(project, productOwner, Authority.PRODUCTOWNER)
                 }
             }
         }
-        if (stakeHolders && product.preferences.hidden) {
+        if (stakeHolders && project.preferences.hidden) {
             for (stakeHolder in User.getAll(stakeHolders*.toLong())) {
                 if (stakeHolder) {
-                    addRole(product, stakeHolder, Authority.STAKEHOLDER)
+                    addRole(project, stakeHolder, Authority.STAKEHOLDER)
                 }
             }
         }
-        manageProductEvents(product, [:])
-        publishSynchronousEvent(IceScrumEventType.CREATE, product)
+        manageProjectEvents(project, [:])
+        publishSynchronousEvent(IceScrumEventType.CREATE, project)
     }
 
-    @PreAuthorize('owner(#team) and !archivedProduct(#product)')
-    void addTeamToProduct(Product product, Team team) {
-        def oldMembers = getAllMembersProductByRole(product)
-        product.addToTeams(team)
-        if (!product.save()) {
-            throw new BusinessException(code: 'Product not saved')
+    @PreAuthorize('owner(#team) and !archivedProject(#project)')
+    void addTeamToProject(Project project, Team team) {
+        def oldMembers = getAllMembersProjectByRole(project)
+        project.addToTeams(team)
+        if (!project.save()) {
+            throw new BusinessException(code: 'Project not saved')
         }
-        manageProductEvents(product, oldMembers)
+        manageProjectEvents(project, oldMembers)
     }
 
-    @PreAuthorize('owner(#product.firstTeam) and owner(#newTeam) and !archivedProduct(#product)')
-    void changeTeam(Product product, Team newTeam) {
-        def oldTeam = product.firstTeam
-        def oldMembers = getAllMembersProductByRole(product)
+    @PreAuthorize('owner(#project.firstTeam) and owner(#newTeam) and !archivedProject(#project)')
+    void changeTeam(Project project, Team newTeam) {
+        def oldTeam = project.firstTeam
+        def oldMembers = getAllMembersProjectByRole(project)
         // Switch team
-        product.removeFromTeams(oldTeam)
-        product.addToTeams(newTeam)
+        project.removeFromTeams(oldTeam)
+        project.addToTeams(newTeam)
         // Remove conflicting POs and SHs
-        removeConflictingPOandSH(newTeam, product)
-        removeConflictingInvitedPOandSH(newTeam, product)
+        removeConflictingPOandSH(newTeam, project)
+        removeConflictingInvitedPOandSH(newTeam, project)
         // Broadcasts and events
-        manageProductEvents(product, oldMembers)
+        manageProjectEvents(project, oldMembers)
     }
 
-    @PreAuthorize('scrumMaster(#product) and !archivedProduct(#product)')
-    void update(Product product, boolean hasHiddenChanged, String pkeyChanged) {
-        if (!product.name?.trim()) {
-            throw new BusinessException(code: 'is.product.error.no.name')
+    @PreAuthorize('scrumMaster(#project) and !archivedProject(#project)')
+    void update(Project project, boolean hasHiddenChanged, String pkeyChanged) {
+        if (!project.name?.trim()) {
+            throw new BusinessException(code: 'is.project.error.no.name')
         }
-        if (hasHiddenChanged && product.preferences.hidden && !ApplicationSupport.booleanValue(grailsApplication.config.icescrum.project.private.enable)
+        if (hasHiddenChanged && project.preferences.hidden && !ApplicationSupport.booleanValue(grailsApplication.config.icescrum.project.private.enable)
                 && !SpringSecurityUtils.ifAnyGranted(Authority.ROLE_ADMIN)) {
-            product.preferences.hidden = false
+            project.preferences.hidden = false
         }
-        if (hasHiddenChanged && !product.preferences.hidden) {
-            product.stakeHolders?.each {
-                removeStakeHolder(product, it)
+        if (hasHiddenChanged && !project.preferences.hidden) {
+            project.stakeHolders?.each {
+                removeStakeHolder(project, it)
             }
-            product.invitedStakeHolders?.each {
+            project.invitedStakeHolders?.each {
                 it.delete()
             }
         }
         if (pkeyChanged) {
-            UserPreferences.findAllByLastProductOpened(pkeyChanged)?.each {
-                it.lastProductOpened = product.pkey
+            UserPreferences.findAllByLastProjectOpened(pkeyChanged)?.each {
+                it.lastProjectOpened = project.pkey
                 it.save()
             }
         }
-        def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_UPDATE, product)
-        product.save(flush: true)
-        publishSynchronousEvent(IceScrumEventType.UPDATE, product, dirtyProperties)
+        def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_UPDATE, project)
+        project.save(flush: true)
+        publishSynchronousEvent(IceScrumEventType.UPDATE, project, dirtyProperties)
     }
 
-    @PreAuthorize('stakeHolder(#product) or inProduct(#product)')
-    def cumulativeFlowValues(Product product) {
+    @PreAuthorize('stakeHolder(#project) or inProject(#project)')
+    def cumulativeFlowValues(Project project) {
         def values = []
-        product.releases?.sort { a, b -> a.orderNumber <=> b.orderNumber }?.each { Release release ->
+        project.releases?.sort { a, b -> a.orderNumber <=> b.orderNumber }?.each { Release release ->
             def cliches = []
             //begin of project
             def firstClicheActivation = Cliche.findByParentTimeBoxAndType(release, Cliche.TYPE_ACTIVATION, [sort: "datePrise", order: "asc"])
@@ -164,10 +164,10 @@ class ProductService extends IceScrumEventPublisher {
         return values
     }
 
-    @PreAuthorize('stakeHolder(#product) or inProduct(#product)')
-    def productBurnupValues(Product product) {
+    @PreAuthorize('stakeHolder(#project) or inProject(#project)')
+    def projectBurnupValues(Project project) {
         def values = []
-        product.releases?.sort { a, b -> a.orderNumber <=> b.orderNumber }?.each {Release release ->
+        project.releases?.sort { a, b -> a.orderNumber <=> b.orderNumber }?.each {Release release ->
             def cliches = []
             //begin of project
             def firstClicheActivation = Cliche.findByParentTimeBoxAndType(release, Cliche.TYPE_ACTIVATION, [sort: "datePrise", order: "asc"])
@@ -186,11 +186,11 @@ class ProductService extends IceScrumEventPublisher {
             cliches?.eachWithIndex { cliche, index ->
                 def xmlRoot = new XmlSlurper().parseText(cliche.data)
                 if (xmlRoot) {
-                    def a = xmlRoot."${Cliche.PRODUCT_BACKLOG_POINTS}".toBigDecimal()
-                    def b = xmlRoot."${Cliche.PRODUCT_REMAINING_POINTS}".toBigDecimal()
+                    def a = xmlRoot."${Cliche.PROJECT_POINTS}".toBigDecimal()
+                    def b = xmlRoot."${Cliche.PROJECT_REMAINING_POINTS}".toBigDecimal()
                     def c = a - b
                     values << [
-                            all  : xmlRoot."${Cliche.PRODUCT_BACKLOG_POINTS}".toBigDecimal(),
+                            all  : xmlRoot."${Cliche.PROJECT_POINTS}".toBigDecimal(),
                             done : c,
                             label: index == 0 ? "Start" : xmlRoot."${Cliche.SPRINT_ID}".toString()+"${cliche.id ?: " (progress)"}"
                     ]
@@ -200,20 +200,20 @@ class ProductService extends IceScrumEventPublisher {
         return values
     }
 
-    @PreAuthorize('stakeHolder(#product) or inProduct(#product)')
-    def productBurndownValues(Product product) {
+    @PreAuthorize('stakeHolder(#project) or inProject(#project)')
+    def projectBurndownValues(Project project) {
         def values = []
         def releaseService = (ReleaseService) grailsApplication.mainContext.getBean('releaseService')
-        product.releases?.sort { a, b -> a.orderNumber <=> b.orderNumber }?.each { Release release ->
+        project.releases?.sort { a, b -> a.orderNumber <=> b.orderNumber }?.each { Release release ->
             values.addAll(releaseService.releaseBurndownValues(release))
         }
         return values
     }
 
-    @PreAuthorize('stakeHolder(#product) or inProduct(#product)')
-    def productVelocityValues(Product product) {
+    @PreAuthorize('stakeHolder(#project) or inProject(#project)')
+    def projectVelocityValues(Project project) {
         def values = []
-        product.releases?.sort { a, b -> a.orderNumber <=> b.orderNumber }?.each {
+        project.releases?.sort { a, b -> a.orderNumber <=> b.orderNumber }?.each {
             Cliche.findAllByParentTimeBoxAndType(it, Cliche.TYPE_CLOSE, [sort: "datePrise", order: "asc"])?.each { cliche ->
                 def xmlRoot = new XmlSlurper().parseText(cliche.data)
                 if (xmlRoot) {
@@ -231,11 +231,11 @@ class ProductService extends IceScrumEventPublisher {
         return values
     }
 
-    @PreAuthorize('stakeHolder(#product) or inProduct(#product)')
-    def productVelocityCapacityValues(Product product) {
+    @PreAuthorize('stakeHolder(#project) or inProject(#project)')
+    def projectVelocityCapacityValues(Project project) {
         def values = []
         def capacity = 0, label = ""
-        product.releases?.sort { a, b -> a.orderNumber <=> b.orderNumber }?.each {
+        project.releases?.sort { a, b -> a.orderNumber <=> b.orderNumber }?.each {
             Cliche.findAllByParentTimeBox(it, [sort: "datePrise", order: "asc"])?.each { cliche ->
                 def xmlRoot = new XmlSlurper().parseText(cliche.data)
                 if (xmlRoot) {
@@ -275,56 +275,56 @@ class ProductService extends IceScrumEventPublisher {
     }
 
     @PreAuthorize('isAuthenticated()')
-    Product unMarshall(def productXml, def options) {
-        Product.withTransaction(readOnly: !options.save) { transaction ->
+    Project unMarshall(def projectXml, def options) {
+        Project.withTransaction(readOnly: !options.save) { transaction ->
             try {
-                def product = new Product(
-                        name: productXml."${'name'}".text(),
-                        pkey: productXml.pkey.text(),
-                        description: productXml.description.text(),
-                        lastUpdated: productXml.lastUpdated.text() ? new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(productXml.lastUpdated.text()) : new Date(),
-                        todoDate: new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(productXml.todoDate?.text() ?: productXml.dateCreated.text()),
-                        startDate: new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(productXml.startDate.text()),
-                        endDate: new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(productXml.endDate.text()),
-                        planningPokerGameType: productXml.planningPokerGameType.text().toInteger())
+                def project = new Project(
+                        name: projectXml."${'name'}".text(),
+                        pkey: projectXml.pkey.text(),
+                        description: projectXml.description.text(),
+                        lastUpdated: projectXml.lastUpdated.text() ? new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(projectXml.lastUpdated.text()) : new Date(),
+                        todoDate: new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(projectXml.todoDate?.text() ?: projectXml.dateCreated.text()),
+                        startDate: new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(projectXml.startDate.text()),
+                        endDate: new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(projectXml.endDate.text()),
+                        planningPokerGameType: projectXml.planningPokerGameType.text().toInteger())
 
-                product.preferences = new ProductPreferences(
-                        hidden: productXml.preferences.hidden.text().toBoolean(),
-                        assignOnBeginTask: productXml.preferences.assignOnBeginTask.text().toBoolean(),
-                        assignOnCreateTask: productXml.preferences.assignOnCreateTask.text().toBoolean(),
-                        autoCreateTaskOnEmptyStory: productXml.preferences.autoCreateTaskOnEmptyStory.text().toBoolean(),
-                        autoDoneStory: productXml.preferences.autoDoneStory.text().toBoolean(),
-                        noEstimation: productXml.preferences.noEstimation.text().toBoolean(),
-                        limitUrgentTasks: productXml.preferences.limitUrgentTasks.text().toInteger(),
-                        estimatedSprintsDuration: productXml.preferences.estimatedSprintsDuration.text().toInteger(),
-                        displayUrgentTasks: productXml.preferences.displayUrgentTasks.text().toBoolean(),
-                        displayRecurrentTasks: productXml.preferences.displayRecurrentTasks.text().toBoolean(),
-                        hideWeekend: productXml.preferences.hideWeekend.text()?.toBoolean() ?: false,
-                        releasePlanningHour: productXml.preferences.releasePlanningHour.text() ?: "9:00",
-                        sprintPlanningHour: productXml.preferences.sprintPlanningHour.text() ?: "9:00",
-                        dailyMeetingHour: productXml.preferences.dailyMeetingHour.text() ?: "11:00",
-                        sprintReviewHour: productXml.preferences.sprintReviewHour.text() ?: "14:00",
-                        sprintRetrospectiveHour: productXml.preferences.sprintRetrospectiveHour.text() ?: "16:00",
-                        timezone: productXml.preferences?.timezone?.text() ?: grailsApplication.config.icescrum.timezone.default)
+                project.preferences = new ProjectPreferences(
+                        hidden: projectXml.preferences.hidden.text().toBoolean(),
+                        assignOnBeginTask: projectXml.preferences.assignOnBeginTask.text().toBoolean(),
+                        assignOnCreateTask: projectXml.preferences.assignOnCreateTask.text().toBoolean(),
+                        autoCreateTaskOnEmptyStory: projectXml.preferences.autoCreateTaskOnEmptyStory.text().toBoolean(),
+                        autoDoneStory: projectXml.preferences.autoDoneStory.text().toBoolean(),
+                        noEstimation: projectXml.preferences.noEstimation.text().toBoolean(),
+                        limitUrgentTasks: projectXml.preferences.limitUrgentTasks.text().toInteger(),
+                        estimatedSprintsDuration: projectXml.preferences.estimatedSprintsDuration.text().toInteger(),
+                        displayUrgentTasks: projectXml.preferences.displayUrgentTasks.text().toBoolean(),
+                        displayRecurrentTasks: projectXml.preferences.displayRecurrentTasks.text().toBoolean(),
+                        hideWeekend: projectXml.preferences.hideWeekend.text()?.toBoolean() ?: false,
+                        releasePlanningHour: projectXml.preferences.releasePlanningHour.text() ?: "9:00",
+                        sprintPlanningHour: projectXml.preferences.sprintPlanningHour.text() ?: "9:00",
+                        dailyMeetingHour: projectXml.preferences.dailyMeetingHour.text() ?: "11:00",
+                        sprintReviewHour: projectXml.preferences.sprintReviewHour.text() ?: "14:00",
+                        sprintRetrospectiveHour: projectXml.preferences.sprintRetrospectiveHour.text() ?: "16:00",
+                        timezone: projectXml.preferences?.timezone?.text() ?: grailsApplication.config.icescrum.timezone.default)
 
-                options.product = product
+                options.project = project
 
-                productXml.teams.team.eachWithIndex { it, index ->
+                projectXml.teams.team.eachWithIndex { it, index ->
                     teamService.unMarshall(it, options)
                 }
 
-                Product pExist = (Product) Product.findByPkey(product.pkey)
+                Project pExist = (Project) Project.findByPkey(project.pkey)
                 if (pExist && securityService.productOwner(pExist, springSecurityService.authentication)) {
-                    product.erasableByUser = true
+                    project.erasableByUser = true
                 }
 
                 def productOwnersList = []
-                productXml.productOwners.user.eachWithIndex { productOwner, index ->
+                projectXml.productOwners.user.eachWithIndex { productOwner, index ->
                     User u
                     if (!productOwner.@uid?.isEmpty())
-                        u = ((User) product.getAllUsers().find { it.uid == productOwner.@uid.text() }) ?: null
+                        u = ((User) project.getAllUsers().find { it.uid == productOwner.@uid.text() }) ?: null
                     else {
-                        u = ApplicationSupport.findUserUIDOldXMl(productOwner, null, product.getAllUsers())
+                        u = ApplicationSupport.findUserUIDOldXMl(productOwner, null, project.getAllUsers())
                     }
                     if (!u) {
                         u = User.findByUsernameAndEmail(productOwner.username.text(), productOwner.email.text())
@@ -335,11 +335,11 @@ class ProductService extends IceScrumEventPublisher {
                     }
                     productOwnersList << u
                 }
-                product.productOwners = productOwnersList
+                project.productOwners = productOwnersList
 
                 def erase = options.changes?.erase ? true : false
                 if (options.changes) {
-                    def team = product.teams[0]
+                    def team = project.teams[0]
                     if (options.changes?.team?.name) {
                         team.name = options.changes.team.name
                     }
@@ -354,17 +354,17 @@ class ProductService extends IceScrumEventPublisher {
                                 it.username = options.changes.users."${it.uid}"
                             }
                         }
-                        product.productOwners?.each {
+                        project.productOwners?.each {
                             if (options.changes.users."${it.uid}") {
                                 it.username = options.changes.users."${it.uid}"
                             }
                         }
                     }
-                    product.pkey = !erase && options.changes?.product?.pkey != null ? options.changes.product.pkey : product.pkey
-                    product.name = !erase && options.changes?.product?.name != null ? options.changes.product.name : product.name
+                    project.pkey = !erase && options.changes?.project?.pkey != null ? options.changes.project.pkey : project.pkey
+                    project.name = !erase && options.changes?.project?.name != null ? options.changes.project.name : project.name
                 }
                 if (options.validate) {
-                    options.changesNeeded = validate(product, erase)
+                    options.changesNeeded = validate(project, erase)
                     if (options.changesNeeded) {
                         return null
                     }
@@ -373,8 +373,8 @@ class ProductService extends IceScrumEventPublisher {
                     if (erase && pExist) {
                         delete(pExist)
                     }
-                    product.save()
-                    product.teams.each { t ->
+                    project.save()
+                    project.teams.each { t ->
                         // Save users before team
                         t.members?.each {
                             if (it.id == null)
@@ -385,40 +385,40 @@ class ProductService extends IceScrumEventPublisher {
                             teamService.saveImport(t)
                         else {
                             def ts = Team.get(t.id)
-                            ts.removeFromProducts(product)
-                            ts.addToProducts(product)
+                            ts.removeFromProjects(project)
+                            ts.addToProjects(project)
                         }
                     }
-                    securityService.secureDomain(product)
-                    if (product.productOwners) {
-                        product.productOwners?.eachWithIndex { user, index ->
+                    securityService.secureDomain(project)
+                    if (project.productOwners) {
+                        project.productOwners?.eachWithIndex { user, index ->
                             user = User.get(user.id)
-                            securityService.createProductOwnerPermissions(user, product)
+                            securityService.createProductOwnerPermissions(user, project)
                         }
-                        def user = product.productOwners.first()
+                        def user = project.productOwners.first()
                         user = User.get(user.id)
-                        securityService.changeOwner(user, product)
+                        securityService.changeOwner(user, project)
                     } else {
                         def user = User.get(springSecurityService.principal.id)
-                        securityService.createProductOwnerPermissions(user, product)
-                        securityService.changeOwner(user, product)
+                        securityService.createProductOwnerPermissions(user, project)
+                        securityService.changeOwner(user, project)
                     }
                 }
 
                 // Child objects
                 def featureService = (FeatureService) grailsApplication.mainContext.getBean('featureService')
-                productXml.features.feature.eachWithIndex { it, index ->
+                projectXml.features.feature.eachWithIndex { it, index ->
                     featureService.unMarshall(it, options)
                 }
-                productXml.actors.actor.eachWithIndex { it, index ->
+                projectXml.actors.actor.eachWithIndex { it, index ->
                     actorService.unMarshall(it, options)
                 }
                 def storyService = (StoryService) grailsApplication.mainContext.getBean('storyService')
-                productXml.stories.story.eachWithIndex { it, index ->
+                projectXml.stories.story.eachWithIndex { it, index ->
                     storyService.unMarshall(it, options)
                 }
                 // Ensure rank for stories in backlog
-                def stories = product.stories.findAll {
+                def stories = project.stories.findAll {
                     it.state == Story.STATE_ACCEPTED || it.state == Story.STATE_ESTIMATED
                 }.sort { a, b -> a.rank <=> b.rank }
                 stories.eachWithIndex { it, index ->
@@ -429,11 +429,11 @@ class ProductService extends IceScrumEventPublisher {
                 }
 
                 def releaseService = (ReleaseService) grailsApplication.mainContext.getBean('releaseService')
-                productXml.releases.release.eachWithIndex { it, index ->
+                projectXml.releases.release.eachWithIndex { it, index ->
                     releaseService.unMarshall(it, options)
                 }
                 // Ensure rank for stories in each sprint
-                product.releases.each { Release release ->
+                project.releases.each { Release release ->
                     release.sprints.each { Sprint sprint ->
                         // First ranks for planned and in progress stories
                         stories = sprint.stories.findAll { Story story -> story.state == Story.STATE_PLANNED || story.state == Story.STATE_INPROGRESS }.sort { a, b -> a.rank <=> b.rank }
@@ -455,10 +455,10 @@ class ProductService extends IceScrumEventPublisher {
                     }
                 }
                 if (options.save) {
-                    product.save()
+                    project.save()
                 }
-                options.product = null
-                return (Product) importDomainsPlugins(product, options)
+                options.project = null
+                return (Project) importDomainsPlugins(project, options)
             } catch (Exception e) {
                 if (log.debugEnabled) {
                     e.printStackTrace()
@@ -470,36 +470,36 @@ class ProductService extends IceScrumEventPublisher {
 
     @PreAuthorize('isAuthenticated()')
     def importXML(File file, def options) {
-        Product.withTransaction(readOnly: !options.save) {
+        Project.withTransaction(readOnly: !options.save) {
             String xmlText = file.getText()
             String cleanedXmlText = ServicesUtils.cleanXml(xmlText)
-            def _productXml = new XmlSlurper().parseText(cleanedXmlText)
-            def Product product = null
+            def _projectXml = new XmlSlurper().parseText(cleanedXmlText)
+            def Project project = null
             try {
-                def productXml = _productXml
+                def projectXml = _projectXml
                 // Be compatible with xml without export tag
-                if (_productXml.find { it.name == 'export' }) {
-                    productXml = _productXml.product
+                if (_projectXml.find { it.name == 'export' }) {
+                    projectXml = _projectXml.project
                 }
-                product = this.unMarshall(productXml, options)
+                project = this.unMarshall(projectXml, options)
             } catch (RuntimeException e) {
                 if (log.debugEnabled) {
                     e.printStackTrace()
                 }
             }
-            if (product?.id && options.save) {
-                product.save(flush: true)
+            if (project?.id && options.save) {
+                project.save(flush: true)
             }
-            return product
+            return project
         }
     }
 
     @PreAuthorize('isAuthenticated()')
-    def validate(Product product, boolean erase = false) {
+    def validate(Project project, boolean erase = false) {
         def changes = [:]
         try {
-            Product.withNewSession {
-                product.teams.eachWithIndex { team, index ->
+            Project.withNewSession {
+                project.teams.eachWithIndex { team, index ->
                     team.validate()
                     if (team.errors.errorCount == 1) {
                         changes.team = [:]
@@ -537,7 +537,7 @@ class ProductService extends IceScrumEventPublisher {
                         }
                     }
                 }
-                product.productOwners?.eachWithIndex { productOwner, index ->
+                project.productOwners?.eachWithIndex { productOwner, index ->
                     productOwner.validate()
                     if (productOwner.errors.errorCount == 1) {
                         changes.users = changes.users ?: [:]
@@ -556,23 +556,23 @@ class ProductService extends IceScrumEventPublisher {
                         throw new RuntimeException()
                     }
                 }
-                product.validate()
-                if (product.errors.errorCount && product.errors.errorCount <= 2 && !erase) {
-                    changes.product = [:]
-                    product.errors.fieldErrors*.field.each { field ->
+                project.validate()
+                if (project.errors.errorCount && project.errors.errorCount <= 2 && !erase) {
+                    changes.project = [:]
+                    project.errors.fieldErrors*.field.each { field ->
                         if (!(field in ['pkey', 'name'])) {
                             if (log.infoEnabled) {
-                                log.info("Product validation error (${product.name}): " + product.errors)
+                                log.info("Project validation error (${project.name}): " + project.errors)
                             }
                             throw new RuntimeException()
                         } else {
-                            changes.product[field] = product[field]
+                            changes.project[field] = project[field]
                         }
                     }
-                    changes.erasable = product.erasableByUser
-                } else if (product.errors.errorCount > 2) {
+                    changes.erasable = project.erasableByUser
+                } else if (project.errors.errorCount > 2) {
                     if (log.infoEnabled) {
-                        log.info("Product validation error (${product.name}): " + product.errors)
+                        log.info("Project validation error (${project.name}): " + project.errors)
                     }
                     throw new RuntimeException()
                 }
@@ -586,43 +586,43 @@ class ProductService extends IceScrumEventPublisher {
     }
 
     @PreAuthorize('owner(#p.firstTeam)')
-    def delete(Product p) {
+    def delete(Project p) {
         def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_DELETE, p)
         p.allUsers.each { it.preferences.removeEmailsSettings(p.pkey) } // must be before unsecure to have POs
         p.invitedStakeHolders*.delete()
         p.invitedProductOwners*.delete()
         securityService.unsecureDomain p
-        UserPreferences.findAllByLastProductOpened(p.pkey)?.each {
-            it.lastProductOpened = null
+        UserPreferences.findAllByLastProjectOpened(p.pkey)?.each {
+            it.lastProjectOpened = null
         }
         p.teams.each {
-            it.removeFromProducts(p)
+            it.removeFromProjects(p)
         }
         p.removeAllAttachments()
         p.delete(flush: true)
         publishSynchronousEvent(IceScrumEventType.DELETE, p, dirtyProperties)
     }
 
-    @PreAuthorize('scrumMaster(#product)')
-    def archive(Product product) {
-        product.preferences.archived = true
-        def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_UPDATE, product)
-        product.save(flush: true)
-        publishSynchronousEvent(IceScrumEventType.UPDATE, product, dirtyProperties)
+    @PreAuthorize('scrumMaster(#project)')
+    def archive(Project project) {
+        project.preferences.archived = true
+        def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_UPDATE, project)
+        project.save(flush: true)
+        publishSynchronousEvent(IceScrumEventType.UPDATE, project, dirtyProperties)
     }
 
     @PreAuthorize("hasRole('ROLE_ADMIN')")
-    def unArchive(Product product) {
-        product.preferences.archived = false
-        def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_UPDATE, product)
-        product.save(flush: true)
-        publishSynchronousEvent(IceScrumEventType.UPDATE, product, dirtyProperties)
+    def unArchive(Project project) {
+        project.preferences.archived = false
+        def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_UPDATE, project)
+        project.save(flush: true)
+        publishSynchronousEvent(IceScrumEventType.UPDATE, project, dirtyProperties)
     }
 
     void removeAllRoles(domain, User user) {
         if (domain instanceof Team) {
             teamService.removeMemberOrScrumMaster(domain, user)
-        } else if (domain instanceof Product) {
+        } else if (domain instanceof Project) {
             removeProductOwner(domain, user)
             removeStakeHolder(domain, user)
         }
@@ -635,7 +635,7 @@ class ProductService extends IceScrumEventPublisher {
             } else if (role == Authority.MEMBER) {
                 teamService.addMember(domain, user)
             }
-        } else if (domain instanceof Product) {
+        } else if (domain instanceof Project) {
             if (role == Authority.PRODUCTOWNER) {
                 addProductOwner(domain, user)
             } else if (role == Authority.STAKEHOLDER) {
@@ -645,9 +645,9 @@ class ProductService extends IceScrumEventPublisher {
     }
 
     void updateTeamMembers(Team team, List newMembers) {
-        def oldMembersByProduct = [:]
-        team.products.each { Product product ->
-            oldMembersByProduct[product.id] = getAllMembersProductByRole(product)
+        def oldMembersByProject = [:]
+        team.projects.each { Project project ->
+            oldMembersByProject[project.id] = getAllMembersProjectByRole(project)
         }
         def currentMembers = team.scrumMasters.collect { [id: it.id, role: Authority.SCRUMMASTER] }
         team.members.each { member ->
@@ -657,16 +657,16 @@ class ProductService extends IceScrumEventPublisher {
         }
         updateMembers(team, currentMembers, newMembers)
         removeConflictingPOandSH(team)
-        oldMembersByProduct.each { Long productId, Map oldMembers ->
-            manageProductEvents(Product.get(productId), oldMembers)
+        oldMembersByProject.each { Long projectId, Map oldMembers ->
+            manageProjectEvents(Project.get(projectId), oldMembers)
         }
     }
 
-    void updateProductMembers(Product product, List newMembers) {
-        def oldMembers = getAllMembersProductByRole(product)
-        def currentMembers = product.stakeHolders.collect { [id: it.id, role: Authority.STAKEHOLDER] } + product.productOwners.collect { [id: it.id, role: Authority.PRODUCTOWNER] }
-        updateMembers(product, currentMembers, newMembers)
-        manageProductEvents(product, oldMembers)
+    void updateProjectMembers(Project project, List newMembers) {
+        def oldMembers = getAllMembersProjectByRole(project)
+        def currentMembers = project.stakeHolders.collect { [id: it.id, role: Authority.STAKEHOLDER] } + project.productOwners.collect { [id: it.id, role: Authority.PRODUCTOWNER] }
+        updateMembers(project, currentMembers, newMembers)
+        manageProjectEvents(project, oldMembers)
     }
 
     private void updateMembers(domain, List currentMembers, List newMembers) {
@@ -688,11 +688,11 @@ class ProductService extends IceScrumEventPublisher {
         }
     }
 
-    private void removeConflictingPOandSH(team, product = null) {
+    private void removeConflictingPOandSH(team, project = null) {
         def membersIds = team.members*.id
         def tmIds = team.members*.id - team.scrumMasters*.id
-        def products = product ? [product] : team.products
-        products.each { Product p ->
+        def projects = project ? [project] : team.projects
+        projects.each { Project p ->
             p.productOwners?.each { User po ->
                 if (po.id in tmIds) {
                     removeAllRoles(p, po)
@@ -706,22 +706,22 @@ class ProductService extends IceScrumEventPublisher {
         }
     }
 
-    private void addProductOwner(Product product, User productOwner) {
-        securityService.createProductOwnerPermissions productOwner, product
+    private void addProductOwner(Project project, User productOwner) {
+        securityService.createProductOwnerPermissions productOwner, project
     }
 
-    private void addStakeHolder(Product product, User stakeHolder) {
-        if (product.preferences.hidden) {
-            securityService.createStakeHolderPermissions stakeHolder, product
+    private void addStakeHolder(Project project, User stakeHolder) {
+        if (project.preferences.hidden) {
+            securityService.createStakeHolderPermissions stakeHolder, project
         }
     }
 
-    private void removeProductOwner(Product product, User productOwner) {
-        securityService.deleteProductOwnerPermissions productOwner, product
+    private void removeProductOwner(Project project, User productOwner) {
+        securityService.deleteProductOwnerPermissions productOwner, project
     }
 
-    private void removeStakeHolder(Product product, User stakeHolder) {
-        securityService.deleteStakeHolderPermissions stakeHolder, product
+    private void removeStakeHolder(Project project, User stakeHolder) {
+        securityService.deleteStakeHolderPermissions stakeHolder, project
     }
 
     // INVITATIONS
@@ -739,34 +739,34 @@ class ProductService extends IceScrumEventPublisher {
         removeConflictingInvitedPOandSH(team)
     }
 
-    void manageProductInvitations(Product product, invitedProductOwners, invitedStakeHolders) {
+    void manageProjectInvitations(Project project, invitedProductOwners, invitedStakeHolders) {
         invitedProductOwners = invitedProductOwners*.toLowerCase()
         invitedStakeHolders = invitedStakeHolders*.toLowerCase()
-        def type = Invitation.InvitationType.PRODUCT
-        def currentInvitations = Invitation.findAllByTypeAndProduct(type, product)
+        def type = Invitation.InvitationType.PROJECT
+        def currentInvitations = Invitation.findAllByTypeAndProject(type, project)
         def newInvitations = []
         assert !invitedProductOwners.intersect(invitedStakeHolders)
         newInvitations.addAll(invitedProductOwners.collect { [role: Authority.PRODUCTOWNER, email: it] })
-        if (invitedStakeHolders && product.preferences.hidden) {
+        if (invitedStakeHolders && project.preferences.hidden) {
             newInvitations.addAll(invitedStakeHolders.collect { [role: Authority.STAKEHOLDER, email: it] })
         }
-        manageInvitations(currentInvitations, newInvitations, type, product, null)
+        manageInvitations(currentInvitations, newInvitations, type, project, null)
     }
 
-    List<Product> getAllActiveProductsByUser(User user, String searchTerm = '') {
-        def projects = Product.findAllByUserAndActive(user, [sort: "name", order: "asc", cache: true], searchTerm)
-        def projectsOwnerOf = Team.findAllActiveProductsByTeamOwner(user.username, searchTerm, [sort: "name", order: "asc", cache: true]).findAll {
+    List<Project> getAllActiveProjectsByUser(User user, String searchTerm = '') {
+        def projects = Project.findAllByUserAndActive(user, [sort: "name", order: "asc", cache: true], searchTerm)
+        def projectsOwnerOf = Team.findAllActiveProjectsByTeamOwner(user.username, searchTerm, [sort: "name", order: "asc", cache: true]).findAll {
             !(it in projects)
         }
         projects.addAll(projectsOwnerOf)
         return projects
     }
 
-    private void removeConflictingInvitedPOandSH(team, product = null) {
+    private void removeConflictingInvitedPOandSH(team, project = null) {
         def invitedMembersEmail = team.invitedMembers*.email
         def invitedMembersAndScrumMastersEmail = invitedMembersEmail + team.invitedScrumMasters*.email
-        def products = product ? [product] : team.products
-        products.each { Product p ->
+        def projects = project ? [project] : team.projects
+        projects.each { Project p ->
             p.invitedProductOwners?.each { Invitation invitedPo ->
                 if (invitedPo.email in invitedMembersEmail) {
                     invitedPo.delete()
@@ -780,7 +780,7 @@ class ProductService extends IceScrumEventPublisher {
         }
     }
 
-    private void manageInvitations(List<Invitation> currentInvitations, List newInvitations, Invitation.InvitationType type, Product product, Team team) {
+    private void manageInvitations(List<Invitation> currentInvitations, List newInvitations, Invitation.InvitationType type, Project project, Team team) {
         newInvitations.each {
             def email = it.email
             int role = it.role
@@ -795,7 +795,7 @@ class ProductService extends IceScrumEventPublisher {
                 if (type == Invitation.InvitationType.TEAM) {
                     invitation.team = team
                 } else {
-                    invitation.product = product
+                    invitation.project = project
                 }
                 invitation.save()
                 try {
@@ -811,21 +811,21 @@ class ProductService extends IceScrumEventPublisher {
     }
 
     // Quite experimental
-    void manageProductEvents(Product product, Map oldMembers) {
-        Map newMembers = getAllMembersProductByRole(product)
-        if (product.hasProperty('membersByRole')) {
-            product.membersByRole = newMembers
+    void manageProjectEvents(Project project, Map oldMembers) {
+        Map newMembers = getAllMembersProjectByRole(project)
+        if (project.hasProperty('membersByRole')) {
+            project.membersByRole = newMembers
         } else {
-            product.metaClass.membersByRole = newMembers
+            project.metaClass.membersByRole = newMembers
         }
-        publishSynchronousEvent(IceScrumEventType.BEFORE_UPDATE, product, [membersByRole: oldMembers])
-        publishSynchronousEvent(IceScrumEventType.UPDATE, product, [membersByRole: oldMembers])
+        publishSynchronousEvent(IceScrumEventType.BEFORE_UPDATE, project, [membersByRole: oldMembers])
+        publishSynchronousEvent(IceScrumEventType.UPDATE, project, [membersByRole: oldMembers])
     }
 
-    Map getAllMembersProductByRole(Product product) {
+    Map getAllMembersProjectByRole(Project project) {
         def usersByRole = [:]
-        def productOwners = product.productOwners
-        def team = product.firstTeam
+        def productOwners = project.productOwners
+        def team = project.firstTeam
         if (team) {
             def scrumMasters = team.scrumMasters
             team.members?.each { User member ->
@@ -841,24 +841,24 @@ class ProductService extends IceScrumEventPublisher {
                 usersByRole[productOwner] = Authority.PRODUCTOWNER
             }
         }
-        product.stakeHolders?.each { User stakeHolder ->
+        project.stakeHolders?.each { User stakeHolder ->
             usersByRole[stakeHolder] = Authority.STAKEHOLDER
         }
         return usersByRole
     }
 
-    def export(StringWriter writer, Product product, String version) {
+    def export(StringWriter writer, Project project, String version) {
         def builder = new MarkupBuilder(writer)
         builder.mkp.xmlDeclaration(version: "1.0", encoding: "UTF-8")
         builder.export(version: version) {
-            product.xml(builder)
+            project.xml(builder)
         }
     }
 
-    private void createDefaultBacklogs(Product product) {
-        new Backlog(product: product, shared: true, filter: '{"story":{"state":1}}', name: 'is.ui.sandbox', code: 'sandbox').save()
-        new Backlog(product: product, shared: true, filter: '{"story":{"state":[2,3]}}', name: 'is.ui.backlog', code: 'backlog').save()
-        new Backlog(product: product, shared: true, filter: '{"story":{"state":7}}', name: 'todo.is.ui.backlog.done', code: 'done').save()
-        new Backlog(product: product, shared: true, filter: '{"story":{}}', name: 'todo.is.ui.backlog.all', code: 'all').save()
+    private void createDefaultBacklogs(Project project) {
+        new Backlog(project: project, shared: true, filter: '{"story":{"state":1}}', name: 'is.ui.sandbox', code: 'sandbox').save()
+        new Backlog(project: project, shared: true, filter: '{"story":{"state":[2,3]}}', name: 'is.ui.backlog', code: 'backlog').save()
+        new Backlog(project: project, shared: true, filter: '{"story":{"state":7}}', name: 'todo.is.ui.backlog.done', code: 'done').save()
+        new Backlog(project: project, shared: true, filter: '{"story":{}}', name: 'todo.is.ui.backlog.all', code: 'all').save()
     }
 }

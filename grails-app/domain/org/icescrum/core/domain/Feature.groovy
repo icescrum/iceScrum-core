@@ -67,7 +67,7 @@ class Feature extends BacklogElement implements Serializable {
 
     static namedQueries = {
 
-        getInProduct { p, id ->
+        getInProject { p, id ->
             backlog {
                 eq 'id', p
             }
@@ -78,8 +78,8 @@ class Feature extends BacklogElement implements Serializable {
         }
     }
 
-    static Feature withFeature(long productId, long id) {
-        Feature feature = (Feature) getInProduct(productId, id).list()
+    static Feature withFeature(long projectId, long id) {
+        Feature feature = (Feature) getInProject(projectId, id).list()
         if (!feature) {
             throw new ObjectNotFoundException(id, 'Feature')
         }
@@ -88,7 +88,7 @@ class Feature extends BacklogElement implements Serializable {
 
     static List<Feature> withFeatures(def params, def id = 'id') {
         def ids = params[id]?.contains(',') ? params[id].split(',')*.toLong() : params.list(id)
-        List<Feature> features = ids ? getAll(ids).findAll { it && it.backlog.id == params.product.toLong() } : null
+        List<Feature> features = ids ? getAll(ids).findAll { it && it.backlog.id == params.project.toLong() } : null
         if (!features) {
             throw new ObjectNotFoundException(ids, 'Feature')
         }
@@ -134,7 +134,7 @@ class Feature extends BacklogElement implements Serializable {
     static int findNextUId(Long pid) {
         (executeQuery(
                 """SELECT MAX(f.uid)
-                   FROM org.icescrum.core.domain.Feature as f, org.icescrum.core.domain.Product as p
+                   FROM org.icescrum.core.domain.Feature as f, org.icescrum.core.domain.Project as p
                    WHERE f.backlog = p
                    AND p.id = :pid """, [pid: pid])[0] ?: 0) + 1
     }
@@ -166,10 +166,10 @@ class Feature extends BacklogElement implements Serializable {
         return state == STATE_DONE ? stories.collect { it.doneDate }.findAll { it != null }.sort().first() : null
     }
 
-    static search(product, options) {
+    static search(project, options) {
         def criteria = {
             backlog {
-                eq 'id', product
+                eq 'id', project
             }
             if (options.term || options.feature) {
                 if (options.term) {
@@ -203,13 +203,13 @@ class Feature extends BacklogElement implements Serializable {
         }
     }
 
-    static searchByTermOrTag(productId, searchOptions, term) {
-        search(productId, addTermOrTagToSearch(searchOptions, term))
+    static searchByTermOrTag(projectId, searchOptions, term) {
+        search(projectId, addTermOrTagToSearch(searchOptions, term))
     }
 
-    static searchAllByTermOrTag(productId, term) {
+    static searchAllByTermOrTag(projectId, term) {
         def searchOptions = [feature: [:]]
-        searchByTermOrTag(productId, searchOptions, term)
+        searchByTermOrTag(projectId, searchOptions, term)
     }
 
     def xml(builder) {

@@ -79,37 +79,37 @@ class Activity implements Serializable, Comparable {
 
     // May not work on ORACLE
     static List<List> storyActivities(User user) {
-        def products = Product.findAllByRole(user, [BasePermission.WRITE, BasePermission.READ], [cache: true], true, false)
+        def projects = Project.findAllByRole(user, [BasePermission.WRITE, BasePermission.READ], [cache: true], true, false)
         def activitiesAndStories = []
-        if (products) {
+        if (projects) {
             activitiesAndStories = executeQuery("""SELECT DISTINCT a, s
                         FROM org.icescrum.core.domain.Activity as a, org.icescrum.core.domain.Story as s
                         WHERE a.parentType = 'story'
                         AND a.poster.id != :uid
                         AND a.parentRef = s.id
-                        AND s.backlog.id in (${products*.id.join(',')})
+                        AND s.backlog.id in (${projects*.id.join(',')})
                         ORDER BY a.dateCreated DESC""", [uid: user.id], [cache: true])
             activitiesAndStories = activitiesAndStories.findAll { it[0].important }
         }
         activitiesAndStories
     }
 
-    static recentProductActivity(Product product) {
+    static recentProjectActivity(Project project) {
         executeQuery("""SELECT a
                         FROM org.icescrum.core.domain.Activity as a
-                        WHERE a.parentType = 'product'
+                        WHERE a.parentType = 'project'
                         AND a.parentRef = :p
-                        ORDER BY a.dateCreated DESC""", [p: product.id], [max: 15])
+                        ORDER BY a.dateCreated DESC""", [p: project.id], [max: 15])
     }
 
-    static recentStoryActivity(Product product) {
+    static recentStoryActivity(Project project) {
         executeQuery("""SELECT a
                         FROM org.icescrum.core.domain.Activity as a, org.icescrum.core.domain.Story as s
                         WHERE a.parentType = 'story'
                         AND a.parentRef = s.id
                         AND NOT (a.code LIKE 'task')
                         AND s.backlog = :p
-                        ORDER BY a.dateCreated DESC""", [p: product], [max: 15])
+                        ORDER BY a.dateCreated DESC""", [p: project], [max: 15])
     }
 
     def xml(builder) {

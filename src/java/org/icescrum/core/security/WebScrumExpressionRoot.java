@@ -23,13 +23,12 @@
 package org.icescrum.core.security;
 
 import org.codehaus.groovy.grails.web.servlet.GrailsApplicationAttributes;
-import org.icescrum.core.domain.Product;
+import org.icescrum.core.domain.Project;
 import org.icescrum.core.domain.Team;
 import org.icescrum.core.services.SecurityService;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.FilterInvocation;
 import org.springframework.security.web.access.expression.WebSecurityExpressionRoot;
-import java.util.Set;
 
 public class WebScrumExpressionRoot extends WebSecurityExpressionRoot implements ScrumExpressionRoot{
 
@@ -43,16 +42,16 @@ public class WebScrumExpressionRoot extends WebSecurityExpressionRoot implements
         super(a, fi);
     }
 
-    public boolean inProduct(Product p) {
-        return securityService.inProduct(p, super.authentication);
+    public boolean inProject(Project p) {
+        return securityService.inProject(p, super.authentication);
     }
 
-    public boolean inProduct(long p) {
-        return securityService.inProduct(p, super.authentication);
+    public boolean inProject(long p) {
+        return securityService.inProject(p, super.authentication);
     }
 
-    public boolean inProduct() {
-        return inProduct(null);
+    public boolean inProject() {
+        return inProject(null);
     }
 
     public boolean inTeam(Team t) {
@@ -76,7 +75,7 @@ public class WebScrumExpressionRoot extends WebSecurityExpressionRoot implements
         return securityService.productOwner(p, super.authentication);
     }
 
-     public boolean productOwner(Product p) {
+     public boolean productOwner(Project p) {
         return securityService.productOwner(p, super.authentication);
     }
 
@@ -92,7 +91,7 @@ public class WebScrumExpressionRoot extends WebSecurityExpressionRoot implements
         return securityService.teamMember(t, super.authentication);
     }
 
-    public boolean teamMember(Product p) {
+    public boolean teamMember(Project p) {
         Team team = p.getFirstTeam();
         return team != null && securityService.teamMember(team, super.authentication);
     }
@@ -109,7 +108,7 @@ public class WebScrumExpressionRoot extends WebSecurityExpressionRoot implements
         return securityService.scrumMaster(t, super.authentication);
     }
 
-    public boolean scrumMaster(Product p) {
+    public boolean scrumMaster(Project p) {
         Team team = p.getFirstTeam();
         return team != null && securityService.scrumMaster(team, super.authentication);
     }
@@ -122,11 +121,11 @@ public class WebScrumExpressionRoot extends WebSecurityExpressionRoot implements
         return securityService.stakeHolder(p, super.authentication, false, this.request.getAttribute(GrailsApplicationAttributes.CONTROLLER_NAME_ATTRIBUTE));
     }
 
-    public boolean stakeHolder(Product p) {
+    public boolean stakeHolder(Project p) {
         return securityService.stakeHolder(p, super.authentication, false, this.request.getAttribute(GrailsApplicationAttributes.CONTROLLER_NAME_ATTRIBUTE));
     }
 
-    public boolean stakeHolder(Product p, boolean onlyPrivate) {
+    public boolean stakeHolder(Project p, boolean onlyPrivate) {
         return securityService.stakeHolder(p, super.authentication, onlyPrivate, this.request.getAttribute(GrailsApplicationAttributes.CONTROLLER_NAME_ATTRIBUTE));
     }
 
@@ -142,15 +141,15 @@ public class WebScrumExpressionRoot extends WebSecurityExpressionRoot implements
         return securityService.admin(super.authentication);
     }
 
-    public boolean archivedProduct(Product p) {
-        return securityService.archivedProduct(p);
+    public boolean archivedProject(Project p) {
+        return securityService.archivedProject(p);
     }
 
-    public boolean archivedProduct() {
-        return securityService.archivedProduct(null);
+    public boolean archivedProject() {
+        return securityService.archivedProject(null);
     }
 
-    public boolean archivedProduct(long p) {
-        return securityService.archivedProduct(p);
+    public boolean archivedProject(long p) {
+        return securityService.archivedProject(p);
     }
 }

@@ -95,9 +95,9 @@ class Story extends BacklogElement implements Cloneable, Serializable {
         plannedDate(nullable: true)
         inProgressDate(nullable: true)
         doneDate(nullable: true)
-        parentSprint(nullable: true, validator: { newSprint, story -> newSprint == null || newSprint.parentProduct.id == story.backlog.id ?: 'invalid' })
+        parentSprint(nullable: true, validator: { newSprint, story -> newSprint == null || newSprint.parentProject.id == story.backlog.id ?: 'invalid' })
         feature(nullable: true, validator: { newFeature, story -> newFeature == null || newFeature.backlog.id == story.backlog.id ?: 'invalid' })
-        actor(nullable: true, validator: { newActor, story -> newActor == null || newActor.parentProduct.id == story.backlog.id ?: 'invalid' })
+        actor(nullable: true, validator: { newActor, story -> newActor == null || newActor.parentProject.id == story.backlog.id ?: 'invalid' })
         affectVersion(nullable: true)
         effort(nullable: true, validator: { newEffort, story -> newEffort == null || (newEffort >= 0 && newEffort < 1000) ?: 'invalid' })
         creator(nullable: true) // in case of a user deletion, the story can remain without owner
@@ -251,18 +251,18 @@ class Story extends BacklogElement implements Cloneable, Serializable {
         }
 
         // Return the total number of points in the backlog
-        totalPoint { idProduct ->
+        totalPoint { idProject ->
             projections {
                 sum 'effort'
                 backlog {
-                    eq 'id', idProduct
+                    eq 'id', idProject
                 }
                 isNull 'parentSprint'
                 isNull 'effort'
             }
         }
 
-        getInProduct { p, id ->
+        getInProject { p, id ->
             backlog {
                 eq 'id', p
             }
@@ -273,8 +273,8 @@ class Story extends BacklogElement implements Cloneable, Serializable {
         }
     }
 
-    static Story withStory(long productId, long id) {
-        Story story = (Story) getInProduct(productId, id).list()
+    static Story withStory(long projectId, long id) {
+        Story story = (Story) getInProject(projectId, id).list()
         if (!story) {
             throw new ObjectNotFoundException(id, 'Story')
         }
@@ -283,7 +283,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
 
     static List<Story> withStories(def params, def id = 'id') {
         def ids = params[id]?.contains(',') ? params[id].split(',')*.toLong() : params.list(id)
-        List<Story> stories = ids ? getAll(ids).findAll { it && it.backlog.id == params.product.toLong() } : null
+        List<Story> stories = ids ? getAll(ids).findAll { it && it.backlog.id == params.project.toLong() } : null
         if (!stories) {
             throw new ObjectNotFoundException(ids, 'Story')
         }
@@ -293,7 +293,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
     static int findNextUId(Long pid) {
         (executeQuery(
                 """SELECT MAX(s.uid)
-                   FROM org.icescrum.core.domain.Story as s, org.icescrum.core.domain.Product as p
+                   FROM org.icescrum.core.domain.Story as s, org.icescrum.core.domain.Project as p
                    WHERE s.backlog = p
                    AND p.id = :pid """, [pid: pid])[0] ?: 0) + 1
     }
@@ -363,7 +363,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
         return true
     }
 
-    static search(product, options, rowCount = false) {
+    static search(project, options, rowCount = false) {
         List<Story> stories = []
         def getList = { it instanceof List ? it : (it instanceof Object[] ? it as List : [it]) }
         def criteria = {
@@ -373,7 +373,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                 }
             }
             backlog {
-                eq 'id', product
+                eq 'id', project
             }
             if (options.story) {
                 if (options.story.term) {
@@ -504,30 +504,30 @@ class Story extends BacklogElement implements Cloneable, Serializable {
         }
     }
 
-    static searchByTermOrTag(productId, searchOptions, term) {
-        search(productId, addTermOrTagToSearch(searchOptions, term))
+    static searchByTermOrTag(projectId, searchOptions, term) {
+        search(projectId, addTermOrTagToSearch(searchOptions, term))
     }
 
-    static searchAllByTermOrTag(productId, term) {
+    static searchAllByTermOrTag(projectId, term) {
         def searchOptions = [story: [:]]
-        searchByTermOrTag(productId, searchOptions, term)
+        searchByTermOrTag(projectId, searchOptions, term)
     }
 
-    static searchByTermOrTagInSandbox(productId, term) {
+    static searchByTermOrTagInSandbox(projectId, term) {
         def searchOptions = [story: [state: STATE_SUGGESTED.toString()]]
-        searchByTermOrTag(productId, searchOptions, term)
+        searchByTermOrTag(projectId, searchOptions, term)
     }
 
-    static searchByTermOrTagInBacklog(product, term) {
+    static searchByTermOrTagInBacklog(project, term) {
         def stories
         if (term) {
             if (hasTagKeyword(term)) {
-                stories = search(product.id, [tag: removeTagKeyword(term)]).findAll { it.state in [STATE_ACCEPTED, STATE_ESTIMATED] }
+                stories = search(project.id, [tag: removeTagKeyword(term)]).findAll { it.state in [STATE_ACCEPTED, STATE_ESTIMATED] }
             } else {
-                stories = findInStoriesAcceptedEstimated(product.id, '%' + term + '%').list()
+                stories = findInStoriesAcceptedEstimated(project.id, '%' + term + '%').list()
             }
         } else {
-            stories = findAllByBacklogAndStateBetween(product, STATE_ACCEPTED, STATE_ESTIMATED, [cache: true, sort: 'rank'])
+            stories = findAllByBacklogAndStateBetween(project, STATE_ACCEPTED, STATE_ESTIMATED, [cache: true, sort: 'rank'])
         }
         stories
     }

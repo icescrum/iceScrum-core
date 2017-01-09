@@ -56,15 +56,15 @@ class StoryService extends IceScrumEventPublisher {
 
     def g = new org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib()
 
-    @PreAuthorize('isAuthenticated() and !archivedProduct(#product)')
-    void save(Story story, Product product, User user) {
+    @PreAuthorize('isAuthenticated() and !archivedProject(#project)')
+    void save(Story story, Project project, User user) {
         if (!story.effort) {
             story.effort = null
         }
-        story.backlog = product
+        story.backlog = project
         story.creator = user
-        manageActors(story, product)
-        story.uid = Story.findNextUId(product.id)
+        manageActors(story, project)
+        story.uid = Story.findNextUId(project.id)
         if (!story.suggestedDate) {
             story.suggestedDate = new Date()
         }
@@ -80,8 +80,8 @@ class StoryService extends IceScrumEventPublisher {
         }
         story.affectVersion = (story.type == Story.TYPE_DEFECT ? story.affectVersion : null)
         story.addToFollowers(user)
-        product.allUsers.findAll {
-            user.id != it.id && product.pkey in it.preferences.emailsSettings.autoFollow
+        project.allUsers.findAll {
+            user.id != it.id && project.pkey in it.preferences.emailsSettings.autoFollow
         }.each {
             story.addToFollowers(user)
         }
@@ -89,14 +89,14 @@ class StoryService extends IceScrumEventPublisher {
         setRank(story, rank)
         story.save(flush: true)
         story.refresh() // required to initialize collections to empty list
-        product.addToStories(story)
+        project.addToStories(story)
         publishSynchronousEvent(IceScrumEventType.CREATE, story)
     }
 
     // TODO replace stories by a single one and call the service in a loop in story controller
-    @PreAuthorize('isAuthenticated() and !archivedProduct(#stories[0].backlog)')
+    @PreAuthorize('isAuthenticated() and !archivedProject(#stories[0].backlog)')
     void delete(Collection<Story> stories, newObject = null, reason = null) {
-        def product = stories[0].backlog
+        def project = stories[0].backlog
         stories.each { story ->
             def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_DELETE, story)
             // Custom properties
@@ -106,7 +106,7 @@ class StoryService extends IceScrumEventPublisher {
             if (story.state >= Story.STATE_PLANNED) {
                 throw new BusinessException(code: 'is.story.error.not.deleted.state')
             }
-            if (!(story.creator.id == springSecurityService.currentUser?.id) && !securityService.productOwner(product.id, springSecurityService.authentication)) {
+            if (!(story.creator.id == springSecurityService.currentUser?.id) && !securityService.productOwner(project.id, springSecurityService.authentication)) {
                 throw new BusinessException(code: 'is.story.error.not.deleted.permission')
             }
             if (story.actor) {
@@ -130,16 +130,16 @@ class StoryService extends IceScrumEventPublisher {
 
             story.delete()
             if (!newObject) {
-                activityService.addActivity(product, springSecurityService.currentUser, Activity.CODE_DELETE, story.name)
+                activityService.addActivity(project, springSecurityService.currentUser, Activity.CODE_DELETE, story.name)
             }
-            product.removeFromStories(story)
-            product.save(flush: true)
+            project.removeFromStories(story)
+            project.save(flush: true)
             // Be careful, events may be pushed event if the delete fails because the flush didn't occur yet
             publishSynchronousEvent(IceScrumEventType.DELETE, story, dirtyProperties)
         }
     }
 
-    @PreAuthorize('isAuthenticated() and !archivedProduct(#story.backlog)')
+    @PreAuthorize('isAuthenticated() and !archivedProject(#story.backlog)')
     void update(Story story, Map props = [:]) {
         if (props.effort != null) {
             if (props.effort != story.effort) {
@@ -175,22 +175,22 @@ class StoryService extends IceScrumEventPublisher {
             updateRank(story, props.rank)
         }
         if (story.isDirty('description')) {
-            def product = story.backlog
-            manageActors(story, product)
+            def project = story.backlog
+            manageActors(story, project)
         }
         def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_UPDATE, story)
         story.save()
         publishSynchronousEvent(IceScrumEventType.UPDATE, story, dirtyProperties)
     }
 
-    @PreAuthorize('(productOwner(#sprint.parentProduct) or scrumMaster(#sprint.parentProduct)) and !archivedProduct(#sprint.parentProduct)')
+    @PreAuthorize('(productOwner(#sprint.parentProject) or scrumMaster(#sprint.parentProject)) and !archivedProject(#sprint.parentProject)')
     public void plan(Sprint sprint, Collection<Story> stories) {
         stories.each {
             this.plan(sprint, it)
         }
     }
 
-    @PreAuthorize('(productOwner(#sprint.parentProduct) or scrumMaster(#sprint.parentProduct)) and !archivedProduct(#sprint.parentProduct)')
+    @PreAuthorize('(productOwner(#sprint.parentProject) or scrumMaster(#sprint.parentProject)) and !archivedProject(#sprint.parentProject)')
     public void plan(Sprint sprint, Story story, Long newRank = null) {
         if (story.dependsOn) {
             if (story.dependsOn.state < Story.STATE_PLANNED) {
@@ -231,7 +231,7 @@ class StoryService extends IceScrumEventPublisher {
             if (!story.plannedDate) {
                 story.plannedDate = story.inProgressDate
             }
-            def autoCreateTaskOnEmptyStory = sprint.parentRelease.parentProduct.preferences.autoCreateTaskOnEmptyStory
+            def autoCreateTaskOnEmptyStory = sprint.parentRelease.parentProject.preferences.autoCreateTaskOnEmptyStory
             if (autoCreateTaskOnEmptyStory) {
                 if (autoCreateTaskOnEmptyStory && !story.tasks) {
                     def emptyTask = new Task(name: story.name, state: Task.STATE_WAIT, description: story.description, parentStory: story)
@@ -252,7 +252,7 @@ class StoryService extends IceScrumEventPublisher {
         }
     }
 
-    @PreAuthorize('(productOwner(#story.backlog) or scrumMaster(#story.backlog)) and !archivedProduct(#story.backlog)')
+    @PreAuthorize('(productOwner(#story.backlog) or scrumMaster(#story.backlog)) and !archivedProject(#story.backlog)')
     public void unPlan(Story story, Boolean fullUnPlan = true) {
         def sprint = story.parentSprint
         if (!sprint) {
@@ -311,11 +311,11 @@ class StoryService extends IceScrumEventPublisher {
     def autoPlan(List<Sprint> sprints, Double capacity) {
         def nbPoints = 0
         int nbSprint = 0
-        def product = sprints.first().parentProduct
+        def project = sprints.first().parentProject
         sprints = sprints.findAll { it.state == Sprint.STATE_WAIT }.sort { it.orderNumber }
         int maxSprint = sprints.size()
         // Get the list of stories that have been estimated
-        Collection<Story> itemsList = product.stories.findAll { it.state == Story.STATE_ESTIMATED }.sort { it.rank }
+        Collection<Story> itemsList = project.stories.findAll { it.state == Story.STATE_ESTIMATED }.sort { it.rank }
         Sprint currentSprint = null
         def plannedStories = []
         // Associate story in each sprint
@@ -421,7 +421,7 @@ class StoryService extends IceScrumEventPublisher {
         cleanRanks(stories)
     }
 
-    @PreAuthorize('productOwner(#story.backlog) and !archivedProduct(#story.backlog)')
+    @PreAuthorize('productOwner(#story.backlog) and !archivedProject(#story.backlog)')
     def acceptToBacklog(Story story, Long newRank = null) {
         if (story.state > Story.STATE_SUGGESTED) {
             throw new BusinessException(code: 'is.story.error.not.state.suggested')
@@ -433,7 +433,7 @@ class StoryService extends IceScrumEventPublisher {
         def rank = newRank ?: ((Story.countAllAcceptedOrEstimated(story.backlog.id)?.list()[0] ?: 0) + 1)
         story.state = Story.STATE_ACCEPTED
         story.acceptedDate = new Date()
-        if (((Product) story.backlog).preferences.noEstimation) {
+        if (((Project) story.backlog).preferences.noEstimation) {
             story.estimatedDate = new Date()
             story.effort = 1
             story.state = Story.STATE_ESTIMATED
@@ -442,7 +442,7 @@ class StoryService extends IceScrumEventPublisher {
         update(story)
     }
 
-    @PreAuthorize('productOwner(#story.backlog) and !archivedProduct(#story.backlog)')
+    @PreAuthorize('productOwner(#story.backlog) and !archivedProject(#story.backlog)')
     void returnToSandbox(Story story, Long newRank) {
         if (!(story.state in [Story.STATE_ESTIMATED, Story.STATE_ACCEPTED])) {
             throw new BusinessException(code: 'is.story.error.not.in.backlog')
@@ -457,7 +457,7 @@ class StoryService extends IceScrumEventPublisher {
         update(story)
     }
 
-    @PreAuthorize('productOwner(#stories[0].backlog) and !archivedProduct(#stories[0].backlog)')
+    @PreAuthorize('productOwner(#stories[0].backlog) and !archivedProject(#stories[0].backlog)')
     def acceptToFeature(List<Story> stories) {
         def features = []
         stories.each { story ->
@@ -484,7 +484,7 @@ class StoryService extends IceScrumEventPublisher {
                     throw new ValidationException('Validation Error(s) occurred during save()', feature.errors)
                 }
             }
-            featureService.save(feature, (Product) story.backlog)
+            featureService.save(feature, (Project) story.backlog)
             story.attachments.each { attachment ->
                 feature.addAttachment(story.creator, attachmentableService.getFile(attachment), attachment.filename)
             }
@@ -496,10 +496,10 @@ class StoryService extends IceScrumEventPublisher {
         return features
     }
 
-    @PreAuthorize('productOwner(#stories[0].backlog) and !archivedProduct(#stories[0].backlog)')
+    @PreAuthorize('productOwner(#stories[0].backlog) and !archivedProject(#stories[0].backlog)')
     def acceptToUrgentTask(List<Story> stories) {
         def tasks = []
-        def product = stories[0].backlog
+        def project = stories[0].backlog
         stories.each { story ->
             if (story.state > Story.STATE_SUGGESTED) {
                 throw new BusinessException(code: 'is.story.error.not.state.suggested')
@@ -510,7 +510,7 @@ class StoryService extends IceScrumEventPublisher {
             task.type = Task.TYPE_URGENT
             task.state = Task.STATE_WAIT
             task.description = (story.affectVersion ? g.message(code: 'is.story.affectVersion') + ': ' + story.affectVersion : '') + (task.description ?: '')
-            def sprint = (Sprint) Sprint.findCurrentSprint(product.id).list()
+            def sprint = (Sprint) Sprint.findCurrentSprint(project.id).list()
             if (!sprint) {
                 throw new BusinessException(code: 'is.story.error.not.acceptedAsUrgentTask')
             }
@@ -551,12 +551,12 @@ class StoryService extends IceScrumEventPublisher {
         return tasks
     }
 
-    @PreAuthorize('(productOwner(#story.backlog) or scrumMaster(#story.backlog)) and !archivedProduct(#story.backlog)')
+    @PreAuthorize('(productOwner(#story.backlog) or scrumMaster(#story.backlog)) and !archivedProject(#story.backlog)')
     void done(Story story) {
         done([story])
     }
 
-    @PreAuthorize('(productOwner(#stories[0].backlog) or scrumMaster(#stories[0].backlog)) and !archivedProduct(#stories[0].backlog)')
+    @PreAuthorize('(productOwner(#stories[0].backlog) or scrumMaster(#stories[0].backlog)) and !archivedProject(#stories[0].backlog)')
     void done(List<Story> stories) {
         stories.each { story ->
             if (story.parentSprint.state != Sprint.STATE_INPROGRESS) {
@@ -590,12 +590,12 @@ class StoryService extends IceScrumEventPublisher {
         }
     }
 
-    @PreAuthorize('productOwner(#story.backlog) and !archivedProduct(#story.backlog)')
+    @PreAuthorize('productOwner(#story.backlog) and !archivedProject(#story.backlog)')
     void unDone(Story story) {
         unDone([story])
     }
 
-    @PreAuthorize('(productOwner(#stories[0].backlog) or scrumMaster(#stories[0].backlog)) and !archivedProduct(#stories[0].backlog)')
+    @PreAuthorize('(productOwner(#stories[0].backlog) or scrumMaster(#stories[0].backlog)) and !archivedProject(#stories[0].backlog)')
     void unDone(List<Story> stories) {
         stories.each { story ->
             if (story.state != Story.STATE_DONE) {
@@ -619,10 +619,10 @@ class StoryService extends IceScrumEventPublisher {
         }
     }
 
-    @PreAuthorize('inProduct(#stories[0].backlog) and !archivedProduct(#stories[0].backlog)')
+    @PreAuthorize('inProject(#stories[0].backlog) and !archivedProject(#stories[0].backlog)')
     def copy(List<Story> stories) {
         def copiedStories = []
-        def product = stories[0].backlog
+        def project = stories[0].backlog
         stories.each { story ->
             def copiedStory = new Story(
                     name: story.name + '_1',
@@ -631,7 +631,7 @@ class StoryService extends IceScrumEventPublisher {
                     notes: story.notes,
                     dateCreated: new Date(),
                     type: story.type,
-                    backlog: product,
+                    backlog: project,
                     affectVersion: story.affectVersion,
                     origin: story.name,
                     feature: story.feature,
@@ -651,7 +651,7 @@ class StoryService extends IceScrumEventPublisher {
                     throw new ValidationException('Validation Error(s) occurred during save()', copiedStory.errors)
                 }
             }
-            save(copiedStory, (Product) story.backlog, (User) springSecurityService.currentUser)
+            save(copiedStory, (Project) story.backlog, (User) springSecurityService.currentUser)
             story.attachments?.each { Attachment a ->
                 def currentFile = attachmentableService.getFile(a)
                 def newFile = File.createTempFile(a.name, a.ext)
@@ -671,15 +671,15 @@ class StoryService extends IceScrumEventPublisher {
     }
 
     def unMarshall(def storyXml, def options) {
-        Product product = options.product
+        Project project = options.project
         Sprint sprint = options.sprint
         Story.withTransaction(readOnly: !options.save) { transaction ->
             try {
                 def todoDate = null
                 if (storyXml.todoDate?.text() && storyXml.todoDate?.text() != "") {
                     todoDate = new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(storyXml.todoDate.text())
-                } else if (sprint || product) {
-                    todoDate = sprint?.todoDate ?: product.todoDate
+                } else if (sprint || project) {
+                    todoDate = sprint?.todoDate ?: project.todoDate
                 }
                 def acceptedDate = null
                 if (storyXml.acceptedDate?.text() && storyXml.acceptedDate?.text() != "") {
@@ -723,45 +723,45 @@ class StoryService extends IceScrumEventPublisher {
                         uid: storyXml.@uid.text()?.isEmpty() ? storyXml.@id.text().toInteger() : storyXml.@uid.text().toInteger(),
                 )
                 // References on other objects
-                if (product) {
-                    if (!storyXml.feature?.@uid?.isEmpty() && product) {
-                        def feature = product.features.find {
+                if (project) {
+                    if (!storyXml.feature?.@uid?.isEmpty() && project) {
+                        def feature = project.features.find {
                             it.uid == storyXml.feature.@uid.text().toInteger()
                         } ?: null
                         if (feature) {
                             feature.addToStories(story)
                         }
-                    } else if (!storyXml.feature?.@id?.isEmpty() && product) {
-                        def feature = product.features.find {
+                    } else if (!storyXml.feature?.@id?.isEmpty() && project) {
+                        def feature = project.features.find {
                             it.uid == storyXml.feature.@id.text().toInteger()
                         } ?: null
                         if (feature) {
                             feature.addToStories(story)
                         }
                     }
-                    if (!storyXml.actor?.@uid?.isEmpty() && product) {
-                        def actor = product.actors.find { it.uid == storyXml.actor.@uid.text().toInteger() } ?: null
+                    if (!storyXml.actor?.@uid?.isEmpty() && project) {
+                        def actor = project.actors.find { it.uid == storyXml.actor.@uid.text().toInteger() } ?: null
                         if (actor) {
                             actor.addToStories(story)
                         }
-                    } else if (!storyXml.actor?.@id?.isEmpty() && product) {
-                        def actor = product.actors.find { it.uid == storyXml.actor.@id.text().toInteger() } ?: null
+                    } else if (!storyXml.actor?.@id?.isEmpty() && project) {
+                        def actor = project.actors.find { it.uid == storyXml.actor.@id.text().toInteger() } ?: null
                         if (actor) {
                             actor.addToStories(story)
                         }
                     }
                     def user
                     if (!storyXml.creator?.@uid?.isEmpty())
-                        user = ((User) product.getAllUsers().find { it.uid == storyXml.creator.@uid.text() }) ?: null
+                        user = ((User) project.getAllUsers().find { it.uid == storyXml.creator.@uid.text() }) ?: null
                     else {
-                        user = ApplicationSupport.findUserUIDOldXMl(storyXml, 'creator', product.getAllUsers())
+                        user = ApplicationSupport.findUserUIDOldXMl(storyXml, 'creator', project.getAllUsers())
                     }
                     if (user)
                         story.creator = user
                     else
-                        story.creator = (User) product.productOwners.first()
+                        story.creator = (User) project.productOwners.first()
 
-                    product.addToStories(story)
+                    project.addToStories(story)
                 }
                 if (sprint) {
                     sprint.addToStories(story)
@@ -791,14 +791,14 @@ class StoryService extends IceScrumEventPublisher {
         }
     }
 
-    public void manageActors(story, product) {
+    public void manageActors(story, project) {
         def newActor
         if (story.description) {
             def actorIdMatcher = story.description =~ /A\[(.+?)-.*?\]/
             if (actorIdMatcher) {
                 def uidString = actorIdMatcher[0][1]
                 if (uidString.isInteger()) {
-                    newActor = product.actors.find { it.uid == uidString.toInteger() }
+                    newActor = project.actors.find { it.uid == uidString.toInteger() }
                 }
             }
         }

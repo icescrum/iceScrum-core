@@ -61,13 +61,13 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
     ]
 
     static transients = [
-            'recurrentTasks', 'urgentTasks', 'hasNextSprint', 'parentReleaseId', 'activable', 'effectiveEndDate', 'effectiveStartDate', 'totalRemaining', 'parentProduct', 'totalEffort', 'previousSprint', 'nextSprint', 'parentReleaseName', 'index'
+            'recurrentTasks', 'urgentTasks', 'hasNextSprint', 'parentReleaseId', 'activable', 'effectiveEndDate', 'effectiveStartDate', 'totalRemaining', 'parentProject', 'totalEffort', 'previousSprint', 'nextSprint', 'parentReleaseName', 'index'
     ]
 
     static namedQueries = {
-        getInProduct { p, id ->
+        getInProject { p, id ->
             parentRelease {
-                parentProduct {
+                parentProject {
                     eq 'id', p
                 }
             }
@@ -77,7 +77,7 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
 
         findCurrentSprint { p ->
             parentRelease {
-                parentProduct {
+                parentProject {
                     eq 'id', p
                 }
                 eq 'state', Release.STATE_INPROGRESS
@@ -89,7 +89,7 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
 
         findCurrentOrNextSprint { p ->
             parentRelease {
-                parentProduct {
+                parentProject {
                     eq 'id', p
                 }
                 or {
@@ -110,7 +110,7 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
 
         findCurrentOrLastSprint { p ->
             parentRelease {
-                parentProduct {
+                parentProject {
                     eq 'id', p
                 }
                 or {
@@ -165,8 +165,8 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
         this.state = Sprint.STATE_DONE
     }
 
-    static Sprint withSprint(long productId, long id) {
-        Sprint sprint = (Sprint) getInProduct(productId, id).list()
+    static Sprint withSprint(long projectId, long id) {
+        Sprint sprint = (Sprint) getInProject(projectId, id).list()
         if (!sprint) {
             throw new ObjectNotFoundException(id, 'Sprint')
         }
@@ -175,7 +175,7 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
 
     static List<Sprint> withSprints(def params, def id = 'id') {
         def ids = params[id]?.contains(',') ? params[id].split(',')*.toLong() : params.list(id)
-        List<Sprint> sprints = ids ? getAll(ids).findAll { it && it.parentProduct.id == params.product.toLong() } : null
+        List<Sprint> sprints = ids ? getAll(ids).findAll { it && it.parentProject.id == params.project.toLong() } : null
         if (!sprints) {
             throw new ObjectNotFoundException(ids, 'Sprint')
         }
@@ -292,8 +292,8 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
         (BigDecimal) tasks?.sum { Task t -> t.estimation ? t.estimation.toBigDecimal() : 0.0 } ?: 0.0
     }
 
-    def getParentProduct() {
-        return this.parentRelease.parentProduct
+    def getParentProject() {
+        return this.parentRelease.parentProject
     }
 
     BigDecimal getTotalEffort() {

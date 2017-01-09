@@ -34,7 +34,7 @@ class UserPreferences implements Serializable {
 
     String activity
     String language = "en"
-    String lastProductOpened
+    String lastProjectOpened
     String emailsSettingsData //[onStory:['pkey','pkey2'...],onUrgentTask:['pkey','pkey2'...],autoFollow['pkey','pkey2'...]]
     String filterTask = "allTasks"
 
@@ -51,7 +51,7 @@ class UserPreferences implements Serializable {
 
     static constraints = {
         activity nullable: true
-        lastProductOpened nullable: true
+        lastProjectOpened nullable: true
         emailsSettingsData nullable: true
     }
 
@@ -103,7 +103,7 @@ class UserPreferences implements Serializable {
             builder.filterTask(this.filterTask)
             builder.menuHidden(this.menuHidden)
             builder.displayWhatsNew(this.displayWhatsNew)
-            builder.lastProductOpened(this.lastProductOpened)
+            builder.lastProjectOpened(this.lastProjectOpened)
             builder.emailsSettingsData(this.emailsSettingsData)
             builder.displayWelcomeTour(this.displayWelcomeTour)
             builder.lastReadActivities(this.lastReadActivities)

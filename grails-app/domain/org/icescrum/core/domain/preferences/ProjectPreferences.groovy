@@ -23,9 +23,9 @@
 
 package org.icescrum.core.domain.preferences
 
-import org.icescrum.core.domain.Product
+import org.icescrum.core.domain.Project
 
-class ProductPreferences implements Serializable {
+class ProjectPreferences implements Serializable {
 
     static final long serialVersionUID = 813639045272950126L
 
@@ -62,12 +62,12 @@ class ProductPreferences implements Serializable {
     }
 
     static belongsTo = [
-            product: Product
+            project: Project
     ]
 
     static mapping = {
         cache true
-        table 'is_product_preferences'
+        table 'is_project_preferences'
     }
 
     def xml(builder) {

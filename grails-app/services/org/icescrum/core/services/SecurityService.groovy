@@ -30,7 +30,7 @@ import grails.plugin.springsecurity.SpringSecurityUtils
 import grails.plugin.springsecurity.acl.AclClass
 import grails.plugin.springsecurity.acl.AclObjectIdentity
 import grails.plugin.springsecurity.acl.AclSid
-import org.icescrum.core.domain.Product
+import org.icescrum.core.domain.Project
 import org.icescrum.core.domain.Team
 import org.icescrum.core.domain.User
 import org.icescrum.core.domain.security.Authority
@@ -70,13 +70,13 @@ class SecurityService {
         u.save()
     }
 
-    void createProductOwnerPermissions(User u, Product p) {
+    void createProductOwnerPermissions(User u, Project p) {
         aclUtilService.addPermission GrailsHibernateUtil.unwrapIfProxy(p), u.username, WRITE
         u.lastUpdated = new Date()
         u.save()
     }
 
-    void deleteProductOwnerPermissions(User u, Product p) {
+    void deleteProductOwnerPermissions(User u, Project p) {
         aclUtilService.deletePermission GrailsHibernateUtil.unwrapIfProxy(p), u.username, WRITE
         u.lastUpdated = new Date()
         u.save()
@@ -108,41 +108,41 @@ class SecurityService {
         u.save()
     }
 
-    void createStakeHolderPermissions(User u, Product p) {
+    void createStakeHolderPermissions(User u, Project p) {
         aclUtilService.addPermission GrailsHibernateUtil.unwrapIfProxy(p), u.username, READ
         u.lastUpdated = new Date()
         u.save()
     }
 
-    void deleteStakeHolderPermissions(User u, Product p) {
+    void deleteStakeHolderPermissions(User u, Project p) {
         aclUtilService.deletePermission GrailsHibernateUtil.unwrapIfProxy(p), u.username, READ
         u.lastUpdated = new Date()
         u.save()
     }
 
     @SuppressWarnings("GroovyMissingReturnStatement")
-    boolean inProduct(product, auth) {
+    boolean inProject(project, auth) {
         if (!springSecurityService.isLoggedIn()) {
             return false
         }
-        boolean authorized = productOwner(product, auth)
+        boolean authorized = productOwner(project, auth)
         if (!authorized) {
             def p
-            if (!product) {
+            if (!project) {
                 def request = RCH.requestAttributes.currentRequest
                 if (request.filtered) {
-                    return request.inProduct
+                    return request.inProject
                 } else {
-                    product = parseCurrentRequestProduct(request)
+                    project = parseCurrentRequestProject(request)
                 }
-            } else if (product in Product) {
-                p = product
-                product = product.id
+            } else if (project in Project) {
+                p = project
+                project = project.id
             }
-            if (product) {
+            if (project) {
                 def computeResult = {
                     if (!p) {
-                        p = Product.get(product)
+                        p = Project.get(project)
                     }
                     if (!p || !auth) {
                         return false
@@ -159,26 +159,26 @@ class SecurityService {
         return authorized
     }
 
-    boolean archivedProduct(product) {
+    boolean archivedProject(project) {
         def p
         if (SpringSecurityUtils.ifAnyGranted(Authority.ROLE_ADMIN)) {
             return false
         }
-        if (!product) {
+        if (!project) {
             def request = RCH.requestAttributes.currentRequest
             if (request.filtered) {
-                return request.archivedProduct ?: false
+                return request.archivedProject ?: false
             } else {
-                product = parseCurrentRequestProduct(request)
+                project = parseCurrentRequestProject(request)
             }
-        } else if (product in Product) {
-            p = product
-            product = product.id
+        } else if (project in Project) {
+            p = project
+            project = project.id
         }
-        if (product) {
+        if (project) {
             def computeResult = {
                 if (!p) {
-                    p = Product.get(product)
+                    p = Project.get(project)
                 }
                 return p ? p.preferences.archived : false
             }
@@ -195,9 +195,9 @@ class SecurityService {
         teamMember(team, auth) || scrumMaster(team, auth)
     }
 
-    Team openProductTeam(Long productId, Long principalId) {
+    Team openProjectTeam(Long projectId, Long principalId) {
         def computeResult = {
-            def team = Team.productTeam(productId, principalId).list(max: 1)
+            def team = Team.projectTeam(projectId, principalId).list(max: 1)
             return team ? team[0] : null
         }
         return computeResult()
@@ -214,10 +214,10 @@ class SecurityService {
             if (request.filtered) {
                 return request.scrumMaster
             } else {
-                def parsedProduct = parseCurrentRequestProduct(request)
-                if (parsedProduct) {
-                    def p = Product.get(parsedProduct)
-                    //case product doesn't exist
+                def parsedProject = parseCurrentRequestProject(request)
+                if (parsedProject) {
+                    def p = Project.get(parsedProject)
+                    //case project doesn't exist
                     if(!p){
                         return false
                     }
@@ -252,29 +252,29 @@ class SecurityService {
         }
     }
 
-    boolean stakeHolder(product, auth, onlyPrivate, controllerName = null) {
+    boolean stakeHolder(project, auth, onlyPrivate, controllerName = null) {
         if (!springSecurityService.isLoggedIn() && onlyPrivate) {
             return false
         }
         def p = null
         def stakeHolder = false
-        if (!product) {
+        if (!project) {
             def request = RCH.requestAttributes.currentRequest
             if (request.filtered && !controllerName) {
                 return request.stakeHolder
             } else {
-                product = parseCurrentRequestProduct(request)
+                project = parseCurrentRequestProject(request)
                 if (request.stakeHolder) {
                     stakeHolder = request.stakeHolder
                 }
             }
-        } else if (product in Product) {
-            p = GrailsHibernateUtil.unwrapIfProxy(product)
-            product = product.id
+        } else if (project in Project) {
+            p = GrailsHibernateUtil.unwrapIfProxy(project)
+            project = project.id
         }
-        if (product) {
+        if (project) {
             if (!p) {
-                p = Product.get(product)
+                p = Project.get(project)
             }
             if (!p || !auth) {
                 return false
@@ -296,30 +296,30 @@ class SecurityService {
         }
     }
 
-    boolean productOwner(product, auth) {
+    boolean productOwner(project, auth) {
         if (!springSecurityService.isLoggedIn()) {
             return false
         }
         def p = null
-        if (!product) {
+        if (!project) {
             def request = RCH.requestAttributes.currentRequest
             if (request.filtered) {
                 return request.productOwner
             } else {
-                product = parseCurrentRequestProduct(request)
+                project = parseCurrentRequestProject(request)
             }
-        } else if (product in Product) {
-            p = GrailsHibernateUtil.unwrapIfProxy(product)
-            product = product.id
+        } else if (project in Project) {
+            p = GrailsHibernateUtil.unwrapIfProxy(project)
+            project = project.id
         }
-        def isPo = isProductOwner(product, auth, p)
+        def isPo = isProductOwner(project, auth, p)
         if (isPo) {
             return true
-        } else if (product) {
+        } else if (project) {
             if (!p) {
-                p = Product.get(product)
+                p = Project.get(project)
             }
-            //case product doesn't exist
+            //case project doesn't exist
             if(!p){
                 return false
             }
@@ -338,14 +338,14 @@ class SecurityService {
         return SpringSecurityUtils.ifAnyGranted(Authority.ROLE_ADMIN)
     }
 
-    boolean isProductOwner(product, auth, p = null) {
-        if (product) {
+    boolean isProductOwner(project, auth, p = null) {
+        if (project) {
             if (SpringSecurityUtils.ifAnyGranted(Authority.ROLE_ADMIN)) {
                 return true
             }
             def computeResult = {
                 if (!p) {
-                    p = Product.get(product)
+                    p = Project.get(project)
                 }
                 if (!p || !auth) {
                     return false
@@ -368,12 +368,12 @@ class SecurityService {
             if (request.filtered) {
                 return request.inTeam
             } else {
-                def parsedProduct = parseCurrentRequestProduct(request)
-                if (parsedProduct) {
+                def parsedProject = parseCurrentRequestProject(request)
+                if (parsedProject) {
                     if (SpringSecurityUtils.ifAnyGranted(Authority.ROLE_ADMIN)) {
                         return true
                     }
-                    t = openProductTeam(parsedProduct, springSecurityService.principal.id)
+                    t = openProjectTeam(parsedProject, springSecurityService.principal.id)
                     team = t?.id
                 }
             }
@@ -404,17 +404,17 @@ class SecurityService {
         UserAuthority.countByAuthorityAndUser(Authority.findByAuthority(Authority.ROLE_ADMIN, [cache: true]), user, [cache: true])
     }
 
-    Long parseCurrentRequestProduct(request) {
-        def res = request['product_id']
+    Long parseCurrentRequestProject(request) {
+        def res = request['project_id']
         if (!res) {
-            def param = request.getParameter('product')
+            def param = request.getParameter('project')
             if (!param) {
                 def mappingInfo = grailsUrlMappingsHolder.match(request.forwardURI.replaceFirst(request.contextPath, ''))
-                res = mappingInfo?.parameters?.getAt('product')?.decodeProductKey()?.toLong()
+                res = mappingInfo?.parameters?.getAt('project')?.decodeProjectKey()?.toLong()
             } else {
-                res = param?.decodeProductKey()?.toLong()
+                res = param?.decodeProjectKey()?.toLong()
             }
-            request['product_id'] = res
+            request['project_id'] = res
         }
         return res
     }
@@ -457,10 +457,10 @@ class SecurityService {
             if (request.filtered) {
                 return request.owner
             } else {
-                def parsedProduct = parseCurrentRequestProduct(request)
-                if (parsedProduct) {
-                    def p = Product.get(parsedProduct)
-                    //case product doesn't exist
+                def parsedProject = parseCurrentRequestProject(request)
+                if (parsedProject) {
+                    def p = Project.get(parsedProject)
+                    //case project doesn't exist
                     if(!p){
                         return false
                     }
@@ -510,20 +510,20 @@ class SecurityService {
         request.teamMember = request.filtered ? request.teamMember : teamMember(null, springSecurityService.authentication)
         request.stakeHolder = request.filtered ? request.stakeHolder : stakeHolder(null, springSecurityService.authentication, false)
         request.owner = request.filtered ? request.owner : owner(null, springSecurityService.authentication)
-        request.inProduct = request.filtered ? request.inProduct : request.scrumMaster ?: request.productOwner ?: request.teamMember ?: false
+        request.inProject = request.filtered ? request.inProject : request.scrumMaster ?: request.productOwner ?: request.teamMember ?: false
         request.inTeam = request.filtered ? request.inTeam : request.scrumMaster ?: request.teamMember ?: false
         request.admin = request.filtered ? request.admin : admin(springSecurityService.authentication) ?: false
-        if (request.owner && !request.inProduct && !request.admin) {
+        if (request.owner && !request.inProject && !request.admin) {
             request.stakeholder = true
         }
-        if ((request.inProduct || request.stakeHolder) && archivedProduct(null)) {
+        if ((request.inProject || request.stakeHolder) && archivedProject(null)) {
             request.scrumMaster = false
             request.productOwner = false
             request.teamMember = false
             request.inTeam = false
-            request.inProduct = false
+            request.inProject = false
             request.owner = false
-            request.archivedProduct = true
+            request.archivedProject = true
         }
         request.filtered = request.filtered ?: true
     }

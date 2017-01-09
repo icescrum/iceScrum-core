@@ -46,7 +46,7 @@ import org.apache.http.impl.client.DefaultHttpClient
 import org.apache.http.protocol.BasicHttpContext
 import org.apache.http.util.EntityUtils
 import org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib
-import org.icescrum.core.domain.Product
+import org.icescrum.core.domain.Project
 import org.icescrum.core.domain.Team
 import org.icescrum.core.domain.User
 import org.icescrum.core.domain.preferences.UserPreferences
@@ -150,17 +150,17 @@ class ApplicationSupport {
         println dirPath
         config.icescrum.images.users.dir = dirPath
 
-        dirPath = config.icescrum.baseDir.toString() + File.separator + "images" + File.separator + "products" + File.separator
+        dirPath = config.icescrum.baseDir.toString() + File.separator + "images" + File.separator + "projects" + File.separator
         dir = new File(dirPath)
         if (!dir.exists())
             dir.mkdirs()
-        config.icescrum.products.users.dir = dirPath
+        config.icescrum.projects.users.dir = dirPath
 
         dirPath = config.icescrum.baseDir.toString() + File.separator + "images" + File.separator + "teams" + File.separator
         dir = new File(dirPath)
         if (!dir.exists())
             dir.mkdirs()
-        config.icescrum.products.teams.dir = dirPath
+        config.icescrum.projects.teams.dir = dirPath
     }
 
     static public initEnvironment = { def config ->
@@ -276,7 +276,7 @@ class ApplicationSupport {
         def root = object.parent().parent().parent().parent().parent().parent().parent().parent().parent()
         //be compatible with xml without export tag
         if (root.find { it.name == 'export' }) {
-            root = root.product
+            root = root.project ?: root.product
         }
         def uXml = root.'**'.find {
             it.@id.text() == (name ? object."${name}".@id.text() : object.@id.text()) && it.username.text()
@@ -512,25 +512,25 @@ class ApplicationSupport {
         return menus
     }
 
-    public static void exportProductZIP(Product product, def outputStream) {
+    public static void exportProjectZIP(Project project, def outputStream) {
         def attachmentableService = Holders.applicationContext.getBean("attachmentableService")
-        def projectName = "${product.name.replaceAll("[^a-zA-Z\\s]", "").replaceAll(" ", "")}-${new Date().format('yyyy-MM-dd')}"
+        def projectName = "${project.name.replaceAll("[^a-zA-Z\\s]", "").replaceAll(" ", "")}-${new Date().format('yyyy-MM-dd')}"
         def tempdir = System.getProperty("java.io.tmpdir");
         tempdir = (tempdir.endsWith("/") || tempdir.endsWith("\\")) ? tempdir : tempdir + System.getProperty("file.separator")
         def xml = new File(tempdir + projectName + '.xml')
         try {
             xml.withWriter('UTF-8') { writer ->
                 def builder = new MarkupBuilder(writer)
-                product.xml(builder)
+                project.xml(builder)
             }
             def files = []
-            product.stories*.attachments.findAll { it.size() > 0 }?.each { it?.each { att -> files << attachmentableService.getFile(att) } }
-            product.features*.attachments.findAll { it.size() > 0 }?.each { it?.each { att -> files << attachmentableService.getFile(att) } }
-            product.releases*.attachments.findAll { it.size() > 0 }?.each { it?.each { att -> files << attachmentableService.getFile(att) } }
-            product.sprints*.attachments.findAll { it.size() > 0 }?.each { it?.each { att -> files << attachmentableService.getFile(att) } }
-            product.attachments.each { it?.each { att -> files << attachmentableService.getFile(att) } }
+            project.stories*.attachments.findAll { it.size() > 0 }?.each { it?.each { att -> files << attachmentableService.getFile(att) } }
+            project.features*.attachments.findAll { it.size() > 0 }?.each { it?.each { att -> files << attachmentableService.getFile(att) } }
+            project.releases*.attachments.findAll { it.size() > 0 }?.each { it?.each { att -> files << attachmentableService.getFile(att) } }
+            project.sprints*.attachments.findAll { it.size() > 0 }?.each { it?.each { att -> files << attachmentableService.getFile(att) } }
+            project.attachments.each { it?.each { att -> files << attachmentableService.getFile(att) } }
             def tasks = []
-            product.releases*.each { it.sprints*.each { s -> tasks.addAll(s.tasks) } }
+            project.releases*.each { it.sprints*.each { s -> tasks.addAll(s.tasks) } }
             tasks*.attachments.findAll { it.size() > 0 }?.each {
                 it?.each { att -> files << attachmentableService.getFile(att) }
             }
@@ -705,7 +705,7 @@ class ReportUsageTimerTask extends TimerTask {
                              ],
                              scrumMasters: team.scrumMasters.size() ?: 0]
                         }),
-                        projects: Product.getAll().collect { project ->
+                        projects: Project.getAll().collect { project ->
                             [users        : project.allUsers.size() ?: 0,
                              productOwners: project.productOwners.size() ?: 0,
                              tasks        : project.tasks.size(),

@@ -33,18 +33,18 @@ class Invitation implements Serializable {
     Integer futureRole // don't use "role" because it is a reserved keyword in some SQL dialects
     String token
 
-    static belongsTo = [team: Team, product: Product]
+    static belongsTo = [team: Team, project: Project]
 
     static transients = ['userMock']
 
     static constraints = {
         email(blank: false, email: true)
         team(nullable: true)
-        product(nullable: true)
-        type(validator: { newType, Invitation -> newType == InvitationType.TEAM         && Invitation.team != null && Invitation.product == null ||
-                                                 newType == InvitationType.PRODUCT      && Invitation.team == null && Invitation.product != null ?: 'invalid'})
-        futureRole(validator: { newRole, Invitation -> newRole in [Authority.MEMBER,      Authority.SCRUMMASTER]  && Invitation.team != null && Invitation.product == null ||
-                                                       newRole in [Authority.STAKEHOLDER, Authority.PRODUCTOWNER] && Invitation.team == null && Invitation.product != null ?: 'invalid'})
+        project(nullable: true)
+        type(validator: { newType, Invitation -> newType == InvitationType.TEAM         && Invitation.team != null && Invitation.project == null ||
+                                                 newType == InvitationType.PROJECT      && Invitation.team == null && Invitation.project != null ?: 'invalid'})
+        futureRole(validator: { newRole, Invitation -> newRole in [Authority.MEMBER,      Authority.SCRUMMASTER]  && Invitation.team != null && Invitation.project == null ||
+                                                       newRole in [Authority.STAKEHOLDER, Authority.PRODUCTOWNER] && Invitation.team == null && Invitation.project != null ?: 'invalid'})
     }
 
     static mapping = {
@@ -53,7 +53,7 @@ class Invitation implements Serializable {
     }
 
     enum InvitationType {
-        TEAM, PRODUCT
+        TEAM, PROJECT
     }
 
     def beforeValidate() {

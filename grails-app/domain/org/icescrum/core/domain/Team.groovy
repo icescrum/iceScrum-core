@@ -46,7 +46,7 @@ class Team implements Serializable, Comparable {
     String uid
 
     static hasMany = [
-            products: Product,
+            projects: Project,
             members : User
     ]
 
@@ -54,7 +54,7 @@ class Team implements Serializable, Comparable {
 
     def scrumMasters = null
 
-    static belongsTo = [Product]
+    static belongsTo = [Project]
 
     static constraints = {
         description(nullable: true, maxSize: 1000)
@@ -66,13 +66,13 @@ class Team implements Serializable, Comparable {
         table 'is_team'
     }
 
-    static findExceptProduct(Long id, term, params) {
+    static findExceptProject(Long id, term, params) {
         executeQuery(
                 "SELECT DISTINCT t " +
                         "FROM org.icescrum.core.domain.Team as t " +
                         "WHERE lower(t.name) like lower(:term) and t.id not in " +
                         "(SELECT DISTINCT t2.id FROM org.icescrum.core.domain.Team as t2 " +
-                        "INNER JOIN t2.products as p " +
+                        "INNER JOIN t2.projects as p " +
                         "WHERE p.id = :p) ", [p: id, term: "%$term%"], params ?: [:])
     }
 
@@ -120,14 +120,14 @@ class Team implements Serializable, Comparable {
         return findAllByOwnerOrSM(user, params, term).size()
     }
 
-    static Integer countActiveProductsByTeamOwner(String username, params) {
+    static Integer countActiveProjectsByTeamOwner(String username, params) {
         executeQuery("""SELECT COUNT(DISTINCT p.id)
-                        FROM org.icescrum.core.domain.Product p,
+                        FROM org.icescrum.core.domain.Project p,
                              org.icescrum.core.domain.Team t,
                              grails.plugin.springsecurity.acl.AclClass ac,
                              grails.plugin.springsecurity.acl.AclObjectIdentity ai,
                              grails.plugin.springsecurity.acl.AclSid acl
-                        INNER JOIN t.products p
+                        INNER JOIN t.projects p
                         WHERE p.preferences.archived = false
                         AND t.id = ai.objectId
                         AND acl.id = ai.owner
@@ -136,14 +136,14 @@ class Team implements Serializable, Comparable {
                         AND ac.className = 'org.icescrum.core.domain.Team'""", [sid: username], params ?: [:])[0]
     }
 
-    static List<Product> findAllActiveProductsByTeamOwner(String username, String term = '%%', params) {
+    static List<Project> findAllActiveProjectsByTeamOwner(String username, String term = '%%', params) {
         executeQuery("""SELECT DISTINCT p
-                        FROM org.icescrum.core.domain.Product p,
+                        FROM org.icescrum.core.domain.Project p,
                              org.icescrum.core.domain.Team t,
                              grails.plugin.springsecurity.acl.AclClass ac,
                              grails.plugin.springsecurity.acl.AclObjectIdentity ai,
                              grails.plugin.springsecurity.acl.AclSid acl
-                        INNER JOIN t.products p
+                        INNER JOIN t.projects p
                         WHERE p.preferences.archived = false
                         AND lower(p.name) LIKE lower(:term)
                         AND t.id = ai.objectId
@@ -169,8 +169,8 @@ class Team implements Serializable, Comparable {
 
     static namedQueries = {
 
-        productTeam { p, u ->
-            products {
+        projectTeam { p, u ->
+            projects {
                 idEq(p)
             }
             members {

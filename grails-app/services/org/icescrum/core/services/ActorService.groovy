@@ -27,7 +27,7 @@ package org.icescrum.core.services
 
 import grails.transaction.Transactional
 import org.icescrum.core.domain.Actor
-import org.icescrum.core.domain.Product
+import org.icescrum.core.domain.Project
 import org.icescrum.core.error.BusinessException
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
@@ -38,10 +38,10 @@ class ActorService extends IceScrumEventPublisher {
 
     def springSecurityService
 
-    @PreAuthorize('productOwner(#p) and !archivedProduct(#p)')
-    void save(Actor actor, Product p) {
+    @PreAuthorize('productOwner(#p) and !archivedProject(#p)')
+    void save(Actor actor, Project p) {
         actor.name = actor.name?.trim()
-        actor.parentProduct = p
+        actor.parentProject = p
         actor.uid = Actor.findNextUId(p.id)
         p.addToActors(actor)
         actor.save(flush: true)
@@ -49,19 +49,19 @@ class ActorService extends IceScrumEventPublisher {
         publishSynchronousEvent(IceScrumEventType.CREATE, actor)
     }
 
-    @PreAuthorize('productOwner(#actor.parentProduct) and !archivedProduct(#actor.parentProduct)')
+    @PreAuthorize('productOwner(#actor.parentProject) and !archivedProject(#actor.parentProject)')
     void delete(Actor actor) {
-        Product product = (Product) actor.parentProduct
-        def hasStories = product.stories.any { it.actor?.id == actor.id }
+        Project project = (Project) actor.parentProject
+        def hasStories = project.stories.any { it.actor?.id == actor.id }
         if (hasStories) {
             throw new BusinessException(code: 'is.actor.error.still.hasStories')
         }
         def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_DELETE, actor)
-        product.removeFromActors(actor)
+        project.removeFromActors(actor)
         publishSynchronousEvent(IceScrumEventType.DELETE, actor, dirtyProperties)
     }
 
-    @PreAuthorize('productOwner(#actor.parentProduct) and !archivedProduct(#actor.parentProduct)')
+    @PreAuthorize('productOwner(#actor.parentProject) and !archivedProject(#actor.parentProject)')
     void update(Actor actor) {
         actor.name = actor.name?.trim()
         def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_UPDATE, actor)
@@ -70,12 +70,12 @@ class ActorService extends IceScrumEventPublisher {
     }
 
     def unMarshall(def actorXml, def options) {
-        Product product = options.product
+        Project project = options.project
         Actor.withTransaction(readOnly: !options.save) { transaction ->
             try {
                 def actor = new Actor(name: actorXml."${'name'}".text())
-                if (product) {
-                    product.addToActors(actor)
+                if (project) {
+                    project.addToActors(actor)
                 }
                 if (options.save) {
                     actor.save()

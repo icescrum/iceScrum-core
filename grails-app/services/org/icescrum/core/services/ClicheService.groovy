@@ -104,14 +104,14 @@ class ClicheService {
     def generateSprintClicheData(Sprint sprint, int clicheType) {
         // Retrieve the current release and the current sprint
         Release release = sprint.parentRelease
-        Product product = release.parentProduct
+        Project project = release.parentProject
         // Browse the stories and add their estimated velocity to the corresponding counter
         def currentSprintData = computeDataOnType(sprint.stories)
         // Retrieve all the stories of the release
         List<Story> allItemsInRelease = Story.storiesByRelease(release).list()
         def allItemsReleaseData = computeDataOnType(allItemsInRelease)
-        // Product Backlog points + Remaining product points
-        def allItemsProductData = computeDataOnType(product.stories)
+        // Product Backlog points + Remaining project points
+        def allItemsProjectData = computeDataOnType(project.stories)
         // Stories by state
         int doneCount = 0
         int inprogressCount = 0
@@ -119,7 +119,7 @@ class ClicheService {
         int estimatedCount = 0
         int acceptedCount = 0
         int suggestedCount = 0
-        product.stories.each { story ->
+        project.stories.each { story ->
             switch (story.state) {
                 case Story.STATE_DONE:
                     doneCount++
@@ -164,19 +164,19 @@ class ClicheService {
                     "${Cliche.TECHNICAL_STORY_VELOCITY}"(currentSprintData['compteurTechnical'])
                     "${Cliche.DEFECT_STORY_VELOCITY}"(currentSprintData['compteurDefect'])
                 }
-                // Product points
-                "${Cliche.FUNCTIONAL_STORY_BACKLOG_POINTS}"(allItemsProductData['compteurUS'])
-                "${Cliche.TECHNICAL_STORY_BACKLOG_POINTS}"(allItemsProductData['compteurTechnical'])
-                "${Cliche.DEFECT_STORY_BACKLOG_POINTS}"(allItemsProductData['compteurDefect'])
-                "${Cliche.PRODUCT_BACKLOG_POINTS}"(allItemsProductData['compteurUS'] + allItemsProductData['compteurTechnical'] + allItemsProductData['compteurDefect'])
+                // Project points
+                "${Cliche.FUNCTIONAL_STORY_PROJECT_POINTS}"(allItemsProjectData['compteurUS'])
+                "${Cliche.TECHNICAL_STORY_PROJECT_POINTS}"(allItemsProjectData['compteurTechnical'])
+                "${Cliche.DEFECT_STORY_PROJECT_POINTS}"(allItemsProjectData['compteurDefect'])
+                "${Cliche.PROJECT_POINTS}"(allItemsProjectData['compteurUS'] + allItemsProjectData['compteurTechnical'] + allItemsProjectData['compteurDefect'])
                 // Remaining backlog points
-                def srp = allItemsProductData['compteurUS'] - allItemsProductData['compteurUSFinish']
-                def trp = allItemsProductData['compteurTechnical'] - allItemsProductData['compteurTechnicalFinish']
-                def drp = allItemsProductData['compteurDefect'] - allItemsProductData['compteurDefectFinish']
-                "${Cliche.FUNCTIONAL_STORY_PRODUCT_REMAINING_POINTS}"(srp)
-                "${Cliche.TECHNICAL_STORY_PRODUCT_REMAINING_POINTS}"(trp)
-                "${Cliche.DEFECT_STORY_PRODUCT_REMAINING_POINTS}"(drp)
-                "${Cliche.PRODUCT_REMAINING_POINTS}"(srp + trp + drp)
+                def srp = allItemsProjectData['compteurUS'] - allItemsProjectData['compteurUSFinish']
+                def trp = allItemsProjectData['compteurTechnical'] - allItemsProjectData['compteurTechnicalFinish']
+                def drp = allItemsProjectData['compteurDefect'] - allItemsProjectData['compteurDefectFinish']
+                "${Cliche.FUNCTIONAL_STORY_PROJECT_REMAINING_POINTS}"(srp)
+                "${Cliche.TECHNICAL_STORY_PROJECT_REMAINING_POINTS}"(trp)
+                "${Cliche.DEFECT_STORY_PROJECT_REMAINING_POINTS}"(drp)
+                "${Cliche.PROJECT_REMAINING_POINTS}"(srp + trp + drp)
                 // Release remaining points
                 "${Cliche.FUNCTIONAL_STORY_RELEASE_REMAINING_POINTS}"(allItemsReleaseData['compteurUS'] - allItemsReleaseData['compteurUSFinish'])
                 "${Cliche.TECHNICAL_STORY_RELEASE_REMAINING_POINTS}"(allItemsReleaseData['compteurTechnical'] - allItemsReleaseData['compteurTechnicalFinish'])

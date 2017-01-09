@@ -3,7 +3,7 @@ package org.icescrum.core.services
 import org.icescrum.core.domain.Feature
 import org.icescrum.core.domain.Release
 import org.icescrum.core.domain.Story
-import org.icescrum.core.domain.Product
+import org.icescrum.core.domain.Project
 import org.icescrum.core.domain.User
 import grails.util.GrailsNameUtils
 import java.text.SimpleDateFormat
@@ -17,7 +17,7 @@ class AddonsService {
     def activityService
 
 /*    void onApplicationEvent(def e) {
-        if (e.type == IceScrumProductEvent.EVENT_IMPORTED) {
+        if (e.type == IceScrumProjectEvent.EVENT_IMPORTED) {
             //Wait a small very small time to let hibernate do its job... well
             Thread.sleep(1000);
             synchronisedDataImport(e)
@@ -27,7 +27,7 @@ class AddonsService {
     */
 
     void synchronisedDataImport(def e) {
-        Product p = (Product) e.source
+        Project p = (Project) e.source
         try{
             addAttachments(p, e.xml, e.importPath)
         }catch(Exception _e){
@@ -77,7 +77,7 @@ class AddonsService {
             }
         }
     }
-    void addTags(Product p, def root) {
+    void addTags(Project p, def root) {
         log.debug("start import tags")
         root.'**'.findAll { it.name() in ["story", "task", "feature"] }.each { element ->
             def elemt = null
@@ -88,7 +88,7 @@ class AddonsService {
                         elemt = Story.findByBacklogAndUid(p, element.@uid.text().toInteger()) ?: null
                         break
                     case 'task':
-                        tasksCache = tasksCache ?: Task.getAllInProduct(p.id)
+                        tasksCache = tasksCache ?: Task.getAllInProject(p.id)
                         elemt = tasksCache?.find { it.uid == element.@uid.text().toInteger() } ?: null
                         break
                     case 'feature':
@@ -103,7 +103,7 @@ class AddonsService {
         log.debug("end import tags")
     }
 
-    void addDependsOn(Product p, def root) {
+    void addDependsOn(Project p, def root) {
         log.debug("start import dependsOn")
         root.'**'.findAll { it.name() == "story" }.each { element ->
             if (!element.dependsOn?.@uid?.isEmpty() && p) {
@@ -121,13 +121,13 @@ class AddonsService {
         log.debug("end import dependsOn")
     }
 
-    void addAttachments(Product p, def root, File importPath) {
+    void addAttachments(Project p, def root, File importPath) {
         def defaultU = p.productOwners.first()
         def tasksCache = []
         def sprintsCache = []
         log.debug("start import files")
         root.'**'.findAll {
-            it.name() in ["story", "task", "feature", "release", "sprint", "product"]
+            it.name() in ["story", "task", "feature", "release", "sprint", "project"]
         }.each { element ->
             def elemt = null
             if (element.attachments.attachment.text()) {
@@ -136,22 +136,22 @@ class AddonsService {
                         elemt = Story.findByBacklogAndUid(p, element.@uid.text().toInteger()) ?: null
                         break
                     case 'task':
-                        tasksCache = tasksCache ?: Task.getAllInProduct(p.id)
+                        tasksCache = tasksCache ?: Task.getAllInProject(p.id)
                         elemt = tasksCache?.find { it.uid == element.@uid.text().toInteger() } ?: null
                         break
                     case 'feature':
                         elemt = Feature.findByBacklogAndUid(p, element.@uid.text().toInteger()) ?: null
                         break
                     case 'release':
-                        elemt = Release.findByParentProductAndOrderNumber(p, element.orderNumber.text().toInteger()) ?: null
+                        elemt = Release.findByParentProjectAndOrderNumber(p, element.orderNumber.text().toInteger()) ?: null
                         break
                     case 'sprint':
-                        sprintsCache = sprintsCache ?: Release.findAllByParentProduct(p)*.sprints.flatten()
+                        sprintsCache = sprintsCache ?: Release.findAllByParentProject(p)*.sprints.flatten()
                         elemt = sprintsCache.find {
                             it.orderNumber == element.orderNumber.text().toInteger() && it.startDate.format(('yyyy-MM-dd HH:mm:ss')) == element.startDate.text()
                         } ?: null
                         break
-                    case 'product':
+                    case 'project':
                         elemt = p
                         break
                 }
@@ -180,7 +180,7 @@ class AddonsService {
         log.debug("end import files")
     }
 
-    void addComments(Product p, def root) {
+    void addComments(Project p, def root) {
         def defaultU = p.productOwners.first()
         log.debug("start import comments")
         root.'**'.findAll { it.name() == "story" }.each { story ->
@@ -207,7 +207,7 @@ class AddonsService {
         root.'**'.findAll { it.name() == "task" }.each { task ->
             def t = null
             if (task.comments.comment.text()) {
-                tasksCache = tasksCache ?: Task.getAllInProduct(p.id)
+                tasksCache = tasksCache ?: Task.getAllInProject(p.id)
                 t = tasksCache?.find { it.uid == task.@uid.text().toInteger() } ?: null
             }
             if (t) {
@@ -228,7 +228,7 @@ class AddonsService {
         log.debug("end import comments")
     }
 
-    void addActivities(Product p, def root) {
+    void addActivities(Project p, def root) {
         def defaultU = p.productOwners.first()
         log.debug("start import activities")
         root.'**'.findAll { it.name() == "story" }.each { story ->

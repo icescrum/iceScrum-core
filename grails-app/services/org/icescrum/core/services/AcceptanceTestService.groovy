@@ -25,7 +25,7 @@ package org.icescrum.core.services
 import grails.transaction.Transactional
 import org.icescrum.core.domain.AcceptanceTest
 import org.icescrum.core.domain.AcceptanceTest.AcceptanceTestState
-import org.icescrum.core.domain.Product
+import org.icescrum.core.domain.Project
 import org.icescrum.core.domain.Story
 import org.icescrum.core.domain.User
 import org.icescrum.core.event.IceScrumEventPublisher
@@ -38,7 +38,7 @@ class AcceptanceTestService extends IceScrumEventPublisher {
     def springSecurityService
     def grailsApplication
 
-    @PreAuthorize('inProduct(#parentStory.backlog) and !archivedProduct(#parentStory.backlog)')
+    @PreAuthorize('inProject(#parentStory.backlog) and !archivedProject(#parentStory.backlog)')
     void save(AcceptanceTest acceptanceTest, Story parentStory, User user) {
         acceptanceTest.creator = user
         acceptanceTest.uid = AcceptanceTest.findNextUId(parentStory.backlog.id)
@@ -49,7 +49,7 @@ class AcceptanceTestService extends IceScrumEventPublisher {
         storyService.update(parentStory)
     }
 
-    @PreAuthorize('inProduct(#acceptanceTest.parentProduct) and !archivedProduct(#acceptanceTest.parentProduct)')
+    @PreAuthorize('inProject(#acceptanceTest.parentProject) and !archivedProject(#acceptanceTest.parentProject)')
     void update(AcceptanceTest acceptanceTest) {
         def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_UPDATE, acceptanceTest)
         acceptanceTest.save()
@@ -58,7 +58,7 @@ class AcceptanceTestService extends IceScrumEventPublisher {
         storyService.update(acceptanceTest.parentStory)
     }
 
-    @PreAuthorize('inProduct(#acceptanceTest.parentProduct) and !archivedProduct(#acceptanceTest.parentProduct)')
+    @PreAuthorize('inProject(#acceptanceTest.parentProject) and !archivedProject(#acceptanceTest.parentProject)')
     void delete(AcceptanceTest acceptanceTest) {
         def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_DELETE, acceptanceTest)
         acceptanceTest.parentStory.removeFromAcceptanceTests(acceptanceTest)
@@ -67,7 +67,7 @@ class AcceptanceTestService extends IceScrumEventPublisher {
     }
 
     def unMarshall(def acceptanceTestXml, def options) {
-        Product product = options.product
+        Project project = options.project
         Story story = options.story
         AcceptanceTest.withTransaction(readOnly: !options.save) { transaction ->
             try {
@@ -84,11 +84,11 @@ class AcceptanceTestService extends IceScrumEventPublisher {
                         uid: acceptanceTestXml.@uid.text().toInteger()
                 )
                 // References on other objects
-                if (product) {
-                    def u = ((User) product.getAllUsers().find {
+                if (project) {
+                    def u = ((User) project.getAllUsers().find {
                         it.uid == acceptanceTestXml.creator.@uid.text()
                     }) ?: null
-                    acceptanceTest.creator = (User) (u ?: product.productOwners.first())
+                    acceptanceTest.creator = (User) (u ?: project.productOwners.first())
                 }
                 if (story) {
                     story.addToAcceptanceTests(acceptanceTest)

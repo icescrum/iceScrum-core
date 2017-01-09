@@ -54,7 +54,7 @@ class AcceptanceTest implements Serializable {
         table 'is_acceptance_test'
     }
 
-    static transients = ['parentProduct', 'stateEnum']
+    static transients = ['parentProject', 'stateEnum']
 
     static int findNextUId(Long pid) {
         (executeQuery(
@@ -64,32 +64,32 @@ class AcceptanceTest implements Serializable {
                    AND s.backlog.id = :pid """, [pid: pid])[0] ?: 0) + 1
     }
 
-    static AcceptanceTest getInProduct(productId, id) {
+    static AcceptanceTest getInProject(projectId, id) {
         def results = executeQuery(
                 """SELECT at
                    FROM org.icescrum.core.domain.AcceptanceTest as at
                    WHERE at.id = :id
-                   AND at.parentStory.backlog.id = :pid """, [id: id, pid: productId])
+                   AND at.parentStory.backlog.id = :pid """, [id: id, pid: projectId])
         results ? results.first() : null
     }
 
-    static List<AcceptanceTest> getAllInProduct(productId) {
+    static List<AcceptanceTest> getAllInProject(projectId) {
         executeQuery(
                 """SELECT at
                    FROM org.icescrum.core.domain.AcceptanceTest as at
-                   WHERE at.parentStory.backlog.id = :pid """, [pid: productId])
+                   WHERE at.parentStory.backlog.id = :pid """, [pid: projectId])
     }
 
-    static List<AcceptanceTest> getAllInStory(productId, storyId) {
+    static List<AcceptanceTest> getAllInStory(projectId, storyId) {
         executeQuery(
                 """SELECT at
                    FROM org.icescrum.core.domain.AcceptanceTest as at
                    WHERE at.parentStory.backlog.id = :pid
-                   AND at.parentStory.id = :sid """, [sid: storyId, pid: productId])
+                   AND at.parentStory.id = :sid """, [sid: storyId, pid: projectId])
     }
 
-    static AcceptanceTest withAcceptanceTest(long productId, long id) {
-        AcceptanceTest acceptanceTest = getInProduct(productId, id)
+    static AcceptanceTest withAcceptanceTest(long projectId, long id) {
+        AcceptanceTest acceptanceTest = getInProject(projectId, id)
         if (!acceptanceTest) {
             throw new ObjectNotFoundException(id, 'AcceptanceTest')
         }
@@ -123,7 +123,7 @@ class AcceptanceTest implements Serializable {
         return result;
     }
 
-    def getParentProduct() {
+    def getParentProject() {
         return this.parentStory.backlog
     }
 

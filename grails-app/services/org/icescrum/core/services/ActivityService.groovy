@@ -61,7 +61,7 @@ class ActivityService extends IceScrumEventPublisher {
 
     def unMarshall(def activityXml, def options) {
         def parent = options.parent
-        def product = options.product
+        def project = options.project
         Activity.withTransaction(readOnly: !options.save) { transaction ->
             try {
                 def activity = new Activity(
@@ -75,9 +75,9 @@ class ActivityService extends IceScrumEventPublisher {
                         parentType: activityXml.parentType.text()
                 )
                 // References to object
-                if (product) {
-                    def u = ((User) product.getAllUsers().find { it.uid == activityXml.poster.@uid.text() }) ?: null
-                    activity.poster = (User) (u ?: product.productOwners.first())
+                if (project) {
+                    def u = ((User) project.getAllUsers().find { it.uid == activityXml.poster.@uid.text() }) ?: null
+                    activity.poster = (User) (u ?: project.productOwners.first())
                 }
                 // Save before some hibernate stuff
                 if (options.save) {

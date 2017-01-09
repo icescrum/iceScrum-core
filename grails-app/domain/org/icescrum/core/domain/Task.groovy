@@ -55,7 +55,7 @@ class Task extends BacklogElement implements Serializable {
             creator      : User,
             responsible  : User,
             parentStory  : Story,
-            parentProduct: Product
+            parentProject: Project
     ]
 
     static hasMany = [participants: User]
@@ -80,7 +80,7 @@ class Task extends BacklogElement implements Serializable {
         name unique: 'parentStory'
         responsible nullable: true
         parentStory nullable: true
-        parentProduct validator: { newParentProduct, task -> newParentProduct == task.backlog?.parentProduct || newParentProduct == task.parentStory?.backlog ?: 'invalid' }
+        parentProject validator: { newParentProject, task -> newParentProject == task.backlog?.parentProject || newParentProject == task.parentStory?.backlog ?: 'invalid' }
         inProgressDate nullable: true
     }
 
@@ -117,57 +117,57 @@ class Task extends BacklogElement implements Serializable {
         }
     }
 
-    static Task getInProduct(Long pid, Long id) {
+    static Task getInProject(Long pid, Long id) {
         executeQuery("""SELECT t
                         FROM org.icescrum.core.domain.Task as t
-                        WHERE t.parentProduct.id = :pid
+                        WHERE t.parentProject.id = :pid
                         AND t.id = :id""", [pid: pid, id: id], [max: 1])[0]
     }
 
-    static Task getInProductByUid(Long pid, int uid) {
+    static Task getInProjectByUid(Long pid, int uid) {
         executeQuery("""SELECT t
                         FROM org.icescrum.core.domain.Task as t
-                        WHERE t.parentProduct.id = :pid
+                        WHERE t.parentProject.id = :pid
                         AND t.uid = :uid""", [pid: pid, uid: uid], [max: 1])[0]
     }
 
-    static List<Task> getAllInProduct(Long pid, List id) {
+    static List<Task> getAllInProject(Long pid, List id) {
         executeQuery("""SELECT t
                         FROM org.icescrum.core.domain.Task as t
-                        WHERE t.parentProduct.id = :pid
+                        WHERE t.parentProject.id = :pid
                         AND t.id IN (:id) """, [pid: pid, id: id])
     }
 
-    static List<Task> getAllInProductUID(Long pid, List uid) {
+    static List<Task> getAllInProjectUID(Long pid, List uid) {
         executeQuery("""SELECT t
                         FROM org.icescrum.core.domain.Task as t
-                        WHERE t.parentProduct.id = :pid
+                        WHERE t.parentProject.id = :pid
                         AND t.uid IN (:uid)""", [pid: pid, uid: uid])
     }
 
-    static List<Task> getAllInProduct(Long pid) {
+    static List<Task> getAllInProject(Long pid) {
         executeQuery("""SELECT t
                         FROM org.icescrum.core.domain.Task as t
-                        WHERE t.parentProduct.id = :pid""", [pid: pid])
+                        WHERE t.parentProject.id = :pid""", [pid: pid])
     }
 
-    static List<User> getAllCreatorsInProduct(Long pid) {
+    static List<User> getAllCreatorsInProject(Long pid) {
         User.executeQuery("""SELECT DISTINCT t.creator
                              FROM org.icescrum.core.domain.Task as t
-                             WHERE t.parentProduct.id = :pid""", [pid: pid])
+                             WHERE t.parentProject.id = :pid""", [pid: pid])
     }
 
-    static List<User> getAllResponsiblesInProduct(Long pid) {
+    static List<User> getAllResponsiblesInProject(Long pid) {
         User.executeQuery("""SELECT DISTINCT t.responsible
                              FROM org.icescrum.core.domain.Task as t
-                             WHERE t.parentProduct.id = :pid""", [pid: pid])
+                             WHERE t.parentProject.id = :pid""", [pid: pid])
     }
 
     static int findNextUId(Long pid) {
         (executeQuery(
                 """SELECT MAX(t.uid)
                    FROM org.icescrum.core.domain.Task as t
-                   WHERE t.parentProduct.id = :pid""", [pid: pid])[0] ?: 0) + 1
+                   WHERE t.parentProject.id = :pid""", [pid: pid])[0] ?: 0) + 1
     }
 
     static findLastUpdatedComment(def element) {
@@ -182,8 +182,8 @@ class Task extends BacklogElement implements Serializable {
                 [max: 1])[0]
     }
 
-    static Task withTask(long productId, long id) {
-        Task task = (Task) getInProduct(productId, id)
+    static Task withTask(long projectId, long id) {
+        Task task = (Task) getInProject(projectId, id)
         if (!task) {
             throw new ObjectNotFoundException(id, 'Task')
         }
@@ -192,7 +192,7 @@ class Task extends BacklogElement implements Serializable {
 
     static List<Task> withTasks(def params, def id = 'id') {
         def ids = params[id]?.contains(',') ? params[id].split(',')*.toLong() : params.list(id)*.toLong()
-        List<Task> tasks = ids ? getAllInProduct(params.product.toLong(), ids) : null
+        List<Task> tasks = ids ? getAllInProject(params.project.toLong(), ids) : null
         if (!tasks) {
             throw new ObjectNotFoundException(ids, 'Task')
         }
@@ -235,15 +235,15 @@ class Task extends BacklogElement implements Serializable {
         return activities.sort { a, b -> b.dateCreated <=> a.dateCreated }
     }
 
-    static search(product, options) {
+    static search(project, options) {
         def criteria = {
             backlog {
-                if (options.task?.parentSprint?.isLong() && options.task.parentSprint.toLong() in product.releases*.sprints*.id.flatten()) {
+                if (options.task?.parentSprint?.isLong() && options.task.parentSprint.toLong() in project.releases*.sprints*.id.flatten()) {
                     eq 'id', options.task.parentSprint.toLong()
-                } else if (options.task?.parentRelease?.isLong() && options.task.parentRelease.toLong() in product.releases*.id) {
-                    'in' 'id', product.releases.find { it.id == options.task.parentRelease.toLong() }.sprints*.id
+                } else if (options.task?.parentRelease?.isLong() && options.task.parentRelease.toLong() in project.releases*.id) {
+                    'in' 'id', project.releases.find { it.id == options.task.parentRelease.toLong() }.sprints*.id
                 } else {
-                    'in' 'id', product.releases*.sprints*.id.flatten()
+                    'in' 'id', project.releases*.sprints*.id.flatten()
                 }
             }
 
@@ -297,13 +297,13 @@ class Task extends BacklogElement implements Serializable {
         }
     }
 
-    static searchByTermOrTag(product, searchOptions, term) {
-        search(product, addTermOrTagToSearch(searchOptions, term))
+    static searchByTermOrTag(project, searchOptions, term) {
+        search(project, addTermOrTagToSearch(searchOptions, term))
     }
 
-    static searchAllByTermOrTag(product, term) {
+    static searchAllByTermOrTag(project, term) {
         def searchOptions = [task: [:]]
-        searchByTermOrTag(product, searchOptions, term)
+        searchByTermOrTag(project, searchOptions, term)
     }
 
     def xml(builder) {

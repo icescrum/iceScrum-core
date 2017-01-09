@@ -39,24 +39,24 @@ class Actor implements Serializable, Comparable<Actor> {
 
     static mappedBy = [stories: "actor"]
 
-    static belongsTo = [parentProduct: Product]
+    static belongsTo = [parentProject: Project]
 
     static constraints = {
-        name(blank: false, unique: 'parentProduct', maxSize: 100)
+        name(blank: false, unique: 'parentProject', maxSize: 100)
     }
 
     static mapping = {
         cache true
         table 'is_actor'
         name index: 'act_name_index'
-        parentProduct index: 'act_name_index'
+        parentProject index: 'act_name_index'
         stories cascade: "refresh, evict", cache: true
     }
 
     static namedQueries = {
 
-        getInProduct { p, id ->
-            parentProduct {
+        getInProject { p, id ->
+            parentProject {
                 eq 'id', p
             }
             and {
@@ -66,8 +66,8 @@ class Actor implements Serializable, Comparable<Actor> {
         }
     }
 
-    static Actor withActor(long product, long id) {
-        Actor actor = (Actor) getInProduct(product, id).list()
+    static Actor withActor(long project, long id) {
+        Actor actor = (Actor) getInProject(project, id).list()
         if (!actor) {
             throw new ObjectNotFoundException(id, 'Actor')
         }
@@ -95,11 +95,11 @@ class Actor implements Serializable, Comparable<Actor> {
             return false
         }
         final Actor other = (Actor) obj
-        if (parentProduct == null) {
-            if (other.parentProduct != null) {
+        if (parentProject == null) {
+            if (other.parentProject != null) {
                 return false
             }
-        } else if (!parentProduct.equals(other.parentProduct)) {
+        } else if (!parentProject.equals(other.parentProject)) {
             return false
         }
         if (name != other.name) {
@@ -112,7 +112,7 @@ class Actor implements Serializable, Comparable<Actor> {
     int hashCode() {
         final int prime = 31
         int result = 1
-        result = prime * result + ((parentProduct == null) ? 0 : parentProduct.hashCode())
+        result = prime * result + ((parentProject == null) ? 0 : parentProject.hashCode())
         result = prime * result + (name ? name.hashCode() : 0)
         return result
     }
@@ -124,15 +124,15 @@ class Actor implements Serializable, Comparable<Actor> {
     static int findNextUId(Long pid) {
         (executeQuery(
                 """SELECT MAX(a.uid)
-                   FROM org.icescrum.core.domain.Actor as a, org.icescrum.core.domain.Product as p
-                   WHERE a.parentProduct = p
+                   FROM org.icescrum.core.domain.Actor as a, org.icescrum.core.domain.Project as p
+                   WHERE a.parentProject = p
                    AND p.id = :pid """, [pid: pid])[0] ?: 0) + 1
     }
 
-    static search(product, term) {
+    static search(project, term) {
         return Actor.createCriteria().list {
-            parentProduct {
-                eq 'id', product
+            parentProject {
+                eq 'id', project
             }
             if (term) {
                 ilike 'name', '%' + term + '%'

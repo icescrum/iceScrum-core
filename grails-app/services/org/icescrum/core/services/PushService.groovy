@@ -49,14 +49,14 @@ class PushService {
         }
     }
 
-    void broadcastToProductChannel(String namespace, String eventType, object, long productId) {
-        def channel = '/stream/app/product-' + productId
+    void broadcastToProjectChannel(String namespace, String eventType, object, long projectId) {
+        def channel = '/stream/app/project-' + projectId
         broadcastToChannel(namespace, eventType, object, channel)
     }
 
-    void broadcastToProductChannel(IceScrumEventType eventType, object, long productId) {
+    void broadcastToProjectChannel(IceScrumEventType eventType, object, long projectId) {
         if (!isDisabledThread()) {
-            broadcastToProductChannel(getNamespaceFromDomain(object), eventType.name(), object, productId)
+            broadcastToProjectChannel(getNamespaceFromDomain(object), eventType.name(), object, projectId)
         }
     }
 

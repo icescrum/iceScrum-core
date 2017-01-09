@@ -40,7 +40,7 @@ class WindowDefinition {
     String title = ''
     String pluginName = null
     String templatePath = null
-    String context = "product"
+    String context = "project"
     String secured = 'permitAll()'
 
     def options = [:]
@@ -54,7 +54,7 @@ class WindowDefinition {
         this.disabled = disabled
         this.pluginName = pluginName
     }
-    
+
     void menu(Closure menuClosure) {
         MenuDefinition menu = new MenuDefinition()
         menuClosure.delegate = menu
@@ -107,7 +107,7 @@ class WindowDefinition {
     void printable(boolean printable) {
         this.printable = printable
     }
-    
+
     def methodMissing(String name, args) {
         log.warn("The field $name is unrecognized for $id UI definition")
     }

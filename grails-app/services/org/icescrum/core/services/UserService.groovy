@@ -31,7 +31,7 @@ import org.apache.commons.io.FilenameUtils
 import org.apache.commons.io.filefilter.WildcardFileFilter
 import org.icescrum.core.domain.Invitation
 import org.icescrum.core.domain.Invitation.InvitationType
-import org.icescrum.core.domain.Product
+import org.icescrum.core.domain.Project
 import org.icescrum.core.domain.Team
 import org.icescrum.core.domain.User
 import org.icescrum.core.domain.preferences.UserPreferences
@@ -46,7 +46,7 @@ import org.icescrum.core.support.ApplicationSupport
 class UserService extends IceScrumEventPublisher {
 
     def widgetService
-    def productService
+    def projectService
     def hdImageService
     def grailsApplication
     def springSecurityService
@@ -62,20 +62,20 @@ class UserService extends IceScrumEventPublisher {
             invitations.each { invitation ->
                 def userAdmin = UserAuthority.findByAuthority(Authority.findByAuthority(Authority.ROLE_ADMIN)).user
                 SpringSecurityUtils.doWithAuth(userAdmin ? userAdmin.username : 'admin') {
-                    if (invitation.type == InvitationType.PRODUCT) {
-                        Product product = invitation.product
-                        def oldMembers = productService.getAllMembersProductByRole(product)
-                        productService.addRole(product, user, invitation.futureRole)
-                        productService.manageProductEvents(product, oldMembers)
+                    if (invitation.type == InvitationType.PROJECT) {
+                        Project project = invitation.project
+                        def oldMembers = projectService.getAllMembersProjectByRole(project)
+                        projectService.addRole(project, user, invitation.futureRole)
+                        projectService.manageProjectEvents(project, oldMembers)
                     } else {
                         Team team = invitation.team
-                        def oldMembersByProduct = [:]
-                        team.products.each { Product product ->
-                            oldMembersByProduct[product.id] = productService.getAllMembersProductByRole(product)
+                        def oldMembersByProject = [:]
+                        team.projects.each { Project project ->
+                            oldMembersByProject[project.id] = projectService.getAllMembersProjectByRole(project)
                         }
-                        productService.addRole(team, user, invitation.futureRole)
-                        oldMembersByProduct.each { Long productId, Map oldMembers ->
-                            productService.manageProductEvents(Product.get(productId), oldMembers)
+                        projectService.addRole(team, user, invitation.futureRole)
+                        oldMembersByProject.each { Long projectId, Map oldMembers ->
+                            projectService.manageProjectEvents(Project.get(projectId), oldMembers)
                         }
                     }
                 }

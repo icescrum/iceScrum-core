@@ -45,7 +45,7 @@ class Release extends TimeBox implements Cloneable, Attachmentable {
     Date inProgressDate
     Date doneDate
 
-    static belongsTo = [parentProduct: Product]
+    static belongsTo = [parentProject: Project]
 
     static hasMany = [sprints: Sprint, features: Feature]
 
@@ -65,12 +65,12 @@ class Release extends TimeBox implements Cloneable, Attachmentable {
         vision nullable: true
         inProgressDate nullable: true
         doneDate nullable: true
-        name(blank: false, unique: 'parentProduct')
+        name(blank: false, unique: 'parentProject')
         startDate(validator: { val, obj ->
-            if (val.before(obj.parentProduct.startDate)) {
-                return ['before.productStartDate']
+            if (val.before(obj.parentProject.startDate)) {
+                return ['before.projectStartDate']
             }
-            def r = obj.parentProduct.releases?.find { it.orderNumber == obj.orderNumber - 1 }
+            def r = obj.parentProject.releases?.find { it.orderNumber == obj.orderNumber - 1 }
             if (r && val.before(r.endDate)) {
                 return ['before.previous']
             }
@@ -85,7 +85,7 @@ class Release extends TimeBox implements Cloneable, Attachmentable {
 
     static namedQueries = {
         findCurrentOrNextRelease { p ->
-            parentProduct {
+            parentProject {
                 eq 'id', p
             }
             or {
@@ -97,7 +97,7 @@ class Release extends TimeBox implements Cloneable, Attachmentable {
         }
 
         findCurrentOrLastRelease { p ->
-            parentProduct {
+            parentProject {
                 eq 'id', p
             }
             or {
@@ -108,8 +108,8 @@ class Release extends TimeBox implements Cloneable, Attachmentable {
             maxResults(1)
         }
 
-        getInProduct { p, id ->
-            parentProduct {
+        getInProject { p, id ->
+            parentProject {
                 eq 'id', p
             }
             and {
@@ -119,8 +119,8 @@ class Release extends TimeBox implements Cloneable, Attachmentable {
         }
     }
 
-    static Release withRelease(long productId, long id) {
-        Release release = (Release) getInProduct(productId, id).list()
+    static Release withRelease(long projectId, long id) {
+        Release release = (Release) getInProject(projectId, id).list()
         if (!release) {
             throw new ObjectNotFoundException(id, 'Release')
         }
@@ -139,7 +139,7 @@ class Release extends TimeBox implements Cloneable, Attachmentable {
         final int prime = 31
         int result = 1
         result = prime * result + ((!name) ? 0 : name.hashCode())
-        result = prime * result + ((!parentProduct) ? 0 : parentProduct.hashCode())
+        result = prime * result + ((!parentProject) ? 0 : parentProject.hashCode())
         return result
     }
 
@@ -156,10 +156,10 @@ class Release extends TimeBox implements Cloneable, Attachmentable {
                 return false
         } else if (name != other.name)
             return false
-        if (parentProduct == null) {
-            if (other.parentProduct != null)
+        if (parentProject == null) {
+            if (other.parentProject != null)
                 return false
-        } else if (!parentProduct.equals(other.parentProduct))
+        } else if (!parentProject.equals(other.parentProject))
             return false
         return true
     }
@@ -181,11 +181,11 @@ class Release extends TimeBox implements Cloneable, Attachmentable {
     }
 
     Release getPreviousRelease() {
-        return parentProduct.releases.findAll { it.orderNumber < orderNumber }?.max { it.orderNumber }
+        return parentProject.releases.findAll { it.orderNumber < orderNumber }?.max { it.orderNumber }
     }
 
     Release getNextRelease() {
-        return parentProduct.releases.findAll { it.orderNumber > orderNumber }?.min { it.orderNumber }
+        return parentProject.releases.findAll { it.orderNumber > orderNumber }?.min { it.orderNumber }
     }
 
     Integer getMeanVelocity() {

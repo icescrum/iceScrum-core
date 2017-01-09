@@ -25,7 +25,7 @@
 package org.icescrum.core.services
 
 import grails.transaction.Transactional
-import org.icescrum.core.domain.Product
+import org.icescrum.core.domain.Project
 import org.icescrum.core.domain.Team
 import org.icescrum.core.domain.User
 import org.icescrum.core.error.BusinessException
@@ -64,15 +64,15 @@ class TeamService extends IceScrumEventPublisher {
                 }
             }
             team.save(flush: true)
-            team.products = [] // Grails does not initialize the collection and it is serialized as null instead of empty collection
+            team.projects = [] // Grails does not initialize the collection and it is serialized as null instead of empty collection
             publishSynchronousEvent(IceScrumEventType.CREATE, team)
         }
     }
 
     @PreAuthorize('owner(#team)')
     void delete(Team team) {
-        if (team.products) {
-            throw new BusinessException(code: 'is.team.error.delete.has.products')
+        if (team.projects) {
+            throw new BusinessException(code: 'is.team.error.delete.has.projects')
         }
         def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_DELETE, team)
         def teamMembersIds = team.members*.id
@@ -146,7 +146,7 @@ class TeamService extends IceScrumEventPublisher {
     }
 
     def unMarshall(def teamXml, def options) {
-        Product product = options.product
+        Project project = options.project
         Team.withTransaction(readOnly: !options.save) { transaction ->
             try {
                 def existingTeam = true
@@ -163,7 +163,7 @@ class TeamService extends IceScrumEventPublisher {
                     if (!u.id) {
                         existingTeam = false
                     }
-                    if (product) {
+                    if (project) {
                         def uu = (User) team.members.find { it.uid == u.uid } ?: null
                         uu ? team.addToMembers(uu) : team.addToMembers(u)
                     } else {
@@ -202,8 +202,8 @@ class TeamService extends IceScrumEventPublisher {
                     }
                 }
                 // Reference on other object
-                if (product) {
-                    product.addToTeams(team)
+                if (project) {
+                    project.addToTeams(team)
                 }
                 if (options.save) {
                     team.members.each { user ->

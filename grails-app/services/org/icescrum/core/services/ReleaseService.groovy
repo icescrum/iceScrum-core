@@ -43,22 +43,22 @@ class ReleaseService extends IceScrumEventPublisher {
 
     def g = new org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib()
 
-    @PreAuthorize('(productOwner(#product) or scrumMaster(#product)) and !archivedProduct(#product)')
-    void save(Release release, Product product) {
-        release.parentProduct = product
+    @PreAuthorize('(productOwner(#project) or scrumMaster(#project)) and !archivedProject(#project)')
+    void save(Release release, Project project) {
+        release.parentProject = project
         release.state = Release.STATE_WAIT
-        if (product.releases?.size() <= 0 || product.releases == null) {
+        if (project.releases?.size() <= 0 || project.releases == null) {
             release.inProgressDate = new Date()
             release.state = Release.STATE_INPROGRESS
         }
-        release.orderNumber = (product.releases?.size() ?: 0) + 1
+        release.orderNumber = (project.releases?.size() ?: 0) + 1
         release.save(flush: true)
-        product.addToReleases(release)
-        product.endDate = release.endDate
+        project.addToReleases(release)
+        project.endDate = release.endDate
         publishSynchronousEvent(IceScrumEventType.CREATE, release)
     }
 
-    @PreAuthorize('(productOwner(#release.parentProduct) or scrumMaster(#release.parentProduct)) and !archivedProduct(#release.parentProduct)')
+    @PreAuthorize('(productOwner(#release.parentProject) or scrumMaster(#release.parentProject)) and !archivedProject(#release.parentProject)')
     void update(Release release, Date startDate = null, Date endDate = null, boolean checkIntegrity = true) {
         if (checkIntegrity && release.state == Release.STATE_DONE) {
             def illegalDirtyProperties = release.dirtyPropertyNames - ['name', 'vision']
@@ -109,8 +109,8 @@ class ReleaseService extends IceScrumEventPublisher {
         }
         if (endDate != release.endDate) {
             release.endDate = endDate
-            if (release.orderNumber == release.parentProduct.releases.size()) {
-                release.parentProduct.endDate = endDate
+            if (release.orderNumber == release.parentProject.releases.size()) {
+                release.parentProject.endDate = endDate
             }
         }
         def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_UPDATE, release)
@@ -118,16 +118,16 @@ class ReleaseService extends IceScrumEventPublisher {
         publishSynchronousEvent(IceScrumEventType.UPDATE, release, dirtyProperties)
     }
 
-    @PreAuthorize('(productOwner(#release.parentProduct) or scrumMaster(#release.parentProduct)) and !archivedProduct(#release.parentProduct)')
+    @PreAuthorize('(productOwner(#release.parentProject) or scrumMaster(#release.parentProject)) and !archivedProject(#release.parentProject)')
     void activate(Release release) {
         if (release.state != Release.STATE_WAIT) {
             throw new BusinessException(code: 'is.release.error.not.state.wait')
         }
-        def product = release.parentProduct
-        if (product.releases.find { it.state == Release.STATE_INPROGRESS }) {
+        def project = release.parentProject
+        if (project.releases.find { it.state == Release.STATE_INPROGRESS }) {
             throw new BusinessException(code: 'is.release.error.already.active')
         }
-        def lastRelease = product.releases.findAll { it.state == Release.STATE_DONE }.max { it.orderNumber }
+        def lastRelease = project.releases.findAll { it.state == Release.STATE_DONE }.max { it.orderNumber }
         if (lastRelease.orderNumber + 1 != release.orderNumber) {
             throw new BusinessException(code: 'is.release.error.not.next')
         }
@@ -136,7 +136,7 @@ class ReleaseService extends IceScrumEventPublisher {
         update(release)
     }
 
-    @PreAuthorize('(productOwner(#release.parentProduct) or scrumMaster(#release.parentProduct)) and !archivedProduct(#release.parentProduct)')
+    @PreAuthorize('(productOwner(#release.parentProject) or scrumMaster(#release.parentProject)) and !archivedProject(#release.parentProject)')
     void close(Release release) {
         if (release.state != Release.STATE_INPROGRESS) {
             throw new BusinessException(code: 'is.release.error.not.state.wait')
@@ -147,7 +147,7 @@ class ReleaseService extends IceScrumEventPublisher {
         update(release, null, lastSprintEndDate, false)
     }
 
-    @PreAuthorize('(productOwner(#release.parentProduct) or scrumMaster(#release.parentProduct)) and !archivedProduct(#release.parentProduct)')
+    @PreAuthorize('(productOwner(#release.parentProject) or scrumMaster(#release.parentProject)) and !archivedProject(#release.parentProject)')
     void delete(Release release) {
         if (release.state >= Release.STATE_INPROGRESS) {
             throw new BusinessException(code: 'is.release.error.not.deleted')
@@ -157,19 +157,19 @@ class ReleaseService extends IceScrumEventPublisher {
             storyService.unPlanAll(release.sprints)
         }
         release.features?.each { release.removeFromFeatures(it) }
-        def product = release.parentProduct
-        product.removeFromReleases(release)
-        if (product.releases) {
-            product.releases.sort { it.startDate }.eachWithIndex { Release r, int i ->
+        def project = release.parentProject
+        project.removeFromReleases(release)
+        if (project.releases) {
+            project.releases.sort { it.startDate }.eachWithIndex { Release r, int i ->
                 r.orderNumber = i + 1;
             }
-            product.endDate = product.releases*.endDate.max()
+            project.endDate = project.releases*.endDate.max()
         }
-        product.save(flush: true)
+        project.save(flush: true)
         publishSynchronousEvent(IceScrumEventType.DELETE, release, dirtyProperties)
     }
 
-    @PreAuthorize('stakeHolder(#release.parentProduct) or inProduct(#release.parentProduct)')
+    @PreAuthorize('stakeHolder(#release.parentProject) or inProject(#release.parentProject)')
     def releaseBurndownValues(Release release) {
         def values = []
         def cliches = []
@@ -191,9 +191,9 @@ class ReleaseService extends IceScrumEventPublisher {
             def xmlRoot = new XmlSlurper().parseText(cliche.data)
             if (xmlRoot) {
                 def sprintEntry = [
-                        userstories     : xmlRoot."${Cliche.FUNCTIONAL_STORY_PRODUCT_REMAINING_POINTS}".toBigDecimal(),
-                        technicalstories: xmlRoot."${Cliche.TECHNICAL_STORY_PRODUCT_REMAINING_POINTS}".toBigDecimal(),
-                        defectstories   : xmlRoot."${Cliche.DEFECT_STORY_PRODUCT_REMAINING_POINTS}".toBigDecimal(),
+                        userstories     : xmlRoot."${Cliche.FUNCTIONAL_STORY_PROJECT_REMAINING_POINTS}".toBigDecimal(),
+                        technicalstories: xmlRoot."${Cliche.TECHNICAL_STORY_PROJECT_REMAINING_POINTS}".toBigDecimal(),
+                        defectstories   : xmlRoot."${Cliche.DEFECT_STORY_PROJECT_REMAINING_POINTS}".toBigDecimal(),
                         label: index == 0 ? "Start" : xmlRoot."${Cliche.SPRINT_ID}".toString()+"${cliche.id ?: " (progress)"}"
                 ]
                 sprintEntry << computeLabelsForSprintEntry(sprintEntry)
@@ -222,7 +222,7 @@ class ReleaseService extends IceScrumEventPublisher {
     }
 
     def unMarshall(def releaseXml, def options) {
-        Product product = options.product
+        Project project = options.project
         Release.withTransaction(readOnly: !options.save) { transaction ->
             try {
                 def inProgressDate = null
@@ -238,8 +238,8 @@ class ReleaseService extends IceScrumEventPublisher {
                     todoDate = new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(releaseXml.todoDate.text())
                 } else if (releaseXml.dateCreated?.text() && releaseXml.dateCreated?.text() != "") {
                     todoDate = new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(releaseXml.dateCreated.text())
-                } else if (product) {
-                    todoDate = product.todoDate
+                } else if (project) {
+                    todoDate = project.todoDate
                 }
                 def release = new Release(
                         state: releaseXml.state.text().toInteger(),
@@ -256,8 +256,8 @@ class ReleaseService extends IceScrumEventPublisher {
                         vision: releaseXml.vision.text(),
                         goal: releaseXml.goal?.text() ?: '')
                 options.release = release
-                if (product) {
-                    product.addToReleases(release)
+                if (project) {
+                    project.addToReleases(release)
                     // Save before some hibernate stuff
                     if (options.save) {
                         release.save()
@@ -267,7 +267,7 @@ class ReleaseService extends IceScrumEventPublisher {
                         sprintService.unMarshall(it, options)
                     }
                     releaseXml.features?.feature?.each { feature ->
-                        def f = product.features.find { it.uid == feature.@uid.text().toInteger() } ?: null
+                        def f = project.features.find { it.uid == feature.@uid.text().toInteger() } ?: null
                         if (f) {
                             release.addToFeatures(f)
                         }

@@ -38,8 +38,8 @@ class IceScrumMeteorHandler extends HttpServlet {
                 PushService pushService = Holders.applicationContext.getBean("pushService")
                 if (to && to.users) {
                     pushService.broadcastToUsers(message.namespace, message.eventType, message.object, to.users)
-                } else if (to && to.product) {
-                    pushService.broadcastToProductChannel(message.namespace, message.eventType, message.object, to.product)
+                } else if (to && to.project) {
+                    pushService.broadcastToProjectChannel(message.namespace, message.eventType, message.object, to.project)
                 } else {
                     pushService.broadcastToChannel(message.namespace, message.eventType, message.object)
                 }

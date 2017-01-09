@@ -23,22 +23,22 @@
 
 package org.icescrum.core.security;
 
-import org.icescrum.core.domain.Product;
+import org.icescrum.core.domain.Project;
 import org.icescrum.core.domain.Team;
 
 public interface ScrumExpressionRoot {
 
-    public boolean inProduct(Product p);
-    public boolean inProduct(long p);
-    public boolean inProduct();
+    public boolean inProject(Project p);
+    public boolean inProject(long p);
+    public boolean inProject();
 
 
     public boolean inTeam(Team t);
     public boolean inTeam(long t);
     public boolean inTeam();
 
-    public boolean archivedProduct(Product p);
-    public boolean archivedProduct();
-    public boolean archivedProduct(long p);
+    public boolean archivedProject(Project p);
+    public boolean archivedProject();
+    public boolean archivedProject(long p);
 
 }

@@ -39,41 +39,41 @@ class FeatureService extends IceScrumEventPublisher {
     def springSecurityService
     def grailsApplication
 
-    @PreAuthorize('productOwner(#product) and !archivedProduct(#product)')
-    void save(Feature feature, Product product) {
+    @PreAuthorize('productOwner(#project) and !archivedProject(#project)')
+    void save(Feature feature, Project project) {
         feature.name = feature.name?.trim()
-        feature.rank = Feature.countByBacklog(product) + 1
+        feature.rank = Feature.countByBacklog(project) + 1
         if (feature.value == null) {
             feature.value = 0 // TODO check if relevant (previously, it wasn't possible to create a feature with no value)
         }
-        feature.uid = Feature.findNextUId(product.id)
-        feature.backlog = product
-        product.addToFeatures(feature)
+        feature.uid = Feature.findNextUId(project.id)
+        feature.backlog = project
+        project.addToFeatures(feature)
         feature.save(flush: true)
         feature.refresh() // required to initialize collections to empty list
         publishSynchronousEvent(IceScrumEventType.CREATE, feature)
     }
 
-    @PreAuthorize('productOwner(#feature.backlog) and !archivedProduct(#feature.backlog)')
+    @PreAuthorize('productOwner(#feature.backlog) and !archivedProject(#feature.backlog)')
     void delete(Feature feature) {
-        def product = feature.backlog
+        def project = feature.backlog
         def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_DELETE, feature)
         feature.stories?.each {
             it.feature = null
             it.save()
         }
-        product.removeFromFeatures(feature)
-        product.features.each {
+        project.removeFromFeatures(feature)
+        project.features.each {
             if (it.rank > feature.rank) {
                 it.rank--
                 it.save()
             }
         }
-        product.save()
+        project.save()
         publishSynchronousEvent(IceScrumEventType.DELETE, feature, dirtyProperties)
     }
 
-    @PreAuthorize('productOwner(#feature.backlog) and !archivedProduct(#feature.backlog)')
+    @PreAuthorize('productOwner(#feature.backlog) and !archivedProject(#feature.backlog)')
     void update(Feature feature) {
         feature.name = feature.name.trim()
         if (feature.isDirty('rank')) {
@@ -87,7 +87,7 @@ class FeatureService extends IceScrumEventPublisher {
         publishSynchronousEvent(IceScrumEventType.UPDATE, feature, dirtyProperties)
     }
 
-    @PreAuthorize('productOwner(#features[0].backlog) and !archivedProduct(#features[0].backlog)')
+    @PreAuthorize('productOwner(#features[0].backlog) and !archivedProject(#features[0].backlog)')
     def copyToBacklog(List<Feature> features) {
         def stories = []
         StoryService storyService = (StoryService) grailsApplication.mainContext.getBean('storyService')
@@ -142,9 +142,9 @@ class FeatureService extends IceScrumEventPublisher {
         }
     }
 
-    def productParkingLotValues(Product product) {
+    def projectParkingLotValues(Project project) {
         def values = []
-        product.features?.each { it ->
+        project.features?.each { it ->
             def value = 100d * calculateCompletion(it)
             values << [label: it.name, value: value]
         }
@@ -153,7 +153,7 @@ class FeatureService extends IceScrumEventPublisher {
 
     def releaseParkingLotValues(Release release) {
         def values = []
-        release.parentProduct.features?.each { it ->
+        release.parentProject.features?.each { it ->
             def value = 100d * calculateCompletion(it, release)
             values << [label: it.name, value: value]
         }
@@ -161,14 +161,14 @@ class FeatureService extends IceScrumEventPublisher {
     }
 
     def unMarshall(def featureXml, def options) {
-        Product product = options.product
+        Project project = options.project
         Feature.withTransaction(readOnly: !options.save) { transaction ->
             try {
                 def todoDate = null
                 if (featureXml.todoDate?.text() && featureXml.todoDate?.text() != "") {
                     todoDate = new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(featureXml.todoDate.text())
-                } else if (product) {
-                    todoDate = product.todoDate
+                } else if (project) {
+                    todoDate = project.todoDate
                 }
                 def feature = new Feature(
                         name: featureXml."${'name'}".text(),
@@ -182,8 +182,8 @@ class FeatureService extends IceScrumEventPublisher {
                         uid: featureXml.@uid.text()?.isEmpty() ? featureXml.@id.text().toInteger() : featureXml.@uid.text().toInteger()
                 )
                 // References on other objects
-                if (product) {
-                    product.addToFeatures(feature)
+                if (project) {
+                    project.addToFeatures(feature)
                 }
                 if (options.save) {
                     feature.save()

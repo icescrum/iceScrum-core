@@ -23,7 +23,7 @@
 
 package org.icescrum.core.domain.security
 
-import org.icescrum.core.domain.Product
+import org.icescrum.core.domain.Project
 import org.icescrum.core.domain.Team
 
 class Authority implements Serializable {
@@ -54,7 +54,7 @@ class Authority implements Serializable {
         "${authority}_T$team.id"
     }
 
-    static String getAuthorityString(String authority, Product product) {
-        "${authority}_P$product.id"
+    static String getAuthorityString(String authority, Project project) {
+        "${authority}_P$project.id"
     }
 }

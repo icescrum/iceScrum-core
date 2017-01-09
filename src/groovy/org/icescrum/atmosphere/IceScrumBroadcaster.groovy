@@ -3,7 +3,7 @@ package org.icescrum.atmosphere
 import org.atmosphere.cpr.AtmosphereConfig
 import org.atmosphere.cpr.Broadcaster
 import org.atmosphere.cpr.DefaultBroadcaster
-import org.icescrum.core.domain.Product
+import org.icescrum.core.domain.Project
 
 class IceScrumBroadcaster extends DefaultBroadcaster {
 
@@ -18,8 +18,8 @@ class IceScrumBroadcaster extends DefaultBroadcaster {
     }
 
     private void initValues() {
-        if (name.contains("product-")){
-            def props = Product.createCriteria().get {
+        if (name.contains("project-")){
+            def props = Project.createCriteria().get {
                 eq 'id', name.split('-')[1].toLong()
                 projections {
                     property 'pkey'

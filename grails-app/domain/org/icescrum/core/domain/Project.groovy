@@ -29,7 +29,7 @@ import grails.plugin.springsecurity.acl.AclUtilService
 import grails.util.Holders
 import org.hibernate.ObjectNotFoundException
 import org.icescrum.core.domain.Invitation.InvitationType
-import org.icescrum.core.domain.preferences.ProductPreferences
+import org.icescrum.core.domain.preferences.ProjectPreferences
 import org.icescrum.core.domain.security.Authority
 import org.icescrum.core.services.SecurityService
 import org.icescrum.plugins.attachmentable.interfaces.Attachmentable
@@ -37,11 +37,11 @@ import org.springframework.security.acls.domain.BasePermission
 import org.springframework.security.acls.model.Acl
 import org.springframework.security.acls.model.NotFoundException
 
-class Product extends TimeBox implements Serializable, Attachmentable {
+class Project extends TimeBox implements Serializable, Attachmentable {
 
     int planningPokerGameType = PlanningPokerGame.FIBO_SUITE
     String name = ""
-    ProductPreferences preferences
+    ProjectPreferences preferences
     String pkey
     SortedSet<Team> teams
     SortedSet<Release> releases
@@ -59,10 +59,10 @@ class Product extends TimeBox implements Serializable, Attachmentable {
     static mappedBy = [
             features: "backlog",
             stories : "backlog",
-            releases: "parentProduct",
-            backlogs: "product",
-            actors  : "parentProduct",
-            tasks   : "parentProduct"
+            releases: "parentProject",
+            backlogs: "project",
+            actors  : "parentProject",
+            tasks   : "parentProject"
     ]
 
     static transients = [
@@ -85,7 +85,7 @@ class Product extends TimeBox implements Serializable, Attachmentable {
 
     static mapping = {
         cache true
-        table 'is_product'
+        table 'is_project'
         actors cascade: 'all-delete-orphan', batchSize: 10, cache: true
         features cascade: 'all-delete-orphan', sort: 'rank', batchSize: 10, cache: true
         stories cascade: 'all-delete-orphan', sort: 'rank', 'label': 'asc', batchSize: 25, cache: true
@@ -123,7 +123,7 @@ class Product extends TimeBox implements Serializable, Attachmentable {
             return false
         if (getClass() != obj.getClass())
             return false
-        final Product other = (Product) obj
+        final Project other = (Project) obj
         if (name == null) {
             if (other.name != null)
                 return false
@@ -132,7 +132,7 @@ class Product extends TimeBox implements Serializable, Attachmentable {
         return true
     }
 
-    int compareTo(Product obj) {
+    int compareTo(Project obj) {
         return name.compareTo(obj.name);
     }
 
@@ -156,7 +156,7 @@ class Product extends TimeBox implements Serializable, Attachmentable {
         return users.unique()
     }
 
-    static List<Product> findAllByTermAndFilter(params = [:], String term = '', String filter = '') {
+    static List<Project> findAllByTermAndFilter(params = [:], String term = '', String filter = '') {
         return createCriteria().list(params) {
             if (filter) {
                 preferences {
@@ -182,15 +182,15 @@ class Product extends TimeBox implements Serializable, Attachmentable {
             vars.uid = user?.id ?: 0L
         }
         executeQuery("""SELECT p
-                        FROM org.icescrum.core.domain.Product as p
+                        FROM org.icescrum.core.domain.Project as p
                         WHERE p.id IN (
                             SELECT DISTINCT p.id
-                            FROM org.icescrum.core.domain.Product as p
+                            FROM org.icescrum.core.domain.Project as p
                             WHERE """
                                 + ( members ? """
                                 p.id IN (
                                     SELECT DISTINCT p.id
-                                    FROM org.icescrum.core.domain.Product as p
+                                    FROM org.icescrum.core.domain.Project as p
                                     INNER JOIN p.teams as t
                                     WHERE t.id IN (
                                         SELECT DISTINCT t2.id
@@ -203,12 +203,12 @@ class Product extends TimeBox implements Serializable, Attachmentable {
                                 : "") + """
                                 p IN (
                                     SELECT DISTINCT p
-                                    FROM org.icescrum.core.domain.Product as p,
+                                    FROM org.icescrum.core.domain.Project as p,
                                          grails.plugin.springsecurity.acl.AclClass as ac,
                                          grails.plugin.springsecurity.acl.AclObjectIdentity as ai,
                                          grails.plugin.springsecurity.acl.AclSid as acl,
                                          grails.plugin.springsecurity.acl.AclEntry as ae
-                                    WHERE ac.className = 'org.icescrum.core.domain.Product'
+                                    WHERE ac.className = 'org.icescrum.core.domain.Project'
                                     AND ai.aclClass = ac.id
                                     AND acl.sid = :sid
                                     AND acl.id = ae.sid.id
@@ -230,10 +230,10 @@ class Product extends TimeBox implements Serializable, Attachmentable {
 
     static findAllByMember(long userid, params) {
         executeQuery("""SELECT p
-                        FROM org.icescrum.core.domain.Product as p
+                        FROM org.icescrum.core.domain.Project as p
                         WHERE p.id IN (
                             SELECT DISTINCT p.id
-                            FROM org.icescrum.core.domain.Product as p
+                            FROM org.icescrum.core.domain.Project as p
                             INNER JOIN p.teams as t
                             WHERE t.id IN (
                                 SELECT DISTINCT t2.id
@@ -244,20 +244,20 @@ class Product extends TimeBox implements Serializable, Attachmentable {
                         )""", [uid: userid], params ?: [:])
     }
 
-    static Product withProduct(long id) {
-        Product product = get(id)
-        if (!product) {
-            throw new ObjectNotFoundException(id, 'Product')
+    static Project withProject(long id) {
+        Project project = get(id)
+        if (!project) {
+            throw new ObjectNotFoundException(id, 'Project')
         }
-        return product
+        return project
     }
 
     def getProductOwners() {
-        //Only used when product is being imported
+        //Only used when project is being imported
         if (this.productOwners) {
             this.productOwners
         } else if (this.id) {
-            def acl = retrieveAclProduct()
+            def acl = retrieveAclProject()
             def users = acl.entries.findAll { it.permission in SecurityService.productOwnerPermissions }*.sid*.principal;
             if (users) {
                 return User.findAll("from User as u where u.username in (:users)", [users: users], [cache: true])
@@ -273,7 +273,7 @@ class Product extends TimeBox implements Serializable, Attachmentable {
         if (this.stakeHolders) {
             this.stakeHolders // Used only when the project is being imported
         } else if (this.id) {
-            def acl = retrieveAclProduct()
+            def acl = retrieveAclProject()
             def users = acl.entries.findAll { it.permission in SecurityService.stakeHolderPermissions }*.sid*.principal
             if (users) {
                 return User.findAll("from User as u where u.username in (:users)", [users: users], [cache: true])
@@ -290,11 +290,11 @@ class Product extends TimeBox implements Serializable, Attachmentable {
     }
 
     List<Invitation> getInvitedStakeHolders() {
-        return Invitation.findAllByTypeAndProductAndFutureRole(InvitationType.PRODUCT, this, Authority.STAKEHOLDER)
+        return Invitation.findAllByTypeAndProjectAndFutureRole(InvitationType.PROJECT, this, Authority.STAKEHOLDER)
     }
 
     List<Invitation> getInvitedProductOwners() {
-        return Invitation.findAllByTypeAndProductAndFutureRole(InvitationType.PRODUCT, this, Authority.PRODUCTOWNER)
+        return Invitation.findAllByTypeAndProjectAndFutureRole(InvitationType.PROJECT, this, Authority.PRODUCTOWNER)
     }
 
     Team getFirstTeam() {
@@ -312,7 +312,7 @@ class Product extends TimeBox implements Serializable, Attachmentable {
         return this.releases*.sprints.flatten()
     }
 
-    private Acl retrieveAclProduct() {
+    private Acl retrieveAclProject() {
         def aclUtilService = (AclUtilService) Holders.grailsApplication.mainContext.getBean('aclUtilService')
         def acl
         try {
@@ -331,7 +331,7 @@ class Product extends TimeBox implements Serializable, Attachmentable {
     }
 
     def xml(builder) {
-        builder.product(id: this.id) {
+        builder.project(id: this.id) {
             builder.pkey(this.pkey)
             builder.endDate(this.endDate)
             builder.todoDate(this.todoDate)
