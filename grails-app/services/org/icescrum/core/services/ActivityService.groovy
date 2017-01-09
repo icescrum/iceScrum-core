@@ -90,7 +90,7 @@ class ActivityService extends IceScrumEventPublisher {
                 if (options.save) {
                     activity.save()
                 }
-                return (Activity) importDomainsPlugins(activity, options)
+                return (Activity) importDomainsPlugins(activityXml, activity, options)
             } catch (Exception e) {
                 if (log.debugEnabled) {
                     e.printStackTrace()

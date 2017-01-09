@@ -409,7 +409,7 @@ class TaskService extends IceScrumEventPublisher {
                 if (options.save) {
                     task.save()
                 }
-                return (Task) importDomainsPlugins(task, options)
+                return (Task) importDomainsPlugins(taskXml, task, options)
             } catch (Exception e) {
                 if (log.debugEnabled) e.printStackTrace()
                 throw new RuntimeException(e)

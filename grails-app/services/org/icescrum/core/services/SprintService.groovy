@@ -424,7 +424,7 @@ class SprintService extends IceScrumEventPublisher {
                     sprint.save()
                 }
                 options.sprint = null
-                return (Sprint) importDomainsPlugins(sprint, options)
+                return (Sprint) importDomainsPlugins(sprintXml, sprint, options)
             } catch (Exception e) {
                 if (log.debugEnabled) e.printStackTrace()
                 throw new RuntimeException(e)

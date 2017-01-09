@@ -243,7 +243,7 @@ class IcescrumCoreGrailsPlugin {
 
     private void addImportDomainsPlugins(source, config) {
         def name = source.logicalPropertyName
-        source.metaClass.importDomainsPlugins = { domainObject, options ->
+        source.metaClass.importDomainsPlugins = { objectXml, object, options ->
             def progress = RCH.currentRequestAttributes().getSession()?.progress
             if (progress) {
                 if (!progress.buffer?.contains(name)) {
@@ -256,9 +256,9 @@ class IcescrumCoreGrailsPlugin {
                 }
             }
             config[name]?.each { closure ->
-                closure(domainObject, options)
+                closure(objectXml, object, options)
             }
-            return domainObject
+            return object
         }
     }
 

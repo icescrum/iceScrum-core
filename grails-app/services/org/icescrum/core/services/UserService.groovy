@@ -233,7 +233,7 @@ class UserService extends IceScrumEventPublisher {
                 if (options.save) {
                     user.save()
                 }
-                return (User) importDomainsPlugins(user, options)
+                return (User) importDomainsPlugins(userXml, user, options)
             } catch (Exception e) {
                 if (log.debugEnabled) e.printStackTrace()
                 throw new RuntimeException(e)

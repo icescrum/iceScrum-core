@@ -783,7 +783,7 @@ class StoryService extends IceScrumEventPublisher {
                     story.save()
                 }
                 options.story = null
-                return (Story) importDomainsPlugins(story, options)
+                return (Story) importDomainsPlugins(storyXml, story, options)
             } catch (Exception e) {
                 if (log.debugEnabled) e.printStackTrace()
                 throw new RuntimeException(e)

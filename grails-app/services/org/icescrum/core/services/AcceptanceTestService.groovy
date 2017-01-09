@@ -96,7 +96,7 @@ class AcceptanceTestService extends IceScrumEventPublisher {
                 if (options.save) {
                     acceptanceTest.save()
                 }
-                return (AcceptanceTest) importDomainsPlugins(acceptanceTest, options)
+                return (AcceptanceTest) importDomainsPlugins(acceptanceTestXml, acceptanceTest, options)
             } catch (Exception e) {
                 if (log.debugEnabled) {
                     e.printStackTrace()

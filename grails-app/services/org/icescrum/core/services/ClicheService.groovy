@@ -312,7 +312,7 @@ class ClicheService {
             if (options.save) {
                 cliche.save()
             }
-            return (Cliche) importDomainsPlugins(cliche, options)
+            return (Cliche) importDomainsPlugins(clicheXml, cliche, options)
         }
     }
 }

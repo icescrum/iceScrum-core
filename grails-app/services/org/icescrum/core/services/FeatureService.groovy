@@ -188,7 +188,7 @@ class FeatureService extends IceScrumEventPublisher {
                 if (options.save) {
                     feature.save()
                 }
-                return (Feature) importDomainsPlugins(feature, options)
+                return (Feature) importDomainsPlugins(featureXml, feature, options)
             } catch (Exception e) {
                 if (log.debugEnabled) e.printStackTrace()
                 throw new RuntimeException(e)

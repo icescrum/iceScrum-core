@@ -176,7 +176,7 @@ class WidgetService {
                 if (options.save) {
                     widget.save()
                 }
-                return (WidgetService) importDomainsPlugins(widget, options)
+                return (WidgetService) importDomainsPlugins(widgetXml, widget, options)
             } catch (Exception e) {
                 if (log.debugEnabled) {
                     e.printStackTrace()

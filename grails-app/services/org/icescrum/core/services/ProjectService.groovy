@@ -458,7 +458,7 @@ class ProjectService extends IceScrumEventPublisher {
                     project.save()
                 }
                 options.project = null
-                return (Project) importDomainsPlugins(project, options)
+                return (Project) importDomainsPlugins(projectXml, project, options)
             } catch (Exception e) {
                 if (log.debugEnabled) {
                     e.printStackTrace()

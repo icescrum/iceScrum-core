@@ -80,7 +80,7 @@ class ActorService extends IceScrumEventPublisher {
                 if (options.save) {
                     actor.save()
                 }
-                return (Actor) importDomainsPlugins(actor, options)
+                return (Actor) importDomainsPlugins(actorXml, actor, options)
             } catch (Exception e) {
                 if (log.debugEnabled) {
                     e.printStackTrace()

@@ -284,7 +284,7 @@ class ReleaseService extends IceScrumEventPublisher {
                     release.save()
                 }
                 options.release = null
-                return (Release) importDomainsPlugins(release, options)
+                return (Release) importDomainsPlugins(releaseXml, release, options)
             } catch (Exception e) {
                 if (log.debugEnabled) e.printStackTrace()
                 throw new RuntimeException(e)

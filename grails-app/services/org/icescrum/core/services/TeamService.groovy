@@ -214,7 +214,7 @@ class TeamService extends IceScrumEventPublisher {
                     }
                     team.save()
                 }
-                return (Team) importDomainsPlugins(team, options)
+                return (Team) importDomainsPlugins(teamXml, team, options)
             } catch (Exception e) {
                 if (log.debugEnabled) e.printStackTrace()
                 throw new RuntimeException(e)
