@@ -208,10 +208,10 @@ class ApplicationSupport {
 
     static public checkForUpdateAndReportUsage = { def config ->
         def timer = new Timer()
-        //CheckForUpdate
+        // CheckForUpdate
         def interval = CheckerTimerTask.computeInterval(config.icescrum.check.interval ?: 360)
         timer.scheduleAtFixedRate(new CheckerTimerTask(timer, interval), 60000, interval)
-        //ReportUsage at least 6hours after first launch?
+        // ReportUsage at least 6hours after first launch?
         def intervalReport = CheckerTimerTask.computeInterval(config.icescrum.report.interval ?: 360)
         timer.scheduleAtFixedRate(new ReportUsageTimerTask(timer, interval), 60000 * 60 * 6, intervalReport)
     }
@@ -693,15 +693,12 @@ class ReportUsageTimerTask extends TimerTask {
         def referer = Holders.grailsApplication.config.grails.serverURL
         def environment = Holders.grailsApplication.config.icescrum.environment
         try {
-
             if (!config.enable) {
                 return
             }
-
             def headers = ['User-Agent': 'iceScrum-Agent/1.0', 'Referer': referer, 'Content-Type': 'application/json', 'Accept': 'application/json']
             def params = ['http.connection.timeout': config.timeout ?: 5000, 'http.socket.timeout': config.timeout ?: 5000]
             def url = config.url + "/" + config.path
-
             JSON data
             User.withNewSession {
                 data = [
@@ -750,7 +747,6 @@ class ReportUsageTimerTask extends TimerTask {
                         OS          : "${System.getProperty('os.name')} / ${System.getProperty('os.arch')} / ${System.getProperty('os.version')}"
                 ] as JSON
             }
-
             def resp = ApplicationSupport.postJSON(url, null, null, data, headers, params)
             if (resp.status == 200) {
                 if (log.debugEnabled) {
