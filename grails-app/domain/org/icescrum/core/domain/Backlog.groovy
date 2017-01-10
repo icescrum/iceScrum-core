@@ -77,7 +77,7 @@ class Backlog {
             builder.shared(this.shared)
             builder.filter(this.filter)
             builder.notes { builder.mkp.yieldUnescaped("<![CDATA[${this.notes ?: ''}]]>") }
-            if(this.owner){
+            if (this.owner) {
                 builder.owner(uid: this.owner.uid)
             }
             exportDomainsPlugins(builder)
