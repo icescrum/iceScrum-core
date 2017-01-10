@@ -6,6 +6,8 @@ import org.icescrum.core.domain.Story
 import org.icescrum.core.domain.Project
 import org.icescrum.core.domain.User
 import grails.util.GrailsNameUtils
+import org.icescrum.core.support.ApplicationSupport
+
 import java.text.SimpleDateFormat
 import org.grails.comments.Comment
 import org.grails.comments.CommentLink
@@ -199,7 +201,7 @@ class AddonsService {
                     addComment(s,
                             u,
                             comment.body.text(),
-                            new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(comment.dateCreated.text()))
+                            ApplicationSupport.parseDate(comment.dateCreated.text()))
                 }
             }
         }
@@ -221,7 +223,7 @@ class AddonsService {
                     addComment(t,
                             u,
                             comment.body.text(),
-                            new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(comment.dateCreated.text()))
+                            ApplicationSupport.parseDate(comment.dateCreated.text()))
                 }
             }
         }
@@ -249,7 +251,7 @@ class AddonsService {
                                                         activity.code.text(),
                                                         activity.cachedLabel?.text() ?: activity.label.text(),
                                                         activity.cachedDescription?.text() ?: activity.description.text())
-                    a.dateCreated = new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(activity.dateCreated.text())
+                    a.dateCreated = ApplicationSupport.parseDate(activity.dateCreated.text())
                 }
             }
         }
@@ -265,7 +267,7 @@ class AddonsService {
                                                 activity.code.text(),
                                                 activity.cachedLabel?.text() ?: activity.label.text(),
                                                 activity.cachedDescription?.text() ?: activity.description.text())
-            a.dateCreated = new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(activity.dateCreated.text())
+            a.dateCreated = ApplicationSupport.parseDate(activity.dateCreated.text())
         }
         log.debug("end import activities")
     }

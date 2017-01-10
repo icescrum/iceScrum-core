@@ -362,19 +362,19 @@ class SprintService extends IceScrumEventPublisher {
             try {
                 def inProgressDate = null
                 if (sprintXml.inProgressDate?.text() && sprintXml.inProgressDate?.text() != "")
-                    inProgressDate = new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(sprintXml.inProgressDate.text()) ?: null
+                    inProgressDate = sprintXml.inProgressDate.text() ? ApplicationSupport.parseDate(sprintXml.inProgressDate.text()) : null
                 if (!inProgressDate && sprintXml.state.text().toInteger() >= Sprint.STATE_INPROGRESS) {
-                    inProgressDate = new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(sprintXml.startDate.text())
+                    inProgressDate = ApplicationSupport.parseDate(sprintXml.startDate.text())
                 }
                 def doneDate = null
                 if (sprintXml.doneDate?.text() && sprintXml.doneDate?.text() != "")
-                    doneDate = new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(sprintXml.doneDate.text()) ?: null
+                    doneDate = sprintXml.doneDate.text() ? ApplicationSupport.parseDate(sprintXml.doneDate.text()) : null
                 if (!doneDate && sprintXml.state.text().toInteger() == Sprint.STATE_INPROGRESS) {
-                    doneDate = new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(sprintXml.endDate.text())
+                    doneDate = ApplicationSupport.parseDate(sprintXml.endDate.text())
                 }
                 def todoDate = null
                 if (sprintXml.todoDate?.text() && sprintXml.todoDate?.text() != "") {
-                    todoDate = new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(sprintXml.todoDate.text())
+                    todoDate = ApplicationSupport.parseDate(sprintXml.todoDate.text())
                 } else if (release) {
                     todoDate = release.todoDate
                 }
@@ -387,10 +387,10 @@ class SprintService extends IceScrumEventPublisher {
                         velocity: (sprintXml.velocity.text().isNumber()) ? sprintXml.velocity.text().toDouble() : 0d,
                         dailyWorkTime: (sprintXml.dailyWorkTime.text().isNumber()) ? sprintXml.dailyWorkTime.text().toDouble() : 8d,
                         capacity: (sprintXml.capacity.text().isNumber()) ? sprintXml.capacity.text().toDouble() : 0d,
-                        lastUpdated: sprintXml.lastUpdated.text() ? new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(sprintXml.lastUpdated.text()) : new Date(),
+                        lastUpdated: sprintXml.lastUpdated.text() ? ApplicationSupport.parseDate(sprintXml.lastUpdated.text()) : new Date(),
                         todoDate: todoDate,
-                        startDate: new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(sprintXml.startDate.text()),
-                        endDate: new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(sprintXml.endDate.text()),
+                        startDate: ApplicationSupport.parseDate(sprintXml.startDate.text()),
+                        endDate: ApplicationSupport.parseDate(sprintXml.endDate.text()),
                         orderNumber: sprintXml.orderNumber.text().toInteger(),
                         description: sprintXml.description.text() ?: '',
                         goal: sprintXml.goal?.text() ?: '',

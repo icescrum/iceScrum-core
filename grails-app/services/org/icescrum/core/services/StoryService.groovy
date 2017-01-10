@@ -677,33 +677,33 @@ class StoryService extends IceScrumEventPublisher {
             try {
                 def todoDate = null
                 if (storyXml.todoDate?.text() && storyXml.todoDate?.text() != "") {
-                    todoDate = new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(storyXml.todoDate.text())
+                    todoDate = ApplicationSupport.parseDate(storyXml.todoDate.text())
                 } else if (sprint || project) {
                     todoDate = sprint?.todoDate ?: project.todoDate
                 }
                 def acceptedDate = null
                 if (storyXml.acceptedDate?.text() && storyXml.acceptedDate?.text() != "") {
-                    acceptedDate = new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(storyXml.acceptedDate.text()) ?: null
+                    acceptedDate = ApplicationSupport.parseDate(storyXml.acceptedDate.text())
                 }
                 def estimatedDate = null
                 if (storyXml.estimatedDate?.text() && storyXml.estimatedDate?.text() != "") {
-                    estimatedDate = new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(storyXml.estimatedDate.text()) ?: null
+                    estimatedDate = ApplicationSupport.parseDate(storyXml.estimatedDate.text())
                 }
                 def plannedDate = null
                 if (storyXml.plannedDate?.text() && storyXml.plannedDate?.text() != "") {
-                    plannedDate = new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(storyXml.plannedDate.text()) ?: null
+                    plannedDate = ApplicationSupport.parseDate(storyXml.plannedDate.text())
                 }
                 def inProgressDate = null
                 if (storyXml.inProgressDate?.text() && storyXml.inProgressDate?.text() != "") {
-                    inProgressDate = new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(storyXml.inProgressDate.text()) ?: null
+                    inProgressDate = ApplicationSupport.parseDate(storyXml.inProgressDate.text())
                 }
                 def doneDate = null
                 if (storyXml.doneDate?.text() && storyXml.doneDate?.text() != "") {
-                    doneDate = new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(storyXml.doneDate.text()) ?: null
+                    doneDate = ApplicationSupport.parseDate(storyXml.doneDate.text())
                 }
                 def story = new Story(
                         type: storyXml.type.text().toInteger(),
-                        suggestedDate: new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(storyXml.suggestedDate.text()),
+                        suggestedDate: ApplicationSupport.parseDate(storyXml.suggestedDate.text()),
                         acceptedDate: acceptedDate,
                         estimatedDate: estimatedDate,
                         plannedDate: plannedDate,

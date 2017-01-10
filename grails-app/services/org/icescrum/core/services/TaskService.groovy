@@ -346,15 +346,15 @@ class TaskService extends IceScrumEventPublisher {
             try {
                 def inProgressDate = null
                 if (taskXml.inProgressDate?.text() && taskXml.inProgressDate?.text() != "") {
-                    inProgressDate = new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(taskXml.inProgressDate.text()) ?: null
+                    inProgressDate = ApplicationSupport.parseDate(taskXml.inProgressDate.text())
                 }
                 def doneDate = null
                 if (taskXml.doneDate?.text() && taskXml.doneDate?.text() != "") {
-                    doneDate = new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(taskXml.doneDate.text()) ?: null
+                    doneDate = ApplicationSupport.parseDate(taskXml.doneDate.text())
                 }
                 def todoDate = null
                 if (taskXml.todoDate?.text() && taskXml.todoDate?.text() != "") {
-                    todoDate = new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(taskXml.todoDate.text())
+                    todoDate = ApplicationSupport.parseDate(taskXml.todoDate.text())
                 } else if (sprint || story) {
                     todoDate = sprint?.todoDate ?: story.todoDate
                 }

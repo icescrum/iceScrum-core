@@ -282,10 +282,10 @@ class ProjectService extends IceScrumEventPublisher {
                         name: projectXml."${'name'}".text(),
                         pkey: projectXml.pkey.text(),
                         description: projectXml.description.text(),
-                        lastUpdated: projectXml.lastUpdated.text() ? new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(projectXml.lastUpdated.text()) : new Date(),
-                        todoDate: new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(projectXml.todoDate?.text() ?: projectXml.dateCreated.text()),
-                        startDate: new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(projectXml.startDate.text()),
-                        endDate: new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(projectXml.endDate.text()),
+                        lastUpdated: projectXml.lastUpdated.text() ? ApplicationSupport.parseDate(projectXml.lastUpdated.text()) : new Date(),
+                        todoDate: ApplicationSupport.parseDate(projectXml.todoDate?.text() ?: projectXml.dateCreated.text()),
+                        startDate: ApplicationSupport.parseDate(projectXml.startDate.text()),
+                        endDate: ApplicationSupport.parseDate(projectXml.endDate.text()),
                         planningPokerGameType: projectXml.planningPokerGameType.text().toInteger())
 
                 project.preferences = new ProjectPreferences(

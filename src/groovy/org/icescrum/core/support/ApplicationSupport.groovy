@@ -60,6 +60,7 @@ import org.springframework.security.web.access.WebInvocationPrivilegeEvaluator
 
 import javax.servlet.FilterChain
 import java.security.MessageDigest
+import java.text.SimpleDateFormat
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
@@ -269,6 +270,14 @@ class ApplicationSupport {
         midnightTime.set(Calendar.SECOND, 0)
         midnightTime.set(Calendar.MILLISECOND, 0)
         return midnightTime.getTime()
+    }
+
+    public static Date parseDate(String date){
+        try{
+            return new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(date)
+        } catch(Exception e){
+            return new SimpleDateFormat('EEE MMM d HH:mm:ss zzz yyyy').parse(date)
+        }
     }
 
     static public findUserUIDOldXMl(def object, name, users) {

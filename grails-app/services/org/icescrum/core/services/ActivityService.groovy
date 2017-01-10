@@ -29,6 +29,7 @@ import org.icescrum.core.domain.Activity
 import org.icescrum.core.domain.User
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
+import org.icescrum.core.support.ApplicationSupport
 
 import java.text.SimpleDateFormat
 
@@ -65,8 +66,8 @@ class ActivityService extends IceScrumEventPublisher {
         Activity.withTransaction(readOnly: !options.save) { transaction ->
             try {
                 def activity = new Activity(
-                        dateCreated: new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(activityXml.dateCreated.text()),
-                        lastUpdated: new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(activityXml.lastUpdated.text()),
+                        dateCreated: ApplicationSupport.parseDate(activityXml.dateCreated.text()),
+                        lastUpdated: ApplicationSupport.parseDate(activityXml.lastUpdated.text()),
                         code: activityXml.code.text(),
                         label: activityXml.label.text(),
                         field: activityXml.field.text(),

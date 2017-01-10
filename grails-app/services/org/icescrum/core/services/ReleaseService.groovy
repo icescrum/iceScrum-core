@@ -29,6 +29,7 @@ import org.icescrum.core.domain.*
 import org.icescrum.core.error.BusinessException
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
+import org.icescrum.core.support.ApplicationSupport
 import org.springframework.security.access.prepost.PreAuthorize
 
 import java.text.SimpleDateFormat
@@ -227,29 +228,29 @@ class ReleaseService extends IceScrumEventPublisher {
             try {
                 def inProgressDate = null
                 if (releaseXml.inProgressDate?.text() && releaseXml.inProgressDate?.text() != "") {
-                    inProgressDate = new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(releaseXml.inProgressDate.text()) ?: null
+                    inProgressDate = ApplicationSupport.parseDate(releaseXml.inProgressDate.text())
                 }
                 def doneDate = null
                 if (releaseXml.doneDate?.text() && releaseXml.doneDate?.text() != "") {
-                    doneDate = new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(releaseXml.doneDate.text()) ?: null
+                    doneDate = ApplicationSupport.parseDate(releaseXml.doneDate.text())
                 }
                 def todoDate = null
                 if (releaseXml.todoDate?.text() && releaseXml.todoDate?.text() != "") {
-                    todoDate = new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(releaseXml.todoDate.text())
+                    todoDate = ApplicationSupport.parseDate(releaseXml.todoDate.text())
                 } else if (releaseXml.dateCreated?.text() && releaseXml.dateCreated?.text() != "") {
-                    todoDate = new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(releaseXml.dateCreated.text())
+                    todoDate = ApplicationSupport.parseDate(releaseXml.dateCreated.text())
                 } else if (project) {
                     todoDate = project.todoDate
                 }
                 def release = new Release(
                         state: releaseXml.state.text().toInteger(),
                         name: releaseXml.name.text(),
-                        lastUpdated: releaseXml.lastUpdated.text() ? new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(releaseXml.lastUpdated.text()) : new Date(),
+                        lastUpdated: releaseXml.lastUpdated.text() ? ApplicationSupport.parseDate(releaseXml.lastUpdated.text()) : new Date(),
                         todoDate: todoDate,
-                        startDate: new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(releaseXml.startDate.text()),
+                        startDate: ApplicationSupport.parseDate(releaseXml.startDate.text()),
                         doneDate: doneDate,
                         inProgressDate: inProgressDate,
-                        endDate: new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(releaseXml.endDate.text()),
+                        endDate: ApplicationSupport.parseDate(releaseXml.endDate.text()),
                         orderNumber: releaseXml.orderNumber.text().toInteger(),
                         firstSprintIndex: releaseXml.firstSprintIndex.text() ? releaseXml.firstSprintIndex.toInteger() : 1,
                         description: releaseXml.description.text(),

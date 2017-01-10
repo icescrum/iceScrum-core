@@ -29,6 +29,7 @@ import grails.validation.ValidationException
 import org.icescrum.core.domain.*
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
+import org.icescrum.core.support.ApplicationSupport
 import org.springframework.security.access.prepost.PreAuthorize
 
 import java.text.SimpleDateFormat
@@ -166,7 +167,7 @@ class FeatureService extends IceScrumEventPublisher {
             try {
                 def todoDate = null
                 if (featureXml.todoDate?.text() && featureXml.todoDate?.text() != "") {
-                    todoDate = new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(featureXml.todoDate.text())
+                    todoDate = ApplicationSupport.parseDate(featureXml.todoDate.text())
                 } else if (project) {
                     todoDate = project.todoDate
                 }
