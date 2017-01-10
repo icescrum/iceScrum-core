@@ -31,8 +31,6 @@ import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
 import org.icescrum.core.support.ApplicationSupport
 
-import java.text.SimpleDateFormat
-
 class ActivityService extends IceScrumEventPublisher {
 
     Activity addActivity(Object item, User poster, String code, String label, String field = null, String beforeValue = null, String afterValue = null) {

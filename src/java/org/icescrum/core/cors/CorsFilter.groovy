@@ -28,7 +28,7 @@ public class CorsFilter implements Filter {
         optionsHeaders.put("Access-Control-Allow-Headers", "origin, authorization, accept, content-type, x-requested-with");
         optionsHeaders.put("Access-Control-Allow-Methods", "GET, HEAD, POST, PUT, DELETE, TRACE, OPTIONS");
         optionsHeaders.put("Access-Control-Max-Age", "3600");
-        for (Enumeration<String> i = cfg.getInitParameterNames(); i.hasMoreElements(); ) {
+        for (Enumeration<String> i = cfg.getInitParameterNames(); i.hasMoreElements();) {
             String name = i.nextElement();
             if (name.startsWith("header:")) {
                 optionsHeaders.put(name.substring(7), cfg.getInitParameter(name));
@@ -47,10 +47,10 @@ public class CorsFilter implements Filter {
     }
 
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain filterChain)
-    throws IOException, ServletException {
+            throws IOException, ServletException {
         if (request instanceof HttpServletRequest && response instanceof HttpServletResponse) {
-            HttpServletRequest req = (HttpServletRequest)request;
-            HttpServletResponse resp = (HttpServletResponse)response;
+            HttpServletRequest req = (HttpServletRequest) request;
+            HttpServletResponse resp = (HttpServletResponse) response;
             if ("OPTIONS".equals(req.getMethod())) {
                 if (checkOrigin(req, resp)) {
                     for (Map.Entry<String, String> e : optionsHeaders.entrySet()) {

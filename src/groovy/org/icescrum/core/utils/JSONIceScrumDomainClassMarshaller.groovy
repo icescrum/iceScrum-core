@@ -23,20 +23,16 @@
 package org.icescrum.core.utils
 
 import grails.converters.JSON
-import org.codehaus.groovy.grails.commons.DomainClassArtefactHandler
-import org.codehaus.groovy.grails.commons.GrailsApplication
-import org.codehaus.groovy.grails.commons.GrailsClassUtils
-import org.codehaus.groovy.grails.commons.GrailsDomainClass
-import org.codehaus.groovy.grails.commons.GrailsDomainClassProperty
+import grails.util.GrailsNameUtils
+import org.codehaus.groovy.grails.commons.*
+import org.codehaus.groovy.grails.support.proxy.DefaultProxyHandler
+import org.codehaus.groovy.grails.support.proxy.EntityProxyHandler
+import org.codehaus.groovy.grails.support.proxy.ProxyHandler
 import org.codehaus.groovy.grails.web.converters.exceptions.ConverterException
+import org.codehaus.groovy.grails.web.converters.marshaller.json.DomainClassMarshaller
 import org.codehaus.groovy.grails.web.json.JSONWriter
 import org.springframework.beans.BeanWrapper
 import org.springframework.beans.BeanWrapperImpl
-import org.codehaus.groovy.grails.web.converters.marshaller.json.DomainClassMarshaller
-import org.codehaus.groovy.grails.support.proxy.DefaultProxyHandler
-import org.codehaus.groovy.grails.support.proxy.ProxyHandler
-import grails.util.GrailsNameUtils
-import org.codehaus.groovy.grails.support.proxy.EntityProxyHandler
 
 public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
 
@@ -178,7 +174,7 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
         propertiesMap."${configName}"?.include?.each {
             def granted = propertiesMap."${configName}".security?."${it}" != null ? propertiesMap."${configName}".security?."${it}" : true
             granted = granted instanceof Closure ? granted(value, grailsApplication, user) : granted
-            if(granted){
+            if (granted) {
                 def val = value.properties."${it}"
                 if (val != null) {
                     writer.key(it);
@@ -191,7 +187,7 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
         propertiesMap."${configName}"?.includeCount?.each {
             def granted = propertiesMap."${configName}".security?."${it}" != null ? propertiesMap."${configName}".security?."${it}" : true
             granted = granted instanceof Closure ? granted(value, grailsApplication, user) : granted
-            if(granted) {
+            if (granted) {
                 def val = value.properties."${it}"
                 if (val instanceof Collection) {
                     Collection o = val

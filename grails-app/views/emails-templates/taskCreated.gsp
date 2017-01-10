@@ -19,13 +19,13 @@
 - Vincent Barrier (vbarrier@kagilum.com)
 - Nicolas Noullet (nnoullet@kagilum.com)
 --}%
-<%@ page contentType="text/html"%>
+<%@ page contentType="text/html" %>
 <g:message
         locale="${locale}"
         code='is.template.email.task.created.text'
-        args="[taskName,permalink]"/>
+        args="[taskName, permalink]"/>
 <br/><br/>--<br/>
-<g:message locale="${locale}" code='is.template.email.footer.reason.new.tasks' args="[link,linkName]"/>
+<g:message locale="${locale}" code='is.template.email.footer.reason.new.tasks' args="[link, linkName]"/>
 <g:message locale="${locale}" code='is.template.email.footer.preferences.information'/>
 <br/>-<br/>
 <g:message locale="${locale}" code='is.template.email.footer.website'/>

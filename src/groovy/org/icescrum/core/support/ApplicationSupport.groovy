@@ -213,7 +213,7 @@ class ApplicationSupport {
         timer.scheduleAtFixedRate(new CheckerTimerTask(timer, interval), 60000, interval)
         //ReportUsage at least 6hours after first launch?
         def intervalReport = CheckerTimerTask.computeInterval(config.icescrum.report.interval ?: 360)
-        timer.scheduleAtFixedRate(new ReportUsageTimerTask(timer, interval), 60000*60*6, intervalReport)
+        timer.scheduleAtFixedRate(new ReportUsageTimerTask(timer, interval), 60000 * 60 * 6, intervalReport)
     }
 
     static public createUUID = {
@@ -272,10 +272,10 @@ class ApplicationSupport {
         return midnightTime.getTime()
     }
 
-    public static Date parseDate(String date){
-        try{
+    public static Date parseDate(String date) {
+        try {
             return new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(date)
-        } catch(Exception e){
+        } catch (Exception e) {
             return new SimpleDateFormat('EEE MMM d HH:mm:ss zzz yyyy').parse(date)
         }
     }
@@ -744,10 +744,10 @@ class ReportUsageTimerTask extends TimerTask {
                                          duration: release.duration]
                              }]
                         },
-                        server_id    : serverID,
-                        environment  : environment,
-                        java_version : System.getProperty("java.version"),
-                        OS           : "${System.getProperty('os.name')} / ${System.getProperty('os.arch')} / ${System.getProperty('os.version')}"
+                        server_id   : serverID,
+                        environment : environment,
+                        java_version: System.getProperty("java.version"),
+                        OS          : "${System.getProperty('os.name')} / ${System.getProperty('os.arch')} / ${System.getProperty('os.version')}"
                 ] as JSON
             }
 

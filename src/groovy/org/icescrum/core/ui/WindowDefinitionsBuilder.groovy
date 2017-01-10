@@ -1,6 +1,7 @@
 package org.icescrum.core.ui
 
 import org.slf4j.LoggerFactory
+
 import java.util.concurrent.ConcurrentHashMap
 
 /*
@@ -25,6 +26,7 @@ import java.util.concurrent.ConcurrentHashMap
  * Nicolas Noullet (nnoullet@kagilum.com)
  *
  */
+
 class WindowDefinitionsBuilder {
 
     private final log = LoggerFactory.getLogger(this.class.name)
@@ -46,12 +48,14 @@ class WindowDefinitionsBuilder {
             definitionClosure.delegate = windowDefinition
             definitionClosure.resolveStrategy = Closure.DELEGATE_FIRST
             definitionClosure()
-            if(windowsDefinitionsById[name]) {
+            if (windowsDefinitionsById[name]) {
                 log.warn("UI window definition for $name will be overriden")
             }
             windowDefinition.templatePath = windowDefinition.templatePath ?: "/${windowDefinition.id}/widget"
             windowsDefinitionsById[name] = windowDefinition
-            if (log.debugEnabled) { log.debug("Added new UI window definition for $name and status is : ${disabled ? 'disabled' : 'enabled'}") }
+            if (log.debugEnabled) {
+                log.debug("Added new UI window definition for $name and status is : ${disabled ? 'disabled' : 'enabled'}")
+            }
         }
     }
 }

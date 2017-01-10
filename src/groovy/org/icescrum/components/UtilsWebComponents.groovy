@@ -22,142 +22,142 @@
  */
 
 package org.icescrum.components
+
 import grails.plugin.springsecurity.SpringSecurityUtils
 
 public final class UtilsWebComponents {
-  /**
-   * Check the attributes for the rendered, renderedOnRoles, renderedOnNotRoles.
-   * If they are defined, compute their values and return a boolean determining if the tag is to be
-   * rendered or not. The rendered** entry are removed from the attrs array afterward.
-   * @param attrs
-   * @return
-   */
-  final static IS_ALLOWED = {true}
-  final static sec = new grails.plugin.springsecurity.SecurityTagLib()
+    /**
+     * Check the attributes for the rendered, renderedOnRoles, renderedOnNotRoles.
+     * If they are defined, compute their values and return a boolean determining if the tag is to be
+     * rendered or not. The rendered** entry are removed from the attrs array afterward.
+     * @param attrs
+     * @return
+     */
+    final static IS_ALLOWED = { true }
+    final static sec = new grails.plugin.springsecurity.SecurityTagLib()
 
 
-  public static boolean rendered(attrs) {
-    def isRendered = ([attrs.rendered, attrs.restrictOnAccess, attrs.renderedOnRoles, attrs.renderedOnNotRoles, attrs.restrictOnRoles, attrs.renderedOnAccess, attrs.renderedOnNotAccess] ==
-            [null, null, null, null, null, null]) ||
-            ((attrs.rendered == null || attrs.rendered.asBoolean()) &&
-                    (attrs.renderedOnRoles == null || SpringSecurityUtils.ifAnyGranted(attrs.renderedOnRoles)) &&
-                    (attrs.restrictOnRoles == null || SpringSecurityUtils.ifAnyGranted(attrs.restrictOnRoles)) &&
-                    (attrs.renderedOnNotRoles == null || SpringSecurityUtils.ifNotGranted(attrs.renderedOnNotRoles)) &&
-                    (attrs.renderedOnAccess == null || sec.access(expression: attrs.renderedOnAccess, IS_ALLOWED)) &&
-                    (attrs.restrictOnAccess == null || sec.access(expression: attrs.restrictOnAccess, IS_ALLOWED)) &&
-                    (attrs.renderedOnNotAccess == null || sec.access(expression: attrs.renderedOnNotAccess, IS_ALLOWED)))
-    attrs.remove('rendered')
-    attrs.remove('restrictOnRoles')
-    attrs.remove('restrictOnAccess')
-    attrs.remove('renderedOnRoles')
-    attrs.remove('renderedOnNotRoles')
-    attrs.remove('renderedOnAccess')
-    attrs.remove('renderedOnNotAccess')
-    return isRendered
-  }
+    public static boolean rendered(attrs) {
+        def isRendered = ([attrs.rendered, attrs.restrictOnAccess, attrs.renderedOnRoles, attrs.renderedOnNotRoles, attrs.restrictOnRoles, attrs.renderedOnAccess, attrs.renderedOnNotAccess] ==
+                [null, null, null, null, null, null]) ||
+                ((attrs.rendered == null || attrs.rendered.asBoolean()) &&
+                        (attrs.renderedOnRoles == null || SpringSecurityUtils.ifAnyGranted(attrs.renderedOnRoles)) &&
+                        (attrs.restrictOnRoles == null || SpringSecurityUtils.ifAnyGranted(attrs.restrictOnRoles)) &&
+                        (attrs.renderedOnNotRoles == null || SpringSecurityUtils.ifNotGranted(attrs.renderedOnNotRoles)) &&
+                        (attrs.renderedOnAccess == null || sec.access(expression: attrs.renderedOnAccess, IS_ALLOWED)) &&
+                        (attrs.restrictOnAccess == null || sec.access(expression: attrs.restrictOnAccess, IS_ALLOWED)) &&
+                        (attrs.renderedOnNotAccess == null || sec.access(expression: attrs.renderedOnNotAccess, IS_ALLOWED)))
+        attrs.remove('rendered')
+        attrs.remove('restrictOnRoles')
+        attrs.remove('restrictOnAccess')
+        attrs.remove('renderedOnRoles')
+        attrs.remove('renderedOnNotRoles')
+        attrs.remove('renderedOnAccess')
+        attrs.remove('renderedOnNotAccess')
+        return isRendered
+    }
 
-  /**
-   * Check the attributes for the disabled, disabledOnRoles, disabledOnNotRoles.
-   * If they are defined, compute their values and return a boolean determining if the tag is to be
-   * enabled or not. The disabled** entry are removed from the attrs array afterward.
-   * @param attrs
-   * @return
-   */
-  public static boolean enabled(attrs) {
-    def isEnabled = ([attrs.disabled, attrs.disabledOnRoles, attrs.disabledOnNotRoles, attrs.disabledOnAccess, attrs.disableOnNotAccess] == [null, null, null, null, null]) ||
-            ((attrs.disabled == null || !attrs.disabled.asBoolean()) &&
-                    (attrs.disabledOnRoles == null || SpringSecurityUtils.ifNotGranted(attrs.disabledOnRoles)) &&
-                    (attrs.disabledOnAccess == null || sec.access(expression: attrs.disabledOnAccess, IS_ALLOWED)) &&
-                    (attrs.disabledOnAccess == null || sec.access(expression: attrs.disableOnNotAccess, IS_ALLOWED)) &&
-                    (attrs.disabledOnNotRoles == null || SpringSecurityUtils.ifAllGranted(attrs.disabledOnNotRoles)))
-    attrs.remove('disabled')
-    attrs.remove('disabledOnRoles')
-    attrs.remove('disabledOnNotRoles')
-    attrs.remove('disabledOnAccess')
-    attrs.remove('disableOnNotAccess')
-    return isEnabled
-  }
+    /**
+     * Check the attributes for the disabled, disabledOnRoles, disabledOnNotRoles.
+     * If they are defined, compute their values and return a boolean determining if the tag is to be
+     * enabled or not. The disabled** entry are removed from the attrs array afterward.
+     * @param attrs
+     * @return
+     */
+    public static boolean enabled(attrs) {
+        def isEnabled = ([attrs.disabled, attrs.disabledOnRoles, attrs.disabledOnNotRoles, attrs.disabledOnAccess, attrs.disableOnNotAccess] == [null, null, null, null, null]) ||
+                ((attrs.disabled == null || !attrs.disabled.asBoolean()) &&
+                        (attrs.disabledOnRoles == null || SpringSecurityUtils.ifNotGranted(attrs.disabledOnRoles)) &&
+                        (attrs.disabledOnAccess == null || sec.access(expression: attrs.disabledOnAccess, IS_ALLOWED)) &&
+                        (attrs.disabledOnAccess == null || sec.access(expression: attrs.disableOnNotAccess, IS_ALLOWED)) &&
+                        (attrs.disabledOnNotRoles == null || SpringSecurityUtils.ifAllGranted(attrs.disabledOnNotRoles)))
+        attrs.remove('disabled')
+        attrs.remove('disabledOnRoles')
+        attrs.remove('disabledOnNotRoles')
+        attrs.remove('disabledOnAccess')
+        attrs.remove('disableOnNotAccess')
+        return isEnabled
+    }
 
-  public static def formatColForJS(coll) {
-    if (coll instanceof Map) {
-      '{' + coll.findAll {k, v -> v}.collect {k, v ->
-        if (v instanceof Collection || v instanceof Map) {
-          v = formatColForJS(v)
+    public static def formatColForJS(coll) {
+        if (coll instanceof Map) {
+            '{' + coll.findAll { k, v -> v }.collect { k, v ->
+                if (v instanceof Collection || v instanceof Map) {
+                    v = formatColForJS(v)
+                }
+                " $k:$v"
+            }.join(',') + '}'
+        } else if (coll instanceof Collection) {
+            '[' + coll.findAll { v -> v }.collect { v ->
+                if (v instanceof Collection || v instanceof Map) {
+                    v = formatColForJS(v)
+                }
+                " $v"
+            }.join(',') + ']'
         }
-        " $k:$v"
-      }.join(',') + '}'
-    } else if (coll instanceof Collection) {
-      '[' + coll.findAll {v -> v}.collect {v ->
-        if (v instanceof Collection || v instanceof Map) {
-          v = formatColForJS(v)
+    }
+
+    /**
+     * Wrap the value with simple quotes if it is not null.
+     * @param attr The value to wrap
+     * @param defaultValue The value returned if attr is null
+     * @return
+     */
+    public static def wrap(attr, defaultValue = null, doubleQuote = false) {
+        if (attr instanceof Map) {
+            defaultValue = attr.defaultValue ?: null
+            doubleQuote = attr.doubleQuote ?: false
+            attr = attr.attr
         }
-        " $v"
-      }.join(',') + ']'
+        def quoteChar = doubleQuote ? '"' : '\''
+        attr ? "${quoteChar}${attr}${quoteChar}" : defaultValue
     }
-  }
 
-  /**
-   * Wrap the value with simple quotes if it is not null.
-   * @param attr The value to wrap
-   * @param defaultValue The value returned if attr is null
-   * @return
-   */
-  public static def wrap(attr, defaultValue = null, doubleQuote = false) {
-    if (attr instanceof Map) {
-      defaultValue = attr.defaultValue ?: null
-      doubleQuote = attr.doubleQuote ?: false
-      attr = attr.attr
+    /**
+     * Normal map implementation does a shallow clone. This implements a deep clone for maps
+     * using recursion
+     */
+    public static deepClone(Map map) {
+        def cloned = [:]
+        map?.each { k, v ->
+            if (v instanceof Map) {
+                cloned[k] = deepClone(v)
+            } else {
+                cloned[k] = v
+            }
+        }
+        return cloned
     }
-    def quoteChar = doubleQuote ? '"' : '\''
-    attr ? "${quoteChar}${attr}${quoteChar}" : defaultValue
-  }
 
-  /**
-   * Normal map implementation does a shallow clone. This implements a deep clone for maps
-   * using recursion
-   */
-  public static deepClone(Map map) {
-      def cloned = [:]
-      map?.each { k,v ->
-          if(v instanceof Map) {
-             cloned[k] = deepClone(v)
-          }
-          else {
-           cloned[k] = v
-          }
-      }
-      return cloned
-  }
-
-  public static String createQueryString(params) {
-    def allParams = []
-    for (entry in params) {
-      def value = entry.value
-      def key = entry.key
-      if (value)
-        allParams << "${key.encodeAsURL()}=${value.encodeAsURL()}".encodeAsJavaScript()
+    public static String createQueryString(params) {
+        def allParams = []
+        for (entry in params) {
+            def value = entry.value
+            def key = entry.key
+            if (value)
+                allParams << "${key.encodeAsURL()}=${value.encodeAsURL()}".encodeAsJavaScript()
+        }
+        if (allParams.size() == 1) {
+            return allParams[0]
+        }
+        return allParams.join('&')
     }
-    if (allParams.size() == 1) {
-      return allParams[0]
-    }
-    return allParams.join('&')
-  }
 
     public static def handleUpload = { def request, def params, def endOfUploadClosure ->
-        def chunkNumber  = params.int('flowChunkNumber') != null ? params.int('flowChunkNumber') : -1
+        def chunkNumber = params.int('flowChunkNumber') != null ? params.int('flowChunkNumber') : -1
         def uploadInfo = getFileUploadInfo(params)
         if (request.method == 'GET') {
             if (uploadInfo.uploadedChunks.contains(new FileUploadInfo.ChunkNumber(chunkNumber))) {
-                if(uploadInfo.checkIfUploadFinished()){
+                if (uploadInfo.checkIfUploadFinished()) {
                     endOfUploadClosure(uploadInfo)
                     FileUploadInfoStorage.instance.remove(uploadInfo)
-                }else {
-                    delegate.render(status:200)
+                } else {
+                    delegate.render(status: 200)
                 }
             } else {
-                delegate.render(status:204)
+                delegate.render(status: 204)
             }
-        } else if(request.method == 'POST') {
+        } else if (request.method == 'POST') {
             RandomAccessFile raf = new RandomAccessFile(uploadInfo.filePath, "rw")
             raf.seek((chunkNumber - 1) * uploadInfo.chunkSize)
             def file = params.file ?: request.getFile('file')
@@ -168,21 +168,21 @@ public final class UtilsWebComponents {
                 endOfUploadClosure(uploadInfo)
                 FileUploadInfoStorage.instance.remove(uploadInfo)
             } else {
-                delegate.render(status:200)
+                delegate.render(status: 200)
             }
         }
     }
 
     private static FileUploadInfo getFileUploadInfo(def params) {
 
-        def info = ['chunkSize'          : (params.remove('flowChunkSize') ?: -1).toInteger(),
-                    'totalSize'          : (params.remove('flowTotalSize') ?: -1).toLong(),
-                    'totalChunks'        : params.int('flowTotalChunks'),
-                    'identifier'         : params.remove('flowIdentifier'),
-                    'filename'           : params.remove('flowFilename'),
-                    'relativePath'       : params.remove("flowRelativePath")]
+        def info = ['chunkSize'   : (params.remove('flowChunkSize') ?: -1).toInteger(),
+                    'totalSize'   : (params.remove('flowTotalSize') ?: -1).toLong(),
+                    'totalChunks' : params.int('flowTotalChunks'),
+                    'identifier'  : params.remove('flowIdentifier'),
+                    'filename'    : params.remove('flowFilename'),
+                    'relativePath': params.remove("flowRelativePath")]
 
-        def test = new File(System.getProperty("java.io.tmpdir"), (String)info.filename)
+        def test = new File(System.getProperty("java.io.tmpdir"), (String) info.filename)
         info.filePath = test.absolutePath + ".temp"
         return FileUploadInfoStorage.instance.get(info)
     }

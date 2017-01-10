@@ -134,16 +134,16 @@ class ProjectService extends IceScrumEventPublisher {
             def cliches = []
             //begin of project
             def firstClicheActivation = Cliche.findByParentTimeBoxAndType(release, Cliche.TYPE_ACTIVATION, [sort: "datePrise", order: "asc"])
-            if(firstClicheActivation)
+            if (firstClicheActivation)
                 cliches.add(firstClicheActivation)
             //others cliches
             cliches.addAll(Cliche.findAllByParentTimeBoxAndType(release, Cliche.TYPE_CLOSE, [sort: "datePrise", order: "asc"]))
             //transient cliche
-            if(release.state == Release.STATE_INPROGRESS){
+            if (release.state == Release.STATE_INPROGRESS) {
                 def sprint = null
-                sprint = release.sprints.find{it.state == Sprint.STATE_INPROGRESS}
-                if(sprint){
-                    cliches << [data:clicheService.generateSprintClicheData(sprint, Cliche.TYPE_CLOSE)]
+                sprint = release.sprints.find { it.state == Sprint.STATE_INPROGRESS }
+                if (sprint) {
+                    cliches << [data: clicheService.generateSprintClicheData(sprint, Cliche.TYPE_CLOSE)]
                 }
             }
             cliches?.eachWithIndex { cliche, index ->
@@ -156,7 +156,7 @@ class ProjectService extends IceScrumEventPublisher {
                             planned   : xmlRoot."${Cliche.PLANNED_STORIES}".toInteger(),
                             inprogress: xmlRoot."${Cliche.INPROGRESS_STORIES}".toInteger(),
                             done      : xmlRoot."${Cliche.FINISHED_STORIES}".toInteger(),
-                            label: index == 0 ? "Start" : xmlRoot."${Cliche.SPRINT_ID}".toString()+"${cliche.id ?: " (progress)"}"
+                            label     : index == 0 ? "Start" : xmlRoot."${Cliche.SPRINT_ID}".toString() + "${cliche.id ?: " (progress)"}"
                     ]
                 }
             }
@@ -167,20 +167,20 @@ class ProjectService extends IceScrumEventPublisher {
     @PreAuthorize('stakeHolder(#project) or inProject(#project)')
     def projectBurnupValues(Project project) {
         def values = []
-        project.releases?.sort { a, b -> a.orderNumber <=> b.orderNumber }?.each {Release release ->
+        project.releases?.sort { a, b -> a.orderNumber <=> b.orderNumber }?.each { Release release ->
             def cliches = []
             //begin of project
             def firstClicheActivation = Cliche.findByParentTimeBoxAndType(release, Cliche.TYPE_ACTIVATION, [sort: "datePrise", order: "asc"])
-            if(firstClicheActivation)
+            if (firstClicheActivation)
                 cliches.add(firstClicheActivation)
             //others cliches
             cliches.addAll(Cliche.findAllByParentTimeBoxAndType(release, Cliche.TYPE_CLOSE, [sort: "datePrise", order: "asc"]))
             //transient cliche
-            if(release.state == Release.STATE_INPROGRESS){
+            if (release.state == Release.STATE_INPROGRESS) {
                 def sprint = null
-                sprint = release.sprints.find{it.state == Sprint.STATE_INPROGRESS}
-                if(sprint){
-                    cliches << [data:clicheService.generateSprintClicheData(sprint, Cliche.TYPE_CLOSE)]
+                sprint = release.sprints.find { it.state == Sprint.STATE_INPROGRESS }
+                if (sprint) {
+                    cliches << [data: clicheService.generateSprintClicheData(sprint, Cliche.TYPE_CLOSE)]
                 }
             }
             cliches?.eachWithIndex { cliche, index ->
@@ -192,7 +192,7 @@ class ProjectService extends IceScrumEventPublisher {
                     values << [
                             all  : xmlRoot."${Cliche.PROJECT_POINTS}".toBigDecimal(),
                             done : c,
-                            label: index == 0 ? "Start" : xmlRoot."${Cliche.SPRINT_ID}".toString()+"${cliche.id ?: " (progress)"}"
+                            label: index == 0 ? "Start" : xmlRoot."${Cliche.SPRINT_ID}".toString() + "${cliche.id ?: " (progress)"}"
                     ]
                 }
             }

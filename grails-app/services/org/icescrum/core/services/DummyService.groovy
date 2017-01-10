@@ -107,23 +107,23 @@ class DummyService {
         ]
         def storyPropertiesBySprint = [
                 0: [
-                    [name: 'Setup CI & SCM', description: 'Create projects on SCM and build it automatically after each commit', value: 5, type: Story.TYPE_TECHNICAL_STORY, effort: 5, state: Story.STATE_ESTIMATED],
-                    [name: 'Create a pet profile', description: "As a $petOwnerTag\nI can create a profile for my pet \nIn order for it to be found by the owner of its soul mate", feature: featurePetProfile,  value: 6, type: Story.TYPE_USER_STORY, effort: 3, state: Story.STATE_ESTIMATED],
-                    [name: 'Display a pet profile', description: "As a $petOwnerTag\nI can display the profile of other pets \nIn order to find the soul mate of mine", value: 6, feature: featurePetProfile, type: Story.TYPE_USER_STORY, effort: 3, state: Story.STATE_ESTIMATED],
-                    [name: 'Spike advertising', description: 'Validate the business model by contacting advertising plaforms and pet projects brands', feature: featureAdvertising, value: 5, type: Story.TYPE_TECHNICAL_STORY, effort: 2, state: Story.STATE_ESTIMATED],
+                        [name: 'Setup CI & SCM', description: 'Create projects on SCM and build it automatically after each commit', value: 5, type: Story.TYPE_TECHNICAL_STORY, effort: 5, state: Story.STATE_ESTIMATED],
+                        [name: 'Create a pet profile', description: "As a $petOwnerTag\nI can create a profile for my pet \nIn order for it to be found by the owner of its soul mate", feature: featurePetProfile, value: 6, type: Story.TYPE_USER_STORY, effort: 3, state: Story.STATE_ESTIMATED],
+                        [name: 'Display a pet profile', description: "As a $petOwnerTag\nI can display the profile of other pets \nIn order to find the soul mate of mine", value: 6, feature: featurePetProfile, type: Story.TYPE_USER_STORY, effort: 3, state: Story.STATE_ESTIMATED],
+                        [name: 'Spike advertising', description: 'Validate the business model by contacting advertising plaforms and pet projects brands', feature: featureAdvertising, value: 5, type: Story.TYPE_TECHNICAL_STORY, effort: 2, state: Story.STATE_ESTIMATED],
                 ],
                 1: [
-                    [name: 'Contact a pet owner', description: "As a $petOwnerTag\nI can contact another pet owner \nIn order to arrange a meeting for our pets", feature: featurePetProfile, value: 5, type: Story.TYPE_USER_STORY, effort: 2, state: Story.STATE_ESTIMATED],
-                    [name: 'Authenticate', description: "As a $petOwnerTag\nI can be recognized as my pet owner on the website \nIn order to manage my pet profile and prevent others to do so", feature: featurePetProfile, value: 5, type: Story.TYPE_USER_STORY, effort: 8, state: Story.STATE_ESTIMATED],
-                    [name: 'Search profiles by race', description: "As a $petOwnerTag\nI can search other pets by race \nIn order to find the right partner for my pets", feature: featureSearch, value: 5, type: Story.TYPE_USER_STORY, effort: 3, state: Story.STATE_ESTIMATED],
-                    [name: 'Basic advertising', description: "As an $administratorTag\nI can offer pet project ads to my users\nIn order to earn money", feature: featureAdvertising, value: 4, type: Story.TYPE_USER_STORY, effort: 5, state: Story.STATE_ESTIMATED],
+                        [name: 'Contact a pet owner', description: "As a $petOwnerTag\nI can contact another pet owner \nIn order to arrange a meeting for our pets", feature: featurePetProfile, value: 5, type: Story.TYPE_USER_STORY, effort: 2, state: Story.STATE_ESTIMATED],
+                        [name: 'Authenticate', description: "As a $petOwnerTag\nI can be recognized as my pet owner on the website \nIn order to manage my pet profile and prevent others to do so", feature: featurePetProfile, value: 5, type: Story.TYPE_USER_STORY, effort: 8, state: Story.STATE_ESTIMATED],
+                        [name: 'Search profiles by race', description: "As a $petOwnerTag\nI can search other pets by race \nIn order to find the right partner for my pets", feature: featureSearch, value: 5, type: Story.TYPE_USER_STORY, effort: 3, state: Story.STATE_ESTIMATED],
+                        [name: 'Basic advertising', description: "As an $administratorTag\nI can offer pet project ads to my users\nIn order to earn money", feature: featureAdvertising, value: 4, type: Story.TYPE_USER_STORY, effort: 5, state: Story.STATE_ESTIMATED],
                 ],
                 2: [
-                    [name: 'Add photos to my pet profile', description: "As a $petOwnerTag\nI can add photos to my pet profile \nIn order show how it is gorgeous to the other pet owners and make them choose it", feature: featurePetProfile, value: 5, type: Story.TYPE_USER_STORY, effort: 3, state: Story.STATE_ESTIMATED],
-                    [name: 'Delete my pet profile', description: "As a $petOwnerTag\nI can delete my pet profile \nIn order to stop dating if it has found its soul mate", feature: featurePetProfile, value: 5, type: Story.TYPE_USER_STORY, effort: 2, state: Story.STATE_ESTIMATED],
-                    [name: 'Advertise according to the race of the pet', description: "As an $administratorTag\nI can advertise according to the race of the pet \nIn order to increase the click rates", feature: featureAdvertising, value: 4, type: Story.TYPE_USER_STORY, effort: 5, state: Story.STATE_ESTIMATED],
-                    [name: 'Update my pet profile', description: "As a $petOwnerTag\nI can update my pet profile \nIn order to add information and correct mistakes", feature: featurePetProfile, value: 4, type: Story.TYPE_USER_STORY, effort: 8, state: Story.STATE_ESTIMATED],
-                    [name: 'Advertise according to visited profiles', description: "As an $administratorTag\nI can advertise according to visited profile \nIn order to increase the click rates", feature: featureAdvertising, value: 3, type: Story.TYPE_USER_STORY, effort: 2, state: Story.STATE_ESTIMATED]
+                        [name: 'Add photos to my pet profile', description: "As a $petOwnerTag\nI can add photos to my pet profile \nIn order show how it is gorgeous to the other pet owners and make them choose it", feature: featurePetProfile, value: 5, type: Story.TYPE_USER_STORY, effort: 3, state: Story.STATE_ESTIMATED],
+                        [name: 'Delete my pet profile', description: "As a $petOwnerTag\nI can delete my pet profile \nIn order to stop dating if it has found its soul mate", feature: featurePetProfile, value: 5, type: Story.TYPE_USER_STORY, effort: 2, state: Story.STATE_ESTIMATED],
+                        [name: 'Advertise according to the race of the pet', description: "As an $administratorTag\nI can advertise according to the race of the pet \nIn order to increase the click rates", feature: featureAdvertising, value: 4, type: Story.TYPE_USER_STORY, effort: 5, state: Story.STATE_ESTIMATED],
+                        [name: 'Update my pet profile', description: "As a $petOwnerTag\nI can update my pet profile \nIn order to add information and correct mistakes", feature: featurePetProfile, value: 4, type: Story.TYPE_USER_STORY, effort: 8, state: Story.STATE_ESTIMATED],
+                        [name: 'Advertise according to visited profiles', description: "As an $administratorTag\nI can advertise according to visited profile \nIn order to increase the click rates", feature: featureAdvertising, value: 3, type: Story.TYPE_USER_STORY, effort: 2, state: Story.STATE_ESTIMATED]
                 ]
         ]
         def createStory = { properties ->
@@ -340,7 +340,7 @@ class DummyService {
     }
 
     private String toPkey(User user) {
-        String pkey = 'PET' + Normalizer.normalize(user.username, Normalizer.Form.NFD).replaceAll("[^\\p{ASCII}]", "").toUpperCase().replaceAll("[^A-Z0-9]+","")
+        String pkey = 'PET' + Normalizer.normalize(user.username, Normalizer.Form.NFD).replaceAll("[^\\p{ASCII}]", "").toUpperCase().replaceAll("[^A-Z0-9]+", "")
         pkey = pkey.take(10)
         def countTaken = Project.countByPkey(pkey)
         if (countTaken > 0) {

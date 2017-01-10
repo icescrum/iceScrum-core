@@ -22,28 +22,28 @@
 
 package org.icescrum.core.support
 
-class ProgressSupport implements Serializable{
-  def buffer
-  float value = 0.0f
-  String label = '%'
-  int multiple = 1
-  Boolean error = false
-  Boolean complete = false
+class ProgressSupport implements Serializable {
+    def buffer
+    float value = 0.0f
+    String label = '%'
+    int multiple = 1
+    Boolean error = false
+    Boolean complete = false
 
-  def updateProgress(value,label = null){
-    this.value = value
-    this.label = label?:this.label
-  }
+    def updateProgress(value, label = null) {
+        this.value = value
+        this.label = label ?: this.label
+    }
 
-  def progressError(label = null){
-    this.value = 100
-    this.label = label?:this.label
-    this.error = true
-  }
+    def progressError(label = null) {
+        this.value = 100
+        this.label = label ?: this.label
+        this.error = true
+    }
 
-  def completeProgress(label = null){
-    this.value = 100
-    this.label = label?:this.label
-    this.complete = true
-  }
+    def completeProgress(label = null) {
+        this.value = 100
+        this.label = label ?: this.label
+        this.complete = true
+    }
 }

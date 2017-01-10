@@ -34,12 +34,12 @@ class WindowTagLib {
 
     def window = { attrs, body ->
         assert attrs.windowDefinition
-        out << g.render(template: '/components/window', plugin: 'icescrum-core', model:[windowDefinition:attrs.windowDefinition, content:body()])
+        out << g.render(template: '/components/window', plugin: 'icescrum-core', model: [windowDefinition: attrs.windowDefinition, content: body()])
     }
 
     def widget = { attrs, body ->
         assert attrs.widgetDefinition
-        out << g.render(template: '/components/widget', plugin: 'icescrum-core', model:[widgetDefinition:attrs.widgetDefinition, content:body()])
+        out << g.render(template: '/components/widget', plugin: 'icescrum-core', model: [widgetDefinition: attrs.widgetDefinition, content: body()])
     }
 
     def modal = { attrs, body ->

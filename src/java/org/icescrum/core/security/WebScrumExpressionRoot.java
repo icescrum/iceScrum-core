@@ -30,7 +30,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.web.FilterInvocation;
 import org.springframework.security.web.access.expression.WebSecurityExpressionRoot;
 
-public class WebScrumExpressionRoot extends WebSecurityExpressionRoot implements ScrumExpressionRoot{
+public class WebScrumExpressionRoot extends WebSecurityExpressionRoot implements ScrumExpressionRoot {
 
     private org.icescrum.core.services.SecurityService securityService;
 
@@ -75,7 +75,7 @@ public class WebScrumExpressionRoot extends WebSecurityExpressionRoot implements
         return securityService.productOwner(p, super.authentication);
     }
 
-     public boolean productOwner(Project p) {
+    public boolean productOwner(Project p) {
         return securityService.productOwner(p, super.authentication);
     }
 
@@ -104,7 +104,7 @@ public class WebScrumExpressionRoot extends WebSecurityExpressionRoot implements
         return securityService.scrumMaster(t, super.authentication);
     }
 
-     public boolean scrumMaster(Team t) {
+    public boolean scrumMaster(Team t) {
         return securityService.scrumMaster(t, super.authentication);
     }
 

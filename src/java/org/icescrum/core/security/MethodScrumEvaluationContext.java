@@ -23,14 +23,14 @@
 
 package org.icescrum.core.security;
 
-import java.lang.reflect.Method;
-
 import org.aopalliance.intercept.MethodInvocation;
 import org.springframework.core.LocalVariableTableParameterNameDiscoverer;
 import org.springframework.core.ParameterNameDiscoverer;
 import org.springframework.expression.spel.support.StandardEvaluationContext;
 import org.springframework.security.core.Authentication;
 import org.springframework.util.ClassUtils;
+
+import java.lang.reflect.Method;
 
 /**
  * Internal security-specific EvaluationContext implementation which lazily adds the

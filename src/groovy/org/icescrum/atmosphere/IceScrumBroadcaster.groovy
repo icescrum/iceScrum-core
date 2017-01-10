@@ -10,7 +10,7 @@ class IceScrumBroadcaster extends DefaultBroadcaster {
     String pkey
     String pname
 
-    public IceScrumBroadcaster(){}
+    public IceScrumBroadcaster() {}
 
     public Broadcaster initialize(String name, AtmosphereConfig config) {
         initValues()
@@ -18,7 +18,7 @@ class IceScrumBroadcaster extends DefaultBroadcaster {
     }
 
     private void initValues() {
-        if (name.contains("project-")){
+        if (name.contains("project-")) {
             def props = Project.createCriteria().get {
                 eq 'id', name.split('-')[1].toLong()
                 projections {

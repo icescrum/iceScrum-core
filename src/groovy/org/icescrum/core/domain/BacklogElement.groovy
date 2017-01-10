@@ -24,9 +24,9 @@
 
 package org.icescrum.core.domain
 
-import org.icescrum.plugins.attachmentable.interfaces.Attachmentable
 import org.grails.comments.Commentable
 import org.grails.taggable.Taggable
+import org.icescrum.plugins.attachmentable.interfaces.Attachmentable
 
 abstract class BacklogElement implements Attachmentable, Commentable, Serializable, Taggable {
 
@@ -75,7 +75,7 @@ abstract class BacklogElement implements Attachmentable, Commentable, Serializab
         term.trim()
     }
 
-    static Map addTermOrTagToSearch (Map searchOptions, term) {
+    static Map addTermOrTagToSearch(Map searchOptions, term) {
         if (term) {
             if (hasTagKeyword(term)) {
                 def tag = removeTagKeyword(term)

@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory
  * Nicolas Noullet (nnoullet@kagilum.com)
  *
  */
+
 class MenuDefinition {
 
     private final log = LoggerFactory.getLogger(this.class.name)
@@ -31,7 +32,7 @@ class MenuDefinition {
     String title = ''
     def show // no type because it can be a closure
     boolean defaultVisibility
-    int  defaultPosition
+    int defaultPosition
 
     void title(String title) {
         this.title = title

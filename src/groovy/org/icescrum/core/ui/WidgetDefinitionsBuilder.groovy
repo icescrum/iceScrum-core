@@ -1,8 +1,7 @@
 package org.icescrum.core.ui
 
-import groovy.text.Template
-import org.codehaus.groovy.grails.io.support.PathMatchingResourcePatternResolver
 import org.slf4j.LoggerFactory
+
 import java.util.concurrent.ConcurrentHashMap
 
 /*
@@ -27,6 +26,7 @@ import java.util.concurrent.ConcurrentHashMap
  * Nicolas Noullet (nnoullet@kagilum.com)
  *
  */
+
 class WidgetDefinitionsBuilder {
 
     private final log = LoggerFactory.getLogger(this.class.name)
@@ -50,14 +50,16 @@ class WidgetDefinitionsBuilder {
             definitionClosure.delegate = widgetDefinition
             definitionClosure.resolveStrategy = Closure.DELEGATE_FIRST
             definitionClosure()
-            if(widgetsDefinitionsById[name]) {
+            if (widgetsDefinitionsById[name]) {
                 log.warn("UI widget definition for $name will be overriden")
             }
             widgetDefinition.templatePath = widgetDefinition.templatePath ?: "/${widgetDefinition.id}/widget"
             widgetDefinition.footer = groovyPageLocator.findTemplate(widgetDefinition.id, "widget/footer") ? true : false
             widgetDefinition.settings = groovyPageLocator.findTemplate(widgetDefinition.id, "widget/settings") ? true : false
             widgetsDefinitionsById[name] = widgetDefinition
-            if (log.debugEnabled) { log.debug("Added new UI widget definition for $name and status is : ${disabled ? 'disabled' : 'enabled'}") }
+            if (log.debugEnabled) {
+                log.debug("Added new UI widget definition for $name and status is : ${disabled ? 'disabled' : 'enabled'}")
+            }
         }
     }
 }

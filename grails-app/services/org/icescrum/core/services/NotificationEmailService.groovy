@@ -21,20 +21,13 @@
  */
 package org.icescrum.core.services
 
-import org.icescrum.core.domain.Invitation
-import org.icescrum.core.domain.Project
-import org.icescrum.core.domain.Sprint
-import org.icescrum.core.domain.Task
+import org.grails.comments.Comment
+import org.icescrum.core.domain.*
 import org.icescrum.core.event.IceScrumEventType
 import org.icescrum.core.event.IceScrumListener
-import org.icescrum.core.domain.Story
-import org.grails.comments.Comment
-import org.icescrum.core.domain.BacklogElement
-import org.icescrum.core.domain.User
+import org.icescrum.core.support.ApplicationSupport
 import org.icescrum.core.utils.ServicesUtils
 import org.springframework.web.context.request.RequestContextHolder as RCH
-import org.icescrum.core.domain.Feature
-import org.icescrum.core.support.ApplicationSupport
 
 class NotificationEmailService {
 

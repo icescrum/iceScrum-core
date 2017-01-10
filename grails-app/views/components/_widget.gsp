@@ -18,7 +18,7 @@
   --}%
 %{-- widget --}%
 <div ng-controller="widgetCtrl" id="widget-${widgetDefinition.id}" class="panel panel-light widget widget-${widgetDefinition.id}">
-    <div ${widgetDefinition.ngController ? 'ng-controller="'+widgetDefinition.ngController+'"' : ''}>
+    <div ${widgetDefinition.ngController ? 'ng-controller="' + widgetDefinition.ngController + '"' : ''}>
         <div class="panel-heading clearfix" as-sortable-item-handle>
             <h3 class="panel-title">
                 <i class="fa fa-${widgetDefinition.icon}"></i> <g:message code="${widgetDefinition.title}"/>
@@ -46,7 +46,7 @@
             ${widgetDefinition.settings ? '<div ng-switch-default>' : ''}
                 ${content}
             ${widgetDefinition.settings ? '</div>' : ''}
-        <g:if test="${widgetDefinition.settings}">
+            <g:if test="${widgetDefinition.settings}">
                 <form ng-switch-when="true"
                       ng-submit="update(widget)"
                       class="form-horizontal">

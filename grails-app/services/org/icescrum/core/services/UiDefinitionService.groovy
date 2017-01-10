@@ -23,11 +23,11 @@
 package org.icescrum.core.services
 
 import org.icescrum.core.ui.WidgetDefinition
+import org.icescrum.core.ui.WidgetDefinitionsBuilder
+import org.icescrum.core.ui.WindowDefinition
 import org.icescrum.core.ui.WindowDefinitionsBuilder
 
 import java.util.concurrent.ConcurrentHashMap
-import org.icescrum.core.ui.WidgetDefinitionsBuilder
-import org.icescrum.core.ui.WindowDefinition
 
 class UiDefinitionService {
 
@@ -46,17 +46,21 @@ class UiDefinitionService {
     }
 
     def loadWindowsDefinitions() {
-        if (log.infoEnabled) { log.info "Loading UI Windows definitions..." }
+        if (log.infoEnabled) {
+            log.info "Loading UI Windows definitions..."
+        }
         windowsDefinitionsById = new ConcurrentHashMap()
-        grailsApplication.uiDefinitionClasses.each{
+        grailsApplication.uiDefinitionClasses.each {
             def config = new ConfigSlurper().parse(it.clazz)
-            def enabled = config.pluginName ? pluginManager.getUserPlugins().find{ it.name == config.pluginName && it.isEnabled() } : true
+            def enabled = config.pluginName ? pluginManager.getUserPlugins().find { it.name == config.pluginName && it.isEnabled() } : true
             enabled = enabled ? true : false
 
             def windows = config.windows
-            if(windows instanceof Closure) {
-                if (log.debugEnabled) { log.debug("Evaluating UI Windows definitions from $it.clazz.name") }
-                def builder = new WindowDefinitionsBuilder(windowsDefinitionsById, config.pluginName?:null, !enabled)
+            if (windows instanceof Closure) {
+                if (log.debugEnabled) {
+                    log.debug("Evaluating UI Windows definitions from $it.clazz.name")
+                }
+                def builder = new WindowDefinitionsBuilder(windowsDefinitionsById, config.pluginName ?: null, !enabled)
                 windows.delegate = builder
                 windows.resolveStrategy = Closure.DELEGATE_FIRST
                 windows()
@@ -67,17 +71,21 @@ class UiDefinitionService {
     }
 
     def loadWidgetsDefinitions() {
-        if (log.infoEnabled) { log.info "Loading UI Widgets definitions..." }
+        if (log.infoEnabled) {
+            log.info "Loading UI Widgets definitions..."
+        }
         widgetsDefinitionsById = new ConcurrentHashMap()
-        grailsApplication.uiDefinitionClasses.each{
+        grailsApplication.uiDefinitionClasses.each {
             def config = new ConfigSlurper().parse(it.clazz)
-            def enabled = config.pluginName ? pluginManager.getUserPlugins().find{ it.name == config.pluginName && it.isEnabled() } : true
+            def enabled = config.pluginName ? pluginManager.getUserPlugins().find { it.name == config.pluginName && it.isEnabled() } : true
             enabled = enabled ? true : false
 
             def widgets = config.widgets
-            if(widgets instanceof Closure) {
-                if (log.debugEnabled) { log.debug("Evaluating UI widgets definitions from $it.clazz.name") }
-                def builder = new WidgetDefinitionsBuilder(widgetsDefinitionsById, config.pluginName?:null, !enabled, groovyPageLocator)
+            if (widgets instanceof Closure) {
+                if (log.debugEnabled) {
+                    log.debug("Evaluating UI widgets definitions from $it.clazz.name")
+                }
+                def builder = new WidgetDefinitionsBuilder(widgetsDefinitionsById, config.pluginName ?: null, !enabled, groovyPageLocator)
                 widgets.delegate = builder
                 widgets.resolveStrategy = Closure.DELEGATE_FIRST
                 widgets()
@@ -88,7 +96,9 @@ class UiDefinitionService {
     }
 
     def reload() {
-        if (log.infoEnabled) { log.info("Reloading UI Windows & Widgets definitions") }
+        if (log.infoEnabled) {
+            log.info("Reloading UI Windows & Widgets definitions")
+        }
         loadDefinitions()
     }
 

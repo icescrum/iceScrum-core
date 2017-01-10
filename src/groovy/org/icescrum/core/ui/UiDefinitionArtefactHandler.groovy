@@ -1,7 +1,4 @@
 package org.icescrum.core.ui
-
-import org.codehaus.groovy.grails.commons.ArtefactHandlerAdapter
-
 /*
  * Copyright (c) 2012 Kagilum SAS
  *
@@ -24,8 +21,9 @@ import org.codehaus.groovy.grails.commons.ArtefactHandlerAdapter
  * Nicolas Noullet (nnoullet@kagilum.com)
  *
  */
+
 class UiDefinitionArtefactHandler extends AbstractUiDefinitionArtefactHandler {
-    
+
     static public final String TYPE = 'UiDefinition'
     static public final String SUFFIX = 'UiDefinition'
 

@@ -23,20 +23,18 @@
 
 package org.icescrum.core.services
 
+import grails.transaction.Transactional
 import grails.util.GrailsNameUtils
 import grails.validation.ValidationException
 import org.grails.comments.Comment
 import org.grails.comments.CommentLink
+import org.icescrum.core.domain.*
+import org.icescrum.core.error.BusinessException
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
-import org.icescrum.core.error.BusinessException
-
-import java.text.SimpleDateFormat
+import org.icescrum.core.support.ApplicationSupport
 import org.springframework.context.ApplicationContext
 import org.springframework.security.access.prepost.PreAuthorize
-import grails.transaction.Transactional
-import org.icescrum.core.domain.*
-import org.icescrum.core.support.ApplicationSupport
 
 @Transactional
 class TaskService extends IceScrumEventPublisher {

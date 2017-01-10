@@ -1,12 +1,11 @@
 package org.icescrum.atmosphere
 
-import javax.servlet.ServletConfig
-import javax.servlet.ServletException
-
 import org.atmosphere.cpr.MeteorServlet
 import org.atmosphere.handler.ReflectorServletProcessor
-
 import org.grails.plugins.atmosphere_meteor.AtmosphereConfigurationHolder
+
+import javax.servlet.ServletConfig
+import javax.servlet.ServletException
 
 class IceScrumMeteorServlet extends MeteorServlet {
 

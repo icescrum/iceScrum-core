@@ -18,7 +18,7 @@
 -
 - Vincent Barrier (vbarrier@kagilum.com)
 --}%
-<%@ page contentType="text/html"%>
+<%@ page contentType="text/html" %>
 Bonjour,<br/>
 <br/>
 Nouveau rapport d'erreur :<br/>
@@ -41,4 +41,4 @@ ${params}<br/>
 ip : ${ip}<br/>
 appID : ${appID}<br/>
 version : ${version}<br/>
-User : ${sec.loggedInUserInfo([field:'fullName'])} (${sec.loggedInUserInfo([field:'email'])})
+User : ${sec.loggedInUserInfo([field: 'fullName'])} (${sec.loggedInUserInfo([field: 'email'])})

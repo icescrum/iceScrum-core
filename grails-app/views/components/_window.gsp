@@ -1,4 +1,3 @@
-
 <%@ page import="grails.converters.JSON" %>
 %{--
   - Copyright (c) 2014 Kagilum SAS.
@@ -17,8 +16,8 @@
   - You should have received a copy of the GNU Lesser General Public License
   - along with iceScrum.  If not, see <http://www.gnu.org/licenses/>.
   --}%
- %{-- view --}%
-<div id="view-${windowDefinition.id}" class="view ${windowDefinition.flex?'flex':''}" ${windowDefinition.details ? 'ng-class="displayDetailsView()"' : ''}>
+%{-- view --}%
+<div id="view-${windowDefinition.id}" class="view ${windowDefinition.flex ? 'flex' : ''}" ${windowDefinition.details ? 'ng-class="displayDetailsView()"' : ''}>
     <div class="content">
         ${content}
     </div>

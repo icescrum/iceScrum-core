@@ -39,7 +39,7 @@ trait ControllerErrorHandler {
         if (attrs.silent) {
             error.silent = true
         }
-        render(status: 400, contentType: 'application/json', text:error as JSON)
+        render(status: 400, contentType: 'application/json', text: error as JSON)
     }
 
     // Exception handlers

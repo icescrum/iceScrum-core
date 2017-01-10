@@ -30,8 +30,6 @@ import groovy.xml.StreamingMarkupBuilder
 import org.icescrum.core.domain.*
 import org.icescrum.core.support.ApplicationSupport
 
-import java.text.SimpleDateFormat
-
 @Transactional
 class ClicheService {
 
@@ -90,7 +88,6 @@ class ClicheService {
                 compteurTechnicalFinish: cTechnicalDone
         ]
     }
-
 
 
     void createSprintCliche(Sprint s, Date d, int type) {

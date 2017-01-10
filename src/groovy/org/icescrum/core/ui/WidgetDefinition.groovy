@@ -114,7 +114,7 @@ class WidgetDefinition {
         log.warn("The field $name is unrecognized for $id UI Widget definition")
     }
 
-    def propertyMissing(String name, value){
+    def propertyMissing(String name, value) {
         this.options."$name" = value
         log.debug("The field $name is unrecognized for $id UI Widget definition added to options")
     }

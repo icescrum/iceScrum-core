@@ -19,10 +19,10 @@
 - Vincent Barrier (vbarrier@kagilum.com)
 - Nicolas Noullet (nnoullet@kagilum.com)
 --}%
-<%@ page contentType="text/html"%>
+<%@ page contentType="text/html" %>
 <g:message
         locale="${locale}"
         code='is.template.email.user.retrieve.text'
-        args="[user.firstName,user.username,password,ip,link]"/>
+        args="[user.firstName, user.username, password, ip, link]"/>
 <br/><br/>--<br/>
 <g:message locale="${locale}" code='is.template.email.footer.website'/>

@@ -22,14 +22,11 @@
 
 package org.icescrum.core.services
 
-import org.springframework.security.core.context.SecurityContextHolder as SCH
-import org.springframework.web.context.request.RequestContextHolder as RCH
-
-import org.codehaus.groovy.grails.orm.hibernate.cfg.GrailsHibernateUtil
 import grails.plugin.springsecurity.SpringSecurityUtils
 import grails.plugin.springsecurity.acl.AclClass
 import grails.plugin.springsecurity.acl.AclObjectIdentity
 import grails.plugin.springsecurity.acl.AclSid
+import org.codehaus.groovy.grails.orm.hibernate.cfg.GrailsHibernateUtil
 import org.icescrum.core.domain.Project
 import org.icescrum.core.domain.Team
 import org.icescrum.core.domain.User
@@ -37,10 +34,13 @@ import org.icescrum.core.domain.security.Authority
 import org.icescrum.core.domain.security.UserAuthority
 import org.springframework.security.acls.domain.BasePermission
 import org.springframework.security.acls.domain.PrincipalSid
-import org.springframework.security.core.Authentication
-import org.springframework.util.Assert
-import static org.springframework.security.acls.domain.BasePermission.*
 import org.springframework.security.acls.model.*
+import org.springframework.security.core.Authentication
+import org.springframework.security.core.context.SecurityContextHolder as SCH
+import org.springframework.util.Assert
+import org.springframework.web.context.request.RequestContextHolder as RCH
+
+import static org.springframework.security.acls.domain.BasePermission.*
 
 class SecurityService {
 
@@ -218,7 +218,7 @@ class SecurityService {
                 if (parsedProject) {
                     def p = Project.get(parsedProject)
                     //case project doesn't exist
-                    if(!p){
+                    if (!p) {
                         return false
                     }
                     t = GrailsHibernateUtil.unwrapIfProxy(p.firstTeam)
@@ -320,7 +320,7 @@ class SecurityService {
                 p = Project.get(project)
             }
             //case project doesn't exist
-            if(!p){
+            if (!p) {
                 return false
             }
             Team t = GrailsHibernateUtil.unwrapIfProxy(p.firstTeam)
@@ -461,7 +461,7 @@ class SecurityService {
                 if (parsedProject) {
                     def p = Project.get(parsedProject)
                     //case project doesn't exist
-                    if(!p){
+                    if (!p) {
                         return false
                     }
                     d = GrailsHibernateUtil.unwrapIfProxy(p.firstTeam)
@@ -528,13 +528,13 @@ class SecurityService {
         request.filtered = request.filtered ?: true
     }
 
-    def getRolesRequest(force){
+    def getRolesRequest(force) {
         filterRequest(force)
         def request = RCH.requestAttributes.currentRequest
         return [productOwner: request.productOwner,
-                scrumMaster: request.scrumMaster,
-                teamMember: request.teamMember,
-                stakeHolder: request.stakeHolder,
-                admin: request.admin]
+                scrumMaster : request.scrumMaster,
+                teamMember  : request.teamMember,
+                stakeHolder : request.stakeHolder,
+                admin       : request.admin]
     }
 }

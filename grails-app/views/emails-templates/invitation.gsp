@@ -21,15 +21,15 @@
 - Vincent Barrier (vbarrier@kagilum.com)
 - Nicolas Noullet (nnoullet@kagilum.com)
 --}%
-<%@ page contentType="text/html"%>
+<%@ page contentType="text/html" %>
 <g:if test="${isProjectInvitation}">
-        <g:message locale="${locale}"
-                   code='is.template.email.user.invitation.project.text'
-                   args="[(inviter.firstName + ' ' + inviter.lastName), inviter.username, invitedIn, role]"/>
+    <g:message locale="${locale}"
+               code='is.template.email.user.invitation.project.text'
+               args="[(inviter.firstName + ' ' + inviter.lastName), inviter.username, invitedIn, role]"/>
 </g:if><g:else>
-        <g:message locale="${locale}"
-                   code='is.template.email.user.invitation.team.text'
-                   args="[(inviter.firstName + ' ' + inviter.lastName), inviter.username, invitedIn, role]"/>
+    <g:message locale="${locale}"
+               code='is.template.email.user.invitation.team.text'
+               args="[(inviter.firstName + ' ' + inviter.lastName), inviter.username, invitedIn, role]"/>
 </g:else>
 
 <br/><br/>

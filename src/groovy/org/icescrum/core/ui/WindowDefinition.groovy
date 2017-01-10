@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory
  * Nicolas Noullet (nnoullet@kagilum.com)
  *
  */
+
 class WindowDefinition {
 
     private final log = LoggerFactory.getLogger(this.class.name)
@@ -112,7 +113,7 @@ class WindowDefinition {
         log.warn("The field $name is unrecognized for $id UI definition")
     }
 
-    def propertyMissing(String name, value){
+    def propertyMissing(String name, value) {
         this.options."$name" = value
         log.debug("The field $name is unrecognized for $id UI definition added to options")
     }

@@ -1,17 +1,10 @@
 package org.icescrum.core.services
 
-import org.icescrum.core.domain.Feature
-import org.icescrum.core.domain.Release
-import org.icescrum.core.domain.Story
-import org.icescrum.core.domain.Project
-import org.icescrum.core.domain.User
 import grails.util.GrailsNameUtils
-import org.icescrum.core.support.ApplicationSupport
-
-import java.text.SimpleDateFormat
 import org.grails.comments.Comment
 import org.grails.comments.CommentLink
-import org.icescrum.core.domain.Task
+import org.icescrum.core.domain.*
+import org.icescrum.core.support.ApplicationSupport
 
 //TODO migrate to new event
 class AddonsService {
@@ -30,55 +23,56 @@ class AddonsService {
 
     void synchronisedDataImport(def e) {
         Project p = (Project) e.source
-        try{
+        try {
             addAttachments(p, e.xml, e.importPath)
-        }catch(Exception _e){
+        } catch (Exception _e) {
             log.error("error when importing attachments")
             if (log.debugEnabled) {
                 _e.printStackTrace()
             }
         }
-        try{
+        try {
             addTags(p, e.xml)
-        }catch(Exception _e){
+        } catch (Exception _e) {
             log.error("error when importing tags")
             if (log.debugEnabled) {
                 _e.printStackTrace()
             }
         }
-        try{
+        try {
             addDependsOn(p, e.xml)
-        }catch(Exception _e){
+        } catch (Exception _e) {
             log.error("error when importing dependsOn")
             if (log.debugEnabled) {
                 _e.printStackTrace()
             }
         }
-        try{
+        try {
             addComments(p, e.xml)
-        }catch(Exception _e){
+        } catch (Exception _e) {
             log.error("error when importing comments")
             if (log.debugEnabled) {
                 _e.printStackTrace()
             }
         }
-        try{
+        try {
             addTags(p, e.xml)
-        }catch(Exception _e){
+        } catch (Exception _e) {
             log.error("error when importing tags")
             if (log.debugEnabled) {
                 _e.printStackTrace()
             }
         }
-        try{
+        try {
             addActivities(p, e.xml)
-        }catch(Exception _e){
+        } catch (Exception _e) {
             log.error("error when importing activities")
             if (log.debugEnabled) {
                 _e.printStackTrace()
             }
         }
     }
+
     void addTags(Project p, def root) {
         log.debug("start import tags")
         root.'**'.findAll { it.name() in ["story", "task", "feature"] }.each { element ->

@@ -34,7 +34,7 @@ class CoreBootStrap {
             println "Creating dummy users"
             userService.save(new User(username: "a", email: "a@gmail.com", firstName: "Roberto", password: "a", preferences: new UserPreferences(language: 'en', activity: 'Consultant')))
             userService.save(new User(username: "z", email: "z@gmail.com", firstName: "Bernardo", password: "z", preferences:
-                             new UserPreferences(language: 'en', activity: 'WebDesigner', menu: ["taskBoard": "1",  "planning": "2", "backlog": "3", "feature": "4", "project": "5"])))
+                             new UserPreferences(language: 'en', activity: 'WebDesigner', menu: ["taskBoard": "1", "planning": "2", "backlog": "3", "feature": "4", "project": "5"])))
         }
     }
 }

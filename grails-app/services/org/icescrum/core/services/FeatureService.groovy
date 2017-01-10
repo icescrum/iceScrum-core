@@ -32,8 +32,6 @@ import org.icescrum.core.event.IceScrumEventType
 import org.icescrum.core.support.ApplicationSupport
 import org.springframework.security.access.prepost.PreAuthorize
 
-import java.text.SimpleDateFormat
-
 @Transactional
 class FeatureService extends IceScrumEventPublisher {
 

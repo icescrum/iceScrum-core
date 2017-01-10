@@ -19,21 +19,21 @@
 - Vincent Barrier (vbarrier@kagilum.com)
 - Nicolas Noullet (nnoullet@kagilum.com)
 --}%
-<%@ page contentType="text/html"%>
+<%@ page contentType="text/html" %>
 <g:if test="${description}">
     <g:message
             locale="${locale}"
             code='is.template.email.story.deleted.text.details'
             args="[storyName, description]"/>
 </g:if>
-    <g:else>
-        <g:message
-                locale="${locale}"
-                code='is.template.email.story.deleted.text'
-                args="[storyName]"/>
+<g:else>
+    <g:message
+            locale="${locale}"
+            code='is.template.email.story.deleted.text'
+            args="[storyName]"/>
 </g:else>
 <br/><br/>--<br/>
-<g:message locale="${locale}" code='is.template.email.footer.reason.follow' args="[link,linkName]"/>
+<g:message locale="${locale}" code='is.template.email.footer.reason.follow' args="[link, linkName]"/>
 <g:message locale="${locale}" code='is.template.email.footer.preferences.information'/>
 <br/>-<br/>
 <g:message locale="${locale}" code='is.template.email.footer.website'/>

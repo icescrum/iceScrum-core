@@ -20,7 +20,7 @@ public class FileUploadInfo {
 
         @Override
         boolean equals(Object obj) {
-            return obj instanceof ChunkNumber ? ((ChunkNumber)obj).number == this.number : false
+            return obj instanceof ChunkNumber ? ((ChunkNumber) obj).number == this.number : false
         }
 
         @Override
@@ -29,12 +29,13 @@ public class FileUploadInfo {
         }
     }
 
-    boolean valid(){
+    boolean valid() {
         return !(chunkSize < 0 || totalSize < 0 || identifier.isEmpty() || filename.isEmpty() || relativePath.isEmpty())
     }
+
     public boolean checkIfUploadFinished() {
         //check if upload finished
-        if (totalChunks == uploadedChunks.size()){
+        if (totalChunks == uploadedChunks.size()) {
             //Upload finished, change filename.
             File file = new File(filePath)
             String new_path = file.absolutePath.substring(0, file.absolutePath.length() - ".temp".length())

@@ -3,10 +3,10 @@ package org.icescrum.core.utils
 import org.eclipse.mylyn.wikitext.core.parser.MarkupParser
 import org.eclipse.mylyn.wikitext.textile.core.TextileLanguage
 
-import java.text.SimpleDateFormat
+import javax.crypto.Mac
 import javax.crypto.SecretKey
 import javax.crypto.spec.SecretKeySpec
-import javax.crypto.Mac
+import java.text.SimpleDateFormat
 
 /*
  * Copyright (c) 2015 Kagilum SAS
