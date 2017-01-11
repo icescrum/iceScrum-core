@@ -379,8 +379,8 @@ class SprintService extends IceScrumEventPublisher {
                     todoDate = release.todoDate
                 }
                 def sprint = new Sprint(
-                        retrospective: sprintXml.retrospective.text(),
-                        doneDefinition: sprintXml.doneDefinition.text(),
+                        retrospective: sprintXml.retrospective.text()?: null,
+                        doneDefinition: sprintXml.doneDefinition.text()?: null,
                         inProgressDate: inProgressDate,
                         doneDate: doneDate,
                         state: sprintXml.state.text().toInteger(),
@@ -391,9 +391,9 @@ class SprintService extends IceScrumEventPublisher {
                         startDate: ApplicationSupport.parseDate(sprintXml.startDate.text()),
                         endDate: ApplicationSupport.parseDate(sprintXml.endDate.text()),
                         orderNumber: sprintXml.orderNumber.text().toInteger(),
-                        description: sprintXml.description.text() ?: '',
-                        goal: sprintXml.goal?.text() ?: '',
-                        deliveredVersion: sprintXml.deliveredVersion?.text() ?: '',
+                        description: sprintXml.description.text() ?: null,
+                        goal: sprintXml.goal?.text() ?: null,
+                        deliveredVersion: sprintXml.deliveredVersion?.text() ?: null,
                         initialRemainingTime: sprintXml.initialRemainingTime?.text()?.isNumber() ? sprintXml.initialRemainingTime.text().toFloat() : sprintXml.initialRemainingHours?.text()?.isNumber() ? sprintXml.initialRemainingHours.text().toFloat() : null
                 )
                 // References other objects
@@ -417,6 +417,11 @@ class SprintService extends IceScrumEventPublisher {
                     }
                     sprintXml.tasks.task.each {
                         taskService.unMarshall(it, options)
+                    }
+                    sprintXml.attachments.attachment.each { _attachmentXml ->
+                        def uid = options.IDUIDUserMatch?."${_attachmentXml.posterId.text().toInteger()}"?:null
+                        User user = (User)project.getAllUsers().find{ it.uid == uid }?: (User)springSecurityService.currentUser
+                        ApplicationSupport.importAttachment(sprint, user, options.path, _attachmentXml)
                     }
                 }
                 if (options.save) {

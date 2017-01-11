@@ -304,6 +304,7 @@ class ProjectService extends IceScrumEventPublisher {
                         timezone: projectXml.preferences?.timezone?.text() ?: grailsApplication.config.icescrum.timezone.default)
 
                 options.project = project
+                options.IDUIDUserMatch = [:]
 
                 def saveMode = options.save
                 options.save = false
@@ -319,19 +320,15 @@ class ProjectService extends IceScrumEventPublisher {
 
                 def productOwnersList = []
                 projectXml.productOwners.user.eachWithIndex { productOwner, index ->
-                    User u
-                    if (!productOwner.@uid?.isEmpty())
-                        u = ((User) project.getAllUsers().find { it.uid == productOwner.@uid.text() }) ?: null
-                    else {
-                        u = ApplicationSupport.findUserUIDOldXMl(productOwner, null, project.getAllUsers())
-                    }
+                    User u = ((User) project.getAllUsers().find { it.uid == productOwner.@uid.text() }) ?: null
                     if (!u) {
                         u = User.findByUsernameAndEmail(productOwner.username.text(), productOwner.email.text())
                         if (!u) {
                             def userService = (UserService) grailsApplication.mainContext.getBean('userService')
-                            userService.unMarshall(productOwner, options)
+                            u = userService.unMarshall(productOwner, options)
                         }
                     }
+                    options.IDUIDUserMatch."${u.id ?: productOwner.id.text().toInteger()}" = u.uid
                     productOwnersList << u
                 }
                 project.productOwners = productOwnersList
@@ -382,6 +379,13 @@ class ProjectService extends IceScrumEventPublisher {
                         }
                     }
                     project.save()
+
+                    projectXml.attachments.attachment.each { _attachmentXml ->
+                        def uid = options.IDUIDUserMatch?."${_attachmentXml.posterId.text().toInteger()}"?:null
+                        User user = (User)project.getAllUsers().find{ it.uid == uid }?: (User)springSecurityService.currentUser
+                        ApplicationSupport.importAttachment(project, user, options.path, _attachmentXml)
+                    }
+
                     securityService.secureDomain(project)
                     if (project.productOwners) {
                         project.productOwners?.eachWithIndex { user, index ->

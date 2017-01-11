@@ -358,8 +358,8 @@ class TaskService extends IceScrumEventPublisher {
                 }
                 def task = new Task(
                         type: (taskXml.type.text().isNumber()) ? taskXml.type.text().toInteger() : null,
-                        description: taskXml.description.text(),
-                        notes: taskXml.notes.text(),
+                        description: taskXml.description.text() ?: null,
+                        notes: taskXml.notes.text() ?: null,
                         estimation: (taskXml.estimation.text().isNumber()) ? taskXml.estimation.text().toFloat() : null,
                         initial: (taskXml.initial.text().isNumber()) ? taskXml.initial.text().toFloat() : null,
                         rank: taskXml.rank.text().toInteger(),
@@ -372,30 +372,19 @@ class TaskService extends IceScrumEventPublisher {
                         uid: taskXml.@uid.text()?.isEmpty() ? taskXml.@id.text().toInteger() : taskXml.@uid.text().toInteger(),
                         color: taskXml?.color?.text() ?: "yellow")
                 if (project) {
-                    def u
-                    if (!taskXml.creator?.@uid?.isEmpty()) {
-                        u = ((User) project.getAllUsers().find { it.uid == taskXml.creator.@uid.text() }) ?: null
-                    } else {
-                        u = ApplicationSupport.findUserUIDOldXMl(taskXml, 'creator', project.getAllUsers())
-                    }
-                    if (u) {
-                        task.creator = u
-                    } else {
-                        task.creator = (User) project.productOwners.first()
-                    }
+                    def u = ((User) project.getAllUsers().find { it.uid == taskXml.creator.@uid.text() }) ?: null
+                    task.creator = u ?: (User) project.productOwners.first()
                     project.addToTasks(task)
-                }
-                if ((!taskXml.responsible?.@uid?.isEmpty() || !taskXml.responsible?.@id?.isEmpty()) && project) {
-                    def u
-                    if (!taskXml.responsible?.@uid?.isEmpty()) {
+
+                    if ((!taskXml.responsible?.@uid?.isEmpty() || !taskXml.responsible?.@id?.isEmpty()) && project) {
                         u = ((User) project.getAllUsers().find { it.uid == taskXml.responsible.@uid.text() }) ?: null
-                    } else {
-                        u = ApplicationSupport.findUserUIDOldXMl(taskXml, 'responsible', project.getAllUsers())
+                        task.responsible = u ?: (User) project.productOwners.first()
                     }
-                    if (u) {
-                        task.responsible = u
-                    } else {
-                        task.responsible = (User) project.productOwners.first()
+
+                    taskXml.attachments.attachment.each { _attachmentXml ->
+                        def uid = options.IDUIDUserMatch?."${_attachmentXml.posterId.text().toInteger()}"?:null
+                        User user = (User)project.getAllUsers().find{ it.uid == uid }?: (User)springSecurityService.currentUser
+                        ApplicationSupport.importAttachment(task, user, options.path, _attachmentXml)
                     }
                 }
 
@@ -409,11 +398,19 @@ class TaskService extends IceScrumEventPublisher {
                 // Save before some hibernate stuff
                 if (options.save) {
                     task.save()
-                }
 
-                //Handle tags
-                if(taskXml.tags.text()){
-                    task.tags = taskXml.tags.text().replaceAll(' ', '').replace('[', '').replace(']', '').split(',')
+                    //Handle tags
+                    if(taskXml.tags.text()){
+                        task.tags = taskXml.tags.text().replaceAll(' ', '').replace('[', '').replace(']', '').split(',')
+                    }
+
+                    if(project){
+                        taskXml.comments.comment.each{ _commentXml ->
+                            def uid = options.IDUIDUserMatch?."${_commentXml.posterId.text().toInteger()}"?:null
+                            User user = (User)project.getAllUsers().find{ it.uid == uid }?: (User)springSecurityService.currentUser
+                            ApplicationSupport.importComment(task, user, _commentXml.body.text(), ApplicationSupport.parseDate(_commentXml.dateCreated.text()))
+                        }
+                    }
                 }
 
                 // Child objects

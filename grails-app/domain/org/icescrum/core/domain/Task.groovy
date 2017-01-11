@@ -325,7 +325,7 @@ class Task extends BacklogElement implements Serializable {
                 builder.responsible(uid: this.responsible.uid)
             }
 
-            builder.tags { builder.mkp.yieldUnescaped("<![CDATA[${this.tags}]]>") }
+            builder.tags { builder.mkp.yieldUnescaped("<![CDATA[${this.tags ?: ''}]]>") }
             builder.name { builder.mkp.yieldUnescaped("<![CDATA[${this.name}]]>") }
             builder.notes { builder.mkp.yieldUnescaped("<![CDATA[${this.notes ?: ''}]]>") }
             builder.description { builder.mkp.yieldUnescaped("<![CDATA[${this.description ?: ''}]]>") }

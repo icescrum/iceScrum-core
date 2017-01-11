@@ -707,7 +707,7 @@ class StoryService extends IceScrumEventPublisher {
                         plannedDate: plannedDate,
                         inProgressDate: inProgressDate,
                         doneDate: doneDate,
-                        origin: storyXml.origin.text(),
+                        origin: storyXml.origin.text()?: null,
                         effort: storyXml.effort.text().isEmpty() ? null : storyXml.effort.text().toBigDecimal(),
                         rank: storyXml.rank.text().toInteger(),
                         state: storyXml.state.text().toInteger(),
@@ -715,8 +715,8 @@ class StoryService extends IceScrumEventPublisher {
                         affectVersion: storyXml.affectVersion.text(),
                         //backlogElement
                         name: storyXml."${'name'}".text(),
-                        description: storyXml.description.text(),
-                        notes: storyXml.notes.text(),
+                        description: storyXml.description.text()?: null,
+                        notes: storyXml.notes.text()?: null,
                         todoDate: todoDate,
                         uid: storyXml.@uid.text()?.isEmpty() ? storyXml.@id.text().toInteger() : storyXml.@uid.text().toInteger(),
                 )
@@ -748,17 +748,8 @@ class StoryService extends IceScrumEventPublisher {
                             actor.addToStories(story)
                         }
                     }
-                    def user
-                    if (!storyXml.creator?.@uid?.isEmpty())
-                        user = ((User) project.getAllUsers().find { it.uid == storyXml.creator.@uid.text() }) ?: null
-                    else {
-                        user = ApplicationSupport.findUserUIDOldXMl(storyXml, 'creator', project.getAllUsers())
-                    }
-                    if (user)
-                        story.creator = user
-                    else
-                        story.creator = (User) project.productOwners.first()
-
+                    def user = ((User) project.getAllUsers().find { it.uid == storyXml.creator.@uid.text() }) ?: null
+                    story.creator = user ?: (User) project.productOwners.first()
                     project.addToStories(story)
                 }
                 if (sprint) {
@@ -767,21 +758,35 @@ class StoryService extends IceScrumEventPublisher {
                 // Save before some hibernate stuff
                 if (options.save) {
                     story.save()
-                }
 
-                //Handle dependsOn
-                if (project && !storyXml.dependsOn?.@uid?.isEmpty()) {
-                    def dependsOn = Story.findByBacklogAndUid(project, storyXml.dependsOn.@uid.text().toInteger())
-                    if (dependsOn) {
-                        story.dependsOn = dependsOn
-                        story.save()
-                        dependsOn.save()
+                    //Handle dependsOn
+                    if (project && !storyXml.dependsOn?.@uid?.isEmpty()) {
+                        def dependsOn = Story.findByBacklogAndUid(project, storyXml.dependsOn.@uid.text().toInteger())
+                        if (dependsOn) {
+                            story.dependsOn = dependsOn
+                            story.save()
+                            dependsOn.save()
+                        }
                     }
-                }
 
-                //Handle tags
-                if(storyXml.tags.text()){
-                    story.tags = storyXml.tags.text().replaceAll(' ', '').replace('[', '').replace(']', '').split(',')
+                    //Handle tags only available when story has an id options.save)
+                    if(storyXml.tags.text()){
+                        story.tags = storyXml.tags.text().replaceAll(' ', '').replace('[', '').replace(']', '').split(',')
+                    }
+
+                    if(project){
+                        storyXml.comments.comment.each{ _commentXml ->
+                            def uid = options.IDUIDUserMatch?."${_commentXml.posterId.text().toInteger()}"?:null
+                            User user = (User)project.getAllUsers().find{ it.uid == uid }?: (User)springSecurityService.currentUser
+                            ApplicationSupport.importComment(story, user, _commentXml.body.text(), ApplicationSupport.parseDate(_commentXml.dateCreated.text()))
+                        }
+
+                        storyXml.attachments.attachment.each { _attachmentXml ->
+                            def uid = options.IDUIDUserMatch?."${_attachmentXml.posterId.text().toInteger()}"?:null
+                            User user = (User)project.getAllUsers().find{ it.uid == uid }?: (User)springSecurityService.currentUser
+                            ApplicationSupport.importAttachment(story, user, options.path, _attachmentXml)
+                        }
+                    }
                 }
 
                 options.story = story

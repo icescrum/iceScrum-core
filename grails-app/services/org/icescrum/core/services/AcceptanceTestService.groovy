@@ -79,7 +79,7 @@ class AcceptanceTestService extends IceScrumEventPublisher {
                 }
                 def acceptanceTest = new AcceptanceTest(
                         name: acceptanceTestXml."${'name'}".text(),
-                        description: acceptanceTestXml."${'description'}".text(),
+                        description: acceptanceTestXml."${'description'}".text()?:null,
                         state: state,
                         uid: acceptanceTestXml.@uid.text().toInteger()
                 )

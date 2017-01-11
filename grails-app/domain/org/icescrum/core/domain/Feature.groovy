@@ -217,7 +217,7 @@ class Feature extends BacklogElement implements Serializable {
             builder.type(this.type)
             builder.rank(this.rank)
             builder.color(this.color)
-            builder.value(this.value)
+            builder.value(this.value?:'')
             builder.todoDate(this.todoDate)
             builder.tags { builder.mkp.yieldUnescaped("<![CDATA[${this.tags}]]>") }
             builder.name { builder.mkp.yieldUnescaped("<![CDATA[${this.name}]]>") }

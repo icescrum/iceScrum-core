@@ -193,12 +193,7 @@ class UserService extends IceScrumEventPublisher {
     User unMarshall(def userXml, def options) {
         User.withTransaction(readOnly: !options.save) { transaction ->
             try {
-                def user
-                if (userXml.@uid.text()) {
-                    user = User.findByUid(userXml.@uid.text())
-                } else {
-                    user = ApplicationSupport.findUserUIDOldXMl(userXml, null, null)
-                }
+                def user = User.findByUid(userXml.@uid.text())
                 if (!user) {
                     user = new User(
                             lastName: userXml.lastName.text(),
@@ -213,16 +208,8 @@ class UserService extends IceScrumEventPublisher {
                             accountExternal: userXml.accountExternal?.text()?.toBoolean() ?: false,
                             uid: userXml.@uid.text() ?: (userXml.username.text() + userXml.email.text()).encodeAsMD5()
                     )
-
-                    def language = userXml.preferences.language.text()
-                    if (language == "en") {
-                        def version = ApplicationSupport.findIceScrumVersionFromXml(userXml)
-                        if (version == null || version < "R6#2") {
-                            language = "en_US"
-                        }
-                    }
                     user.preferences = new UserPreferences(
-                            language: language,
+                            language: userXml.preferences.language.text(),
                             activity: userXml.preferences.activity.text(),
                             filterTask: userXml.preferences.filterTask.text(),
                             user: user,

@@ -251,9 +251,9 @@ class ReleaseService extends IceScrumEventPublisher {
                         endDate: ApplicationSupport.parseDate(releaseXml.endDate.text()),
                         orderNumber: releaseXml.orderNumber.text().toInteger(),
                         firstSprintIndex: releaseXml.firstSprintIndex.text() ? releaseXml.firstSprintIndex.toInteger() : 1,
-                        description: releaseXml.description.text(),
-                        vision: releaseXml.vision.text(),
-                        goal: releaseXml.goal?.text() ?: '')
+                        description: releaseXml.description.text() ?: null,
+                        vision: releaseXml.vision.text() ?: null,
+                        goal: releaseXml.goal?.text() ?: null)
                 options.release = release
                 if (project) {
                     project.addToReleases(release)
@@ -270,6 +270,11 @@ class ReleaseService extends IceScrumEventPublisher {
                         if (f) {
                             release.addToFeatures(f)
                         }
+                    }
+                    releaseXml.attachments.attachment.each { _attachmentXml ->
+                        def uid = options.IDUIDUserMatch?."${_attachmentXml.posterId.text().toInteger()}"?:null
+                        User user = (User)project.getAllUsers().find{ it.uid == uid }?: (User)springSecurityService.currentUser
+                        ApplicationSupport.importAttachment(release, user, options.path, _attachmentXml)
                     }
                 }
 

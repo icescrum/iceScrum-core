@@ -26,6 +26,7 @@ import grails.converters.JSON
 import grails.plugin.springsecurity.userdetails.GrailsUser
 import grails.plugin.springsecurity.web.SecurityRequestHolder as SRH
 import grails.util.Environment
+import grails.util.GrailsNameUtils
 import grails.util.Holders
 import grails.util.Metadata
 import groovy.xml.MarkupBuilder
@@ -46,6 +47,8 @@ import org.apache.http.impl.client.DefaultHttpClient
 import org.apache.http.protocol.BasicHttpContext
 import org.apache.http.util.EntityUtils
 import org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib
+import org.grails.comments.Comment
+import org.grails.comments.CommentLink
 import org.icescrum.core.domain.Project
 import org.icescrum.core.domain.Team
 import org.icescrum.core.domain.User
@@ -279,25 +282,6 @@ class ApplicationSupport {
             return new SimpleDateFormat('EEE MMM d HH:mm:ss zzz yyyy').parse(date)
         }
     }
-
-    static public findUserUIDOldXMl(def object, name, users) {
-        //be sure we are at root node
-        def root = object.parent().parent().parent().parent().parent().parent().parent().parent().parent()
-        //be compatible with xml without export tag
-        if (root.find { it.name == 'export' }) {
-            root = root.project ?: root.product
-        }
-        def uXml = root.'**'.find {
-            it.@id.text() == (name ? object."${name}".@id.text() : object.@id.text()) && it.username.text()
-        }
-        if (uXml) {
-            def UXmlUID = (uXml.username?.text() + uXml.email?.text()).encodeAsMD5()
-            return users ? ((User) users?.find { it.uid == UXmlUID }) : User.findByUid(UXmlUID) ?: null
-        } else {
-            return null
-        }
-    }
-
 
     static public findIceScrumVersionFromXml(def object) {
         def root = object.parent().parent().parent().parent().parent().parent().parent().parent().parent()
@@ -592,6 +576,31 @@ class ApplicationSupport {
             !it.silent
         }
         return lastWarning ? [id: lastWarning.id, icon: lastWarning.icon, title: g.message(lastWarning.title), message: g.message(lastWarning.message), hideable: lastWarning.hideable, silent: lastWarning.silent] : null
+    }
+
+    static void importComment(def object, User poster, String body, Date dateCreated) {
+        def posterClass = poster.class.name
+        def i = posterClass.indexOf('_$$_javassist')
+        if (i > -1)
+            posterClass = posterClass[0..i - 1]
+        def c = new Comment(body: body, posterId: poster.id, posterClass: posterClass)
+        c.save()
+        def link = new CommentLink(comment: c, commentRef: object.id, type: GrailsNameUtils.getPropertyName(object.class))
+        link.save()
+        c.dateCreated = dateCreated
+    }
+
+    static void importAttachment(def object, def user, def importPath, def attachmentXml){
+        def originalName = attachmentXml.inputName.text()
+        if (!attachmentXml.url?.text()) {
+            def path = "${importPath}${File.separator}attachments${File.separator}${attachmentXml.@id.text()}.${attachmentXml.ext.text()}"
+            def fileAttch = new File(path)
+            if (fileAttch.exists()) {
+                object.addAttachment(user, fileAttch, originalName)
+            }
+        } else {
+            object.addAttachment(user, [filename: originalName, url: attachmentXml.url.text(), provider: attachmentXml.provider.text(), size: attachmentXml.length.toInteger()])
+        }
     }
 }
 

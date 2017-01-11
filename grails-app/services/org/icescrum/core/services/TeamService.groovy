@@ -158,7 +158,7 @@ class TeamService extends IceScrumEventPublisher {
                 def team = new Team(
                         name: teamXml."${'name'}".text(),
                         velocity: (teamXml.velocity.text().isNumber()) ? teamXml.velocity.text().toInteger() : 0,
-                        description: teamXml.description.text(),
+                        description: teamXml.description.text()?: null,
                         uid: teamXml.@uid.text() ?: (teamXml."${'name'}".text()).encodeAsMD5()
                 )
 
@@ -176,20 +176,16 @@ class TeamService extends IceScrumEventPublisher {
                     } else {
                         team.addToMembers(u)
                     }
+                    if(options.IDUIDUserMatch != null){
+                        options.IDUIDUserMatch."${u.id ?: user.id.text().toInteger()}" =  u.uid
+                    }
                 }
 
                 def scrumMastersList = []
                 def sm = teamXml.scrumMasters.user
                 sm.eachWithIndex { user, index ->
-                    def u
-                    if (!user.@uid?.isEmpty()) {
-                        u = ((User) team.members.find { it.uid == user.@uid.text() }) ?: null
-                    } else {
-                        u = ApplicationSupport.findUserUIDOldXMl(user, null, team.members)
-                    }
-                    if (u) {
-                        scrumMastersList << u
-                    }
+                    def u = ((User) team.members.find { it.uid == user.@uid.text() }) ?: null
+                    scrumMastersList << u
                 }
                 team.scrumMasters = scrumMastersList
                 if (existingTeam) {
