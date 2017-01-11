@@ -477,6 +477,9 @@ class ProjectService extends IceScrumEventPublisher {
             String xmlText = file.getText()
             String cleanedXmlText = ServicesUtils.cleanXml(xmlText)
             def _projectXml = new XmlSlurper().parseText(cleanedXmlText)
+            if (_projectXml.@version.text().startsWith('R6')) {
+                throw new BusinessException(code: 'todo.is.ui.import.error.R6')
+            }
             Project project = null
             try {
                 def projectXml = _projectXml
