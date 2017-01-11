@@ -625,9 +625,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
             }
             builder.activities() {
                 this.activities.each { _activity ->
-                    builder.activity() {
-                        _activity.xml(builder)
-                    }
+                    _activity.xml(builder)
                 }
             }
             builder.acceptanceTests() {

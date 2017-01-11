@@ -184,9 +184,31 @@ class FeatureService extends IceScrumEventPublisher {
                 if (project) {
                     project.addToFeatures(feature)
                 }
+
+                // Save before some hibernate stuff
                 if (options.save) {
                     feature.save()
                 }
+
+                //Handle tags
+                if(featureXml.tags.text()){
+                    feature.tags = featureXml.tags.text().replaceAll(' ', '').replace('[', '').replace(']', '').split(',')
+                }
+
+
+                // Child objects
+                options.feature = feature
+
+                options.parent = feature
+                featureXml.activities.activity.each{ def activityXml ->
+                    activityService.unMarshall(activityXml, options)
+                }
+                options.parent = null
+
+                if (options.save) {
+                    feature.save()
+                }
+                options.feature = null
                 return (Feature) importDomainsPlugins(featureXml, feature, options)
             } catch (Exception e) {
                 if (log.debugEnabled) e.printStackTrace()

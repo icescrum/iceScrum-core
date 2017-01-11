@@ -113,16 +113,18 @@ class Activity implements Serializable, Comparable {
     }
 
     def xml(builder) {
-        builder.poster(uid: this.poster.uid)
-        builder.dateCreated(this.dateCreated)
-        builder.lastUpdated(this.lastUpdated)
-        builder.code(this.code)
-        builder.label { builder.mkp.yieldUnescaped("<![CDATA[${this.label}]]>") }
-        builder.field { this.field }
-        builder.beforeValue { builder.mkp.yieldUnescaped("<![CDATA[${this.beforeValue}]]>") }
-        builder.afterValue { builder.mkp.yieldUnescaped("<![CDATA[${this.afterValue}]]>") }
-        builder.parentRef(this.parentRef)
-        builder.parentType(this.parentRef)
-        exportDomainsPlugins(builder)
+        builder.activity(){
+            builder.poster(uid: this.poster.uid)
+            builder.dateCreated(this.dateCreated)
+            builder.lastUpdated(this.lastUpdated)
+            builder.code(this.code)
+            builder.label { builder.mkp.yieldUnescaped("<![CDATA[${this.label}]]>") }
+            builder.field { builder.mkp.yieldUnescaped("<![CDATA[${this.field}]]>") }
+            builder.beforeValue { builder.mkp.yieldUnescaped("<![CDATA[${this.beforeValue?:''}]]>") }
+            builder.afterValue { builder.mkp.yieldUnescaped("<![CDATA[${this.afterValue?:''}]]>") }
+            builder.parentRef(this.parentRef)
+            builder.parentType(this.parentType)
+            exportDomainsPlugins(builder)
+        }
     }
 }

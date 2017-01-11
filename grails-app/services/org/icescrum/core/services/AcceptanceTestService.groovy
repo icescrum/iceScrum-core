@@ -93,9 +93,26 @@ class AcceptanceTestService extends IceScrumEventPublisher {
                 if (story) {
                     story.addToAcceptanceTests(acceptanceTest)
                 }
+
+                // Save before some hibernate stuff
                 if (options.save) {
                     acceptanceTest.save()
                 }
+
+                // Child objects
+                options.acceptanceTest = acceptanceTest
+                def activityService = (ActivityService) grailsApplication.mainContext.getBean('activityService')
+                options.parent = acceptanceTest
+                acceptanceTestXml.activities.activity.each { it ->
+                    activityService.unMarshall(it, options)
+                }
+                options.parent = null
+
+                if (options.save) {
+                    acceptanceTest.save()
+                }
+
+                options.acceptanceTest = null
                 return (AcceptanceTest) importDomainsPlugins(acceptanceTestXml, acceptanceTest, options)
             } catch (Exception e) {
                 if (log.debugEnabled) {

@@ -29,7 +29,6 @@ import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
 import org.icescrum.core.utils.ServicesUtils
 import org.icescrum.core.error.BusinessException
-import java.text.SimpleDateFormat
 import org.icescrum.core.domain.preferences.ProjectPreferences
 import org.icescrum.core.domain.security.Authority
 import org.springframework.security.access.prepost.PreAuthorize
@@ -48,8 +47,6 @@ class ProjectService extends IceScrumEventPublisher {
     def grailsApplication
     def clicheService
     def notificationEmailService
-
-    def g = new org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib()
 
     @PreAuthorize('isAuthenticated()')
     void save(Project project, productOwners, stakeHolders) {
@@ -72,7 +69,6 @@ class ProjectService extends IceScrumEventPublisher {
             }
         }
         manageProjectEvents(project, [:])
-        publishSynchronousEvent(IceScrumEventType.CREATE, project)
     }
 
     @PreAuthorize('owner(#team) and !archivedProject(#project)')
@@ -166,7 +162,7 @@ class ProjectService extends IceScrumEventPublisher {
 
     @PreAuthorize('stakeHolder(#project) or inProject(#project)')
     def projectBurnupValues(Project project) {
-        def values = []
+         def values = []
         project.releases?.sort { a, b -> a.orderNumber <=> b.orderNumber }?.each { Release release ->
             def cliches = []
             //begin of project
@@ -309,9 +305,12 @@ class ProjectService extends IceScrumEventPublisher {
 
                 options.project = project
 
+                def saveMode = options.save
+                options.save = false
                 projectXml.teams.team.eachWithIndex { it, index ->
                     teamService.unMarshall(it, options)
                 }
+                options.save = saveMode
 
                 Project pExist = (Project) Project.findByPkey(project.pkey)
                 if (pExist && securityService.productOwner(pExist, springSecurityService.authentication)) {
@@ -344,6 +343,9 @@ class ProjectService extends IceScrumEventPublisher {
                         team.name = options.changes.team.name
                     }
                     if (options.changes?.users) {
+                        if (options.changes.users."${team.owner.uid}") {
+                            team.owner.username = options.changes.users."${it.uid}"
+                        }
                         team.members?.each {
                             if (options.changes.users."${it.uid}") {
                                 it.username = options.changes.users."${it.uid}"
@@ -369,54 +371,49 @@ class ProjectService extends IceScrumEventPublisher {
                         return null
                     }
                 }
+                // Save before some hibernate stuff
                 if (options.save) {
                     if (erase && pExist) {
                         delete(pExist)
                     }
-                    project.save()
                     project.teams.each { t ->
-                        // Save users before team
-                        t.members?.each {
-                            if (it.id == null)
-                                it.save()
-                        }
-
-                        if (t.id == null)
+                        if (t.id == null){
                             teamService.saveImport(t)
-                        else {
-                            def ts = Team.get(t.id)
-                            ts.removeFromProjects(project)
-                            ts.addToProjects(project)
                         }
                     }
+                    project.save()
                     securityService.secureDomain(project)
                     if (project.productOwners) {
                         project.productOwners?.eachWithIndex { user, index ->
                             user = User.get(user.id)
                             securityService.createProductOwnerPermissions(user, project)
                         }
-                        def user = project.productOwners.first()
-                        user = User.get(user.id)
-                        securityService.changeOwner(user, project)
                     } else {
                         def user = User.get(springSecurityService.principal.id)
                         securityService.createProductOwnerPermissions(user, project)
-                        securityService.changeOwner(user, project)
                     }
+                    securityService.changeOwner(project.owner, project)
                 }
 
                 // Child objects
                 def featureService = (FeatureService) grailsApplication.mainContext.getBean('featureService')
-                projectXml.features.feature.eachWithIndex { it, index ->
+                projectXml.features.feature.each { it ->
                     featureService.unMarshall(it, options)
                 }
-                projectXml.actors.actor.eachWithIndex { it, index ->
+                projectXml.actors.actor.each { it ->
                     actorService.unMarshall(it, options)
                 }
                 def storyService = (StoryService) grailsApplication.mainContext.getBean('storyService')
-                projectXml.stories.story.eachWithIndex { it, index ->
+                projectXml.stories.story.each { it ->
                     storyService.unMarshall(it, options)
                 }
+                def activityService = (ActivityService) grailsApplication.mainContext.getBean('activityService')
+                options.parent = project
+                projectXml.activities.activity.each { it ->
+                    activityService.unMarshall(it, options)
+                }
+                options.parent = null
+
                 // Ensure rank for stories in backlog
                 def stories = project.stories.findAll {
                     it.state == Story.STATE_ACCEPTED || it.state == Story.STATE_ESTIMATED
@@ -454,6 +451,7 @@ class ProjectService extends IceScrumEventPublisher {
                         }
                     }
                 }
+
                 if (options.save) {
                     project.save()
                 }
@@ -474,7 +472,7 @@ class ProjectService extends IceScrumEventPublisher {
             String xmlText = file.getText()
             String cleanedXmlText = ServicesUtils.cleanXml(xmlText)
             def _projectXml = new XmlSlurper().parseText(cleanedXmlText)
-            def Project project = null
+            Project project = null
             try {
                 def projectXml = _projectXml
                 // Be compatible with xml without export tag
@@ -488,7 +486,9 @@ class ProjectService extends IceScrumEventPublisher {
                 }
             }
             if (project?.id && options.save) {
-                project.save(flush: true)
+                project.save(flush:true)
+                //manageProjectEvents(project, [:])
+                //publishSynchronousEvent(IceScrumEventType.CREATE, project)
             }
             return project
         }
@@ -856,9 +856,9 @@ class ProjectService extends IceScrumEventPublisher {
     }
 
     private void createDefaultBacklogs(Project project) {
-        new Backlog(project: project, shared: true, filter: '{"story":{"state":1}}', name: 'is.ui.sandbox', code: 'sandbox').save()
-        new Backlog(project: project, shared: true, filter: '{"story":{"state":[2,3]}}', name: 'is.ui.backlog', code: 'backlog').save()
-        new Backlog(project: project, shared: true, filter: '{"story":{"state":7}}', name: 'todo.is.ui.backlog.done', code: 'done').save()
-        new Backlog(project: project, shared: true, filter: '{"story":{}}', name: 'todo.is.ui.backlog.all', code: 'all').save()
+        new Backlog(project: project, shared: true, filter: '{"story":{"state":1}}', name: 'is.ui.sandbox', code: 'sandbox', orderNumber: 1).save()
+        new Backlog(project: project, shared: true, filter: '{"story":{"state":[2,3]}}', name: 'is.ui.backlog', code: 'backlog' , orderNumber: 2).save()
+        new Backlog(project: project, shared: true, filter: '{"story":{"state":7}}', name: 'todo.is.ui.backlog.done', code: 'done', orderNumber: 3).save()
+        new Backlog(project: project, shared: true, filter: '{"story":{}}', name: 'todo.is.ui.backlog.all', code: 'all', orderNumber: 4).save()
     }
 }

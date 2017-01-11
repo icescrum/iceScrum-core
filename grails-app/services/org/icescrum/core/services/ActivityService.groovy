@@ -64,30 +64,31 @@ class ActivityService extends IceScrumEventPublisher {
         Activity.withTransaction(readOnly: !options.save) { transaction ->
             try {
                 def activity = new Activity(
-                        dateCreated: ApplicationSupport.parseDate(activityXml.dateCreated.text()),
-                        lastUpdated: ApplicationSupport.parseDate(activityXml.lastUpdated.text()),
                         code: activityXml.code.text(),
                         label: activityXml.label.text(),
                         field: activityXml.field.text(),
-                        afterValue: activityXml.afterValue.text(),
-                        beforeValue: activityXml.beforeValue.text(),
+                        afterValue: activityXml.afterValue.text()?:null,
+                        beforeValue: activityXml.beforeValue.text()?:null,
                         parentType: activityXml.parentType.text()
                 )
+
                 // References to object
                 if (project) {
                     def u = ((User) project.getAllUsers().find { it.uid == activityXml.poster.@uid.text() }) ?: null
                     activity.poster = (User) (u ?: project.productOwners.first())
                 }
+                if (parent) {
+                    activity.parentRef = parent.id
+                }
                 // Save before some hibernate stuff
                 if (options.save) {
                     activity.save()
-                }
-                if (parent) {
-                    activity.parentRef = parent.id
-                    parent.addToActivities(activity)
-                }
-                if (options.save) {
+                    //can't be in constructor
+                    activity.dateCreated = ApplicationSupport.parseDate(activityXml.dateCreated.text())
                     activity.save()
+                    if(parent){
+                        parent.addToActivities(activity)
+                    }
                 }
                 return (Activity) importDomainsPlugins(activityXml, activity, options)
             } catch (Exception e) {

@@ -228,6 +228,11 @@ class Feature extends BacklogElement implements Serializable {
                     story(uid: _story.uid)
                 }
             }
+            builder.activities() {
+                this.activities.each { _activity ->
+                    _activity.xml(builder)
+                }
+            }
             builder.attachments() {
                 this.attachments.each { _att ->
                     _att.xml(builder)

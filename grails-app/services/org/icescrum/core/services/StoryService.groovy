@@ -28,6 +28,7 @@ package org.icescrum.core.services
 import grails.util.GrailsNameUtils
 import grails.validation.ValidationException
 import org.apache.commons.io.FileUtils
+import org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib
 import org.grails.comments.Comment
 import org.grails.comments.CommentLink
 import org.icescrum.core.domain.*
@@ -40,8 +41,6 @@ import org.icescrum.plugins.attachmentable.domain.Attachment
 import org.springframework.security.access.prepost.PreAuthorize
 import grails.transaction.Transactional
 
-import java.text.SimpleDateFormat
-
 @Transactional
 class StoryService extends IceScrumEventPublisher {
     def taskService
@@ -51,10 +50,8 @@ class StoryService extends IceScrumEventPublisher {
     def attachmentableService
     def securityService
     def acceptanceTestService
-    def sessionFactory
     def activityService
-
-    def g = new org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib()
+    def grailsApplication
 
     @PreAuthorize('isAuthenticated() and !archivedProject(#project)')
     void save(Story story, Project project, User user) {
@@ -500,6 +497,7 @@ class StoryService extends IceScrumEventPublisher {
     def acceptToUrgentTask(List<Story> stories) {
         def tasks = []
         def project = stories[0].backlog
+        def g = grailsApplication.mainContext.getBean("org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib")
         stories.each { story ->
             if (story.state > Story.STATE_SUGGESTED) {
                 throw new BusinessException(code: 'is.story.error.not.state.suggested')
@@ -770,14 +768,35 @@ class StoryService extends IceScrumEventPublisher {
                 if (options.save) {
                     story.save()
                 }
+
+                //Handle dependsOn
+                if (project && !storyXml.dependsOn?.@uid?.isEmpty()) {
+                    def dependsOn = Story.findByBacklogAndUid(project, storyXml.dependsOn.@uid.text().toInteger())
+                    if (dependsOn) {
+                        story.dependsOn = dependsOn
+                        story.save()
+                        dependsOn.save()
+                    }
+                }
+
+                //Handle tags
+                if(storyXml.tags.text()){
+                    story.tags = storyXml.tags.text().replaceAll(' ', '').replace('[', '').replace(']', '').split(',')
+                }
+
                 options.story = story
                 // Child objects
-                storyXml.tasks?.task?.each {
+                storyXml.tasks.task.each {
                     taskService.unMarshall(it, options)
                 }
-                storyXml.acceptanceTests?.acceptanceTest?.each {
+                storyXml.acceptanceTests.acceptanceTest.each {
                     acceptanceTestService.unMarshall(it, options)
                 }
+                options.parent = story
+                storyXml.activities.activity.each{ def activityXml ->
+                    activityService.unMarshall(activityXml, options)
+                }
+                options.parent = null
 
                 if (options.save) {
                     story.save()

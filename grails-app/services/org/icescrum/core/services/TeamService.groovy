@@ -88,15 +88,21 @@ class TeamService extends IceScrumEventPublisher {
 
     @PreAuthorize('isAuthenticated()')
     void saveImport(Team team) {
-        if (!team) {
-            throw new BusinessException(code: 'is.team.error.not.exist')
+        //save before go further
+        team.members.each { user ->
+            user.save()
+        }
+        team.scrumMasters.each { user ->
+            user.save()
         }
         if (!team.save()) {
             throw new BusinessException(code: 'is.team.error.not.saved')
         }
+
         securityService.secureDomain(team)
+        securityService.changeOwner(team.owner, team)
+
         def scrumMasters = team.scrumMasters
-        def user = (User) springSecurityService.currentUser
         for (member in team.members) {
             if (!member.isAttached()) {
                 member = member.merge()
@@ -112,13 +118,12 @@ class TeamService extends IceScrumEventPublisher {
                 }
                 addScrumMaster(team, it)
             }
-            securityService.changeOwner(team.scrumMasters.first(), team)
         } else {
+            def user = User.get(springSecurityService.principal.id)
             if (!user.isAttached()) {
                 user = user.merge()
             }
             addScrumMaster(team, user)
-            securityService.changeOwner(user, team)
         }
     }
 
@@ -157,6 +162,8 @@ class TeamService extends IceScrumEventPublisher {
                         uid: teamXml.@uid.text() ?: (teamXml."${'name'}".text()).encodeAsMD5()
                 )
 
+                team.owner = (!teamXml.owner.user.@uid.isEmpty()) ? ((User) User.findByUid(teamXml.owner.user.@uid.text())) ?: null : null
+
                 def userService = (UserService) grailsApplication.mainContext.getBean('userService')
                 teamXml.members.user.eachWithIndex { user, index ->
                     User u = userService.unMarshall(user, options)
@@ -170,9 +177,9 @@ class TeamService extends IceScrumEventPublisher {
                         team.addToMembers(u)
                     }
                 }
+
                 def scrumMastersList = []
-                // Fix between R6#x and R7
-                def sm = teamXml.scrumMasters.scrumMaster ?: teamXml.scrumMasters.user
+                def sm = teamXml.scrumMasters.user
                 sm.eachWithIndex { user, index ->
                     def u
                     if (!user.@uid?.isEmpty()) {
@@ -205,14 +212,8 @@ class TeamService extends IceScrumEventPublisher {
                 if (project) {
                     project.addToTeams(team)
                 }
-                if (options.save) {
-                    team.members.each { user ->
-                        user.save()
-                    }
-                    team.scrumMasters.each { user ->
-                        user.save()
-                    }
-                    team.save()
+                if (!existingTeam && options.save) {
+                    saveImport(team)
                 }
                 return (Team) importDomainsPlugins(teamXml, team, options)
             } catch (Exception e) {

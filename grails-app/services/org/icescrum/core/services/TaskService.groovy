@@ -398,15 +398,37 @@ class TaskService extends IceScrumEventPublisher {
                         task.responsible = (User) project.productOwners.first()
                     }
                 }
+
                 if (sprint) {
                     sprint.addToTasks(task)
                 }
                 if (story) {
                     story.addToTasks(task)
                 }
+
+                // Save before some hibernate stuff
                 if (options.save) {
                     task.save()
                 }
+
+                //Handle tags
+                if(taskXml.tags.text()){
+                    task.tags = taskXml.tags.text().replaceAll(' ', '').replace('[', '').replace(']', '').split(',')
+                }
+
+                // Child objects
+                options.task = task
+
+                options.parent = task
+                taskXml.activities?.activity?.each{ def activityXml ->
+                    activityService.unMarshall(activityXml, options)
+                }
+                options.parent = null
+
+                if (options.save) {
+                    task.save()
+                }
+                options.task = null
                 return (Task) importDomainsPlugins(taskXml, task, options)
             } catch (Exception e) {
                 if (log.debugEnabled) e.printStackTrace()

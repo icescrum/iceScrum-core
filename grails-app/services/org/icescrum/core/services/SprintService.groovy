@@ -387,7 +387,6 @@ class SprintService extends IceScrumEventPublisher {
                         velocity: (sprintXml.velocity.text().isNumber()) ? sprintXml.velocity.text().toDouble() : 0d,
                         dailyWorkTime: (sprintXml.dailyWorkTime.text().isNumber()) ? sprintXml.dailyWorkTime.text().toDouble() : 8d,
                         capacity: (sprintXml.capacity.text().isNumber()) ? sprintXml.capacity.text().toDouble() : 0d,
-                        lastUpdated: sprintXml.lastUpdated.text() ? ApplicationSupport.parseDate(sprintXml.lastUpdated.text()) : new Date(),
                         todoDate: todoDate,
                         startDate: ApplicationSupport.parseDate(sprintXml.startDate.text()),
                         endDate: ApplicationSupport.parseDate(sprintXml.endDate.text()),

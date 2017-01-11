@@ -42,8 +42,6 @@ class ReleaseService extends IceScrumEventPublisher {
     def springSecurityService
     def grailsApplication
 
-    def g = new org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib()
-
     @PreAuthorize('(productOwner(#project) or scrumMaster(#project)) and !archivedProject(#project)')
     void save(Release release, Project project) {
         release.parentProject = project
@@ -92,6 +90,7 @@ class ReleaseService extends IceScrumEventPublisher {
                     return sprint.tasks || sprint.stories?.any { Story story -> story.tasks }
                 }
                 if (sprints) {
+                    def g = grailsApplication.mainContext.getBean("org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib")
                     def sprintNames = sprints.collect { Sprint sprint -> g.message(code: 'is.sprint') + ' ' + sprint.index }.join(', ')
                     throw new BusinessException(code: 'is.release.error.sprint.tasks', args: [sprintNames])
                 }
@@ -245,7 +244,6 @@ class ReleaseService extends IceScrumEventPublisher {
                 def release = new Release(
                         state: releaseXml.state.text().toInteger(),
                         name: releaseXml.name.text(),
-                        lastUpdated: releaseXml.lastUpdated.text() ? ApplicationSupport.parseDate(releaseXml.lastUpdated.text()) : new Date(),
                         todoDate: todoDate,
                         startDate: ApplicationSupport.parseDate(releaseXml.startDate.text()),
                         doneDate: doneDate,
@@ -267,13 +265,19 @@ class ReleaseService extends IceScrumEventPublisher {
                     releaseXml.sprints.sprint.eachWithIndex { it, index ->
                         sprintService.unMarshall(it, options)
                     }
-                    releaseXml.features?.feature?.each { feature ->
+                    releaseXml.features.feature.each { feature ->
                         def f = project.features.find { it.uid == feature.@uid.text().toInteger() } ?: null
                         if (f) {
                             release.addToFeatures(f)
                         }
                     }
                 }
+
+                // Save before some hibernate stuff
+                if (options.save) {
+                    release.save()
+                }
+
                 // Child objects
                 options.timebox = release
                 releaseXml.cliches.cliche.each {
@@ -284,6 +288,7 @@ class ReleaseService extends IceScrumEventPublisher {
                 if (options.save) {
                     release.save()
                 }
+
                 options.release = null
                 return (Release) importDomainsPlugins(releaseXml, release, options)
             } catch (Exception e) {

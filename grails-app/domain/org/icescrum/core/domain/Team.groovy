@@ -53,6 +53,7 @@ class Team implements Serializable, Comparable {
     static transients = ['scrumMasters', 'owner', 'invitedScrumMasters', 'invitedMembers']
 
     def scrumMasters = null
+    def owner = null
 
     static belongsTo = [Project]
 
@@ -204,7 +205,10 @@ class Team implements Serializable, Comparable {
     }
 
     def getOwner() {
-        if (this.id) {
+        if(this.owner){
+            return this.owner
+        }
+        else if (this.id) {
             def acl = retrieveAclTeam()
             return User.findByUsername(acl.owner.principal, [cache: true])
         } else {
