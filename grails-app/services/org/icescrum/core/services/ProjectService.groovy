@@ -69,6 +69,7 @@ class ProjectService extends IceScrumEventPublisher {
             }
         }
         manageProjectEvents(project, [:])
+        publishSynchronousEvent(IceScrumEventType.CREATE, project)
     }
 
     @PreAuthorize('owner(#team) and !archivedProject(#project)')
