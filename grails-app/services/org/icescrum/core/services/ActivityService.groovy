@@ -67,11 +67,10 @@ class ActivityService extends IceScrumEventPublisher {
                         code: activityXml.code.text(),
                         label: activityXml.label.text(),
                         field: activityXml.field.text(),
-                        afterValue: activityXml.afterValue.text()?:null,
-                        beforeValue: activityXml.beforeValue.text()?:null,
+                        afterValue: activityXml.afterValue.text() ?: null,
+                        beforeValue: activityXml.beforeValue.text() ?: null,
                         parentType: activityXml.parentType.text()
                 )
-
                 // References to object
                 if (project) {
                     def u = ((User) project.getAllUsers().find { it.uid == activityXml.poster.@uid.text() }) ?: null
@@ -86,7 +85,7 @@ class ActivityService extends IceScrumEventPublisher {
                     //can't be in constructor
                     activity.dateCreated = ApplicationSupport.parseDate(activityXml.dateCreated.text())
                     activity.save()
-                    if(parent){
+                    if (parent) {
                         parent.addToActivities(activity)
                     }
                 }

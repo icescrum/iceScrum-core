@@ -596,7 +596,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
             builder.estimatedDate(this.estimatedDate)
             builder.inProgressDate(this.inProgressDate)
 
-            builder.tags { builder.mkp.yieldUnescaped("<![CDATA[${this.tags?:''}]]>") }
+            builder.tags { builder.mkp.yieldUnescaped("<![CDATA[${this.tags ?: ''}]]>") }
             builder.name { builder.mkp.yieldUnescaped("<![CDATA[${this.name}]]>") }
             builder.notes { builder.mkp.yieldUnescaped("<![CDATA[${this.notes ?: ''}]]>") }
             builder.origin { builder.mkp.yieldUnescaped("<![CDATA[${this.origin ?: ''}]]>") }

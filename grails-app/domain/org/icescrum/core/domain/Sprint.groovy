@@ -337,7 +337,7 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
             }
             builder.stories() {
                 this.stories
-                        .sort{ a, b -> return a.dependences.contains(b) ? 1 : 0 }
+                        .sort { a, b -> return a.dependences.contains(b) ? 1 : 0 }
                         .each { _story ->
                             _story.xml(builder)
                         }

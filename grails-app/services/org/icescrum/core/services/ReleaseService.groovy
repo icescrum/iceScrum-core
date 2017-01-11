@@ -272,30 +272,26 @@ class ReleaseService extends IceScrumEventPublisher {
                         }
                     }
                 }
-
                 // Save before some hibernate stuff
                 if (options.save) {
                     release.save()
-                    if(project){
+                    if (project) {
                         releaseXml.attachments.attachment.each { _attachmentXml ->
-                            def uid = options.IDUIDUserMatch?."${_attachmentXml.posterId.text().toInteger()}"?:null
-                            User user = (User)project.getAllUsers().find{ it.uid == uid }?: (User)springSecurityService.currentUser
+                            def uid = options.IDUIDUserMatch?."${_attachmentXml.posterId.text().toInteger()}" ?: null
+                            User user = (User) project.getAllUsers().find { it.uid == uid } ?: (User) springSecurityService.currentUser
                             ApplicationSupport.importAttachment(release, user, options.path, _attachmentXml)
                         }
                     }
                 }
-
                 // Child objects
                 options.timebox = release
                 releaseXml.cliches.cliche.each {
                     clicheService.unMarshall(it, options)
                 }
                 options.timebox = null
-
                 if (options.save) {
                     release.save()
                 }
-
                 options.release = null
                 return (Release) importDomainsPlugins(releaseXml, release, options)
             } catch (Exception e) {

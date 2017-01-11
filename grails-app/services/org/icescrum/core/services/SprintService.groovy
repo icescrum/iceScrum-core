@@ -379,8 +379,8 @@ class SprintService extends IceScrumEventPublisher {
                     todoDate = release.todoDate
                 }
                 def sprint = new Sprint(
-                        retrospective: sprintXml.retrospective.text()?: null,
-                        doneDefinition: sprintXml.doneDefinition.text()?: null,
+                        retrospective: sprintXml.retrospective.text() ?: null,
+                        doneDefinition: sprintXml.doneDefinition.text() ?: null,
                         inProgressDate: inProgressDate,
                         doneDate: doneDate,
                         state: sprintXml.state.text().toInteger(),
@@ -421,10 +421,10 @@ class SprintService extends IceScrumEventPublisher {
                 }
                 if (options.save) {
                     sprint.save()
-                    if(project){
+                    if (project) {
                         sprintXml.attachments.attachment.each { _attachmentXml ->
-                            def uid = options.IDUIDUserMatch?."${_attachmentXml.posterId.text().toInteger()}"?:null
-                            User user = (User)project.getAllUsers().find{ it.uid == uid }?: (User)springSecurityService.currentUser
+                            def uid = options.IDUIDUserMatch?."${_attachmentXml.posterId.text().toInteger()}" ?: null
+                            User user = (User) project.getAllUsers().find { it.uid == uid } ?: (User) springSecurityService.currentUser
                             ApplicationSupport.importAttachment(sprint, user, options.path, _attachmentXml)
                         }
                     }

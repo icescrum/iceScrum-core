@@ -175,7 +175,7 @@ class FeatureService extends IceScrumEventPublisher {
                         notes: featureXml.notes.text(),
                         color: featureXml.color.text(),
                         todoDate: todoDate,
-                        value: featureXml.value.text()?.toInteger()?:null,
+                        value: featureXml.value.text()?.toInteger() ?: null,
                         type: featureXml.type.text().toInteger(),
                         rank: featureXml.rank.text()?.toInteger(),
                         uid: featureXml.@uid.text()?.isEmpty() ? featureXml.@id.text().toInteger() : featureXml.@uid.text().toInteger()
@@ -184,32 +184,26 @@ class FeatureService extends IceScrumEventPublisher {
                 if (project) {
                     project.addToFeatures(feature)
                 }
-
                 // Save before some hibernate stuff
                 if (options.save) {
                     feature.save()
-
-                    //Handle tags
-                    if(featureXml.tags.text()){
+                    // Handle tags
+                    if (featureXml.tags.text()) {
                         feature.tags = featureXml.tags.text().replaceAll(' ', '').replace('[', '').replace(']', '').split(',')
                     }
-
                     featureXml.attachments.attachment.each { _attachmentXml ->
-                        def uid = options.IDUIDUserMatch?."${_attachmentXml.posterId.text().toInteger()}"?:null
-                        User user = (User)project.getAllUsers().find{ it.uid == uid }?: (User)springSecurityService.currentUser
+                        def uid = options.IDUIDUserMatch?."${_attachmentXml.posterId.text().toInteger()}" ?: null
+                        User user = (User) project.getAllUsers().find { it.uid == uid } ?: (User) springSecurityService.currentUser
                         ApplicationSupport.importAttachment(feature, user, options.path, _attachmentXml)
                     }
                 }
-
                 // Child objects
                 options.feature = feature
-
                 options.parent = feature
-                featureXml.activities.activity.each{ def activityXml ->
+                featureXml.activities.activity.each { def activityXml ->
                     activityService.unMarshall(activityXml, options)
                 }
                 options.parent = null
-
                 if (options.save) {
                     feature.save()
                 }

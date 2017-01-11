@@ -360,7 +360,7 @@ class Project extends TimeBox implements Serializable, Attachmentable {
             builder.stories() {
                 //to preserve groupby & sort order and be able to insert dependsOn on the import flow..
                 this.stories.findAll { it.parentSprint == null }
-                        .sort{ a, b -> return a.dependences.contains(b) ? 1 : 0 }
+                        .sort { a, b -> return a.dependences.contains(b) ? 1 : 0 }
                         .each { _story ->
                             _story.xml(builder)
                         }

@@ -205,10 +205,9 @@ class Team implements Serializable, Comparable {
     }
 
     def getOwner() {
-        if(this.owner){
+        if (this.owner) {
             return this.owner
-        }
-        else if (this.id) {
+        } else if (this.id) {
             def acl = retrieveAclTeam()
             return User.findByUsername(acl.owner.principal, [cache: true])
         } else {

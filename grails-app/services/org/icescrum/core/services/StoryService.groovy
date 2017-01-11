@@ -25,21 +25,20 @@
 
 package org.icescrum.core.services
 
+import grails.transaction.Transactional
 import grails.util.GrailsNameUtils
 import grails.validation.ValidationException
 import org.apache.commons.io.FileUtils
-import org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib
 import org.grails.comments.Comment
 import org.grails.comments.CommentLink
 import org.icescrum.core.domain.*
 import org.icescrum.core.domain.AcceptanceTest.AcceptanceTestState
+import org.icescrum.core.error.BusinessException
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
 import org.icescrum.core.support.ApplicationSupport
-import org.icescrum.core.error.BusinessException
 import org.icescrum.plugins.attachmentable.domain.Attachment
 import org.springframework.security.access.prepost.PreAuthorize
-import grails.transaction.Transactional
 
 @Transactional
 class StoryService extends IceScrumEventPublisher {
@@ -707,7 +706,7 @@ class StoryService extends IceScrumEventPublisher {
                         plannedDate: plannedDate,
                         inProgressDate: inProgressDate,
                         doneDate: doneDate,
-                        origin: storyXml.origin.text()?: null,
+                        origin: storyXml.origin.text() ?: null,
                         effort: storyXml.effort.text().isEmpty() ? null : storyXml.effort.text().toBigDecimal(),
                         rank: storyXml.rank.text().toInteger(),
                         state: storyXml.state.text().toInteger(),
@@ -715,8 +714,8 @@ class StoryService extends IceScrumEventPublisher {
                         affectVersion: storyXml.affectVersion.text(),
                         //backlogElement
                         name: storyXml."${'name'}".text(),
-                        description: storyXml.description.text()?: null,
-                        notes: storyXml.notes.text()?: null,
+                        description: storyXml.description.text() ?: null,
+                        notes: storyXml.notes.text() ?: null,
                         todoDate: todoDate,
                         uid: storyXml.@uid.text()?.isEmpty() ? storyXml.@id.text().toInteger() : storyXml.@uid.text().toInteger(),
                 )
@@ -758,7 +757,6 @@ class StoryService extends IceScrumEventPublisher {
                 // Save before some hibernate stuff
                 if (options.save) {
                     story.save()
-
                     //Handle dependsOn
                     if (project && !storyXml.dependsOn?.@uid?.isEmpty()) {
                         def dependsOn = Story.findByBacklogAndUid(project, storyXml.dependsOn.@uid.text().toInteger())
@@ -768,27 +766,23 @@ class StoryService extends IceScrumEventPublisher {
                             dependsOn.save()
                         }
                     }
-
                     //Handle tags only available when story has an id options.save)
-                    if(storyXml.tags.text()){
+                    if (storyXml.tags.text()) {
                         story.tags = storyXml.tags.text().replaceAll(' ', '').replace('[', '').replace(']', '').split(',')
                     }
-
-                    if(project){
-                        storyXml.comments.comment.each{ _commentXml ->
-                            def uid = options.IDUIDUserMatch?."${_commentXml.posterId.text().toInteger()}"?:null
-                            User user = (User)project.getAllUsers().find{ it.uid == uid }?: (User)springSecurityService.currentUser
+                    if (project) {
+                        storyXml.comments.comment.each { _commentXml ->
+                            def uid = options.IDUIDUserMatch?."${_commentXml.posterId.text().toInteger()}" ?: null
+                            User user = (User) project.getAllUsers().find { it.uid == uid } ?: (User) springSecurityService.currentUser
                             ApplicationSupport.importComment(story, user, _commentXml.body.text(), ApplicationSupport.parseDate(_commentXml.dateCreated.text()))
                         }
-
                         storyXml.attachments.attachment.each { _attachmentXml ->
-                            def uid = options.IDUIDUserMatch?."${_attachmentXml.posterId.text().toInteger()}"?:null
-                            User user = (User)project.getAllUsers().find{ it.uid == uid }?: (User)springSecurityService.currentUser
+                            def uid = options.IDUIDUserMatch?."${_attachmentXml.posterId.text().toInteger()}" ?: null
+                            User user = (User) project.getAllUsers().find { it.uid == uid } ?: (User) springSecurityService.currentUser
                             ApplicationSupport.importAttachment(story, user, options.path, _attachmentXml)
                         }
                     }
                 }
-
                 options.story = story
                 // Child objects
                 storyXml.tasks.task.each {
@@ -798,11 +792,10 @@ class StoryService extends IceScrumEventPublisher {
                     acceptanceTestService.unMarshall(it, options)
                 }
                 options.parent = story
-                storyXml.activities.activity.each{ def activityXml ->
+                storyXml.activities.activity.each { def activityXml ->
                     activityService.unMarshall(activityXml, options)
                 }
                 options.parent = null
-
                 if (options.save) {
                     story.save()
                 }

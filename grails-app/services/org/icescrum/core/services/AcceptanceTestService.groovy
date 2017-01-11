@@ -79,7 +79,7 @@ class AcceptanceTestService extends IceScrumEventPublisher {
                 }
                 def acceptanceTest = new AcceptanceTest(
                         name: acceptanceTestXml."${'name'}".text(),
-                        description: acceptanceTestXml."${'description'}".text()?:null,
+                        description: acceptanceTestXml."${'description'}".text() ?: null,
                         state: state,
                         uid: acceptanceTestXml.@uid.text().toInteger()
                 )
@@ -93,12 +93,10 @@ class AcceptanceTestService extends IceScrumEventPublisher {
                 if (story) {
                     story.addToAcceptanceTests(acceptanceTest)
                 }
-
                 // Save before some hibernate stuff
                 if (options.save) {
                     acceptanceTest.save()
                 }
-
                 // Child objects
                 options.acceptanceTest = acceptanceTest
                 def activityService = (ActivityService) grailsApplication.mainContext.getBean('activityService')
@@ -107,11 +105,9 @@ class AcceptanceTestService extends IceScrumEventPublisher {
                     activityService.unMarshall(it, options)
                 }
                 options.parent = null
-
                 if (options.save) {
                     acceptanceTest.save()
                 }
-
                 options.acceptanceTest = null
                 return (AcceptanceTest) importDomainsPlugins(acceptanceTestXml, acceptanceTest, options)
             } catch (Exception e) {

@@ -40,7 +40,6 @@ import org.icescrum.core.domain.security.UserAuthority
 import org.icescrum.core.error.BusinessException
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
-import org.icescrum.core.support.ApplicationSupport
 
 @Transactional
 class UserService extends IceScrumEventPublisher {

@@ -590,7 +590,7 @@ class ApplicationSupport {
         c.dateCreated = dateCreated
     }
 
-    static void importAttachment(def object, def user, def importPath, def attachmentXml){
+    static void importAttachment(def object, def user, def importPath, def attachmentXml) {
         def originalName = attachmentXml.inputName.text()
         if (!attachmentXml.url?.text()) {
             def path = "${importPath}${File.separator}attachments${File.separator}${attachmentXml.@id.text()}.${attachmentXml.ext.text()}"

@@ -2,12 +2,12 @@ package org.icescrum.components
 
 public class FileUploadInfo {
 
-    int      chunkSize
-    long     totalSize
-    int      totalChunks
-    String   identifier
-    String   filename
-    String   relativePath
+    int    chunkSize
+    long   totalSize
+    int    totalChunks
+    String identifier
+    String filename
+    String relativePath
     HashSet<ChunkNumber> uploadedChunks = new HashSet<ChunkNumber>()
     String filePath
 

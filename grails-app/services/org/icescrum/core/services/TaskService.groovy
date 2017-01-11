@@ -381,46 +381,39 @@ class TaskService extends IceScrumEventPublisher {
                         task.responsible = u ?: (User) project.productOwners.first()
                     }
                 }
-
                 if (sprint) {
                     sprint.addToTasks(task)
                 }
                 if (story) {
                     story.addToTasks(task)
                 }
-
                 // Save before some hibernate stuff
                 if (options.save) {
                     task.save()
-
                     //Handle tags
-                    if(taskXml.tags.text()){
+                    if (taskXml.tags.text()) {
                         task.tags = taskXml.tags.text().replaceAll(' ', '').replace('[', '').replace(']', '').split(',')
                     }
-
-                    if(project){
-                        taskXml.comments.comment.each{ _commentXml ->
-                            def uid = options.IDUIDUserMatch?."${_commentXml.posterId.text().toInteger()}"?:null
-                            User user = (User)project.getAllUsers().find{ it.uid == uid }?: (User)springSecurityService.currentUser
+                    if (project) {
+                        taskXml.comments.comment.each { _commentXml ->
+                            def uid = options.IDUIDUserMatch?."${_commentXml.posterId.text().toInteger()}" ?: null
+                            User user = (User) project.getAllUsers().find { it.uid == uid } ?: (User) springSecurityService.currentUser
                             ApplicationSupport.importComment(task, user, _commentXml.body.text(), ApplicationSupport.parseDate(_commentXml.dateCreated.text()))
                         }
                         taskXml.attachments.attachment.each { _attachmentXml ->
-                            def uid = options.IDUIDUserMatch?."${_attachmentXml.posterId.text().toInteger()}"?:null
-                            User user = (User)project.getAllUsers().find{ it.uid == uid }?: (User)springSecurityService.currentUser
+                            def uid = options.IDUIDUserMatch?."${_attachmentXml.posterId.text().toInteger()}" ?: null
+                            User user = (User) project.getAllUsers().find { it.uid == uid } ?: (User) springSecurityService.currentUser
                             ApplicationSupport.importAttachment(task, user, options.path, _attachmentXml)
                         }
                     }
                 }
-
                 // Child objects
                 options.task = task
-
                 options.parent = task
-                taskXml.activities?.activity?.each{ def activityXml ->
+                taskXml.activities?.activity?.each { def activityXml ->
                     activityService.unMarshall(activityXml, options)
                 }
                 options.parent = null
-
                 if (options.save) {
                     task.save()
                 }

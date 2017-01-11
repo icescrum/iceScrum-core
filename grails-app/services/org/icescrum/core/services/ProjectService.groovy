@@ -163,7 +163,7 @@ class ProjectService extends IceScrumEventPublisher {
 
     @PreAuthorize('stakeHolder(#project) or inProject(#project)')
     def projectBurnupValues(Project project) {
-         def values = []
+        def values = []
         project.releases?.sort { a, b -> a.orderNumber <=> b.orderNumber }?.each { Release release ->
             def cliches = []
             //begin of project
@@ -375,15 +375,15 @@ class ProjectService extends IceScrumEventPublisher {
                         delete(pExist)
                     }
                     project.teams.each { t ->
-                        if (t.id == null){
+                        if (t.id == null) {
                             teamService.saveImport(t)
                         }
                     }
                     project.save()
 
                     projectXml.attachments.attachment.each { _attachmentXml ->
-                        def uid = options.IDUIDUserMatch?."${_attachmentXml.posterId.text().toInteger()}"?:null
-                        User user = (User)project.getAllUsers().find{ it.uid == uid }?: (User)springSecurityService.currentUser
+                        def uid = options.IDUIDUserMatch?."${_attachmentXml.posterId.text().toInteger()}" ?: null
+                        User user = (User) project.getAllUsers().find { it.uid == uid } ?: (User) springSecurityService.currentUser
                         ApplicationSupport.importAttachment(project, user, options.path, _attachmentXml)
                     }
 
@@ -491,7 +491,7 @@ class ProjectService extends IceScrumEventPublisher {
                 }
             }
             if (project?.id && options.save) {
-                project.save(flush:true)
+                project.save(flush: true)
                 //manageProjectEvents(project, [:])
                 //publishSynchronousEvent(IceScrumEventType.CREATE, project)
             }

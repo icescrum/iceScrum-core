@@ -31,7 +31,6 @@ import org.icescrum.core.domain.User
 import org.icescrum.core.error.BusinessException
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
-import org.icescrum.core.support.ApplicationSupport
 import org.springframework.security.access.prepost.PreAuthorize
 
 @Transactional
@@ -98,10 +97,8 @@ class TeamService extends IceScrumEventPublisher {
         if (!team.save()) {
             throw new BusinessException(code: 'is.team.error.not.saved')
         }
-
         securityService.secureDomain(team)
         securityService.changeOwner(team.owner, team)
-
         def scrumMasters = team.scrumMasters
         for (member in team.members) {
             if (!member.isAttached()) {
@@ -158,12 +155,10 @@ class TeamService extends IceScrumEventPublisher {
                 def team = new Team(
                         name: teamXml."${'name'}".text(),
                         velocity: (teamXml.velocity.text().isNumber()) ? teamXml.velocity.text().toInteger() : 0,
-                        description: teamXml.description.text()?: null,
+                        description: teamXml.description.text() ?: null,
                         uid: teamXml.@uid.text() ?: (teamXml."${'name'}".text()).encodeAsMD5()
                 )
-
                 team.owner = (!teamXml.owner.user.@uid.isEmpty()) ? ((User) User.findByUid(teamXml.owner.user.@uid.text())) ?: null : null
-
                 def userService = (UserService) grailsApplication.mainContext.getBean('userService')
                 teamXml.members.user.eachWithIndex { user, index ->
                     User u = userService.unMarshall(user, options)
@@ -176,11 +171,10 @@ class TeamService extends IceScrumEventPublisher {
                     } else {
                         team.addToMembers(u)
                     }
-                    if(options.IDUIDUserMatch != null){
-                        options.IDUIDUserMatch."${u.id ?: user.id.text().toInteger()}" =  u.uid
+                    if (options.IDUIDUserMatch != null) {
+                        options.IDUIDUserMatch."${u.id ?: user.id.text().toInteger()}" = u.uid
                     }
                 }
-
                 def scrumMastersList = []
                 def sm = teamXml.scrumMasters.user
                 sm.eachWithIndex { user, index ->
