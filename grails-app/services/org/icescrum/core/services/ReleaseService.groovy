@@ -271,16 +271,18 @@ class ReleaseService extends IceScrumEventPublisher {
                             release.addToFeatures(f)
                         }
                     }
-                    releaseXml.attachments.attachment.each { _attachmentXml ->
-                        def uid = options.IDUIDUserMatch?."${_attachmentXml.posterId.text().toInteger()}"?:null
-                        User user = (User)project.getAllUsers().find{ it.uid == uid }?: (User)springSecurityService.currentUser
-                        ApplicationSupport.importAttachment(release, user, options.path, _attachmentXml)
-                    }
                 }
 
                 // Save before some hibernate stuff
                 if (options.save) {
                     release.save()
+                    if(project){
+                        releaseXml.attachments.attachment.each { _attachmentXml ->
+                            def uid = options.IDUIDUserMatch?."${_attachmentXml.posterId.text().toInteger()}"?:null
+                            User user = (User)project.getAllUsers().find{ it.uid == uid }?: (User)springSecurityService.currentUser
+                            ApplicationSupport.importAttachment(release, user, options.path, _attachmentXml)
+                        }
+                    }
                 }
 
                 // Child objects

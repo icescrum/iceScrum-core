@@ -418,14 +418,16 @@ class SprintService extends IceScrumEventPublisher {
                     sprintXml.tasks.task.each {
                         taskService.unMarshall(it, options)
                     }
-                    sprintXml.attachments.attachment.each { _attachmentXml ->
-                        def uid = options.IDUIDUserMatch?."${_attachmentXml.posterId.text().toInteger()}"?:null
-                        User user = (User)project.getAllUsers().find{ it.uid == uid }?: (User)springSecurityService.currentUser
-                        ApplicationSupport.importAttachment(sprint, user, options.path, _attachmentXml)
-                    }
                 }
                 if (options.save) {
                     sprint.save()
+                    if(project){
+                        sprintXml.attachments.attachment.each { _attachmentXml ->
+                            def uid = options.IDUIDUserMatch?."${_attachmentXml.posterId.text().toInteger()}"?:null
+                            User user = (User)project.getAllUsers().find{ it.uid == uid }?: (User)springSecurityService.currentUser
+                            ApplicationSupport.importAttachment(sprint, user, options.path, _attachmentXml)
+                        }
+                    }
                 }
                 options.sprint = null
                 return (Sprint) importDomainsPlugins(sprintXml, sprint, options)
