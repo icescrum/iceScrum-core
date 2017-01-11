@@ -380,12 +380,6 @@ class TaskService extends IceScrumEventPublisher {
                         u = ((User) project.getAllUsers().find { it.uid == taskXml.responsible.@uid.text() }) ?: null
                         task.responsible = u ?: (User) project.productOwners.first()
                     }
-
-                    taskXml.attachments.attachment.each { _attachmentXml ->
-                        def uid = options.IDUIDUserMatch?."${_attachmentXml.posterId.text().toInteger()}"?:null
-                        User user = (User)project.getAllUsers().find{ it.uid == uid }?: (User)springSecurityService.currentUser
-                        ApplicationSupport.importAttachment(task, user, options.path, _attachmentXml)
-                    }
                 }
 
                 if (sprint) {
@@ -409,6 +403,11 @@ class TaskService extends IceScrumEventPublisher {
                             def uid = options.IDUIDUserMatch?."${_commentXml.posterId.text().toInteger()}"?:null
                             User user = (User)project.getAllUsers().find{ it.uid == uid }?: (User)springSecurityService.currentUser
                             ApplicationSupport.importComment(task, user, _commentXml.body.text(), ApplicationSupport.parseDate(_commentXml.dateCreated.text()))
+                        }
+                        taskXml.attachments.attachment.each { _attachmentXml ->
+                            def uid = options.IDUIDUserMatch?."${_attachmentXml.posterId.text().toInteger()}"?:null
+                            User user = (User)project.getAllUsers().find{ it.uid == uid }?: (User)springSecurityService.currentUser
+                            ApplicationSupport.importAttachment(task, user, options.path, _attachmentXml)
                         }
                     }
                 }
