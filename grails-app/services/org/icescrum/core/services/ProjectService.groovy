@@ -860,9 +860,9 @@ class ProjectService extends IceScrumEventPublisher {
     }
 
     private void createDefaultBacklogs(Project project) {
-        new Backlog(project: project, shared: true, filter: '{"story":{"state":1}}', name: 'is.ui.sandbox', code: 'sandbox', orderNumber: 1).save()
-        new Backlog(project: project, shared: true, filter: '{"story":{"state":[2,3]}}', name: 'is.ui.backlog', code: 'backlog' , orderNumber: 2).save()
-        new Backlog(project: project, shared: true, filter: '{"story":{"state":7}}', name: 'todo.is.ui.backlog.done', code: 'done', orderNumber: 3).save()
-        new Backlog(project: project, shared: true, filter: '{"story":{}}', name: 'todo.is.ui.backlog.all', code: 'all', orderNumber: 4).save()
+        new Backlog(project: project, shared: true, filter: '{"story":{"state":1}}', name: 'is.ui.sandbox', code: 'sandbox').save()
+        new Backlog(project: project, shared: true, filter: '{"story":{"state":[2,3]}}', name: 'is.ui.backlog', code: 'backlog').save()
+        new Backlog(project: project, shared: true, filter: '{"story":{"state":7}}', name: 'todo.is.ui.backlog.done', code: 'done').save()
+        new Backlog(project: project, shared: true, filter: '{"story":{}}', name: 'todo.is.ui.backlog.all', code: 'all').save()
     }
 }
