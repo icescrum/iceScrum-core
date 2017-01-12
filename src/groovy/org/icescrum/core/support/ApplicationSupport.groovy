@@ -216,7 +216,7 @@ class ApplicationSupport {
         timer.scheduleAtFixedRate(new CheckerTimerTask(timer, interval), 60000, interval)
         // ReportUsage at least 6hours after first launch?
         def intervalReport = CheckerTimerTask.computeInterval(config.icescrum.report.interval ?: 360)
-        timer.scheduleAtFixedRate(new ReportUsageTimerTask(timer, interval), 60000 * 60 * 6, intervalReport)
+        timer.scheduleAtFixedRate(new ReportUsageTimerTask(timer, intervalReport), 60000 * 60 * 6, intervalReport)
     }
 
     static public createUUID = {
