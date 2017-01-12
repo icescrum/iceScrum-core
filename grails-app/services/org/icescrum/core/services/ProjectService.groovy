@@ -490,8 +490,6 @@ class ProjectService extends IceScrumEventPublisher {
             }
             if (project?.id && options.save) {
                 project.save(flush: true)
-                //manageProjectEvents(project, [:])
-                //publishSynchronousEvent(IceScrumEventType.CREATE, project)
             }
             return project
         }

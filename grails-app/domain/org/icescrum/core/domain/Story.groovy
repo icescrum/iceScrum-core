@@ -635,12 +635,12 @@ class Story extends BacklogElement implements Cloneable, Serializable {
             }
             builder.voters() {
                 this.voters.each { _voter ->
-                    builder.user(uid: _voter.id)
+                    builder.user(uid: _voter.uid)
                 }
             }
             builder.followers() {
                 this.followers.each { _follower ->
-                    builder.user(uid: _follower.id)
+                    builder.user(uid: _follower.uid)
                 }
             }
             builder.tasks() {

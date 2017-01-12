@@ -212,8 +212,8 @@ class UserService extends IceScrumEventPublisher {
                             activity: userXml.preferences.activity.text(),
                             filterTask: userXml.preferences.filterTask.text(),
                             user: user,
-                            menu: user.preferences.menu.text() ?: [:],
-                            menuHidden: user.preferences.menuHidden.text() ?: [:]
+                            menu: userXml.preferences.menu.text() ?: [:],
+                            menuHidden: userXml.preferences.menuHidden.text() ?: [:]
                     )
                 }
                 if (options.save) {
