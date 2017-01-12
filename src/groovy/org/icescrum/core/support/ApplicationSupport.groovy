@@ -54,6 +54,7 @@ import org.icescrum.core.domain.Team
 import org.icescrum.core.domain.User
 import org.icescrum.core.domain.preferences.UserPreferences
 import org.icescrum.core.security.WebScrumExpressionHandler
+import org.icescrum.core.services.ProjectService
 import org.icescrum.core.ui.WindowDefinition
 import org.springframework.expression.Expression
 import org.springframework.security.access.expression.ExpressionUtils
@@ -513,8 +514,8 @@ class ApplicationSupport {
         def xml = new File(tempdir + projectName + '.xml')
         try {
             xml.withWriter('UTF-8') { writer ->
-                def builder = new MarkupBuilder(writer)
-                project.xml(builder)
+                ProjectService projectService = Holders.applicationContext.getBean('projectService')
+                projectService.export(writer, project)
             }
             def files = []
             project.stories*.attachments.findAll { it.size() > 0 }?.each { it?.each { att -> files << attachmentableService.getFile(att) } }

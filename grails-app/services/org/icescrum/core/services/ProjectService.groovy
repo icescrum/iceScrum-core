@@ -476,18 +476,13 @@ class ProjectService extends IceScrumEventPublisher {
         Project.withTransaction(readOnly: !options.save) {
             String xmlText = file.getText()
             String cleanedXmlText = ServicesUtils.cleanXml(xmlText)
-            def _projectXml = new XmlSlurper().parseText(cleanedXmlText)
-            if (_projectXml.@version.text().startsWith('R6')) {
+            def exportXML = new XmlSlurper().parseText(cleanedXmlText)
+            if (exportXML.@version.text().startsWith('R6')) {
                 throw new BusinessException(code: 'todo.is.ui.import.error.R6')
             }
             Project project = null
             try {
-                def projectXml = _projectXml
-                // Be compatible with xml without export tag
-                if (_projectXml.find { it.name == 'export' }) {
-                    projectXml = _projectXml.project
-                }
-                project = this.unMarshall(projectXml, options)
+                project = this.unMarshall(exportXML.project, options)
             } catch (RuntimeException e) {
                 if (log.debugEnabled) {
                     e.printStackTrace()
@@ -855,10 +850,11 @@ class ProjectService extends IceScrumEventPublisher {
         return usersByRole
     }
 
-    def export(StringWriter writer, Project project, String version) {
+    def export(writer, Project project) {
         def builder = new MarkupBuilder(writer)
         builder.mkp.xmlDeclaration(version: "1.0", encoding: "UTF-8")
-        builder.export(version: version) {
+        def g = grailsApplication.mainContext.getBean('org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib')
+        builder.export(version: g.meta(name: "app.version")) {
             project.xml(builder)
         }
     }
