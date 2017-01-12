@@ -83,6 +83,7 @@ class IcescrumCoreGrailsPlugin {
         System.setProperty('lbdsl.home', "${application.config.icescrum.baseDir.toString()}${File.separator}lbdsl")
         // Init config.icescrum.export for plugins to be able to register without an if exist / create test
         application.config?.icescrum?.export = [:]
+        application.config.icescrum.reportUsage.plugins = []
         application.domainClasses.each {
             if (it.metaClass.methods*.name.any { it == 'xml' }) {
                 application.config?.icescrum?.export."${it.propertyName}" = []

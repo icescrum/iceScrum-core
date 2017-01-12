@@ -708,7 +708,7 @@ class ReportUsageTimerTask extends TimerTask {
             def headers = ['User-Agent': 'iceScrum-Agent/1.0', 'Referer': referer, 'Content-Type': 'application/json', 'Accept': 'application/json']
             def params = ['http.connection.timeout': config.timeout ?: 5000, 'http.socket.timeout': config.timeout ?: 5000]
             def url = config.url + "/" + config.path
-            JSON data
+            JSON data = null
             User.withNewSession {
                 data = [
                         users   : User.count(),
@@ -750,13 +750,17 @@ class ReportUsageTimerTask extends TimerTask {
                                          duration: release.duration]
                              }]
                         },
+                        plugins     : [],
                         server_id   : serverID,
                         environment : environment,
                         java_version: System.getProperty("java.version"),
                         OS          : "${System.getProperty('os.name')} / ${System.getProperty('os.arch')} / ${System.getProperty('os.version')}"
-                ] as JSON
+                ]
+                config.plugins.each{ reportToAdd ->
+                    reportToAdd(data.plugins)
+                }
             }
-            def resp = ApplicationSupport.postJSON(url, null, null, data, headers, params)
+            def resp = ApplicationSupport.postJSON(url, null, null, data as JSON, headers, params)
             if (resp.status == 200) {
                 if (log.debugEnabled) {
                     log.debug('Automatic report usage - report sent')
