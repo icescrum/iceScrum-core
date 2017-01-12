@@ -142,8 +142,19 @@ class ApplicationSupport {
             addWarning('http-error', 'warning', [code: 'is.warning.httpPart.title'], [code: 'is.warning.httpPart.message'])
             config.icescrum.push.enable = false;
         }
+        checkCommonErrors(config)
+    }
+
+    static public checkCommonErrors(def config){
         if (config.grails.serverURL.contains('localhost') && Environment.current != Environment.DEVELOPMENT) {
             addWarning('serverUrl', 'warning', [code: 'is.warning.serverUrl.title'], [code: 'is.warning.serverUrl.message', args: [config.grails.serverURL]])
+        } else {
+            removeWarning('serverUrl')
+        }
+        if (config.dataSource.driverClassName == "org.h2.Driver" && Environment.current != Environment.DEVELOPMENT) {
+            addWarning('database', 'warning', [code: 'is.warning.database.title'], [code: 'is.warning.database.message'])
+        } else {
+            removeWarning('database')
         }
     }
 
@@ -569,6 +580,10 @@ class ApplicationSupport {
         def warning = Holders.grailsApplication.config.icescrum.warnings.find { it.id == id && it.hideable }
         warning?.silent = !warning.silent
         return warning
+    }
+
+    static def removeWarning(String id) {
+        Holders.grailsApplication.config.icescrum.warnings = Holders.grailsApplication.config.icescrum.warnings.findAll{ it.id != id }
     }
 
     static def getLastWarning() {
