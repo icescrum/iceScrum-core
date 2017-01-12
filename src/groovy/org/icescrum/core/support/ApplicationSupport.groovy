@@ -756,7 +756,7 @@ class ReportUsageTimerTask extends TimerTask {
                         java_version: System.getProperty("java.version"),
                         OS          : "${System.getProperty('os.name')} / ${System.getProperty('os.arch')} / ${System.getProperty('os.version')}"
                 ]
-                config.plugins.each{ reportToAdd ->
+                config.plugins.each { reportToAdd ->
                     reportToAdd(data.plugins)
                 }
             }
