@@ -33,6 +33,7 @@ class AuthorityService {
     def securityService
     def grailsApplication
     def springSecurityService
+    def widgetService
 
     void makeAdmin(User user) {
         UserAuthority.create(user, Authority.findByAuthority(Authority.ROLE_ADMIN), false)
@@ -60,6 +61,7 @@ class AuthorityService {
                         password: springSecurityService.encodePassword('adminadmin!'),
                         preferences: new UserPreferences(language: "en")
                 ).save(flush: true)
+                widgetService.initUserWidgets(admin)
                 makeAdmin(admin)
             }
         }
