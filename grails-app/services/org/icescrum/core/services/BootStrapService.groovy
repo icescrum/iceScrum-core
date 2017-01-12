@@ -44,7 +44,10 @@ class BootStrapService {
         ApplicationSupport.checkInitialConfig(config)
         ApplicationSupport.generateFolders(config)
         ApplicationSupport.initEnvironment(config)
-        ApplicationSupport.checkForUpdateAndReportUsage(config)
+
+        if(!dev){
+            ApplicationSupport.checkForUpdateAndReportUsage(config)
+        }
 
         config.grails.attachmentable.baseDir = config.icescrum.baseDir.toString()
         config.grails.mail.default.from = config.icescrum.alerts.default.from
