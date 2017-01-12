@@ -171,7 +171,7 @@ class DummyService {
         release1.sprints.each { sprint ->
             sprint.todoDate = startDate
             sprint.goal = ''
-            sprint.deliveredVersion = '0.' + sprint.orderNumber
+            sprint.deliveredVersion = sprint.orderNumber == release1.sprints.size() ? 'v1.0' : 'v0.' + sprint.orderNumber
             sprint.doneDefinition = "* All tasks are done\n* All code is merged in master branch\n* All acceptance tests pass\n* There are automated unit tests\n* There are automated functional tests\n* Implemented web UI features are compatible with modern browsers"
             sprint.stories.each { story ->
                 (sprint.orderNumber).times {
