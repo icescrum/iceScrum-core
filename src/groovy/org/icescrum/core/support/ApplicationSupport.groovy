@@ -29,6 +29,7 @@ import grails.util.Environment
 import grails.util.GrailsNameUtils
 import grails.util.Holders
 import grails.util.Metadata
+import groovy.xml.MarkupBuilder
 import org.apache.commons.logging.LogFactory
 import org.apache.http.HttpHost
 import org.apache.http.HttpResponse
@@ -71,7 +72,7 @@ import java.util.zip.ZipOutputStream
 class ApplicationSupport {
 
     private static final log = LogFactory.getLog(this)
-    public static final CONFIG_ENV_NAME = 'icescrum.config.file'
+    public static final CONFIG_ENV_NAME = 'icescrum_config_location'
     protected static final FilterChain DUMMY_CHAIN = [
             doFilter: { req, res -> throw new UnsupportedOperationException() }
     ] as FilterChain
@@ -145,7 +146,7 @@ class ApplicationSupport {
     }
 
     static public checkCommonErrors(def config){
-        if (config.grails.serverURL && config.grails.serverURL.contains('localhost') && Environment.current != Environment.DEVELOPMENT) {
+        if (config.grails.serverURL instanceof String && config.grails.serverURL.contains('localhost') && Environment.current != Environment.DEVELOPMENT) {
             addWarning('serverUrl', 'warning', [code: 'is.warning.serverUrl.title'], [code: 'is.warning.serverUrl.message', args: [config.grails.serverURL]])
         } else {
             removeWarning('serverUrl')
