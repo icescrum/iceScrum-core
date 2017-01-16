@@ -29,7 +29,6 @@ import grails.util.Environment
 import grails.util.GrailsNameUtils
 import grails.util.Holders
 import grails.util.Metadata
-import groovy.xml.MarkupBuilder
 import org.apache.commons.logging.LogFactory
 import org.apache.http.HttpHost
 import org.apache.http.HttpResponse
@@ -72,7 +71,7 @@ import java.util.zip.ZipOutputStream
 class ApplicationSupport {
 
     private static final log = LogFactory.getLog(this)
-    public static final CONFIG_ENV_NAME = 'icescrum_config_location'
+    public static final CONFIG_ENV_NAME = 'icescrum.config.file'
     protected static final FilterChain DUMMY_CHAIN = [
             doFilter: { req, res -> throw new UnsupportedOperationException() }
     ] as FilterChain
