@@ -68,8 +68,8 @@ class ProjectService extends IceScrumEventPublisher {
                 }
             }
         }
-        manageProjectEvents(project, [:])
         publishSynchronousEvent(IceScrumEventType.CREATE, project)
+        manageProjectEvents(project, [:])
     }
 
     @PreAuthorize('owner(#team) and !archivedProject(#project)')
@@ -811,7 +811,6 @@ class ProjectService extends IceScrumEventPublisher {
         }*.delete()
     }
 
-    // Quite experimental
     void manageProjectEvents(Project project, Map oldMembers) {
         Map newMembers = getAllMembersProjectByRole(project)
         if (project.hasProperty('membersByRole')) {

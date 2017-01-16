@@ -46,8 +46,11 @@ class DummyService {
     def featureService
     def acceptanceTestService
     def taskService
+    def pushService
 
     void createSampleProject(User user) {
+        // Avoid premature notification and thus access to the project, which would fail
+        pushService.disablePushForThisThread()
         // Project & team
         def projectName = ("Peetic " + user.username).take(100)
         def startDate = new Date() - 16
@@ -55,8 +58,12 @@ class DummyService {
         Project project = new Project(name: projectName, pkey: toPkey(user), startDate: startDate, endDate: startDate + 102)
         project.description = '''*Peetic* is a dating website for your pets! Don't you think that they deserve to find their soul mate?\n\nThis project is yours: browse it and play with it to discover *iceScrum 7*!\n\nPeetic is inspired by this free "template":https://github.com/pablopernot/peetic.'''
         project.preferences = new ProjectPreferences(webservices: true, hidden: true)
-        Team team = new Team(name: projectName + ' Team')
-        teamService.save(team, [], [user.id])
+        String teamName = projectName + ' Team'
+        Team team = Team.findByName(teamName)
+        if (!team || team.owner.username != user.username) {
+            team = new Team(name: teamName)
+            teamService.save(team, [], [user.id])
+        }
         projectService.save(project, [user.id], [])
         projectService.addTeamToProject(project, team)
         // Releases & sprints
@@ -216,6 +223,9 @@ class DummyService {
         project.refresh()
         createAcceptanceTests(project, user)
         sessionFactory.currentSession.flush()
+        // Push project creation
+        pushService.enablePushForThisThread()
+        projectService.manageProjectEvents(project, [:])
     }
 
     private void updateContentDoneSprint(Sprint sprint, Set<User> members) {
