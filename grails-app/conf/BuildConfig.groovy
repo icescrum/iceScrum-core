@@ -64,7 +64,6 @@ grails.project.dependency.resolution = {
         runtime('org.apache.geronimo.specs:geronimo-servlet_3.0_spec:1.0')
         compile 'org.fusesource.wikitext:wikitext-core:1.4'
         compile 'org.fusesource.wikitext:textile-core:1.4'
-        compile 'javax.mail:mail:1.4.7' // By default, grails installs 1.4.3 which doesn't support NTLM
     }
 
     plugins {
