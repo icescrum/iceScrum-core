@@ -22,7 +22,6 @@
 
 package org.icescrum.core.support
 
-import asset.pipeline.grails.utils.net.HttpServletRequests
 import grails.converters.JSON
 import grails.plugin.springsecurity.userdetails.GrailsUser
 import grails.plugin.springsecurity.web.SecurityRequestHolder as SRH
@@ -47,6 +46,7 @@ import org.apache.http.impl.client.DefaultHttpClient
 import org.apache.http.protocol.BasicHttpContext
 import org.apache.http.util.EntityUtils
 import org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib
+import org.codehaus.groovy.grails.web.servlet.mvc.GrailsWebRequest
 import org.codehaus.groovy.grails.web.util.WebUtils
 import org.grails.comments.Comment
 import org.grails.comments.CommentLink
@@ -62,7 +62,6 @@ import org.springframework.security.access.expression.ExpressionUtils
 import org.springframework.security.core.context.SecurityContextHolder as SCH
 import org.springframework.security.web.FilterInvocation
 import org.springframework.security.web.access.WebInvocationPrivilegeEvaluator
-import org.springframework.web.context.request.RequestContextHolder
 
 import javax.servlet.FilterChain
 import javax.servlet.http.HttpServletRequest
@@ -80,9 +79,8 @@ class ApplicationSupport {
             doFilter: { req, res -> throw new UnsupportedOperationException() }
     ] as FilterChain
 
-    public static String serverURL(HttpServletRequest request){
-        request = request ?: (HttpServletRequest)WebUtils.retrieveGrailsWebRequest().getNativeRequest()
-        return  HttpServletRequests.getBaseUrl(request, true)
+    public static String serverURL(){
+        return  WebUtils.retrieveGrailsWebRequest()?.getBaseUrl()
     }
 
     public static def controllerExist(def controllerName, def actionName = '') {
