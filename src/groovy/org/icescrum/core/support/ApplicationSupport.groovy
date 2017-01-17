@@ -29,7 +29,6 @@ import grails.util.Environment
 import grails.util.GrailsNameUtils
 import grails.util.Holders
 import grails.util.Metadata
-import groovy.xml.MarkupBuilder
 import org.apache.commons.logging.LogFactory
 import org.apache.http.HttpHost
 import org.apache.http.HttpResponse
