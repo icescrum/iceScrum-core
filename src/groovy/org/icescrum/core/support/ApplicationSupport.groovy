@@ -46,7 +46,6 @@ import org.apache.http.impl.client.DefaultHttpClient
 import org.apache.http.protocol.BasicHttpContext
 import org.apache.http.util.EntityUtils
 import org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib
-import org.codehaus.groovy.grails.web.servlet.mvc.GrailsWebRequest
 import org.codehaus.groovy.grails.web.util.WebUtils
 import org.grails.comments.Comment
 import org.grails.comments.CommentLink
@@ -64,7 +63,6 @@ import org.springframework.security.web.FilterInvocation
 import org.springframework.security.web.access.WebInvocationPrivilegeEvaluator
 
 import javax.servlet.FilterChain
-import javax.servlet.http.HttpServletRequest
 import java.security.MessageDigest
 import java.text.SimpleDateFormat
 import java.util.zip.ZipEntry
@@ -79,8 +77,8 @@ class ApplicationSupport {
             doFilter: { req, res -> throw new UnsupportedOperationException() }
     ] as FilterChain
 
-    public static String serverURL(){
-        return  WebUtils.retrieveGrailsWebRequest()?.getBaseUrl()
+    public static String serverURL() {
+        return WebUtils.retrieveGrailsWebRequest()?.getBaseUrl()
     }
 
     public static def controllerExist(def controllerName, def actionName = '') {
@@ -151,7 +149,7 @@ class ApplicationSupport {
         checkCommonErrors(config)
     }
 
-    static public checkCommonErrors(def config){
+    static public checkCommonErrors(def config) {
         if (config.dataSource.driverClassName == "org.h2.Driver" && Environment.current != Environment.DEVELOPMENT) {
             addWarning('database', 'warning', [code: 'is.warning.database.title'], [code: 'is.warning.database.message'])
         } else {
@@ -366,12 +364,12 @@ class ApplicationSupport {
         }
     }
 
-    static public boolean isWritablePath(String dirPath){
+    static public boolean isWritablePath(String dirPath) {
         def dir = new File(dirPath.toString())
         return dir.canRead() && dir.canWrite()
     }
 
-    static public String getConfigFilePath(){
+    static public String getConfigFilePath() {
         def configLocations = Holders.grailsApplication.config.grails.config.locations.collect { it.contains(':') ? it.split(':')[1] : it }
         return configLocations ? configLocations.first() : System.getProperty("user.home") + File.separator + ".icescrum" + File.separator + "config.groovy"
     }
@@ -594,7 +592,7 @@ class ApplicationSupport {
     }
 
     static def removeWarning(String id) {
-        Holders.grailsApplication.config.icescrum.warnings = Holders.grailsApplication.config.icescrum.warnings.findAll{ it.id != id }
+        Holders.grailsApplication.config.icescrum.warnings = Holders.grailsApplication.config.icescrum.warnings.findAll { it.id != id }
     }
 
     static def getLastWarning() {
