@@ -90,7 +90,7 @@ class NotificationEmailService {
         }
         Project project = (Project) story.backlog
         def subjectArgs = [project.name, story.name]
-        def baseUrl = grailsApplication.config.grails.serverURL + '/p/' + project.pkey
+        def baseUrl = grailsApplication.config.icescrum.serverURL + '/p/' + project.pkey
         def permalink = baseUrl + '-' + story.uid
         def projectLink = baseUrl + '#project'
         def eventLabel = EVENT_LABELS[type]
@@ -116,7 +116,7 @@ class NotificationEmailService {
         }
         Project project = task.parentProject
         def subjectArgs = [project.name, task.name]
-        def baseUrl = grailsApplication.config.grails.serverURL + '/p/' + project.pkey
+        def baseUrl = grailsApplication.config.icescrum.serverURL + '/p/' + project.pkey
         def permalink = baseUrl + '-T' + task.uid
         def projectLink = baseUrl + '#project'
         def listTo = receiversByLocale(project.allUsers, user?.id, [type: 'onUrgentTask', pkey: project.pkey])
@@ -140,7 +140,7 @@ class NotificationEmailService {
         }
         def project = story.backlog
         def subjectArgs = [project.name, story.name]
-        def baseUrl = grailsApplication.config.grails.serverURL + '/p/' + project.pkey
+        def baseUrl = grailsApplication.config.icescrum.serverURL + '/p/' + project.pkey
         def permalink = baseUrl + '-' + story.uid
         def projectLink = baseUrl + '#project'
         def eventLabel = EVENT_LABELS[type]
@@ -166,7 +166,7 @@ class NotificationEmailService {
         def user = springSecurityService.currentUser
         def project = story.backlog
         def subjectArgs = [project.name, story.name]
-        def baseUrl = grailsApplication.config.grails.serverURL + '/p/' + project.pkey
+        def baseUrl = grailsApplication.config.icescrum.serverURL + '/p/' + project.pkey
         def permalink = baseUrl + '-' + story.uid
         def projectLink = baseUrl + '#project'
         String text = ServicesUtils.textileToHtml(comment.body)
@@ -192,7 +192,7 @@ class NotificationEmailService {
         def user = springSecurityService.currentUser
         def project = story.backlog
         def subjectArgs = [project.name, story.name]
-        def baseUrl = grailsApplication.config.grails.serverURL + '/p/' + project.pkey
+        def baseUrl = grailsApplication.config.icescrum.serverURL + '/p/' + project.pkey
         def permalink = baseUrl + '-' + story.uid
         def projectLink = baseUrl + '#project'
         def listTo = receiversByLocale(story.followers, user?.id)
@@ -216,7 +216,7 @@ class NotificationEmailService {
         }
         def project = element instanceof Feature ? element.backlog : element.backlog.parentRelease.parentProject
         def subjectArgs = [project.name, element.name]
-        def projectLink = grailsApplication.config.grails.serverURL + '/p/' + project.pkey + '#project'
+        def projectLink = grailsApplication.config.icescrum.serverURL + '/p/' + project.pkey + '#project'
         def listTo = receiversByLocale(followers, user?.id)
         listTo?.each { locale, group ->
             def acceptedAs = getMessage(element instanceof Feature ? 'is.feature' : 'is.task', (Locale) locale)
@@ -235,8 +235,8 @@ class NotificationEmailService {
     }
 
     void sendNewPassword(User user, String password) {
-        def link = grailsApplication.config.grails.serverURL + '/login'
         def request = RCH.currentRequestAttributes().getRequest()
+        def link = grailsApplication.config.icescrum.serverURL + '/login'
         if (log.debugEnabled) {
             log.debug "Send email, retrieve password to : ${user.email} (${user.username})"
         }
@@ -249,7 +249,7 @@ class NotificationEmailService {
     }
 
     void sendInvitation(Invitation invitation, User inviter) {
-        def link = grailsApplication.config.grails.serverURL + '/#/user/register/' + invitation.token
+        def link = grailsApplication.config.icescrum.serverURL + '/#/user/register/' + invitation.token
         def isProjectInvitation = invitation.type == Invitation.InvitationType.PROJECT
         def invitedIn = isProjectInvitation ? invitation.project.name.encodeAsHTML() : invitation.team.name.encodeAsHTML()
         def locale = inviter.locale

@@ -94,13 +94,6 @@ class IcescrumCoreGrailsPlugin {
                 application.config?.icescrum?.import."${it.logicalPropertyName}" = []
             }
         }
-        // We must ensure that it's before the serverURL is used anywhere
-        // E.g. in AssetPipelineGrailsPlugin.groovy::doWithSpring, that's why there is a loadBefore
-        def iceScrumURL = System.getProperty('icescrum.serverURL')
-        if (iceScrumURL) {
-            println("Overriding grails.serverURL with URL: " + iceScrumURL)
-            application.config.grails.serverURL = iceScrumURL
-        }
         println '... finished configuring iceScrum plugin core'
     }
 

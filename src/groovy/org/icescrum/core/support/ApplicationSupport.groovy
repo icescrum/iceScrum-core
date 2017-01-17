@@ -22,6 +22,7 @@
 
 package org.icescrum.core.support
 
+import asset.pipeline.grails.utils.net.HttpServletRequests
 import grails.converters.JSON
 import grails.plugin.springsecurity.userdetails.GrailsUser
 import grails.plugin.springsecurity.web.SecurityRequestHolder as SRH
@@ -46,6 +47,7 @@ import org.apache.http.impl.client.DefaultHttpClient
 import org.apache.http.protocol.BasicHttpContext
 import org.apache.http.util.EntityUtils
 import org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib
+import org.codehaus.groovy.grails.web.util.WebUtils
 import org.grails.comments.Comment
 import org.grails.comments.CommentLink
 import org.icescrum.core.domain.Project
@@ -60,8 +62,10 @@ import org.springframework.security.access.expression.ExpressionUtils
 import org.springframework.security.core.context.SecurityContextHolder as SCH
 import org.springframework.security.web.FilterInvocation
 import org.springframework.security.web.access.WebInvocationPrivilegeEvaluator
+import org.springframework.web.context.request.RequestContextHolder
 
 import javax.servlet.FilterChain
+import javax.servlet.http.HttpServletRequest
 import java.security.MessageDigest
 import java.text.SimpleDateFormat
 import java.util.zip.ZipEntry
@@ -75,6 +79,11 @@ class ApplicationSupport {
     protected static final FilterChain DUMMY_CHAIN = [
             doFilter: { req, res -> throw new UnsupportedOperationException() }
     ] as FilterChain
+
+    public static String serverURL(HttpServletRequest request){
+        request = request ?: (HttpServletRequest)WebUtils.retrieveGrailsWebRequest().getNativeRequest()
+        return  HttpServletRequests.getBaseUrl(request, true)
+    }
 
     public static def controllerExist(def controllerName, def actionName = '') {
         def controllerClass = Holders.grailsApplication.controllerClasses.find {
@@ -145,11 +154,6 @@ class ApplicationSupport {
     }
 
     static public checkCommonErrors(def config){
-        if (config.grails.serverURL && config.grails.serverURL.contains('localhost') && Environment.current != Environment.DEVELOPMENT) {
-            addWarning('serverUrl', 'warning', [code: 'is.warning.serverUrl.title'], [code: 'is.warning.serverUrl.message', args: [config.grails.serverURL]])
-        } else {
-            removeWarning('serverUrl')
-        }
         if (config.dataSource.driverClassName == "org.h2.Driver" && Environment.current != Environment.DEVELOPMENT) {
             addWarning('database', 'warning', [code: 'is.warning.database.title'], [code: 'is.warning.database.message'])
         } else {
@@ -362,6 +366,16 @@ class ApplicationSupport {
                 }
             }
         }
+    }
+
+    static public boolean isWritablePath(String dirPath){
+        def dir = new File(dirPath.toString())
+        return dir.canRead() && dir.canWrite()
+    }
+
+    static public String getConfigFilePath(){
+        def configLocations = Holders.grailsApplication.config.grails.config.locations.collect { it.contains(':') ? it.split(':')[1] : it }
+        return configLocations ? configLocations.first() : System.getProperty("user.home") + File.separator + ".icescrum" + File.separator + "config.groovy"
     }
 
     static public createTempDir(String name) {
@@ -636,7 +650,7 @@ class CheckerTimerTask extends TimerTask {
         def config = Holders.grailsApplication.config.icescrum.check
         def configInterval = computeInterval(config.interval ?: 1440)
         def serverID = Holders.grailsApplication.config.icescrum.appID
-        def referer = Holders.grailsApplication.config.grails.serverURL
+        def referer = Holders.grailsApplication.config.icescrum.serverURL
         def environment = Holders.grailsApplication.config.icescrum.environment
         try {
 
@@ -714,7 +728,7 @@ class ReportUsageTimerTask extends TimerTask {
         def config = Holders.grailsApplication.config.icescrum.reportUsage
         def configInterval = computeInterval(config.interval ?: 1440)
         def serverID = Holders.grailsApplication.config.icescrum.appID
-        def referer = Holders.grailsApplication.config.grails.serverURL
+        def referer = Holders.grailsApplication.config.icescrum.serverURL
         def environment = Holders.grailsApplication.config.icescrum.environment
         try {
             if (!config.enable) {

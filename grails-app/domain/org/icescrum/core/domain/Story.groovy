@@ -69,10 +69,10 @@ class Story extends BacklogElement implements Cloneable, Serializable {
 
     static hasMany = [
             tasks          : Task,
-            acceptanceTests: AcceptanceTest,
             voters         : User,
             followers      : User,
-            dependences    : Story
+            dependences    : Story,
+            acceptanceTests: AcceptanceTest
     ]
 
     static transients = [
