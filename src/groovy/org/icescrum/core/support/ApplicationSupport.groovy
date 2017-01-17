@@ -644,7 +644,7 @@ class CheckerTimerTask extends TimerTask {
     @Override
     void run() {
         def config = Holders.grailsApplication.config.icescrum.check
-        if (config.enable || !Holders.grailsApplication.config.icescrum.setupCompleted){
+        if (config.enable || !Holders.grailsApplication.config.icescrum.setupCompleted) {
             return
         }
         def configInterval = computeInterval(config.interval ?: 1440)
