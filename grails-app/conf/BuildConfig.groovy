@@ -80,7 +80,9 @@ grails.project.dependency.resolution = {
         compile ':jdbc-pool:1.0.9.3'
         compile ':spring-events:1.2'
         compile ':springcache:1.3.1'
-        compile ':mail:1.0.1'
+        compile (':mail:1.0.1') {
+            excludes 'mail'
+        }
         compile ':jasper:1.6.1'
         compile (':maven-publisher:0.8.1') {
             excludes 'http-builder'
