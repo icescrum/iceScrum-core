@@ -146,7 +146,7 @@ class ApplicationSupport {
     }
 
     static public checkCommonErrors(def config){
-        if (config.grails.serverURL instanceof String && config.grails.serverURL.contains('localhost') && Environment.current != Environment.DEVELOPMENT) {
+        if (config.grails.serverURL && config.grails.serverURL.contains('localhost') && Environment.current != Environment.DEVELOPMENT) {
             addWarning('serverUrl', 'warning', [code: 'is.warning.serverUrl.title'], [code: 'is.warning.serverUrl.message', args: [config.grails.serverURL]])
         } else {
             removeWarning('serverUrl')
