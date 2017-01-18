@@ -78,7 +78,7 @@ class ListenerService {
                 pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, story.parentSprint, project.id)
             }
             def user = (User) springSecurityService.currentUser
-            ['name', 'type'].each { property ->
+            ['name', 'type', 'value'].each { property ->
                 if (dirtyProperties.containsKey(property)) {
                     activityService.addActivity(story, user, Activity.CODE_UPDATE, story.name, property, dirtyProperties[property]?.toString(), story."$property"?.toString())
                 }
