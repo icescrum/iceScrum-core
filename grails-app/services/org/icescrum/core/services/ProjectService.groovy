@@ -23,19 +23,19 @@
 
 package org.icescrum.core.services
 
+import grails.plugin.springsecurity.SpringSecurityUtils
 import grails.transaction.Transactional
 import groovy.xml.MarkupBuilder
+import org.icescrum.core.domain.*
+import org.icescrum.core.domain.preferences.ProjectPreferences
+import org.icescrum.core.domain.preferences.UserPreferences
+import org.icescrum.core.domain.security.Authority
+import org.icescrum.core.error.BusinessException
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
-import org.icescrum.core.utils.ServicesUtils
-import org.icescrum.core.error.BusinessException
-import org.icescrum.core.domain.preferences.ProjectPreferences
-import org.icescrum.core.domain.security.Authority
-import org.springframework.security.access.prepost.PreAuthorize
-import org.icescrum.core.domain.*
 import org.icescrum.core.support.ApplicationSupport
-import grails.plugin.springsecurity.SpringSecurityUtils
-import org.icescrum.core.domain.preferences.UserPreferences
+import org.icescrum.core.utils.ServicesUtils
+import org.springframework.security.access.prepost.PreAuthorize
 
 @Transactional
 class ProjectService extends IceScrumEventPublisher {
@@ -129,16 +129,16 @@ class ProjectService extends IceScrumEventPublisher {
         def values = []
         project.releases?.sort { a, b -> a.orderNumber <=> b.orderNumber }?.each { Release release ->
             def cliches = []
-            //begin of project
+            // Beginning of project
             def firstClicheActivation = Cliche.findByParentTimeBoxAndType(release, Cliche.TYPE_ACTIVATION, [sort: "datePrise", order: "asc"])
-            if (firstClicheActivation)
+            if (firstClicheActivation) {
                 cliches.add(firstClicheActivation)
-            //others cliches
+            }
+            // Regular close cliches
             cliches.addAll(Cliche.findAllByParentTimeBoxAndType(release, Cliche.TYPE_CLOSE, [sort: "datePrise", order: "asc"]))
-            //transient cliche
+            // Dynamic cliche
             if (release.state == Release.STATE_INPROGRESS) {
-                def sprint = null
-                sprint = release.sprints.find { it.state == Sprint.STATE_INPROGRESS }
+                Sprint sprint = release.sprints.find { it.state == Sprint.STATE_INPROGRESS }
                 if (sprint) {
                     cliches << [data: clicheService.generateSprintClicheData(sprint, Cliche.TYPE_CLOSE)]
                 }
@@ -153,7 +153,7 @@ class ProjectService extends IceScrumEventPublisher {
                             planned   : xmlRoot."${Cliche.PLANNED_STORIES}".toInteger(),
                             inprogress: xmlRoot."${Cliche.INPROGRESS_STORIES}".toInteger(),
                             done      : xmlRoot."${Cliche.FINISHED_STORIES}".toInteger(),
-                            label     : index == 0 ? "Start" : xmlRoot."${Cliche.SPRINT_ID}".toString() + "${cliche.id ?'': " (progress)"}"
+                            label     : index == 0 ? "Start" : xmlRoot."${Cliche.SPRINT_ID}".toString() + "${cliche.id ? '' : " (progress)"}"
                     ]
                 }
             }
@@ -166,15 +166,16 @@ class ProjectService extends IceScrumEventPublisher {
         def values = []
         project.releases?.sort { a, b -> a.orderNumber <=> b.orderNumber }?.each { Release release ->
             def cliches = []
-            //begin of project
+            // Beginning of project
             def firstClicheActivation = Cliche.findByParentTimeBoxAndType(release, Cliche.TYPE_ACTIVATION, [sort: "datePrise", order: "asc"])
-            if (firstClicheActivation)
+            if (firstClicheActivation) {
                 cliches.add(firstClicheActivation)
-            //others cliches
+            }
+            // Regular close cliches
             cliches.addAll(Cliche.findAllByParentTimeBoxAndType(release, Cliche.TYPE_CLOSE, [sort: "datePrise", order: "asc"]))
-            //transient cliche
+            // Dynamic cliche
             if (release.state == Release.STATE_INPROGRESS) {
-                def sprint = release.sprints.find { it.state == Sprint.STATE_INPROGRESS }
+                Sprint sprint = release.sprints.find { it.state == Sprint.STATE_INPROGRESS }
                 if (sprint) {
                     cliches << [data: clicheService.generateSprintClicheData(sprint, Cliche.TYPE_CLOSE)]
                 }
@@ -188,7 +189,7 @@ class ProjectService extends IceScrumEventPublisher {
                     values << [
                             all  : xmlRoot."${Cliche.PROJECT_POINTS}".toBigDecimal(),
                             done : c,
-                            label: index == 0 ? "Start" : xmlRoot."${Cliche.SPRINT_ID}".toString() + "${cliche.id ?'': " (progress)"}"
+                            label: index == 0 ? "Start" : xmlRoot."${Cliche.SPRINT_ID}".toString() + "${cliche.id ? '' : " (progress)"}"
                     ]
                 }
             }

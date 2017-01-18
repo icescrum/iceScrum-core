@@ -32,8 +32,6 @@ import org.icescrum.core.event.IceScrumEventType
 import org.icescrum.core.support.ApplicationSupport
 import org.springframework.security.access.prepost.PreAuthorize
 
-import java.text.SimpleDateFormat
-
 @Transactional
 class ReleaseService extends IceScrumEventPublisher {
 
@@ -173,16 +171,16 @@ class ReleaseService extends IceScrumEventPublisher {
     def releaseBurndownValues(Release release) {
         def values = []
         def cliches = []
-        //begin of project
+        // Beginning of project
         def firstClicheActivation = Cliche.findByParentTimeBoxAndType(release, Cliche.TYPE_ACTIVATION, [sort: "datePrise", order: "asc"])
-        if (firstClicheActivation)
+        if (firstClicheActivation) {
             cliches.add(firstClicheActivation)
-        //others cliches
+        }
+        // Regular close cliches
         cliches.addAll(Cliche.findAllByParentTimeBoxAndType(release, Cliche.TYPE_CLOSE, [sort: "datePrise", order: "asc"]))
-        //transient cliche
+        // Dynamic cliche
         if (release.state == Release.STATE_INPROGRESS) {
-            def sprint = null
-            sprint = release.sprints.find { it.state == Sprint.STATE_INPROGRESS }
+            Sprint sprint = release.sprints.find { it.state == Sprint.STATE_INPROGRESS }
             if (sprint) {
                 cliches << [data: clicheService.generateSprintClicheData(sprint, Cliche.TYPE_CLOSE)]
             }
@@ -194,7 +192,7 @@ class ReleaseService extends IceScrumEventPublisher {
                         userstories     : xmlRoot."${Cliche.FUNCTIONAL_STORY_PROJECT_REMAINING_POINTS}".toBigDecimal(),
                         technicalstories: xmlRoot."${Cliche.TECHNICAL_STORY_PROJECT_REMAINING_POINTS}".toBigDecimal(),
                         defectstories   : xmlRoot."${Cliche.DEFECT_STORY_PROJECT_REMAINING_POINTS}".toBigDecimal(),
-                        label           : index == 0 ? "Start" : xmlRoot."${Cliche.SPRINT_ID}".toString() + "${cliche.id ?'': " (progress)"}"
+                        label           : index == 0 ? "Start" : xmlRoot."${Cliche.SPRINT_ID}".toString() + "${cliche.id ? '' : " (progress)"}"
                 ]
                 sprintEntry << computeLabelsForSprintEntry(sprintEntry)
                 values << sprintEntry
