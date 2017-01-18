@@ -158,7 +158,7 @@ class StoryService extends IceScrumEventPublisher {
                 story.state = Story.STATE_ACCEPTED
                 story.effort = null
                 story.estimatedDate = null
-            } else {
+            } else if (story.state > Story.STATE_ESTIMATED) {
                 throw new BusinessException(code: 'is.story.error.not.unestimated.state')
             }
         }
