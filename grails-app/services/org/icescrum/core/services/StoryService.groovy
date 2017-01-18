@@ -513,13 +513,8 @@ class StoryService extends IceScrumEventPublisher {
             }
             task.backlog = sprint
             task.validate()
-            def i = 1
             while (task.hasErrors() && task.errors.getFieldError('name')) {
-                if (task.errors.getFieldError('name')?.defaultMessage?.contains("unique")) {
-                    i += 1
-                    task.name = task.name + '_' + i
-                    task.validate()
-                } else if (story.errors.getFieldError('name')?.defaultMessage?.contains("maximum size")) {
+                if (story.errors.getFieldError('name')?.defaultMessage?.contains("maximum size")) {
                     task.name = task.name[0..20]
                     task.validate()
                 } else {
