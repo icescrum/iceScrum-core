@@ -153,7 +153,7 @@ class ProjectService extends IceScrumEventPublisher {
                             planned   : xmlRoot."${Cliche.PLANNED_STORIES}".toInteger(),
                             inprogress: xmlRoot."${Cliche.INPROGRESS_STORIES}".toInteger(),
                             done      : xmlRoot."${Cliche.FINISHED_STORIES}".toInteger(),
-                            label     : index == 0 ? "Start" : xmlRoot."${Cliche.SPRINT_ID}".toString() + "${cliche.id ?: " (progress)"}"
+                            label     : index == 0 ? "Start" : xmlRoot."${Cliche.SPRINT_ID}".toString() + "${cliche.id ?'': " (progress)"}"
                     ]
                 }
             }
@@ -174,8 +174,7 @@ class ProjectService extends IceScrumEventPublisher {
             cliches.addAll(Cliche.findAllByParentTimeBoxAndType(release, Cliche.TYPE_CLOSE, [sort: "datePrise", order: "asc"]))
             //transient cliche
             if (release.state == Release.STATE_INPROGRESS) {
-                def sprint = null
-                sprint = release.sprints.find { it.state == Sprint.STATE_INPROGRESS }
+                def sprint = release.sprints.find { it.state == Sprint.STATE_INPROGRESS }
                 if (sprint) {
                     cliches << [data: clicheService.generateSprintClicheData(sprint, Cliche.TYPE_CLOSE)]
                 }
@@ -189,7 +188,7 @@ class ProjectService extends IceScrumEventPublisher {
                     values << [
                             all  : xmlRoot."${Cliche.PROJECT_POINTS}".toBigDecimal(),
                             done : c,
-                            label: index == 0 ? "Start" : xmlRoot."${Cliche.SPRINT_ID}".toString() + "${cliche.id ?: " (progress)"}"
+                            label: index == 0 ? "Start" : xmlRoot."${Cliche.SPRINT_ID}".toString() + "${cliche.id ?'': " (progress)"}"
                     ]
                 }
             }
