@@ -66,8 +66,6 @@ class Task extends BacklogElement implements Serializable {
         cache true
         table 'is_task'
         participants cache: true
-        name index: 't_name_index'
-        parentStory index: 't_name_index'
     }
 
     static constraints = {
@@ -77,7 +75,6 @@ class Task extends BacklogElement implements Serializable {
         backlog nullable: true
         doneDate nullable: true
         estimation nullable: true, validator: { newEffort, task -> newEffort == null || newEffort >= 0 ?: 'invalid' }
-        name unique: 'parentStory'
         responsible nullable: true
         parentStory nullable: true
         parentProject validator: { newParentProject, task -> newParentProject == task.backlog?.parentProject || newParentProject == task.parentStory?.backlog ?: 'invalid' }
