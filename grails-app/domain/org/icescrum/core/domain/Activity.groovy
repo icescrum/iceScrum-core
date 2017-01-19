@@ -39,6 +39,7 @@ class Activity implements Serializable, Comparable {
     String field
     String beforeValue
     String afterValue
+    String afterLabel
     Long parentRef
     String parentType
 
@@ -52,6 +53,7 @@ class Activity implements Serializable, Comparable {
         field(nullable: true, validator: { newField, activity -> (activity.beforeValue == null && activity.afterValue == null) || newField != null ?: 'invalid' })
         beforeValue nullable: true
         afterValue nullable: true
+        afterLabel nullable: true
         parentType blank: false
     }
 
@@ -59,6 +61,7 @@ class Activity implements Serializable, Comparable {
         label type: "text"
         beforeValue type: "text" // TODO check if relevant
         afterValue type: "text" // TODO check if relevant
+        afterLabel type: "text"
         cache true
         table 'is_activity'
     }
@@ -122,6 +125,7 @@ class Activity implements Serializable, Comparable {
             builder.field { builder.mkp.yieldUnescaped("<![CDATA[${this.field}]]>") }
             builder.beforeValue { builder.mkp.yieldUnescaped("<![CDATA[${this.beforeValue ?: ''}]]>") }
             builder.afterValue { builder.mkp.yieldUnescaped("<![CDATA[${this.afterValue ?: ''}]]>") }
+            builder.afterLabel { builder.mkp.yieldUnescaped("<![CDATA[${this.afterLabel ?: ''}]]>") }
             builder.parentRef(this.parentRef)
             builder.parentType(this.parentType)
             exportDomainsPlugins(builder)
