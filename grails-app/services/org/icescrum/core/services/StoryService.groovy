@@ -145,10 +145,10 @@ class StoryService extends IceScrumEventPublisher {
                 }
                 if (story.state == Story.STATE_ACCEPTED) {
                     story.state = Story.STATE_ESTIMATED
+                    story.estimatedDate = new Date()
+                    activityService.addActivity(story, springSecurityService.currentUser, 'estimate', story.name)
                 }
-                activityService.addActivity(story, springSecurityService.currentUser, 'estimate', story.name, 'effort', story.effort?.toString() ?: '', props.effort?.toString() ?: '')
                 story.effort = props.effort
-                story.estimatedDate = new Date()
             }
             if (story.parentSprint && story.parentSprint.state == Sprint.STATE_WAIT) {
                 story.parentSprint.capacity = story.parentSprint.totalEffort
@@ -429,10 +429,12 @@ class StoryService extends IceScrumEventPublisher {
         def rank = newRank ?: ((Story.countAllAcceptedOrEstimated(story.backlog.id)?.list()[0] ?: 0) + 1)
         story.state = Story.STATE_ACCEPTED
         story.acceptedDate = new Date()
+        activityService.addActivity(story, springSecurityService.currentUser, 'acceptAs', story.name)
         if (((Project) story.backlog).preferences.noEstimation) {
             story.estimatedDate = new Date()
             story.effort = 1
             story.state = Story.STATE_ESTIMATED
+            activityService.addActivity(story, springSecurityService.currentUser, 'estimate', story.name)
         }
         setRank(story, rank)
         update(story)
@@ -448,6 +450,7 @@ class StoryService extends IceScrumEventPublisher {
         story.acceptedDate = null
         story.estimatedDate = null
         story.effort = null
+        activityService.addActivity(story, springSecurityService.currentUser, 'returnToSandbox', story.name)
         def rank = newRank ?: 1
         setRank(story, rank)
         update(story)
