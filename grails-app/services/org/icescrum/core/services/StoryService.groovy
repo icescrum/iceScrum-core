@@ -776,10 +776,6 @@ class StoryService extends IceScrumEventPublisher {
                             User user = (User) project.getAllUsers().find { it.uid == uid } ?: (User) springSecurityService.currentUser
                             ApplicationSupport.importAttachment(story, user, options.path, _attachmentXml)
                         }
-                        storyXml.voters.user.each { _userXml ->
-                            User user = (User) project.getAllUsers().find { it.uid == _userXml.@uid.text() } ?: (User) springSecurityService.currentUser
-                            story.addToVoters(user)
-                        }
                         storyXml.followers.user.each { _userXml ->
                             User user = (User) project.getAllUsers().find { it.uid == _userXml.@uid.text() } ?: (User) springSecurityService.currentUser
                             story.addToFollowers(user)
