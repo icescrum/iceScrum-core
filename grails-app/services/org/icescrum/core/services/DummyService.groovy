@@ -137,11 +137,9 @@ class DummyService {
             Story story = new Story([suggestedDate: startDate] + properties)
             if (story.state >= Story.STATE_ACCEPTED) {
                 story.acceptedDate = startDate + 1
-                addStoryActivity(story, user, 'acceptAs', story.acceptedDate)
             }
             if (story.state >= Story.STATE_ESTIMATED) {
                 story.estimatedDate = startDate + 2
-                addStoryActivity(story, user, 'estimate', story.estimatedDate)
             }
             storyService.save(story, project, user)
             return story

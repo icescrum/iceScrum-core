@@ -85,6 +85,12 @@ class StoryService extends IceScrumEventPublisher {
         setRank(story, rank)
         story.save(flush: true)
         story.refresh() // required to initialize collections to empty list
+        if (story.state > Story.STATE_SUGGESTED) {
+            activityService.addActivity(story, springSecurityService.currentUser, 'acceptAs', story.name)
+            if (story.state > Story.STATE_ACCEPTED) {
+                activityService.addActivity(story, springSecurityService.currentUser, 'estimate', story.name)
+            }
+        }
         project.addToStories(story)
         publishSynchronousEvent(IceScrumEventType.CREATE, story)
     }
