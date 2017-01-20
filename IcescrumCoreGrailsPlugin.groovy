@@ -79,6 +79,18 @@ class IcescrumCoreGrailsPlugin {
 
     def doWithSpring = {
         println '\nConfiguring iceScrum plugin core....'
+        // If grails.serverURL, it's likely to be an iceScrum R6 config so we stop the startup
+        if (application.config.grails.serverURL) {
+            println """
+------------------------------------------------------------
+ERROR: iceScrum v7 has detected that you attempt to run it on an existing R6 installation. This will not work!
+ - If you want to start new projects or evaluate this new version, the best solution consists in installing it on a new server.
+ - If this server is not a production server then you can clean everything related to your R6 installation (database, ~/.icescrum, ~/icescrum directories, Tomcat dirs...) and try again.
+ - If you want to migrate an existing R6 production server to v7 then don't worry: we will release a migration path soon.
+------------------------------------------------------------
+ """
+            throw new RuntimeException('\nERROR: Cannot run iceScrum v7 on an iceScrum R6 installation')
+        }
         ApplicationSupport.createUUID()
         System.setProperty('lbdsl.home', "${application.config.icescrum.baseDir.toString()}${File.separator}lbdsl")
         // Init config.icescrum.export for plugins to be able to register without an if exist / create test
