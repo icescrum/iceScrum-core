@@ -21,7 +21,21 @@
 <%@ page contentType="text/html" %>
 Bonjour,<br/>
 <br/>
-Nouveau rapport d'erreur :<br/>
+Nouveau rapport d'erreur V7 :<br/>
+
+------------------------------------------------------------------------------<br/>
+
+IP        : ${ip}<br/>
+Server ID : ${appID}<br/>
+Version   : ${version}<br/>
+User      : ${user}<br/>
+
+------------------------------------------------------------------------------<br/>
+
+Params :<br/>
+${params}<br/>
+
+------------------------------------------------------------------------------<br/>
 
 Message :<br/>
 ${message}<br/>
@@ -31,14 +45,4 @@ ${message}<br/>
 StackTrace :<br/>
 ${stackTrace}<br/>
 
-------------------------------------------------------------------------------<br/>
 
-Params :<br/>
-${params}<br/>
-
-
-------------------------------------------------------------------------------<br/>
-ip : ${ip}<br/>
-appID : ${appID}<br/>
-version : ${version}<br/>
-User : ${sec.loggedInUserInfo([field: 'fullName'])} (${sec.loggedInUserInfo([field: 'email'])})
