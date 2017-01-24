@@ -172,6 +172,9 @@ class IcescrumCoreGrailsPlugin {
     def doWithSpring = {
         mergeConfig(application)
 
+        // V7
+        application.config?.icescrum?.export = [:]
+
         if (application.config.springcache.configLocation){
             springcacheCacheManager(EhCacheManagerFactoryBean) {
                 shared = false
@@ -323,6 +326,11 @@ class IcescrumCoreGrailsPlugin {
             if (it.logicalPropertyName in controllersWithDownloadAndPreview){
                 addDownloadAndPreviewMethods(it, attachmentableService, burningImageService)
             }
+        }
+
+        // V7
+        application.domainClasses.each {
+            addExportDomainsPlugins(it, application.config.icescrum.export)
         }
 
         application.serviceClasses.each {
@@ -807,6 +815,21 @@ class IcescrumCoreGrailsPlugin {
             } catch (Exception e) {
                 if (log.debugEnabled) e.printStackTrace()
                 session.progress.progressError(message(code: 'is.report.error'))
+            }
+        }
+
+        // V7
+        private void addExportDomainsPlugins(source, config) {
+            source.metaClass.exportDomainsPlugins = { builder ->
+                def domainObject = delegate
+                def progress = RequestContextHolder.currentRequestAttributes().getSession()?.progress
+                if (progress) {
+                    progress.updateProgress(10, source.propertyName) // TODO IMPROVE
+                }
+                config[source.propertyName]?.each { closure ->
+                    closure.delegate = domainObject
+                    closure(domainObject, builder)
+                }
             }
         }
 

@@ -346,4 +346,64 @@ class Product extends TimeBox implements Serializable, Attachmentable {
         }
         return acl
     }
+
+    // V7
+    def xml(builder) {
+        builder.project(id: this.id) {
+            builder.pkey(this.pkey)
+            builder.endDate(this.endDate)
+            builder.todoDate(this.dateCreated) // 6 -> 7
+            builder.startDate(this.startDate)
+            builder.lastUpdated(this.lastUpdated)
+            builder.dateCreated(this.dateCreated)
+            builder.planningPokerGameType(this.planningPokerGameType)
+            builder.name { builder.mkp.yieldUnescaped("<![CDATA[${this.name}]]>") }
+            builder.description { builder.mkp.yieldUnescaped("<![CDATA[${this.description ?: ''}]]>") }
+            preferences.xml(builder)
+//            builder.teams() {
+//                this.teams.each { _team ->
+//                    _team.xml(builder)
+//                }
+//            }
+//            builder.productOwners() {
+//                this.productOwners.each { _user ->
+//                    _user.xml(builder)
+//                }
+//            }
+//            builder.features() {
+//                this.features.each { _feature ->
+//                    _feature.xml(builder)
+//                }
+//            }
+//            builder.stories() {
+//                //to preserve groupby & sort order and be able to insert dependsOn on the import flow..
+//                this.stories.findAll { it.parentSprint == null }
+//                        .sort { a, b -> return a.dependences.contains(b) ? 1 : 0 }
+//                        .each { _story ->
+//                    _story.xml(builder)
+//                }
+//            }
+//            builder.releases() {
+//                this.releases.each { _release ->
+//                    _release.xml(builder)
+//                }
+//            }
+//            builder.attachments() {
+//                this.attachments.each { _att ->
+//                    _att.xml(builder)
+//                }
+//            }
+//            builder.cliches() {
+//                this.cliches.each { _cliche ->
+//                    _cliche.xml(builder)
+//                }
+//            }
+//            builder.activities() {
+//                this.activities.each { _activity ->
+//                    _activity.xml(builder)
+//                }
+//            }
+            exportDomainsPlugins(builder)
+        }
+    }
 }

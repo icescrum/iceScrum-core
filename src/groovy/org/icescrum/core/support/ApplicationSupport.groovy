@@ -25,6 +25,7 @@ package org.icescrum.core.support
 
 import grails.converters.JSON
 import grails.util.Environment
+import groovy.xml.MarkupBuilder
 import org.apache.http.Consts
 import org.apache.http.HttpResponse
 import org.apache.http.HttpStatus
@@ -37,6 +38,7 @@ import org.apache.http.util.EntityUtils
 import org.codehaus.groovy.grails.commons.ApplicationHolder
 import grails.util.Metadata
 import org.apache.commons.logging.LogFactory
+import org.icescrum.core.domain.Product
 import org.icescrum.core.domain.User
 
 import java.security.MessageDigest
@@ -244,6 +246,44 @@ class ApplicationSupport {
             }
         } finally {
             zout.close()
+        }
+    }
+
+    // V7
+    public static void exportProjectZIPV7(Product project, def outputStream) {
+        def grailsApplication = ApplicationHolder.application
+        def attachmentableService = grailsApplication.mainContext.getBean("attachmentableService")
+        def projectName = "${project.name.replaceAll("[^a-zA-Z\\s]", "").replaceAll(" ", "")}-${new Date().format('yyyy-MM-dd')}"
+        def tempdir = System.getProperty("java.io.tmpdir");
+        tempdir = (tempdir.endsWith("/") || tempdir.endsWith("\\")) ? tempdir : tempdir + System.getProperty("file.separator")
+        def xml = new File(tempdir + projectName + '.xml')
+        try {
+            xml.withWriter('UTF-8') { writer ->
+                def builder = new MarkupBuilder(writer)
+                builder.mkp.xmlDeclaration(version: "1.0", encoding: "UTF-8")
+                def g = grailsApplication.mainContext.getBean('org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib')
+                builder.export(version: '6.14.13') {
+                    project.xml(builder)
+                }
+            }
+            def files = []
+            project.stories*.attachments.findAll { it.size() > 0 }?.each { it?.each { att -> files << attachmentableService.getFile(att) } }
+            project.features*.attachments.findAll { it.size() > 0 }?.each { it?.each { att -> files << attachmentableService.getFile(att) } }
+            project.releases*.attachments.findAll { it.size() > 0 }?.each { it?.each { att -> files << attachmentableService.getFile(att) } }
+            project.sprints*.attachments.findAll { it.size() > 0 }?.each { it?.each { att -> files << attachmentableService.getFile(att) } }
+            project.attachments.each { it?.each { att -> files << attachmentableService.getFile(att) } }
+            def tasks = []
+            project.releases*.each { it.sprints*.each { s -> tasks.addAll(s.tasks) } }
+            tasks*.attachments.findAll { it.size() > 0 }?.each {
+                it?.each { att -> files << attachmentableService.getFile(att) }
+            }
+            zipExportFile(outputStream, files, xml, 'attachments')
+        } catch (Exception e) {
+            if (log.debugEnabled) {
+                e.printStackTrace()
+            }
+        } finally {
+            xml.delete()
         }
     }
 
