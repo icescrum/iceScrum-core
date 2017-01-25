@@ -262,7 +262,7 @@ class ApplicationSupport {
                 def builder = new MarkupBuilder(writer)
                 builder.mkp.xmlDeclaration(version: "1.0", encoding: "UTF-8")
                 def g = grailsApplication.mainContext.getBean('org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib')
-                builder.export(version: '6.14.13') {
+                builder.export(version: g.meta(name: "app.version") + '-v7') {
                     project.xml(builder)
                 }
             }

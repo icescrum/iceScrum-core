@@ -546,7 +546,16 @@ class ProductService {
             def product = prod
 
             //be compatible with xml without export tag
-            if (prod.find{it.name == 'export'}){ product = prod.product }
+            if (prod.find{it.name == 'export'}) {
+                def version = prod.@version.text()
+                if (!version.startsWith('R6') || version.endsWith('-v7')) {
+                    def errorMessage = "Error, this export comes from version $version. Only exports generated for iceScrum R6 can be imported in iceScrum R6"
+                    log.debug(errorMessage)
+                    progress?.progressError(errorMessage)
+                    return
+                }
+                product = prod.product
+            }
 
             p = this.unMarshall(product, progress)
         } catch (RuntimeException e) {
