@@ -324,4 +324,30 @@ class Team implements Serializable, Comparable {
         }
         return acl
     }
+
+    // V7
+    def xml(builder) {
+        builder.team(uid: this.uid) {
+            builder.velocity(this.velocity)
+            builder.dateCreated(this.dateCreated)
+            builder.lastUpdated(this.lastUpdated)
+            builder.name { builder.mkp.yieldUnescaped("<![CDATA[${this.name}]]>") }
+            builder.description { builder.mkp.yieldUnescaped("<![CDATA[${this.description ?: ''}]]>") }
+            builder.scrumMasters() {
+                this.scrumMasters?.each { _user ->
+                    builder.user(uid: _user.uid)
+                }
+            }
+
+            builder.members() {
+                this.members?.each { _user ->
+                    _user.xml(builder)
+                }
+            }
+            builder.owner() {
+                this.owner.xml(builder)
+            }
+            exportDomainsPlugins(builder)
+        }
+    }
 }

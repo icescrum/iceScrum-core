@@ -343,4 +343,57 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
             publishEvent(new IceScrumSprintEvent(this, this.class, User.get(SCH.context?.authentication?.principal?.id), IceScrumEvent.EVENT_AFTER_DELETE, true))
         }
     }
+
+    // V7
+    def xml(builder) {
+        builder.sprint(id: this.id) {
+            builder.state(this.state)
+            builder.endDate(this.endDate)
+            builder.velocity(this.velocity)
+            builder.capacity(this.capacity)
+            builder.todoDate(this.dateCreated) // R6 -> v7
+            if (state > STATE_INPROGRESS) {
+                builder.doneDate(this.endDate) // R6 -> v7
+            }
+            builder.startDate(this.startDate)
+            builder.orderNumber(this.orderNumber)
+            builder.lastUpdated(this.lastUpdated)
+            builder.dateCreated(this.dateCreated)
+            builder.dailyWorkTime(this.dailyWorkTime)
+            if (state > STATE_WAIT) {
+                builder.inProgressDate(this.startDate) // R6 -> v7
+            }
+            builder.deliveredVersion(this.deliveredVersion)
+            builder.initialRemainingTime(this.initialRemainingTime)
+
+            builder.goal { builder.mkp.yieldUnescaped("<![CDATA[${this.goal ?: ''}]]>") }
+            builder.description { builder.mkp.yieldUnescaped("<![CDATA[${this.description ?: ''}]]>") }
+            builder.retrospective { builder.mkp.yieldUnescaped("<![CDATA[${this.retrospective ?: ''}]]>") }
+            builder.doneDefinition { builder.mkp.yieldUnescaped("<![CDATA[${this.doneDefinition ?: ''}]]>") }
+
+            builder.attachments() {
+                this.attachments.each { _att ->
+                    _att.xml(builder)
+                }
+            }
+            builder.stories() {
+                this.stories
+                        .sort { a, b -> return a.dependences.contains(b) ? 1 : 0 }
+                        .each { _story ->
+                    _story.xml(builder)
+                }
+            }
+            builder.tasks() {
+                this.tasks.findAll { it.parentStory == null }.each { _task ->
+                    _task.xml(builder)
+                }
+            }
+            builder.cliches() {
+                this.cliches.each { _cliche ->
+                    _cliche.xml(builder)
+                }
+            }
+            exportDomainsPlugins(builder)
+        }
+    }
 }

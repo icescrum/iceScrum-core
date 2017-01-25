@@ -150,4 +150,15 @@ class Cliche implements Serializable {
         hash = 67 * hash + (parentTimeBox != null ? parentTimeBox.hashCode() : 0)
         return hash
     }
+
+    // V7
+    def xml(builder) {
+        builder.cliche(id: this.id) {
+            builder.id(this.id)
+            builder.type(this.type)
+            builder.datePrise(this.datePrise)
+            builder.data { builder.mkp.yieldUnescaped("<![CDATA[${this.data}]]>") }
+            exportDomainsPlugins(builder)
+        }
+    }
 }

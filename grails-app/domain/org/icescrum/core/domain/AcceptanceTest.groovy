@@ -24,6 +24,7 @@ package org.icescrum.core.domain
 
 import grails.plugin.fluxiable.Fluxiable
 import org.icescrum.core.event.IceScrumAcceptanceTestEvent
+import org.icescrum.core.support.ApplicationSupport
 import org.springframework.security.core.context.SecurityContextHolder as SCH
 
 class AcceptanceTest implements Fluxiable, Serializable {
@@ -126,5 +127,21 @@ class AcceptanceTest implements Fluxiable, Serializable {
 
     void setStateEnum(AcceptanceTestState stateEnum) {
         state = stateEnum.id
+    }
+
+    // V7
+    def xml(builder) {
+        builder.acceptanceTest(uid: this.uid) {
+            builder.state(this.state)
+            builder.creator(uid: this.creator.uid)
+            builder.name { builder.mkp.yieldUnescaped("<![CDATA[${this.name}]]>") }
+            builder.description { builder.mkp.yieldUnescaped("<![CDATA[${this.description ?: ''}]]>") }
+            builder.activities() {
+                this.activities.each { _activity ->
+                    ApplicationSupport.xmlActivity(builder, _activity, this.id, 'acceptanceTest') // R6 -> v7
+                }
+            }
+            exportDomainsPlugins(builder)
+        }
     }
 }

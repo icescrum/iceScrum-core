@@ -92,4 +92,27 @@ class UserPreferences implements Serializable{
             setEmailsSettings(settings)
         }
     }
+
+    // V7
+    def xml = { builder ->
+        builder.preferences(id: this.id) {
+//            builder.menu(this.menu)
+            builder.language(this.language)
+            builder.activity(this.activity)
+            builder.filterTask(this.filterTask)
+//            builder.menuHidden(this.menuHidden)
+//            builder.displayWhatsNew(this.displayWhatsNew)
+//            builder.lastProjectOpened(this.lastProjectOpened)
+//            builder.emailsSettingsData(this.emailsSettingsData)
+//            builder.displayWelcomeTour(this.displayWelcomeTour)
+//            builder.lastReadActivities(this.lastReadActivities)
+//            builder.displayFullProjectTour(this.displayFullProjectTour)
+//            builder.widgets() {
+//                this.widgets?.each { _widget ->
+//                    _widget.xml(builder)
+//                }
+//            }
+            exportDomainsPlugins(builder)
+        }
+    }
 }

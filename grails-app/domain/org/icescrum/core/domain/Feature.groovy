@@ -29,6 +29,7 @@ package org.icescrum.core.domain
 
 import org.icescrum.core.event.IceScrumEvent
 import org.icescrum.core.event.IceScrumFeatureEvent
+import org.icescrum.core.support.ApplicationSupport
 import org.springframework.security.core.context.SecurityContextHolder as SCH
 
 class Feature extends BacklogElement implements Serializable {
@@ -195,6 +196,37 @@ class Feature extends BacklogElement implements Serializable {
     static searchAllByTermOrTag(productId, term) {
         def searchOptions = [feature: [:]]
         searchByTermOrTag(productId, searchOptions, term)
+    }
+
+    // V7
+    def xml(builder) {
+        builder.feature(uid: this.uid) {
+            builder.type(this.type)
+            builder.rank(this.rank)
+            builder.color(this.color)
+            builder.value(this.value ?: '')
+            builder.todoDate(this.creationDate) // R6 -> v7
+            builder.tags { builder.mkp.yieldUnescaped("<![CDATA[${this.tags}]]>") }
+            builder.name { builder.mkp.yieldUnescaped("<![CDATA[${this.name}]]>") }
+            builder.notes { builder.mkp.yieldUnescaped("<![CDATA[${this.notes ?: ''}]]>") }
+            builder.description { builder.mkp.yieldUnescaped("<![CDATA[${this.description ?: ''}]]>") }
+            builder.stories() {
+                this.stories.each { _story ->
+                    story(uid: _story.uid)
+                }
+            }
+            builder.activities() {
+                this.activities.each { _activity ->
+                    ApplicationSupport.xmlActivity(builder, _activity, this.id, 'feature') // R6 -> v7
+                }
+            }
+            builder.attachments() {
+                this.attachments.each { _att ->
+                    _att.xml(builder)
+                }
+            }
+            exportDomainsPlugins(builder)
+        }
     }
 
 }

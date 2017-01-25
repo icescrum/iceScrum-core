@@ -31,6 +31,7 @@ package org.icescrum.core.domain
 import grails.util.GrailsNameUtils
 import org.icescrum.core.event.IceScrumEvent
 import org.icescrum.core.event.IceScrumTaskEvent
+import org.icescrum.core.support.ApplicationSupport
 import org.springframework.security.core.context.SecurityContextHolder as SCH
 
 class Task extends BacklogElement implements Serializable {
@@ -442,5 +443,57 @@ class Task extends BacklogElement implements Serializable {
     static searchAllByTermOrTag(product, term) {
         def searchOptions = [task: [:]]
         searchByTermOrTag(product, searchOptions, term)
+    }
+
+    // V7
+    def xml(builder) {
+        builder.task(uid: this.uid) {
+            builder.type(this.type)
+            builder.rank(this.rank)
+            builder.color(this.color)
+            builder.state(this.state)
+            builder.blocked(this.blocked)
+            builder.initial(this.initial)
+            builder.doneDate(this.doneDate)
+            builder.estimation(this.estimation)
+            builder.todoDate(this.creationDate) // R6 -> v7
+            builder.inProgressDate(this.inProgressDate)
+
+            builder.creator(uid: this.creator.uid)
+
+            if (this.responsible) {
+                builder.responsible(uid: this.responsible.uid)
+            }
+
+            builder.tags { builder.mkp.yieldUnescaped("<![CDATA[${this.tags ?: ''}]]>") }
+            builder.name { builder.mkp.yieldUnescaped("<![CDATA[${this.name}]]>") }
+            builder.notes { builder.mkp.yieldUnescaped("<![CDATA[${this.notes ?: ''}]]>") }
+            builder.description { builder.mkp.yieldUnescaped("<![CDATA[${this.description ?: ''}]]>") }
+
+            builder.attachments() {
+                this.attachments.each { _att ->
+                    _att.xml(builder)
+                }
+            }
+
+            builder.comments() {
+                this.comments.each { _comment ->
+                    builder.comment() {
+                        builder.dateCreated(_comment.dateCreated)
+                        builder.posterId(_comment.posterId)
+                        builder.posterClass(_comment.posterClass)
+                        builder.body { builder.mkp.yieldUnescaped("<![CDATA[${_comment.body}]]>") }
+                    }
+                }
+            }
+
+            builder.activities() {
+                this.activities.each { _activity ->
+                    ApplicationSupport.xmlActivity(builder, _activity, this.id, 'task') // R6 -> v7
+                }
+            }
+
+            exportDomainsPlugins(builder)
+        }
     }
 }

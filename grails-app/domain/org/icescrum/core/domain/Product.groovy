@@ -31,6 +31,7 @@ import org.icescrum.core.domain.security.Authority
 import org.icescrum.core.services.SecurityService
 import org.icescrum.core.event.IceScrumEvent
 import org.icescrum.core.event.IceScrumProductEvent
+import org.icescrum.core.support.ApplicationSupport
 import org.icescrum.plugins.attachmentable.interfaces.Attachmentable
 import org.springframework.security.acls.model.NotFoundException
 import org.springframework.security.core.context.SecurityContextHolder as SCH
@@ -352,7 +353,7 @@ class Product extends TimeBox implements Serializable, Attachmentable {
         builder.project(id: this.id) {
             builder.pkey(this.pkey)
             builder.endDate(this.endDate)
-            builder.todoDate(this.dateCreated) // 6 -> 7
+            builder.todoDate(this.dateCreated) // R6 -> v7
             builder.startDate(this.startDate)
             builder.lastUpdated(this.lastUpdated)
             builder.dateCreated(this.dateCreated)
@@ -360,49 +361,49 @@ class Product extends TimeBox implements Serializable, Attachmentable {
             builder.name { builder.mkp.yieldUnescaped("<![CDATA[${this.name}]]>") }
             builder.description { builder.mkp.yieldUnescaped("<![CDATA[${this.description ?: ''}]]>") }
             preferences.xml(builder)
-//            builder.teams() {
-//                this.teams.each { _team ->
-//                    _team.xml(builder)
-//                }
-//            }
-//            builder.productOwners() {
-//                this.productOwners.each { _user ->
-//                    _user.xml(builder)
-//                }
-//            }
-//            builder.features() {
-//                this.features.each { _feature ->
-//                    _feature.xml(builder)
-//                }
-//            }
-//            builder.stories() {
-//                //to preserve groupby & sort order and be able to insert dependsOn on the import flow..
-//                this.stories.findAll { it.parentSprint == null }
-//                        .sort { a, b -> return a.dependences.contains(b) ? 1 : 0 }
-//                        .each { _story ->
-//                    _story.xml(builder)
-//                }
-//            }
-//            builder.releases() {
-//                this.releases.each { _release ->
-//                    _release.xml(builder)
-//                }
-//            }
-//            builder.attachments() {
-//                this.attachments.each { _att ->
-//                    _att.xml(builder)
-//                }
-//            }
-//            builder.cliches() {
-//                this.cliches.each { _cliche ->
-//                    _cliche.xml(builder)
-//                }
-//            }
-//            builder.activities() {
-//                this.activities.each { _activity ->
-//                    _activity.xml(builder)
-//                }
-//            }
+            builder.teams() {
+                this.teams.each { _team ->
+                    _team.xml(builder)
+                }
+            }
+            builder.productOwners() {
+                this.productOwners.each { _user ->
+                    _user.xml(builder)
+                }
+            }
+            builder.features() {
+                this.features.each { _feature ->
+                    _feature.xml(builder)
+                }
+            }
+            builder.stories() {
+                //to preserve groupby & sort order and be able to insert dependsOn on the import flow..
+                this.stories.findAll { it.parentSprint == null }
+                        .sort { a, b -> return a.dependences.contains(b) ? 1 : 0 }
+                        .each { _story ->
+                    _story.xml(builder)
+                }
+            }
+            builder.releases() {
+                this.releases.each { _release ->
+                    _release.xml(builder)
+                }
+            }
+            builder.attachments() {
+                this.attachments.each { _att ->
+                    _att.xml(builder)
+                }
+            }
+            builder.cliches() {
+                this.cliches.each { _cliche ->
+                    _cliche.xml(builder)
+                }
+            }
+            builder.activities() {
+                this.activities.each { _activity ->
+                    ApplicationSupport.xmlActivity(builder, _activity, this.id, 'product') // R6 -> v7
+                }
+            }
             exportDomainsPlugins(builder)
         }
     }

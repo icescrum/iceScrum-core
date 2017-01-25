@@ -24,6 +24,7 @@
 package org.icescrum.core.support
 
 import grails.converters.JSON
+import grails.plugin.fluxiable.Activity
 import grails.util.Environment
 import groovy.xml.MarkupBuilder
 import org.apache.http.Consts
@@ -287,6 +288,24 @@ class ApplicationSupport {
         }
     }
 
+    // V7
+    public static xmlActivity(builder, Activity activity, long parentRef, String parentType) {
+        builder.activity() {
+            builder.poster(uid: activity.poster.uid)
+            builder.dateCreated(activity.dateCreated)
+            builder.lastUpdated(activity.lastUpdated)
+            builder.code(activity.code)
+            builder.label { builder.mkp.yieldUnescaped("<![CDATA[${activity.cachedLabel}]]>") } // R6 -> v7
+//            builder.field { builder.mkp.yieldUnescaped("<![CDATA[${activity.field}]]>") }
+//            builder.beforeValue { builder.mkp.yieldUnescaped("<![CDATA[${activity.beforeValue ?: ''}]]>") }
+//            builder.afterValue { builder.mkp.yieldUnescaped("<![CDATA[${activity.afterValue ?: ''}]]>") }
+//            builder.afterLabel { builder.mkp.yieldUnescaped("<![CDATA[${activity.afterLabel ?: ''}]]>") }
+            builder.parentRef(parentRef) // R6 -> v7
+            builder.parentType(parentType) // R6 -> v7
+//            exportDomainsPlugins(builder)
+        }
+    }
+
     static public unzip(File zip, File destination){
         def result = new ZipInputStream(new FileInputStream(zip))
 
@@ -399,7 +418,7 @@ class CheckerTimerTask extends TimerTask {
 
     private static Map getJSON(String domain, String path, queryParams = [:], headers = [:], params = [:]) {
         HttpClient httpclient = new DefaultHttpClient();
-        Map resp = [data:'']
+        Map resp = [data: '']
         try {
             String url = domain + '/' + path
             if (queryParams) {

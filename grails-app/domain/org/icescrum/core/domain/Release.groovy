@@ -210,4 +210,49 @@ class Release extends TimeBox implements Cloneable, Attachmentable {
             publishEvent(new IceScrumReleaseEvent(this, this.class, User.get(SCH.context?.authentication?.principal?.id), IceScrumEvent.EVENT_AFTER_DELETE, true))
         }
     }
+
+    // V7
+    def xml(builder) {
+        builder.release(id: this.id) {
+            builder.state(this.state)
+            builder.endDate(this.endDate)
+            builder.todoDate(this.dateCreated) // R6 -> v7
+            if (state > STATE_INPROGRESS) {
+                builder.doneDate(this.endDate) // R6 -> v7
+            }
+            builder.startDate(this.startDate)
+            builder.orderNumber(this.orderNumber)
+            builder.lastUpdated(this.lastUpdated)
+            builder.dateCreated(this.dateCreated)
+            if (state > STATE_WAIT) {
+                builder.inProgressDate(this.startDate) // R6 -> v7
+            }
+//            builder.firstSprintIndex(this.firstSprintIndex)
+            builder.name { builder.mkp.yieldUnescaped("<![CDATA[${this.name}]]>") }
+            builder.goal { builder.mkp.yieldUnescaped("<![CDATA[${this.goal ?: ''}]]>") }
+            builder.vision { builder.mkp.yieldUnescaped("<![CDATA[${this.vision ?: ''}]]>") }
+            builder.description { builder.mkp.yieldUnescaped("<![CDATA[${this.description ?: ''}]]>") }
+            builder.sprints() {
+                this.sprints.each { _sprint ->
+                    _sprint.xml(builder)
+                }
+            }
+            builder.features() {
+                this.features.each { _feature ->
+                    feature(uid: _feature.uid)
+                }
+            }
+            builder.attachments() {
+                this.attachments.each { _att ->
+                    _att.xml(builder)
+                }
+            }
+            builder.cliches() {
+                this.cliches.each { _cliche ->
+                    _cliche.xml(builder)
+                }
+            }
+            exportDomainsPlugins(builder)
+        }
+    }
 }

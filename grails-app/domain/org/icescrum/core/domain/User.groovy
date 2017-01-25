@@ -202,4 +202,33 @@ class User implements Serializable, Attachmentable {
     Locale getLocale() {
         new Locale(*preferences.language.split('_', 3))
     }
+
+    // V7
+    def xml(builder) {
+        builder.user(uid: this.uid) {
+            builder.id(this.id)
+            builder.email(this.email)
+            builder.enabled(this.enabled)
+            builder.username(this.username)
+            builder.password(this.password)
+            builder.lastLogin(this.lastLogin)
+            builder.dateCreated(this.dateCreated)
+            builder.lastUpdated(this.lastUpdated)
+            builder.accountLocked(this.accountLocked)
+            builder.accountExpired(this.accountExpired)
+            builder.passwordExpired(this.passwordExpired)
+            builder.accountExternal(this.accountExternal)
+            builder.lastName { builder.mkp.yieldUnescaped("<![CDATA[${this.lastName}]]>") }
+            builder.firstName { builder.mkp.yieldUnescaped("<![CDATA[${this.firstName}]]>") }
+
+            preferences.xml(builder)
+
+            builder.teams() {
+                this.teams.each { _team ->
+                    team(uid: _team.uid)
+                }
+            }
+            exportDomainsPlugins(builder)
+        }
+    }
 }
