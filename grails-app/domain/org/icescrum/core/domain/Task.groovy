@@ -450,7 +450,7 @@ class Task extends BacklogElement implements Serializable {
         builder.task(uid: this.uid) {
             builder.type(this.type)
             builder.rank(this.rank)
-            builder.color(this.color)
+            builder.color(ApplicationSupport.getColorFromName(this.color)) // R6 -> v7
             builder.state(this.state)
             builder.blocked(this.blocked)
             builder.initial(this.initial)

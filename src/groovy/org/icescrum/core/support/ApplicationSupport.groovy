@@ -306,6 +306,20 @@ class ApplicationSupport {
         }
     }
 
+    // V7
+    public static getColorFromName(String colorName) {
+        return [yellow   : '#f9f157',
+                blue     : '#2d8ccc',
+                orange   : '#DF9D12', // #FBB92E darkened 11%
+                green    : '#A5D03C', // #C1EC58 darkened 11%
+                pink     : '#D263E0', // #EE7FFC darkened 11%
+                violet   : '#AB85D4', // #D6B0FF darkened 17%
+                gray     : '#BDBDBD', // #D9D9D9 darkened 11%
+                red      : '#D97A7A', // #FFA0A0 darkened 15%
+                bluelight: '#94CBE3'  // #B0E7FF darkened 11%
+        ][colorName]
+    }
+
     static public unzip(File zip, File destination){
         def result = new ZipInputStream(new FileInputStream(zip))
 
