@@ -192,7 +192,7 @@ class UserService extends IceScrumEventPublisher {
     User unMarshall(def userXml, def options) {
         User.withTransaction(readOnly: !options.save) { transaction ->
             try {
-                def user = User.findByUid(userXml.@uid.text())
+                User user = User.findByUid(userXml.@uid.text())
                 if (!user) {
                     user = new User(
                             lastName: userXml.lastName.text(),
@@ -204,7 +204,7 @@ class UserService extends IceScrumEventPublisher {
                             accountExpired: userXml.accountExpired.text().toBoolean() ?: false,
                             accountLocked: userXml.accountLocked.text().toBoolean() ?: false,
                             passwordExpired: userXml.passwordExpired.text().toBoolean() ?: false,
-                            accountExternal: userXml.accountExternal?.text()?.toBoolean() ?: false,
+                            accountExternal: userXml.accountExternal.text().toBoolean() ?: false,
                             uid: userXml.@uid.text() ?: (userXml.username.text() + userXml.email.text()).encodeAsMD5()
                     )
                     user.preferences = new UserPreferences(

@@ -24,7 +24,6 @@ package org.icescrum.core.services
 
 import grails.transaction.Transactional
 import org.icescrum.core.domain.AcceptanceTest
-import org.icescrum.core.domain.AcceptanceTest.AcceptanceTestState
 import org.icescrum.core.domain.Project
 import org.icescrum.core.domain.Story
 import org.icescrum.core.domain.User
@@ -71,24 +70,15 @@ class AcceptanceTestService extends IceScrumEventPublisher {
         Story story = options.story
         AcceptanceTest.withTransaction(readOnly: !options.save) { transaction ->
             try {
-                def state = acceptanceTestXml."${'state'}".text()
-                if (state) {
-                    state = state.toInteger()
-                } else {
-                    state = (story.state < Story.STATE_DONE) ? AcceptanceTestState.TOCHECK.id : AcceptanceTestState.SUCCESS.id
-                }
                 def acceptanceTest = new AcceptanceTest(
                         name: acceptanceTestXml."${'name'}".text(),
-                        description: acceptanceTestXml."${'description'}".text() ?: null,
-                        state: state,
+                        description: acceptanceTestXml.description.text() ?: null,
+                        state: acceptanceTestXml.state.text().toInteger(),
                         uid: acceptanceTestXml.@uid.text().toInteger()
                 )
                 // References on other objects
                 if (project) {
-                    def u = ((User) project.getAllUsers().find {
-                        it.uid == acceptanceTestXml.creator.@uid.text()
-                    }) ?: null
-                    acceptanceTest.creator = (User) (u ?: project.productOwners.first())
+                    acceptanceTest.creator = project.getAllUsers().find { it.uid == acceptanceTestXml.creator.@uid.text() } ?: project.productOwners.first()
                 }
                 if (story) {
                     story.addToAcceptanceTests(acceptanceTest)

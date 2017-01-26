@@ -342,20 +342,6 @@ class TaskService extends IceScrumEventPublisher {
         Story story = options.story
         Task.withTransaction(readOnly: options.save) { transaction ->
             try {
-                def inProgressDate = null
-                if (taskXml.inProgressDate?.text() && taskXml.inProgressDate?.text() != "") {
-                    inProgressDate = ApplicationSupport.parseDate(taskXml.inProgressDate.text())
-                }
-                def doneDate = null
-                if (taskXml.doneDate?.text() && taskXml.doneDate?.text() != "") {
-                    doneDate = ApplicationSupport.parseDate(taskXml.doneDate.text())
-                }
-                def todoDate = null
-                if (taskXml.todoDate?.text() && taskXml.todoDate?.text() != "") {
-                    todoDate = ApplicationSupport.parseDate(taskXml.todoDate.text())
-                } else if (sprint || story) {
-                    todoDate = sprint?.todoDate ?: story.todoDate
-                }
                 def task = new Task(
                         type: (taskXml.type.text().isNumber()) ? taskXml.type.text().toInteger() : null,
                         description: taskXml.description.text() ?: null,
@@ -364,21 +350,18 @@ class TaskService extends IceScrumEventPublisher {
                         initial: (taskXml.initial.text().isNumber()) ? taskXml.initial.text().toFloat() : null,
                         rank: taskXml.rank.text().toInteger(),
                         name: taskXml."${'name'}".text(),
-                        todoDate: todoDate,
-                        inProgressDate: inProgressDate,
-                        doneDate: doneDate,
+                        todoDate: ApplicationSupport.parseDate(taskXml.todoDate.text()),
+                        inProgressDate: ApplicationSupport.parseDate(taskXml.inProgressDate.text()),
+                        doneDate: ApplicationSupport.parseDate(taskXml.doneDate.text()),
                         state: taskXml.state.text().toInteger(),
-                        blocked: taskXml.blocked.text()?.toBoolean() ?: false,
-                        uid: taskXml.@uid.text()?.isEmpty() ? taskXml.@id.text().toInteger() : taskXml.@uid.text().toInteger(),
-                        color: taskXml?.color?.text() ?: "yellow")
+                        blocked: taskXml.blocked.text().toBoolean() ?: false,
+                        uid: taskXml.@uid.text().toInteger(),
+                        color: taskXml.color.text())
                 if (project) {
-                    def u = ((User) project.getAllUsers().find { it.uid == taskXml.creator.@uid.text() }) ?: null
-                    task.creator = u ?: (User) project.productOwners.first()
+                    task.creator = project.getAllUsers().find { it.uid == taskXml.creator.@uid.text() } ?: project.productOwners.first()
                     project.addToTasks(task)
-
-                    if ((!taskXml.responsible?.@uid?.isEmpty() || !taskXml.responsible?.@id?.isEmpty()) && project) {
-                        u = ((User) project.getAllUsers().find { it.uid == taskXml.responsible.@uid.text() }) ?: null
-                        task.responsible = u ?: (User) project.productOwners.first()
+                    if (!taskXml.responsible.@uid.isEmpty() && project) {
+                        task.responsible = project.getAllUsers().find { it.uid == taskXml.responsible.@uid.text() } ?: task.creator
                     }
                 }
                 if (sprint) {
@@ -397,12 +380,12 @@ class TaskService extends IceScrumEventPublisher {
                     if (project) {
                         taskXml.comments.comment.each { _commentXml ->
                             def uid = options.IDUIDUserMatch?."${_commentXml.posterId.text().toInteger()}" ?: null
-                            User user = (User) project.getAllUsers().find { it.uid == uid } ?: (User) springSecurityService.currentUser
+                            User user = project.getAllUsers().find { it.uid == uid } ?: (User) springSecurityService.currentUser
                             ApplicationSupport.importComment(task, user, _commentXml.body.text(), ApplicationSupport.parseDate(_commentXml.dateCreated.text()))
                         }
                         taskXml.attachments.attachment.each { _attachmentXml ->
                             def uid = options.IDUIDUserMatch?."${_attachmentXml.posterId.text().toInteger()}" ?: null
-                            User user = (User) project.getAllUsers().find { it.uid == uid } ?: (User) springSecurityService.currentUser
+                            User user = project.getAllUsers().find { it.uid == uid } ?: (User) springSecurityService.currentUser
                             ApplicationSupport.importAttachment(task, user, options.path, _attachmentXml)
                         }
                     }
@@ -410,7 +393,7 @@ class TaskService extends IceScrumEventPublisher {
                 // Child objects
                 options.task = task
                 options.parent = task
-                taskXml.activities?.activity?.each { def activityXml ->
+                taskXml.activities.activity.each { def activityXml ->
                     activityService.unMarshall(activityXml, options)
                 }
                 options.parent = null

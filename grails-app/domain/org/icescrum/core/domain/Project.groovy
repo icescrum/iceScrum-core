@@ -136,7 +136,7 @@ class Project extends TimeBox implements Serializable, Attachmentable {
         return name.compareTo(obj.name);
     }
 
-    def getAllUsers() {
+    List<User> getAllUsers() {
         def users = []
         this.teams?.each {
             if (it.members) {
@@ -252,7 +252,7 @@ class Project extends TimeBox implements Serializable, Attachmentable {
         return project
     }
 
-    def getProductOwners() {
+    List<User> getProductOwners() {
         //Only used when project is being imported
         if (this.productOwners) {
             this.productOwners
@@ -269,7 +269,7 @@ class Project extends TimeBox implements Serializable, Attachmentable {
         }
     }
 
-    def getStakeHolders() {
+    List<User> getStakeHolders() {
         if (this.stakeHolders) {
             this.stakeHolders // Used only when the project is being imported
         } else if (this.id) {
@@ -285,7 +285,7 @@ class Project extends TimeBox implements Serializable, Attachmentable {
         }
     }
 
-    def getOwner() {
+    User getOwner() {
         return (id && firstTeam) ? firstTeam.owner : null
     }
 
@@ -301,7 +301,7 @@ class Project extends TimeBox implements Serializable, Attachmentable {
         return this.teams ? this.teams.first() : null
     }
 
-    def getVersions(def onlyFromSprints = false, def onlyDelivered = false) {
+    List<String> getVersions(def onlyFromSprints = false, def onlyDelivered = false) {
         def versions = onlyFromSprints ? [] : this.stories.findAll { it.affectVersion }*.affectVersion
         def sprints = this.releases*.sprints?.flatten()
         versions.addAll(onlyDelivered ? sprints?.findAll { it.state == Sprint.STATE_DONE && it.deliveredVersion }*.deliveredVersion : sprints?.findAll { it.deliveredVersion }*.deliveredVersion)

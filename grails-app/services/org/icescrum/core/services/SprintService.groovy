@@ -356,45 +356,27 @@ class SprintService extends IceScrumEventPublisher {
     }
 
     def unMarshall(def sprintXml, def options) {
-        def project = options.project
+        Project project = options.project
         def release = options.release
         Sprint.withTransaction(readOnly: !options.save) { transaction ->
             try {
-                def inProgressDate = null
-                if (sprintXml.inProgressDate?.text() && sprintXml.inProgressDate?.text() != "")
-                    inProgressDate = sprintXml.inProgressDate.text() ? ApplicationSupport.parseDate(sprintXml.inProgressDate.text()) : null
-                if (!inProgressDate && sprintXml.state.text().toInteger() >= Sprint.STATE_INPROGRESS) {
-                    inProgressDate = ApplicationSupport.parseDate(sprintXml.startDate.text())
-                }
-                def doneDate = null
-                if (sprintXml.doneDate?.text() && sprintXml.doneDate?.text() != "")
-                    doneDate = sprintXml.doneDate.text() ? ApplicationSupport.parseDate(sprintXml.doneDate.text()) : null
-                if (!doneDate && sprintXml.state.text().toInteger() == Sprint.STATE_INPROGRESS) {
-                    doneDate = ApplicationSupport.parseDate(sprintXml.endDate.text())
-                }
-                def todoDate = null
-                if (sprintXml.todoDate?.text() && sprintXml.todoDate?.text() != "") {
-                    todoDate = ApplicationSupport.parseDate(sprintXml.todoDate.text())
-                } else if (release) {
-                    todoDate = release.todoDate
-                }
                 def sprint = new Sprint(
                         retrospective: sprintXml.retrospective.text() ?: null,
                         doneDefinition: sprintXml.doneDefinition.text() ?: null,
-                        inProgressDate: inProgressDate,
-                        doneDate: doneDate,
+                        doneDate: ApplicationSupport.parseDate(sprintXml.doneDate.text()),
+                        inProgressDate: ApplicationSupport.parseDate(sprintXml.inProgressDate.text()),
                         state: sprintXml.state.text().toInteger(),
-                        velocity: (sprintXml.velocity.text().isNumber()) ? sprintXml.velocity.text().toDouble() : 0d,
+                        velocity: sprintXml.velocity.text().isNumber() ? sprintXml.velocity.text().toDouble() : 0d,
                         dailyWorkTime: (sprintXml.dailyWorkTime.text().isNumber()) ? sprintXml.dailyWorkTime.text().toDouble() : 8d,
-                        capacity: (sprintXml.capacity.text().isNumber()) ? sprintXml.capacity.text().toDouble() : 0d,
-                        todoDate: todoDate,
+                        capacity: sprintXml.capacity.text().isNumber() ? sprintXml.capacity.text().toDouble() : 0d,
+                        todoDate: ApplicationSupport.parseDate(sprintXml.todoDate.text()),
                         startDate: ApplicationSupport.parseDate(sprintXml.startDate.text()),
                         endDate: ApplicationSupport.parseDate(sprintXml.endDate.text()),
                         orderNumber: sprintXml.orderNumber.text().toInteger(),
                         description: sprintXml.description.text() ?: null,
-                        goal: sprintXml.goal?.text() ?: null,
-                        deliveredVersion: sprintXml.deliveredVersion?.text() ?: null,
-                        initialRemainingTime: sprintXml.initialRemainingTime?.text()?.isNumber() ? sprintXml.initialRemainingTime.text().toFloat() : sprintXml.initialRemainingHours?.text()?.isNumber() ? sprintXml.initialRemainingHours.text().toFloat() : null
+                        goal: sprintXml.goal.text() ?: null,
+                        deliveredVersion: sprintXml.deliveredVersion.text() ?: null,
+                        initialRemainingTime: sprintXml.initialRemainingTime.text().isNumber() ? sprintXml.initialRemainingTime.text().toFloat() : null
                 )
                 // References other objects
                 if (release) {
@@ -424,7 +406,7 @@ class SprintService extends IceScrumEventPublisher {
                     if (project) {
                         sprintXml.attachments.attachment.each { _attachmentXml ->
                             def uid = options.IDUIDUserMatch?."${_attachmentXml.posterId.text().toInteger()}" ?: null
-                            User user = (User) project.getAllUsers().find { it.uid == uid } ?: (User) springSecurityService.currentUser
+                            User user = project.getAllUsers().find { it.uid == uid } ?: (User) springSecurityService.currentUser
                             ApplicationSupport.importAttachment(sprint, user, options.path, _attachmentXml)
                         }
                     }

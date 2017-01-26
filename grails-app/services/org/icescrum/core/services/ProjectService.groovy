@@ -275,12 +275,12 @@ class ProjectService extends IceScrumEventPublisher {
     Project unMarshall(def projectXml, def options) {
         Project.withTransaction(readOnly: !options.save) { transaction ->
             try {
-                def project = new Project(
+                Project project = new Project(
                         name: projectXml."${'name'}".text(),
                         pkey: projectXml.pkey.text(),
                         description: projectXml.description.text(),
-                        lastUpdated: projectXml.lastUpdated.text() ? ApplicationSupport.parseDate(projectXml.lastUpdated.text()) : new Date(),
-                        todoDate: ApplicationSupport.parseDate(projectXml.todoDate?.text() ?: projectXml.dateCreated.text()),
+                        lastUpdated: ApplicationSupport.parseDate(projectXml.lastUpdated.text()),
+                        todoDate: ApplicationSupport.parseDate(projectXml.todoDate.text()),
                         startDate: ApplicationSupport.parseDate(projectXml.startDate.text()),
                         endDate: ApplicationSupport.parseDate(projectXml.endDate.text()),
                         planningPokerGameType: projectXml.planningPokerGameType.text().toInteger())
@@ -296,13 +296,13 @@ class ProjectService extends IceScrumEventPublisher {
                         estimatedSprintsDuration: projectXml.preferences.estimatedSprintsDuration.text().toInteger(),
                         displayUrgentTasks: projectXml.preferences.displayUrgentTasks.text().toBoolean(),
                         displayRecurrentTasks: projectXml.preferences.displayRecurrentTasks.text().toBoolean(),
-                        hideWeekend: projectXml.preferences.hideWeekend.text()?.toBoolean() ?: false,
-                        releasePlanningHour: projectXml.preferences.releasePlanningHour.text() ?: "9:00",
-                        sprintPlanningHour: projectXml.preferences.sprintPlanningHour.text() ?: "9:00",
-                        dailyMeetingHour: projectXml.preferences.dailyMeetingHour.text() ?: "11:00",
-                        sprintReviewHour: projectXml.preferences.sprintReviewHour.text() ?: "14:00",
-                        sprintRetrospectiveHour: projectXml.preferences.sprintRetrospectiveHour.text() ?: "16:00",
-                        timezone: projectXml.preferences?.timezone?.text() ?: grailsApplication.config.icescrum.timezone.default)
+                        hideWeekend: projectXml.preferences.hideWeekend.text().toBoolean(),
+                        releasePlanningHour: projectXml.preferences.releasePlanningHour.text(),
+                        sprintPlanningHour: projectXml.preferences.sprintPlanningHour.text(),
+                        dailyMeetingHour: projectXml.preferences.dailyMeetingHour.text(),
+                        sprintReviewHour: projectXml.preferences.sprintReviewHour.text(),
+                        sprintRetrospectiveHour: projectXml.preferences.sprintRetrospectiveHour.text(),
+                        timezone: projectXml.preferences.timezone.text() ?: grailsApplication.config.icescrum.timezone.default)
 
                 options.project = project
                 options.IDUIDUserMatch = [:]
@@ -321,16 +321,16 @@ class ProjectService extends IceScrumEventPublisher {
 
                 def productOwnersList = []
                 projectXml.productOwners.user.eachWithIndex { productOwner, index ->
-                    User u = ((User) project.getAllUsers().find { it.uid == productOwner.@uid.text() }) ?: null
-                    if (!u) {
-                        u = User.findByUsernameAndEmail(productOwner.username.text(), productOwner.email.text())
-                        if (!u) {
+                    User user = project.getAllUsers().find { it.uid == productOwner.@uid.text() }
+                    if (!user) {
+                        user = User.findByUsernameAndEmail(productOwner.username.text(), productOwner.email.text())
+                        if (!user) {
                             def userService = (UserService) grailsApplication.mainContext.getBean('userService')
-                            u = userService.unMarshall(productOwner, options)
+                            user = userService.unMarshall(productOwner, options)
                         }
                     }
-                    options.IDUIDUserMatch."${u.id ?: productOwner.id.text().toInteger()}" = u.uid
-                    productOwnersList << u
+                    options.IDUIDUserMatch."${user.id ?: productOwner.id.text().toInteger()}" = user.uid
+                    productOwnersList << user
                 }
                 project.productOwners = productOwnersList
 
@@ -383,7 +383,7 @@ class ProjectService extends IceScrumEventPublisher {
 
                     projectXml.attachments.attachment.each { _attachmentXml ->
                         def uid = options.IDUIDUserMatch?."${_attachmentXml.posterId.text().toInteger()}" ?: null
-                        User user = (User) project.getAllUsers().find { it.uid == uid } ?: (User) springSecurityService.currentUser
+                        User user = project.getAllUsers().find { it.uid == uid } ?: (User) springSecurityService.currentUser
                         ApplicationSupport.importAttachment(project, user, options.path, _attachmentXml)
                     }
 

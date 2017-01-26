@@ -676,40 +676,14 @@ class StoryService extends IceScrumEventPublisher {
         Sprint sprint = options.sprint
         Story.withTransaction(readOnly: !options.save) { transaction ->
             try {
-                def todoDate = null
-                if (storyXml.todoDate?.text() && storyXml.todoDate?.text() != "") {
-                    todoDate = ApplicationSupport.parseDate(storyXml.todoDate.text())
-                } else if (sprint || project) {
-                    todoDate = sprint?.todoDate ?: project.todoDate
-                }
-                def acceptedDate = null
-                if (storyXml.acceptedDate?.text() && storyXml.acceptedDate?.text() != "") {
-                    acceptedDate = ApplicationSupport.parseDate(storyXml.acceptedDate.text())
-                }
-                def estimatedDate = null
-                if (storyXml.estimatedDate?.text() && storyXml.estimatedDate?.text() != "") {
-                    estimatedDate = ApplicationSupport.parseDate(storyXml.estimatedDate.text())
-                }
-                def plannedDate = null
-                if (storyXml.plannedDate?.text() && storyXml.plannedDate?.text() != "") {
-                    plannedDate = ApplicationSupport.parseDate(storyXml.plannedDate.text())
-                }
-                def inProgressDate = null
-                if (storyXml.inProgressDate?.text() && storyXml.inProgressDate?.text() != "") {
-                    inProgressDate = ApplicationSupport.parseDate(storyXml.inProgressDate.text())
-                }
-                def doneDate = null
-                if (storyXml.doneDate?.text() && storyXml.doneDate?.text() != "") {
-                    doneDate = ApplicationSupport.parseDate(storyXml.doneDate.text())
-                }
                 def story = new Story(
                         type: storyXml.type.text().toInteger(),
                         suggestedDate: ApplicationSupport.parseDate(storyXml.suggestedDate.text()),
-                        acceptedDate: acceptedDate,
-                        estimatedDate: estimatedDate,
-                        plannedDate: plannedDate,
-                        inProgressDate: inProgressDate,
-                        doneDate: doneDate,
+                        acceptedDate: ApplicationSupport.parseDate(storyXml.acceptedDate.text()),
+                        estimatedDate: ApplicationSupport.parseDate(storyXml.estimatedDate.text()),
+                        plannedDate: ApplicationSupport.parseDate(storyXml.plannedDate.text()),
+                        inProgressDate: ApplicationSupport.parseDate(storyXml.inProgressDate.text()),
+                        doneDate: ApplicationSupport.parseDate(storyXml.doneDate.text()),
                         origin: storyXml.origin.text() ?: null,
                         effort: storyXml.effort.text().isEmpty() ? null : storyXml.effort.text().toBigDecimal(),
                         rank: storyXml.rank.text().toInteger(),
@@ -720,39 +694,26 @@ class StoryService extends IceScrumEventPublisher {
                         name: storyXml."${'name'}".text(),
                         description: storyXml.description.text() ?: null,
                         notes: storyXml.notes.text() ?: null,
-                        todoDate: todoDate,
-                        uid: storyXml.@uid.text()?.isEmpty() ? storyXml.@id.text().toInteger() : storyXml.@uid.text().toInteger(),
+                        todoDate: ApplicationSupport.parseDate(storyXml.todoDate.text()),
+                        uid: storyXml.@uid.text().toInteger(),
                 )
                 // References on other objects
                 if (project) {
-                    if (!storyXml.feature?.@uid?.isEmpty() && project) {
-                        def feature = project.features.find {
+                    if (!storyXml.feature.@uid.isEmpty() && project) {
+                        Feature feature = project.features.find {
                             it.uid == storyXml.feature.@uid.text().toInteger()
-                        } ?: null
-                        if (feature) {
-                            feature.addToStories(story)
                         }
-                    } else if (!storyXml.feature?.@id?.isEmpty() && project) {
-                        def feature = project.features.find {
-                            it.uid == storyXml.feature.@id.text().toInteger()
-                        } ?: null
                         if (feature) {
                             feature.addToStories(story)
                         }
                     }
-                    if (!storyXml.actor?.@uid?.isEmpty() && project) {
-                        def actor = project.actors.find { it.uid == storyXml.actor.@uid.text().toInteger() } ?: null
-                        if (actor) {
-                            actor.addToStories(story)
-                        }
-                    } else if (!storyXml.actor?.@id?.isEmpty() && project) {
-                        def actor = project.actors.find { it.uid == storyXml.actor.@id.text().toInteger() } ?: null
+                    if (!storyXml.actor.@uid.isEmpty() && project) {
+                        Actor actor = project.actors.find { it.uid == storyXml.actor.@uid.text().toInteger() }
                         if (actor) {
                             actor.addToStories(story)
                         }
                     }
-                    def user = ((User) project.getAllUsers().find { it.uid == storyXml.creator.@uid.text() }) ?: null
-                    story.creator = user ?: (User) project.productOwners.first()
+                    story.creator = project.getAllUsers().find { it.uid == storyXml.creator.@uid.text() } ?: project.productOwners.first()
                     project.addToStories(story)
                 }
                 if (sprint) {
@@ -762,8 +723,8 @@ class StoryService extends IceScrumEventPublisher {
                 if (options.save) {
                     story.save()
                     //Handle dependsOn
-                    if (project && !storyXml.dependsOn?.@uid?.isEmpty()) {
-                        def dependsOn = Story.findByBacklogAndUid(project, storyXml.dependsOn.@uid.text().toInteger())
+                    if (project && !storyXml.dependsOn.@uid.isEmpty()) {
+                        Story dependsOn = Story.findByBacklogAndUid(project, storyXml.dependsOn.@uid.text().toInteger())
                         if (dependsOn) {
                             story.dependsOn = dependsOn
                             story.save()
@@ -777,16 +738,16 @@ class StoryService extends IceScrumEventPublisher {
                     if (project) {
                         storyXml.comments.comment.each { _commentXml ->
                             def uid = options.IDUIDUserMatch?."${_commentXml.posterId.text().toInteger()}" ?: null
-                            User user = (User) project.getAllUsers().find { it.uid == uid } ?: (User) springSecurityService.currentUser
+                            User user = project.getAllUsers().find { it.uid == uid } ?: (User) springSecurityService.currentUser
                             ApplicationSupport.importComment(story, user, _commentXml.body.text(), ApplicationSupport.parseDate(_commentXml.dateCreated.text()))
                         }
                         storyXml.attachments.attachment.each { _attachmentXml ->
                             def uid = options.IDUIDUserMatch?."${_attachmentXml.posterId.text().toInteger()}" ?: null
-                            User user = (User) project.getAllUsers().find { it.uid == uid } ?: (User) springSecurityService.currentUser
+                            User user = project.getAllUsers().find { it.uid == uid } ?: (User) springSecurityService.currentUser
                             ApplicationSupport.importAttachment(story, user, options.path, _attachmentXml)
                         }
                         storyXml.followers.user.each { _userXml ->
-                            User user = (User) project.getAllUsers().find { it.uid == _userXml.@uid.text() } ?: (User) springSecurityService.currentUser
+                            User user = project.getAllUsers().find { it.uid == _userXml.@uid.text() } ?: (User) springSecurityService.currentUser
                             story.addToFollowers(user)
                         }
                     }

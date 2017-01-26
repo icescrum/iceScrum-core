@@ -163,22 +163,16 @@ class FeatureService extends IceScrumEventPublisher {
         Project project = options.project
         Feature.withTransaction(readOnly: !options.save) { transaction ->
             try {
-                def todoDate = null
-                if (featureXml.todoDate?.text() && featureXml.todoDate?.text() != "") {
-                    todoDate = ApplicationSupport.parseDate(featureXml.todoDate.text())
-                } else if (project) {
-                    todoDate = project.todoDate
-                }
                 def feature = new Feature(
                         name: featureXml."${'name'}".text(),
                         description: featureXml.description.text(),
                         notes: featureXml.notes.text(),
                         color: featureXml.color.text(),
-                        todoDate: todoDate,
-                        value: featureXml.value.text()?.toInteger() ?: null,
+                        todoDate: ApplicationSupport.parseDate(featureXml.todoDate.text()),
+                        value: featureXml.value.text().isEmpty() ? null : featureXml.value.text().toInteger(),
                         type: featureXml.type.text().toInteger(),
-                        rank: featureXml.rank.text()?.toInteger(),
-                        uid: featureXml.@uid.text()?.isEmpty() ? featureXml.@id.text().toInteger() : featureXml.@uid.text().toInteger()
+                        rank: featureXml.rank.text().toInteger(),
+                        uid: featureXml.@uid.text().toInteger()
                 )
                 // References on other objects
                 if (project) {
@@ -193,7 +187,7 @@ class FeatureService extends IceScrumEventPublisher {
                     }
                     featureXml.attachments.attachment.each { _attachmentXml ->
                         def uid = options.IDUIDUserMatch?."${_attachmentXml.posterId.text().toInteger()}" ?: null
-                        User user = (User) project.getAllUsers().find { it.uid == uid } ?: (User) springSecurityService.currentUser
+                        User user = project.getAllUsers().find { it.uid == uid } ?: (User) springSecurityService.currentUser
                         ApplicationSupport.importAttachment(feature, user, options.path, _attachmentXml)
                     }
                 }

@@ -287,6 +287,9 @@ class ApplicationSupport {
     }
 
     public static Date parseDate(String date) {
+        if (!date) {
+            return null
+        }
         try {
             return new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(date)
         } catch (Exception e) {

@@ -158,28 +158,27 @@ class TeamService extends IceScrumEventPublisher {
                         description: teamXml.description.text() ?: null,
                         uid: teamXml.@uid.text() ?: (teamXml."${'name'}".text()).encodeAsMD5()
                 )
-                team.owner = (!teamXml.owner.user.@uid.isEmpty()) ? ((User) User.findByUid(teamXml.owner.user.@uid.text())) ?: null : null
+                team.owner = teamXml.owner.user.@uid.isEmpty() ? null : (User) User.findByUid(teamXml.owner.user.@uid.text())
                 def userService = (UserService) grailsApplication.mainContext.getBean('userService')
-                teamXml.members.user.eachWithIndex { user, index ->
-                    User u = userService.unMarshall(user, options)
+                teamXml.members.user.eachWithIndex { userXml, index ->
+                    User u = userService.unMarshall(userXml, options)
                     if (!u.id) {
                         existingTeam = false
                     }
                     if (project) {
-                        def uu = (User) team.members.find { it.uid == u.uid } ?: null
+                        User uu = team.members.find { it.uid == u.uid }
                         uu ? team.addToMembers(uu) : team.addToMembers(u)
                     } else {
                         team.addToMembers(u)
                     }
                     if (options.IDUIDUserMatch != null) {
-                        options.IDUIDUserMatch."${u.id ?: user.id.text().toInteger()}" = u.uid
+                        options.IDUIDUserMatch."${u.id ?: userXml.id.text().toInteger()}" = u.uid
                     }
                 }
                 def scrumMastersList = []
                 def sm = teamXml.scrumMasters.user
                 sm.eachWithIndex { user, index ->
-                    def u = ((User) team.members.find { it.uid == user.@uid.text() }) ?: null
-                    scrumMastersList << u
+                    scrumMastersList << team.members.find { it.uid == user.@uid.text() }
                 }
                 team.scrumMasters = scrumMastersList
                 if (existingTeam) {
@@ -188,7 +187,7 @@ class TeamService extends IceScrumEventPublisher {
                         if (dbTeam.members.size() != team.members.size()) existingTeam = false
                         if (existingTeam) {
                             for (member in dbTeam.members) {
-                                def u = team.members.find { member.uid == it.uid }
+                                User u = team.members.find { member.uid == it.uid }
                                 if (!u) {
                                     existingTeam = false
                                     break

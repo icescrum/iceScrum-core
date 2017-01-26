@@ -26,6 +26,7 @@ package org.icescrum.core.services
 import grails.util.GrailsNameUtils
 import org.hibernate.proxy.HibernateProxyHelper
 import org.icescrum.core.domain.Activity
+import org.icescrum.core.domain.Project
 import org.icescrum.core.domain.User
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
@@ -60,7 +61,7 @@ class ActivityService extends IceScrumEventPublisher {
 
     def unMarshall(def activityXml, def options) {
         def parent = options.parent
-        def project = options.project
+        Project project = options.project
         Activity.withTransaction(readOnly: !options.save) { transaction ->
             try {
                 def activity = new Activity(
@@ -74,8 +75,7 @@ class ActivityService extends IceScrumEventPublisher {
                 )
                 // References to object
                 if (project) {
-                    def u = ((User) project.getAllUsers().find { it.uid == activityXml.poster.@uid.text() }) ?: null
-                    activity.poster = (User) (u ?: project.productOwners.first())
+                    activity.poster = project.getAllUsers().find { it.uid == activityXml.poster.@uid.text() } ?: project.productOwners.first()
                 }
                 if (parent) {
                     activity.parentRef = parent.id

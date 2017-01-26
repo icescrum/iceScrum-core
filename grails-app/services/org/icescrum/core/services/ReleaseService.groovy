@@ -223,35 +223,19 @@ class ReleaseService extends IceScrumEventPublisher {
         Project project = options.project
         Release.withTransaction(readOnly: !options.save) { transaction ->
             try {
-                def inProgressDate = null
-                if (releaseXml.inProgressDate?.text() && releaseXml.inProgressDate?.text() != "") {
-                    inProgressDate = ApplicationSupport.parseDate(releaseXml.inProgressDate.text())
-                }
-                def doneDate = null
-                if (releaseXml.doneDate?.text() && releaseXml.doneDate?.text() != "") {
-                    doneDate = ApplicationSupport.parseDate(releaseXml.doneDate.text())
-                }
-                def todoDate = null
-                if (releaseXml.todoDate?.text() && releaseXml.todoDate?.text() != "") {
-                    todoDate = ApplicationSupport.parseDate(releaseXml.todoDate.text())
-                } else if (releaseXml.dateCreated?.text() && releaseXml.dateCreated?.text() != "") {
-                    todoDate = ApplicationSupport.parseDate(releaseXml.dateCreated.text())
-                } else if (project) {
-                    todoDate = project.todoDate
-                }
                 def release = new Release(
                         state: releaseXml.state.text().toInteger(),
                         name: releaseXml.name.text(),
-                        todoDate: todoDate,
+                        todoDate: ApplicationSupport.parseDate(releaseXml.todoDate.text()),
                         startDate: ApplicationSupport.parseDate(releaseXml.startDate.text()),
-                        doneDate: doneDate,
-                        inProgressDate: inProgressDate,
+                        doneDate: ApplicationSupport.parseDate(releaseXml.doneDate.text()),
+                        inProgressDate: ApplicationSupport.parseDate(releaseXml.inProgressDate.text()),
                         endDate: ApplicationSupport.parseDate(releaseXml.endDate.text()),
                         orderNumber: releaseXml.orderNumber.text().toInteger(),
                         firstSprintIndex: releaseXml.firstSprintIndex.text() ? releaseXml.firstSprintIndex.toInteger() : 1,
                         description: releaseXml.description.text() ?: null,
                         vision: releaseXml.vision.text() ?: null,
-                        goal: releaseXml.goal?.text() ?: null)
+                        goal: releaseXml.goal.text() ?: null)
                 options.release = release
                 if (project) {
                     project.addToReleases(release)
@@ -264,7 +248,7 @@ class ReleaseService extends IceScrumEventPublisher {
                         sprintService.unMarshall(it, options)
                     }
                     releaseXml.features.feature.each { feature ->
-                        def f = project.features.find { it.uid == feature.@uid.text().toInteger() } ?: null
+                        Feature f = project.features.find { it.uid == feature.@uid.text().toInteger() }
                         if (f) {
                             release.addToFeatures(f)
                         }
@@ -276,7 +260,7 @@ class ReleaseService extends IceScrumEventPublisher {
                     if (project) {
                         releaseXml.attachments.attachment.each { _attachmentXml ->
                             def uid = options.IDUIDUserMatch?."${_attachmentXml.posterId.text().toInteger()}" ?: null
-                            User user = (User) project.getAllUsers().find { it.uid == uid } ?: (User) springSecurityService.currentUser
+                            User user = project.getAllUsers().find { it.uid == uid } ?: (User) springSecurityService.currentUser
                             ApplicationSupport.importAttachment(release, user, options.path, _attachmentXml)
                         }
                     }
