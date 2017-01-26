@@ -224,7 +224,7 @@ class Feature extends BacklogElement implements Serializable {
             builder.notes { builder.mkp.yieldUnescaped("<![CDATA[${this.notes ?: ''}]]>") }
             builder.description { builder.mkp.yieldUnescaped("<![CDATA[${this.description ?: ''}]]>") }
             builder.stories() {
-                this.stories.each { _story ->
+                this.stories.sort { it.uid }.each { _story ->
                     story(uid: _story.uid)
                 }
             }

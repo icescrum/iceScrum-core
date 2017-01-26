@@ -336,11 +336,11 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
                 }
             }
             builder.stories() {
-                this.stories
-                        .sort { a, b -> return a.dependences.contains(b) ? 1 : 0 }
-                        .each { _story ->
-                            _story.xml(builder)
-                        }
+                this.stories .sort {
+                    it.rank
+                }.each { _story ->
+                    _story.xml(builder)
+                }
             }
             builder.tasks() {
                 this.tasks.findAll { it.parentStory == null }.each { _task ->
@@ -348,7 +348,9 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
                 }
             }
             builder.cliches() {
-                this.cliches.each { _cliche ->
+                this.cliches.sort { a, b ->
+                    a.type <=> b.type ?: a.datePrise <=> b.datePrise
+                }.each { _cliche ->
                     _cliche.xml(builder)
                 }
             }
