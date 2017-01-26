@@ -357,13 +357,22 @@ class Project extends TimeBox implements Serializable, Attachmentable {
                     _feature.xml(builder)
                 }
             }
+            builder.actors() {
+                this.actors.each { _actor ->
+                    _actor.xml(builder)
+                }
+            }
             builder.stories() {
-                //to preserve groupby & sort order and be able to insert dependsOn on the import flow..
-                this.stories.findAll { it.parentSprint == null }
-                        .sort { a, b -> return a.dependences.contains(b) ? 1 : 0 }
-                        .each { _story ->
-                            _story.xml(builder)
-                        }
+                // To preserve groupby & sort order and be able to insert dependsOn on the import flow..
+                this.stories.findAll {
+                    it.parentSprint == null
+                }.sort { a, b ->
+                    def stateA = a.state == Story.STATE_ESTIMATED ? Story.STATE_ACCEPTED : a.state
+                    def stateB = b.state == Story.STATE_ESTIMATED ? Story.STATE_ACCEPTED : b.state
+                    return stateB <=> stateA ?: a.rank <=> b.rank
+                }.each { _story ->
+                    _story.xml(builder)
+                }
             }
             builder.releases() {
                 this.releases.each { _release ->
@@ -376,7 +385,9 @@ class Project extends TimeBox implements Serializable, Attachmentable {
                 }
             }
             builder.cliches() {
-                this.cliches.each { _cliche ->
+                this.cliches.sort { a, b ->
+                    a.type <=> b.type ?: a.datePrise <=> b.datePrise
+                }.each { _cliche ->
                     _cliche.xml(builder)
                 }
             }
