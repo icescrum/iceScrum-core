@@ -457,6 +457,8 @@ class ProjectService extends IceScrumEventPublisher {
                     }
                 }
 
+                createDefaultBacklogs(project)
+
                 if (options.save) {
                     project.save()
                 }
