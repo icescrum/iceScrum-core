@@ -248,7 +248,9 @@ class Release extends TimeBox implements Cloneable, Attachmentable {
                 }
             }
             builder.cliches() {
-                this.cliches.each { _cliche ->
+                this.cliches.sort { a, b ->
+                    a.type <=> b.type ?: a.datePrise <=> b.datePrise
+                }.each { _cliche ->
                     _cliche.xml(builder)
                 }
             }
