@@ -377,7 +377,7 @@ class Product extends TimeBox implements Serializable, Attachmentable {
                 }
             }
             builder.actors() {
-                this.actors.each { _actor ->
+                this.actors.sort { it.uid }.each { _actor ->
                     _actor.xml(builder)
                 }
             }
