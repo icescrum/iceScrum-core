@@ -156,7 +156,12 @@ class DummyService {
         // Plan Stories
         storiesBySprint.each { sprintIndex, stories ->
             Sprint sprint = release1.sprints[sprintIndex]
-            stories.each { Story story ->
+            stories.eachWithIndex { Story story, storyIndex ->
+                story.sameBacklogStories.findAll { it.rank > story.rank }.each {
+                    it.rank--
+                    it.save()
+                }
+                story.rank = storyIndex + 1
                 sprint.addToStories(story)
                 story.parentSprint = sprint
                 story.plannedDate = startDate + 2
