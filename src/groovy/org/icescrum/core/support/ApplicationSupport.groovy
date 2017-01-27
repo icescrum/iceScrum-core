@@ -41,6 +41,7 @@ import grails.util.Metadata
 import org.apache.commons.logging.LogFactory
 import org.icescrum.core.domain.Product
 import org.icescrum.core.domain.User
+import org.icescrum.plugins.attachmentable.domain.Attachment
 
 import java.security.MessageDigest
 import java.util.zip.ZipOutputStream
@@ -303,6 +304,22 @@ class ApplicationSupport {
             builder.parentRef(parentRef) // R6 -> v7
             builder.parentType(parentType) // R6 -> v7
 //            exportDomainsPlugins(builder)
+        }
+    }
+
+    // V7
+    public static xmlAttachment(builder, Attachment attachment) {
+        builder.attachment(id:attachment.id){
+            builder.ext(attachment.ext?:'')
+            builder.length(attachment.length)
+            builder.posterId(attachment.posterId)
+            builder.posterClass(attachment.posterClass)
+            builder.dateCreated(attachment.dateCreated)
+            builder.url { builder.mkp.yieldUnescaped("<![CDATA[${attachment.url?:''}]]>") }
+            builder.name { builder.mkp.yieldUnescaped("<![CDATA[${attachment.name}]]>") }
+            builder.provider { builder.mkp.yieldUnescaped("<![CDATA[${attachment.provider?:''}]]>") }
+            builder.inputName { builder.mkp.yieldUnescaped("<![CDATA[${attachment.inputName}]]>") }
+            builder.contentType { builder.mkp.yieldUnescaped("<![CDATA[${attachment.contentType?:''}]]>") }
         }
     }
 

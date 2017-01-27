@@ -27,6 +27,7 @@ package org.icescrum.core.domain
 
 import org.icescrum.core.event.IceScrumReleaseEvent
 import org.icescrum.core.event.IceScrumEvent
+import org.icescrum.core.support.ApplicationSupport
 import org.icescrum.plugins.attachmentable.interfaces.Attachmentable
 import org.springframework.security.core.context.SecurityContextHolder as SCH
 
@@ -244,7 +245,7 @@ class Release extends TimeBox implements Cloneable, Attachmentable {
             }
             builder.attachments() {
                 this.attachments.each { _att ->
-                    _att.xml(builder)
+                    ApplicationSupport.xmlAttachment(builder, _att) // R6 -> v7
                 }
             }
             builder.cliches() {

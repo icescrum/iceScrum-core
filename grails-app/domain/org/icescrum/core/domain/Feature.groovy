@@ -222,7 +222,7 @@ class Feature extends BacklogElement implements Serializable {
             }
             builder.attachments() {
                 this.attachments.each { _att ->
-                    _att.xml(builder)
+                    ApplicationSupport.xmlAttachment(builder, _att) // R6 -> v7
                 }
             }
             exportDomainsPlugins(builder)

@@ -400,7 +400,7 @@ class Product extends TimeBox implements Serializable, Attachmentable {
             }
             builder.attachments() {
                 this.attachments.each { _att ->
-                    _att.xml(builder)
+                    ApplicationSupport.xmlAttachment(builder, _att) // R6 -> v7
                 }
             }
             builder.cliches() {
