@@ -172,9 +172,6 @@ class IcescrumCoreGrailsPlugin {
     def doWithSpring = {
         mergeConfig(application)
 
-        // V7
-        application.config?.icescrum?.export = [:]
-
         if (application.config.springcache.configLocation){
             springcacheCacheManager(EhCacheManagerFactoryBean) {
                 shared = false
