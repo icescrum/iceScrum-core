@@ -254,7 +254,7 @@ class Project extends TimeBox implements Serializable, Attachmentable {
 
     List<User> getProductOwners() {
         //Only used when project is being imported
-        if (this.productOwners) {
+        if (this.productOwners != null) {
             this.productOwners
         } else if (this.id) {
             def acl = retrieveAclProject()
@@ -270,7 +270,7 @@ class Project extends TimeBox implements Serializable, Attachmentable {
     }
 
     List<User> getStakeHolders() {
-        if (this.stakeHolders) {
+        if (this.stakeHolders != null) {
             this.stakeHolders // Used only when the project is being imported
         } else if (this.id) {
             def acl = retrieveAclProject()
