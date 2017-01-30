@@ -224,10 +224,10 @@ class ApplicationSupport {
         def timer = new Timer()
         def oneHour = CheckerTimerTask.minutesToMilliseconds(60)
         // CheckForUpdate
-        def intervalCheckVersion = CheckerTimerTask.minutesToMilliseconds(config.icescrum.check.interval ?: 360)
+        def intervalCheckVersion = CheckerTimerTask.minutesToMilliseconds(config.icescrum.check.interval)
         timer.scheduleAtFixedRate(new CheckerTimerTask(timer, intervalCheckVersion), oneHour, intervalCheckVersion)
         // ReportUsage
-        def intervalReport = CheckerTimerTask.minutesToMilliseconds(config.icescrum.report.interval ?: 360)
+        def intervalReport = CheckerTimerTask.minutesToMilliseconds(config.icescrum.report.interval)
         timer.scheduleAtFixedRate(new ReportUsageTimerTask(timer, intervalReport), 6 * oneHour, intervalReport)
     }
 
@@ -633,12 +633,18 @@ class ApplicationSupport {
     }
 }
 
+abstract class IsTimerTask extends TimerTask {
 
-class CheckerTimerTask extends TimerTask {
+    protected static final log = LogFactory.getLog(this)
+    protected Timer timer
+    protected int interval
 
-    private static final log = LogFactory.getLog(this)
-    private Timer timer
-    private int interval
+    public static minutesToMilliseconds(int minutes) {
+        return minutes * 60000
+    }
+}
+
+class CheckerTimerTask extends IsTimerTask {
 
     CheckerTimerTask(Timer timer, int interval) {
         this.timer = timer
@@ -651,22 +657,20 @@ class CheckerTimerTask extends TimerTask {
         if (!config.enable || !Holders.grailsApplication.config.icescrum.setupCompleted) {
             return
         }
-        def configInterval = minutesToMilliseconds(config.interval ?: 1440)
+        def configInterval = minutesToMilliseconds(config.interval)
         def serverID = Holders.grailsApplication.config.icescrum.appID
         def referer = Holders.grailsApplication.config.icescrum.serverURL
         def environment = Holders.grailsApplication.config.icescrum.environment
         try {
             def headers = ['User-Agent': 'iceScrum-Agent/1.0', 'Referer': referer, 'Content-Type': 'application/json', 'Accept': 'application/json']
-            def params = ['http.connection.timeout': config.timeout ?: 5000, 'http.socket.timeout': config.timeout ?: 5000]
+            def params = ['http.connection.timeout': config.timeout, 'http.socket.timeout': config.timeout]
             def url = config.url + "/" + config.path
-
             def data = [
                     server_id  : serverID,
                     environment: environment,
                     version    : Metadata.current['app.version'].split("\\s+")[0],
                     pro        : (Metadata.current['app.version']).contains('Pro'),
             ] as JSON
-
             def resp = ApplicationSupport.postJSON(url, null, null, data, headers, params)
             if (resp.status == 200) {
                 if (!resp.data.up_to_date) {
@@ -684,7 +688,7 @@ class CheckerTimerTask extends TimerTask {
                 }
             }
             if (interval != configInterval) {
-                //Back to normal delay
+                // Back to normal delay
                 this.cancel()
                 timer.scheduleAtFixedRate(new CheckerTimerTask(timer, configInterval), configInterval, configInterval)
                 if (log.debugEnabled) {
@@ -693,7 +697,7 @@ class CheckerTimerTask extends TimerTask {
             }
         } catch (ex) {
             if (interval == configInterval) {
-                //Setup new timer with a long delay
+                // Setup new timer with a long delay
                 if (log.debugEnabled) {
                     log.debug('Automatic check for update error - new timer delay')
                     log.debug(ex.message)
@@ -704,17 +708,9 @@ class CheckerTimerTask extends TimerTask {
             }
         }
     }
-
-    public static minutesToMilliseconds(int minutes) {
-        return minutes * 60000
-    }
 }
 
-class ReportUsageTimerTask extends TimerTask {
-
-    private static final log = LogFactory.getLog(this)
-    private Timer timer
-    private int interval
+class ReportUsageTimerTask extends IsTimerTask {
 
     ReportUsageTimerTask(Timer timer, int interval) {
         this.timer = timer
@@ -724,18 +720,18 @@ class ReportUsageTimerTask extends TimerTask {
     @Override
     void run() {
         def config = Holders.grailsApplication.config.icescrum.reportUsage
-        def configInterval = minutesToMilliseconds(config.interval ?: 1440)
+        if (!config.enable) {
+            return
+        }
+        def configInterval = minutesToMilliseconds(config.interval)
         def serverID = Holders.grailsApplication.config.icescrum.appID
         def referer = Holders.grailsApplication.config.icescrum.serverURL
         def environment = Holders.grailsApplication.config.icescrum.environment
         try {
-            if (!config.enable) {
-                return
-            }
             def headers = ['User-Agent': 'iceScrum-Agent/1.0', 'Referer': referer, 'Content-Type': 'application/json', 'Accept': 'application/json']
-            def params = ['http.connection.timeout': config.timeout ?: 5000, 'http.socket.timeout': config.timeout ?: 5000]
+            def params = ['http.connection.timeout': config.timeout, 'http.socket.timeout': config.timeout]
             def url = config.url + "/" + config.path
-            JSON data = null
+            Map data
             User.withNewSession {
                 data = [
                         users   : User.count(),
@@ -794,16 +790,16 @@ class ReportUsageTimerTask extends TimerTask {
                 }
             }
             if (interval != configInterval) {
-                //Back to normal delay
+                // Back to normal delay
                 this.cancel()
-                timer.scheduleAtFixedRate(new CheckerTimerTask(timer, configInterval), configInterval, configInterval)
+                timer.scheduleAtFixedRate(new ReportUsageTimerTask(timer, configInterval), configInterval, configInterval)
                 if (log.debugEnabled) {
                     log.debug('Automatic report usage - back to normal delay')
                 }
             }
         } catch (ex) {
             if (interval == configInterval) {
-                //Setup new timer with a long delay
+                // Setup new timer with a long delay
                 if (log.debugEnabled) {
                     log.debug('Automatic report usage error - new timer delay')
                     log.debug(ex.message)
@@ -813,9 +809,5 @@ class ReportUsageTimerTask extends TimerTask {
                 timer.scheduleAtFixedRate(new ReportUsageTimerTask(timer, longInterval), longInterval, longInterval)
             }
         }
-    }
-
-    public static minutesToMilliseconds(int minutes) {
-        return minutes * 60000
     }
 }
