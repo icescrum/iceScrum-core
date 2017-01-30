@@ -222,12 +222,13 @@ class ApplicationSupport {
 
     static public checkForUpdateAndReportUsage = { def config ->
         def timer = new Timer()
+        def oneHour = CheckerTimerTask.minutesToMilliseconds(60)
         // CheckForUpdate
-        def interval = CheckerTimerTask.computeInterval(config.icescrum.check.interval ?: 360)
-        timer.scheduleAtFixedRate(new CheckerTimerTask(timer, interval), 60000 * 60, interval)
-        // ReportUsage at least 6hours after first launch?
-        def intervalReport = CheckerTimerTask.computeInterval(config.icescrum.report.interval ?: 360)
-        timer.scheduleAtFixedRate(new ReportUsageTimerTask(timer, intervalReport), 60000 * 60 * 6, intervalReport)
+        def intervalCheckVersion = CheckerTimerTask.minutesToMilliseconds(config.icescrum.check.interval ?: 360)
+        timer.scheduleAtFixedRate(new CheckerTimerTask(timer, intervalCheckVersion), oneHour, intervalCheckVersion)
+        // ReportUsage
+        def intervalReport = CheckerTimerTask.minutesToMilliseconds(config.icescrum.report.interval ?: 360)
+        timer.scheduleAtFixedRate(new ReportUsageTimerTask(timer, intervalReport), 6 * oneHour, intervalReport)
     }
 
     static public createUUID = {
@@ -647,10 +648,10 @@ class CheckerTimerTask extends TimerTask {
     @Override
     void run() {
         def config = Holders.grailsApplication.config.icescrum.check
-        if (config.enable || !Holders.grailsApplication.config.icescrum.setupCompleted) {
+        if (!config.enable || !Holders.grailsApplication.config.icescrum.setupCompleted) {
             return
         }
-        def configInterval = computeInterval(config.interval ?: 1440)
+        def configInterval = minutesToMilliseconds(config.interval ?: 1440)
         def serverID = Holders.grailsApplication.config.icescrum.appID
         def referer = Holders.grailsApplication.config.icescrum.serverURL
         def environment = Holders.grailsApplication.config.icescrum.environment
@@ -698,14 +699,14 @@ class CheckerTimerTask extends TimerTask {
                     log.debug(ex.message)
                 }
                 this.cancel()
-                def longInterval = configInterval >= 1440 ? configInterval * 2 : computeInterval(1440)
+                def longInterval = configInterval >= 1440 ? configInterval * 2 : minutesToMilliseconds(1440)
                 timer.scheduleAtFixedRate(new CheckerTimerTask(timer, longInterval), longInterval, longInterval)
             }
         }
     }
 
-    public static computeInterval(int interval) {
-        return 1000 * 60 * interval
+    public static minutesToMilliseconds(int minutes) {
+        return minutes * 60000
     }
 }
 
@@ -723,7 +724,7 @@ class ReportUsageTimerTask extends TimerTask {
     @Override
     void run() {
         def config = Holders.grailsApplication.config.icescrum.reportUsage
-        def configInterval = computeInterval(config.interval ?: 1440)
+        def configInterval = minutesToMilliseconds(config.interval ?: 1440)
         def serverID = Holders.grailsApplication.config.icescrum.appID
         def referer = Holders.grailsApplication.config.icescrum.serverURL
         def environment = Holders.grailsApplication.config.icescrum.environment
@@ -808,13 +809,13 @@ class ReportUsageTimerTask extends TimerTask {
                     log.debug(ex.message)
                 }
                 this.cancel()
-                def longInterval = configInterval >= 1440 ? configInterval * 2 : computeInterval(1440)
+                def longInterval = configInterval >= 1440 ? configInterval * 2 : minutesToMilliseconds(1440)
                 timer.scheduleAtFixedRate(new ReportUsageTimerTask(timer, longInterval), longInterval, longInterval)
             }
         }
     }
 
-    public static computeInterval(int interval) {
-        return 1000 * 60 * interval
+    public static minutesToMilliseconds(int minutes) {
+        return minutes * 60000
     }
 }
