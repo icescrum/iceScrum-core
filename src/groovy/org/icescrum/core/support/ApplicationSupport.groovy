@@ -761,7 +761,7 @@ class ReportUsageTimerTask extends IsTimerTask {
                                              [state         : sprint.state,
                                               capacity      : sprint.capacity,
                                               velocity      : sprint.velocity,
-                                              retrospective : !sprint.retrospective.isEmpty(),
+                                              retrospective : !sprint.retrospective?.isEmpty(),
                                               duration      : sprint.duration,
                                               tasks         : sprint.tasks.size(),
                                               stories       : sprint.stories.size(),
@@ -769,11 +769,11 @@ class ReportUsageTimerTask extends IsTimerTask {
                                               recurrentTasks: sprint.recurrentTasks.size()]
                                          },
                                          state   : release.state,
-                                         vision  : !release.vision.isEmpty(),
+                                         vision  : !release.vision?.isEmpty(),
                                          duration: release.duration]
                              }]
                         },
-                        plugins     : [],
+                        plugins     : [:],
                         server_id   : serverID,
                         environment : environment,
                         java_version: System.getProperty("java.version"),
@@ -803,6 +803,7 @@ class ReportUsageTimerTask extends IsTimerTask {
                 if (log.debugEnabled) {
                     log.debug('Automatic report usage error - new timer delay')
                     log.debug(ex.message)
+                    ex.printStackTrace()
                 }
                 this.cancel()
                 def longInterval = configInterval >= 1440 ? configInterval * 2 : minutesToMilliseconds(1440)
