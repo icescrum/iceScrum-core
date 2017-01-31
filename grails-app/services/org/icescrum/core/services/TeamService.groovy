@@ -152,7 +152,16 @@ class TeamService extends IceScrumEventPublisher {
         Team.withTransaction(readOnly: !options.save) { transaction ->
             try {
                 def existingTeam = true
-                User owner = User.findByUid(teamXml.owner.user.@uid.text())
+                def userService = (UserService) grailsApplication.mainContext.getBean('userService')
+                def ownerXml = teamXml.owner.user
+                User owner = User.findByUid(ownerXml.@uid.text())
+                if (!owner) {
+                    existingTeam = false
+                    owner = userService.unMarshall(ownerXml, options)
+                    if (options.IDUIDUserMatch != null) {
+                        options.IDUIDUserMatch."${owner.id ?: ownerXml.id.text().toInteger()}" = owner.uid
+                    }
+                }
                 def team = new Team(
                         name: teamXml."${'name'}".text(),
                         velocity: (teamXml.velocity.text().isNumber()) ? teamXml.velocity.text().toInteger() : 0,
@@ -160,7 +169,6 @@ class TeamService extends IceScrumEventPublisher {
                         uid: teamXml.@uid.text() ?: (teamXml."${'name'}".text()).encodeAsMD5()
                 )
                 team.owner = owner
-                def userService = (UserService) grailsApplication.mainContext.getBean('userService')
                 teamXml.members.user.eachWithIndex { userXml, index ->
                     User u = userService.unMarshall(userXml, options)
                     if (!u.id) {
