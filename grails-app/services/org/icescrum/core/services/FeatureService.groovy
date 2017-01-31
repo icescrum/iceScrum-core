@@ -186,7 +186,7 @@ class FeatureService extends IceScrumEventPublisher {
                         feature.tags = featureXml.tags.text().replaceAll(' ', '').replace('[', '').replace(']', '').split(',')
                     }
                     featureXml.attachments.attachment.each { _attachmentXml ->
-                        def uid = options.IDUIDUserMatch?."${_attachmentXml.posterId.text().toInteger()}" ?: null
+                        def uid = options.userUIDByImportedID?."${_attachmentXml.posterId.text().toInteger()}" ?: null
                         User user = project.getUserByUidOrOwner(uid)
                         ApplicationSupport.importAttachment(feature, user, options.path, _attachmentXml)
                     }

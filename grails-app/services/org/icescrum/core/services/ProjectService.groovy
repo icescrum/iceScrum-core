@@ -306,7 +306,7 @@ class ProjectService extends IceScrumEventPublisher {
                         timezone: projectXml.preferences.timezone.text() ?: grailsApplication.config.icescrum.timezone.default)
 
                 options.project = project
-                options.IDUIDUserMatch = [:]
+                options.userUIDByImportedID = [:]
 
                 def saveMode = options.save
                 options.save = false
@@ -326,7 +326,7 @@ class ProjectService extends IceScrumEventPublisher {
                     if (!user) {
                         user = userService.unMarshall(userXml, options)
                     }
-                    options.IDUIDUserMatch."${user.id ?: userXml.id.text().toInteger()}" = user.uid
+                    options.userUIDByImportedID[userXml.id.text()] = user.uid
                     return user
                 }
                 project.productOwners = projectXml.productOwners.user.collect(getUser)
@@ -382,7 +382,7 @@ class ProjectService extends IceScrumEventPublisher {
                     project.save()
 
                     projectXml.attachments.attachment.each { _attachmentXml ->
-                        def uid = options.IDUIDUserMatch?."${_attachmentXml.posterId.text().toInteger()}" ?: null
+                        def uid = options.userUIDByImportedID?."${_attachmentXml.posterId.text().toInteger()}" ?: null
                         User user = project.getUserByUidOrOwner(uid)
                         ApplicationSupport.importAttachment(project, user, options.path, _attachmentXml)
                     }

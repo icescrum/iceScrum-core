@@ -159,8 +159,8 @@ class TeamService extends IceScrumEventPublisher {
                     teamAlreadyExists = false
                     owner = userService.unMarshall(ownerXml, options)
                 }
-                if (options.IDUIDUserMatch != null) {
-                    options.IDUIDUserMatch."${owner.id ?: ownerXml.id.text().toInteger()}" = owner.uid
+                if (options.userUIDByImportedID != null) {
+                    options.userUIDByImportedID[ownerXml.id.text()] = owner.uid
                 }
                 def team = new Team(
                         name: teamXml."${'name'}".text(),
@@ -176,8 +176,8 @@ class TeamService extends IceScrumEventPublisher {
                         user = userService.unMarshall(userXml, options)
                     }
                     team.addToMembers(user)
-                    if (options.IDUIDUserMatch != null) {
-                        options.IDUIDUserMatch."${user.id ?: userXml.id.text().toInteger()}" = user.uid
+                    if (options.userUIDByImportedID != null) {
+                        options.userUIDByImportedID[userXml.id.text()] = user.uid
                     }
                 }
                 team.scrumMasters = teamXml.scrumMasters.user.collect { userXml ->
