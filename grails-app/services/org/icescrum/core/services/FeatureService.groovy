@@ -187,7 +187,7 @@ class FeatureService extends IceScrumEventPublisher {
                     }
                     featureXml.attachments.attachment.each { _attachmentXml ->
                         def uid = options.IDUIDUserMatch?."${_attachmentXml.posterId.text().toInteger()}" ?: null
-                        User user = project.getAllUsers().find { it.uid == uid } ?: (User) springSecurityService.currentUser
+                        User user = project.getUserByUidOrOwner(uid)
                         ApplicationSupport.importAttachment(feature, user, options.path, _attachmentXml)
                     }
                 }

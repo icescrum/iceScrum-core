@@ -676,6 +676,7 @@ class StoryService extends IceScrumEventPublisher {
         Sprint sprint = options.sprint
         Story.withTransaction(readOnly: !options.save) { transaction ->
             try {
+                User creator = project ? project.getUserByUidOrOwner(storyXml.creator.@uid.text()) : null
                 def story = new Story(
                         type: storyXml.type.text().toInteger(),
                         suggestedDate: ApplicationSupport.parseDate(storyXml.suggestedDate.text()),
@@ -713,7 +714,7 @@ class StoryService extends IceScrumEventPublisher {
                             actor.addToStories(story)
                         }
                     }
-                    story.creator = project.getAllUsers().find { it.uid == storyXml.creator.@uid.text() } ?: project.productOwners.first()
+                    story.creator = creator
                     project.addToStories(story)
                 }
                 if (sprint) {
@@ -738,17 +739,19 @@ class StoryService extends IceScrumEventPublisher {
                     if (project) {
                         storyXml.comments.comment.each { _commentXml ->
                             def uid = options.IDUIDUserMatch?."${_commentXml.posterId.text().toInteger()}" ?: null
-                            User user = project.getAllUsers().find { it.uid == uid } ?: (User) springSecurityService.currentUser
+                            User user = project.getUserByUidOrOwner(uid)
                             ApplicationSupport.importComment(story, user, _commentXml.body.text(), ApplicationSupport.parseDate(_commentXml.dateCreated.text()))
                         }
                         storyXml.attachments.attachment.each { _attachmentXml ->
                             def uid = options.IDUIDUserMatch?."${_attachmentXml.posterId.text().toInteger()}" ?: null
-                            User user = project.getAllUsers().find { it.uid == uid } ?: (User) springSecurityService.currentUser
+                            User user = project.getUserByUidOrOwner(uid)
                             ApplicationSupport.importAttachment(story, user, options.path, _attachmentXml)
                         }
                         storyXml.followers.user.each { _userXml ->
-                            User user = project.getAllUsers().find { it.uid == _userXml.@uid.text() } ?: (User) springSecurityService.currentUser
-                            story.addToFollowers(user)
+                            User user = User.findByUid(_userXml.@uid.text())
+                            if (user) {
+                                story.addToFollowers(user)
+                            }
                         }
                     }
                 }

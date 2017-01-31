@@ -34,7 +34,6 @@ import org.springframework.security.access.prepost.PreAuthorize
 @Transactional
 class AcceptanceTestService extends IceScrumEventPublisher {
 
-    def springSecurityService
     def grailsApplication
 
     @PreAuthorize('inProject(#parentStory.backlog) and !archivedProject(#parentStory.backlog)')
@@ -70,6 +69,7 @@ class AcceptanceTestService extends IceScrumEventPublisher {
         Story story = options.story
         AcceptanceTest.withTransaction(readOnly: !options.save) { transaction ->
             try {
+                User creator = project ? project.getUserByUidOrOwner(acceptanceTestXml.creator.@uid.text()) : null
                 def acceptanceTest = new AcceptanceTest(
                         name: acceptanceTestXml."${'name'}".text(),
                         description: acceptanceTestXml.description.text() ?: null,
@@ -78,7 +78,7 @@ class AcceptanceTestService extends IceScrumEventPublisher {
                 )
                 // References on other objects
                 if (project) {
-                    acceptanceTest.creator = project.getAllUsers().find { it.uid == acceptanceTestXml.creator.@uid.text() } ?: project.productOwners.first()
+                    acceptanceTest.creator = creator
                 }
                 if (story) {
                     story.addToAcceptanceTests(acceptanceTest)

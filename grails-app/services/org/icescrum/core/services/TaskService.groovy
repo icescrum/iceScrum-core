@@ -342,6 +342,8 @@ class TaskService extends IceScrumEventPublisher {
         Story story = options.story
         Task.withTransaction(readOnly: options.save) { transaction ->
             try {
+                User creator = project ? project.getUserByUidOrOwner(taskXml.creator.@uid.text()) : null
+                User responsible = project && !taskXml.responsible.@uid.isEmpty() ? project.getUserByUidOrOwner(taskXml.responsible.@uid.text()) : null
                 def task = new Task(
                         type: (taskXml.type.text().isNumber()) ? taskXml.type.text().toInteger() : null,
                         description: taskXml.description.text() ?: null,
@@ -358,10 +360,10 @@ class TaskService extends IceScrumEventPublisher {
                         uid: taskXml.@uid.text().toInteger(),
                         color: taskXml.color.text())
                 if (project) {
-                    task.creator = project.getAllUsers().find { it.uid == taskXml.creator.@uid.text() } ?: project.productOwners.first()
+                    task.creator = creator
                     project.addToTasks(task)
-                    if (!taskXml.responsible.@uid.isEmpty() && project) {
-                        task.responsible = project.getAllUsers().find { it.uid == taskXml.responsible.@uid.text() } ?: task.creator
+                    if (responsible) {
+                        task.responsible = responsible
                     }
                 }
                 if (sprint) {
@@ -380,12 +382,12 @@ class TaskService extends IceScrumEventPublisher {
                     if (project) {
                         taskXml.comments.comment.each { _commentXml ->
                             def uid = options.IDUIDUserMatch?."${_commentXml.posterId.text().toInteger()}" ?: null
-                            User user = project.getAllUsers().find { it.uid == uid } ?: (User) springSecurityService.currentUser
+                            User user = project.getUserByUidOrOwner(uid)
                             ApplicationSupport.importComment(task, user, _commentXml.body.text(), ApplicationSupport.parseDate(_commentXml.dateCreated.text()))
                         }
                         taskXml.attachments.attachment.each { _attachmentXml ->
                             def uid = options.IDUIDUserMatch?."${_attachmentXml.posterId.text().toInteger()}" ?: null
-                            User user = project.getAllUsers().find { it.uid == uid } ?: (User) springSecurityService.currentUser
+                            User user = project.getUserByUidOrOwner(uid)
                             ApplicationSupport.importAttachment(task, user, options.path, _attachmentXml)
                         }
                     }

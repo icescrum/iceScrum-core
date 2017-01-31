@@ -289,6 +289,10 @@ class Project extends TimeBox implements Serializable, Attachmentable {
         return (id && firstTeam) ? firstTeam.owner : null
     }
 
+    User getUserByUidOrOwner(String uid) {
+        return getAllUsers().find { it.uid == uid } ?: owner
+    }
+
     List<Invitation> getInvitedStakeHolders() {
         return Invitation.findAllByTypeAndProjectAndFutureRole(InvitationType.PROJECT, this, Authority.STAKEHOLDER)
     }

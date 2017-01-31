@@ -260,7 +260,7 @@ class ReleaseService extends IceScrumEventPublisher {
                     if (project) {
                         releaseXml.attachments.attachment.each { _attachmentXml ->
                             def uid = options.IDUIDUserMatch?."${_attachmentXml.posterId.text().toInteger()}" ?: null
-                            User user = project.getAllUsers().find { it.uid == uid } ?: (User) springSecurityService.currentUser
+                            User user = project.getUserByUidOrOwner(uid)
                             ApplicationSupport.importAttachment(release, user, options.path, _attachmentXml)
                         }
                     }

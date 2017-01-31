@@ -406,7 +406,7 @@ class SprintService extends IceScrumEventPublisher {
                     if (project) {
                         sprintXml.attachments.attachment.each { _attachmentXml ->
                             def uid = options.IDUIDUserMatch?."${_attachmentXml.posterId.text().toInteger()}" ?: null
-                            User user = project.getAllUsers().find { it.uid == uid } ?: (User) springSecurityService.currentUser
+                            User user = project.getUserByUidOrOwner(uid)
                             ApplicationSupport.importAttachment(sprint, user, options.path, _attachmentXml)
                         }
                     }

@@ -64,6 +64,7 @@ class ActivityService extends IceScrumEventPublisher {
         Project project = options.project
         Activity.withTransaction(readOnly: !options.save) { transaction ->
             try {
+                User poster = project ? project.getUserByUidOrOwner(activityXml.poster.@uid.text()) : null
                 def activity = new Activity(
                         code: activityXml.code.text(),
                         label: activityXml.label.text(),
@@ -75,7 +76,7 @@ class ActivityService extends IceScrumEventPublisher {
                 )
                 // References to object
                 if (project) {
-                    activity.poster = project.getAllUsers().find { it.uid == activityXml.poster.@uid.text() } ?: project.productOwners.first()
+                    activity.poster = poster
                 }
                 if (parent) {
                     activity.parentRef = parent.id
