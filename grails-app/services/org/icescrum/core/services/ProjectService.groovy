@@ -392,6 +392,10 @@ class ProjectService extends IceScrumEventPublisher {
                         user = User.get(user.id)
                         securityService.createProductOwnerPermissions(user, project)
                     }
+                    project.stakeHolders?.each { user ->
+                        user = User.get(user.id)
+                        securityService.createStakeHolderPermissions(user, project)
+                    }
                     securityService.changeOwner(project.owner, project)
                 }
 
