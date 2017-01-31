@@ -290,7 +290,7 @@ class Project extends TimeBox implements Serializable, Attachmentable {
     }
 
     User getUserByUidOrOwner(String uid) {
-        return getAllUsers().find { it.uid == uid } ?: owner
+        return User.findByUid(uid) ?: owner
     }
 
     List<Invitation> getInvitedStakeHolders() {
