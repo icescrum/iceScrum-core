@@ -371,6 +371,13 @@ class Product extends TimeBox implements Serializable, Attachmentable {
                     _user.xml(builder)
                 }
             }
+            if (preferences.hidden) {
+                builder.stakeHolders() {
+                    this.stakeHolders.each { _user ->
+                        _user.xml(builder)
+                    }
+                }
+            }
             builder.features() {
                 this.features.each { _feature ->
                     _feature.xml(builder)
