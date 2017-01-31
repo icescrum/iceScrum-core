@@ -91,7 +91,7 @@ class TeamService extends IceScrumEventPublisher {
         team.members.each { user ->
             user.save()
         }
-        team.scrumMasters.each { user ->
+        team.scrumMasters?.each { user ->
             user.save()
         }
         if (!team.save()) {
@@ -108,19 +108,11 @@ class TeamService extends IceScrumEventPublisher {
                 addMember(team, member)
             }
         }
-        if (scrumMasters) {
-            scrumMasters.eachWithIndex { it, index ->
-                if (!it.isAttached()) {
-                    it = it.merge()
-                }
-                addScrumMaster(team, it)
+        scrumMasters?.each { scrumMaster ->
+            if (!scrumMaster.isAttached()) {
+                scrumMaster = scrumMaster.merge()
             }
-        } else {
-            def user = User.get(springSecurityService.principal.id)
-            if (!user.isAttached()) {
-                user = user.merge()
-            }
-            addScrumMaster(team, user)
+            addScrumMaster(team, scrumMaster)
         }
     }
 

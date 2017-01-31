@@ -310,8 +310,8 @@ class ProjectService extends IceScrumEventPublisher {
 
                 def saveMode = options.save
                 options.save = false
-                projectXml.teams.team.eachWithIndex { it, index ->
-                    teamService.unMarshall(it, options)
+                projectXml.teams.team.each { team ->
+                    teamService.unMarshall(team, options)
                 }
                 options.save = saveMode
 
@@ -388,13 +388,8 @@ class ProjectService extends IceScrumEventPublisher {
                     }
 
                     securityService.secureDomain(project)
-                    if (project.productOwners) {
-                        project.productOwners?.eachWithIndex { user, index ->
-                            user = User.get(user.id)
-                            securityService.createProductOwnerPermissions(user, project)
-                        }
-                    } else {
-                        def user = User.get(springSecurityService.principal.id)
+                    project.productOwners?.each { user ->
+                        user = User.get(user.id)
                         securityService.createProductOwnerPermissions(user, project)
                     }
                     securityService.changeOwner(project.owner, project)
@@ -431,8 +426,8 @@ class ProjectService extends IceScrumEventPublisher {
                 }
 
                 def releaseService = (ReleaseService) grailsApplication.mainContext.getBean('releaseService')
-                projectXml.releases.release.eachWithIndex { it, index ->
-                    releaseService.unMarshall(it, options)
+                projectXml.releases.release.each { release ->
+                    releaseService.unMarshall(release, options)
                 }
                 // Ensure rank for stories in each sprint
                 project.releases.each { Release release ->
@@ -503,7 +498,7 @@ class ProjectService extends IceScrumEventPublisher {
         def changes = [:]
         try {
             Project.withNewSession {
-                project.teams.eachWithIndex { team, index ->
+                project.teams.each { team ->
                     team.validate()
                     if (team.errors.errorCount == 1) {
                         changes.team = [:]
@@ -521,7 +516,7 @@ class ProjectService extends IceScrumEventPublisher {
                         }
                         throw new RuntimeException()
                     }
-                    team.members.eachWithIndex { member, index2 ->
+                    team.members.each { member ->
                         member.validate()
                         if (member.errors.errorCount == 1) {
                             changes.users = changes.users ?: [:]
@@ -541,7 +536,7 @@ class ProjectService extends IceScrumEventPublisher {
                         }
                     }
                 }
-                project.productOwners?.eachWithIndex { productOwner, index ->
+                project.productOwners?.each { productOwner ->
                     productOwner.validate()
                     if (productOwner.errors.errorCount == 1) {
                         changes.users = changes.users ?: [:]
