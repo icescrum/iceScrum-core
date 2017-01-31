@@ -188,10 +188,10 @@ class Team implements Serializable, Comparable {
 
 
     def getScrumMasters() {
-        def aclUtilService = (AclUtilService) Holders.grailsApplication.mainContext.getBean('aclUtilService');
         if (this.scrumMasters != null) {
             this.scrumMasters
         } else if (this.id) {
+            def aclUtilService = (AclUtilService) Holders.grailsApplication.mainContext.getBean('aclUtilService');
             def acl = aclUtilService.readAcl(this.getClass(), this.id)
             def users = acl.entries.findAll { it.permission in SecurityService.scrumMasterPermissions }*.sid*.principal;
             if (users) {

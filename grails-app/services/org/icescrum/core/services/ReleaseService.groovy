@@ -244,8 +244,8 @@ class ReleaseService extends IceScrumEventPublisher {
                         release.save()
                     }
                     def sprintService = (SprintService) grailsApplication.mainContext.getBean('sprintService')
-                    releaseXml.sprints.sprint.eachWithIndex { it, index ->
-                        sprintService.unMarshall(it, options)
+                    releaseXml.sprints.sprint.each { sprint ->
+                        sprintService.unMarshall(sprint, options)
                     }
                     releaseXml.features.feature.each { feature ->
                         Feature f = project.features.find { it.uid == feature.@uid.text().toInteger() }
