@@ -320,20 +320,19 @@ class ProjectService extends IceScrumEventPublisher {
                     project.erasableByUser = true
                 }
 
-                def productOwnersList = []
-                projectXml.productOwners.user.eachWithIndex { productOwner, index ->
-                    User user = project.getAllUsers().find { it.uid == productOwner.@uid.text() }
+                def userService = (UserService) grailsApplication.mainContext.getBean('userService')
+                def getUser = { userXml ->
+                    User user = User.findByUid(userXml.@uid.text())
                     if (!user) {
-                        user = User.findByUsernameAndEmail(productOwner.username.text(), productOwner.email.text())
-                        if (!user) {
-                            def userService = (UserService) grailsApplication.mainContext.getBean('userService')
-                            user = userService.unMarshall(productOwner, options)
-                        }
+                        user = userService.unMarshall(userXml, options)
                     }
-                    options.IDUIDUserMatch."${user.id ?: productOwner.id.text().toInteger()}" = user.uid
-                    productOwnersList << user
+                    options.IDUIDUserMatch."${user.id ?: userXml.id.text().toInteger()}" = user.uid
+                    return user
                 }
-                project.productOwners = productOwnersList
+                project.productOwners = projectXml.productOwners.user.collect(getUser)
+                if (project.preferences.hidden) {
+                    project.stakeHolders = projectXml.stakeHolders.user.collect(getUser)
+                }
 
                 def erase = options.changes?.erase ? true : false
                 if (options.changes) {

@@ -151,16 +151,16 @@ class TeamService extends IceScrumEventPublisher {
         Project project = options.project
         Team.withTransaction(readOnly: !options.save) { transaction ->
             try {
-                def existingTeam = true
+                def teamAlreadyExists = true
                 def userService = (UserService) grailsApplication.mainContext.getBean('userService')
                 def ownerXml = teamXml.owner.user
                 User owner = User.findByUid(ownerXml.@uid.text())
                 if (!owner) {
-                    existingTeam = false
+                    teamAlreadyExists = false
                     owner = userService.unMarshall(ownerXml, options)
-                    if (options.IDUIDUserMatch != null) {
-                        options.IDUIDUserMatch."${owner.id ?: ownerXml.id.text().toInteger()}" = owner.uid
-                    }
+                }
+                if (options.IDUIDUserMatch != null) {
+                    options.IDUIDUserMatch."${owner.id ?: ownerXml.id.text().toInteger()}" = owner.uid
                 }
                 def team = new Team(
                         name: teamXml."${'name'}".text(),
@@ -169,40 +169,27 @@ class TeamService extends IceScrumEventPublisher {
                         uid: teamXml.@uid.text() ?: (teamXml."${'name'}".text()).encodeAsMD5()
                 )
                 team.owner = owner
-                teamXml.members.user.eachWithIndex { userXml, index ->
-                    User u = userService.unMarshall(userXml, options)
-                    if (!u.id) {
-                        existingTeam = false
+                teamXml.members.user.each { userXml ->
+                    User user = User.findByUid(userXml.@uid.text())
+                    if (!user) {
+                        teamAlreadyExists = false
+                        user = userService.unMarshall(userXml, options)
                     }
-                    if (project) {
-                        User uu = team.members.find { it.uid == u.uid }
-                        uu ? team.addToMembers(uu) : team.addToMembers(u)
-                    } else {
-                        team.addToMembers(u)
-                    }
+                    team.addToMembers(user)
                     if (options.IDUIDUserMatch != null) {
-                        options.IDUIDUserMatch."${u.id ?: userXml.id.text().toInteger()}" = u.uid
+                        options.IDUIDUserMatch."${user.id ?: userXml.id.text().toInteger()}" = user.uid
                     }
                 }
-                def scrumMastersList = []
-                def sm = teamXml.scrumMasters.user
-                sm.eachWithIndex { user, index ->
-                    scrumMastersList << team.members.find { it.uid == user.@uid.text() }
+                team.scrumMasters = teamXml.scrumMasters.user.collect { userXml ->
+                    return team.members.find { it.uid == userXml.@uid.text() }
                 }
-                team.scrumMasters = scrumMastersList
-                if (existingTeam) {
+                if (teamAlreadyExists) {
                     Team dbTeam = Team.findByName(team.name)
-                    if (dbTeam) {
-                        if (dbTeam.members.size() != team.members.size()) existingTeam = false
-                        if (existingTeam) {
-                            for (member in dbTeam.members) {
-                                User u = team.members.find { member.uid == it.uid }
-                                if (!u) {
-                                    existingTeam = false
-                                    break
-                                }
-                            }
-                        }
+                    teamAlreadyExists = (dbTeam &&
+                                         dbTeam.owner.uid == team.owner.uid &&
+                                         dbTeam.members.size() == team.members.size() &&
+                                         dbTeam.members.every { dbMember -> return team.members.find { teamMember -> teamMember.uid == dbMember.uid } })
+                    if (teamAlreadyExists) {
                         team = dbTeam
                     }
                 }
@@ -210,7 +197,7 @@ class TeamService extends IceScrumEventPublisher {
                 if (project) {
                     project.addToTeams(team)
                 }
-                if (!existingTeam && options.save) {
+                if (!teamAlreadyExists && options.save) {
                     saveImport(team)
                 }
                 return (Team) importDomainsPlugins(teamXml, team, options)
