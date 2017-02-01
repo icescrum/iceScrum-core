@@ -191,36 +191,31 @@ class UserService extends IceScrumEventPublisher {
 
     User unMarshall(def userXml, def options) {
         User.withTransaction(readOnly: !options.save) { transaction ->
-            try {
-                User user = new User(
-                        lastName: userXml.lastName.text(),
-                        firstName: userXml.firstName.text(),
-                        username: userXml.username.text(),
-                        email: userXml.email.text(),
-                        password: userXml.password.text(),
-                        enabled: userXml.enabled.text().toBoolean() ?: true,
-                        accountExpired: userXml.accountExpired.text().toBoolean() ?: false,
-                        accountLocked: userXml.accountLocked.text().toBoolean() ?: false,
-                        passwordExpired: userXml.passwordExpired.text().toBoolean() ?: false,
-                        accountExternal: userXml.accountExternal.text().toBoolean() ?: false,
-                        uid: userXml.@uid.text() ?: (userXml.username.text() + userXml.email.text()).encodeAsMD5()
-                )
-                user.preferences = new UserPreferences(
-                        language: userXml.preferences.language.text(),
-                        activity: userXml.preferences.activity.text(),
-                        filterTask: userXml.preferences.filterTask.text(),
-                        user: user,
-                        menu: userXml.preferences.menu.text() ?: [:],
-                        menuHidden: userXml.preferences.menuHidden.text() ?: [:]
-                )
-                if (options.save) {
-                    user.save()
-                }
-                return (User) importDomainsPlugins(userXml, user, options)
-            } catch (Exception e) {
-                if (log.debugEnabled) e.printStackTrace()
-                throw new RuntimeException(e)
+            User user = new User(
+                    lastName: userXml.lastName.text(),
+                    firstName: userXml.firstName.text(),
+                    username: userXml.username.text(),
+                    email: userXml.email.text(),
+                    password: userXml.password.text(),
+                    enabled: userXml.enabled.text().toBoolean() ?: true,
+                    accountExpired: userXml.accountExpired.text().toBoolean() ?: false,
+                    accountLocked: userXml.accountLocked.text().toBoolean() ?: false,
+                    passwordExpired: userXml.passwordExpired.text().toBoolean() ?: false,
+                    accountExternal: userXml.accountExternal.text().toBoolean() ?: false,
+                    uid: userXml.@uid.text() ?: (userXml.username.text() + userXml.email.text()).encodeAsMD5()
+            )
+            user.preferences = new UserPreferences(
+                    language: userXml.preferences.language.text(),
+                    activity: userXml.preferences.activity.text(),
+                    filterTask: userXml.preferences.filterTask.text(),
+                    user: user,
+                    menu: userXml.preferences.menu.text() ?: [:],
+                    menuHidden: userXml.preferences.menuHidden.text() ?: [:]
+            )
+            if (options.save) {
+                user.save()
             }
+            return (User) importDomainsPlugins(userXml, user, options)
         }
     }
 }

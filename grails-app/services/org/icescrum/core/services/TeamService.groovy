@@ -142,61 +142,56 @@ class TeamService extends IceScrumEventPublisher {
     def unMarshall(def teamXml, def options) {
         Project project = options.project
         Team.withTransaction(readOnly: !options.save) { transaction ->
-            try {
-                def teamAlreadyExists = true
-                def userService = (UserService) grailsApplication.mainContext.getBean('userService')
-                def ownerXml = teamXml.owner.user
-                User owner = User.findByUid(ownerXml.@uid.text())
-                if (!owner) {
-                    teamAlreadyExists = false
-                    owner = userService.unMarshall(ownerXml, options)
-                }
-                if (options.userUIDByImportedID != null) {
-                    options.userUIDByImportedID[ownerXml.id.text()] = owner.uid
-                }
-                def team = new Team(
-                        name: teamXml."${'name'}".text(),
-                        velocity: (teamXml.velocity.text().isNumber()) ? teamXml.velocity.text().toInteger() : 0,
-                        description: teamXml.description.text() ?: null,
-                        uid: teamXml.@uid.text() ?: (teamXml."${'name'}".text()).encodeAsMD5()
-                )
-                team.owner = owner
-                teamXml.members.user.each { userXml ->
-                    User user = User.findByUid(userXml.@uid.text())
-                    if (!user) {
-                        teamAlreadyExists = false
-                        user = userService.unMarshall(userXml, options)
-                    }
-                    team.addToMembers(user)
-                    if (options.userUIDByImportedID != null) {
-                        options.userUIDByImportedID[userXml.id.text()] = user.uid
-                    }
-                }
-                team.scrumMasters = teamXml.scrumMasters.user.collect { userXml ->
-                    return team.members.find { it.uid == userXml.@uid.text() }
-                }
-                if (teamAlreadyExists) {
-                    Team dbTeam = Team.findByName(team.name)
-                    teamAlreadyExists = (dbTeam &&
-                                         dbTeam.owner.uid == team.owner.uid &&
-                                         dbTeam.members.size() == team.members.size() &&
-                                         dbTeam.members.every { dbMember -> return team.members.find { teamMember -> teamMember.uid == dbMember.uid } })
-                    if (teamAlreadyExists) {
-                        team = dbTeam
-                    }
-                }
-                // Reference on other object
-                if (project) {
-                    project.addToTeams(team)
-                }
-                if (!teamAlreadyExists && options.save) {
-                    saveImport(team)
-                }
-                return (Team) importDomainsPlugins(teamXml, team, options)
-            } catch (Exception e) {
-                if (log.debugEnabled) e.printStackTrace()
-                throw new RuntimeException(e)
+            def teamAlreadyExists = true
+            def userService = (UserService) grailsApplication.mainContext.getBean('userService')
+            def ownerXml = teamXml.owner.user
+            User owner = User.findByUid(ownerXml.@uid.text())
+            if (!owner) {
+                teamAlreadyExists = false
+                owner = userService.unMarshall(ownerXml, options)
             }
+            if (options.userUIDByImportedID != null) {
+                options.userUIDByImportedID[ownerXml.id.text()] = owner.uid
+            }
+            def team = new Team(
+                    name: teamXml."${'name'}".text(),
+                    velocity: (teamXml.velocity.text().isNumber()) ? teamXml.velocity.text().toInteger() : 0,
+                    description: teamXml.description.text() ?: null,
+                    uid: teamXml.@uid.text() ?: (teamXml."${'name'}".text()).encodeAsMD5()
+            )
+            team.owner = owner
+            teamXml.members.user.each { userXml ->
+                User user = User.findByUid(userXml.@uid.text())
+                if (!user) {
+                    teamAlreadyExists = false
+                    user = userService.unMarshall(userXml, options)
+                }
+                team.addToMembers(user)
+                if (options.userUIDByImportedID != null) {
+                    options.userUIDByImportedID[userXml.id.text()] = user.uid
+                }
+            }
+            team.scrumMasters = teamXml.scrumMasters.user.collect { userXml ->
+                return team.members.find { it.uid == userXml.@uid.text() }
+            }
+            if (teamAlreadyExists) {
+                Team dbTeam = Team.findByName(team.name)
+                teamAlreadyExists = (dbTeam &&
+                                     dbTeam.owner.uid == team.owner.uid &&
+                                     dbTeam.members.size() == team.members.size() &&
+                                     dbTeam.members.every { dbMember -> return team.members.find { teamMember -> teamMember.uid == dbMember.uid } })
+                if (teamAlreadyExists) {
+                    team = dbTeam
+                }
+            }
+            // Reference on other object
+            if (project) {
+                project.addToTeams(team)
+            }
+            if (!teamAlreadyExists && options.save) {
+                saveImport(team)
+            }
+            return (Team) importDomainsPlugins(teamXml, team, options)
         }
     }
 }

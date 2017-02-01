@@ -275,200 +275,193 @@ class ProjectService extends IceScrumEventPublisher {
     @PreAuthorize('isAuthenticated()')
     Project unMarshall(def projectXml, def options) {
         Project.withTransaction(readOnly: !options.save) { transaction ->
-            try {
-                Project project = new Project(
-                        name: projectXml."${'name'}".text(),
-                        pkey: projectXml.pkey.text(),
-                        description: projectXml.description.text(),
-                        lastUpdated: ApplicationSupport.parseDate(projectXml.lastUpdated.text()),
-                        todoDate: ApplicationSupport.parseDate(projectXml.todoDate.text()),
-                        startDate: ApplicationSupport.parseDate(projectXml.startDate.text()),
-                        endDate: ApplicationSupport.parseDate(projectXml.endDate.text()),
-                        planningPokerGameType: projectXml.planningPokerGameType.text().toInteger())
+            Project project = new Project(
+                    name: projectXml."${'name'}".text(),
+                    pkey: projectXml.pkey.text(),
+                    description: projectXml.description.text(),
+                    lastUpdated: ApplicationSupport.parseDate(projectXml.lastUpdated.text()),
+                    todoDate: ApplicationSupport.parseDate(projectXml.todoDate.text()),
+                    startDate: ApplicationSupport.parseDate(projectXml.startDate.text()),
+                    endDate: ApplicationSupport.parseDate(projectXml.endDate.text()),
+                    planningPokerGameType: projectXml.planningPokerGameType.text().toInteger())
 
-                project.preferences = new ProjectPreferences(
-                        hidden: projectXml.preferences.hidden.text().toBoolean(),
-                        assignOnBeginTask: projectXml.preferences.assignOnBeginTask.text().toBoolean(),
-                        assignOnCreateTask: projectXml.preferences.assignOnCreateTask.text().toBoolean(),
-                        autoCreateTaskOnEmptyStory: projectXml.preferences.autoCreateTaskOnEmptyStory.text().toBoolean(),
-                        autoDoneStory: projectXml.preferences.autoDoneStory.text().toBoolean(),
-                        noEstimation: projectXml.preferences.noEstimation.text().toBoolean(),
-                        limitUrgentTasks: projectXml.preferences.limitUrgentTasks.text().toInteger(),
-                        estimatedSprintsDuration: projectXml.preferences.estimatedSprintsDuration.text().toInteger(),
-                        displayUrgentTasks: projectXml.preferences.displayUrgentTasks.text().toBoolean(),
-                        displayRecurrentTasks: projectXml.preferences.displayRecurrentTasks.text().toBoolean(),
-                        hideWeekend: projectXml.preferences.hideWeekend.text().toBoolean(),
-                        releasePlanningHour: projectXml.preferences.releasePlanningHour.text(),
-                        sprintPlanningHour: projectXml.preferences.sprintPlanningHour.text(),
-                        dailyMeetingHour: projectXml.preferences.dailyMeetingHour.text(),
-                        sprintReviewHour: projectXml.preferences.sprintReviewHour.text(),
-                        sprintRetrospectiveHour: projectXml.preferences.sprintRetrospectiveHour.text(),
-                        timezone: projectXml.preferences.timezone.text() ?: grailsApplication.config.icescrum.timezone.default)
+            project.preferences = new ProjectPreferences(
+                    hidden: projectXml.preferences.hidden.text().toBoolean(),
+                    assignOnBeginTask: projectXml.preferences.assignOnBeginTask.text().toBoolean(),
+                    assignOnCreateTask: projectXml.preferences.assignOnCreateTask.text().toBoolean(),
+                    autoCreateTaskOnEmptyStory: projectXml.preferences.autoCreateTaskOnEmptyStory.text().toBoolean(),
+                    autoDoneStory: projectXml.preferences.autoDoneStory.text().toBoolean(),
+                    noEstimation: projectXml.preferences.noEstimation.text().toBoolean(),
+                    limitUrgentTasks: projectXml.preferences.limitUrgentTasks.text().toInteger(),
+                    estimatedSprintsDuration: projectXml.preferences.estimatedSprintsDuration.text().toInteger(),
+                    displayUrgentTasks: projectXml.preferences.displayUrgentTasks.text().toBoolean(),
+                    displayRecurrentTasks: projectXml.preferences.displayRecurrentTasks.text().toBoolean(),
+                    hideWeekend: projectXml.preferences.hideWeekend.text().toBoolean(),
+                    releasePlanningHour: projectXml.preferences.releasePlanningHour.text(),
+                    sprintPlanningHour: projectXml.preferences.sprintPlanningHour.text(),
+                    dailyMeetingHour: projectXml.preferences.dailyMeetingHour.text(),
+                    sprintReviewHour: projectXml.preferences.sprintReviewHour.text(),
+                    sprintRetrospectiveHour: projectXml.preferences.sprintRetrospectiveHour.text(),
+                    timezone: projectXml.preferences.timezone.text() ?: grailsApplication.config.icescrum.timezone.default)
 
-                options.project = project
-                options.userUIDByImportedID = [:]
+            options.project = project
+            options.userUIDByImportedID = [:]
 
-                def saveMode = options.save
-                options.save = false
-                projectXml.teams.team.each { team ->
-                    teamService.unMarshall(team, options)
-                }
-                options.save = saveMode
-
-                Project pExist = (Project) Project.findByPkey(project.pkey)
-                if (pExist && securityService.productOwner(pExist, springSecurityService.authentication)) {
-                    project.erasableByUser = true
-                }
-
-                def userService = (UserService) grailsApplication.mainContext.getBean('userService')
-                def getUser = { userXml ->
-                    User user = User.findByUid(userXml.@uid.text())
-                    if (!user) {
-                        user = userService.unMarshall(userXml, options)
-                    }
-                    options.userUIDByImportedID[userXml.id.text()] = user.uid
-                    return user
-                }
-                project.productOwners = projectXml.productOwners.user.collect(getUser)
-                if (project.preferences.hidden) {
-                    project.stakeHolders = projectXml.stakeHolders.user.collect(getUser)
-                }
-
-                def erase = options.changes?.erase ? true : false
-                if (options.changes) {
-                    def team = project.teams[0]
-                    if (options.changes?.team?.name) {
-                        team.name = options.changes.team.name
-                    }
-                    if (options.changes?.users) {
-                        if (options.changes.users."${team.owner.uid}") {
-                            team.owner.username = options.changes.users."${it.uid}"
-                        }
-                        team.members?.each {
-                            if (options.changes.users."${it.uid}") {
-                                it.username = options.changes.users."${it.uid}"
-                            }
-                        }
-                        team.scrumMasters?.each {
-                            if (options.changes.users."${it.uid}") {
-                                it.username = options.changes.users."${it.uid}"
-                            }
-                        }
-                        project.productOwners?.each {
-                            if (options.changes.users."${it.uid}") {
-                                it.username = options.changes.users."${it.uid}"
-                            }
-                        }
-                    }
-                    project.pkey = !erase && options.changes?.project?.pkey != null ? options.changes.project.pkey : project.pkey
-                    project.name = !erase && options.changes?.project?.name != null ? options.changes.project.name : project.name
-                }
-                if (options.validate) {
-                    options.changesNeeded = validate(project, erase)
-                    if (options.changesNeeded) {
-                        return null
-                    }
-                }
-                // Save before some hibernate stuff
-                if (options.save) {
-                    if (erase && pExist) {
-                        delete(pExist)
-                    }
-                    project.teams.each { t ->
-                        if (t.id == null) {
-                            teamService.saveImport(t)
-                        }
-                    }
-                    project.save()
-
-                    projectXml.attachments.attachment.each { _attachmentXml ->
-                        def uid = options.userUIDByImportedID?."${_attachmentXml.posterId.text().toInteger()}" ?: null
-                        User user = project.getUserByUidOrOwner(uid)
-                        ApplicationSupport.importAttachment(project, user, options.path, _attachmentXml)
-                    }
-
-                    securityService.secureDomain(project)
-                    project.productOwners?.each { user ->
-                        user = User.get(user.id)
-                        securityService.createProductOwnerPermissions(user, project)
-                    }
-                    project.stakeHolders?.each { user ->
-                        user = User.get(user.id)
-                        securityService.createStakeHolderPermissions(user, project)
-                    }
-                    securityService.changeOwner(project.owner, project)
-                }
-
-                // Child objects
-                def featureService = (FeatureService) grailsApplication.mainContext.getBean('featureService')
-                projectXml.features.feature.each { it ->
-                    featureService.unMarshall(it, options)
-                }
-                projectXml.actors.actor.each { it ->
-                    actorService.unMarshall(it, options)
-                }
-                def storyService = (StoryService) grailsApplication.mainContext.getBean('storyService')
-                projectXml.stories.story.each { it ->
-                    storyService.unMarshall(it, options)
-                }
-                def activityService = (ActivityService) grailsApplication.mainContext.getBean('activityService')
-                options.parent = project
-                projectXml.activities.activity.each { it ->
-                    activityService.unMarshall(it, options)
-                }
-                options.parent = null
-
-                // Ensure rank for stories in backlog
-                def stories = project.stories.findAll {
-                    it.state == Story.STATE_ACCEPTED || it.state == Story.STATE_ESTIMATED
-                }.sort { a, b -> a.rank <=> b.rank }
-                stories.eachWithIndex { it, index ->
-                    it.rank = index + 1
-                    if (options.save) {
-                        it.save()
-                    }
-                }
-
-                def releaseService = (ReleaseService) grailsApplication.mainContext.getBean('releaseService')
-                projectXml.releases.release.each { release ->
-                    releaseService.unMarshall(release, options)
-                }
-                // Ensure rank for stories in each sprint
-                project.releases.each { Release release ->
-                    release.sprints.each { Sprint sprint ->
-                        // First ranks for planned and in progress stories
-                        stories = sprint.stories.findAll { Story story -> story.state == Story.STATE_PLANNED || story.state == Story.STATE_INPROGRESS }.sort { a, b -> a.rank <=> b.rank }
-                        stories.eachWithIndex { Story story, index ->
-                            story.rank = index + 1
-                            if (options.save) {
-                                story.save()
-                            }
-                        }
-                        // Lask ranks for done stories
-                        def maxRank = stories.size()
-                        stories = sprint.stories.findAll { Story story -> story.state == Story.STATE_DONE }.sort { a, b -> a.rank <=> b.rank }
-                        stories.each { Story story ->
-                            story.rank = ++maxRank
-                            if (options.save) {
-                                story.save()
-                            }
-                        }
-                    }
-                }
-
-                createDefaultBacklogs(project)
-
-                if (options.save) {
-                    project.save()
-                }
-                options.project = null
-                return (Project) importDomainsPlugins(projectXml, project, options)
-            } catch (Exception e) {
-                if (log.debugEnabled) {
-                    e.printStackTrace()
-                }
-                throw new RuntimeException(e)
+            def saveMode = options.save
+            options.save = false
+            projectXml.teams.team.each { team ->
+                teamService.unMarshall(team, options)
             }
+            options.save = saveMode
+
+            Project pExist = (Project) Project.findByPkey(project.pkey)
+            if (pExist && securityService.productOwner(pExist, springSecurityService.authentication)) {
+                project.erasableByUser = true
+            }
+
+            def userService = (UserService) grailsApplication.mainContext.getBean('userService')
+            def getUser = { userXml ->
+                User user = User.findByUid(userXml.@uid.text())
+                if (!user) {
+                    user = userService.unMarshall(userXml, options)
+                }
+                options.userUIDByImportedID[userXml.id.text()] = user.uid
+                return user
+            }
+            project.productOwners = projectXml.productOwners.user.collect(getUser)
+            if (project.preferences.hidden) {
+                project.stakeHolders = projectXml.stakeHolders.user.collect(getUser)
+            }
+
+            def erase = options.changes?.erase ? true : false
+            if (options.changes) {
+                def team = project.teams[0]
+                if (options.changes?.team?.name) {
+                    team.name = options.changes.team.name
+                }
+                if (options.changes?.users) {
+                    if (options.changes.users."${team.owner.uid}") {
+                        team.owner.username = options.changes.users."${it.uid}"
+                    }
+                    team.members?.each {
+                        if (options.changes.users."${it.uid}") {
+                            it.username = options.changes.users."${it.uid}"
+                        }
+                    }
+                    team.scrumMasters?.each {
+                        if (options.changes.users."${it.uid}") {
+                            it.username = options.changes.users."${it.uid}"
+                        }
+                    }
+                    project.productOwners?.each {
+                        if (options.changes.users."${it.uid}") {
+                            it.username = options.changes.users."${it.uid}"
+                        }
+                    }
+                }
+                project.pkey = !erase && options.changes?.project?.pkey != null ? options.changes.project.pkey : project.pkey
+                project.name = !erase && options.changes?.project?.name != null ? options.changes.project.name : project.name
+            }
+            if (options.validate) {
+                options.changesNeeded = validate(project, erase)
+                if (options.changesNeeded) {
+                    return null
+                }
+            }
+            // Save before some hibernate stuff
+            if (options.save) {
+                if (erase && pExist) {
+                    delete(pExist)
+                }
+                project.teams.each { t ->
+                    if (t.id == null) {
+                        teamService.saveImport(t)
+                    }
+                }
+                project.save()
+
+                projectXml.attachments.attachment.each { _attachmentXml ->
+                    def uid = options.userUIDByImportedID?."${_attachmentXml.posterId.text().toInteger()}" ?: null
+                    User user = project.getUserByUidOrOwner(uid)
+                    ApplicationSupport.importAttachment(project, user, options.path, _attachmentXml)
+                }
+
+                securityService.secureDomain(project)
+                project.productOwners?.each { user ->
+                    user = User.get(user.id)
+                    securityService.createProductOwnerPermissions(user, project)
+                }
+                project.stakeHolders?.each { user ->
+                    user = User.get(user.id)
+                    securityService.createStakeHolderPermissions(user, project)
+                }
+                securityService.changeOwner(project.owner, project)
+            }
+
+            // Child objects
+            def featureService = (FeatureService) grailsApplication.mainContext.getBean('featureService')
+            projectXml.features.feature.each { it ->
+                featureService.unMarshall(it, options)
+            }
+            projectXml.actors.actor.each { it ->
+                actorService.unMarshall(it, options)
+            }
+            def storyService = (StoryService) grailsApplication.mainContext.getBean('storyService')
+            projectXml.stories.story.each { it ->
+                storyService.unMarshall(it, options)
+            }
+            def activityService = (ActivityService) grailsApplication.mainContext.getBean('activityService')
+            options.parent = project
+            projectXml.activities.activity.each { it ->
+                activityService.unMarshall(it, options)
+            }
+            options.parent = null
+
+            // Ensure rank for stories in backlog
+            def stories = project.stories.findAll {
+                it.state == Story.STATE_ACCEPTED || it.state == Story.STATE_ESTIMATED
+            }.sort { a, b -> a.rank <=> b.rank }
+            stories.eachWithIndex { it, index ->
+                it.rank = index + 1
+                if (options.save) {
+                    it.save()
+                }
+            }
+
+            def releaseService = (ReleaseService) grailsApplication.mainContext.getBean('releaseService')
+            projectXml.releases.release.each { release ->
+                releaseService.unMarshall(release, options)
+            }
+            // Ensure rank for stories in each sprint
+            project.releases.each { Release release ->
+                release.sprints.each { Sprint sprint ->
+                    // First ranks for planned and in progress stories
+                    stories = sprint.stories.findAll { Story story -> story.state == Story.STATE_PLANNED || story.state == Story.STATE_INPROGRESS }.sort { a, b -> a.rank <=> b.rank }
+                    stories.eachWithIndex { Story story, index ->
+                        story.rank = index + 1
+                        if (options.save) {
+                            story.save()
+                        }
+                    }
+                    // Lask ranks for done stories
+                    def maxRank = stories.size()
+                    stories = sprint.stories.findAll { Story story -> story.state == Story.STATE_DONE }.sort { a, b -> a.rank <=> b.rank }
+                    stories.each { Story story ->
+                        story.rank = ++maxRank
+                        if (options.save) {
+                            story.save()
+                        }
+                    }
+                }
+            }
+
+            createDefaultBacklogs(project)
+
+            if (options.save) {
+                project.save()
+            }
+            options.project = null
+            return (Project) importDomainsPlugins(projectXml, project, options)
         }
     }
 
@@ -489,6 +482,7 @@ class ProjectService extends IceScrumEventPublisher {
                 if (log.debugEnabled) {
                     e.printStackTrace()
                 }
+                throw e
             }
             if (project?.id && options.save) {
                 project.save(flush: true)

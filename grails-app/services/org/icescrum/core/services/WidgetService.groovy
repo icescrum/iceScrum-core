@@ -163,26 +163,19 @@ class WidgetService {
     def unMarshall(def widgetXml, def options) {
         def user = options.user
         Widget.withTransaction(readOnly: !options.save) { transaction ->
-            try {
-                def widget = new Widget(
-                        position: widgetXml.position.toInteger(),
-                        onRight: widgetXml.onRight.toBoolean(),
-                        settingsData: widgetXml.settingsData.toText(),
-                        widgetDefinitionId: widgetXml.widgetDefinitionId.toText())
-                // Reference on other object
-                if (user?.userPreferences) {
-                    widget.userPreferences = userPreferences
-                }
-                if (options.save) {
-                    widget.save()
-                }
-                return (WidgetService) importDomainsPlugins(widgetXml, widget, options)
-            } catch (Exception e) {
-                if (log.debugEnabled) {
-                    e.printStackTrace()
-                }
-                throw new RuntimeException(e)
+            def widget = new Widget(
+                    position: widgetXml.position.toInteger(),
+                    onRight: widgetXml.onRight.toBoolean(),
+                    settingsData: widgetXml.settingsData.toText(),
+                    widgetDefinitionId: widgetXml.widgetDefinitionId.toText())
+            // Reference on other object
+            if (user?.userPreferences) {
+                widget.userPreferences = userPreferences
             }
+            if (options.save) {
+                widget.save()
+            }
+            return (WidgetService) importDomainsPlugins(widgetXml, widget, options)
         }
     }
 }

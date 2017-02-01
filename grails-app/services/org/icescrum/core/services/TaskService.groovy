@@ -341,73 +341,68 @@ class TaskService extends IceScrumEventPublisher {
         Sprint sprint = options.sprint
         Story story = options.story
         Task.withTransaction(readOnly: options.save) { transaction ->
-            try {
-                User creator = project ? project.getUserByUidOrOwner(taskXml.creator.@uid.text()) : null
-                User responsible = project && !taskXml.responsible.@uid.isEmpty() ? project.getUserByUidOrOwner(taskXml.responsible.@uid.text()) : null
-                def task = new Task(
-                        type: (taskXml.type.text().isNumber()) ? taskXml.type.text().toInteger() : null,
-                        description: taskXml.description.text() ?: null,
-                        notes: taskXml.notes.text() ?: null,
-                        estimation: (taskXml.estimation.text().isNumber()) ? taskXml.estimation.text().toFloat() : null,
-                        initial: (taskXml.initial.text().isNumber()) ? taskXml.initial.text().toFloat() : null,
-                        rank: taskXml.rank.text().toInteger(),
-                        name: taskXml."${'name'}".text(),
-                        todoDate: ApplicationSupport.parseDate(taskXml.todoDate.text()),
-                        inProgressDate: ApplicationSupport.parseDate(taskXml.inProgressDate.text()),
-                        doneDate: ApplicationSupport.parseDate(taskXml.doneDate.text()),
-                        state: taskXml.state.text().toInteger(),
-                        blocked: taskXml.blocked.text().toBoolean() ?: false,
-                        uid: taskXml.@uid.text().toInteger(),
-                        color: taskXml.color.text())
-                if (project) {
-                    task.creator = creator
-                    project.addToTasks(task)
-                    if (responsible) {
-                        task.responsible = responsible
-                    }
+            User creator = project ? project.getUserByUidOrOwner(taskXml.creator.@uid.text()) : null
+            User responsible = project && !taskXml.responsible.@uid.isEmpty() ? project.getUserByUidOrOwner(taskXml.responsible.@uid.text()) : null
+            def task = new Task(
+                    type: (taskXml.type.text().isNumber()) ? taskXml.type.text().toInteger() : null,
+                    description: taskXml.description.text() ?: null,
+                    notes: taskXml.notes.text() ?: null,
+                    estimation: (taskXml.estimation.text().isNumber()) ? taskXml.estimation.text().toFloat() : null,
+                    initial: (taskXml.initial.text().isNumber()) ? taskXml.initial.text().toFloat() : null,
+                    rank: taskXml.rank.text().toInteger(),
+                    name: taskXml."${'name'}".text(),
+                    todoDate: ApplicationSupport.parseDate(taskXml.todoDate.text()),
+                    inProgressDate: ApplicationSupport.parseDate(taskXml.inProgressDate.text()),
+                    doneDate: ApplicationSupport.parseDate(taskXml.doneDate.text()),
+                    state: taskXml.state.text().toInteger(),
+                    blocked: taskXml.blocked.text().toBoolean() ?: false,
+                    uid: taskXml.@uid.text().toInteger(),
+                    color: taskXml.color.text())
+            if (project) {
+                task.creator = creator
+                project.addToTasks(task)
+                if (responsible) {
+                    task.responsible = responsible
                 }
-                if (sprint) {
-                    sprint.addToTasks(task)
-                }
-                if (story) {
-                    story.addToTasks(task)
-                }
-                // Save before some hibernate stuff
-                if (options.save) {
-                    task.save()
-                    //Handle tags
-                    if (taskXml.tags.text()) {
-                        task.tags = taskXml.tags.text().replaceAll(' ', '').replace('[', '').replace(']', '').split(',')
-                    }
-                    if (project) {
-                        taskXml.comments.comment.each { _commentXml ->
-                            def uid = options.userUIDByImportedID?."${_commentXml.posterId.text().toInteger()}" ?: null
-                            User user = project.getUserByUidOrOwner(uid)
-                            ApplicationSupport.importComment(task, user, _commentXml.body.text(), ApplicationSupport.parseDate(_commentXml.dateCreated.text()))
-                        }
-                        taskXml.attachments.attachment.each { _attachmentXml ->
-                            def uid = options.userUIDByImportedID?."${_attachmentXml.posterId.text().toInteger()}" ?: null
-                            User user = project.getUserByUidOrOwner(uid)
-                            ApplicationSupport.importAttachment(task, user, options.path, _attachmentXml)
-                        }
-                    }
-                }
-                // Child objects
-                options.task = task
-                options.parent = task
-                taskXml.activities.activity.each { def activityXml ->
-                    activityService.unMarshall(activityXml, options)
-                }
-                options.parent = null
-                if (options.save) {
-                    task.save()
-                }
-                options.task = null
-                return (Task) importDomainsPlugins(taskXml, task, options)
-            } catch (Exception e) {
-                if (log.debugEnabled) e.printStackTrace()
-                throw new RuntimeException(e)
             }
+            if (sprint) {
+                sprint.addToTasks(task)
+            }
+            if (story) {
+                story.addToTasks(task)
+            }
+            // Save before some hibernate stuff
+            if (options.save) {
+                task.save()
+                //Handle tags
+                if (taskXml.tags.text()) {
+                    task.tags = taskXml.tags.text().replaceAll(' ', '').replace('[', '').replace(']', '').split(',')
+                }
+                if (project) {
+                    taskXml.comments.comment.each { _commentXml ->
+                        def uid = options.userUIDByImportedID?."${_commentXml.posterId.text().toInteger()}" ?: null
+                        User user = project.getUserByUidOrOwner(uid)
+                        ApplicationSupport.importComment(task, user, _commentXml.body.text(), ApplicationSupport.parseDate(_commentXml.dateCreated.text()))
+                    }
+                    taskXml.attachments.attachment.each { _attachmentXml ->
+                        def uid = options.userUIDByImportedID?."${_attachmentXml.posterId.text().toInteger()}" ?: null
+                        User user = project.getUserByUidOrOwner(uid)
+                        ApplicationSupport.importAttachment(task, user, options.path, _attachmentXml)
+                    }
+                }
+            }
+            // Child objects
+            options.task = task
+            options.parent = task
+            taskXml.activities.activity.each { def activityXml ->
+                activityService.unMarshall(activityXml, options)
+            }
+            options.parent = null
+            if (options.save) {
+                task.save()
+            }
+            options.task = null
+            return (Task) importDomainsPlugins(taskXml, task, options)
         }
     }
 }

@@ -72,22 +72,15 @@ class ActorService extends IceScrumEventPublisher {
     def unMarshall(def actorXml, def options) {
         Project project = options.project
         Actor.withTransaction(readOnly: !options.save) { transaction ->
-            try {
-                def actor = new Actor(name: actorXml."${'name'}".text(),
-                                      uid: actorXml.@uid.text().toInteger())
-                if (project) {
-                    project.addToActors(actor)
-                }
-                if (options.save) {
-                    actor.save()
-                }
-                return (Actor) importDomainsPlugins(actorXml, actor, options)
-            } catch (Exception e) {
-                if (log.debugEnabled) {
-                    e.printStackTrace()
-                }
-                throw new RuntimeException(e)
+            def actor = new Actor(name: actorXml."${'name'}".text(),
+                                  uid: actorXml.@uid.text().toInteger())
+            if (project) {
+                project.addToActors(actor)
             }
+            if (options.save) {
+                actor.save()
+            }
+            return (Actor) importDomainsPlugins(actorXml, actor, options)
         }
     }
 }

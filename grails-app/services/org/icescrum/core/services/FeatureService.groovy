@@ -162,51 +162,46 @@ class FeatureService extends IceScrumEventPublisher {
     def unMarshall(def featureXml, def options) {
         Project project = options.project
         Feature.withTransaction(readOnly: !options.save) { transaction ->
-            try {
-                def feature = new Feature(
-                        name: featureXml."${'name'}".text(),
-                        description: featureXml.description.text(),
-                        notes: featureXml.notes.text(),
-                        color: featureXml.color.text(),
-                        todoDate: ApplicationSupport.parseDate(featureXml.todoDate.text()),
-                        value: featureXml.value.text().isEmpty() ? null : featureXml.value.text().toInteger(),
-                        type: featureXml.type.text().toInteger(),
-                        rank: featureXml.rank.text().toInteger(),
-                        uid: featureXml.@uid.text().toInteger()
-                )
-                // References on other objects
-                if (project) {
-                    project.addToFeatures(feature)
-                }
-                // Save before some hibernate stuff
-                if (options.save) {
-                    feature.save()
-                    // Handle tags
-                    if (featureXml.tags.text()) {
-                        feature.tags = featureXml.tags.text().replaceAll(' ', '').replace('[', '').replace(']', '').split(',')
-                    }
-                    featureXml.attachments.attachment.each { _attachmentXml ->
-                        def uid = options.userUIDByImportedID?."${_attachmentXml.posterId.text().toInteger()}" ?: null
-                        User user = project.getUserByUidOrOwner(uid)
-                        ApplicationSupport.importAttachment(feature, user, options.path, _attachmentXml)
-                    }
-                }
-                // Child objects
-                options.feature = feature
-                options.parent = feature
-                featureXml.activities.activity.each { def activityXml ->
-                    activityService.unMarshall(activityXml, options)
-                }
-                options.parent = null
-                if (options.save) {
-                    feature.save()
-                }
-                options.feature = null
-                return (Feature) importDomainsPlugins(featureXml, feature, options)
-            } catch (Exception e) {
-                if (log.debugEnabled) e.printStackTrace()
-                throw new RuntimeException(e)
+            def feature = new Feature(
+                    name: featureXml."${'name'}".text(),
+                    description: featureXml.description.text(),
+                    notes: featureXml.notes.text(),
+                    color: featureXml.color.text(),
+                    todoDate: ApplicationSupport.parseDate(featureXml.todoDate.text()),
+                    value: featureXml.value.text().isEmpty() ? null : featureXml.value.text().toInteger(),
+                    type: featureXml.type.text().toInteger(),
+                    rank: featureXml.rank.text().toInteger(),
+                    uid: featureXml.@uid.text().toInteger()
+            )
+            // References on other objects
+            if (project) {
+                project.addToFeatures(feature)
             }
+            // Save before some hibernate stuff
+            if (options.save) {
+                feature.save()
+                // Handle tags
+                if (featureXml.tags.text()) {
+                    feature.tags = featureXml.tags.text().replaceAll(' ', '').replace('[', '').replace(']', '').split(',')
+                }
+                featureXml.attachments.attachment.each { _attachmentXml ->
+                    def uid = options.userUIDByImportedID?."${_attachmentXml.posterId.text().toInteger()}" ?: null
+                    User user = project.getUserByUidOrOwner(uid)
+                    ApplicationSupport.importAttachment(feature, user, options.path, _attachmentXml)
+                }
+            }
+            // Child objects
+            options.feature = feature
+            options.parent = feature
+            featureXml.activities.activity.each { def activityXml ->
+                activityService.unMarshall(activityXml, options)
+            }
+            options.parent = null
+            if (options.save) {
+                feature.save()
+            }
+            options.feature = null
+            return (Feature) importDomainsPlugins(featureXml, feature, options)
         }
     }
 }

@@ -359,64 +359,59 @@ class SprintService extends IceScrumEventPublisher {
         Project project = options.project
         def release = options.release
         Sprint.withTransaction(readOnly: !options.save) { transaction ->
-            try {
-                def sprint = new Sprint(
-                        retrospective: sprintXml.retrospective.text() ?: null,
-                        doneDefinition: sprintXml.doneDefinition.text() ?: null,
-                        doneDate: ApplicationSupport.parseDate(sprintXml.doneDate.text()),
-                        inProgressDate: ApplicationSupport.parseDate(sprintXml.inProgressDate.text()),
-                        state: sprintXml.state.text().toInteger(),
-                        velocity: sprintXml.velocity.text().isNumber() ? sprintXml.velocity.text().toDouble() : 0d,
-                        dailyWorkTime: (sprintXml.dailyWorkTime.text().isNumber()) ? sprintXml.dailyWorkTime.text().toDouble() : 8d,
-                        capacity: sprintXml.capacity.text().isNumber() ? sprintXml.capacity.text().toDouble() : 0d,
-                        todoDate: ApplicationSupport.parseDate(sprintXml.todoDate.text()),
-                        startDate: ApplicationSupport.parseDate(sprintXml.startDate.text()),
-                        endDate: ApplicationSupport.parseDate(sprintXml.endDate.text()),
-                        orderNumber: sprintXml.orderNumber.text().toInteger(),
-                        description: sprintXml.description.text() ?: null,
-                        goal: sprintXml.goal.text() ?: null,
-                        deliveredVersion: sprintXml.deliveredVersion.text() ?: null,
-                        initialRemainingTime: sprintXml.initialRemainingTime.text().isNumber() ? sprintXml.initialRemainingTime.text().toFloat() : null
-                )
-                // References other objects
-                if (release) {
-                    release.addToSprints(sprint)
-                }
-                // Save before some hibernate stuff
-                if (options.save) {
-                    sprint.save()
-                }
-                options.sprint = sprint
-                options.timebox = sprint
-                // Child objects
-                sprintXml.cliches.cliche.each {
-                    clicheService.unMarshall(it, options)
-                }
-                options.timebox = null
-                if (project) {
-                    sprintXml.stories.story.each {
-                        storyService.unMarshall(it, options)
-                    }
-                    sprintXml.tasks.task.each {
-                        taskService.unMarshall(it, options)
-                    }
-                }
-                if (options.save) {
-                    sprint.save()
-                    if (project) {
-                        sprintXml.attachments.attachment.each { _attachmentXml ->
-                            def uid = options.userUIDByImportedID?."${_attachmentXml.posterId.text().toInteger()}" ?: null
-                            User user = project.getUserByUidOrOwner(uid)
-                            ApplicationSupport.importAttachment(sprint, user, options.path, _attachmentXml)
-                        }
-                    }
-                }
-                options.sprint = null
-                return (Sprint) importDomainsPlugins(sprintXml, sprint, options)
-            } catch (Exception e) {
-                if (log.debugEnabled) e.printStackTrace()
-                throw new RuntimeException(e)
+            def sprint = new Sprint(
+                    retrospective: sprintXml.retrospective.text() ?: null,
+                    doneDefinition: sprintXml.doneDefinition.text() ?: null,
+                    doneDate: ApplicationSupport.parseDate(sprintXml.doneDate.text()),
+                    inProgressDate: ApplicationSupport.parseDate(sprintXml.inProgressDate.text()),
+                    state: sprintXml.state.text().toInteger(),
+                    velocity: sprintXml.velocity.text().isNumber() ? sprintXml.velocity.text().toDouble() : 0d,
+                    dailyWorkTime: (sprintXml.dailyWorkTime.text().isNumber()) ? sprintXml.dailyWorkTime.text().toDouble() : 8d,
+                    capacity: sprintXml.capacity.text().isNumber() ? sprintXml.capacity.text().toDouble() : 0d,
+                    todoDate: ApplicationSupport.parseDate(sprintXml.todoDate.text()),
+                    startDate: ApplicationSupport.parseDate(sprintXml.startDate.text()),
+                    endDate: ApplicationSupport.parseDate(sprintXml.endDate.text()),
+                    orderNumber: sprintXml.orderNumber.text().toInteger(),
+                    description: sprintXml.description.text() ?: null,
+                    goal: sprintXml.goal.text() ?: null,
+                    deliveredVersion: sprintXml.deliveredVersion.text() ?: null,
+                    initialRemainingTime: sprintXml.initialRemainingTime.text().isNumber() ? sprintXml.initialRemainingTime.text().toFloat() : null
+            )
+            // References other objects
+            if (release) {
+                release.addToSprints(sprint)
             }
+            // Save before some hibernate stuff
+            if (options.save) {
+                sprint.save()
+            }
+            options.sprint = sprint
+            options.timebox = sprint
+            // Child objects
+            sprintXml.cliches.cliche.each {
+                clicheService.unMarshall(it, options)
+            }
+            options.timebox = null
+            if (project) {
+                sprintXml.stories.story.each {
+                    storyService.unMarshall(it, options)
+                }
+                sprintXml.tasks.task.each {
+                    taskService.unMarshall(it, options)
+                }
+            }
+            if (options.save) {
+                sprint.save()
+                if (project) {
+                    sprintXml.attachments.attachment.each { _attachmentXml ->
+                        def uid = options.userUIDByImportedID?."${_attachmentXml.posterId.text().toInteger()}" ?: null
+                        User user = project.getUserByUidOrOwner(uid)
+                        ApplicationSupport.importAttachment(sprint, user, options.path, _attachmentXml)
+                    }
+                }
+            }
+            options.sprint = null
+            return (Sprint) importDomainsPlugins(sprintXml, sprint, options)
         }
     }
 }

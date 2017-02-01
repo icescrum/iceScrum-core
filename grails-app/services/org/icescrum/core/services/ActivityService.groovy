@@ -63,41 +63,34 @@ class ActivityService extends IceScrumEventPublisher {
         def parent = options.parent
         Project project = options.project
         Activity.withTransaction(readOnly: !options.save) { transaction ->
-            try {
-                User poster = project ? project.getUserByUidOrOwner(activityXml.poster.@uid.text()) : null
-                def activity = new Activity(
-                        code: activityXml.code.text(),
-                        label: activityXml.label.text(),
-                        field: activityXml.field.text(),
-                        afterLabel: activityXml.afterLabel.text() ?: null,
-                        afterValue: activityXml.afterValue.text() ?: null,
-                        beforeValue: activityXml.beforeValue.text() ?: null,
-                        parentType: activityXml.parentType.text()
-                )
-                // References to object
-                if (project) {
-                    activity.poster = poster
-                }
-                if (parent) {
-                    activity.parentRef = parent.id
-                }
-                // Save before some hibernate stuff
-                if (options.save) {
-                    activity.save()
-                    //can't be in constructor
-                    activity.dateCreated = ApplicationSupport.parseDate(activityXml.dateCreated.text())
-                    activity.save()
-                    if (parent) {
-                        parent.addToActivities(activity)
-                    }
-                }
-                return (Activity) importDomainsPlugins(activityXml, activity, options)
-            } catch (Exception e) {
-                if (log.debugEnabled) {
-                    e.printStackTrace()
-                }
-                throw new RuntimeException(e)
+            User poster = project ? project.getUserByUidOrOwner(activityXml.poster.@uid.text()) : null
+            def activity = new Activity(
+                    code: activityXml.code.text(),
+                    label: activityXml.label.text(),
+                    field: activityXml.field.text(),
+                    afterLabel: activityXml.afterLabel.text() ?: null,
+                    afterValue: activityXml.afterValue.text() ?: null,
+                    beforeValue: activityXml.beforeValue.text() ?: null,
+                    parentType: activityXml.parentType.text()
+            )
+            // References to object
+            if (project) {
+                activity.poster = poster
             }
+            if (parent) {
+                activity.parentRef = parent.id
+            }
+            // Save before some hibernate stuff
+            if (options.save) {
+                activity.save()
+                //can't be in constructor
+                activity.dateCreated = ApplicationSupport.parseDate(activityXml.dateCreated.text())
+                activity.save()
+                if (parent) {
+                    parent.addToActivities(activity)
+                }
+            }
+            return (Activity) importDomainsPlugins(activityXml, activity, options)
         }
     }
 }

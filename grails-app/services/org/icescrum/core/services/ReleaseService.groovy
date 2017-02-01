@@ -222,64 +222,59 @@ class ReleaseService extends IceScrumEventPublisher {
     def unMarshall(def releaseXml, def options) {
         Project project = options.project
         Release.withTransaction(readOnly: !options.save) { transaction ->
-            try {
-                def release = new Release(
-                        state: releaseXml.state.text().toInteger(),
-                        name: releaseXml.name.text(),
-                        todoDate: ApplicationSupport.parseDate(releaseXml.todoDate.text()),
-                        startDate: ApplicationSupport.parseDate(releaseXml.startDate.text()),
-                        doneDate: ApplicationSupport.parseDate(releaseXml.doneDate.text()),
-                        inProgressDate: ApplicationSupport.parseDate(releaseXml.inProgressDate.text()),
-                        endDate: ApplicationSupport.parseDate(releaseXml.endDate.text()),
-                        orderNumber: releaseXml.orderNumber.text().toInteger(),
-                        firstSprintIndex: releaseXml.firstSprintIndex.text() ? releaseXml.firstSprintIndex.toInteger() : 1,
-                        description: releaseXml.description.text() ?: null,
-                        vision: releaseXml.vision.text() ?: null,
-                        goal: releaseXml.goal.text() ?: null)
-                options.release = release
-                if (project) {
-                    project.addToReleases(release)
-                    // Save before some hibernate stuff
-                    if (options.save) {
-                        release.save()
-                    }
-                    def sprintService = (SprintService) grailsApplication.mainContext.getBean('sprintService')
-                    releaseXml.sprints.sprint.each { sprint ->
-                        sprintService.unMarshall(sprint, options)
-                    }
-                    releaseXml.features.feature.each { feature ->
-                        Feature f = project.features.find { it.uid == feature.@uid.text().toInteger() }
-                        if (f) {
-                            release.addToFeatures(f)
-                        }
-                    }
-                }
+            def release = new Release(
+                    state: releaseXml.state.text().toInteger(),
+                    name: releaseXml.name.text(),
+                    todoDate: ApplicationSupport.parseDate(releaseXml.todoDate.text()),
+                    startDate: ApplicationSupport.parseDate(releaseXml.startDate.text()),
+                    doneDate: ApplicationSupport.parseDate(releaseXml.doneDate.text()),
+                    inProgressDate: ApplicationSupport.parseDate(releaseXml.inProgressDate.text()),
+                    endDate: ApplicationSupport.parseDate(releaseXml.endDate.text()),
+                    orderNumber: releaseXml.orderNumber.text().toInteger(),
+                    firstSprintIndex: releaseXml.firstSprintIndex.text() ? releaseXml.firstSprintIndex.toInteger() : 1,
+                    description: releaseXml.description.text() ?: null,
+                    vision: releaseXml.vision.text() ?: null,
+                    goal: releaseXml.goal.text() ?: null)
+            options.release = release
+            if (project) {
+                project.addToReleases(release)
                 // Save before some hibernate stuff
                 if (options.save) {
                     release.save()
-                    if (project) {
-                        releaseXml.attachments.attachment.each { _attachmentXml ->
-                            def uid = options.userUIDByImportedID?."${_attachmentXml.posterId.text().toInteger()}" ?: null
-                            User user = project.getUserByUidOrOwner(uid)
-                            ApplicationSupport.importAttachment(release, user, options.path, _attachmentXml)
-                        }
+                }
+                def sprintService = (SprintService) grailsApplication.mainContext.getBean('sprintService')
+                releaseXml.sprints.sprint.each { sprint ->
+                    sprintService.unMarshall(sprint, options)
+                }
+                releaseXml.features.feature.each { feature ->
+                    Feature f = project.features.find { it.uid == feature.@uid.text().toInteger() }
+                    if (f) {
+                        release.addToFeatures(f)
                     }
                 }
-                // Child objects
-                options.timebox = release
-                releaseXml.cliches.cliche.each {
-                    clicheService.unMarshall(it, options)
-                }
-                options.timebox = null
-                if (options.save) {
-                    release.save()
-                }
-                options.release = null
-                return (Release) importDomainsPlugins(releaseXml, release, options)
-            } catch (Exception e) {
-                if (log.debugEnabled) e.printStackTrace()
-                throw new RuntimeException(e)
             }
+            // Save before some hibernate stuff
+            if (options.save) {
+                release.save()
+                if (project) {
+                    releaseXml.attachments.attachment.each { _attachmentXml ->
+                        def uid = options.userUIDByImportedID?."${_attachmentXml.posterId.text().toInteger()}" ?: null
+                        User user = project.getUserByUidOrOwner(uid)
+                        ApplicationSupport.importAttachment(release, user, options.path, _attachmentXml)
+                    }
+                }
+            }
+            // Child objects
+            options.timebox = release
+            releaseXml.cliches.cliche.each {
+                clicheService.unMarshall(it, options)
+            }
+            options.timebox = null
+            if (options.save) {
+                release.save()
+            }
+            options.release = null
+            return (Release) importDomainsPlugins(releaseXml, release, options)
         }
     }
 }

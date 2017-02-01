@@ -675,108 +675,103 @@ class StoryService extends IceScrumEventPublisher {
         Project project = options.project
         Sprint sprint = options.sprint
         Story.withTransaction(readOnly: !options.save) { transaction ->
-            try {
-                User creator = project ? project.getUserByUidOrOwner(storyXml.creator.@uid.text()) : null
-                def story = new Story(
-                        type: storyXml.type.text().toInteger(),
-                        suggestedDate: ApplicationSupport.parseDate(storyXml.suggestedDate.text()),
-                        acceptedDate: ApplicationSupport.parseDate(storyXml.acceptedDate.text()),
-                        estimatedDate: ApplicationSupport.parseDate(storyXml.estimatedDate.text()),
-                        plannedDate: ApplicationSupport.parseDate(storyXml.plannedDate.text()),
-                        inProgressDate: ApplicationSupport.parseDate(storyXml.inProgressDate.text()),
-                        doneDate: ApplicationSupport.parseDate(storyXml.doneDate.text()),
-                        origin: storyXml.origin.text() ?: null,
-                        effort: storyXml.effort.text().isEmpty() ? null : storyXml.effort.text().toBigDecimal(),
-                        rank: storyXml.rank.text().toInteger(),
-                        state: storyXml.state.text().toInteger(),
-                        value: storyXml.value.text().isEmpty() ? 0 : storyXml.value.text().toInteger(),
-                        affectVersion: storyXml.affectVersion.text(),
-                        //backlogElement
-                        name: storyXml."${'name'}".text(),
-                        description: storyXml.description.text() ?: null,
-                        notes: storyXml.notes.text() ?: null,
-                        todoDate: ApplicationSupport.parseDate(storyXml.todoDate.text()),
-                        uid: storyXml.@uid.text().toInteger(),
-                )
-                // References on other objects
-                if (project) {
-                    if (!storyXml.feature.@uid.isEmpty() && project) {
-                        Feature feature = project.features.find {
-                            it.uid == storyXml.feature.@uid.text().toInteger()
-                        }
-                        if (feature) {
-                            feature.addToStories(story)
-                        }
+            User creator = project ? project.getUserByUidOrOwner(storyXml.creator.@uid.text()) : null
+            def story = new Story(
+                    type: storyXml.type.text().toInteger(),
+                    suggestedDate: ApplicationSupport.parseDate(storyXml.suggestedDate.text()),
+                    acceptedDate: ApplicationSupport.parseDate(storyXml.acceptedDate.text()),
+                    estimatedDate: ApplicationSupport.parseDate(storyXml.estimatedDate.text()),
+                    plannedDate: ApplicationSupport.parseDate(storyXml.plannedDate.text()),
+                    inProgressDate: ApplicationSupport.parseDate(storyXml.inProgressDate.text()),
+                    doneDate: ApplicationSupport.parseDate(storyXml.doneDate.text()),
+                    origin: storyXml.origin.text() ?: null,
+                    effort: storyXml.effort.text().isEmpty() ? null : storyXml.effort.text().toBigDecimal(),
+                    rank: storyXml.rank.text().toInteger(),
+                    state: storyXml.state.text().toInteger(),
+                    value: storyXml.value.text().isEmpty() ? 0 : storyXml.value.text().toInteger(),
+                    affectVersion: storyXml.affectVersion.text(),
+                    //backlogElement
+                    name: storyXml."${'name'}".text(),
+                    description: storyXml.description.text() ?: null,
+                    notes: storyXml.notes.text() ?: null,
+                    todoDate: ApplicationSupport.parseDate(storyXml.todoDate.text()),
+                    uid: storyXml.@uid.text().toInteger(),
+            )
+            // References on other objects
+            if (project) {
+                if (!storyXml.feature.@uid.isEmpty() && project) {
+                    Feature feature = project.features.find {
+                        it.uid == storyXml.feature.@uid.text().toInteger()
                     }
-                    if (!storyXml.actor.@uid.isEmpty() && project) {
-                        Actor actor = project.actors.find { it.uid == storyXml.actor.@uid.text().toInteger() }
-                        if (actor) {
-                            actor.addToStories(story)
-                        }
-                    }
-                    story.creator = creator
-                    project.addToStories(story)
-                }
-                if (sprint) {
-                    sprint.addToStories(story)
-                }
-                // Save before some hibernate stuff
-                if (options.save) {
-                    story.save()
-                    //Handle dependsOn
-                    if (project && !storyXml.dependsOn.@uid.isEmpty()) {
-                        Story dependsOn = Story.findByBacklogAndUid(project, storyXml.dependsOn.@uid.text().toInteger())
-                        if (dependsOn) {
-                            story.dependsOn = dependsOn
-                            story.save()
-                            dependsOn.save()
-                        }
-                    }
-                    //Handle tags only available when story has an id options.save)
-                    if (storyXml.tags.text()) {
-                        story.tags = storyXml.tags.text().replaceAll(' ', '').replace('[', '').replace(']', '').split(',')
-                    }
-                    if (project) {
-                        storyXml.comments.comment.each { _commentXml ->
-                            def uid = options.userUIDByImportedID?."${_commentXml.posterId.text().toInteger()}" ?: null
-                            User user = project.getUserByUidOrOwner(uid)
-                            ApplicationSupport.importComment(story, user, _commentXml.body.text(), ApplicationSupport.parseDate(_commentXml.dateCreated.text()))
-                        }
-                        storyXml.attachments.attachment.each { _attachmentXml ->
-                            def uid = options.userUIDByImportedID?."${_attachmentXml.posterId.text().toInteger()}" ?: null
-                            User user = project.getUserByUidOrOwner(uid)
-                            ApplicationSupport.importAttachment(story, user, options.path, _attachmentXml)
-                        }
-                        storyXml.followers.user.each { _userXml ->
-                            User user = User.findByUid(_userXml.@uid.text())
-                            if (user) {
-                                story.addToFollowers(user)
-                            }
-                        }
+                    if (feature) {
+                        feature.addToStories(story)
                     }
                 }
-                options.story = story
-                // Child objects
-                storyXml.tasks.task.each {
-                    taskService.unMarshall(it, options)
+                if (!storyXml.actor.@uid.isEmpty() && project) {
+                    Actor actor = project.actors.find { it.uid == storyXml.actor.@uid.text().toInteger() }
+                    if (actor) {
+                        actor.addToStories(story)
+                    }
                 }
-                storyXml.acceptanceTests.acceptanceTest.each {
-                    acceptanceTestService.unMarshall(it, options)
-                }
-                options.parent = story
-                storyXml.activities.activity.each { def activityXml ->
-                    activityService.unMarshall(activityXml, options)
-                }
-                options.parent = null
-                if (options.save) {
-                    story.save()
-                }
-                options.story = null
-                return (Story) importDomainsPlugins(storyXml, story, options)
-            } catch (Exception e) {
-                if (log.debugEnabled) e.printStackTrace()
-                throw new RuntimeException(e)
+                story.creator = creator
+                project.addToStories(story)
             }
+            if (sprint) {
+                sprint.addToStories(story)
+            }
+            // Save before some hibernate stuff
+            if (options.save) {
+                story.save()
+                //Handle dependsOn
+                if (project && !storyXml.dependsOn.@uid.isEmpty()) {
+                    Story dependsOn = Story.findByBacklogAndUid(project, storyXml.dependsOn.@uid.text().toInteger())
+                    if (dependsOn) {
+                        story.dependsOn = dependsOn
+                        story.save()
+                        dependsOn.save()
+                    }
+                }
+                //Handle tags only available when story has an id options.save)
+                if (storyXml.tags.text()) {
+                    story.tags = storyXml.tags.text().replaceAll(' ', '').replace('[', '').replace(']', '').split(',')
+                }
+                if (project) {
+                    storyXml.comments.comment.each { _commentXml ->
+                        def uid = options.userUIDByImportedID?."${_commentXml.posterId.text().toInteger()}" ?: null
+                        User user = project.getUserByUidOrOwner(uid)
+                        ApplicationSupport.importComment(story, user, _commentXml.body.text(), ApplicationSupport.parseDate(_commentXml.dateCreated.text()))
+                    }
+                    storyXml.attachments.attachment.each { _attachmentXml ->
+                        def uid = options.userUIDByImportedID?."${_attachmentXml.posterId.text().toInteger()}" ?: null
+                        User user = project.getUserByUidOrOwner(uid)
+                        ApplicationSupport.importAttachment(story, user, options.path, _attachmentXml)
+                    }
+                    storyXml.followers.user.each { _userXml ->
+                        User user = User.findByUid(_userXml.@uid.text())
+                        if (user) {
+                            story.addToFollowers(user)
+                        }
+                    }
+                }
+            }
+            options.story = story
+            // Child objects
+            storyXml.tasks.task.each {
+                taskService.unMarshall(it, options)
+            }
+            storyXml.acceptanceTests.acceptanceTest.each {
+                acceptanceTestService.unMarshall(it, options)
+            }
+            options.parent = story
+            storyXml.activities.activity.each { def activityXml ->
+                activityService.unMarshall(activityXml, options)
+            }
+            options.parent = null
+            if (options.save) {
+                story.save()
+            }
+            options.story = null
+            return (Story) importDomainsPlugins(storyXml, story, options)
         }
     }
 

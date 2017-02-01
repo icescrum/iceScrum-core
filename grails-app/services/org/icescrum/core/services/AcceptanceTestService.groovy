@@ -68,44 +68,37 @@ class AcceptanceTestService extends IceScrumEventPublisher {
         Project project = options.project
         Story story = options.story
         AcceptanceTest.withTransaction(readOnly: !options.save) { transaction ->
-            try {
-                User creator = project ? project.getUserByUidOrOwner(acceptanceTestXml.creator.@uid.text()) : null
-                def acceptanceTest = new AcceptanceTest(
-                        name: acceptanceTestXml."${'name'}".text(),
-                        description: acceptanceTestXml.description.text() ?: null,
-                        state: acceptanceTestXml.state.text().toInteger(),
-                        uid: acceptanceTestXml.@uid.text().toInteger()
-                )
-                // References on other objects
-                if (project) {
-                    acceptanceTest.creator = creator
-                }
-                if (story) {
-                    story.addToAcceptanceTests(acceptanceTest)
-                }
-                // Save before some hibernate stuff
-                if (options.save) {
-                    acceptanceTest.save()
-                }
-                // Child objects
-                options.acceptanceTest = acceptanceTest
-                def activityService = (ActivityService) grailsApplication.mainContext.getBean('activityService')
-                options.parent = acceptanceTest
-                acceptanceTestXml.activities.activity.each { it ->
-                    activityService.unMarshall(it, options)
-                }
-                options.parent = null
-                if (options.save) {
-                    acceptanceTest.save()
-                }
-                options.acceptanceTest = null
-                return (AcceptanceTest) importDomainsPlugins(acceptanceTestXml, acceptanceTest, options)
-            } catch (Exception e) {
-                if (log.debugEnabled) {
-                    e.printStackTrace()
-                }
-                throw new RuntimeException(e)
+            User creator = project ? project.getUserByUidOrOwner(acceptanceTestXml.creator.@uid.text()) : null
+            def acceptanceTest = new AcceptanceTest(
+                    name: acceptanceTestXml."${'name'}".text(),
+                    description: acceptanceTestXml.description.text() ?: null,
+                    state: acceptanceTestXml.state.text().toInteger(),
+                    uid: acceptanceTestXml.@uid.text().toInteger()
+            )
+            // References on other objects
+            if (project) {
+                acceptanceTest.creator = creator
             }
+            if (story) {
+                story.addToAcceptanceTests(acceptanceTest)
+            }
+            // Save before some hibernate stuff
+            if (options.save) {
+                acceptanceTest.save()
+            }
+            // Child objects
+            options.acceptanceTest = acceptanceTest
+            def activityService = (ActivityService) grailsApplication.mainContext.getBean('activityService')
+            options.parent = acceptanceTest
+            acceptanceTestXml.activities.activity.each { it ->
+                activityService.unMarshall(it, options)
+            }
+            options.parent = null
+            if (options.save) {
+                acceptanceTest.save()
+            }
+            options.acceptanceTest = null
+            return (AcceptanceTest) importDomainsPlugins(acceptanceTestXml, acceptanceTest, options)
         }
     }
 }
