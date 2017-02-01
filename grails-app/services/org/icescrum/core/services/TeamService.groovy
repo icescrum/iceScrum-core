@@ -98,7 +98,6 @@ class TeamService extends IceScrumEventPublisher {
             throw new BusinessException(code: 'is.team.error.not.saved')
         }
         securityService.secureDomain(team)
-        securityService.changeOwner(team.owner, team)
         def scrumMasters = team.scrumMasters
         for (member in team.members) {
             if (!member.isAttached()) {
@@ -108,12 +107,13 @@ class TeamService extends IceScrumEventPublisher {
                 addMember(team, member)
             }
         }
-        scrumMasters?.each { scrumMaster ->
+        scrumMasters?.each { User scrumMaster ->
             if (!scrumMaster.isAttached()) {
                 scrumMaster = scrumMaster.merge()
             }
             addScrumMaster(team, scrumMaster)
         }
+        securityService.changeOwner(team.owner, team) // Only after adding SM & Member permission to ensure that current user has permissions to manage permissions
     }
 
     void addMember(Team team, User member) {

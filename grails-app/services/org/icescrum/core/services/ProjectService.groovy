@@ -475,15 +475,8 @@ class ProjectService extends IceScrumEventPublisher {
             if (version.startsWith('R6') && !version.endsWith('-v7')) {
                 throw new BusinessException(code: 'todo.is.ui.import.error.R6')
             }
-            Project project = null
-            try {
-                project = this.unMarshall(exportXML.project, options)
-            } catch (RuntimeException e) {
-                if (log.debugEnabled) {
-                    e.printStackTrace()
-                }
-                throw e
-            }
+            Project project
+            project = this.unMarshall(exportXML.project, options)
             if (project?.id && options.save) {
                 project.save(flush: true)
             }
