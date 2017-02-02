@@ -145,7 +145,7 @@ class TeamService extends IceScrumEventPublisher {
             def teamAlreadyExists = true
             def userService = (UserService) grailsApplication.mainContext.getBean('userService')
             def ownerXml = teamXml.owner.user
-            User owner = User.findByUid(ownerXml.@uid.text())
+            User owner = project.getUserByUid(ownerXml.@uid.text())
             if (!owner) {
                 teamAlreadyExists = false
                 owner = userService.unMarshall(ownerXml, options)
@@ -161,7 +161,8 @@ class TeamService extends IceScrumEventPublisher {
             )
             team.owner = owner
             teamXml.members.user.each { userXml ->
-                User user = User.findByUid(userXml.@uid.text())
+                String uid = userXml.@uid.text()
+                User user = project.getUserByUid(uid) ?: (team.owner.uid == uid ? team.owner : null) // Team is not associated to project yet so getUserByUid will not find owner
                 if (!user) {
                     teamAlreadyExists = false
                     user = userService.unMarshall(userXml, options)

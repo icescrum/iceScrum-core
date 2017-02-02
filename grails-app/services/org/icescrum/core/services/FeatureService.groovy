@@ -37,6 +37,7 @@ class FeatureService extends IceScrumEventPublisher {
 
     def springSecurityService
     def grailsApplication
+    def activityService
 
     @PreAuthorize('productOwner(#project) and !archivedProject(#project)')
     void save(Feature feature, Project project) {

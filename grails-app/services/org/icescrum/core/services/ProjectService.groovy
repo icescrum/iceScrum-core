@@ -322,7 +322,7 @@ class ProjectService extends IceScrumEventPublisher {
 
             def userService = (UserService) grailsApplication.mainContext.getBean('userService')
             def getUser = { userXml ->
-                User user = User.findByUid(userXml.@uid.text())
+                User user = project.getUserByUid(userXml.@uid.text())
                 if (!user) {
                     user = userService.unMarshall(userXml, options)
                 }

@@ -139,6 +139,7 @@ class Project extends TimeBox implements Serializable, Attachmentable {
     List<User> getAllUsers() {
         def users = []
         this.teams?.each {
+            users << it.owner
             if (it.members) {
                 users.addAll(it.members)
             }
@@ -147,13 +148,11 @@ class Project extends TimeBox implements Serializable, Attachmentable {
         if (pos) {
             users.addAll(pos)
         }
+        def shs = this.getStakeHolders()
+        if (shs) {
+            users.addAll(shs)
+        }
         return users.asList().unique()
-    }
-
-    Collection<User> getAllUsersAndStakehokders() {
-        def users = getAllUsers()
-        users.addAll(this.getStakeHolders())
-        return users.unique()
     }
 
     static List<Project> findAllByTermAndFilter(params = [:], String term = '', String filter = '') {
@@ -290,7 +289,11 @@ class Project extends TimeBox implements Serializable, Attachmentable {
     }
 
     User getUserByUidOrOwner(String uid) {
-        return User.findByUid(uid) ?: owner
+        return getAllUsers().find { it.uid == uid } ?: (User.findByUid(uid) ?: owner)
+    }
+
+    User getUserByUid(String uid) {
+        return getAllUsers().find { it.uid == uid } ?: User.findByUid(uid)
     }
 
     List<Invitation> getInvitedStakeHolders() {
