@@ -231,7 +231,7 @@ class ReleaseService extends IceScrumEventPublisher {
                     inProgressDate: ApplicationSupport.parseDate(releaseXml.inProgressDate.text()),
                     endDate: ApplicationSupport.parseDate(releaseXml.endDate.text()),
                     orderNumber: releaseXml.orderNumber.text().toInteger(),
-                    firstSprintIndex: releaseXml.firstSprintIndex.text() ? releaseXml.firstSprintIndex.toInteger() : 1,
+                    firstSprintIndex: releaseXml.firstSprintIndex.text().toInteger(),
                     description: releaseXml.description.text() ?: null,
                     vision: releaseXml.vision.text() ?: null,
                     goal: releaseXml.goal.text() ?: null)
