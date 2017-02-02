@@ -228,7 +228,7 @@ class Release extends TimeBox implements Cloneable, Attachmentable {
             if (state > STATE_WAIT) {
                 builder.inProgressDate(this.startDate) // R6 -> v7
             }
-//            builder.firstSprintIndex(this.firstSprintIndex)
+            builder.firstSprintIndex(1) // R6 -> v7
             builder.name { builder.mkp.yieldUnescaped("<![CDATA[${this.name}]]>") }
             builder.goal { builder.mkp.yieldUnescaped("<![CDATA[${this.goal ?: ''}]]>") }
             builder.vision { builder.mkp.yieldUnescaped("<![CDATA[${this.vision ?: ''}]]>") }
