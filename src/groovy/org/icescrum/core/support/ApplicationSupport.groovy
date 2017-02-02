@@ -227,7 +227,7 @@ class ApplicationSupport {
         def intervalCheckVersion = CheckerTimerTask.minutesToMilliseconds(config.icescrum.check.interval)
         timer.scheduleAtFixedRate(new CheckerTimerTask(timer, intervalCheckVersion), oneHour, intervalCheckVersion)
         // ReportUsage
-        def intervalReport = CheckerTimerTask.minutesToMilliseconds(config.icescrum.report.interval)
+        def intervalReport = CheckerTimerTask.minutesToMilliseconds(config.icescrum.reportUsage.interval)
         timer.scheduleAtFixedRate(new ReportUsageTimerTask(timer, intervalReport), 6 * oneHour, intervalReport)
     }
 
