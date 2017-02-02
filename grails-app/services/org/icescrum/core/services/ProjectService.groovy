@@ -25,6 +25,7 @@ package org.icescrum.core.services
 
 import grails.plugin.springsecurity.SpringSecurityUtils
 import grails.transaction.Transactional
+import grails.validation.ValidationException
 import groovy.xml.MarkupBuilder
 import org.icescrum.core.domain.*
 import org.icescrum.core.domain.preferences.ProjectPreferences
@@ -487,91 +488,85 @@ class ProjectService extends IceScrumEventPublisher {
     @PreAuthorize('isAuthenticated()')
     def validate(Project project, boolean erase = false) {
         def changes = [:]
-        try {
-            Project.withNewSession {
-                project.teams.each { team ->
-                    team.validate()
-                    if (team.errors.errorCount == 1) {
-                        changes.team = [:]
-                        if (team.errors.fieldErrors[0]?.field == 'name') {
-                            changes.team.name = team.name
-                        } else {
-                            if (log.infoEnabled) {
-                                log.info("Team validation error (${team.name}): " + team.errors)
-                            }
-                            throw new RuntimeException()
-                        }
-                    } else if (team.errors.errorCount > 1) {
+        Project.withNewSession {
+            project.teams.each { team ->
+                team.validate()
+                if (team.errors.errorCount == 1) {
+                    changes.team = [:]
+                    if (team.errors.fieldErrors[0]?.field == 'name') {
+                        changes.team.name = team.name
+                    } else {
                         if (log.infoEnabled) {
                             log.info("Team validation error (${team.name}): " + team.errors)
                         }
-                        throw new RuntimeException()
+                        throw new ValidationException('Validation errors occurred during team import', team.errors)
                     }
-                    team.members.each { member ->
-                        member.validate()
-                        if (member.errors.errorCount == 1) {
-                            changes.users = changes.users ?: [:]
-                            if (member.errors.fieldErrors[0]?.field == 'username') {
-                                changes.users."$member.uid" = member.username
-                            } else {
-                                if (log.infoEnabled) {
-                                    log.info("User validation error (${member.username}): " + member.errors)
-                                }
-                                throw new RuntimeException()
-                            }
-                        } else if (member.errors.errorCount > 1) {
+                } else if (team.errors.errorCount > 1) {
+                    if (log.infoEnabled) {
+                        log.info("Team validation error (${team.name}): " + team.errors)
+                    }
+                    throw new ValidationException('Validation errors occurred during team import', team.errors)
+                }
+                team.members.each { member ->
+                    member.validate()
+                    if (member.errors.errorCount == 1) {
+                        changes.users = changes.users ?: [:]
+                        if (member.errors.fieldErrors[0]?.field == 'username') {
+                            changes.users."$member.uid" = member.username
+                        } else {
                             if (log.infoEnabled) {
                                 log.info("User validation error (${member.username}): " + member.errors)
                             }
-                            throw new RuntimeException()
+                            throw new ValidationException('Validation errors occurred during user import', member.errors)
                         }
+                    } else if (member.errors.errorCount > 1) {
+                        if (log.infoEnabled) {
+                            log.info("User validation error (${member.username}): " + member.errors)
+                        }
+                        throw new ValidationException('Validation errors occurred during user import', member.errors)
                     }
                 }
-                project.productOwners?.each { productOwner ->
-                    productOwner.validate()
-                    if (productOwner.errors.errorCount == 1) {
-                        changes.users = changes.users ?: [:]
-                        if (productOwner.errors.fieldErrors[0]?.field == 'username' && !(productOwner.username in changes.users)) {
-                            changes.users."$productOwner.uid" = productOwner.username
-                        } else {
-                            if (log.infoEnabled) {
-                                log.info("User validation error (${productOwner.username}): " + productOwner.errors)
-                            }
-                            throw new RuntimeException()
-                        }
-                    } else if (productOwner.errors.errorCount > 1) {
+            }
+            project.productOwners?.each { productOwner ->
+                productOwner.validate()
+                if (productOwner.errors.errorCount == 1) {
+                    changes.users = changes.users ?: [:]
+                    if (productOwner.errors.fieldErrors[0]?.field == 'username' && !(productOwner.username in changes.users)) {
+                        changes.users."$productOwner.uid" = productOwner.username
+                    } else {
                         if (log.infoEnabled) {
                             log.info("User validation error (${productOwner.username}): " + productOwner.errors)
                         }
-                        throw new RuntimeException()
+                        throw new ValidationException('Validation errors occurred during Product Owner import', productOwner.errors)
                     }
-                }
-                project.validate()
-                if (project.errors.errorCount && project.errors.errorCount <= 2 && !erase) {
-                    changes.project = [:]
-                    project.errors.fieldErrors*.field.each { field ->
-                        if (!(field in ['pkey', 'name'])) {
-                            if (log.infoEnabled) {
-                                log.info("Project validation error (${project.name}): " + project.errors)
-                            }
-                            throw new RuntimeException()
-                        } else {
-                            changes.project[field] = project[field]
-                        }
-                    }
-                    changes.erasable = project.erasableByUser
-                } else if (project.errors.errorCount > 2) {
+                } else if (productOwner.errors.errorCount > 1) {
                     if (log.infoEnabled) {
-                        log.info("Project validation error (${project.name}): " + project.errors)
+                        log.info("User validation error (${productOwner.username}): " + productOwner.errors)
                     }
-                    throw new RuntimeException()
+                    throw new ValidationException('Validation errors occurred during Product Owner import', productOwner.errors)
                 }
-                return changes
             }
-        } catch (Exception e) {
-            if (log.debugEnabled) {
-                e.printStackTrace()
+            project.validate()
+            if (project.errors.errorCount && project.errors.errorCount <= 2 && !erase) {
+                changes.project = [:]
+                project.errors.fieldErrors*.field.each { field ->
+                    if (!(field in ['pkey', 'name'])) {
+                        if (log.infoEnabled) {
+                            log.info("Project validation error (${project.name}): " + project.errors)
+                        }
+                        throw new ValidationException('Validation errors occurred during Project import', project.errors)
+                    } else {
+                        changes.project[field] = project[field]
+                    }
+                }
+                changes.erasable = project.erasableByUser
+            } else if (project.errors.errorCount > 2) {
+                if (log.infoEnabled) {
+                    log.info("Project validation error (${project.name}): " + project.errors)
+                }
+                throw new ValidationException('Validation errors occurred during Project import', project.errors)
             }
+            return changes
         }
     }
 
