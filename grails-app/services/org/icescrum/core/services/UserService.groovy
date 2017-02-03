@@ -204,17 +204,24 @@ class UserService extends IceScrumEventPublisher {
                     accountExternal: userXml.accountExternal.text().toBoolean() ?: false,
                     uid: userXml.@uid.text() ?: (userXml.username.text() + userXml.email.text()).encodeAsMD5()
             )
+            def preferencesXml = userXml.preferences
             user.preferences = new UserPreferences(
-                    language: userXml.preferences.language.text(),
-                    activity: userXml.preferences.activity.text(),
-                    filterTask: userXml.preferences.filterTask.text(),
+                    language: preferencesXml.language.text(),
+                    activity: preferencesXml.activity.text(),
+                    filterTask: preferencesXml.filterTask.text(),
                     user: user,
-                    menu: userXml.preferences.menu.text() ?: [:],
-                    menuHidden: userXml.preferences.menuHidden.text() ?: [:]
+                    menu: preferencesXml.menu.text() ?: [:],
+                    menuHidden: preferencesXml.menuHidden.text() ?: [:]
             )
             if (options.save) {
                 user.save()
             }
+            // Child objects
+            options.userPreferences = user.preferences
+            preferencesXml.widgets.widget.each {
+                widgetService.unMarshall(it, options)
+            }
+            options.userPreferences = null
             return (User) importDomainsPlugins(userXml, user, options)
         }
     }

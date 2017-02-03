@@ -46,7 +46,7 @@ class Widget implements Serializable {
             builder.onRight(this.onRight)
             builder.position(this.position)
             builder.widgetDefinitionId(this.widgetDefinitionId)
-            builder.settingsData { builder.mkp.yieldUnescaped("<![CDATA[${this.settingsData}]]>") }
+            builder.settingsData { builder.mkp.yieldUnescaped("<![CDATA[${this.settingsData ?: ''}]]>") }
             exportDomainsPlugins(builder)
         }
     }

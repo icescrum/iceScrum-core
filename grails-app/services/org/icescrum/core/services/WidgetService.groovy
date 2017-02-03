@@ -26,6 +26,7 @@ package org.icescrum.core.services
 import grails.transaction.Transactional
 import org.icescrum.core.domain.User
 import org.icescrum.core.domain.Widget
+import org.icescrum.core.domain.preferences.UserPreferences
 import org.icescrum.core.error.BusinessException
 import org.icescrum.core.ui.WidgetDefinition
 
@@ -161,21 +162,22 @@ class WidgetService {
     }
 
     def unMarshall(def widgetXml, def options) {
-        def user = options.user
         Widget.withTransaction(readOnly: !options.save) { transaction ->
             def widget = new Widget(
                     position: widgetXml.position.toInteger(),
                     onRight: widgetXml.onRight.toBoolean(),
-                    settingsData: widgetXml.settingsData.toText(),
-                    widgetDefinitionId: widgetXml.widgetDefinitionId.toText())
+                    settingsData: widgetXml.settingsData.text() ?: null,
+                    widgetDefinitionId: widgetXml.widgetDefinitionId.text())
             // Reference on other object
-            if (user?.userPreferences) {
-                widget.userPreferences = userPreferences
+            if (options.userPreferences) {
+                UserPreferences userPreferences = options.userPreferences
+                userPreferences.addToWidgets(widget)
+                widget.userPreferences = options.userPreferences
             }
             if (options.save) {
                 widget.save()
             }
-            return (WidgetService) importDomainsPlugins(widgetXml, widget, options)
+            return (Widget) importDomainsPlugins(widgetXml, widget, options)
         }
     }
 }
