@@ -22,15 +22,13 @@
  */
 
 
-
-
 package org.icescrum.core.domain.preferences
 
 import grails.converters.JSON
 import org.codehaus.groovy.grails.web.json.JSONObject
 import org.icescrum.core.domain.User
 
-class UserPreferences implements Serializable{
+class UserPreferences implements Serializable {
 
     static final long serialVersionUID = 813649045202976126L
 
@@ -81,7 +79,7 @@ class UserPreferences implements Serializable{
         emailsSettingsData ? JSON.parse(emailsSettingsData) as Map : [:]
     }
 
-    public removeEmailsSettings(pkey){
+    public removeEmailsSettings(pkey) {
         def settings = getEmailsSettings()
         if (settings) {
             settings.each { setting, projects ->
@@ -107,11 +105,40 @@ class UserPreferences implements Serializable{
 //            builder.displayWelcomeTour(this.displayWelcomeTour)
 //            builder.lastReadActivities(this.lastReadActivities)
 //            builder.displayFullProjectTour(this.displayFullProjectTour)
-//            builder.widgets() {
-//                this.widgets?.each { _widget ->
-//                    _widget.xml(builder)
-//                }
-//            }
+            // R6 -> v7
+            builder.widgets() {
+                [
+                        [
+                                onRight           : false,
+                                position          : 1,
+                                widgetDefinitionId: 'quickProjects',
+                                settingsData      : ''
+                        ], [
+                                onRight           : false,
+                                position          : 2,
+                                widgetDefinitionId: 'notes',
+                                settingsData      : '{"text":"Welcome to iceScrum 7! Here is your home, where you can add your widgets, such as this one which allows you to write your personal notes, try updating this text!\\n\\nWe have also created a \\"Peetic\\" project so you can explore iceScrum, try opening it!","text_html":"<?xml version=\'1.0\' encoding=\'utf-8\' ?><html xmlns=\\"http://www.w3.org/1999/xhtml\\"><head><meta http-equiv=\\"Content-Type\\" content=\\"text/html; charset=utf-8\\"/><\\u002fhead><body><p>Welcome to iceScrum 7! Here is your home, where you can add your widgets, such as this one which allows you to write your personal notes, try updating this text!<\\u002fp><p>We have also created a &#171;Peetic&#187; project so you can explore iceScrum, try opening it!<\\u002fp><\\u002fbody><\\u002fhtml>"}'
+                        ], [
+                                onRight           : true,
+                                position          : 1,
+                                widgetDefinitionId: 'feed',
+                                settingsData      : '{"feeds":[{"url":"https://www.icescrum.com/blog/feed/","title":"iceScrum","selected":true},{"url":"http://www.universfreebox.com/backend.php","title":"Univers Freebox","selected":false}]}'
+                        ], [
+                                onRight           : true,
+                                position          : 2,
+                                widgetDefinitionId: 'tasks',
+                                settingsData      : ''
+                        ]
+
+                ].each { _widget ->
+                    builder.widget() {
+                        builder.onRight(_widget.onRight)
+                        builder.position(_widget.position)
+                        builder.widgetDefinitionId(_widget.widgetDefinitionId)
+                        builder.settingsData { builder.mkp.yieldUnescaped("<![CDATA[${_widget.settingsData ?: ''}]]>") }
+                    }
+                }
+            }
             exportDomainsPlugins(builder)
         }
     }
