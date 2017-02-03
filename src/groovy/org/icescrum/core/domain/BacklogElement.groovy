@@ -52,7 +52,7 @@ abstract class BacklogElement implements Attachmentable, Commentable, Serializab
     static constraints = {
         description(maxSize: 3000, nullable: true)
         notes(maxSize: 5000, nullable: true)
-        name(blank: false, unique: 'backlog', maxSize: 100)
+        name(blank: false, maxSize: 100)
     }
 
     static mapping = {
@@ -60,10 +60,8 @@ abstract class BacklogElement implements Attachmentable, Commentable, Serializab
         table 'icescrum2_backlogelement'
         description length: 3000
         notes length: 5000
-        backlog index: 'be_name_index'
-        name index: 'be_name_index'
-        tablePerHierarchy false
         backlog lazy: true
+        tablePerHierarchy false
     }
 
     static boolean hasTagKeyword(String term) {

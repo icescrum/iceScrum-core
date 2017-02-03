@@ -61,6 +61,7 @@ class Feature extends BacklogElement implements Serializable {
     }
 
     static constraints = {
+        name(unique: 'backlog')
         parentRelease(nullable: true)
         value(nullable: true)
     }

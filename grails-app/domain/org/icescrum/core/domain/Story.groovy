@@ -89,6 +89,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
     }
 
     static constraints = {
+        name(unique: 'backlog')
         suggestedDate(nullable: true)
         acceptedDate(nullable: true)
         estimatedDate(nullable: true)
