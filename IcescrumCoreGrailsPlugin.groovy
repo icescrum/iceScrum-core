@@ -819,10 +819,6 @@ class IcescrumCoreGrailsPlugin {
         private void addExportDomainsPlugins(source, config) {
             source.metaClass.exportDomainsPlugins = { builder ->
                 def domainObject = delegate
-                def progress = RequestContextHolder.currentRequestAttributes().getSession()?.progress
-                if (progress) {
-                    progress.updateProgress(10, source.propertyName) // TODO IMPROVE
-                }
                 config[source.propertyName]?.each { closure ->
                     closure.delegate = domainObject
                     closure(domainObject, builder)

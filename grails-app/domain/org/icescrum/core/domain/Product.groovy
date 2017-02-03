@@ -39,6 +39,7 @@ import org.codehaus.groovy.grails.commons.ApplicationHolder
 import org.grails.plugins.springsecurity.service.acl.AclUtilService
 import org.springframework.security.acls.domain.BasePermission
 import org.springframework.security.acls.model.Acl
+import org.springframework.web.context.request.RequestContextHolder
 
 class Product extends TimeBox implements Serializable, Attachmentable {
 
@@ -350,7 +351,14 @@ class Product extends TimeBox implements Serializable, Attachmentable {
 
     // V7
     def xml(builder) {
+        def progress = RequestContextHolder.currentRequestAttributes().getSession()?.progress
+        def updateProgress = { percentage, names ->
+            if (progress) {
+                progress.updateProgress(percentage, names)
+            }
+        }
         builder.project(id: this.id) {
+            updateProgress(5, 'Project')
             builder.pkey(this.pkey)
             builder.endDate(this.endDate)
             builder.todoDate(this.dateCreated) // R6 -> v7
@@ -361,6 +369,7 @@ class Product extends TimeBox implements Serializable, Attachmentable {
             builder.name { builder.mkp.yieldUnescaped("<![CDATA[${this.name}]]>") }
             builder.description { builder.mkp.yieldUnescaped("<![CDATA[${this.description ?: ''}]]>") }
             preferences.xml(builder)
+            updateProgress(10, 'Team')
             builder.teams() {
                 this.teams.each { _team ->
                     _team.xml(builder)
@@ -378,38 +387,51 @@ class Product extends TimeBox implements Serializable, Attachmentable {
                     }
                 }
             }
+            updateProgress(20, 'Feature')
             builder.features() {
                 this.features.each { _feature ->
                     _feature.xml(builder)
                 }
             }
+            updateProgress(25, 'Actors')
             builder.actors() {
                 this.actors.sort { it.uid }.each { _actor ->
                     _actor.xml(builder)
                 }
             }
+            updateProgress(30, 'Accepted / estimated stories')
             builder.stories() {
                 // To preserve groupby & sort order and be able to insert dependsOn on the import flow..
-                this.stories.findAll {
+                def stories = this.stories.findAll {
                     it.parentSprint == null
                 }.sort { a, b ->
                     def stateA = a.state == Story.STATE_ESTIMATED ? Story.STATE_ACCEPTED : a.state
                     def stateB = b.state == Story.STATE_ESTIMATED ? Story.STATE_ACCEPTED : b.state
                     return stateB <=> stateA ?: a.rank <=> b.rank
-                }.each { _story ->
+                }
+                stories.eachWithIndex { _story, index ->
+                    if (index > stories.size() / 2) {
+                        updateProgress(40, 'Accepted / estimated stories')
+                    }
                     _story.xml(builder)
                 }
             }
+            updateProgress(50, 'Releases, sprints & tasks')
             builder.releases() {
-                this.releases.each { _release ->
+                this.releases.eachWithIndex { _release, index ->
+                    if (index > this.releases.size() / 2) {
+                        updateProgress(60, 'Releases, sprints & tasks')
+                    }
                     _release.xml(builder)
                 }
             }
+            updateProgress(70, 'Attachments')
             builder.attachments() {
                 this.attachments.each { _att ->
                     ApplicationSupport.xmlAttachment(builder, _att) // R6 -> v7
                 }
             }
+            updateProgress(75, 'Cliches')
             builder.cliches() {
                 this.cliches.sort { a, b ->
                     a.type <=> b.type ?: a.datePrise <=> b.datePrise
@@ -417,11 +439,13 @@ class Product extends TimeBox implements Serializable, Attachmentable {
                     _cliche.xml(builder)
                 }
             }
+            updateProgress(80, 'Activities')
             builder.activities() {
                 this.activities.each { _activity ->
                     ApplicationSupport.xmlActivity(builder, _activity, this.id, 'product') // R6 -> v7
                 }
             }
+            updateProgress(90, 'Other')
             exportDomainsPlugins(builder)
         }
     }
