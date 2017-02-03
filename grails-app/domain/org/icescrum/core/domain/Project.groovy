@@ -67,7 +67,7 @@ class Project extends TimeBox implements Serializable, Attachmentable {
 
     static transients = [
             'allUsers',
-            'allUsersAndStakehokders',
+            'allUsersAndOwnerAndStakeholders',
             'productOwners',
             'erasableByUser',
             'stakeHolders',
@@ -139,7 +139,6 @@ class Project extends TimeBox implements Serializable, Attachmentable {
     List<User> getAllUsers() {
         def users = []
         this.teams?.each {
-            users << it.owner
             if (it.members) {
                 users.addAll(it.members)
             }
@@ -148,11 +147,19 @@ class Project extends TimeBox implements Serializable, Attachmentable {
         if (pos) {
             users.addAll(pos)
         }
+        return users.asList().unique()
+    }
+
+    List<User> getAllUsersAndOwnerAndStakeholders() {
+        def users = getAllUsers()
+        this.teams?.each {
+            users << it.owner
+        }
         def shs = this.getStakeHolders()
         if (shs) {
             users.addAll(shs)
         }
-        return users.asList().unique()
+        return users.unique()
     }
 
     static List<Project> findAllByTermAndFilter(params = [:], String term = '', String filter = '') {
@@ -289,11 +296,11 @@ class Project extends TimeBox implements Serializable, Attachmentable {
     }
 
     User getUserByUidOrOwner(String uid) {
-        return getAllUsers().find { it.uid == uid } ?: (User.findByUid(uid) ?: owner)
+        return getAllUsersAndOwnerAndStakeholders().find { it.uid == uid } ?: (User.findByUid(uid) ?: owner)
     }
 
     User getUserByUid(String uid) {
-        return getAllUsers().find { it.uid == uid } ?: User.findByUid(uid)
+        return getAllUsersAndOwnerAndStakeholders().find { it.uid == uid } ?: User.findByUid(uid)
     }
 
     List<Invitation> getInvitedStakeHolders() {

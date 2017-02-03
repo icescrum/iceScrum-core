@@ -251,7 +251,7 @@ class ListenerService {
     void activityCreate(Activity activity, Map dirtyProperties) {
         if (activity.parentType == 'story' && activity.important) {
             Project project = Story.get(activity.parentRef).backlog
-            def users = project.allUsersAndStakehokders - activity.poster
+            def users = project.allUsersAndOwnerAndStakeholders - activity.poster
             pushService.broadcastToUsers(IceScrumEventType.CREATE, activity, users)
         }
     }
