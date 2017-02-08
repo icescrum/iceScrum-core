@@ -35,8 +35,6 @@ class Invitation implements Serializable {
 
     static belongsTo = [team: Team, project: Project]
 
-    static transients = ['userMock']
-
     static constraints = {
         email(blank: false, email: true)
         team(nullable: true)
@@ -58,21 +56,5 @@ class Invitation implements Serializable {
 
     def beforeValidate() {
         token = email.encodeAsMD5()
-    }
-
-    Map getUserMock() {
-        return getUserMock(email)
-    }
-
-    static Map getUserMock(String email) {
-        def emailPrefix = email.split('@')[0]
-        def firstName = emailPrefix
-        def lastName = ""
-        def dotPosition = emailPrefix.indexOf('.')
-        if (dotPosition != -1) {
-            firstName = emailPrefix.substring(0, dotPosition)?.capitalize()
-            lastName = emailPrefix.substring(dotPosition + 1)?.capitalize()
-        }
-        return [id: null, firstName: firstName, lastName: lastName, email: email]
     }
 }
