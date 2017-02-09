@@ -36,8 +36,7 @@ class Feature extends BacklogElement implements Serializable {
     static final int STATE_BUSY = 1
     static final int STATE_DONE = 2
 
-    //default color is blue
-    String color = "#2d8ccc"
+    String color = "#2d8ccc" // Blue by default
 
     Integer value = null
     int type = Feature.TYPE_FUNCTIONAL
@@ -58,6 +57,7 @@ class Feature extends BacklogElement implements Serializable {
         table 'is_feature'
         stories cascade: "refresh", sort: 'rank', 'name': 'asc', cache: true
         sort "id"
+        activities cascade: 'delete-orphan' // Doesn't work on BacklogElement
     }
 
     static constraints = {

@@ -52,6 +52,7 @@ class AcceptanceTest implements Serializable {
     static mapping = {
         cache true
         table 'is_acceptance_test'
+        activities cascade: 'delete-orphan'
     }
 
     static transients = ['parentProject', 'stateEnum']

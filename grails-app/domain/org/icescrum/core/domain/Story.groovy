@@ -86,6 +86,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
         dependences cache: true, sort: "state", order: "asc"
         acceptanceTests sort: 'uid'
         effort precision: 5, scale: 2
+        activities cascade: 'delete-orphan' // Doesn't work on BacklogElement
     }
 
     static constraints = {

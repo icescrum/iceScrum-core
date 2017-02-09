@@ -66,6 +66,7 @@ class Task extends BacklogElement implements Serializable {
         cache true
         table 'is_task'
         participants cache: true
+        activities cascade: 'delete-orphan' // Doesn't work on BacklogElement
     }
 
     static constraints = {

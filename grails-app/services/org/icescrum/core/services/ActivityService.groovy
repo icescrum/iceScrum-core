@@ -48,17 +48,6 @@ class ActivityService extends IceScrumEventPublisher {
         return activity
     }
 
-    void removeAllActivities(Object item) {
-        if (item.activities) {
-            def activitiesToDelete = []
-            activitiesToDelete.addAll(item.activities)
-            activitiesToDelete.each { activity ->
-                item.removeFromActivities(activity)
-                activity.delete()
-            }
-        }
-    }
-
     def unMarshall(def activityXml, def options) {
         def parent = options.parent
         Project project = options.project

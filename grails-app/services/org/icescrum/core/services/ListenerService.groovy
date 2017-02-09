@@ -324,7 +324,6 @@ class ListenerService {
     @IceScrumListener(domains = ['story', 'feature', 'task', 'sprint', 'release', 'project'], eventType = IceScrumEventType.BEFORE_DELETE)
     void backlogElementBeforeDelete(object, Map dirtyProperties) {
         object.removeAllAttachments()
-        activityService.removeAllActivities(object)
     }
 
     @IceScrumListener(domains = ['story', 'feature', 'task', 'sprint', 'release', 'acceptanceTest', 'project'], eventType = IceScrumEventType.BEFORE_UPDATE)

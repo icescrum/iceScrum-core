@@ -79,6 +79,7 @@ class TimeBox implements Comparable<TimeBox>, Serializable {
         description type: 'text'
         tablePerHierarchy false
         cliches cascade: 'all-delete-orphan', cache: true
+        activities cascade: 'delete-orphan'
         sort: orderNumber:'asc'
     }
 
