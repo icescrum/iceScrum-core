@@ -253,7 +253,7 @@ class ApplicationSupport {
                     log.debug "Warning could not access network interfaces, message: $ioe.message"
                 }
             }
-            config.icescrum.appID = uid ?: UUID.randomUUID()
+            config.icescrum.appID = uid ?: UUID.randomUUID().toString()
             if (log.debugEnabled) {
                 log.debug "Generated (${uid ? 'm' : 'r'}) appID: $config.icescrum.appID"
             }
