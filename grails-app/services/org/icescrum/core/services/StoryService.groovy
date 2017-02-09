@@ -64,16 +64,6 @@ class StoryService extends IceScrumEventPublisher {
         if (!story.suggestedDate) {
             story.suggestedDate = new Date()
         }
-        if (story.effort > 0) {
-            story.state = Story.STATE_ESTIMATED
-            if (!story.estimatedDate) {
-                story.estimatedDate = new Date()
-            }
-        } else if (story.acceptedDate) {
-            story.state = Story.STATE_ACCEPTED
-        } else {
-            story.state = Story.STATE_SUGGESTED
-        }
         story.affectVersion = (story.type == Story.TYPE_DEFECT ? story.affectVersion : null)
         story.addToFollowers(user)
         project.allUsers.findAll {
@@ -85,12 +75,6 @@ class StoryService extends IceScrumEventPublisher {
         setRank(story, rank)
         story.save(flush: true)
         story.refresh() // required to initialize collections to empty list
-        if (story.state > Story.STATE_SUGGESTED) {
-            activityService.addActivity(story, springSecurityService.currentUser, 'acceptAs', story.name)
-            if (story.state > Story.STATE_ACCEPTED) {
-                activityService.addActivity(story, springSecurityService.currentUser, 'estimate', story.name)
-            }
-        }
         project.addToStories(story)
         publishSynchronousEvent(IceScrumEventType.CREATE, story)
     }

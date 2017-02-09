@@ -134,14 +134,18 @@ class DummyService {
                 ]
         ]
         def createStory = { properties ->
+            Integer effort = properties.remove('effort')
+            Integer state = properties.remove('state')
             Story story = new Story([suggestedDate: startDate] + properties)
-            if (story.state >= Story.STATE_ACCEPTED) {
-                story.acceptedDate = startDate + 1
-            }
-            if (story.state >= Story.STATE_ESTIMATED) {
-                story.estimatedDate = startDate + 2
-            }
             storyService.save(story, project, user)
+            if (state >= Story.STATE_ACCEPTED) {
+                storyService.acceptToBacklog(story)
+                story.acceptedDate = startDate + 1 // Override the date
+            }
+            if (state >= Story.STATE_ESTIMATED) {
+                storyService.update(story, [effort: effort])
+                story.estimatedDate = startDate + 2 // Override the date
+            }
             return story
         }
         // Create stories
