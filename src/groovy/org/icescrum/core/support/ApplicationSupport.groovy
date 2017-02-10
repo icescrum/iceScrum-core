@@ -374,7 +374,7 @@ class ApplicationSupport {
     }
 
     static public String getConfigFilePath() {
-        def configLocations = Holders.grailsApplication.config.grails.config.locations.collect { it.contains(':') ? it.split(':')[1] : it }
+        def configLocations = Holders.grailsApplication.config.grails.config.locations.collect { it.contains('file:') ? it.split('file:')[1] : it }
         return configLocations ? configLocations.first() : System.getProperty("user.home") + File.separator + ".icescrum" + File.separator + "config.groovy"
     }
 
