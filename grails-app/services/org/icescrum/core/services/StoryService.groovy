@@ -217,12 +217,9 @@ class StoryService extends IceScrumEventPublisher {
             if (!story.plannedDate) {
                 story.plannedDate = story.inProgressDate
             }
-            def autoCreateTaskOnEmptyStory = sprint.parentRelease.parentProject.preferences.autoCreateTaskOnEmptyStory
-            if (autoCreateTaskOnEmptyStory) {
-                if (autoCreateTaskOnEmptyStory && !story.tasks) {
-                    def emptyTask = new Task(name: story.name, state: Task.STATE_WAIT, description: story.description, parentStory: story)
-                    taskService.save(emptyTask, user)
-                }
+            if (sprint.parentRelease.parentProject.preferences.autoCreateTaskOnEmptyStory && !story.tasks) {
+                def emptyTask = new Task(name: story.name, state: Task.STATE_WAIT, description: story.description, parentStory: story)
+                taskService.save(emptyTask, user)
             }
             clicheService.createOrUpdateDailyTasksCliche(sprint)
         } else {
