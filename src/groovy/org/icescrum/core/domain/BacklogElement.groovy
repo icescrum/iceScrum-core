@@ -32,8 +32,6 @@ abstract class BacklogElement implements Attachmentable, Commentable, Serializab
 
     static final long serialVersionUID = -6800252500987149051L
 
-    static final String TAG_KEYWORD = "tag:"
-
     String description
     String notes
     String name
@@ -62,28 +60,5 @@ abstract class BacklogElement implements Attachmentable, Commentable, Serializab
         notes length: 5000
         backlog lazy: true
         tablePerHierarchy false
-    }
-
-    static boolean hasTagKeyword(String term) {
-        term.startsWith(TAG_KEYWORD)
-    }
-
-    static String removeTagKeyword(String term) {
-        term -= TAG_KEYWORD
-        term.trim()
-    }
-
-    static Map addTermOrTagToSearch(Map searchOptions, term) {
-        if (term) {
-            if (hasTagKeyword(term)) {
-                def tag = removeTagKeyword(term)
-                if (tag) {
-                    searchOptions.tag = tag
-                    return searchOptions
-                }
-            }
-            searchOptions.term = term
-        }
-        return searchOptions
     }
 }

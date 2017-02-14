@@ -511,34 +511,6 @@ class Story extends BacklogElement implements Cloneable, Serializable {
         }
     }
 
-    static searchByTermOrTag(projectId, searchOptions, term) {
-        search(projectId, addTermOrTagToSearch(searchOptions, term))
-    }
-
-    static searchAllByTermOrTag(projectId, term) {
-        def searchOptions = [story: [:]]
-        searchByTermOrTag(projectId, searchOptions, term)
-    }
-
-    static searchByTermOrTagInSandbox(projectId, term) {
-        def searchOptions = [story: [state: STATE_SUGGESTED.toString()]]
-        searchByTermOrTag(projectId, searchOptions, term)
-    }
-
-    static searchByTermOrTagInBacklog(project, term) {
-        def stories
-        if (term) {
-            if (hasTagKeyword(term)) {
-                stories = search(project.id, [tag: removeTagKeyword(term)]).findAll { it.state in [STATE_ACCEPTED, STATE_ESTIMATED] }
-            } else {
-                stories = findInStoriesAcceptedEstimated(project.id, '%' + term + '%').list()
-            }
-        } else {
-            stories = findAllByBacklogAndStateBetween(project, STATE_ACCEPTED, STATE_ESTIMATED, [cache: true, sort: 'rank'])
-        }
-        stories
-    }
-
     enum TestState {
         NOTEST(0),
         TOCHECK(1),

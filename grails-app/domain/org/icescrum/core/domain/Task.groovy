@@ -295,15 +295,6 @@ class Task extends BacklogElement implements Serializable {
         }
     }
 
-    static searchByTermOrTag(project, searchOptions, term) {
-        search(project, addTermOrTagToSearch(searchOptions, term))
-    }
-
-    static searchAllByTermOrTag(project, term) {
-        def searchOptions = [task: [:]]
-        searchByTermOrTag(project, searchOptions, term)
-    }
-
     def xml(builder) {
         builder.task(uid: this.uid) {
             builder.type(this.type)

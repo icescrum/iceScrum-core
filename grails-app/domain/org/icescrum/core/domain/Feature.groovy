@@ -204,15 +204,6 @@ class Feature extends BacklogElement implements Serializable {
         }
     }
 
-    static searchByTermOrTag(projectId, searchOptions, term) {
-        search(projectId, addTermOrTagToSearch(searchOptions, term))
-    }
-
-    static searchAllByTermOrTag(projectId, term) {
-        def searchOptions = [feature: [:]]
-        searchByTermOrTag(projectId, searchOptions, term)
-    }
-
     def xml(builder) {
         builder.feature(uid: this.uid) {
             builder.type(this.type)
