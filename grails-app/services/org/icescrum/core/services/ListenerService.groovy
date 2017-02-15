@@ -32,6 +32,13 @@ class ListenerService {
     def springSecurityService
     def activityService
     def pushService
+    def releaseService
+    def sprintService
+    def featureService
+    def actorService
+    def storyService
+    def acceptanceTestService
+    def taskService
 
     @IceScrumListener(domain = 'story', eventType = IceScrumEventType.CREATE)
     void storyCreate(Story story, Map dirtyProperties) {
@@ -312,6 +319,31 @@ class ListenerService {
             }
         } else {
             pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, project, project.id)
+        }
+    }
+
+    @IceScrumListener(domain = 'project', eventType = IceScrumEventType.BEFORE_DELETE)
+    void projectBeforeDelete(Project project, Map dirtyProperties) {
+        project.tasks.each { Task task ->
+            taskService.publishSynchronousEvent(IceScrumEventType.BEFORE_DELETE, task, [:])
+        }
+        project.stories.each { Story story ->
+            storyService.publishSynchronousEvent(IceScrumEventType.BEFORE_DELETE, story, [:])
+            story.acceptanceTests.each { AcceptanceTest acceptanceTest ->
+                acceptanceTestService.publishSynchronousEvent(IceScrumEventType.BEFORE_DELETE, acceptanceTest, [:])
+            }
+        }
+        project.releases.each { Release release ->
+            release.sprints.each { Sprint sprint ->
+                sprintService.publishSynchronousEvent(IceScrumEventType.BEFORE_DELETE, sprint, [:])
+            }
+            releaseService.publishSynchronousEvent(IceScrumEventType.BEFORE_DELETE, release, [:])
+        }
+        project.features.each { Feature feature ->
+            featureService.publishSynchronousEvent(IceScrumEventType.BEFORE_DELETE, feature, [:])
+        }
+        project.actors.each { Actor actor ->
+            actorService.publishSynchronousEvent(IceScrumEventType.BEFORE_DELETE, actor, [:])
         }
     }
 

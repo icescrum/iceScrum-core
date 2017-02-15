@@ -109,7 +109,6 @@ class StoryService extends IceScrumEventPublisher {
                 it.dependsOn = null
                 it.save()
             }
-            story.removeAllAttachments()
             resetRank(story)
             story.deleteComments()
             story.description = reason ?: null

@@ -48,6 +48,7 @@ class ProjectService extends IceScrumEventPublisher {
     def grailsApplication
     def clicheService
     def notificationEmailService
+    def pushService
     def sprintService
 
     @PreAuthorize('isAuthenticated()')
@@ -572,11 +573,9 @@ class ProjectService extends IceScrumEventPublisher {
 
     @PreAuthorize('owner(#p.firstTeam)')
     def delete(Project p) {
+        pushService.disablePushForThisThread()
         def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_DELETE, p)
         p.allUsers.each { it.preferences.removeEmailsSettings(p.pkey) } // must be before unsecure to have POs
-        p.sprints.each { Sprint sprint ->
-            sprintService.publishSynchronousEvent(IceScrumEventType.BEFORE_DELETE, sprint) // TODO probably send events similarily for all items since their service is not called in project deletion
-        }
         p.invitedStakeHolders*.delete()
         p.invitedProductOwners*.delete()
         securityService.unsecureDomain p
@@ -586,8 +585,8 @@ class ProjectService extends IceScrumEventPublisher {
         p.teams.each {
             it.removeFromProjects(p)
         }
-        p.removeAllAttachments()
         p.delete(flush: true)
+        pushService.enablePushForThisThread()
         publishSynchronousEvent(IceScrumEventType.DELETE, p, dirtyProperties)
     }
 
