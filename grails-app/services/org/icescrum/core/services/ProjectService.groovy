@@ -571,23 +571,24 @@ class ProjectService extends IceScrumEventPublisher {
         }
     }
 
-    @PreAuthorize('owner(#p.firstTeam)')
-    def delete(Project p) {
+    @PreAuthorize('owner(#project.firstTeam)')
+    def delete(Project project) {
         pushService.disablePushForThisThread()
-        def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_DELETE, p)
-        p.allUsers.each { it.preferences.removeEmailsSettings(p.pkey) } // must be before unsecure to have POs
-        p.invitedStakeHolders*.delete()
-        p.invitedProductOwners*.delete()
-        securityService.unsecureDomain p
-        UserPreferences.findAllByLastProjectOpened(p.pkey)?.each {
+        def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_DELETE, project)
+        project.allUsers.each { it.preferences.removeEmailsSettings(project.pkey) } // must be before unsecure to have POs
+        Widget.findAllByTypeAndTypeId('project', project.id)*.delete()
+        project.invitedStakeHolders*.delete()
+        project.invitedProductOwners*.delete()
+        securityService.unsecureDomain project
+        UserPreferences.findAllByLastProjectOpened(project.pkey)?.each {
             it.lastProjectOpened = null
         }
-        p.teams.each {
-            it.removeFromProjects(p)
+        project.teams.each {
+            it.removeFromProjects(project)
         }
-        p.delete(flush: true)
+        project.delete(flush: true)
         pushService.enablePushForThisThread()
-        publishSynchronousEvent(IceScrumEventType.DELETE, p, dirtyProperties)
+        publishSynchronousEvent(IceScrumEventType.DELETE, project, dirtyProperties)
     }
 
     @PreAuthorize('scrumMaster(#project)')

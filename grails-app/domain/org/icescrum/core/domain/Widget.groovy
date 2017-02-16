@@ -12,11 +12,15 @@ class Widget implements Serializable {
 
     String settingsData
     String widgetDefinitionId
+    String type
+    Long typeId
 
     static belongsTo = [userPreferences: UserPreferences]
 
     static constraints = {
         settingsData nullable: true
+        type nullable: true
+        typeId nullable: true
     }
 
     static mapping = {
