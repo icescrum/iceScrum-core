@@ -50,10 +50,14 @@ class ListenerService {
     @IceScrumListener(domain = 'story', eventType = IceScrumEventType.UPDATE)
     void storyUpdate(Story story, Map dirtyProperties) {
         if (dirtyProperties) {
-            def project = story.backlog
+            Project project = story.backlog
             if (dirtyProperties.containsKey('rank') || dirtyProperties.containsKey('state')) {
                 project.stories.findAll { it.isDirty('rank') && it.id != story.id }.each { // If others stories have been updated, push them
-                    pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, [class: 'Story', id: it.id, rank: it.rank], project.id)
+                    def storyData = [class: 'Story', id: it.id, rank: it.rank] // Avoid pushing everything, which is very costly
+                    if (it.parentSprint) {
+                        storyData.parentSprint = [id: it.parentSprint.id];
+                    }
+                    pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, storyData, project.id)
                 }
             }
             def newUpdatedProperties = [:]
