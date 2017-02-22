@@ -364,7 +364,6 @@ ERROR: iceScrum v7 has detected that you attempt to run it on an existing R6 ins
     private void addListenerSupport(serviceGrailsClass, ctx) {
         println 'explore ' + serviceGrailsClass.propertyName
         serviceGrailsClass.clazz.declaredMethods.each { Method method ->
-            println ' --- method ' + method.name
             IceScrumListener listener = method.getAnnotation(IceScrumListener)
             if (listener) {
                 println ' ------ found annotation '
@@ -376,20 +375,18 @@ ERROR: iceScrum v7 has detected that you attempt to run it on an existing R6 ins
                         if (listener.eventType() == IceScrumEventType.UGLY_HACK_BECAUSE_ANNOTATION_CANT_BE_NULL) {
                             println ' ------ Add listener on all ' + domain + ' events: ' + serviceGrailsClass.propertyName + '.' + method.name
                             publisherService.registerListener { eventType, object, dirtyProperties ->
-                                println 'listener called ' + serviceGrailsClass.propertyName + '.' + method.name + ' on event: ' + eventType.toString()
                                 listenerService."$method.name"(eventType, object, dirtyProperties)
                             }
                         } else {
                             println '------ Add listener on ' + domain + ' ' + listener.eventType().toString() + ' events: ' + serviceGrailsClass.propertyName + '.' + method.name
                             publisherService.registerListener(listener.eventType()) { eventType, object, dirtyProperties ->
-                                println 'listener called ' + serviceGrailsClass.propertyName + '.' + method.name + ' on event: ' + eventType.toString()
                                 listenerService."$method.name"(object, dirtyProperties)
                             }
                         }
                     }
                 }
-
             }
         }
+        ctx.getBean('projectService').showListeners('add listener support')
     }
 }

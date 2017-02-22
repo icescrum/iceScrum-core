@@ -32,7 +32,6 @@ abstract class IceScrumEventPublisher {
     private Map<IceScrumEventType, List<Closure>> listenersByEventType = [:]
 
     synchronized void registerListener(IceScrumEventType eventType, Closure listener) {
-        println "Add listener for event: ${eventType.toString()}"
         def listeners = listenersByEventType[eventType]
         if (listeners == null) {
             def emptyListeners = []
@@ -59,6 +58,10 @@ abstract class IceScrumEventPublisher {
             it(type, object, dirtyProperties)
         }
         return dirtyProperties
+    }
+
+    synchronized void showListeners(String context) {
+        println "SHOW " + context + ' ' + listenersByEventType.inspect()
     }
 
     private static Map extractDirtyProperties(IceScrumEventType type, object) {
