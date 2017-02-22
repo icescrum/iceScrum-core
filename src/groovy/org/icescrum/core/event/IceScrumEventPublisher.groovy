@@ -40,7 +40,6 @@ abstract class IceScrumEventPublisher {
         }
         listener.delegate = this
         listeners.add(listener)
-        println "Add listener for event: ${eventType.toString()} listeners count: ${listeners.size()}"
     }
 
     synchronized void registerListener(Closure listener) {
@@ -53,15 +52,10 @@ abstract class IceScrumEventPublisher {
 
     synchronized Map publishSynchronousEvent(IceScrumEventType type, object, Map dirtyProperties = extractDirtyProperties(type, object)) {
         logEvent(type, object, dirtyProperties)
-        println "call ${listenersByEventType[type]} listeners for event: ${type.toString()} of ${object?.class?.name}"
         listenersByEventType[type]?.each {
             it(type, object, dirtyProperties)
         }
         return dirtyProperties
-    }
-
-    synchronized void showListeners(String context) {
-        println "SHOW " + context + ' ' + listenersByEventType.inspect()
     }
 
     private static Map extractDirtyProperties(IceScrumEventType type, object) {
