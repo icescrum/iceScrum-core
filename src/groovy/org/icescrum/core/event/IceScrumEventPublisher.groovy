@@ -23,36 +23,43 @@
  */
 package org.icescrum.core.event
 
+import grails.util.GrailsNameUtils
+import grails.util.Holders
 import org.codehaus.groovy.grails.commons.DefaultGrailsDomainClass
+import org.codehaus.groovy.grails.commons.GrailsApplication
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 abstract class IceScrumEventPublisher {
 
-    private Map<IceScrumEventType, List<Closure>> listenersByEventType = [:]
-
-    synchronized void registerListener(IceScrumEventType eventType, Closure listener) {
-        def listeners = listenersByEventType[eventType]
-        if (listeners == null) {
-            def emptyListeners = []
-            listenersByEventType[eventType] = emptyListeners
-            listeners = emptyListeners
-        }
+    static void registerListener(String domain, IceScrumEventType eventType, Closure listener) {
         listener.delegate = this
-        listeners.add(listener)
+        GrailsApplication grailsApplication = Holders.grailsApplication
+        if (grailsApplication.config.icescrum.listenersByDomain == null) {
+            grailsApplication.config.icescrum.listenersByDomain = [:]
+        }
+        def listenersByDomain = grailsApplication.config.icescrum.listenersByDomain
+        if (listenersByDomain[domain] == null) {
+            listenersByDomain[domain] = [:]
+        }
+        if (listenersByDomain[domain][eventType] == null) {
+            listenersByDomain[domain][eventType] = []
+        }
+        listenersByDomain[domain][eventType] << listener
     }
 
-    synchronized void registerListener(Closure listener) {
+    static void registerListener(String domain, Closure listener) {
         IceScrumEventType.values().each { IceScrumEventType type ->
             if (type != IceScrumEventType.UGLY_HACK_BECAUSE_ANNOTATION_CANT_BE_NULL) {
-                registerListener(type, listener)
+                registerListener(domain, type, listener)
             }
         }
     }
 
-    synchronized Map publishSynchronousEvent(IceScrumEventType type, object, Map dirtyProperties = extractDirtyProperties(type, object)) {
+    Map publishSynchronousEvent(IceScrumEventType type, object, Map dirtyProperties = extractDirtyProperties(type, object)) {
         logEvent(type, object, dirtyProperties)
-        listenersByEventType[type]?.each {
+        def domain = GrailsNameUtils.getPropertyNameRepresentation(object.class)
+        Holders.grailsApplication.config.icescrum.listenersByDomain.getAt(domain)?.getAt(type)?.each {
             it(type, object, dirtyProperties)
         }
         return dirtyProperties
@@ -78,7 +85,7 @@ abstract class IceScrumEventPublisher {
         Logger log = LoggerFactory.getLogger(getClass())
         if (log.isDebugEnabled()) {
             def id = object.id ?: dirtyProperties.id
-            log.debug("$type ${object.class.toString().split('\\.').last()} $id")
+            log.debug("$type ${GrailsNameUtils.getPropertyNameRepresentation(object.class)} $id")
             if (type == IceScrumEventType.UPDATE) {
                 dirtyProperties.each { dirtyProperty, oldValue ->
                     if (object.hasProperty("$dirtyProperty")) {
