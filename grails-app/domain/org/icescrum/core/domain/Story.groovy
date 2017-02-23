@@ -302,7 +302,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                 """SELECT MAX(s.uid)
                    FROM org.icescrum.core.domain.Story as s, org.icescrum.core.domain.Project as p
                    WHERE s.backlog = p
-                   AND p.id = :pid """, [pid: pid])[0] ?: 0) + 1
+                   AND p.id = :pid """, [pid: pid], [readOnly: true])[0] ?: 0) + 1
     }
 
     static findLastUpdatedComment(def element) {
@@ -314,7 +314,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                 "AND b.id = :id " +
                 "ORDER BY c.lastUpdated DESC",
                 [id: element.id, type: GrailsNameUtils.getPropertyName(element.class)],
-                [max: 1])[0]
+                [max: 1, readOnly: true])[0]
     }
 
     int compareTo(Story o) {
@@ -543,7 +543,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
             FROM Story story INNER JOIN story.acceptanceTests AS test
             WHERE story.id = :id
             GROUP BY test.state
-            ORDER BY test.state ASC """, [id: id, cache: true]
+            ORDER BY test.state ASC """, [id: id], [cache: true, readOnly: true]
         ).inject([:]) { countByState, group ->
             def (state, stateCount) = group
             if (AcceptanceTestState.exists(state)) {

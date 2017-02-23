@@ -35,7 +35,7 @@ import org.icescrum.core.event.IceScrumEventType
 
 import java.util.concurrent.CopyOnWriteArrayList
 
-@Transactional
+@Transactional(readOnly = true)
 class PushService {
 
     def atmosphereMeteor
