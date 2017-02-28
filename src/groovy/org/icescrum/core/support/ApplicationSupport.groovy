@@ -677,7 +677,7 @@ class CheckerTimerTask extends IsTimerTask {
                     ApplicationSupport.addWarning('version',
                             'cloud-download',
                             [code: 'is.warning.version', args: [resp.data.version]],
-                            [code: 'is.warning.version.download', args: [resp.data.message, resp.data.url]])
+                            [code: 'is.warning.version.message', args: [resp.data.message, resp.data.url]])
                     if (log.debugEnabled) {
                         log.debug('Automatic check for update - A new version is available : ' + resp.data.version)
                     }
