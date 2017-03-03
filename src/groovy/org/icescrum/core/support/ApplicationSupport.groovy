@@ -621,14 +621,17 @@ class ApplicationSupport {
 
     static void importAttachment(def object, def user, def importPath, def attachmentXml) {
         def originalName = attachmentXml.inputName.text()
-        if (!attachmentXml.url?.text()) {
+        if (attachmentXml.url.text()) {
+            object.addAttachment(user, [name: originalName,
+                                        url: attachmentXml.url.text(),
+                                        provider: attachmentXml.provider.text(),
+                                        length: attachmentXml.length.toInteger()])
+        } else {
             def path = "${importPath}${File.separator}attachments${File.separator}${attachmentXml.@id.text()}.${attachmentXml.ext.text()}"
             def fileAttch = new File(path)
             if (fileAttch.exists()) {
                 object.addAttachment(user, fileAttch, originalName)
             }
-        } else {
-            object.addAttachment(user, [filename: originalName, url: attachmentXml.url.text(), provider: attachmentXml.provider.text(), size: attachmentXml.length.toInteger()])
         }
     }
 }
