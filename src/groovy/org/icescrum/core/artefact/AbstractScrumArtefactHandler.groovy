@@ -1,9 +1,5 @@
-package org.icescrum.core.ui
-
-import org.icescrum.core.artefact.AbstractScrumArtefactHandler
-
 /*
- * Copyright (c) 2012 Kagilum SAS
+ * Copyright (c) 2017 Kagilum SAS
  *
  * This file is part of iceScrum.
  *
@@ -22,15 +18,20 @@ import org.icescrum.core.artefact.AbstractScrumArtefactHandler
  * Authors:
  *
  * Nicolas Noullet (nnoullet@kagilum.com)
+ * Vincent Barrier (vbarrier@kagilum.com)
  *
  */
+package org.icescrum.core.artefact
 
-class UiDefinitionArtefactHandler extends AbstractScrumArtefactHandler {
+import org.codehaus.groovy.grails.commons.ArtefactHandlerAdapter
 
-    static public final String TYPE = 'UiDefinition'
-    static public final String SUFFIX = 'UiDefinition'
+abstract public class AbstractScrumArtefactHandler extends ArtefactHandlerAdapter {
+    public AbstractScrumArtefactHandler(String type, Class<?> grailsClassType, Class<?> grailsClassImpl, String artefactSuffix) {
+        super(type, grailsClassType, grailsClassImpl, artefactSuffix, true)
+    }
 
-    UiDefinitionArtefactHandler() {
-        super(TYPE, UiDefinitionClass.class, DefaultUiDefinitionClass.class, SUFFIX)
+    @Override
+    public String getPluginName() {
+        return "icescrum-core"
     }
 }
