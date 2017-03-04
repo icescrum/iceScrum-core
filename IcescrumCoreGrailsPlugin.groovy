@@ -25,8 +25,11 @@
 import com.quirklabs.hdimageutils.HdImageService
 import grails.converters.JSON
 import grails.plugin.springsecurity.SpringSecurityService
+import hr.helix.transaction.RollbackAlwaysTransactionAttribute
 import org.codehaus.groovy.grails.commons.ControllerArtefactHandler
 import org.codehaus.groovy.grails.commons.GrailsClassUtils
+import org.codehaus.groovy.grails.commons.ServiceArtefactHandler
+import org.codehaus.groovy.grails.orm.support.GroovyAwareNamedTransactionAttributeSource
 import org.codehaus.groovy.grails.plugins.jasper.JasperExportFormat
 import org.codehaus.groovy.grails.plugins.jasper.JasperReportDef
 import org.codehaus.groovy.grails.plugins.jasper.JasperService
@@ -41,6 +44,7 @@ import org.icescrum.core.ui.UiDefinitionArtefactHandler
 import org.icescrum.core.utils.JSONIceScrumDomainClassMarshaller
 import org.icescrum.plugins.attachmentable.domain.Attachment
 import org.icescrum.plugins.attachmentable.services.AttachmentableService
+import org.springframework.beans.factory.config.BeanDefinition
 import org.springframework.web.context.request.RequestContextHolder as RCH
 import org.springframework.web.servlet.support.RequestContextUtils as RCU
 
@@ -54,9 +58,10 @@ class IcescrumCoreGrailsPlugin {
     def artefacts = [UiDefinitionArtefactHandler]
     def watchedResources = [
             "file:./grails-app/conf/*UiDefinition.groovy",
-            "file:./plugins/*/grails-app/conf/*UiDefinition.groovy"
+            "file:./plugins/*/grails-app/conf/*UiDefinition.groovy",
+            "file:./grails-app/services/*Service.groovy"
     ]
-    def observe = ['controllers']
+    def observe = ['controllers', 'services']
     def loadAfter = ['controllers', 'feeds', 'hibernate']
     def loadBefore = ['grails-atmosphere-meteor', 'asset-pipeline']
     def author = "iceScrum"
@@ -104,6 +109,13 @@ ERROR: iceScrum v7 has detected that you attempt to run it on an existing R6 ins
         application.serviceClasses.each {
             if (it.metaClass.methods*.name.any { it == 'unMarshall' }) {
                 application.config?.icescrum?.import."${it.logicalPropertyName}" = []
+            }
+        }
+
+        for (String beanName : getSpringConfig().getBeanNames()) {
+            def definition = getSpringConfig().getBeanConfig(beanName)?.getBeanDefinition()
+            if(definition){
+                makeServiceMethodsRollbackOnAnyThrowable definition
             }
         }
         println '... finished configuring iceScrum plugin core'
@@ -167,6 +179,11 @@ ERROR: iceScrum v7 has detected that you attempt to run it on an existing R6 ins
                 JasperService jasperService = event.ctx.getBean('jasperService')
                 addJasperMethod(event.source, springSecurityService, jasperService)
             }
+        }
+        if (application.isArtefactOfType(ServiceArtefactHandler.TYPE, event.source)) {
+            def serviceClass = application.getArtefact(ServiceArtefactHandler.TYPE, event.source.name)
+            def definition = event.ctx.getBeanDefinition(serviceClass.propertyName)
+            makeServiceMethodsRollbackOnAnyThrowable definition
         }
     }
 
@@ -384,6 +401,14 @@ ERROR: iceScrum v7 has detected that you attempt to run it on an existing R6 ins
                     }
                 }
             }
+        }
+    }
+
+    private void makeServiceMethodsRollbackOnAnyThrowable(BeanDefinition definition) {
+        if (definition.beanClassName == 'org.codehaus.groovy.grails.commons.spring.TypeSpecifyableTransactionProxyFactoryBean') {
+            def methodMatchingMap = ['*': new RollbackAlwaysTransactionAttribute()]
+            def source = new GroovyAwareNamedTransactionAttributeSource(nameMap: methodMatchingMap)
+            definition.propertyValues.addPropertyValue('transactionAttributeSource', source)
         }
     }
 }

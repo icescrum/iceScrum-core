@@ -66,7 +66,6 @@ grails.project.dependency.resolution = {
         compile ':cache:1.1.8'                  //cache:3.0.3
         compile ':cache-ehcache:1.0.5'          //3.0.0.BUILD-SNAPSHOT
 
-        runtime ':rollback-on-exception:0.2'    //no support
         runtime ':hibernate4:4.3.10'            //hibernate5
         build  (':release:3.1.2') {
             export = false

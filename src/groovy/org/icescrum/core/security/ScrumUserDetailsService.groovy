@@ -30,9 +30,8 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.security.core.userdetails.UsernameNotFoundException
 
-class ScrumDetailsService implements GrailsUserDetailsService {
+class ScrumUserDetailsService implements GrailsUserDetailsService {
 
-    def grailsApplication
     static final List NO_ROLES = [new SimpleGrantedAuthority(Authority.ROLE_USER)]
 
     UserDetails loadUserByUsername(String username, boolean loadRoles)
