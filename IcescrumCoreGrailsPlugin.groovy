@@ -25,7 +25,6 @@
 import com.quirklabs.hdimageutils.HdImageService
 import grails.converters.JSON
 import grails.plugin.springsecurity.SpringSecurityService
-import hr.helix.transaction.RollbackAlwaysTransactionAttribute
 import org.codehaus.groovy.grails.commons.ControllerArtefactHandler
 import org.codehaus.groovy.grails.commons.GrailsClassUtils
 import org.codehaus.groovy.grails.commons.ServiceArtefactHandler
@@ -42,6 +41,7 @@ import org.icescrum.core.support.ApplicationSupport
 import org.icescrum.core.support.ProgressSupport
 import org.icescrum.core.ui.UiDefinitionArtefactHandler
 import org.icescrum.core.utils.JSONIceScrumDomainClassMarshaller
+import org.icescrum.core.utils.RollbackAlwaysTransactionAttribute
 import org.icescrum.plugins.attachmentable.domain.Attachment
 import org.icescrum.plugins.attachmentable.services.AttachmentableService
 import org.springframework.beans.factory.config.BeanDefinition
