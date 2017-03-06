@@ -46,10 +46,6 @@ class App {
         server,
     }
 
-    void id(String id) {
-        this.id = id
-    }
-
     void name(String name) {
         this.name = name
     }
@@ -79,11 +75,12 @@ class App {
     }
 
     void screenshots(String... screenshots) {
-        this.screenshots = screenshots
+        this.screenshots.addAll(screenshots)
     }
 
     void tags(String... tags) {
-        this.tags = tags
+        this.tags.addAll(tags)
+        this.tags.unique()
     }
 
     void appLevel(AppLevel appLevel) {
