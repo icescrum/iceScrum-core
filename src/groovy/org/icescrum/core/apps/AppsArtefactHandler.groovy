@@ -1,9 +1,9 @@
-package org.icescrum.core.ui
+package org.icescrum.core.apps
 
 import org.icescrum.core.artefact.AbstractScrumArtefactHandler
 
 /*
- * Copyright (c) 2012 Kagilum SAS
+ * Copyright (c) 2017 Kagilum SAS
  *
  * This file is part of iceScrum.
  *
@@ -22,14 +22,15 @@ import org.icescrum.core.artefact.AbstractScrumArtefactHandler
  * Authors:
  *
  * Nicolas Noullet (nnoullet@kagilum.com)
+ * Vincent Barrier (vbarrier@kagilum.com)
  *
  */
 
-class UiDefinitionArtefactHandler extends AbstractScrumArtefactHandler {
+class AppsArtefactHandler extends AbstractScrumArtefactHandler {
 
-    static public final String TYPE = 'UiDefinition'
+    static public final String TYPE = 'Apps'
 
-    UiDefinitionArtefactHandler() {
-        super(TYPE, UiDefinitionClass.class, DefaultUiDefinitionClass.class, TYPE)
+    AppsArtefactHandler() {
+        super(TYPE, AppsClass.class, DefaultAppsClass.class, TYPE)
     }
 }

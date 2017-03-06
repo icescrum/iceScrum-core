@@ -28,6 +28,6 @@ import org.codehaus.groovy.grails.commons.AbstractGrailsClass;
 
 public class DefaultUiDefinitionClass extends AbstractGrailsClass implements UiDefinitionClass {
     public DefaultUiDefinitionClass(Class clazz) {
-        super(clazz, UiDefinitionArtefactHandler.SUFFIX);
+        super(clazz, UiDefinitionArtefactHandler.TYPE);
     }
 }

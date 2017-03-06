@@ -1,9 +1,5 @@
-package org.icescrum.core.ui
-
-import org.icescrum.core.artefact.AbstractScrumArtefactHandler
-
 /*
- * Copyright (c) 2012 Kagilum SAS
+ * Copyright (c) 2017 Kagilum SAS
  *
  * This file is part of iceScrum.
  *
@@ -22,14 +18,26 @@ import org.icescrum.core.artefact.AbstractScrumArtefactHandler
  * Authors:
  *
  * Nicolas Noullet (nnoullet@kagilum.com)
+ * Vincent Barrier (vbarrier@kagilum.com)
  *
  */
+package org.icescrum.core.services
 
-class UiDefinitionArtefactHandler extends AbstractScrumArtefactHandler {
+class AppsService {
 
-    static public final String TYPE = 'UiDefinition'
+    static transactional = false
 
-    UiDefinitionArtefactHandler() {
-        super(TYPE, UiDefinitionClass.class, DefaultUiDefinitionClass.class, TYPE)
+    def grailsApplication
+
+    def loadApps() {
+        log.debug("load apps")
+        grailsApplication.appsClasses.each {
+            new ConfigSlurper().parse(it.clazz)
+        }
+    }
+
+    def reloadApps() {
+        log.debug("reload apps")
+        loadApps()
     }
 }
