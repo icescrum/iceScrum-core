@@ -21,9 +21,9 @@
  * Vincent Barrier (vbarrier@kagilum.com)
  *
  */
-package org.icescrum.core.apps
+package org.icescrum.core.app
 
-class App {
+class AppDefinition {
     String id
     String name
     String logo

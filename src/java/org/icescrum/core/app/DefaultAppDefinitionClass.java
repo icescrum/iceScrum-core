@@ -1,6 +1,4 @@
-package org.icescrum.core.apps
-
-import org.icescrum.core.artefact.AbstractScrumArtefactHandler
+package org.icescrum.core.app;
 
 /*
  * Copyright (c) 2017 Kagilum SAS
@@ -26,11 +24,10 @@ import org.icescrum.core.artefact.AbstractScrumArtefactHandler
  *
  */
 
-class AppsArtefactHandler extends AbstractScrumArtefactHandler {
+import org.codehaus.groovy.grails.commons.AbstractGrailsClass;
 
-    static public final String TYPE = 'Apps'
-
-    AppsArtefactHandler() {
-        super(TYPE, AppsClass.class, DefaultAppsClass.class, TYPE)
+public class DefaultAppDefinitionClass extends AbstractGrailsClass implements AppDefinitionClass {
+    public DefaultAppDefinitionClass(Class clazz) {
+        super(clazz, AppDefinitionArtefactHandler.TYPE);
     }
 }

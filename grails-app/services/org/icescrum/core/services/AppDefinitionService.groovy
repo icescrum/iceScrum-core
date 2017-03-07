@@ -23,36 +23,36 @@
  */
 package org.icescrum.core.services
 
-import org.icescrum.core.apps.App
+import org.icescrum.core.app.AppDefinition
 
-class AppsService {
+class AppDefinitionService {
 
     static transactional = false
 
     def grailsApplication
 
-    List<App> getApps() {
-        return grailsApplication.config.icescrum.apps ? grailsApplication.config.icescrum.apps.values() as List : []
+    List<AppDefinition> getAppDefinitions() {
+        return grailsApplication.config.icescrum.appDefinitions ? grailsApplication.config.icescrum.appDefinitions.values() as List : []
     }
 
-    void registerApps(List<App> apps) {
-        if (!grailsApplication.config.icescrum.apps) {
-            grailsApplication.config.icescrum.apps = [:]
+    void registerAppDefinitions(List<AppDefinition> appDefinitions) {
+        if (!grailsApplication.config.icescrum.appDefinitions) {
+            grailsApplication.config.icescrum.appDefinitions = [:]
         }
-        apps.each { App app ->
-            grailsApplication.config.icescrum.apps[app.id] = app
+        appDefinitions.each { AppDefinition appDefinition ->
+            grailsApplication.config.icescrum.appDefinitions[appDefinition.id] = appDefinition
         }
     }
 
-    void loadApps() {
-        log.debug("Load apps")
+    void loadAppDefinitions() {
+        log.info('Loading App definitions...')
         grailsApplication.appsClasses.each {
             new ConfigSlurper().parse(it.clazz)
         }
     }
 
-    void reloadApps() {
-        log.debug("Reload apps")
-        loadApps()
+    void reloadAppDefinitions() {
+        log.info('Reloading App definitions')
+        loadAppDefinitions()
     }
 }

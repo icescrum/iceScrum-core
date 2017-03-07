@@ -32,12 +32,12 @@ import org.codehaus.groovy.grails.orm.support.GroovyAwareNamedTransactionAttribu
 import org.codehaus.groovy.grails.plugins.jasper.JasperExportFormat
 import org.codehaus.groovy.grails.plugins.jasper.JasperReportDef
 import org.codehaus.groovy.grails.plugins.jasper.JasperService
-import org.icescrum.core.apps.AppsArtefactHandler
+import org.icescrum.core.app.AppDefinitionArtefactHandler
 import org.icescrum.core.cors.CorsFilter
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
 import org.icescrum.core.event.IceScrumListener
-import org.icescrum.core.services.AppsService
+import org.icescrum.core.services.AppDefinitionService
 import org.icescrum.core.services.UiDefinitionService
 import org.icescrum.core.support.ApplicationSupport
 import org.icescrum.core.support.ProgressSupport
@@ -57,7 +57,7 @@ class IcescrumCoreGrailsPlugin {
     def groupId = 'org.icescrum'
     def version = "1.7-SNAPSHOT"
     def grailsVersion = "2.5 > *"
-    def artefacts = [UiDefinitionArtefactHandler, AppsArtefactHandler]
+    def artefacts = [UiDefinitionArtefactHandler, AppDefinitionArtefactHandler]
     def watchedResources = [
             "file:./grails-app/conf/*UiDefinition.groovy",
             "file:../plugins/*/grails-app/conf/*UiDefinition.groovy",
@@ -132,9 +132,9 @@ ERROR: iceScrum v7 has detected that you attempt to run it on an existing R6 ins
         AttachmentableService attachmentableService = ctx.getBean('attachmentableService')
         JasperService jasperService = ctx.getBean('jasperService')
         UiDefinitionService uiDefinitionService = ctx.getBean('uiDefinitionService')
-        AppsService appsService = ctx.getBean('appsService')
+        AppDefinitionService appDefinitionService = ctx.getBean('appDefinitionService')
         uiDefinitionService.loadDefinitions()
-        appsService.loadApps()
+        appDefinitionService.loadAppDefinitions()
         application.controllerClasses.each {
             addJasperMethod(it, springSecurityService, jasperService)
             if (it.logicalPropertyName in controllersWithDownloadAndPreview) {
@@ -171,13 +171,13 @@ ERROR: iceScrum v7 has detected that you attempt to run it on an existing R6 ins
             }
         }
         def uiDefinitionType = UiDefinitionArtefactHandler.TYPE
-        def appsType = AppsArtefactHandler.TYPE
+        def appsType = AppDefinitionArtefactHandler.TYPE
         if (application.isArtefactOfType(uiDefinitionType, event.source)) {
             reloadArtefact(uiDefinitionType)
             uiDefinitionService.reload()
         } else if (application.isArtefactOfType(appsType, event.source)) {
             reloadArtefact(appsType)
-            event.ctx.getBean('appsService').reloadApps()
+            ((AppDefinitionService) event.ctx.getBean('appDefinitionService')).reloadAppDefinitions()
         } else if (application.isArtefactOfType(ControllerArtefactHandler.TYPE, event.source)) {
             def controller = application.getControllerClass(event.source?.name)
             HdImageService hdImageService = event.ctx.getBean('hdImageService')
@@ -202,7 +202,7 @@ ERROR: iceScrum v7 has detected that you attempt to run it on an existing R6 ins
 
     def onConfigChange = { event ->
         event.application.mainContext.uiDefinitionService.reload()
-        event.application.mainContext.appsService.reloadApps()
+        ((AppDefinitionService) event.application.mainContext.appDefinitionService).reloadAppDefinitions()
     }
 
     private addDownloadAndPreviewMethods(clazz, attachmentableService, hdImageService) {
