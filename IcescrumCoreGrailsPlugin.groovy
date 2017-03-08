@@ -37,6 +37,7 @@ import org.icescrum.core.cors.CorsFilter
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
 import org.icescrum.core.event.IceScrumListener
+import org.icescrum.core.security.ScrumUserDetailsService
 import org.icescrum.core.services.AppDefinitionService
 import org.icescrum.core.services.UiDefinitionService
 import org.icescrum.core.support.ApplicationSupport
@@ -122,6 +123,11 @@ ERROR: iceScrum v7 has detected that you attempt to run it on an existing R6 ins
                 makeServiceMethodsRollbackOnAnyThrowable definition
             }
         }
+
+        userDetailsService(ScrumUserDetailsService) {
+            grailsApplication = ref('grailsApplication')
+        }
+
         println '... finished configuring iceScrum plugin core'
     }
 

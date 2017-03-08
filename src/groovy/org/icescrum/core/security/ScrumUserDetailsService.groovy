@@ -43,9 +43,10 @@ class ScrumUserDetailsService implements GrailsUserDetailsService {
     @Transactional(readOnly = true, noRollbackFor = [IllegalArgumentException, UsernameNotFoundException])
     UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         def user = findUser(username, false)
-        if (!user && grailsApplication.mainContext['ldapUserDetailsMapper']?.isEnabled()) {
-            user = findUser(username, true)
-        }
+        return createUserDetails(username, user)
+    }
+
+    def createUserDetails(def username, def user){
         if (!user) {
             LoggerFactory.getLogger(getClass()).warn "User not found: $username"
             throw new UsernameNotFoundException('User not found', username)
