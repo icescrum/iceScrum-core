@@ -54,10 +54,15 @@ class ScrumUserDetailsService implements GrailsUserDetailsService {
         def authorities = user.authorities.collect {
             new SimpleGrantedAuthority(it.authority)
         }
-        return new ScrumUserDetails(user.username, user.password,
-                user.enabled, !user.accountExpired, !user.passwordExpired,
-                !user.accountLocked, authorities ?: NO_ROLES, user.id,
-                user.firstName + " " + user.lastName)
+        return new ScrumUserDetails(user.username,
+                                    user.password,
+                                    user.enabled,
+                                    !user.accountExpired,
+                                    !user.passwordExpired,
+                                    !user.accountLocked,
+                                    authorities ?: NO_ROLES,
+                                    user.id,
+                                    user.firstName + " " + user.lastName)
     }
 
     def findUser(username, external) {
