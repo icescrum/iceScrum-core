@@ -22,6 +22,7 @@
 package org.icescrum.core.security
 
 import grails.plugin.springsecurity.SpringSecurityUtils
+import grails.plugin.springsecurity.userdetails.GrailsUser
 import grails.plugin.springsecurity.userdetails.GrailsUserDetailsService
 import grails.transaction.Transactional
 import org.icescrum.core.domain.security.Authority
@@ -46,7 +47,7 @@ class ScrumUserDetailsService implements GrailsUserDetailsService {
         return createUserDetails(username, user)
     }
 
-    def createUserDetails(def username, def user){
+    def createUserDetails(def username, def user) {
         if (!user) {
             LoggerFactory.getLogger(getClass()).warn "User not found: $username"
             throw new UsernameNotFoundException('User not found', username)
@@ -54,15 +55,16 @@ class ScrumUserDetailsService implements GrailsUserDetailsService {
         def authorities = user.authorities.collect {
             new SimpleGrantedAuthority(it.authority)
         }
-        return new ScrumUserDetails(user.username,
-                                    user.password,
-                                    user.enabled,
-                                    !user.accountExpired,
-                                    !user.passwordExpired,
-                                    !user.accountLocked,
-                                    authorities ?: NO_ROLES,
-                                    user.id,
-                                    user.firstName + " " + user.lastName)
+        return new GrailsUser(
+                user.username,
+                user.password,
+                user.enabled,
+                !user.accountExpired,
+                !user.passwordExpired,
+                !user.accountLocked,
+                authorities ?: NO_ROLES,
+                user.id
+        )
     }
 
     def findUser(username, external) {

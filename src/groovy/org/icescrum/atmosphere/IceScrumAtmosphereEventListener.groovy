@@ -114,9 +114,9 @@ class IceScrumAtmosphereEventListener implements AtmosphereResourceEventListener
         def context = (SecurityContext) request.session?.getAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY);
         if (context?.authentication?.isAuthenticated()) {
             def principal = context.authentication.principal
-            user.putAll([fullName: principal.fullName, id: principal.id, username: principal.username])
+            user.putAll([id: principal.id, username: principal.username])
         } else {
-            user.putAll([fullName: 'anonymous', id: null, username: 'anonymous'])
+            user.putAll([id: null, username: 'anonymous'])
         }
         return user
     }
