@@ -25,6 +25,7 @@
 import com.quirklabs.hdimageutils.HdImageService
 import grails.converters.JSON
 import grails.plugin.springsecurity.SpringSecurityService
+import grails.util.Holders
 import org.codehaus.groovy.grails.commons.ControllerArtefactHandler
 import org.codehaus.groovy.grails.commons.GrailsClassUtils
 import org.codehaus.groovy.grails.commons.ServiceArtefactHandler
@@ -67,7 +68,7 @@ class IcescrumCoreGrailsPlugin {
             "file:./grails-app/services/*Service.groovy"
     ]
     def observe = ['controllers', 'services']
-    def loadAfter = ['controllers', 'feeds', 'hibernate']
+    def loadAfter = ['controllers', 'feeds', 'hibernate', 'springSecurityCore']
     def loadBefore = ['grails-atmosphere-meteor', 'asset-pipeline']
     def author = "iceScrum"
     def authorEmail = "contact@icescrum.org"
