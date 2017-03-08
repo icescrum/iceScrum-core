@@ -43,7 +43,7 @@ class ScrumUserDetailsService implements GrailsUserDetailsService {
 
     @Transactional(readOnly = true, noRollbackFor = [IllegalArgumentException, UsernameNotFoundException])
     UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        def user = findUser(username, false)
+        def user = findUser(username)
         return createUserDetails(username, user)
     }
 
@@ -67,7 +67,7 @@ class ScrumUserDetailsService implements GrailsUserDetailsService {
         )
     }
 
-    def findUser(username, external) {
+    def findUser(username) {
         def conf = SpringSecurityUtils.securityConfig
         Class<?> User = grailsApplication.getDomainClass(conf.userLookup.userDomainClassName).clazz
         return User.createCriteria().get {
@@ -75,7 +75,6 @@ class ScrumUserDetailsService implements GrailsUserDetailsService {
                 eq conf.userLookup.usernamePropertyName, username
                 eq 'email', username.toLowerCase()
             }
-            eq('accountExternal', external)
             cache true
         }
     }
