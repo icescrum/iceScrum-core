@@ -25,7 +25,6 @@
 import com.quirklabs.hdimageutils.HdImageService
 import grails.converters.JSON
 import grails.plugin.springsecurity.SpringSecurityService
-import grails.util.Holders
 import org.codehaus.groovy.grails.commons.ControllerArtefactHandler
 import org.codehaus.groovy.grails.commons.GrailsClassUtils
 import org.codehaus.groovy.grails.commons.ServiceArtefactHandler
