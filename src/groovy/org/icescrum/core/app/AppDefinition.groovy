@@ -24,6 +24,12 @@
 package org.icescrum.core.app
 
 class AppDefinition {
+    boolean hasWidgets = false
+    boolean hasWindows = false
+    boolean hasProjectSettings = false
+    boolean isSimple = true
+    boolean isProject = false
+    boolean isServer = false
     String id
     String name
     String logo
@@ -31,20 +37,13 @@ class AppDefinition {
     String version
     String author
     String docUrl
+    String websiteUrl
     String baseline
     List<String> screenshots = []
     List<String> tags = []
-    AppLevel appLevel
-    Date date
-    boolean hasWidgets = false
-    boolean hasWindows = false
-    boolean hasProcesses = false
-
-    enum AppLevel {
-        both,
-        project,
-        server,
-    }
+    Closure<Boolean> isEnabledForProject
+    Closure onEnableForProject
+    Closure onDisableForProject
 
     void name(String name) {
         this.name = name
@@ -70,6 +69,10 @@ class AppDefinition {
         this.docUrl = docUrl
     }
 
+    void websiteUrl(String websiteUrl) {
+        this.websiteUrl = websiteUrl
+    }
+
     void baseline(String baseline) {
         this.baseline = baseline
     }
@@ -83,14 +86,6 @@ class AppDefinition {
         this.tags.unique()
     }
 
-    void appLevel(AppLevel appLevel) {
-        this.appLevel = appLevel
-    }
-
-    void date(Date date) {
-        this.date = date
-    }
-
     void hasWidgets(boolean hasWidgets) {
         this.hasWidgets = hasWidgets
     }
@@ -99,7 +94,31 @@ class AppDefinition {
         this.hasWindows = hasWindows
     }
 
-    void hasProcesses(boolean hasProcesses) {
-        this.hasProcesses = hasProcesses
+    void hasProjectSettings(boolean hasProjectSettings) {
+        this.hasProjectSettings = hasProjectSettings
+    }
+
+    void isSimple(boolean isSimple) {
+        this.isSimple = isSimple
+    }
+
+    void isProject(boolean isProject) {
+        this.isProject = isProject
+    }
+
+    void isServer(boolean isServer) {
+        this.isServer = isServer
+    }
+
+    void isEnabledForProject(Closure<Boolean> isEnabledForProject) {
+        this.isEnabledForProject = isEnabledForProject
+    }
+
+    void onEnableForProject(Closure onEnableForProject) {
+        this.onEnableForProject = onEnableForProject
+    }
+
+    void onDisableForProject(Closure onDisableForProject) {
+        this.onDisableForProject = onDisableForProject
     }
 }
