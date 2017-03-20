@@ -67,13 +67,16 @@ class ScrumUserDetailsService implements GrailsUserDetailsService {
         )
     }
 
-    def findUser(username) {
+    def findUser(username, external = null) {
         def conf = SpringSecurityUtils.securityConfig
         Class<?> User = grailsApplication.getDomainClass(conf.userLookup.userDomainClassName).clazz
         return User.createCriteria().get {
             or {
                 eq conf.userLookup.usernamePropertyName, username
                 eq 'email', username.toLowerCase()
+            }
+            if(external != null){
+                eq('accountExternal', external)
             }
             cache true
         }
