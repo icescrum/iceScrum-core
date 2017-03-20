@@ -26,8 +26,6 @@ package org.icescrum.core.app
 class AppDefinition {
     boolean hasWidgets = false
     boolean hasWindows = false
-    boolean hasProjectSettings = false
-    boolean isSimple = true
     boolean isProject = false
     boolean isServer = false
     String id
@@ -41,9 +39,11 @@ class AppDefinition {
     String baseline
     List<String> screenshots = []
     List<String> tags = []
-    Closure<Boolean> isEnabledForProject
     Closure onEnableForProject
     Closure onDisableForProject
+    AppSettingsDefinition projectSettings
+
+    // Builder
 
     void name(String name) {
         this.name = name
@@ -94,14 +94,6 @@ class AppDefinition {
         this.hasWindows = hasWindows
     }
 
-    void hasProjectSettings(boolean hasProjectSettings) {
-        this.hasProjectSettings = hasProjectSettings
-    }
-
-    void isSimple(boolean isSimple) {
-        this.isSimple = isSimple
-    }
-
     void isProject(boolean isProject) {
         this.isProject = isProject
     }
@@ -110,15 +102,27 @@ class AppDefinition {
         this.isServer = isServer
     }
 
-    void isEnabledForProject(Closure<Boolean> isEnabledForProject) {
-        this.isEnabledForProject = isEnabledForProject
-    }
-
     void onEnableForProject(Closure onEnableForProject) {
         this.onEnableForProject = onEnableForProject
     }
 
     void onDisableForProject(Closure onDisableForProject) {
         this.onDisableForProject = onDisableForProject
+    }
+
+    void projectSettings(@DelegatesTo(strategy=Closure.DELEGATE_ONLY, value=AppSettingsDefinition) Closure settingsClosure) {
+        AppSettingsDefinition projectSettings = new AppSettingsDefinition()
+        AppDefinitionsBuilder.builObjectFromClosure(projectSettings, settingsClosure, this)
+        this.projectSettings = projectSettings
+    }
+
+    // Utility
+
+    static Map getAttributes(AppDefinition appDefinition) {
+        def attributes = appDefinition.properties.clone()
+        ['class', 'onDisableForProject', 'onEnableForProject'].each { k ->
+            attributes.remove(k)
+        }
+        return attributes
     }
 }

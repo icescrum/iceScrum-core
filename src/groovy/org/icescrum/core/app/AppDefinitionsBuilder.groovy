@@ -4,20 +4,22 @@ import grails.util.Holders
 
 class AppDefinitionsBuilder {
 
-    static void apps(@DelegatesTo(strategy=Closure.DELEGATE_ONLY, value=AppDefinitions) Closure cl) {
+    static void apps(@DelegatesTo(strategy=Closure.DELEGATE_ONLY, value=AppDefinitions) Closure appDefinitionsClosure) {
         AppDefinitions appDefinitions = new AppDefinitions()
-        Closure appDefinitionsClosure = cl.rehydrate(appDefinitions, this, this)
-        appDefinitionsClosure.resolveStrategy = Closure.DELEGATE_ONLY
-        appDefinitionsClosure()
+        builObjectFromClosure(appDefinitions, appDefinitionsClosure, this)
         List<AppDefinition> definitions = appDefinitions.definitions
         if (appDefinitions.shared) { // Override each appDefinition fields with shared ones
             definitions.each { AppDefinition appDefinition ->
-                Closure appDefinitionClosure = appDefinitions.shared.rehydrate(appDefinition, this, this)
-                appDefinitionClosure.resolveStrategy = Closure.DELEGATE_ONLY
-                appDefinitionClosure()
+                builObjectFromClosure(appDefinition, appDefinitions.shared, this)
             }
         }
         Holders.grailsApplication.mainContext.appDefinitionService.registerAppDefinitions(definitions)
+    }
+
+    static void builObjectFromClosure(Object objectToBuild, Closure cl, Object context) {
+        Closure buildObject = cl.rehydrate(objectToBuild, context, context)
+        buildObject.resolveStrategy = Closure.DELEGATE_ONLY
+        buildObject()
     }
 
     static class AppDefinitions {
@@ -25,16 +27,14 @@ class AppDefinitionsBuilder {
         List<AppDefinition> definitions = []
         Closure shared
 
-        void app(String id, @DelegatesTo(strategy=Closure.DELEGATE_ONLY, value=AppDefinition) Closure cl) {
+        void app(String id, @DelegatesTo(strategy=Closure.DELEGATE_ONLY, value=AppDefinition) Closure appDefinitionClosure) {
             AppDefinition appDefinition = new AppDefinition(id: id)
-            Closure appDefinitionClosure = cl.rehydrate(appDefinition, this, this)
-            appDefinitionClosure.resolveStrategy = Closure.DELEGATE_ONLY
-            appDefinitionClosure()
+            builObjectFromClosure(appDefinition, appDefinitionClosure, this)
             definitions << appDefinition
         }
 
-        void shared(@DelegatesTo(strategy=Closure.DELEGATE_ONLY, value=AppDefinition) Closure cl) {
-            this.shared = cl
+        void shared(@DelegatesTo(strategy=Closure.DELEGATE_ONLY, value=AppDefinition) Closure sharedClosure) {
+            this.shared = sharedClosure
         }
     }
 }

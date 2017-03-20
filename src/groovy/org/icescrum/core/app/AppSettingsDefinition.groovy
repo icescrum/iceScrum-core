@@ -17,26 +17,22 @@
  *
  * Authors:
  *
- * Vincent Barrier (vbarrier@kagilum.com)
  * Nicolas Noullet (nnoullet@kagilum.com)
+ * Vincent Barrier (vbarrier@kagilum.com)
  *
  */
+package org.icescrum.core.app
 
-package org.icescrum.core.domain
+class AppSettingsDefinition {
 
-class SimpleProjectApp implements Serializable {
+    String icon
+    String template
 
-    boolean enabled = false
-    String appDefinitionId
-
-    static belongsTo = [parentProject: Project]
-
-    static mapping = {
-        cache true
-        table 'is_simple_project_app'
+    void icon(String icon) {
+        this.icon = icon
     }
 
-    static List<String> getEnabledAppIdsForProject(Project project) {
-        findAllByParentProjectAndEnabled(project, true)*.appDefinitionId
+    void template(String template) {
+        this.template = template
     }
 }

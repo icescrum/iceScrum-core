@@ -42,9 +42,7 @@ class AppService extends IceScrumEventPublisher {
         if (!appDefinition.isProject) {
             throw new BusinessException(code: 'Error, the App ' + appDefinitionId +  ' cannot be enabled/disabled for the project because it is not at project level')
         }
-        if (appDefinition.isSimple) {
-            updateSimpleProjectAppEnabledForProject(project, appDefinition, enabledForProject)
-        }
+        updateSimpleProjectAppEnabledForProject(project, appDefinition, enabledForProject)
         if (enabledForProject) {
             if (appDefinition.onEnableForProject) {
                 appDefinition.onEnableForProject(project)
