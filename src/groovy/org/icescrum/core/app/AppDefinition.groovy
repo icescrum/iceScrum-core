@@ -24,6 +24,7 @@
 package org.icescrum.core.app
 
 class AppDefinition {
+
     boolean hasWidgets = false
     boolean hasWindows = false
     boolean isProject = false
@@ -124,5 +125,19 @@ class AppDefinition {
             attributes.remove(k)
         }
         return attributes
+    }
+
+    Map validate() {
+        def result = [valid: false, errorMessage: "Error(s) for app definition $id:"]
+        if (!id || !name || !description || !baseline || !docUrl || !version || !author) {
+            result.errorMessage += '\n - These fields are required: name, description, baseline, docUrl, version, author'
+        } else if ((onEnableForProject || onDisableForProject || projectSettings) && !isProject) {
+            result.errorMessage += '\n - The fields onEnableForProject, onDisableForProject and projectSettings can be defined only if isProject is true'
+        } else if (!isProject && !isServer) {
+            result.errorMessage += '\n - At least one of the fields isProject and isServer must be true (both can be true)'
+        } else {
+            result.valid = true;
+        }
+        return result
     }
 }

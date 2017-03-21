@@ -1,8 +1,11 @@
 package org.icescrum.core.app
 
 import grails.util.Holders
+import org.slf4j.LoggerFactory
 
 class AppDefinitionsBuilder {
+
+    static private final log = LoggerFactory.getLogger(this.class.name)
 
     static void apps(@DelegatesTo(strategy=Closure.DELEGATE_ONLY, value=AppDefinitions) Closure appDefinitionsClosure) {
         AppDefinitions appDefinitions = new AppDefinitions()
@@ -11,6 +14,12 @@ class AppDefinitionsBuilder {
         if (appDefinitions.shared) { // Override each appDefinition fields with shared ones
             definitions.each { AppDefinition appDefinition ->
                 builObjectFromClosure(appDefinition, appDefinitions.shared, this)
+            }
+        }
+        definitions.each { AppDefinition appDefinition ->
+            def validationResult = appDefinition.validate()
+            if (!validationResult.valid) {
+                log.error(validationResult.errorMessage)
             }
         }
         Holders.grailsApplication.mainContext.appDefinitionService.registerAppDefinitions(definitions)
