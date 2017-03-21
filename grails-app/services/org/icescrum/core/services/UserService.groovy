@@ -77,6 +77,7 @@ class UserService extends IceScrumEventPublisher {
                             projectService.manageProjectEvents(Project.get(projectId), oldMembers)
                         }
                     }
+                    invitation.delete()
                 }
             }
         }
