@@ -49,7 +49,6 @@ class ProjectService extends IceScrumEventPublisher {
     def clicheService
     def notificationEmailService
     def pushService
-    def sprintService
 
     @PreAuthorize('isAuthenticated()')
     void save(Project project, productOwners, stakeHolders) {
@@ -789,7 +788,7 @@ class ProjectService extends IceScrumEventPublisher {
                 try {
                     notificationEmailService.sendInvitation(invitation, springSecurityService.currentUser)
                 } catch (MailException) {
-                    throw new BusinessException(code: 'is.mail.invitation.error')
+                    throw new BusinessException(code: 'is.mail.error')
                 }
             }
         }
