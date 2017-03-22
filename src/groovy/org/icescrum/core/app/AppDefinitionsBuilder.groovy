@@ -16,11 +16,12 @@ class AppDefinitionsBuilder {
                 builObjectFromClosure(appDefinition, appDefinitions.shared, this)
             }
         }
-        definitions.each { AppDefinition appDefinition ->
+        definitions = definitions.findAll { AppDefinition appDefinition ->
             def validationResult = appDefinition.validate()
             if (!validationResult.valid) {
                 log.error(validationResult.errorMessage)
             }
+            return validationResult.valid;
         }
         Holders.grailsApplication.mainContext.appDefinitionService.registerAppDefinitions(definitions)
     }

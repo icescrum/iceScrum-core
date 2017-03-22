@@ -128,7 +128,7 @@ class AppDefinition {
     }
 
     Map validate() {
-        def result = [valid: false, errorMessage: "Error(s) for app definition $id:"]
+        def result = [valid: false, errorMessage: "Error, this app definition cannot be registered: $id"]
         if (!id || !name || !description || !baseline || !docUrl || !version || !author) {
             result.errorMessage += '\n - These fields are required: name, description, baseline, docUrl, version, author'
         } else if ((onEnableForProject || onDisableForProject || projectSettings) && !isProject) {
