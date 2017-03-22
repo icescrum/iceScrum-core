@@ -60,10 +60,10 @@ class IcescrumCoreGrailsPlugin {
     def grailsVersion = "2.5 > *"
     def artefacts = [UiDefinitionArtefactHandler, AppDefinitionArtefactHandler]
     def watchedResources = [
-            "file:./grails-app/conf/*UiDefinition.groovy",
-            "file:../plugins/*/grails-app/conf/*UiDefinition.groovy",
-            "file:./grails-app/conf/*Apps.groovy",
-            "file:../plugins/*/grails-app/conf/*Apps.groovy",
+            "file:./grails-app/icescrum/*UiDefinition.groovy",
+            "file:../plugins/*/grails-app/icescrum/*UiDefinition.groovy",
+            "file:./grails-app/icescrum/*Apps.groovy",
+            "file:../plugins/*/grails-app/icescrum/*Apps.groovy",
             "file:./grails-app/services/*Service.groovy"
     ]
     def observe = ['controllers', 'services']
