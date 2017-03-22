@@ -387,7 +387,7 @@ class Product extends TimeBox implements Serializable, Attachmentable {
                     }
                 }
             }
-            updateProgress(20, 'Feature')
+            updateProgress(20, 'Features')
             builder.features() {
                 this.features.each { _feature ->
                     _feature.xml(builder)
