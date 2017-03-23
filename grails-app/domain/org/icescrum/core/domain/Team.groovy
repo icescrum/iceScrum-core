@@ -155,7 +155,7 @@ class Team implements Serializable, Comparable {
         return findAllByOwnerOrSM(user, params, term).size()
     }
 
-    static Integer countActiveProductsByTeamOwner(String username, params) {
+    static Integer countActivePrivateProductsByTeamOwner(String username, params) {
         executeQuery("""SELECT COUNT(DISTINCT p.id)
                         FROM org.icescrum.core.domain.Product p,
                              org.icescrum.core.domain.Team t,
@@ -164,6 +164,7 @@ class Team implements Serializable, Comparable {
                              org.codehaus.groovy.grails.plugins.springsecurity.acl.AclSid acl
                         INNER JOIN t.products p
                         WHERE p.preferences.archived = false
+                        AND p.preferences.hidden = true
                         AND t.id = ai.objectId
                         AND acl.id = ai.owner
                         AND ai.owner.sid = :sid
@@ -171,7 +172,24 @@ class Team implements Serializable, Comparable {
                         AND ac.className = 'org.icescrum.core.domain.Team'""", [sid: username], params ?: [:])[0]
     }
 
-    static List<Product> findAllActiveProductsByTeamOwner(String username, params) {
+    static Integer countActivePublicProductsByTeamOwner(String username, params) {
+        executeQuery("""SELECT COUNT(DISTINCT p.id)
+                        FROM org.icescrum.core.domain.Product p,
+                             org.icescrum.core.domain.Team t,
+                             org.codehaus.groovy.grails.plugins.springsecurity.acl.AclClass ac,
+                             org.codehaus.groovy.grails.plugins.springsecurity.acl.AclObjectIdentity ai,
+                             org.codehaus.groovy.grails.plugins.springsecurity.acl.AclSid acl
+                        INNER JOIN t.products p
+                        WHERE p.preferences.archived = false
+                        AND p.preferences.hidden = false
+                        AND t.id = ai.objectId
+                        AND acl.id = ai.owner
+                        AND ai.owner.sid = :sid
+                        AND ai.aclClass = ac.id
+                        AND ac.className = 'org.icescrum.core.domain.Team'""", [sid: username], params ?: [:])[0]
+    }
+
+    static List<Product> findAllActivePrivateProductsByTeamOwner(String username, params) {
         executeQuery("""SELECT DISTINCT p
                         FROM org.icescrum.core.domain.Product p,
                              org.icescrum.core.domain.Team t,
@@ -180,6 +198,25 @@ class Team implements Serializable, Comparable {
                              org.codehaus.groovy.grails.plugins.springsecurity.acl.AclSid acl
                         INNER JOIN t.products p
                         WHERE p.preferences.archived = false
+                        AND p.preferences.hidden = true
+                        AND t.id = ai.objectId
+                        AND acl.id = ai.owner
+                        AND ai.owner.sid = :sid
+                        AND ai.aclClass = ac.id
+                        AND ac.className = 'org.icescrum.core.domain.Team'""", [sid: username], params ?: [:])
+    }
+
+
+    static List<Product> findAllActivePublicProductsByTeamOwner(String username, params) {
+        executeQuery("""SELECT DISTINCT p
+                        FROM org.icescrum.core.domain.Product p,
+                             org.icescrum.core.domain.Team t,
+                             org.codehaus.groovy.grails.plugins.springsecurity.acl.AclClass ac,
+                             org.codehaus.groovy.grails.plugins.springsecurity.acl.AclObjectIdentity ai,
+                             org.codehaus.groovy.grails.plugins.springsecurity.acl.AclSid acl
+                        INNER JOIN t.products p
+                        WHERE p.preferences.archived = false
+                        AND p.preferences.hidden = false
                         AND t.id = ai.objectId
                         AND acl.id = ai.owner
                         AND ai.owner.sid = :sid
