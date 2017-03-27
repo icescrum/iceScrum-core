@@ -23,6 +23,8 @@
  */
 package org.icescrum.core.app
 
+import grails.util.Holders
+
 class AppDefinition {
 
     boolean hasWidgets = false
@@ -30,14 +32,11 @@ class AppDefinition {
     boolean isProject = false
     boolean isServer = false
     String id
-    String name
     String logo
-    String description
     String version
     String author
     String docUrl
     String websiteUrl
-    String baseline
     List<String> screenshots = []
     List<String> tags = []
     Closure onEnableForProject
@@ -46,16 +45,8 @@ class AppDefinition {
 
     // Builder
 
-    void name(String name) {
-        this.name = name
-    }
-
     void logo(String logo) {
         this.logo = logo
-    }
-
-    void description(String description) {
-        this.description = description
     }
 
     void version(String version) {
@@ -72,10 +63,6 @@ class AppDefinition {
 
     void websiteUrl(String websiteUrl) {
         this.websiteUrl = websiteUrl
-    }
-
-    void baseline(String baseline) {
-        this.baseline = baseline
     }
 
     void screenshots(String... screenshots) {
@@ -124,13 +111,17 @@ class AppDefinition {
         ['class', 'onDisableForProject', 'onEnableForProject'].each { k ->
             attributes.remove(k)
         }
+        def g = Holders.grailsApplication.mainContext.getBean("org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib")
+        ['name', 'baseline', 'description'].each { k ->
+            attributes[k] = g.message(code: 'is.ui.apps.' + appDefinition.id + '.'+ k)
+        }
         return attributes
     }
 
     Map validate() {
         def result = [valid: false, errorMessage: "Error, this app definition cannot be registered: $id"]
-        if (!id || !name || !description || !baseline || !docUrl || !version || !author) {
-            result.errorMessage += '\n - These fields are required: name, description, baseline, docUrl, version, author'
+        if (!id || !docUrl || !version || !author) {
+            result.errorMessage += '\n - These fields are required: docUrl, version, author'
         } else if ((onEnableForProject || onDisableForProject || projectSettings) && !isProject) {
             result.errorMessage += '\n - The fields onEnableForProject, onDisableForProject and projectSettings can be defined only if isProject is true'
         } else if (!isProject && !isServer) {
