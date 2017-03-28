@@ -41,6 +41,7 @@ class AppDefinition {
     List<String> tags = []
     Closure onEnableForProject
     Closure onDisableForProject
+    Closure<Boolean> isEnabledForServer
     AppSettingsDefinition projectSettings
 
     // Builder
@@ -98,6 +99,10 @@ class AppDefinition {
         this.onDisableForProject = onDisableForProject
     }
 
+    void isEnabledForServer(Closure<Boolean> isEnabledForServer) {
+        this.isEnabledForServer = isEnabledForServer
+    }
+
     void projectSettings(@DelegatesTo(strategy=Closure.DELEGATE_ONLY, value=AppSettingsDefinition) Closure settingsClosure) {
         AppSettingsDefinition projectSettings = new AppSettingsDefinition()
         AppDefinitionsBuilder.builObjectFromClosure(projectSettings, settingsClosure, this)
@@ -105,21 +110,6 @@ class AppDefinition {
     }
 
     // Utility
-
-    static Map getAttributes(AppDefinition appDefinition) {
-        def attributes = appDefinition.properties.clone()
-        ['class', 'onDisableForProject', 'onEnableForProject'].each { k ->
-            attributes.remove(k)
-        }
-        def g = Holders.grailsApplication.mainContext.getBean("org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib")
-        ['name', 'baseline', 'description'].each { k ->
-            attributes[k] = g.message(code: 'is.ui.apps.' + appDefinition.id + '.'+ k)
-        }
-        attributes.tags = attributes.tags?.collect {
-            g.message(code: it)
-        }
-        return attributes
-    }
 
     Map validate() {
         def result = [valid: false, errorMessage: "Error, this app definition cannot be registered: $id"]
@@ -129,6 +119,8 @@ class AppDefinition {
             result.errorMessage += '\n - The fields onEnableForProject, onDisableForProject and projectSettings can be defined only if isProject is true'
         } else if (!isProject && !isServer) {
             result.errorMessage += '\n - At least one of the fields isProject and isServer must be true (both can be true)'
+        } else if (isEnabledForServer && !isServer) {
+            result.errorMessage += '\n - The field isEnabledForServer cannot be defined if isServer is false'
         } else {
             result.valid = true;
         }
