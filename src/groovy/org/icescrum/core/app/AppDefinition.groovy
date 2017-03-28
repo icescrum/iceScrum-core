@@ -115,6 +115,9 @@ class AppDefinition {
         ['name', 'baseline', 'description'].each { k ->
             attributes[k] = g.message(code: 'is.ui.apps.' + appDefinition.id + '.'+ k)
         }
+        attributes.tags = attributes.tags?.collect {
+            g.message(code: it)
+        }
         return attributes
     }
 
