@@ -40,7 +40,7 @@ class AppService extends IceScrumEventPublisher {
     void updateEnabledForProject(Project project, String appDefinitionId, boolean enabledForProject) {
         AppDefinition appDefinition = appDefinitionService.getAppDefinitions().find { it.id == appDefinitionId }
         if (!appDefinition.isProject) {
-            throw new BusinessException(code: 'Error, the App ' + appDefinitionId +  ' cannot be enabled/disabled for the project because it is not at project level')
+            throw new BusinessException(code: 'Error, the App ' + appDefinitionId + ' cannot be enabled/disabled for the project because it is not at project level')
         }
         updateSimpleProjectAppEnabledForProject(project, appDefinition, enabledForProject)
         if (enabledForProject) {
@@ -61,5 +61,22 @@ class AppService extends IceScrumEventPublisher {
         }
         app.enabled = enabledForProject
         app.save(flush: true)
+    }
+
+    def unMarshall(def simpleProjectAppXml, def options) {
+        Project project = options.project
+        SimpleProjectApp.withTransaction(readOnly: !options.save) { transaction ->
+            def simpleProjectApp = new SimpleProjectApp(
+                    appDefinitionId: simpleProjectAppXml.appDefinitionId.text(),
+                    enabled: simpleProjectAppXml.enabled.text().toBoolean(),
+            )
+            if (project) {
+                simpleProjectApp.parentProject = project
+            }
+            if (options.save) {
+                simpleProjectApp.save()
+            }
+            return (SimpleProjectApp) importDomainsPlugins(simpleProjectAppXml, simpleProjectApp, options)
+        }
     }
 }

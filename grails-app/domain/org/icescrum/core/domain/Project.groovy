@@ -47,13 +47,14 @@ class Project extends TimeBox implements Serializable, Attachmentable {
     SortedSet<Release> releases
 
     static hasMany = [
-            actors  : Actor,
-            features: Feature,
-            stories : Story,
-            releases: Release,
-            teams   : Team,
-            backlogs: Backlog,
-            tasks   : Task
+            actors           : Actor,
+            features         : Feature,
+            stories          : Story,
+            releases         : Release,
+            teams            : Team,
+            backlogs         : Backlog,
+            tasks            : Task,
+            simpleProjectApps: SimpleProjectApp
     ]
 
     static mappedBy = [
@@ -415,6 +416,11 @@ class Project extends TimeBox implements Serializable, Attachmentable {
             builder.activities() {
                 this.activities.each { _activity ->
                     _activity.xml(builder)
+                }
+            }
+            builder.simpleProjectApps() {
+                this.simpleProjectApps.each { _simpleProjectApp ->
+                    _simpleProjectApp.xml(builder)
                 }
             }
             exportDomainsPlugins(builder)

@@ -23,8 +23,6 @@
  */
 package org.icescrum.core.app
 
-import grails.util.Holders
-
 class AppDefinition {
 
     boolean hasWidgets = false

@@ -400,6 +400,10 @@ class ProjectService extends IceScrumEventPublisher {
             }
 
             // Child objects
+            def appService = (AppService) grailsApplication.mainContext.getBean('appService')
+            projectXml.simpleProjectApps.simpleProjectApp.each {
+                appService.unMarshall(it, options)
+            }
             def featureService = (FeatureService) grailsApplication.mainContext.getBean('featureService')
             projectXml.features.feature.each { it ->
                 featureService.unMarshall(it, options)

@@ -39,4 +39,12 @@ class SimpleProjectApp implements Serializable {
     static List<String> getEnabledAppIdsForProject(Project project) {
         findAllByParentProjectAndEnabled(project, true)*.appDefinitionId
     }
+
+    def xml(builder) {
+        builder.simpleProjectApp {
+            builder.appDefinitionId(this.appDefinitionId)
+            builder.enabled(this.enabled)
+            exportDomainsPlugins(builder)
+        }
+    }
 }
