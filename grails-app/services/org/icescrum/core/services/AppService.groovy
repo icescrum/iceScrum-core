@@ -54,6 +54,10 @@ class AppService extends IceScrumEventPublisher {
         }
     }
 
+    boolean isEnabledAppForProject(Project project, String appDefinitionId) {
+        return SimpleProjectApp.findByAppDefinitionIdAndParentProject(appDefinitionId, project)?.enabled ?: false
+    }
+
     private void updateSimpleProjectAppEnabledForProject(Project project, AppDefinition appDefinition, enabledForProject) {
         SimpleProjectApp app = SimpleProjectApp.findByAppDefinitionIdAndParentProject(appDefinition.id, project)
         if (!app) {
