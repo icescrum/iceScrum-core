@@ -38,7 +38,7 @@ class AppDefinitionsBuilder {
         Closure shared
 
         void app(String id, @DelegatesTo(strategy=Closure.DELEGATE_ONLY, value=AppDefinition) Closure appDefinitionClosure) {
-            AppDefinition appDefinition = new AppDefinition(id: id)
+            AppDefinition appDefinition = new AppDefinition(id)
             builObjectFromClosure(appDefinition, appDefinitionClosure, this)
             definitions << appDefinition
         }
