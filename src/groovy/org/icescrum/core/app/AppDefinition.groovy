@@ -64,13 +64,13 @@ class AppDefinition {
         this.websiteUrl = websiteUrl
     }
 
-    AppDefinition(String id){
+    AppDefinition(String id) {
         this.id = id
-        //manage logo url
+        // Manage logo URL
         def assetProcessorService = Holders.grailsApplication.mainContext.assetProcessorService
         ConfigObject configObject = new ConfigObject()
-        configObject.putAll([url:Holders.grailsApplication.config.icescrum.serverURL + '/assets/'])
-        this.logo = assetProcessorService.assetBaseUrl(null, SERVER_BASE_URL, configObject) + assetProcessorService.getAssetPath(Objects.toString('apps/'+this.id+'/'+this.id+'.png'))
+        configObject.putAll([url: Holders.grailsApplication.config.icescrum.serverURL + '/assets/'])
+        this.logo = assetProcessorService.assetBaseUrl(null, SERVER_BASE_URL, configObject) + assetProcessorService.getAssetPath(Objects.toString('apps/' + this.id + '/' + this.id + '.png'))
     }
 
     void screenshots(String... screenshots) {
@@ -110,7 +110,7 @@ class AppDefinition {
         this.isEnabledForServer = isEnabledForServer
     }
 
-    void projectSettings(@DelegatesTo(strategy=Closure.DELEGATE_ONLY, value=AppSettingsDefinition) Closure settingsClosure) {
+    void projectSettings(@DelegatesTo(strategy = Closure.DELEGATE_ONLY, value = AppSettingsDefinition) Closure settingsClosure) {
         AppSettingsDefinition projectSettings = new AppSettingsDefinition()
         AppDefinitionsBuilder.builObjectFromClosure(projectSettings, settingsClosure, this)
         this.projectSettings = projectSettings
