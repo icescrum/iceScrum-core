@@ -287,14 +287,16 @@ class ApplicationSupport {
         return midnightTime.getTime()
     }
 
+    // Parse date from an XML export
     public static Date parseDate(String date) {
         if (!date) {
             return null
         }
         try {
             return new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(date)
-        } catch (Exception e) {
-            return new SimpleDateFormat('EEE MMM d HH:mm:ss zzz yyyy').parse(date)
+        } catch (Exception e) { // Ugly hack because export is toString and if java.util.Date has been exported instead of a java.sql.Date the format is different
+            String utcDate = date.take(20) + 'UTC' + date.drop(23) // Fix date that has been exported with server not UTC
+            return new SimpleDateFormat('EEE MMM d HH:mm:ss zzz yyyy').parse(utcDate)
         }
     }
 
