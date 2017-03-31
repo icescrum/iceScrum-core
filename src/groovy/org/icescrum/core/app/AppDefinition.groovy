@@ -28,7 +28,6 @@ class AppDefinition {
     boolean hasWidgets = false
     boolean hasWindows = false
     boolean isProject = false
-    boolean isServer = false
     String id
     String logo
     String version
@@ -40,6 +39,7 @@ class AppDefinition {
     Closure onEnableForProject
     Closure onDisableForProject
     Closure<Boolean> isEnabledForServer
+    Closure<Boolean> isAvailableForServer
     AppSettingsDefinition projectSettings
 
     // Builder
@@ -85,10 +85,6 @@ class AppDefinition {
         this.isProject = isProject
     }
 
-    void isServer(boolean isServer) {
-        this.isServer = isServer
-    }
-
     void onEnableForProject(Closure onEnableForProject) {
         this.onEnableForProject = onEnableForProject
     }
@@ -99,6 +95,10 @@ class AppDefinition {
 
     void isEnabledForServer(Closure<Boolean> isEnabledForServer) {
         this.isEnabledForServer = isEnabledForServer
+    }
+
+    void isAvailableForServer(Closure<Boolean> isAvailableForServer) {
+        this.isAvailableForServer = isAvailableForServer
     }
 
     void projectSettings(@DelegatesTo(strategy = Closure.DELEGATE_ONLY, value = AppSettingsDefinition) Closure settingsClosure) {
@@ -115,10 +115,6 @@ class AppDefinition {
             result.errorMessage += '\n - These fields are required: docUrl, version, author'
         } else if ((onEnableForProject || onDisableForProject || projectSettings) && !isProject) {
             result.errorMessage += '\n - The fields onEnableForProject, onDisableForProject and projectSettings can be defined only if isProject is true'
-        } else if (!isProject && !isServer) {
-            result.errorMessage += '\n - At least one of the fields isProject and isServer must be true (both can be true)'
-        } else if (isEnabledForServer && !isServer) {
-            result.errorMessage += '\n - The field isEnabledForServer cannot be defined if isServer is false'
         } else {
             result.valid = true;
         }
