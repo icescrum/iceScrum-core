@@ -23,10 +23,6 @@
  */
 package org.icescrum.core.app
 
-import grails.util.Holders
-
-import static asset.pipeline.grails.UrlBase.SERVER_BASE_URL
-
 class AppDefinition {
 
     boolean hasWidgets = false
@@ -66,11 +62,6 @@ class AppDefinition {
 
     AppDefinition(String id) {
         this.id = id
-        // Manage logo URL
-        def assetProcessorService = Holders.grailsApplication.mainContext.assetProcessorService
-        ConfigObject configObject = new ConfigObject()
-        configObject.putAll([url: Holders.grailsApplication.config.icescrum.serverURL + '/assets/'])
-        this.logo = assetProcessorService.assetBaseUrl(null, SERVER_BASE_URL, configObject) + assetProcessorService.getAssetPath(Objects.toString('apps/' + this.id + '/' + this.id + '.png'))
     }
 
     void screenshots(String... screenshots) {
