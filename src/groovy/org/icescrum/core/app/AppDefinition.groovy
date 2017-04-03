@@ -28,6 +28,7 @@ class AppDefinition {
     boolean hasWidgets = false
     boolean hasWindows = false
     boolean isProject = false
+    boolean isNew = false
     String id
     String logo
     String version
@@ -83,6 +84,10 @@ class AppDefinition {
 
     void isProject(boolean isProject) {
         this.isProject = isProject
+    }
+
+    void isNew(boolean isNew) {
+        this.isNew = isNew
     }
 
     void onEnableForProject(Closure onEnableForProject) {
