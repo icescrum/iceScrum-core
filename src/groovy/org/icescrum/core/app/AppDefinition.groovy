@@ -53,6 +53,14 @@ class AppDefinition {
         this.author = author
     }
 
+    void logo(String logo) {
+        this.logo = logo
+    }
+
+    String getLogo() {
+        return this.logo ?: "logo.png"
+    }
+
     void docUrl(String docUrl) {
         this.docUrl = docUrl
     }
@@ -124,5 +132,9 @@ class AppDefinition {
             result.valid = true;
         }
         return result
+    }
+
+    static getAssetPath(AppDefinition definition, def fileName){
+            return "apps/${definition.id}/${fileName}"
     }
 }
