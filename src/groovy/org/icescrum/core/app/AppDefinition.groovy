@@ -30,7 +30,7 @@ class AppDefinition {
     boolean isProject = false
     boolean isNew = false
     String id
-    String logo
+    String logo = 'logo.png'
     String version
     String author
     String docUrl
@@ -43,7 +43,15 @@ class AppDefinition {
     Closure<Boolean> isAvailableForServer
     AppSettingsDefinition projectSettings
 
+    AppDefinition(String id) {
+        this.id = id
+    }
+
     // Builder
+
+    void logo(String logo) {
+        this.logo = logo
+    }
 
     void version(String version) {
         this.version = version
@@ -53,24 +61,12 @@ class AppDefinition {
         this.author = author
     }
 
-    void logo(String logo) {
-        this.logo = logo
-    }
-
-    String getLogo() {
-        return this.logo ?: "logo.png"
-    }
-
     void docUrl(String docUrl) {
         this.docUrl = docUrl
     }
 
     void websiteUrl(String websiteUrl) {
         this.websiteUrl = websiteUrl
-    }
-
-    AppDefinition(String id) {
-        this.id = id
     }
 
     void screenshots(String... screenshots) {
@@ -134,7 +130,7 @@ class AppDefinition {
         return result
     }
 
-    static getAssetPath(AppDefinition definition, def fileName) {
-        return "apps/${definition.id}/${fileName}"
+    String getAssetPath(String fileName) {
+        return "apps/$id/$fileName"
     }
 }
