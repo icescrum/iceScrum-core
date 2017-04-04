@@ -134,7 +134,7 @@ class AppDefinition {
         return result
     }
 
-    static getAssetPath(AppDefinition definition, def fileName){
-            return "apps/${definition.id}/${fileName}"
+    static getAssetPath(AppDefinition definition, def fileName) {
+        return "apps/${definition.id}/${fileName}"
     }
 }
