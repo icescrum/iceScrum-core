@@ -37,6 +37,7 @@ class AppDefinition {
     String websiteUrl
     List<String> screenshots = []
     List<String> tags = []
+    Closure reportUsageData
     Closure onEnableForProject
     Closure onDisableForProject
     Closure<Boolean> isEnabledForServer
@@ -92,6 +93,10 @@ class AppDefinition {
 
     void isNew(boolean isNew) {
         this.isNew = isNew
+    }
+
+    void reportUsageData(Closure reportUsageData) {
+        this.reportUsageData = reportUsageData
     }
 
     void onEnableForProject(Closure onEnableForProject) {

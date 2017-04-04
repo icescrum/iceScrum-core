@@ -49,11 +49,13 @@ import org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib
 import org.codehaus.groovy.grails.web.util.WebUtils
 import org.grails.comments.Comment
 import org.grails.comments.CommentLink
+import org.icescrum.core.app.AppDefinition
 import org.icescrum.core.domain.Project
 import org.icescrum.core.domain.Team
 import org.icescrum.core.domain.User
 import org.icescrum.core.domain.preferences.UserPreferences
 import org.icescrum.core.security.WebScrumExpressionHandler
+import org.icescrum.core.services.AppDefinitionService
 import org.icescrum.core.services.ProjectService
 import org.icescrum.core.ui.WindowDefinition
 import org.springframework.expression.Expression
@@ -778,14 +780,22 @@ class ReportUsageTimerTask extends IsTimerTask {
                                          duration: release.duration]
                              }]
                         },
-                        plugins     : [:],
+                        apps        : [:],
                         server_id   : serverID,
                         environment : environment,
                         java_version: System.getProperty("java.version"),
                         OS          : "${System.getProperty('os.name')} / ${System.getProperty('os.arch')} / ${System.getProperty('os.version')}"
                 ]
-                config.plugins.each { reportToAdd ->
-                    reportToAdd(data.plugins)
+
+                def appDefinitionService = Holders.grailsApplication.mainContext.appDefinitionService
+                appDefinitionService.getAppDefinitions().each{  AppDefinition definition ->
+                    //global data
+                    data.apps."$definition.id" = [
+                        'enabled': definition.isEnabledForServer()
+                    ]
+                    //for a particular app data
+                    if(definition.reportUsageData)
+                        definition.reportUsageData(data.apps."$definition.id", Holders.grailsApplication)
                 }
             }
             def resp = ApplicationSupport.postJSON(url, null, null, data as JSON, headers, params)
