@@ -38,9 +38,11 @@ public class FileUploadInfo {
         if (totalChunks == uploadedChunks.size()) {
             //Upload finished, change filename.
             File file = new File(filePath)
-            String new_path = file.absolutePath.substring(0, file.absolutePath.length() - ".temp".length())
-            file.renameTo(new File(new_path))
-            filePath = new_path
+            if(file.absolutePath.contains(".temp")){
+                String new_path = file.absolutePath.substring(0, file.absolutePath.length() - ".temp".length())
+                file.renameTo(new File(new_path))
+                filePath = new_path
+            }
             return true
         } else {
             return false

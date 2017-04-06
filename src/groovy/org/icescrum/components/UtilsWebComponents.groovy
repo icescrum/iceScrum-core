@@ -143,14 +143,16 @@ public final class UtilsWebComponents {
         return allParams.join('&')
     }
 
-    public static def handleUpload = { def request, def params, def endOfUploadClosure ->
+    public static def handleUpload = { def request, def params, def endOfUploadClosure, def deleteFile = true ->
         def chunkNumber = params.int('flowChunkNumber') != null ? params.int('flowChunkNumber') : -1
         def uploadInfo = getFileUploadInfo(params)
         if (request.method == 'GET') {
             if (uploadInfo.uploadedChunks.contains(new FileUploadInfo.ChunkNumber(chunkNumber))) {
                 if (uploadInfo.checkIfUploadFinished()) {
                     endOfUploadClosure(uploadInfo)
-                    FileUploadInfoStorage.instance.remove(uploadInfo)
+                    if(deleteFile){
+                        FileUploadInfoStorage.instance.remove(uploadInfo)
+                    }
                 } else {
                     delegate.render(status: 200)
                 }
@@ -166,7 +168,9 @@ public final class UtilsWebComponents {
             uploadInfo.uploadedChunks.add(new FileUploadInfo.ChunkNumber(chunkNumber))
             if (uploadInfo.checkIfUploadFinished()) {
                 endOfUploadClosure(uploadInfo)
-                FileUploadInfoStorage.instance.remove(uploadInfo)
+                if(deleteFile) {
+                    FileUploadInfoStorage.instance.remove(uploadInfo)
+                }
             } else {
                 delegate.render(status: 200)
             }
