@@ -23,6 +23,8 @@
  */
 package org.icescrum.core.app
 
+import grails.util.Holders
+
 class AppDefinition {
 
     boolean hasWidgets = false
@@ -119,6 +121,16 @@ class AppDefinition {
         AppSettingsDefinition projectSettings = new AppSettingsDefinition()
         AppDefinitionsBuilder.builObjectFromClosure(projectSettings, settingsClosure, this)
         this.projectSettings = projectSettings
+    }
+
+    // Getters
+
+    boolean getAvailableForServer() {
+        return isAvailableForServer ? isAvailableForServer(Holders.grailsApplication) : true
+    }
+
+    boolean getEnabledForServer() {
+        return isEnabledForServer ? isEnabledForServer(Holders.grailsApplication) : true
     }
 
     // Utility

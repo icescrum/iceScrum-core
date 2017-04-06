@@ -790,7 +790,7 @@ class ReportUsageTimerTask extends IsTimerTask {
                 appDefinitionService.getAppDefinitions().each { AppDefinition definition ->
                     // Generic data
                     data.apps."$definition.id" = [
-                            enabled: definition.isEnabledForServer ? definition.isEnabledForServer(Holders.grailsApplication) : true
+                            enabled: definition.enabledForServer
                     ]
                     // App specific data
                     if (definition.reportUsageData) {
