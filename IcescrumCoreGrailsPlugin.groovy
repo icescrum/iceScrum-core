@@ -118,7 +118,7 @@ ERROR: iceScrum v7 has detected that you attempt to run it on an existing R6 ins
 
         for (String beanName : getSpringConfig().getBeanNames()) {
             def definition = getSpringConfig().getBeanConfig(beanName)?.getBeanDefinition()
-            if(definition){
+            if (definition) {
                 makeServiceMethodsRollbackOnAnyThrowable definition
             }
         }

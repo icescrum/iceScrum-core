@@ -55,7 +55,6 @@ import org.icescrum.core.domain.Team
 import org.icescrum.core.domain.User
 import org.icescrum.core.domain.preferences.UserPreferences
 import org.icescrum.core.security.WebScrumExpressionHandler
-import org.icescrum.core.services.AppDefinitionService
 import org.icescrum.core.services.ProjectService
 import org.icescrum.core.ui.WindowDefinition
 import org.springframework.expression.Expression
@@ -626,10 +625,10 @@ class ApplicationSupport {
     static void importAttachment(def object, def user, def importPath, def attachmentXml) {
         def originalName = attachmentXml.inputName.text()
         if (attachmentXml.url.text()) {
-            object.addAttachment(user, [name: originalName,
-                                        url: attachmentXml.url.text(),
+            object.addAttachment(user, [name    : originalName,
+                                        url     : attachmentXml.url.text(),
                                         provider: attachmentXml.provider.text(),
-                                        length: attachmentXml.length.toInteger()])
+                                        length  : attachmentXml.length.toInteger()])
         } else {
             def path = "${importPath}${File.separator}attachments${File.separator}${attachmentXml.@id.text()}.${attachmentXml.ext.text()}"
             def fileAttch = new File(path)
@@ -741,8 +740,8 @@ class ReportUsageTimerTask extends IsTimerTask {
             Map data
             User.withNewSession {
                 data = [
-                        users   : User.count(),
-                        teams   : Team.getAll().collect({ team ->
+                        users       : User.count(),
+                        teams       : Team.getAll().collect({ team ->
                             [members     : team.members.size() ?: 0,
                              projects    : [
                                      all     : team.projects.size(),
@@ -750,7 +749,7 @@ class ReportUsageTimerTask extends IsTimerTask {
                              ],
                              scrumMasters: team.scrumMasters.size() ?: 0]
                         }),
-                        projects: Project.getAll().collect { project ->
+                        projects    : Project.getAll().collect { project ->
                             [users        : project.allUsers.size() ?: 0,
                              productOwners: project.productOwners.size() ?: 0,
                              tasks        : project.tasks.size(),
@@ -788,14 +787,15 @@ class ReportUsageTimerTask extends IsTimerTask {
                 ]
 
                 def appDefinitionService = Holders.grailsApplication.mainContext.appDefinitionService
-                appDefinitionService.getAppDefinitions().each{  AppDefinition definition ->
-                    //global data
+                appDefinitionService.getAppDefinitions().each { AppDefinition definition ->
+                    // Generic data
                     data.apps."$definition.id" = [
-                        'enabled': definition.isEnabledForServer ? definition.isEnabledForServer(Holders.grailsApplication) : true
+                            enabled: definition.isEnabledForServer ? definition.isEnabledForServer(Holders.grailsApplication) : true
                     ]
-                    //for a particular app data
-                    if(definition.reportUsageData)
+                    // App specific data
+                    if (definition.reportUsageData) {
                         definition.reportUsageData(data.apps."$definition.id", Holders.grailsApplication)
+                    }
                 }
             }
             def resp = ApplicationSupport.postJSON(url, null, null, data as JSON, headers, params)
