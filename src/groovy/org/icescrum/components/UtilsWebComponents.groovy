@@ -150,7 +150,7 @@ public final class UtilsWebComponents {
             if (uploadInfo.uploadedChunks.contains(new FileUploadInfo.ChunkNumber(chunkNumber))) {
                 if (uploadInfo.checkIfUploadFinished()) {
                     endOfUploadClosure(uploadInfo)
-                    if(deleteFile){
+                    if (deleteFile) {
                         FileUploadInfoStorage.instance.remove(uploadInfo)
                     }
                 } else {
@@ -168,7 +168,7 @@ public final class UtilsWebComponents {
             uploadInfo.uploadedChunks.add(new FileUploadInfo.ChunkNumber(chunkNumber))
             if (uploadInfo.checkIfUploadFinished()) {
                 endOfUploadClosure(uploadInfo)
-                if(deleteFile) {
+                if (deleteFile) {
                     FileUploadInfoStorage.instance.remove(uploadInfo)
                 }
             } else {
