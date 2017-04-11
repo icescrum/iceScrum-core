@@ -16,11 +16,7 @@ trait ControllerErrorHandler {
      * @param silent    Option to return the error to the browser but don't display it to the user, useful for custom display or to swallow the error
      */
     def returnError = { Map attrs ->
-        def error = attrs.errors ? attrs.errors.allErrors.collect { [text: message(error: it) + ' - ' + it.field] } :
-                attrs.code ? [text: message(code: attrs.code)] :
-                        attrs.text ? [text: attrs.text] :
-                                attrs.exception?.message ? [text: attrs.exception.message] :
-                                        [text: 'An unexpected error has occurred']
+        def error = extractError(attrs)
         if (attrs.exception) {
             if (log.debugEnabled) {
                 log.debug(attrs.exception)
@@ -40,6 +36,15 @@ trait ControllerErrorHandler {
             error.silent = true
         }
         render(status: 400, contentType: 'application/json', text: error as JSON)
+    }
+
+    def extractError(Map attrs) {
+        def error = attrs.errors ? attrs.errors.allErrors.collect { [text: message(error: it) + ' - ' + it.field] } :
+                attrs.code ? [text: message(code: attrs.code)] :
+                        attrs.text ? [text: attrs.text] :
+                                attrs.exception?.message ? [text: attrs.exception.message] :
+                                        [text: 'An unexpected error has occurred']
+        return error
     }
 
     // Exception handlers
