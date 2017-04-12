@@ -637,6 +637,16 @@ class ApplicationSupport {
             }
         }
     }
+
+    static def extractError(Map attrs) {
+        def g = Holders.grailsApplication.mainContext.getBean('org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib')
+        def error = attrs.errors ? attrs.errors.allErrors.collect { [text: g.message(error: it) + ' - ' + it.field] } :
+                attrs.code ? [text: g.message(code: attrs.code)] :
+                        attrs.text ? [text: attrs.text] :
+                                attrs.exception?.message ? [text: attrs.exception.message] :
+                                        [text: 'An unexpected error has occurred']
+        return error
+    }
 }
 
 abstract class IsTimerTask extends TimerTask {
