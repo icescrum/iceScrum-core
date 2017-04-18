@@ -51,6 +51,7 @@ import org.grails.comments.Comment
 import org.grails.comments.CommentLink
 import org.icescrum.core.app.AppDefinition
 import org.icescrum.core.domain.Project
+import org.icescrum.core.domain.SimpleProjectApp
 import org.icescrum.core.domain.Team
 import org.icescrum.core.domain.User
 import org.icescrum.core.domain.preferences.UserPreferences
@@ -802,6 +803,9 @@ class ReportUsageTimerTask extends IsTimerTask {
                     data.apps."$definition.id" = [
                             enabled: definition.enabledForServer
                     ]
+                    if (definition.isProject) {
+                        data.apps."$definition.id".projects = SimpleProjectApp.countByAppDefinitionIdAndEnabled(definition.id, true)
+                    }
                     // App specific data
                     if (definition.reportUsageData) {
                         definition.reportUsageData(data.apps."$definition.id", Holders.grailsApplication)
