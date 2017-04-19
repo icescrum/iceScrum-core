@@ -88,7 +88,7 @@ class IcescrumCoreGrailsPlugin {
     def controllersWithDownloadAndPreview = ['story', 'task', 'feature', 'sprint', 'release', 'project']
 
     def doWithSpring = {
-        println '\nConfiguring iceScrum plugin core....'
+        println '\n\nConfiguring iceScrum...'
         // If grails.serverURL, it's likely to be an iceScrum R6 config so we stop the startup
         if (application.config.grails.serverURL) {
             println """
@@ -126,8 +126,6 @@ ERROR: iceScrum v7 has detected that you attempt to run it on an existing R6 ins
         userDetailsService(ScrumUserDetailsService) {
             grailsApplication = ref('grailsApplication')
         }
-
-        println '... finished configuring iceScrum plugin core'
     }
 
     def doWithDynamicMethods = { ctx ->
