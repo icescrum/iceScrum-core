@@ -121,7 +121,7 @@ class Team implements Serializable, Comparable {
         return findAllByOwnerOrSM(user, params, term).size()
     }
 
-    static Integer countActiveProjectsByTeamOwner(String username, params) {
+    static Integer countActiveProjectByTeamOwnerAndHidden(String username, boolean hidden, params) {
         executeQuery("""SELECT COUNT(DISTINCT p.id)
                         FROM org.icescrum.core.domain.Project p,
                              org.icescrum.core.domain.Team t,
@@ -130,11 +130,45 @@ class Team implements Serializable, Comparable {
                              grails.plugin.springsecurity.acl.AclSid acl
                         INNER JOIN t.projects p
                         WHERE p.preferences.archived = false
+                        AND p.preferences.hidden = :hidden
                         AND t.id = ai.objectId
                         AND acl.id = ai.owner
                         AND ai.owner.sid = :sid
                         AND ai.aclClass = ac.id
-                        AND ac.className = 'org.icescrum.core.domain.Team'""", [sid: username], params ?: [:])[0]
+                        AND ac.className = 'org.icescrum.core.domain.Team'""", [sid: username, hidden: hidden], params ?: [:])[0]
+    }
+
+    static Integer countActivePrivateProjectsByTeamOwner(String username, params) {
+        countActiveProjectByTeamOwnerAndHidden(username, true, params)
+    }
+
+    static Integer countActivePublicProjectsByTeamOwner(String username, params) {
+        countActiveProjectByTeamOwnerAndHidden(username, false, params)
+    }
+
+    static List<Project> findAllActiveProjectsByTeamOwnerAndHidden(String username, boolean hidden, params) {
+        executeQuery("""SELECT DISTINCT p
+                        FROM org.icescrum.core.domain.Project p,
+                             org.icescrum.core.domain.Team t,
+                             grails.plugin.springsecurity.acl.AclClass ac,
+                             grails.plugin.springsecurity.acl.AclObjectIdentity ai,
+                             grails.plugin.springsecurity.acl.AclSid acl
+                        INNER JOIN t.projects p
+                        WHERE p.preferences.archived = false
+                        AND p.preferences.hidden = :hidden
+                        AND t.id = ai.objectId
+                        AND acl.id = ai.owner
+                        AND ai.owner.sid = :sid
+                        AND ai.aclClass = ac.id
+                        AND ac.className = 'org.icescrum.core.domain.Team'""", [sid: username, hidden: hidden], params ?: [:])
+    }
+
+    static List<Project> findAllActivePrivateProjectsByTeamOwner(String username, params) {
+        findAllActiveProjectsByTeamOwnerAndHidden(username, true, params)
+    }
+
+    static List<Project> findAllActivePublicProjectsByTeamOwner(String username, params) {
+        findAllActiveProjectsByTeamOwnerAndHidden(username, false, params)
     }
 
     static List<Project> findAllActiveProjectsByTeamOwner(String username, String term = '%%', params) {
