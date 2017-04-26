@@ -36,13 +36,14 @@ class SimpleProjectApp implements Serializable {
         table 'is_simple_project_app'
     }
 
-    static countByParentProjectOwner(String user, params) {
+    static countEnabledByParentProjectOwner(String user, params) {
         executeQuery("""SELECT DISTINCT COUNT(spa.id)
                         FROM org.icescrum.core.domain.SimpleProjectApp as spa,
                              grails.plugin.springsecurity.acl.AclClass as ac,
                              grails.plugin.springsecurity.acl.AclObjectIdentity as ai,
                              grails.plugin.springsecurity.acl.AclSid as acl
-                        WHERE ac.className = 'org.icescrum.core.domain.Project'
+                        WHERE enabled = true
+                        AND ac.className = 'org.icescrum.core.domain.Project'
                         AND ai.aclClass = ac.id
                         AND ai.owner.sid = :sid
                         AND acl.id = ai.owner
