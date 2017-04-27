@@ -325,34 +325,30 @@ class SprintService extends IceScrumEventPublisher {
         return values
     }
 
-    // TODO check rights
-    def copyRecurrentTasksFromPreviousSprint(Sprint sprint) {
+    def copyRecurrentTasks(Sprint sprint) {
         if (sprint.orderNumber == 1 && sprint.parentRelease.orderNumber == 1) {
             throw new BusinessException(code: 'is.sprint.copyRecurrentTasks.error.no.sprint.before')
         }
         if (sprint.state == Sprint.STATE_DONE) {
             throw new BusinessException(code: 'is.sprint.copyRecurrentTasks.error.sprint.done')
         }
-        def previousSprint = sprint.previousSprint
-        def tasks = previousSprint.tasks.findAll { it.type == Task.TYPE_RECURRENT }
+        def tasks = sprint.previousSprint.tasks.findAll { it.type == Task.TYPE_RECURRENT }
         if (!tasks) {
             throw new BusinessException(code: 'is.sprint.copyRecurrentTasks.error.no.recurrent.tasks')
         }
-        def copiedTasks = []
-        tasks.each { it ->
-            def tmp = new Task()
-            tmp.properties = it.properties
-            tmp.todoDate = new Date()
-            tmp.state = Task.STATE_WAIT
-            tmp.backlog = sprint
-            tmp.responsible = null
-            tmp.participants = null
-            tmp.inProgressDate = null
-            tmp.doneDate = null
-            taskService.save(tmp, it.creator)
-            copiedTasks << tmp
+        tasks.each { task ->
+            Task clonedTask = new Task(
+                    name: task.name,
+                    responsible: task.responsible,
+                    color: task.color,
+                    type: task.type,
+                    description: task.description,
+                    notes: task.notes,
+                    estimation: task.initial,
+                    backlog: sprint
+            )
+            taskService.save(clonedTask, task.creator)
         }
-        return copiedTasks
     }
 
     def unMarshall(def sprintXml, def options) {
