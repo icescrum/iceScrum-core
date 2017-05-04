@@ -24,6 +24,7 @@
 package org.icescrum.core.services
 
 import grails.transaction.Transactional
+import org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib
 import org.icescrum.core.domain.User
 import org.icescrum.core.domain.Widget
 import org.icescrum.core.domain.preferences.UserPreferences
@@ -34,6 +35,7 @@ import org.icescrum.core.ui.WidgetDefinition
 class WidgetService {
 
     def uiDefinitionService
+    def grailsApplication
 
     Widget save(User user, WidgetDefinition widgetDefinition, boolean onRight) {
         int duplicate = Widget.countByUserPreferencesAndWidgetDefinitionId(user.preferences, widgetDefinition.id)
@@ -86,7 +88,11 @@ class WidgetService {
         save(user, uiDefinitionService.getWidgetDefinitionById('quickProjects'), false)
         Widget notesWidget = save(user, uiDefinitionService.getWidgetDefinitionById('notes'), false)
         def noteProperties = notesWidget.properties.collectEntries { key, val -> [(key): val] }
-        noteProperties.settings = [text: 'Welcome to iceScrum 7! Here is your home, where you can add your widgets, such as this one which allows you to write your personal notes, try updating this text!\n\nWe have also created a "Peetic" project so you can explore iceScrum, try opening it!']
+        noteProperties.settings = [text: '']
+        try { // Required because it will failed if no request (bootstraping)
+            ApplicationTagLib g = grailsApplication.mainContext.getBean('org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib')
+            noteProperties.settings.text = g.message(code: 'is.ui.widget.notes.default')
+        } catch(Exception) {}
         update(notesWidget, noteProperties)
         save(user, uiDefinitionService.getWidgetDefinitionById('feed'), true)
         save(user, uiDefinitionService.getWidgetDefinitionById('tasks'), true)
