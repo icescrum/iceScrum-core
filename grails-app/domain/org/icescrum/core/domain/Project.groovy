@@ -339,7 +339,7 @@ class Project extends TimeBox implements Serializable, Attachmentable {
             }
             def securityService = (SecurityService) Holders.grailsApplication.mainContext.getBean('securityService')
             securityService.secureDomain(this)
-            securityService.changeOwner(User.findById(1), this)
+            securityService.changeOwner(firstTeam?.owner ?: User.findById(1), this)
             acl = aclUtilService.readAcl(this.getClass(), this.id)
         }
         return acl

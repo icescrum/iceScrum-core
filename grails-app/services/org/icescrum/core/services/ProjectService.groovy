@@ -81,6 +81,7 @@ class ProjectService extends IceScrumEventPublisher {
         if (!project.save()) {
             throw new BusinessException(code: 'Project not saved')
         }
+        securityService.changeOwner(team.owner, project)
         manageProjectEvents(project, oldMembers)
     }
 
