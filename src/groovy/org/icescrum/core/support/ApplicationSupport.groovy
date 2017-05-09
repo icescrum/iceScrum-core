@@ -164,7 +164,6 @@ class ApplicationSupport {
         def dir = new File(dirPath)
         if (!dir.exists())
             dir.mkdirs()
-        println dirPath
         config.icescrum.images.users.dir = dirPath
 
         dirPath = config.icescrum.baseDir.toString() + File.separator + "images" + File.separator + "projects" + File.separator

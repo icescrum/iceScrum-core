@@ -88,7 +88,7 @@ class IcescrumCoreGrailsPlugin {
     def controllersWithDownloadAndPreview = ['story', 'task', 'feature', 'sprint', 'release', 'project']
 
     def doWithSpring = {
-        println '\n\nConfiguring iceScrum...'
+        println 'Configuring iceScrum...'
         // If grails.serverURL, it's likely to be an iceScrum R6 config so we stop the startup
         if (application.config.grails.serverURL) {
             println """
