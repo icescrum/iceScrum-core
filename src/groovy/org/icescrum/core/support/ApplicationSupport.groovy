@@ -46,7 +46,6 @@ import org.apache.http.impl.client.DefaultHttpClient
 import org.apache.http.protocol.BasicHttpContext
 import org.apache.http.util.EntityUtils
 import org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib
-import org.codehaus.groovy.grails.web.servlet.mvc.GrailsWebRequest
 import org.codehaus.groovy.grails.web.util.WebUtils
 import org.grails.comments.Comment
 import org.grails.comments.CommentLink
@@ -66,7 +65,6 @@ import org.springframework.security.web.FilterInvocation
 import org.springframework.security.web.access.WebInvocationPrivilegeEvaluator
 
 import javax.servlet.FilterChain
-import javax.servlet.http.HttpServletRequest
 import java.security.MessageDigest
 import java.text.SimpleDateFormat
 import java.util.zip.ZipEntry
@@ -82,15 +80,7 @@ class ApplicationSupport {
     ] as FilterChain
 
     public static String serverURL() {
-        GrailsWebRequest grailsWebRequest = WebUtils.retrieveGrailsWebRequest()
-        HttpServletRequest request = grailsWebRequest.currentRequest
-        println "-----"
-        println request.scheme
-        request.headerNames.each { headerName ->
-            println headerName + ': ' + request.getHeader(headerName)
-        }
-        println "-----"
-        return grailsWebRequest.getBaseUrl()
+        return WebUtils.retrieveGrailsWebRequest()?.getBaseUrl()
     }
 
     public static def controllerExist(def controllerName, def actionName = '') {
