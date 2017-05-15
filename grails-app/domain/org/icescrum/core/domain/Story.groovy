@@ -783,11 +783,11 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                     }
                 }
             }
-            builder.activities() {
-                this.activities.each { _activity ->
-                    ApplicationSupport.xmlActivity(builder, _activity, this.id, 'story') // R6 -> v7
-                }
-            }
+//            builder.activities() {
+//                this.activities.each { _activity ->
+//                    ApplicationSupport.xmlActivity(builder, _activity, this.id, 'story') // R6 -> v7
+//                }
+//            }
             builder.acceptanceTests() {
                 this.acceptanceTests.each { _acceptanceTest ->
                     _acceptanceTest.xml(builder)
