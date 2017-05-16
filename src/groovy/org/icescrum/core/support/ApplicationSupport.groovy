@@ -46,6 +46,7 @@ import org.apache.http.impl.client.DefaultHttpClient
 import org.apache.http.protocol.BasicHttpContext
 import org.apache.http.util.EntityUtils
 import org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib
+import org.codehaus.groovy.grails.web.servlet.mvc.GrailsWebRequest
 import org.codehaus.groovy.grails.web.util.WebUtils
 import org.grails.comments.Comment
 import org.grails.comments.CommentLink
@@ -65,6 +66,7 @@ import org.springframework.security.web.FilterInvocation
 import org.springframework.security.web.access.WebInvocationPrivilegeEvaluator
 
 import javax.servlet.FilterChain
+import javax.servlet.http.HttpServletRequest
 import java.security.MessageDigest
 import java.text.SimpleDateFormat
 import java.util.zip.ZipEntry
@@ -80,7 +82,25 @@ class ApplicationSupport {
     ] as FilterChain
 
     public static String serverURL() {
-        return WebUtils.retrieveGrailsWebRequest()?.getBaseUrl()
+        // Assets pipeline replaces the default grails link generator by its own LinkGenerator
+        // If there is no grails.serverURL, it uses a custom way to generate URLs through AssetProcessorService.makeServerURL that calls HttpServletRequests.getBaseUrlWithScheme
+        // This methods uses HTTP headers to retrieve port and proto, as opposed to GrailsWebRequest.getBaseUrl that relies only on request URL
+        // Unfortunately, iceScrum core doesn't depend on assets pipeline so we have to mimic its behaviour manually
+        // NB: the original request URL can be faked thanks to the Tomcat RemoteIpValve valve, but it requires modyfing server.xml and that the proxy IP is provided
+        GrailsWebRequest grailsRequest = WebUtils.retrieveGrailsWebRequest()
+        String serverUrl
+        if (grailsRequest) {
+            HttpServletRequest req = grailsRequest.currentRequest
+            String scheme = req.getHeader('x-forwarded-proto') ?: req.scheme
+            serverUrl = scheme + '://' + req.serverName
+            int port = req.getHeader('x-forwarded-port') ? Integer.parseInt(req.getHeader('x-forwarded-port')) : req.serverPort
+            int defaultPort = scheme == 'https' ? 443 : 80
+            if (port >= 0 && scheme != defaultPort) {
+                serverUrl += (':' + port)
+            }
+            serverUrl += req.contextPath
+        }
+        return serverUrl
     }
 
     public static def controllerExist(def controllerName, def actionName = '') {
