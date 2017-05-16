@@ -743,6 +743,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
     // V7
     def xml(builder) {
         builder.story(uid: this.uid) {
+            log.debug("export story - 1")
             builder.type(this.type)
             builder.rank(this.rank)
             builder.state(this.state)
@@ -758,7 +759,9 @@ class Story extends BacklogElement implements Cloneable, Serializable {
             builder.suggestedDate(this.suggestedDate)
             builder.estimatedDate(this.estimatedDate)
             builder.inProgressDate(this.inProgressDate)
+            log.debug("export story - 2")
             builder.tags { builder.mkp.yieldUnescaped("<![CDATA[${this.tags ?: ''}]]>") }
+            log.debug("export story - 3")
             builder.name { builder.mkp.yieldUnescaped("<![CDATA[${this.name}]]>") }
             builder.notes { builder.mkp.yieldUnescaped("<![CDATA[${this.notes ?: ''}]]>") }
             builder.origin { builder.mkp.yieldUnescaped("<![CDATA[${this.origin ?: ''}]]>") }
@@ -773,6 +776,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
             if (dependsOn) {
                 builder.dependsOn(uid: this.dependsOn.uid)
             }
+            log.debug("export story - 4")
             builder.comments() {
                 this.comments.each { _comment ->
                     builder.comment() {
@@ -783,21 +787,25 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                     }
                 }
             }
-//            builder.activities() {
-//                this.activities.each { _activity ->
-//                    ApplicationSupport.xmlActivity(builder, _activity, this.id, 'story') // R6 -> v7
-//                }
-//            }
+            log.debug("export story - 5")
+            builder.activities() {
+                this.activities.each { _activity ->
+                    ApplicationSupport.xmlActivity(builder, _activity, this.id, 'story') // R6 -> v7
+                }
+            }
+            log.debug("export story - 6")
             builder.acceptanceTests() {
                 this.acceptanceTests.each { _acceptanceTest ->
                     _acceptanceTest.xml(builder)
                 }
             }
+            log.debug("export story - 7")
             builder.followers() {
                 this.followers.each { _follower ->
                     builder.user(uid: _follower.uid)
                 }
             }
+            log.debug("export story - 8")
             builder.tasks() {
                 this.tasks.sort { a, b ->
                     a.state <=> b.state ?: a.rank <=> b.rank
@@ -805,12 +813,15 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                     _task.xml(builder)
                 }
             }
+            log.debug("export story - 9")
             builder.attachments() {
                 this.attachments.each { _att ->
                     ApplicationSupport.xmlAttachment(builder, _att) // R6 -> v7
                 }
             }
+            log.debug("export story - 10")
             exportDomainsPlugins(builder)
+            log.debug("export story - 11")
         }
     }
 }
