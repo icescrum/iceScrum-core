@@ -343,7 +343,7 @@ class ProjectService extends IceScrumEventPublisher {
                 }
                 if (options.changes?.users) {
                     if (options.changes.users."${team.owner.uid}") {
-                        team.owner.username = options.changes.users."${it.uid}"
+                        team.owner.username = options.changes.users."${team.owner.uid}"
                     }
                     team.members?.each {
                         if (options.changes.users."${it.uid}") {
