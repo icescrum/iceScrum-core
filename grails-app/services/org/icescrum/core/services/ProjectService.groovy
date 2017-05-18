@@ -381,7 +381,9 @@ class ProjectService extends IceScrumEventPublisher {
                         teamService.saveImport(t)
                     }
                 }
+
                 project.save()
+                securityService.secureDomain(project)
 
                 projectXml.attachments.attachment.each { _attachmentXml ->
                     def uid = options.userUIDByImportedID?."${_attachmentXml.posterId.text().toInteger()}" ?: null
@@ -389,7 +391,6 @@ class ProjectService extends IceScrumEventPublisher {
                     ApplicationSupport.importAttachment(project, user, options.path, _attachmentXml)
                 }
 
-                securityService.secureDomain(project)
                 project.productOwners?.each { user ->
                     user = User.get(user.id)
                     securityService.createProductOwnerPermissions(user, project)
