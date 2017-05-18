@@ -37,6 +37,7 @@ import org.icescrum.core.event.IceScrumEventType
 import org.icescrum.core.support.ApplicationSupport
 import org.icescrum.core.utils.ServicesUtils
 import org.springframework.security.access.prepost.PreAuthorize
+import org.xml.sax.SAXParseException
 
 @Transactional
 class ProjectService extends IceScrumEventPublisher {
@@ -476,7 +477,12 @@ class ProjectService extends IceScrumEventPublisher {
         Project.withTransaction(readOnly: !options.save) {
             String xmlText = file.getText()
             String cleanedXmlText = ServicesUtils.cleanXml(xmlText)
-            def exportXML = new XmlSlurper().parseText(cleanedXmlText)
+            def exportXML
+            try {
+                exportXML = new XmlSlurper().parseText(cleanedXmlText)
+            } catch(SAXParseException e) {
+                throw new BusinessException(code: 'todo.is.ui.import.error.corrupted')
+            }
             def version = exportXML.@version.text()
             if (version.startsWith('R6') && !version.endsWith('-v7')) {
                 throw new BusinessException(code: 'todo.is.ui.import.error.R6')
