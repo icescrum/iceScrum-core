@@ -481,6 +481,10 @@ class ProjectService extends IceScrumEventPublisher {
             try {
                 exportXML = new XmlSlurper().parseText(cleanedXmlText)
             } catch(SAXParseException e) {
+                if (log.debugEnabled) {
+                    log.debug(e.message)
+                    e.printStackTrace()
+                }
                 throw new BusinessException(code: 'todo.is.ui.import.error.corrupted')
             }
             def version = exportXML.@version.text()
