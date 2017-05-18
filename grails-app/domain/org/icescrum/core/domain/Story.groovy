@@ -133,7 +133,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
         } else if (state > STATE_ESTIMATED) {
             stories = parentSprint?.stories
         }
-        return stories ? stories.asList().sort { it.rank } : []
+        return stories ? stories.asList().collect { get(it.id) }.sort { it.rank } : [] // Force get real entity because otherwise list membership test fails
     }
 
     int getTestState() {
