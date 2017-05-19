@@ -342,23 +342,43 @@ class ProjectService extends IceScrumEventPublisher {
                 if (options.changes?.team?.name) {
                     team.name = options.changes.team.name
                 }
-                if (options.changes?.users) {
-                    if (options.changes.users."${team.owner.uid}") {
-                        team.owner.username = options.changes.users."${team.owner.uid}"
+                if (options.changes?.usernames) {
+                    if (options.changes.usernames."${team.owner.uid}") {
+                        team.owner.username = options.changes.usernames."${team.owner.uid}"
                     }
                     team.members?.each {
-                        if (options.changes.users."${it.uid}") {
-                            it.username = options.changes.users."${it.uid}"
+                        if (options.changes.usernames."${it.uid}") {
+                            it.username = options.changes.usernames."${it.uid}"
                         }
                     }
                     team.scrumMasters?.each {
-                        if (options.changes.users."${it.uid}") {
-                            it.username = options.changes.users."${it.uid}"
+                        if (options.changes.usernames."${it.uid}") {
+                            it.username = options.changes.usernames."${it.uid}"
                         }
                     }
                     project.productOwners?.each {
-                        if (options.changes.users."${it.uid}") {
-                            it.username = options.changes.users."${it.uid}"
+                        if (options.changes.usernames."${it.uid}") {
+                            it.username = options.changes.usernames."${it.uid}"
+                        }
+                    }
+                }
+                if (options.changes?.emails) {
+                    if (options.changes.emails."${team.owner.uid}") {
+                        team.owner.username = options.changes.emails."${team.owner.uid}"
+                    }
+                    team.members?.each {
+                        if (options.changes.emails."${it.uid}") {
+                            it.username = options.changes.emails."${it.uid}"
+                        }
+                    }
+                    team.scrumMasters?.each {
+                        if (options.changes.emails."${it.uid}") {
+                            it.username = options.changes.emails."${it.uid}"
+                        }
+                    }
+                    project.productOwners?.each {
+                        if (options.changes.emails."${it.uid}") {
+                            it.username = options.changes.emails."${it.uid}"
                         }
                     }
                 }
@@ -526,9 +546,12 @@ class ProjectService extends IceScrumEventPublisher {
                 team.members.each { member ->
                     member.validate()
                     if (member.errors.errorCount == 1) {
-                        changes.users = changes.users ?: [:]
+                        changes.usernames = changes.usernames ?: [:]
+                        changes.emails = changes.emails ?: [:]
                         if (member.errors.fieldErrors[0]?.field == 'username') {
-                            changes.users."$member.uid" = member.username
+                            changes.usernames."$member.uid" = member.username
+                        } else if (member.errors.fieldErrors[0]?.field == 'email') {
+                            changes.emails."$member.uid" = member.email
                         } else {
                             if (log.infoEnabled) {
                                 log.info("User validation error (${member.username}): " + member.errors)
@@ -546,9 +569,12 @@ class ProjectService extends IceScrumEventPublisher {
             project.productOwners?.each { productOwner ->
                 productOwner.validate()
                 if (productOwner.errors.errorCount == 1) {
-                    changes.users = changes.users ?: [:]
-                    if (productOwner.errors.fieldErrors[0]?.field == 'username' && !(productOwner.username in changes.users)) {
-                        changes.users."$productOwner.uid" = productOwner.username
+                    changes.usernames = changes.usernames ?: [:]
+                    changes.emails = changes.emails ?: [:]
+                    if (productOwner.errors.fieldErrors[0]?.field == 'username' && !(productOwner.username in changes.usernames)) {
+                        changes.usernames."$productOwner.uid" = productOwner.username
+                    } else if (productOwner.errors.fieldErrors[0]?.field == 'email' && !(productOwner.email in changes.emails)) {
+                        changes.email."$productOwner.uid" = productOwner.email
                     } else {
                         if (log.infoEnabled) {
                             log.info("User validation error (${productOwner.username}): " + productOwner.errors)
