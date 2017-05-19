@@ -776,10 +776,10 @@ class StoryService extends IceScrumEventPublisher {
         }
         if (story.dependences) {
             def highestPriorityRank = story.dependences.intersect(sameBacklogStories)*.rank.min()
-            if (highestPriorityRank && rank > highestPriorityRank) {
-                rank = highestPriorityRank
+            if (highestPriorityRank && rank >= highestPriorityRank) {
+                rank = highestPriorityRank - 1
             }
         }
-        return rank
+        return rank > 0 ? rank : 1
     }
 }
