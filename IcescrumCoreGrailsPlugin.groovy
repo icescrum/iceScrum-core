@@ -139,6 +139,7 @@ ERROR: iceScrum v7 has detected that you attempt to run it on an existing R6 ins
         uiDefinitionService.loadDefinitions()
         appDefinitionService.loadAppDefinitions()
         application.controllerClasses.each {
+            addCleanBeforeBindData(it)
             addJasperMethod(it, springSecurityService, jasperService)
             if (it.logicalPropertyName in controllersWithDownloadAndPreview) {
                 addDownloadAndPreviewMethods(it, attachmentableService, hdImageService)
@@ -193,6 +194,7 @@ ERROR: iceScrum v7 has detected that you attempt to run it on an existing R6 ins
             if (application.isControllerClass(event.source)) {
                 SpringSecurityService springSecurityService = event.ctx.getBean('springSecurityService')
                 JasperService jasperService = event.ctx.getBean('jasperService')
+                addCleanBeforeBindData(event.source)
                 addJasperMethod(event.source, springSecurityService, jasperService)
             }
         }
@@ -299,6 +301,30 @@ ERROR: iceScrum v7 has detected that you attempt to run it on an existing R6 ins
                 closure(objectXml, object, options)
             }
             return object
+        }
+    }
+
+    private void addCleanBeforeBindData(source){
+        source.metaClass.cleanBeforeBindData = { def params, def elems ->
+            def toRemove = params.keySet().findAll { String key ->
+                return elems.find{ prefix -> key != prefix + '.id' && key.startsWith(prefix + '.') }
+            }
+            def removeProperty
+            removeProperty = { obj, fullKey ->
+                String[] key = fullKey.split(/\./, 2)
+                if(key.size() == 2){
+                    obj."${key[0]}".remove(key[1])
+                    if(key[1]?.contains('.')){
+                        removeProperty(obj."${key[0]}", key[1])
+                    }
+                    obj."${key[0]}".remove(key[1].split(/\./, 2)[0])
+                }
+                obj.remove(fullKey)
+            }
+            toRemove.each { String fullKey ->
+                removeProperty(params, fullKey)
+            }
+            return params
         }
     }
 
