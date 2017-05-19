@@ -364,21 +364,21 @@ class ProjectService extends IceScrumEventPublisher {
                 }
                 if (options.changes?.emails) {
                     if (options.changes.emails."${team.owner.uid}") {
-                        team.owner.username = options.changes.emails."${team.owner.uid}"
+                        team.owner.email = options.changes.emails."${team.owner.uid}"
                     }
                     team.members?.each {
                         if (options.changes.emails."${it.uid}") {
-                            it.username = options.changes.emails."${it.uid}"
+                            it.email = options.changes.emails."${it.uid}"
                         }
                     }
                     team.scrumMasters?.each {
                         if (options.changes.emails."${it.uid}") {
-                            it.username = options.changes.emails."${it.uid}"
+                            it.email = options.changes.emails."${it.uid}"
                         }
                     }
                     project.productOwners?.each {
                         if (options.changes.emails."${it.uid}") {
-                            it.username = options.changes.emails."${it.uid}"
+                            it.email = options.changes.emails."${it.uid}"
                         }
                     }
                 }
