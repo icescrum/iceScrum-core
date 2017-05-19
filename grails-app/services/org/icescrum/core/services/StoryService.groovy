@@ -618,7 +618,7 @@ class StoryService extends IceScrumEventPublisher {
                     i += 1
                     copiedStory.name = copiedStory.name + '_' + i
                     copiedStory.validate()
-                } else if (story.errors.getFieldError('name')?.defaultMessage?.contains("maximum size")) {
+                } else if (copiedStory.errors.getFieldError('name')?.defaultMessage?.contains("maximum size")) {
                     copiedStory.name = copiedStory.name[0..20]
                     copiedStory.validate()
                 } else {
@@ -694,6 +694,21 @@ class StoryService extends IceScrumEventPublisher {
             }
             // Save before some hibernate stuff
             if (options.save) {
+                //handle hsqldb unicity with name
+                story.validate()
+                def i = 1
+                while (story.hasErrors()) {
+                    if (story.errors.getFieldError('name')?.defaultMessage?.contains("unique")) {
+                        i += 1
+                        story.name = story.name + '_' + i
+                        story.validate()
+                    } else if (story.errors.getFieldError('name')?.defaultMessage?.contains("maximum size")) {
+                        story.name = story.name[0..20]
+                        story.validate()
+                    } else {
+                        throw new ValidationException('Validation Error(s) occurred during save()', story.errors)
+                    }
+                }
                 story.save()
                 //Handle dependsOn
                 if (project && !storyXml.dependsOn.@uid.isEmpty()) {
