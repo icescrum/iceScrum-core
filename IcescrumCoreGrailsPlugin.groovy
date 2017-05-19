@@ -304,17 +304,17 @@ ERROR: iceScrum v7 has detected that you attempt to run it on an existing R6 ins
         }
     }
 
-    private void addCleanBeforeBindData(source){
+    private void addCleanBeforeBindData(source) {
         source.metaClass.cleanBeforeBindData = { def params, def elems ->
             def toRemove = params.keySet().findAll { String key ->
-                return elems.find{ prefix -> key != prefix + '.id' && key.startsWith(prefix + '.') }
+                return elems.find { prefix -> key != prefix + '.id' && key.startsWith(prefix + '.') }
             }
-            def removeProperty
+            def removeProperty // Recursive so must be declared beforehand to be in scope
             removeProperty = { obj, fullKey ->
                 String[] key = fullKey.split(/\./, 2)
-                if(key.size() == 2){
+                if (key.size() == 2) {
                     obj."${key[0]}".remove(key[1])
-                    if(key[1]?.contains('.')){
+                    if (key[1]?.contains('.')) {
                         removeProperty(obj."${key[0]}", key[1])
                     }
                     obj."${key[0]}".remove(key[1].split(/\./, 2)[0])
