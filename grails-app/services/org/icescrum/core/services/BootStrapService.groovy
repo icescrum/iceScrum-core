@@ -36,6 +36,9 @@ class BootStrapService {
     void start() {
         def dev = Environment.current == Environment.DEVELOPMENT && !System.properties['icescrum.noDummyze']
         def config = grailsApplication.config
+        //fix log dir due to lazy object initialization - get it and save it to grailsApplication object
+        config.icescrum.log.dir = System.getProperty('save.icescrum.log.dir')
+
         if (!config.icescrum.createDefaultAdmin) {
             config.icescrum.createDefaultAdmin = dev
         }
