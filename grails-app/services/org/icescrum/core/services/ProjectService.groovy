@@ -574,7 +574,7 @@ class ProjectService extends IceScrumEventPublisher {
                     if (productOwner.errors.fieldErrors[0]?.field == 'username' && !(productOwner.username in changes.usernames)) {
                         changes.usernames."$productOwner.uid" = productOwner.username
                     } else if (productOwner.errors.fieldErrors[0]?.field == 'email' && !(productOwner.email in changes.emails)) {
-                        changes.email."$productOwner.uid" = productOwner.email
+                        changes.emails."$productOwner.uid" = productOwner.email
                     } else {
                         if (log.infoEnabled) {
                             log.info("User validation error (${productOwner.username}): " + productOwner.errors)
