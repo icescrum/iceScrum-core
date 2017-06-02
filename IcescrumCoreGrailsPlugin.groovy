@@ -313,11 +313,11 @@ ERROR: iceScrum v7 has detected that you attempt to run it on an existing R6 ins
             removeProperty = { obj, fullKey ->
                 String[] key = fullKey.split(/\./, 2)
                 if (key.size() == 2) {
-                    obj."${key[0]}".remove(key[1])
-                    if (key[1]?.contains('.')) {
+                    obj."${key[0]}"?.remove(key[1])
+                    if (key[1]?.contains('.') && obj."${key[0]}") {
                         removeProperty(obj."${key[0]}", key[1])
                     }
-                    obj."${key[0]}".remove(key[1].split(/\./, 2)[0])
+                    obj."${key[0]}"?.remove(key[1].split(/\./, 2)[0])
                 }
                 obj.remove(fullKey)
             }
