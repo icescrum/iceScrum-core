@@ -309,6 +309,7 @@ class ProjectService extends IceScrumEventPublisher {
 
             options.project = project
             options.userUIDByImportedID = [:]
+            options.entitiesToSave = []
 
             def saveMode = options.save
             options.save = false
@@ -400,6 +401,9 @@ class ProjectService extends IceScrumEventPublisher {
                     if (t.id == null) {
                         teamService.saveImport(t)
                     }
+                }
+                options.entitiesToSave.each {
+                    it.save()
                 }
 
                 project.save()
