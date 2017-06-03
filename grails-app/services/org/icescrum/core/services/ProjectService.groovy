@@ -318,6 +318,10 @@ class ProjectService extends IceScrumEventPublisher {
             }
             options.save = saveMode
 
+            if(!project.teams){
+                throw new BusinessException(code: 'todo.is.ui.import.no.team')
+            }
+
             Project pExist = (Project) Project.findByPkey(project.pkey)
             if (pExist && securityService.productOwner(pExist, springSecurityService.authentication)) {
                 project.erasableByUser = true
