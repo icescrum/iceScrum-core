@@ -113,7 +113,7 @@ class TeamService extends IceScrumEventPublisher {
             }
             addScrumMaster(team, scrumMaster)
         }
-        def owner = team.owner?:(User)scrumMasters?.first()?:(User)springSecurityService.currentUser
+        def owner = team.owner ?: (User) scrumMasters?.first() ?: (User) springSecurityService.currentUser
         securityService.changeOwner(owner, team) // Only after adding SM & Member permission to ensure that current user has permissions to manage permissions
     }
 
