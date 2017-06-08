@@ -169,7 +169,7 @@ class FeatureService extends IceScrumEventPublisher {
                     notes: featureXml.notes.text(),
                     color: featureXml.color.text(),
                     todoDate: ApplicationSupport.parseDate(featureXml.todoDate.text()),
-                    value: featureXml.value.text().isEmpty() ? null : featureXml.value.text().toInteger(),
+                    value: featureXml.value.text().isEmpty() ? 0 : featureXml.value.text().toInteger(),
                     type: featureXml.type.text().toInteger(),
                     rank: featureXml.rank.text().toInteger(),
                     uid: featureXml.@uid.text().toInteger()
