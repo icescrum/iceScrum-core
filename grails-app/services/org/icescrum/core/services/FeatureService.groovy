@@ -205,7 +205,7 @@ class FeatureService {
                     notes: feat.notes.text(),
                     color: feat.color.text(),
                     creationDate: new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(feat.creationDate.text()),
-                    value: feat.value.text().toInteger(),
+                    value: feat.value.text().isEmpty() ? 0 : feat.value.text().toInteger(),
                     type: feat.type.text().toInteger(),
                     rank: feat.rank.text()?.toInteger(),
                     uid: feat.@uid.text()?.isEmpty() ? feat.@id.text().toInteger() : feat.@uid.text().toInteger()
