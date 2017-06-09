@@ -44,28 +44,25 @@ class TeamService extends IceScrumEventPublisher {
         if (!team) {
             throw new BusinessException(code: 'is.team.error.not.exist')
         }
-        if (!team.save()) {
-            throw new BusinessException(code: 'is.team.error.not.saved')
-        } else {
-            securityService.secureDomain(team)
-            if (members) {
-                for (member in User.getAll(members)) {
-                    if (!scrumMasters?.contains(member.id) && member) {
-                        addMember(team, member)
-                    }
+        team.save()
+        securityService.secureDomain(team)
+        if (members) {
+            for (member in User.getAll(members)) {
+                if (!scrumMasters?.contains(member.id) && member) {
+                    addMember(team, member)
                 }
             }
-            if (scrumMasters) {
-                for (scrumMaster in User.getAll(scrumMasters)) {
-                    if (scrumMaster) {
-                        addScrumMaster(team, scrumMaster)
-                    }
-                }
-            }
-            team.save(flush: true)
-            team.projects = [] // Grails does not initialize the collection and it is serialized as null instead of empty collection
-            publishSynchronousEvent(IceScrumEventType.CREATE, team)
         }
+        if (scrumMasters) {
+            for (scrumMaster in User.getAll(scrumMasters)) {
+                if (scrumMaster) {
+                    addScrumMaster(team, scrumMaster)
+                }
+            }
+        }
+        team.save(flush: true)
+        team.projects = [] // Grails does not initialize the collection and it is serialized as null instead of empty collection
+        publishSynchronousEvent(IceScrumEventType.CREATE, team)
     }
 
     @PreAuthorize('owner(#team)')
@@ -94,9 +91,7 @@ class TeamService extends IceScrumEventPublisher {
         team.scrumMasters?.each { user ->
             user.save()
         }
-        if (!team.save()) {
-            throw new BusinessException(code: 'is.team.error.not.saved')
-        }
+        team.save()
         securityService.secureDomain(team)
         def scrumMasters = team.scrumMasters
         for (member in team.members) {
