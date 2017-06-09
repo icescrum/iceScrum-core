@@ -319,7 +319,7 @@ class ProjectService extends IceScrumEventPublisher {
             options.save = saveMode
 
             if (!project.teams) {
-                throw new BusinessException(code: 'todo.is.ui.import.no.team')
+                throw new BusinessException(text: 'Error, the project has no team')
             }
 
             Project pExist = (Project) Project.findByPkey(project.pkey)

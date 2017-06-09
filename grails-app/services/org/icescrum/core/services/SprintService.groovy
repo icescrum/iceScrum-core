@@ -382,6 +382,7 @@ class SprintService extends IceScrumEventPublisher {
             // Save before some hibernate stuff
             if (options.save) {
                 sprint.validate()
+                // Fix for R6 import
                 if (sprint.hasErrors() && sprint.errors.getFieldError('startDate')) {
                     if (log.debugEnabled) {
                         log.debug("Warning: sprint with startDate $sprint.startDate overlaps the previous sprint. Fixing...")
