@@ -76,7 +76,7 @@ class User implements Serializable, Attachmentable {
     }
 
     static constraints = {
-        email(blank: false, email: true, unique: true)
+        email(blank: false, unique: true, validator: { newEmail, user -> (newEmail && newEmail.split('@')[0] && newEmail.split('@')[1]) ?: 'invalid' })
         username(blank: false, unique: true)
         password(blank: false)
         lastName(blank: false)
@@ -196,6 +196,7 @@ class User implements Serializable, Attachmentable {
 
     def beforeValidate() {
         //Create uid before first save object
+        this.email = this.email.trim()
         if (!this.id && !this.uid) {
             this.uid = (this.username + this.email).encodeAsMD5()
         }
