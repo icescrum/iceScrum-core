@@ -168,8 +168,18 @@ class TeamService extends IceScrumEventPublisher {
                     options.userUIDByImportedID[userXml.id.text()] = user.uid
                 }
             }
-            team.scrumMasters = teamXml.scrumMasters.user.collect { userXml ->
-                return team.members.find { it.uid == userXml.@uid.text() }
+            team.scrumMasters = []
+            teamXml.scrumMasters.user.each { userXml ->
+                String uid = userXml.@uid.text()
+                User sm = team.members.find { it.uid == uid }
+                // Fix for R6 export
+                if (sm) {
+                    team.scrumMasters << sm
+                } else {
+                    if (log.debugEnabled) {
+                        log.debug("Warning: user " + uid + " is SM but not member, it is ignored...")
+                    }
+                }
             }
             if (teamAlreadyExists) {
                 Team dbTeam = Team.findByName(team.name)
