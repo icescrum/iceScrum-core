@@ -342,7 +342,7 @@ class ApplicationSupport {
                     log.debug "Zipping : ${it.name}"
                 }
                 if (it.exists()) {
-                    def entryName = (subdir ? File.separator + subdir + File.separator : '') + it.name
+                    def entryName = (subdir ? '/' + subdir + '/' : '') + it.name // ZIP spec says forward slash only
                     zout.putNextEntry(new ZipEntry(entryName))
                     zout << new FileInputStream(it)
                     zout.closeEntry()
