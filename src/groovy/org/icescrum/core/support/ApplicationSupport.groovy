@@ -237,7 +237,7 @@ class ApplicationSupport {
             files?.each{
                 if (log.debugEnabled){ log.debug "Zipping : ${it.name}" }
                 if (it.exists()){
-                    def entryName = (subdir ? File.separator + subdir + File.separator : '') + it.name
+                    def entryName = (subdir ? '/' + subdir + '/' : '') + it.name
                     zout.putNextEntry(new ZipEntry(entryName))
                     zout << new FileInputStream(it)
                     zout.closeEntry()
