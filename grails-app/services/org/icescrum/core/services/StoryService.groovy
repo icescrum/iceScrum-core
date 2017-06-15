@@ -525,7 +525,8 @@ class StoryService extends IceScrumEventPublisher {
         return tasks
     }
 
-    @PreAuthorize('(productOwner(#story.backlog) or scrumMaster(#story.backlog)) and !archivedProject(#story.backlog)')
+    // This method is used by taskService when moving the last task as done so the permissions are more relaxed so it works for any team member
+    @PreAuthorize('inProject(#story.backlog) and !archivedProject(#story.backlog)')
     void done(Story story) {
         done([story])
     }
