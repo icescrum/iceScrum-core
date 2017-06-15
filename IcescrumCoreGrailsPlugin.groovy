@@ -819,7 +819,7 @@ class IcescrumCoreGrailsPlugin {
         private void addExportDomainsPlugins(source, config) {
             source.metaClass.exportDomainsPlugins = { builder ->
                 def domainObject = delegate
-                config[source.propertyName]?.each { closure ->
+                config[source.propertyName == 'product' ? 'project' : source.propertyName]?.each { closure ->
                     closure.delegate = domainObject
                     closure(domainObject, builder)
                 }
