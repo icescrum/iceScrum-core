@@ -185,7 +185,7 @@ class TeamService extends IceScrumEventPublisher {
                 Team dbTeam = Team.findByName(team.name)
                 teamAlreadyExists = (dbTeam &&
                                      dbTeam.owner.uid == team.owner.uid &&
-                                     dbTeam.members.size() == team.members.size() &&
+                                     dbTeam.members.size() == team.members?.size() &&
                                      dbTeam.members.every { dbMember -> return team.members.find { teamMember -> teamMember.uid == dbMember.uid } })
                 if (teamAlreadyExists) {
                     team = dbTeam

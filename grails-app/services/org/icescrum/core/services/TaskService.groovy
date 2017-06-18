@@ -373,6 +373,14 @@ class TaskService extends IceScrumEventPublisher {
             }
             // Save before some hibernate stuff
             if (options.save) {
+                task.validate()
+                // Fix for R6 import
+                if (task.hasErrors() && task.errors.getFieldError('type')) {
+                    if (log.debugEnabled) {
+                        log.debug("Warning: task with empty type Fixing...")
+                    }
+                    task.type = Task.TYPE_URGENT
+                }
                 task.save()
                 //Handle tags
                 if (taskXml.tags.text()) {
