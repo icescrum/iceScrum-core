@@ -111,6 +111,8 @@ class TaskService extends IceScrumEventPublisher {
                         task.estimation = null
                     }
                     task.doneDate = null
+                } else if (task.estimation == 0f && !sprint) {
+                    task.estimation = null;
                 } else if (task.estimation == 0f && sprint.state == Sprint.STATE_INPROGRESS) {
                     if (project.preferences.assignOnBeginTask && !task.responsible) {
                         task.responsible = user
