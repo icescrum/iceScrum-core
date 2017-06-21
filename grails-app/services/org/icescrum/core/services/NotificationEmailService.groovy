@@ -271,6 +271,11 @@ class NotificationEmailService {
         assert options.emails || options.to || options.cc
         assert options.view
         assert options.subject
+
+        if(((ThreadPoolExecutor)mailService.mailExecutorService)?.isTerminated()){
+            mailService.afterPropertiesSet()
+        }
+        
         if (grailsApplication.config.icescrum.alerts.emailPerAccount && options.emails) {
             options.emails.each { toEmail ->
                 mailService.sendMail {
@@ -289,9 +294,6 @@ class NotificationEmailService {
             }
         } else {
             options.bcc = options.emails ?: options.bcc
-            if(((ThreadPoolExecutor)mailService.mailExecutorService)?.isTerminated()){
-                mailService.afterPropertiesSet()
-            }
             mailService.sendMail {
                 if (options.async) // Warning : if async then error cannot be caught
                     async true
