@@ -337,10 +337,16 @@ ERROR: iceScrum v7 has detected that you attempt to run it on an existing R6 ins
                 }
                 session.progress.updateProgress(50, message(code: 'is.report.processing'))
                 if (parameters) {
-                    parameters.SUBREPORT_DIR = "${servletContext.getRealPath('reports/subreports')}/"
+                    parameters.SUBREPORT_DIR = "${servletContext.getRealPath('reports')}/subreports/"
                 } else {
-                    parameters = [SUBREPORT_DIR: "${servletContext.getRealPath('reports/subreports')}/"]
+                    parameters = [SUBREPORT_DIR: "${servletContext.getRealPath('reports')}/subreports/"]
                 }
+
+                if (log.debugEnabled) {
+                    log.debug("SUBDIR REPORT: "parameters)
+                }
+
+
                 def reportDef = new JasperReportDef(name: reportName,
                         reportData: data,
                         locale: springSecurityService.isLoggedIn() ? springSecurityService.currentUser.locale : RCU.getLocale(request),
