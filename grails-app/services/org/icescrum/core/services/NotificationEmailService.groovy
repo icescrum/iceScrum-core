@@ -29,6 +29,8 @@ import org.icescrum.core.support.ApplicationSupport
 import org.icescrum.core.utils.ServicesUtils
 import org.springframework.web.context.request.RequestContextHolder as RCH
 
+import java.util.concurrent.ThreadPoolExecutor
+
 class NotificationEmailService {
 
     def mailService
@@ -287,6 +289,9 @@ class NotificationEmailService {
             }
         } else {
             options.bcc = options.emails ?: options.bcc
+            if(((ThreadPoolExecutor)mailService.mailExecutorService)?.isTerminated()){
+                mailService.afterPropertiesSet()
+            }
             mailService.sendMail {
                 if (options.async) // Warning : if async then error cannot be caught
                     async true
