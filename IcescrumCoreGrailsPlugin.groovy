@@ -343,7 +343,9 @@ ERROR: iceScrum v7 has detected that you attempt to run it on an existing R6 ins
                 }
 
                 if (log.debugEnabled) {
-                    log.debug("SUBDIR REPORT: "parameters)
+                    log.debug("parameters: ${parameters}")
+                    log.debug("reports: ${servletContext.getRealPath('reports')}")
+                    log.debug("subreports: ${servletContext.getRealPath('subreports')}")
                 }
 
 
