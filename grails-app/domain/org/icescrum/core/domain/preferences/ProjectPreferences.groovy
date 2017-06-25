@@ -33,7 +33,6 @@ class ProjectPreferences implements Serializable {
     boolean hidden = false
     boolean archived = false
     boolean hideWeekend = false
-    boolean webservices = false
     String timezone = TimeZone.default.ID
 
     //Planification

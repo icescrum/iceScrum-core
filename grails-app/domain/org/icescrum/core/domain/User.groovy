@@ -30,6 +30,7 @@ import org.hibernate.ObjectNotFoundException
 import org.icescrum.core.domain.preferences.UserPreferences
 import org.icescrum.core.domain.security.Authority
 import org.icescrum.core.domain.security.UserAuthority
+import org.icescrum.core.domain.security.UserToken
 import org.icescrum.core.services.SecurityService
 import org.icescrum.plugins.attachmentable.interfaces.Attachmentable
 import org.springframework.security.core.context.SecurityContextHolder as SCH
@@ -61,7 +62,8 @@ class User implements Serializable, Attachmentable {
     static transients = ['locale', 'admin']
 
     static hasMany = [
-            teams: Team
+            teams: Team,
+            tokens: UserToken
     ]
 
     static belongsTo = [Team]
@@ -73,6 +75,7 @@ class User implements Serializable, Attachmentable {
         username index: 'username_index'
         preferences lazy: false
         teams cache: true
+        tokens cascade: 'all-delete-orphan', batchSize: 10
     }
 
     static constraints = {

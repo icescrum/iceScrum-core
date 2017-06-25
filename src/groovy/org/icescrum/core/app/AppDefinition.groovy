@@ -31,6 +31,7 @@ class AppDefinition {
     boolean hasWindows = false
     boolean isProject = false
     boolean isNew = false
+    boolean reloadUIOnStateChange = false
     String id
     String logo = 'logo.png'
     String version
@@ -95,6 +96,10 @@ class AppDefinition {
 
     void isNew(boolean isNew) {
         this.isNew = isNew
+    }
+
+    void reloadUIOnStateChange(boolean reloadUIOnStateChange) {
+        this.reloadUIOnStateChange = reloadUIOnStateChange
     }
 
     void reportUsageData(Closure reportUsageData) {

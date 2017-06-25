@@ -24,7 +24,9 @@
 
 import com.quirklabs.hdimageutils.HdImageService
 import grails.converters.JSON
+import grails.plugin.springsecurity.SecurityFilterPosition
 import grails.plugin.springsecurity.SpringSecurityService
+import grails.plugin.springsecurity.SpringSecurityUtils
 import org.codehaus.groovy.grails.commons.ControllerArtefactHandler
 import org.codehaus.groovy.grails.commons.GrailsClassUtils
 import org.codehaus.groovy.grails.commons.ServiceArtefactHandler
@@ -38,6 +40,9 @@ import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
 import org.icescrum.core.event.IceScrumListener
 import org.icescrum.core.security.ScrumUserDetailsService
+import org.icescrum.core.security.rest.TokenAuthenticationFilter
+import org.icescrum.core.security.rest.TokenAuthenticationProvider
+import org.icescrum.core.security.rest.TokenStorageService
 import org.icescrum.core.services.AppDefinitionService
 import org.icescrum.core.services.UiDefinitionService
 import org.icescrum.core.support.ApplicationSupport
@@ -50,6 +55,11 @@ import org.icescrum.plugins.attachmentable.services.AttachmentableService
 import org.springframework.beans.factory.config.BeanDefinition
 import org.springframework.web.context.request.RequestContextHolder as RCH
 import org.springframework.web.servlet.support.RequestContextUtils as RCU
+
+import org.springframework.security.web.access.AccessDeniedHandlerImpl
+import org.springframework.security.web.access.ExceptionTranslationFilter
+import org.springframework.security.web.authentication.Http403ForbiddenEntryPoint
+import org.springframework.security.web.savedrequest.NullRequestCache
 
 import javax.servlet.http.HttpServletResponse
 import java.lang.reflect.Method
@@ -126,6 +136,36 @@ ERROR: iceScrum v7 has detected that you attempt to run it on an existing R6 ins
         userDetailsService(ScrumUserDetailsService) {
             grailsApplication = ref('grailsApplication')
         }
+
+        tokenAuthenticationProvider(TokenAuthenticationProvider){
+            tokenStorageService = ref('tokenStorageService')
+        }
+
+        tokenAuthenticationFilter(TokenAuthenticationFilter){
+            authenticationManager = ref('authenticationManager')
+        }
+
+        tokenStorageService(TokenStorageService){
+            userDetailsService = ref('userDetailsService')
+        }
+
+
+        restAccessDeniedHandler(AccessDeniedHandlerImpl) {
+            errorPage = null //403
+        }
+
+        restExceptionTranslationFilter(ExceptionTranslationFilter, ref('restAuthenticationEntryPoint'), ref('restRequestCache')) {
+            accessDeniedHandler = ref('restAccessDeniedHandler')
+            authenticationTrustResolver = ref('authenticationTrustResolver')
+            throwableAnalyzer = ref('throwableAnalyzer')
+        }
+
+        restAuthenticationEntryPoint(Http403ForbiddenEntryPoint)
+        restRequestCache(NullRequestCache)
+
+        SpringSecurityUtils.registerProvider 'tokenAuthenticationProvider'
+        SpringSecurityUtils.registerFilter 'tokenAuthenticationFilter', SecurityFilterPosition.BASIC_AUTH_FILTER.order - 1
+        SpringSecurityUtils.registerFilter 'restExceptionTranslationFilter', SecurityFilterPosition.EXCEPTION_TRANSLATION_FILTER.order + 1
     }
 
     def doWithDynamicMethods = { ctx ->

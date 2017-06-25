@@ -57,7 +57,7 @@ class DummyService {
         startDate.clearTime()
         Project project = new Project(name: projectName, pkey: toPkey(user), startDate: startDate, endDate: startDate + 102)
         project.description = '''*Peetic* is a dating website for your pets! Don't you think that they deserve to find their soul mate?\n\nThis project is yours: browse it and play with it to discover *iceScrum 7*!\n\nPeetic is inspired by this free "template":https://github.com/pablopernot/peetic.'''
-        project.preferences = new ProjectPreferences(webservices: true, hidden: hidden)
+        project.preferences = new ProjectPreferences(hidden: hidden)
         String teamName = projectName + ' Team'
         Team team = Team.findByName(teamName)
         if (!team || team.owner.username != user.username) {
