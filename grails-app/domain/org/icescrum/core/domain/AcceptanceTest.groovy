@@ -23,6 +23,7 @@
 package org.icescrum.core.domain
 
 import org.hibernate.ObjectNotFoundException
+import org.icescrum.core.utils.ServicesUtils
 
 class AcceptanceTest implements Serializable {
 
@@ -153,6 +154,11 @@ class AcceptanceTest implements Serializable {
 
     void setStateEnum(AcceptanceTestState stateEnum) {
         state = stateEnum.id
+    }
+
+    def beforeValidate(){
+        name = ServicesUtils.cleanXml(name)
+        description = ServicesUtils.cleanXml(description)
     }
 
     def xml(builder) {

@@ -23,6 +23,8 @@
 
 package org.icescrum.core.domain
 
+import org.icescrum.core.utils.ServicesUtils
+
 class TimeBox implements Comparable<TimeBox>, Serializable {
 
     static final long serialVersionUID = -88023090297032383L
@@ -86,6 +88,7 @@ class TimeBox implements Comparable<TimeBox>, Serializable {
     def beforeValidate() {
         startDate = startDate.clearTime()
         endDate = endDate.clearTime()
+        goal = ServicesUtils.cleanXml(goal)
     }
 
     Integer getDuration() {

@@ -26,6 +26,7 @@
 package org.icescrum.core.domain
 
 import org.hibernate.ObjectNotFoundException
+import org.icescrum.core.utils.ServicesUtils
 import org.icescrum.plugins.attachmentable.interfaces.Attachmentable
 
 
@@ -306,6 +307,11 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
 
     int getIndex() {
         return orderNumber + parentRelease.firstSprintIndex - 1
+    }
+
+    def beforeValidate(){
+        retrospective = ServicesUtils.cleanXml(retrospective)
+        doneDefinition = ServicesUtils.cleanXml(doneDefinition)
     }
 
     def xml(builder) {

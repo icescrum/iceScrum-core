@@ -26,6 +26,7 @@
 package org.icescrum.core.domain
 
 import org.hibernate.ObjectNotFoundException
+import org.icescrum.core.utils.ServicesUtils
 import org.icescrum.plugins.attachmentable.interfaces.Attachmentable
 
 import java.sql.Timestamp
@@ -233,5 +234,9 @@ class Release extends TimeBox implements Cloneable, Attachmentable {
             }
             exportDomainsPlugins(builder)
         }
+    }
+
+    def beforeValidate(){
+        vision = ServicesUtils.cleanXml(vision)
     }
 }

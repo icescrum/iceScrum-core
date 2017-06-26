@@ -26,6 +26,7 @@ package org.icescrum.core.domain
 
 import org.grails.comments.Commentable
 import org.grails.taggable.Taggable
+import org.icescrum.core.utils.ServicesUtils
 import org.icescrum.plugins.attachmentable.interfaces.Attachmentable
 
 abstract class BacklogElement implements Attachmentable, Commentable, Serializable, Taggable {
@@ -60,5 +61,11 @@ abstract class BacklogElement implements Attachmentable, Commentable, Serializab
         notes length: 5000
         backlog lazy: true
         tablePerHierarchy false
+    }
+
+    def beforeValidate(){
+        name = ServicesUtils.cleanXml(name)
+        notes = ServicesUtils.cleanXml(notes)
+        description = ServicesUtils.cleanXml(description)
     }
 }
