@@ -209,7 +209,7 @@ class TaskService extends IceScrumEventPublisher {
                 i += 1
                 story.name = story.name + '_' + i
                 story.validate()
-            } else if (task.errors.getFieldError('name')?.defaultMessage?.contains("maximum size")) {
+            } else if (task.errors.getFieldError('name')?.code?.contains("maxSize.exceeded")) {
                 story.name = story.name[0..20]
                 story.validate()
             } else {
@@ -261,7 +261,7 @@ class TaskService extends IceScrumEventPublisher {
                 i += 1
                 clonedTask.name = clonedTask.name + '_' + i
                 clonedTask.validate()
-            } else if (clonedTask.errors.getFieldError('name')?.defaultMessage?.contains("maximum size")) {
+            } else if (clonedTask.errors.getFieldError('name')?.code?.contains("maxSize.exceeded")) {
                 clonedTask.name = clonedTask.name[0..20]
                 clonedTask.validate()
             } else {

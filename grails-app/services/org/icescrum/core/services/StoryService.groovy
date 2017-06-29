@@ -455,7 +455,7 @@ class StoryService extends IceScrumEventPublisher {
                     i += 1
                     feature.name = feature.name + '_' + i
                     feature.validate()
-                } else if (story.errors.getFieldError('name')?.defaultMessage?.contains("maximum size")) {
+                } else if (story.errors.getFieldError('name')?.code?.contains("maxSize.exceeded")) {
                     feature.name = feature.name[0..20]
                     feature.validate()
                 } else {
@@ -496,7 +496,7 @@ class StoryService extends IceScrumEventPublisher {
             task.backlog = sprint
             task.validate()
             while (task.hasErrors() && task.errors.getFieldError('name')) {
-                if (story.errors.getFieldError('name')?.defaultMessage?.contains("maximum size")) {
+                if (story.errors.getFieldError('name')?.code?.contains("maxSize.exceeded")) {
                     task.name = task.name[0..20]
                     task.validate()
                 } else {
@@ -619,7 +619,7 @@ class StoryService extends IceScrumEventPublisher {
                     i += 1
                     copiedStory.name = copiedStory.name + '_' + i
                     copiedStory.validate()
-                } else if (copiedStory.errors.getFieldError('name')?.defaultMessage?.contains("maximum size")) {
+                } else if (copiedStory.errors.getFieldError('name')?.code?.contains("maxSize.exceeded")) {
                     copiedStory.name = copiedStory.name[0..20]
                     copiedStory.validate()
                 } else {
@@ -703,7 +703,7 @@ class StoryService extends IceScrumEventPublisher {
                         i += 1
                         story.name = story.name + '_' + i
                         story.validate()
-                    } else if (story.errors.getFieldError('name')?.defaultMessage?.contains("maximum size")) {
+                    } else if (story.errors.getFieldError('name')?.code?.contains("maxSize.exceeded")) {
                         story.name = story.name[0..20]
                         story.validate()
                     } else {

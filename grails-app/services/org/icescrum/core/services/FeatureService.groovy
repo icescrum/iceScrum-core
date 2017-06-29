@@ -108,7 +108,7 @@ class FeatureService extends IceScrumEventPublisher {
                     i += 1
                     story.name = story.name + '_' + i
                     story.validate()
-                } else if (story.errors.getFieldError('name')?.defaultMessage?.contains("maximum size")) {
+                } else if (story.errors.getFieldError('name')?.code?.contains("maxSize.exceeded")) {
                     story.name = story.name[0..20]
                     story.validate()
                 } else {
