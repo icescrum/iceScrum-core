@@ -36,10 +36,6 @@ class UserTokenService {
         userToken.refresh()
     }
 
-    /*def update(UserToken userToken) {
-        userToken.save(flush:true)
-    }*/
-
     def delete(UserToken userToken) {
         def user = userToken.user
         userToken.delete()
