@@ -272,10 +272,10 @@ class NotificationEmailService {
         assert options.view
         assert options.subject
 
-        if(((ThreadPoolExecutor)mailService.mailExecutorService)?.isTerminated()){
+        if (((ThreadPoolExecutor) mailService.mailExecutorService)?.isTerminated()) {
             mailService.afterPropertiesSet()
         }
-        
+
         if (grailsApplication.config.icescrum.alerts.emailPerAccount && options.emails) {
             options.emails.each { toEmail ->
                 mailService.sendMail {

@@ -23,7 +23,7 @@ package org.icescrum.core.domain.security
 
 import org.icescrum.core.domain.User
 
-class UserToken  implements Serializable {
+class UserToken implements Serializable {
 
     static final long serialVersionUID = 813639045232976106L
 
@@ -38,7 +38,7 @@ class UserToken  implements Serializable {
     static mapping = {
         cache true
         version false
-        id generator:"assigned", column:"id", unique:"true"
+        id generator: "assigned", column: "id", unique: "true"
         table System.properties['icescrum.oracle'] ? 'is_u_tokens' : 'is_user_tokens'
     }
 }

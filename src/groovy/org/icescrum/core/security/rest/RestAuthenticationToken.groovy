@@ -27,20 +27,19 @@ import org.springframework.security.core.GrantedAuthority
 
 class RestAuthenticationToken extends UsernamePasswordAuthenticationToken {
     private static final long serialVersionUID = 340142428848470352L
-	private final String token
+    private final String token
 
-	String getToken() {
-		return token
-	}
+    String getToken() {
+        return token
+    }
 
-	RestAuthenticationToken(Object principal, Object credentials, Collection<? extends GrantedAuthority> authorities, String token) {
-		super(principal, credentials, authorities)
-		this.token = token
-	}
+    RestAuthenticationToken(Object principal, Object credentials, Collection<? extends GrantedAuthority> authorities, String token) {
+        super(principal, credentials, authorities)
+        this.token = token
+    }
 
-	RestAuthenticationToken(String token) {
-		super("N/A", "N/A")
-		this.token = token
-	}
-
+    RestAuthenticationToken(String token) {
+        super("N/A", "N/A")
+        this.token = token
+    }
 }

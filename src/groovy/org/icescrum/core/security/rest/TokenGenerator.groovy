@@ -22,7 +22,7 @@
 package org.icescrum.core.security.rest
 
 class TokenGenerator {
-	static String generateToken() {
-		return UUID.randomUUID().toString().replace("-", "")
-	}
+    static String generateToken() {
+        return UUID.randomUUID().toString().replace("-", "")
+    }
 }

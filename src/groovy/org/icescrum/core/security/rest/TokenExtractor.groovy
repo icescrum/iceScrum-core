@@ -20,15 +20,16 @@
  * Vincent Barrier (vbarrier@kagilum.com)
  */
 package org.icescrum.core.security.rest
+
 import javax.servlet.http.HttpServletRequest
 
 class TokenExtractor {
-	static final String TOKEN_HEADER = "x-icescrum-token"
-	protected static final String TOKEN_PARAMETER = "icescrum-token"
+    static final String TOKEN_HEADER = "x-icescrum-token"
+    protected static final String TOKEN_PARAMETER = "icescrum-token"
 
-	static String getToken(HttpServletRequest request) {
-		String token = request.getHeader(TOKEN_HEADER)
-		token = token ?: request.getParameter(TOKEN_PARAMETER) ?: null
-		return token
-	}
+    static String getToken(HttpServletRequest request) {
+        String token = request.getHeader(TOKEN_HEADER)
+        token = token ?: request.getParameter(TOKEN_PARAMETER) ?: null
+        return token
+    }
 }

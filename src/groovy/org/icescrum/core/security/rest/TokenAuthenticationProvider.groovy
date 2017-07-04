@@ -28,24 +28,23 @@ import org.springframework.security.core.userdetails.UserDetails
 
 class TokenAuthenticationProvider implements AuthenticationProvider {
 
-	TokenStorageService tokenStorageService
+    TokenStorageService tokenStorageService
 
-	@Override
-	Authentication authenticate(Authentication authentication) throws AuthenticationException {
-		if (!supports(authentication.class))
-			throw new IllegalArgumentException("Only RestAuthenticationToken is supported")
+    @Override
+    Authentication authenticate(Authentication authentication) throws AuthenticationException {
+        if (!supports(authentication.class))
+            throw new IllegalArgumentException("Only RestAuthenticationToken is supported")
 
-		RestAuthenticationToken authToken = (RestAuthenticationToken) authentication
-		if (authToken.token) {
-			UserDetails userDetails = tokenStorageService.loadUserByToken(authToken.getToken())
-			authToken = new RestAuthenticationToken(userDetails, userDetails.getPassword(), userDetails.getAuthorities(), authToken.getToken())
-		}
-		return authToken
-	}
+        RestAuthenticationToken authToken = (RestAuthenticationToken) authentication
+        if (authToken.token) {
+            UserDetails userDetails = tokenStorageService.loadUserByToken(authToken.getToken())
+            authToken = new RestAuthenticationToken(userDetails, userDetails.getPassword(), userDetails.getAuthorities(), authToken.getToken())
+        }
+        return authToken
+    }
 
-	@Override
-	boolean supports(Class<?> authentication) {
-		return RestAuthenticationToken.class.isAssignableFrom(authentication)
-	}
-
+    @Override
+    boolean supports(Class<?> authentication) {
+        return RestAuthenticationToken.class.isAssignableFrom(authentication)
+    }
 }

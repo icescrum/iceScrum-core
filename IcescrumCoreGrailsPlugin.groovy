@@ -149,9 +149,8 @@ ERROR: iceScrum v7 has detected that you attempt to run it on an existing R6 ins
             userDetailsService = ref('userDetailsService')
         }
 
-
         restAccessDeniedHandler(AccessDeniedHandlerImpl) {
-            errorPage = null //403
+            errorPage = null // 403
         }
 
         restExceptionTranslationFilter(ExceptionTranslationFilter, ref('restAuthenticationEntryPoint'), ref('restRequestCache')) {
