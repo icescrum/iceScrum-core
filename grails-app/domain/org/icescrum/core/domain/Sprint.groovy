@@ -54,7 +54,7 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
 
     static hasMany = [
             stories: Story,
-            tasks  : Task,
+             tasks  : Task,
     ]
 
     static belongsTo = [
