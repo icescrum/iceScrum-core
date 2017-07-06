@@ -45,7 +45,7 @@ class WindowDefinition {
     String secured = 'permitAll()'
 
     def options = [:]
-    def exportFormats = []
+    def exportFormats = {[]}
 
     MenuDefinition menu
     Closure before = null

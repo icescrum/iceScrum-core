@@ -23,6 +23,7 @@
  */
 
 
+
 package org.icescrum.core.domain
 
 import grails.util.Holders
