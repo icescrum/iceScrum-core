@@ -504,7 +504,7 @@ class ProjectService extends IceScrumEventPublisher {
     @PreAuthorize('isAuthenticated()')
     def importXML(File file, def options) {
         Project.withTransaction(readOnly: !options.save) {
-            String xmlText = file.getText()
+            String xmlText = file.getText('UTF-8')
             String cleanedXmlText = ServicesUtils.cleanXml(xmlText)
             def exportXML
             try {
