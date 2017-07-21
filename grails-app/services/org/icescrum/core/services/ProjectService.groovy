@@ -86,9 +86,9 @@ class ProjectService extends IceScrumEventPublisher {
         manageProjectEvents(project, oldMembers)
     }
 
-    @PreAuthorize('owner(#project.firstTeam) and owner(#newTeam) and !archivedProject(#project)')
+    @PreAuthorize('owner(#project.team) and owner(#newTeam) and !archivedProject(#project)')
     void changeTeam(Project project, Team newTeam) {
-        def oldTeam = project.firstTeam
+        def oldTeam = project.team
         def oldMembers = getAllMembersProjectByRole(project)
         // Switch team
         project.removeFromTeams(oldTeam)
@@ -620,7 +620,7 @@ class ProjectService extends IceScrumEventPublisher {
         }
     }
 
-    @PreAuthorize('owner(#project.firstTeam)')
+    @PreAuthorize('owner(#project.team)')
     def delete(Project project) {
         pushService.disablePushForThisThread()
         def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_DELETE, project)
@@ -861,7 +861,7 @@ class ProjectService extends IceScrumEventPublisher {
     Map getAllMembersProjectByRole(Project project) {
         def usersByRole = [:]
         def productOwners = project.productOwners
-        def team = project.firstTeam
+        def team = project.team
         if (team) {
             def scrumMasters = team.scrumMasters
             team.members?.each { User member ->

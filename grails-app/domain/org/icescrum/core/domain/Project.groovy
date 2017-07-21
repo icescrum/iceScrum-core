@@ -43,7 +43,7 @@ class Project extends TimeBox implements Serializable, Attachmentable {
     String name = ""
     ProjectPreferences preferences
     String pkey
-    SortedSet<Team> teams
+    SortedSet<Team> teams // DO NOT USE DIRECTLY, rather use transient "team" that resolves the first and only team
     SortedSet<Release> releases
 
     static hasMany = [
@@ -75,7 +75,7 @@ class Project extends TimeBox implements Serializable, Attachmentable {
             'invitedStakeHolders',
             'invitedProductOwners',
             'owner',
-            'firstTeam',
+            'team',
             'versions',
             'sprints'
     ]
@@ -293,7 +293,7 @@ class Project extends TimeBox implements Serializable, Attachmentable {
     }
 
     User getOwner() {
-        return (id && firstTeam) ? firstTeam.owner : null
+        return (id && team) ? team.owner : null
     }
 
     User getUserByUidOrOwner(String uid) {
@@ -312,7 +312,7 @@ class Project extends TimeBox implements Serializable, Attachmentable {
         return Invitation.findAllByTypeAndProjectAndFutureRole(InvitationType.PROJECT, this, Authority.PRODUCTOWNER)
     }
 
-    Team getFirstTeam() {
+    Team getTeam() {
         return this.teams ? this.teams.first() : null
     }
 
@@ -339,7 +339,7 @@ class Project extends TimeBox implements Serializable, Attachmentable {
             }
             def securityService = (SecurityService) Holders.grailsApplication.mainContext.getBean('securityService')
             securityService.secureDomain(this)
-            securityService.changeOwner(firstTeam?.owner ?: User.findById(1), this)
+            securityService.changeOwner(team?.owner ?: User.findById(1), this)
             acl = aclUtilService.readAcl(this.getClass(), this.id)
         }
         return acl

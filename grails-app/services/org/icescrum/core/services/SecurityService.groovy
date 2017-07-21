@@ -221,7 +221,7 @@ class SecurityService {
                     if (!p) {
                         return false
                     }
-                    t = GrailsHibernateUtil.unwrapIfProxy(p.firstTeam)
+                    t = GrailsHibernateUtil.unwrapIfProxy(p.team)
                     team = t.id
                 }
             }
@@ -323,7 +323,7 @@ class SecurityService {
             if (!p) {
                 return false
             }
-            Team t = GrailsHibernateUtil.unwrapIfProxy(p.firstTeam)
+            Team t = GrailsHibernateUtil.unwrapIfProxy(p.team)
             long team = t.id
             return isOwner(team, auth, grailsApplication.getDomainClass(Team.class.name).newInstance(), t)
         } else {
@@ -464,7 +464,7 @@ class SecurityService {
                     if (!p) {
                         return false
                     }
-                    d = GrailsHibernateUtil.unwrapIfProxy(p.firstTeam)
+                    d = GrailsHibernateUtil.unwrapIfProxy(p.team)
                     domain = d.id
                     domainClass = grailsApplication.getDomainClass(Team.class.name).newInstance()
                 }

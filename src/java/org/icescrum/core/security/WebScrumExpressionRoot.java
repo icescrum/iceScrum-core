@@ -92,7 +92,7 @@ public class WebScrumExpressionRoot extends WebSecurityExpressionRoot implements
     }
 
     public boolean teamMember(Project p) {
-        Team team = p.getFirstTeam();
+        Team team = p.getTeam();
         return team != null && securityService.teamMember(team, super.authentication);
     }
 
@@ -109,7 +109,7 @@ public class WebScrumExpressionRoot extends WebSecurityExpressionRoot implements
     }
 
     public boolean scrumMaster(Project p) {
-        Team team = p.getFirstTeam();
+        Team team = p.getTeam();
         return team != null && securityService.scrumMaster(team, super.authentication);
     }
 
