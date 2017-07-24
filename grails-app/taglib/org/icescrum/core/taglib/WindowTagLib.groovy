@@ -71,7 +71,7 @@ class WindowTagLib {
             def closeButton = attrs.closeButton ?: message(code: 'is.dialog.close')
             out << """  <button type="button" class="btn btn-default" ng-click="\$close()">$closeButton</button>"""
             if (attrs.submitButton) {
-                out << "<button type='submit' ${attrs.validate ? 'ng-disabled="' + attrs.name + '.$invalid"' : ''} class='btn btn-primary'>${attrs.submitButton}</button>"
+                out << "<button type='submit' ${attrs.validate ? 'ng-disabled="' + attrs.name + '.$invalid"' : ''} class='btn btn-${attrs.submitButtonColor ?: 'primary'}'>${attrs.submitButton}</button>"
             }
             out << """  </div>"""
         }
