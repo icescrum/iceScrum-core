@@ -198,11 +198,11 @@ class UserService extends IceScrumEventPublisher {
                     username: userXml.username.text(),
                     email: userXml.email.text(),
                     password: userXml.password.text(),
-                    enabled: userXml.enabled.text().toBoolean() ?: true,
-                    accountExpired: userXml.accountExpired.text().toBoolean() ?: false,
-                    accountLocked: userXml.accountLocked.text().toBoolean() ?: false,
-                    passwordExpired: userXml.passwordExpired.text().toBoolean() ?: false,
-                    accountExternal: userXml.accountExternal.text().toBoolean() ?: false,
+                    enabled: userXml.enabled.text().toBoolean(),
+                    accountExpired: userXml.accountExpired.text().toBoolean(),
+                    accountLocked: userXml.accountLocked.text().toBoolean(),
+                    passwordExpired: userXml.passwordExpired.text().toBoolean(),
+                    accountExternal: userXml.accountExternal.text().toBoolean(),
                     uid: userXml.@uid.text() ?: (userXml.username.text() + userXml.email.text()).encodeAsMD5()
             )
             def preferencesXml = userXml.preferences

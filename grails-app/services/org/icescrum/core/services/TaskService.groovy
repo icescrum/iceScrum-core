@@ -357,7 +357,7 @@ class TaskService extends IceScrumEventPublisher {
                     inProgressDate: ApplicationSupport.parseDate(taskXml.inProgressDate.text()),
                     doneDate: ApplicationSupport.parseDate(taskXml.doneDate.text()),
                     state: taskXml.state.text().toInteger(),
-                    blocked: taskXml.blocked.text().toBoolean() ?: false,
+                    blocked: taskXml.blocked.text().toBoolean(),
                     uid: taskXml.@uid.text().toInteger(),
                     color: taskXml.color.text())
             if (project) {
