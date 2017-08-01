@@ -35,6 +35,7 @@ import org.springframework.security.access.prepost.PreAuthorize
 class AppService extends IceScrumEventPublisher {
 
     def appDefinitionService
+    def grailsApplication
 
     @PreAuthorize('scrumMaster(#project)')
     void updateEnabledForProject(Project project, String appDefinitionId, boolean enabledForProject) {
@@ -45,11 +46,11 @@ class AppService extends IceScrumEventPublisher {
         updateSimpleProjectAppEnabledForProject(project, appDefinition, enabledForProject)
         if (enabledForProject) {
             if (appDefinition.onEnableForProject) {
-                appDefinition.onEnableForProject(project)
+                appDefinition.onEnableForProject(project, grailsApplication)
             }
         } else {
             if (appDefinition.onDisableForProject) {
-                appDefinition.onDisableForProject(project)
+                appDefinition.onDisableForProject(project, grailsApplication)
             }
         }
     }
