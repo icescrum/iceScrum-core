@@ -61,7 +61,6 @@ class WidgetService {
     }
 
     void update(Widget widget, Map props) {
-
         User user = widget.userPreferences.user
         if (props.position != widget.position || props.onRight != widget.onRight) {
             updatePosition(widget, props.position, props.onRight)
@@ -92,7 +91,7 @@ class WidgetService {
         try { // Required because it will failed if no request (bootstraping)
             ApplicationTagLib g = grailsApplication.mainContext.getBean('org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib')
             noteProperties.settings.text = g.message(code: 'is.ui.widget.notes.default')
-        } catch(Exception) {}
+        } catch (Exception) {}
         update(notesWidget, noteProperties)
         save(user, uiDefinitionService.getWidgetDefinitionById('feed'), true)
         save(user, uiDefinitionService.getWidgetDefinitionById('tasks'), true)
