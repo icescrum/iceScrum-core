@@ -154,7 +154,7 @@ class SprintService extends IceScrumEventPublisher {
             }
         }
         def autoCreateTaskOnEmptyStory = sprint.parentRelease.parentProject.preferences.autoCreateTaskOnEmptyStory
-        sprint.stories?.each { Story story ->
+        sprint.stories?.sort { it.rank }?.each { Story story ->
             story.state = Story.STATE_INPROGRESS
             story.inProgressDate = new Date()
             storyService.update(story)
