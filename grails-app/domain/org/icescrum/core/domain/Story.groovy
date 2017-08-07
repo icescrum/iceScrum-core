@@ -122,7 +122,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
     }
 
     def getCountDoneTasks() {
-        return state >= STATE_INPROGRESS ? tasks.count { it.state == Task.STATE_DONE } : 0;
+        return tasks.count { it.state == Task.STATE_DONE };
     }
 
     List<Story> getSameBacklogStories() {
