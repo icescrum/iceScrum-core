@@ -135,8 +135,6 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
                             asShortObject(referenceObject, json, referencedDomainClass.getIdentifier(), referencedDomainClass)
                         } else {
                             GrailsDomainClassProperty referencedIdProperty = referencedDomainClass.getIdentifier()
-                            @SuppressWarnings("unused")
-                            String refPropertyName = referencedDomainClass.getPropertyName()
                             if (referenceObject instanceof Collection) {
                                 Collection o = (Collection) referenceObject
                                 if (propertiesMap[configName]?.withIds?.contains(property.name)) {
@@ -183,6 +181,7 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
             }
         }
 
+        def gormPropertiesName = properties.collect{ it.name }
 
         propertiesMap."${configName}"?.includeCount?.each {
             def granted = propertiesMap."${configName}".security?."${it}" != null ? propertiesMap."${configName}".security?."${it}" : true
@@ -195,6 +194,28 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
                 }
             }
         }
+
+        propertiesMap."${configName}"?.withIds?.each {
+            //because same withIds works for gorm properties we need to check if it has been done already
+            if(!gormPropertiesName.contains(it)){
+                def granted = propertiesMap."${configName}".security?."${it}" != null ? propertiesMap."${configName}".security?."${it}" : true
+                granted = granted instanceof Closure ? granted(value, grailsApplication, user) : granted
+                if (granted) {
+                    def val = value.properties."${it}"
+                    if (val instanceof Collection) {
+                        writer.key(it + "_ids")
+                        writer.array()
+                        for (Object el : val) {
+                            writer.object()
+                            writer.key("id").value(val.id)
+                            writer.endObject()
+                        }
+                        writer.endArray()
+                    }
+                }
+            }
+        }
+
         propertiesMap."${configName}"?.textile?.each {
             def val = value.properties."${it}"
             writer.key(it + "_html").value(ServicesUtils.textileToHtml(val))
