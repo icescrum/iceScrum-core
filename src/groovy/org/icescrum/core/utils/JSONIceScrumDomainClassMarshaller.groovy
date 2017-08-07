@@ -207,7 +207,7 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
                         writer.array()
                         for (Object el : val) {
                             writer.object()
-                            writer.key("id").value(val.id)
+                            writer.key("id").value(el.id)
                             writer.endObject()
                         }
                         writer.endArray()
