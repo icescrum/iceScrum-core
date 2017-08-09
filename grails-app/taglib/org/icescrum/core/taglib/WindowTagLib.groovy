@@ -50,7 +50,7 @@ class WindowTagLib {
             out << "<form role='form' $validation $name ng-submit='${attrs.form}' ${attrs.autoFillFix ? 'form-autofill-fix' : ''} novalidate>"
         }
         out << """  <div class="modal-header">
-                        <button type="button" class="close" ng-click="\$dismiss()" aria-hidden="true">&times;</button>
+                        <button type="button" class="close" ng-click="\$dismiss()" tabindex="-1" aria-hidden="true">&times;</button>
                         <h4 class="modal-title" id="modal${attrs.name}">${attrs.title}</h4>
                     </div>
                     <div class="modal-body">
