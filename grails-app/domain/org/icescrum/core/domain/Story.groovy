@@ -562,6 +562,10 @@ class Story extends BacklogElement implements Cloneable, Serializable {
         return isProductOwner || ((state == STATE_SUGGESTED && currentUser == creator))
     }
 
+    int getComments_count(){
+        return this.getTotalComments()
+    }
+
     def xml(builder) {
         builder.story(uid: this.uid) {
             builder.type(this.type)

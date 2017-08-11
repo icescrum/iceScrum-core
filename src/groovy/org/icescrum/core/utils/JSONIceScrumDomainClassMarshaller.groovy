@@ -87,9 +87,6 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
         if (propertiesMap."${configName}".exclude) {
             excludes.addAll(propertiesMap."${configName}".exclude)
         }
-        if (propertiesMap."${configName}"?.include) {
-            excludes.addAll(propertiesMap."${configName}".include)
-        }
         properties.removeAll { it.getName() in excludes }
 
         for (GrailsDomainClassProperty property : properties) {
@@ -147,7 +144,10 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
                                     }
                                     writer.endArray()
                                 } else {
-                                    writer.key(property.getName() + "_count").value(o.size())
+                                    int count = domainClass.getClazz().withSession { session ->
+                                        session.createFilter(referenceObject, 'select count(*)').uniqueResult()
+                                    }
+                                    writer.key(property.getName() + "_count").value(count)
                                 }
                             } else if (referenceObject instanceof Map) {
                                 writer.key(property.getName())
@@ -182,18 +182,6 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
         }
 
         def gormPropertiesName = properties.collect{ it.name }
-
-        propertiesMap."${configName}"?.includeCount?.each {
-            def granted = propertiesMap."${configName}".security?."${it}" != null ? propertiesMap."${configName}".security?."${it}" : true
-            granted = granted instanceof Closure ? granted(value, grailsApplication, user) : granted
-            if (granted) {
-                def val = value.properties."${it}"
-                if (val instanceof Collection) {
-                    Collection o = val
-                    writer.key(it + "_count").value(o.size())
-                }
-            }
-        }
 
         propertiesMap."${configName}"?.withIds?.each {
             //because same withIds works for gorm properties we need to check if it has been done already

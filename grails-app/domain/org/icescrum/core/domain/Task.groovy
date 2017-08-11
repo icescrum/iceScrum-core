@@ -233,6 +233,10 @@ class Task extends BacklogElement implements Serializable {
         return activities.sort { a, b -> b.dateCreated <=> a.dateCreated }
     }
 
+    int getComments_count(){
+        return this.getTotalComments()
+    }
+
     static search(project, options) {
         def criteria = {
             backlog {
