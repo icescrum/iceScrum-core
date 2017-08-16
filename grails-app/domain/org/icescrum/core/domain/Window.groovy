@@ -1,7 +1,6 @@
 package org.icescrum.core.domain
 
 import grails.converters.JSON
-import org.icescrum.core.domain.preferences.UserPreferences
 
 class Window implements Serializable {
 

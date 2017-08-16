@@ -122,7 +122,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
     }
 
     def getCountDoneTasks() {
-        return tasks.count { it.state == Task.STATE_DONE };
+        return tasks.count { it.state == Task.STATE_DONE }
     }
 
     List<Story> getSameBacklogStories() {
@@ -562,7 +562,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
         return isProductOwner || ((state == STATE_SUGGESTED && currentUser == creator))
     }
 
-    int getComments_count(){
+    int getComments_count() {
         return this.getTotalComments()
     }
 

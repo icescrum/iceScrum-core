@@ -181,11 +181,11 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
             }
         }
 
-        def gormPropertiesName = properties.collect{ it.name }
+        def gormPropertiesName = properties.collect { it.name }
 
         propertiesMap."${configName}"?.withIds?.each {
             //because same withIds works for gorm properties we need to check if it has been done already
-            if(!gormPropertiesName.contains(it)){
+            if (!gormPropertiesName.contains(it)) {
                 def granted = propertiesMap."${configName}".security?."${it}" != null ? propertiesMap."${configName}".security?."${it}" : true
                 granted = granted instanceof Closure ? granted(value, grailsApplication, user) : granted
                 if (granted) {

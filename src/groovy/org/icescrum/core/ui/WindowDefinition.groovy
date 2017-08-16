@@ -45,7 +45,7 @@ class WindowDefinition {
     String secured = 'permitAll()'
 
     def options = [:]
-    def exportFormats = {[]}
+    def exportFormats = { [] }
     Map defaultSettings = [:]
 
     MenuDefinition menu

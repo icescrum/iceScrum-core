@@ -34,9 +34,9 @@ class WindowService {
 
     Window retrieve(WindowDefinition windowDefinition, User user, def context) {
         def window = null
-        if(user){
+        if (user) {
             window = context ? Window.findByWindowDefinitionIdAndUserAndContextAndContextId(windowDefinition.id, user, context.name, context.object.id) : Window.findByWindowDefinitionIdAndUser(windowDefinition.id, user)
-            if(!window && windowDefinition.alwaysInitSettings){
+            if (!window && windowDefinition.alwaysInitSettings) {
                 window = save(windowDefinition, user, context)
             }
         }
@@ -45,8 +45,8 @@ class WindowService {
 
     Window save(WindowDefinition windowDefinition, User user, def context) {
         def window = null
-        if(user){
-            window = context ? new Window(windowDefinitionId:windowDefinition.id, user: user, context:context.name, contextId: context.object.id, settings: windowDefinition.defaultSettings) : new Window(windowDefinitionId:windowDefinition.id, user: user)
+        if (user) {
+            window = context ? new Window(windowDefinitionId: windowDefinition.id, user: user, context: context.name, contextId: context.object.id, settings: windowDefinition.defaultSettings) : new Window(windowDefinitionId: windowDefinition.id, user: user)
             try {
                 windowDefinition.onSave(window)
             } catch (Exception e) {
@@ -81,7 +81,7 @@ class WindowService {
 
     void delete(String contextName, long contextId) {
         def windows = Window.findAllByContextAndContextId(contextName, contextId)
-        windows.each{ Window window ->
+        windows.each { Window window ->
             try {
                 uiDefinitionService.getWindowDefinitionById(window.windowDefinitionId).onDelete(window)
             } catch (Exception e) {
