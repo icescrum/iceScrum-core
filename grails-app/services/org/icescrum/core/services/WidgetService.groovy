@@ -27,6 +27,7 @@ import grails.transaction.Transactional
 import org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib
 import org.icescrum.core.domain.User
 import org.icescrum.core.domain.Widget
+import org.icescrum.core.domain.Window
 import org.icescrum.core.domain.preferences.UserPreferences
 import org.icescrum.core.error.BusinessException
 import org.icescrum.core.ui.WidgetDefinition
@@ -115,6 +116,13 @@ class WidgetService {
         }
         user.lastUpdated = new Date()
         user.save()
+    }
+
+    void delete(String type, long typeId) {
+        def widgets = Widget.findAllByTypeAndTypeId(type, typeId)
+        widgets.each{ Widget widget ->
+            delete(widget)
+        }
     }
 
     private updatePosition(Widget widget, int position, boolean onRight) {

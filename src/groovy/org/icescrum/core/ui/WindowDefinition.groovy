@@ -1,7 +1,3 @@
-package org.icescrum.core.ui
-
-import org.slf4j.LoggerFactory
-
 /*
  * Copyright (c) 2012 Kagilum SAS
  *
@@ -24,6 +20,9 @@ import org.slf4j.LoggerFactory
  * Nicolas Noullet (nnoullet@kagilum.com)
  *
  */
+package org.icescrum.core.ui
+
+import org.slf4j.LoggerFactory
 
 class WindowDefinition {
 
@@ -34,6 +33,7 @@ class WindowDefinition {
     boolean details = false
     boolean printable = true
     boolean fullScreen = true
+    boolean alwaysInitSettings = false
 
     String id
     String icon = ''
@@ -46,9 +46,14 @@ class WindowDefinition {
 
     def options = [:]
     def exportFormats = {[]}
+    Map defaultSettings = [:]
 
     MenuDefinition menu
     Closure before = null
+
+    Closure onSave   = { def window -> }
+    Closure onUpdate = { def window, settings -> }
+    Closure onDelete = { def window -> }
 
     WindowDefinition(String id, String pluginName, boolean disabled) {
         this.id = id
@@ -81,6 +86,18 @@ class WindowDefinition {
         this.secured = secured
     }
 
+    void onSave(Closure onSave) {
+        this.onSave = onSave
+    }
+
+    void onUpdate(Closure onUpdate) {
+        this.onUpdate = onUpdate
+    }
+
+    void onDelete(Closure onDelete) {
+        this.onDelete = onDelete
+    }
+
     void templatePath(String templatePath) {
         this.templatePath = templatePath
     }
@@ -107,6 +124,10 @@ class WindowDefinition {
 
     void printable(boolean printable) {
         this.printable = printable
+    }
+
+    void alwaysInitSettings(boolean alwaysInitSettings) {
+        this.alwaysInitSettings = alwaysInitSettings
     }
 
     def methodMissing(String name, args) {

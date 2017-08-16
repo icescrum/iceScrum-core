@@ -50,6 +50,8 @@ class ProjectService extends IceScrumEventPublisher {
     def clicheService
     def notificationEmailService
     def pushService
+    def windowService
+    def widgetService
 
     @PreAuthorize('isAuthenticated()')
     void save(Project project, productOwners, stakeHolders) {
@@ -625,7 +627,8 @@ class ProjectService extends IceScrumEventPublisher {
         pushService.disablePushForThisThread()
         def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_DELETE, project)
         project.allUsers.each { it.preferences.removeEmailsSettings(project.pkey) } // must be before unsecure to have POs
-        Widget.findAllByTypeAndTypeId('project', project.id)*.delete()
+        widgetService.delete('widget', project.id)
+        windowService.delete('project', project.id)
         project.invitedStakeHolders*.delete()
         project.invitedProductOwners*.delete()
         securityService.unsecureDomain project
@@ -893,9 +896,10 @@ class ProjectService extends IceScrumEventPublisher {
     }
 
     private void createDefaultBacklogs(Project project) {
-        new Backlog(project: project, shared: true, filter: '{"story":{"state":1}}', name: 'is.ui.sandbox', code: 'sandbox').save()
-        new Backlog(project: project, shared: true, filter: '{"story":{"state":[2,3]}}', name: 'is.ui.backlog', code: 'backlog').save()
-        new Backlog(project: project, shared: true, filter: '{"story":{"state":7}}', name: 'todo.is.ui.backlog.done', code: 'done').save()
-        new Backlog(project: project, shared: true, filter: '{"story":{}}', name: 'todo.is.ui.backlog.all', code: 'all').save()
+        def g = grailsApplication.mainContext.getBean('org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib')
+        new Backlog(project: project, shared: true, filter: '{"story":{"state":1}}', notes:"p. ${g.message(code:'is.ui.backlogs.filter.sandbox.description')}", name: 'is.ui.sandbox', code: 'sandbox').save()
+        new Backlog(project: project, shared: true, filter: '{"story":{"state":[2,3]}}', notes:"p. ${g.message(code:'is.ui.backlogs.filter.backlog.description')}", name: 'is.ui.backlog', code: 'backlog').save()
+        new Backlog(project: project, shared: true, filter: '{"story":{"state":7}}', notes:"p. ${g.message(code:'is.ui.backlogs.filter.done.description')}", name: 'todo.is.ui.backlog.done', code: 'done').save()
+        new Backlog(project: project, shared: true, filter: '{"story":{}}', notes:"p. ${g.message(code:'is.ui.backlogs.filter.all.description')}", name: 'todo.is.ui.backlog.all', code: 'all').save()
     }
 }

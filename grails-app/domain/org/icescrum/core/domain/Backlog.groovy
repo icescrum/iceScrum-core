@@ -45,9 +45,7 @@ class Backlog {
         notes length: 5000
     }
 
-    static transients = [
-            'count', 'isDefault'
-    ]
+    static transients = ['count', 'isDefault']
 
     static constraints = {
         name(blank: false, maxSize: 100)
