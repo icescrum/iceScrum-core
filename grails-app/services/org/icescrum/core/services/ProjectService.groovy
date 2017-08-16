@@ -627,7 +627,7 @@ class ProjectService extends IceScrumEventPublisher {
         pushService.disablePushForThisThread()
         def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_DELETE, project)
         project.allUsers.each { it.preferences.removeEmailsSettings(project.pkey) } // must be before unsecure to have POs
-        widgetService.delete('widget', project.id)
+        widgetService.delete('project', project.id)
         windowService.delete('project', project.id)
         project.invitedStakeHolders*.delete()
         project.invitedProductOwners*.delete()
