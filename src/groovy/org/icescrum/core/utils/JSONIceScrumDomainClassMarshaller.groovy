@@ -87,6 +87,9 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
         if (propertiesMap."${configName}".exclude) {
             excludes.addAll(propertiesMap."${configName}".exclude)
         }
+        if (propertiesMap."${configName}"?.include) { // Treated separately after the main loop
+            excludes.addAll(propertiesMap."${configName}".include)
+        }
         properties.removeAll { it.getName() in excludes }
 
         for (GrailsDomainClassProperty property : properties) {
