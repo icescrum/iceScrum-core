@@ -65,8 +65,14 @@ import org.springframework.security.core.context.SecurityContextHolder as SCH
 import org.springframework.security.web.FilterInvocation
 import org.springframework.security.web.access.WebInvocationPrivilegeEvaluator
 
+import javax.imageio.ImageIO
 import javax.servlet.FilterChain
 import javax.servlet.http.HttpServletRequest
+import java.awt.Color
+import java.awt.Font
+import java.awt.Graphics2D
+import java.awt.RenderingHints
+import java.awt.image.BufferedImage
 import java.security.MessageDigest
 import java.text.SimpleDateFormat
 import java.util.zip.ZipEntry
@@ -673,6 +679,41 @@ class ApplicationSupport {
                                 attrs.exception?.message ? [text: attrs.exception.message] :
                                         [text: 'An unexpected error has occurred']
         return error
+    }
+
+    static generateInitialsAvatar(String firstName, String lastName, OutputStream outputStream){
+        def initials = "${firstName?.charAt(0)?.toUpperCase()}${lastName?.charAt(0)?.toUpperCase()}"
+        BufferedImage img = new BufferedImage(120, 120,BufferedImage.TYPE_INT_RGB)
+
+        Graphics2D graphics = img.createGraphics()
+        graphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR)
+        graphics.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY)
+        graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+        graphics.setRenderingHint( RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON)
+        graphics.setPaint(colorFromName(initials))
+        graphics.fillRect ( 0, 0, img.getWidth(), img.getHeight() )
+        graphics.setPaint (Color.white)
+        graphics.setFont(new Font("SansSerif", Font.BOLD, (img.width / 1.7).toInteger()))
+
+        def fm = graphics.getFontMetrics();
+        def stringBounds = fm.getStringBounds(initials, graphics)
+        int x = (img.width - stringBounds.width) / 2
+        int y = (img.height - stringBounds.height) / 2 + fm.ascent
+        graphics.drawString(initials, x, y)
+        ImageIO.write(img, "png",  outputStream)
+    }
+
+    private static colorFromName(String name){
+        def i, lon = name.size(), charIndex=0,colorIndex
+        def colors = ["#bdc3c7","#6f7b87","#2c3e50","#2f3193","#662d91","#922790","#ec2176","#ed1c24","#f36622","#f8941e","#fab70f","#fdde00","#d1d219","#8ec73f","#00a650","#00aa9c","#00adef","#0081cd","#005bab"]
+        for(i=0; i<lon;i++) charIndex = Character.codePointAt(name, i);
+        colorIndex = charIndex % colors.size();
+        def _bgcolor = colors[ colorIndex ];
+
+        return new Color(
+                Integer.valueOf( _bgcolor.substring( 1, 3 ), 16 ),
+                Integer.valueOf( _bgcolor.substring( 3, 5 ), 16 ),
+                Integer.valueOf( _bgcolor.substring( 5, 7 ), 16 ) )
     }
 }
 

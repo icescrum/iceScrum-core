@@ -40,6 +40,7 @@ import org.icescrum.core.domain.security.UserAuthority
 import org.icescrum.core.error.BusinessException
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
+import org.icescrum.core.support.ApplicationSupport
 
 @Transactional
 class UserService extends IceScrumEventPublisher {
@@ -82,6 +83,7 @@ class UserService extends IceScrumEventPublisher {
             }
         }
         widgetService.initUserWidgets(user)
+        update(user, [avatar:'initials'])
     }
 
     void update(User user, Map props = [:]) {
@@ -92,15 +94,22 @@ class UserService extends IceScrumEventPublisher {
             user.preferences.emailsSettings = props.emailsSettings
         }
         try {
-            def ext = FilenameUtils.getExtension(props.avatar)
-            def path = "${grailsApplication.config.icescrum.images.users.dir}${user.id}.${ext}"
             if (props.avatar) {
-                def source = new File((String) props.avatar)
-                def dest = new File(path)
-                FileUtils.copyFile(source, dest)
-                if (props.scale) {
-                    def avatar = new File(path)
-                    avatar.setBytes(hdImageService.scale(new FileInputStream(dest), 120, 120))
+                def ext
+                if(props.avatar == 'initials'){
+                    ext = "png"
+                    def path = "${grailsApplication.config.icescrum.images.users.dir}${user.id}.${ext}"
+                    ApplicationSupport.generateInitialsAvatar(user.firstName, user.lastName, new FileOutputStream(new File(path)))
+                } else {
+                    ext = FilenameUtils.getExtension(props.avatar)
+                    def path = "${grailsApplication.config.icescrum.images.users.dir}${user.id}.${ext}"
+                    def source = new File((String) props.avatar)
+                    def dest = new File(path)
+                    FileUtils.copyFile(source, dest)
+                    if (props.scale) {
+                        def avatar = new File(path)
+                        avatar.setBytes(hdImageService.scale(new FileInputStream(dest), 120, 120))
+                    }
                 }
                 def files = new File(grailsApplication.config.icescrum.images.users.dir.toString()).listFiles((FilenameFilter) new WildcardFileFilter("${user.id}.*"))
                 files.each {
@@ -188,7 +197,6 @@ class UserService extends IceScrumEventPublisher {
         user.lastUpdated = new Date()
         user.save()
     }
-
 
     User unMarshall(def userXml, def options) {
         User.withTransaction(readOnly: !options.save) { transaction ->
