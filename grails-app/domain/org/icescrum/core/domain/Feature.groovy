@@ -42,7 +42,7 @@ class Feature extends BacklogElement implements Serializable {
     int type = Feature.TYPE_FUNCTIONAL
     int rank
 
-    static transients = ['countDoneStories', 'state', 'effort', 'inProgressDate', 'doneDate']
+    static transients = ['countDoneStories', 'state', 'effort', 'inProgressDate', 'doneDate','attachments_count']
 
     static belongsTo = [
             parentRelease: Release
@@ -102,6 +102,10 @@ class Feature extends BacklogElement implements Serializable {
         result = prime * result + ((!name) ? 0 : name.hashCode())
         result = prime * result + ((!backlog) ? 0 : backlog.hashCode())
         return result
+    }
+
+    int getAttachments_count() {
+        return this.getTotalAttachments()
     }
 
     boolean equals(Object obj) {

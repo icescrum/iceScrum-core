@@ -62,7 +62,7 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
     ]
 
     static transients = [
-            'recurrentTasks', 'urgentTasks', 'hasNextSprint', 'parentReleaseId', 'activable', 'effectiveEndDate', 'effectiveStartDate', 'totalRemaining', 'parentProject', 'totalEffort', 'previousSprint', 'nextSprint', 'parentReleaseName', 'index'
+            'recurrentTasks', 'urgentTasks', 'hasNextSprint', 'parentReleaseId', 'activable', 'effectiveEndDate', 'effectiveStartDate', 'totalRemaining', 'parentProject', 'totalEffort', 'previousSprint', 'nextSprint', 'parentReleaseName', 'index', 'attachments_count'
     ]
 
     static namedQueries = {
@@ -263,6 +263,10 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
 
     def getParentReleaseId() {
         return parentRelease.id
+    }
+
+    int getAttachments_count() {
+        return this.getTotalAttachments()
     }
 
     Sprint getPreviousSprint() {

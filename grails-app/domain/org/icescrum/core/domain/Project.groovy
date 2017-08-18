@@ -77,7 +77,8 @@ class Project extends TimeBox implements Serializable, Attachmentable {
             'owner',
             'team',
             'versions',
-            'sprints'
+            'sprints',
+            'attachments_count'
     ]
 
     def erasableByUser = false
@@ -114,6 +115,10 @@ class Project extends TimeBox implements Serializable, Attachmentable {
         int result = 1
         result = prime * result + ((!name) ? 0 : name.hashCode())
         return result
+    }
+
+    int getAttachments_count() {
+        return this.getTotalAttachments()
     }
 
     @Override

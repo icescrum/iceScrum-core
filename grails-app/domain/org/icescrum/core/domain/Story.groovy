@@ -76,7 +76,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
     ]
 
     static transients = [
-            'deliveredVersion', 'testState', 'testStateEnum', 'activity', 'followed', 'hasVotedFor', 'sameBacklogStories', 'countDoneTasks'
+            'deliveredVersion', 'testState', 'testStateEnum', 'activity', 'followed', 'hasVotedFor', 'sameBacklogStories', 'countDoneTasks', 'attachments_count'
     ]
 
     static mapping = {
@@ -564,6 +564,10 @@ class Story extends BacklogElement implements Cloneable, Serializable {
 
     int getComments_count() {
         return this.getTotalComments()
+    }
+
+    int getAttachments_count() {
+        return this.getTotalAttachments()
     }
 
     def xml(builder) {

@@ -52,7 +52,7 @@ class Release extends TimeBox implements Cloneable, Attachmentable {
 
     static mappedBy = [sprints: 'parentRelease', features: 'parentRelease']
 
-    static transients = ['firstDate', 'closable', 'activable', 'meanVelocity', 'previousRelease', 'nextRelease']
+    static transients = ['firstDate', 'closable', 'activable', 'meanVelocity', 'previousRelease', 'nextRelease', 'attachments_count']
 
     static mapping = {
         cache true
@@ -192,6 +192,10 @@ class Release extends TimeBox implements Cloneable, Attachmentable {
     Integer getMeanVelocity() {
         def doneSprints = sprints.findAll { it.state == Sprint.STATE_DONE }
         return doneSprints ? ((Integer) doneSprints.sum { it.velocity.toBigDecimal() }).intdiv(doneSprints.size()) : 0
+    }
+
+    int getAttachments_count() {
+        return this.getTotalAttachments()
     }
 
     def xml(builder) {

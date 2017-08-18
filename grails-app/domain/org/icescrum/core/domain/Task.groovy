@@ -60,7 +60,7 @@ class Task extends BacklogElement implements Serializable {
 
     static hasMany = [participants: User]
 
-    static transients = ['sprint', 'activity']
+    static transients = ['sprint', 'activity', 'attachments_count']
 
     static mapping = {
         cache true
@@ -235,6 +235,10 @@ class Task extends BacklogElement implements Serializable {
 
     int getComments_count() {
         return this.getTotalComments()
+    }
+
+    int getAttachments_count() {
+        return this.getTotalAttachments()
     }
 
     static search(project, options) {
