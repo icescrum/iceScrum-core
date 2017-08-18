@@ -83,7 +83,7 @@ class UserService extends IceScrumEventPublisher {
             }
         }
         widgetService.initUserWidgets(user)
-        update(user, [avatar:'initials'])
+        update(user, [avatar: 'initials'])
     }
 
     void update(User user, Map props = [:]) {
@@ -96,7 +96,7 @@ class UserService extends IceScrumEventPublisher {
         try {
             if (props.avatar) {
                 def ext
-                if(props.avatar == 'initials'){
+                if (props.avatar == 'initials') {
                     ext = "png"
                     def path = "${grailsApplication.config.icescrum.images.users.dir}${user.id}.${ext}"
                     ApplicationSupport.generateInitialsAvatar(user.firstName, user.lastName, new FileOutputStream(new File(path)))

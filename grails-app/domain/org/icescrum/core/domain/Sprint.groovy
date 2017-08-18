@@ -54,7 +54,7 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
 
     static hasMany = [
             stories: Story,
-             tasks  : Task,
+            tasks  : Task,
     ]
 
     static belongsTo = [
@@ -313,7 +313,7 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
         return orderNumber + parentRelease.firstSprintIndex - 1
     }
 
-    def beforeValidate(){
+    def beforeValidate() {
         retrospective = ServicesUtils.cleanXml(retrospective)
         doneDefinition = ServicesUtils.cleanXml(doneDefinition)
     }
@@ -346,7 +346,7 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
                 }
             }
             builder.stories() {
-                this.stories .sort {
+                this.stories.sort {
                     it.rank
                 }.each { _story ->
                     _story.xml(builder)

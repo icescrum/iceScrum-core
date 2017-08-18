@@ -53,13 +53,12 @@ import org.icescrum.core.utils.RollbackAlwaysTransactionAttribute
 import org.icescrum.plugins.attachmentable.domain.Attachment
 import org.icescrum.plugins.attachmentable.services.AttachmentableService
 import org.springframework.beans.factory.config.BeanDefinition
-import org.springframework.web.context.request.RequestContextHolder as RCH
-import org.springframework.web.servlet.support.RequestContextUtils as RCU
-
 import org.springframework.security.web.access.AccessDeniedHandlerImpl
 import org.springframework.security.web.access.ExceptionTranslationFilter
 import org.springframework.security.web.authentication.Http403ForbiddenEntryPoint
 import org.springframework.security.web.savedrequest.NullRequestCache
+import org.springframework.web.context.request.RequestContextHolder as RCH
+import org.springframework.web.servlet.support.RequestContextUtils as RCU
 
 import javax.servlet.http.HttpServletResponse
 import java.lang.reflect.Method
@@ -137,15 +136,15 @@ ERROR: iceScrum v7 has detected that you attempt to run it on an existing R6 ins
             grailsApplication = ref('grailsApplication')
         }
 
-        tokenAuthenticationProvider(TokenAuthenticationProvider){
+        tokenAuthenticationProvider(TokenAuthenticationProvider) {
             tokenStorageService = ref('tokenStorageService')
         }
 
-        tokenAuthenticationFilter(TokenAuthenticationFilter){
+        tokenAuthenticationFilter(TokenAuthenticationFilter) {
             authenticationManager = ref('authenticationManager')
         }
 
-        tokenStorageService(TokenStorageService){
+        tokenStorageService(TokenStorageService) {
             userDetailsService = ref('userDetailsService')
         }
 

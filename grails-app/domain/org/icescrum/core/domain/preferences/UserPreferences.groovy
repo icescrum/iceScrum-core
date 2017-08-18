@@ -109,7 +109,7 @@ class UserPreferences implements Serializable {
             builder.lastReadActivities(this.lastReadActivities)
             builder.displayFullProjectTour(this.displayFullProjectTour)
             builder.widgets() {
-                this.widgets?.sort{ a, b -> a.onRight <=> b.onRight ?: a.position <=> b.position }?.each { _widget ->
+                this.widgets?.sort { a, b -> a.onRight <=> b.onRight ?: a.position <=> b.position }?.each { _widget ->
                     _widget.xml(builder)
                 }
             }

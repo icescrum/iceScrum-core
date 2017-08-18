@@ -240,7 +240,7 @@ class Release extends TimeBox implements Cloneable, Attachmentable {
         }
     }
 
-    def beforeValidate(){
+    def beforeValidate() {
         vision = ServicesUtils.cleanXml(vision)
     }
 }

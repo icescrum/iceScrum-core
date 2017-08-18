@@ -156,7 +156,7 @@ class AcceptanceTest implements Serializable {
         state = stateEnum.id
     }
 
-    def beforeValidate(){
+    def beforeValidate() {
         name = ServicesUtils.cleanXml(name)
         description = ServicesUtils.cleanXml(description)
     }

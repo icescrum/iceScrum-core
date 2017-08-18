@@ -7,7 +7,7 @@ class AppDefinitionsBuilder {
 
     static private final log = LoggerFactory.getLogger(this.class.name)
 
-    static void apps(@DelegatesTo(strategy=Closure.DELEGATE_ONLY, value=AppDefinitions) Closure appDefinitionsClosure) {
+    static void apps(@DelegatesTo(strategy = Closure.DELEGATE_ONLY, value = AppDefinitions) Closure appDefinitionsClosure) {
         AppDefinitions appDefinitions = new AppDefinitions()
         builObjectFromClosure(appDefinitions, appDefinitionsClosure, this)
         List<AppDefinition> definitions = appDefinitions.definitions
@@ -37,13 +37,13 @@ class AppDefinitionsBuilder {
         List<AppDefinition> definitions = []
         Closure shared
 
-        void app(String id, @DelegatesTo(strategy=Closure.DELEGATE_ONLY, value=AppDefinition) Closure appDefinitionClosure) {
+        void app(String id, @DelegatesTo(strategy = Closure.DELEGATE_ONLY, value = AppDefinition) Closure appDefinitionClosure) {
             AppDefinition appDefinition = new AppDefinition(id)
             builObjectFromClosure(appDefinition, appDefinitionClosure, this)
             definitions << appDefinition
         }
 
-        void shared(@DelegatesTo(strategy=Closure.DELEGATE_ONLY, value=AppDefinition) Closure sharedClosure) {
+        void shared(@DelegatesTo(strategy = Closure.DELEGATE_ONLY, value = AppDefinition) Closure sharedClosure) {
             this.shared = sharedClosure
         }
     }

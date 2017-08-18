@@ -23,7 +23,6 @@
  */
 
 
-
 package org.icescrum.core.domain
 
 import grails.util.Holders
@@ -63,7 +62,7 @@ class User implements Serializable, Attachmentable {
     static transients = ['locale', 'admin']
 
     static hasMany = [
-            teams: Team,
+            teams : Team,
             tokens: UserToken
     ]
 

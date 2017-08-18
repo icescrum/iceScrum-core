@@ -63,7 +63,7 @@ abstract class BacklogElement implements Attachmentable, Commentable, Serializab
         tablePerHierarchy false
     }
 
-    def beforeValidate(){
+    def beforeValidate() {
         name = ServicesUtils.cleanXml(name)
         notes = ServicesUtils.cleanXml(notes)
         description = ServicesUtils.cleanXml(description)

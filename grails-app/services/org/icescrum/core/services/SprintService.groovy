@@ -33,8 +33,6 @@ import org.icescrum.core.support.ApplicationSupport
 import org.icescrum.core.utils.ServicesUtils
 import org.springframework.security.access.prepost.PreAuthorize
 
-import java.text.SimpleDateFormat
-
 @Transactional
 class SprintService extends IceScrumEventPublisher {
 
