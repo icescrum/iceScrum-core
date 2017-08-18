@@ -76,7 +76,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
     ]
 
     static transients = [
-            'deliveredVersion', 'testState', 'testStateEnum', 'activity', 'followed', 'hasVotedFor', 'sameBacklogStories', 'countDoneTasks', 'attachments_count'
+            'deliveredVersion', 'testState', 'testStateEnum', 'activity', 'followed', 'hasVotedFor', 'sameBacklogStories', 'countDoneTasks', 'comments_count', 'attachments_count'
     ]
 
     static mapping = {
