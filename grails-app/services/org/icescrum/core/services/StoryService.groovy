@@ -127,13 +127,14 @@ class StoryService extends IceScrumEventPublisher {
 
     @PreAuthorize('isAuthenticated() and !archivedProject(#story.backlog)')
     void update(Story story, Map props = [:]) {
+        Project project = story.backlog
         if (props.effort != null) {
             if (props.effort != story.effort) {
                 if (story.state < Story.STATE_ACCEPTED || story.state == Story.STATE_DONE) {
                     throw new BusinessException(code: 'is.story.error.not.estimated.state')
                 }
-                if (!securityService.inTeam(null, springSecurityService.authentication)) {
-                    throw new AccessDeniedException()
+                if (!securityService.inTeam(project.team, springSecurityService.authentication)) {
+                    throw new AccessDeniedException('')
                 }
                 if (story.state == Story.STATE_ACCEPTED) {
                     story.state = Story.STATE_ESTIMATED
@@ -147,8 +148,8 @@ class StoryService extends IceScrumEventPublisher {
             }
         } else if (props.containsKey('effort')) {
             if (story.state == Story.STATE_ESTIMATED) {
-                if (!securityService.inTeam(null, springSecurityService.authentication)) {
-                    throw new AccessDeniedException()
+                if (!securityService.inTeam(project.team, springSecurityService.authentication)) {
+                    throw new AccessDeniedException('')
                 }
                 story.state = Story.STATE_ACCEPTED
                 story.effort = null
@@ -166,7 +167,6 @@ class StoryService extends IceScrumEventPublisher {
             updateRank(story, props.rank)
         }
         if (story.isDirty('description')) {
-            def project = story.backlog
             manageActors(story, project)
         }
         def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_UPDATE, story)
