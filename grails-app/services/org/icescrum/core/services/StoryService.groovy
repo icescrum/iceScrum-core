@@ -38,6 +38,7 @@ import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
 import org.icescrum.core.support.ApplicationSupport
 import org.icescrum.plugins.attachmentable.domain.Attachment
+import org.springframework.security.access.AccessDeniedException
 import org.springframework.security.access.prepost.PreAuthorize
 
 @Transactional
@@ -128,9 +129,11 @@ class StoryService extends IceScrumEventPublisher {
     void update(Story story, Map props = [:]) {
         if (props.effort != null) {
             if (props.effort != story.effort) {
-                // TODO check TM or SM
                 if (story.state < Story.STATE_ACCEPTED || story.state == Story.STATE_DONE) {
                     throw new BusinessException(code: 'is.story.error.not.estimated.state')
+                }
+                if (!securityService.inTeam(null, springSecurityService.authentication)) {
+                    throw new AccessDeniedException()
                 }
                 if (story.state == Story.STATE_ACCEPTED) {
                     story.state = Story.STATE_ESTIMATED
@@ -144,6 +147,9 @@ class StoryService extends IceScrumEventPublisher {
             }
         } else if (props.containsKey('effort')) {
             if (story.state == Story.STATE_ESTIMATED) {
+                if (!securityService.inTeam(null, springSecurityService.authentication)) {
+                    throw new AccessDeniedException()
+                }
                 story.state = Story.STATE_ACCEPTED
                 story.effort = null
                 story.estimatedDate = null

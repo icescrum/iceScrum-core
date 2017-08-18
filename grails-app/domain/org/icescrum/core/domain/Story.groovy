@@ -558,10 +558,6 @@ class Story extends BacklogElement implements Cloneable, Serializable {
         }
     }
 
-    Boolean canUpdate(isProductOwner, currentUser) {
-        return isProductOwner || ((state == STATE_SUGGESTED && currentUser == creator))
-    }
-
     int getComments_count() {
         return this.getTotalComments()
     }
