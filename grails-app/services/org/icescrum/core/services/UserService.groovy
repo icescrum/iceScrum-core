@@ -24,16 +24,25 @@
 package org.icescrum.core.services
 
 import grails.plugin.springsecurity.SpringSecurityUtils
+import grails.plugin.springsecurity.acl.AclEntry
 import grails.plugin.springsecurity.acl.AclSid
 import grails.transaction.Transactional
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.FilenameUtils
 import org.apache.commons.io.filefilter.WildcardFileFilter
+import org.grails.comments.Comment
+import org.icescrum.core.domain.AcceptanceTest
+import org.icescrum.core.domain.Activity
+import org.icescrum.core.domain.Backlog
 import org.icescrum.core.domain.Invitation
 import org.icescrum.core.domain.Invitation.InvitationType
 import org.icescrum.core.domain.Project
+import org.icescrum.core.domain.Story
+import org.icescrum.core.domain.Task
 import org.icescrum.core.domain.Team
 import org.icescrum.core.domain.User
+import org.icescrum.core.domain.Widget
+import org.icescrum.core.domain.Window
 import org.icescrum.core.domain.preferences.UserPreferences
 import org.icescrum.core.domain.security.Authority
 import org.icescrum.core.domain.security.UserAuthority
@@ -41,17 +50,22 @@ import org.icescrum.core.error.BusinessException
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
 import org.icescrum.core.support.ApplicationSupport
+import org.icescrum.plugins.attachmentable.domain.Attachment
+import org.springframework.security.acls.domain.BasePermission
 
 @Transactional
 class UserService extends IceScrumEventPublisher {
 
+    def securityService
     def widgetService
     def projectService
+    def teamService
     def hdImageService
     def grailsApplication
     def springSecurityService
     def notificationEmailService
     def aclCache
+    def pushService
 
     void save(User user, String token = null) {
         user.password = springSecurityService.encodePassword(user.password)
@@ -139,6 +153,105 @@ class UserService extends IceScrumEventPublisher {
             }
         }
         publishSynchronousEvent(IceScrumEventType.UPDATE, user, dirtyProperties)
+    }
+
+    void delete(User user, User substitute, boolean deleteDataOwned = false){
+        pushService.disablePushForThisThread()
+        publishSynchronousEvent(IceScrumEventType.BEFORE_DELETE, user, [substitutedBy:substitute, deleteDataOwned:deleteDataOwned])
+        //Project & teams owner
+        Team.findAllByOwner(user.username, [:]).each{
+            if(!deleteDataOwned){
+                securityService.changeOwner(substitute, it)
+                it.projects.each { Project project ->
+                    securityService.changeOwner(substitute, project)
+                }
+            } else {
+                it.projects.each { Project project ->
+                    projectService.delete(project)
+                }
+                teamService.delete(it)
+            }
+        }
+        //remove permissions on active projects
+        Project.findAllByRole(user, [BasePermission.WRITE, BasePermission.READ], [:], true, false, "").each{ Project project ->
+            securityService.deleteProductOwnerPermissions(user, project)
+            securityService.deleteTeamMemberPermissions(user, project.teams[0])
+            securityService.deleteScrumMasterPermissions(user, project.teams[0])
+        }
+        //remove permissions on archived projects
+        Project.findAllByRole(user, [BasePermission.WRITE, BasePermission.READ], [:], true, true, "").each{ Project project ->
+            securityService.deleteProductOwnerPermissions(user, project)
+            securityService.deleteTeamMemberPermissions(user, project.teams[0])
+            securityService.deleteScrumMasterPermissions(user, project.teams[0])
+        }
+        //remove from members
+        Team.where {
+            members { id == user.id }
+        }.list().each{
+            it.removeFromMembers(user)
+        }
+        //Followers
+        Story.where {
+            followers { id == user.id }
+        }.list().each {
+            it.removeFromFollowers(user)
+        }
+        //Voters
+        Story.where {
+            voters { id == user.id }
+        }.list().each {
+            it.removeFromVoters(user)
+        }
+        //Stories
+        Story.findAllByCreator(user).each{
+            it.creator = substitute
+            it.save()
+        }
+        //Tasks
+        Task.findAllByCreatorOrResponsible(user, user)?.each{
+            it.creator = it.creator == user ? substitute : it.creator
+            it.responsible = it.responsible == user ? substitute : it.responsible
+            it.save()
+        }
+        //Comments
+        Comment.findAllByPosterId(user.id).each{
+            it.posterId = substitute.id
+            it.save()
+        }
+        //Attachments
+        Attachment.findAllByPosterId(user.id).each{
+            it.posterId = substitute.id
+            it.save()
+        }
+        //Activity
+        Activity.findAllByPoster(user).each{
+            it.poster = substitute
+            it.save()
+        }
+        //acceptance tests
+        AcceptanceTest.findAllByCreator(user).each{
+            it.creator = substitute
+            it.save()
+        }
+        //backlogs
+        Backlog.findAllByOwner(user).each{
+            it.owner = substitute
+            it.save()
+        }
+        //Widget
+        Widget.findAllByUserPreferences(user.preferences)*.delete()
+        //Window
+        Window.findByUser(user)*.delete()
+        //PrincipalSid
+        def aclSid = AclSid.findBySidAndPrincipal(user.username, true)
+        if (aclSid) {
+            AclEntry.findAllBySid(aclSid)*.delete()
+            aclSid.delete()
+            aclCache.clearCache()
+        }
+        user.delete(flush:true)
+        pushService.enablePushForThisThread()
+        publishSynchronousEvent(IceScrumEventType.DELETE, user, [substitutedBy:substitute, deleteDataOwned:deleteDataOwned])
     }
 
     def resetPassword(User user) {
