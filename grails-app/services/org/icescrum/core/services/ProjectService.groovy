@@ -897,9 +897,9 @@ class ProjectService extends IceScrumEventPublisher {
 
     private void createDefaultBacklogs(Project project) {
         def g = grailsApplication.mainContext.getBean('org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib')
-        new Backlog(project: project, shared: true, filter: '{"story":{"state":1}}', notes: "p. ${g.message(code: 'is.ui.backlogs.filter.sandbox.description')}", name: 'is.ui.sandbox', code: 'sandbox').save()
-        new Backlog(project: project, shared: true, filter: '{"story":{"state":[2,3]}}', notes: "p. ${g.message(code: 'is.ui.backlogs.filter.backlog.description')}", name: 'is.ui.backlog', code: 'backlog').save()
-        new Backlog(project: project, shared: true, filter: '{"story":{"state":7}}', notes: "p. ${g.message(code: 'is.ui.backlogs.filter.done.description')}", name: 'todo.is.ui.backlog.done', code: 'done').save()
-        new Backlog(project: project, shared: true, filter: '{"story":{}}', notes: "p. ${g.message(code: 'is.ui.backlogs.filter.all.description')}", name: 'todo.is.ui.backlog.all', code: 'all').save()
+        new Backlog(project: project, shared: true, filter: '{"story":{"state":1}}', notes: "p. ${g.message(code: 'is.ui.backlogs.filter.sandbox.description')}", name: 'is.ui.sandbox', code: 'sandbox', chartType:'type').save()
+        new Backlog(project: project, shared: true, filter: '{"story":{"state":[2,3]}}', notes: "p. ${g.message(code: 'is.ui.backlogs.filter.backlog.description')}", name: 'is.ui.backlog', code: 'backlog', chartType:'state').save()
+        new Backlog(project: project, shared: true, filter: '{"story":{"state":7}}', notes: "p. ${g.message(code: 'is.ui.backlogs.filter.done.description')}", name: 'todo.is.ui.backlog.done', code: 'done', chartType:'type').save()
+        new Backlog(project: project, shared: true, filter: '{"story":{}}', notes: "p. ${g.message(code: 'is.ui.backlogs.filter.all.description')}", name: 'todo.is.ui.backlog.all', code: 'all', chartType:'state').save()
     }
 }

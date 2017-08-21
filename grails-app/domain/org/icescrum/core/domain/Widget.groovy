@@ -25,14 +25,16 @@
 package org.icescrum.core.domain
 
 import grails.converters.JSON
+import grails.plugin.springsecurity.SpringSecurityService
+import grails.util.Holders
 import org.icescrum.core.domain.preferences.UserPreferences
+import org.icescrum.core.services.UiDefinitionService
 
 class Widget implements Serializable {
 
     static final long serialVersionUID = 813639045722976126L
 
     int position
-    boolean onRight = false
 
     String settingsData
     String widgetDefinitionId
@@ -55,23 +57,28 @@ class Widget implements Serializable {
         widgetDefinitionId index: 'up_wdi_index'
     }
 
-    def beforeInsert() {
-        position = !position ? Widget.countByOnRight(onRight) + 1 : position
-    }
+    static transients = ["settings", "width", "height"]
 
-    static transients = ["settings"]
-
-    public void setSettings(Map settings) {
+    void setSettings(Map settings) {
         settingsData = settings ? settings as JSON : null
     }
 
-    public Map getSettings() {
+    Map getSettings() {
         settingsData ? JSON.parse(settingsData) as Map : [:]
+    }
+
+    int getWidth() {
+        def uiDefinitionService = (UiDefinitionService) Holders.grailsApplication.mainContext.getBean('uiDefinitionService')
+        uiDefinitionService.getWidgetDefinitionById(widgetDefinitionId).width
+    }
+
+    int getHeight() {
+        def uiDefinitionService = (UiDefinitionService) Holders.grailsApplication.mainContext.getBean('uiDefinitionService')
+        uiDefinitionService.getWidgetDefinitionById(widgetDefinitionId).height
     }
 
     def xml = { builder ->
         builder.widget() {
-            builder.onRight(this.onRight)
             builder.position(this.position)
             builder.widgetDefinitionId(this.widgetDefinitionId)
             builder.settingsData { builder.mkp.yieldUnescaped("<![CDATA[${this.settingsData ?: ''}]]>") }

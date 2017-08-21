@@ -35,7 +35,9 @@ class WidgetDefinition {
     boolean allowRemove = true
     boolean allowDuplicate = true
 
-
+    int height = 1
+    int width = 4
+    
     String id
     String name
     String help = ''
@@ -72,6 +74,14 @@ class WidgetDefinition {
 
     void title(String title) {
         this.title = title
+    }
+
+    void height(int height) {
+        this.height = height
+    }
+
+    void width(int width) {
+        this.width = width
     }
 
     void context(String context) {

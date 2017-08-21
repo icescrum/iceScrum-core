@@ -146,7 +146,7 @@ class FeatureService extends IceScrumEventPublisher {
         def values = []
         project.features?.each { it ->
             def value = 100d * calculateCompletion(it)
-            values << [label: it.name, value: value]
+            values << [label: it.name, value: value, color:it.color]
         }
         return values
     }
@@ -155,7 +155,7 @@ class FeatureService extends IceScrumEventPublisher {
         def values = []
         release.parentProject.features?.each { it ->
             def value = 100d * calculateCompletion(it, release)
-            values << [label: it.name, value: value]
+            values << [label: it.name, value: value, color:it.color]
         }
         return values
     }

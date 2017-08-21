@@ -37,13 +37,12 @@ class WidgetService {
     def uiDefinitionService
     def grailsApplication
 
-    Widget save(User user, WidgetDefinition widgetDefinition, boolean onRight) {
+    Widget save(User user, WidgetDefinition widgetDefinition) {
         int duplicate = Widget.countByUserPreferencesAndWidgetDefinitionId(user.preferences, widgetDefinition.id)
         if (duplicate && !widgetDefinition.allowDuplicate) {
             throw new BusinessException(code: 'is.widget.error.duplicate')
         }
-        int count = Widget.countByUserPreferencesAndOnRight(user.preferences, onRight)
-        Widget widget = new Widget(position: count + 1, widgetDefinitionId: widgetDefinition.id, userPreferences: user.preferences, settings: widgetDefinition.defaultSettings, onRight: onRight)
+        Widget widget = new Widget(position: Widget.countByUserPreferences(user.preferences) + 1, widgetDefinitionId: widgetDefinition.id, userPreferences: user.preferences, settings: widgetDefinition.defaultSettings)
         try {
             widgetDefinition.onSave(widget)
         } catch (Exception e) {
@@ -62,8 +61,8 @@ class WidgetService {
 
     void update(Widget widget, Map props) {
         User user = widget.userPreferences.user
-        if (props.position != widget.position || props.onRight != widget.onRight) {
-            updatePosition(widget, props.position, props.onRight)
+        if (props.position != widget.position) {
+            updatePosition(widget, props.position)
         }
         try {
             uiDefinitionService.getWidgetDefinitionById(widget.widgetDefinitionId).onUpdate(widget, props.settings)
@@ -84,8 +83,10 @@ class WidgetService {
     }
 
     void initUserWidgets(User user) {
-        save(user, uiDefinitionService.getWidgetDefinitionById('quickProjects'), false)
-        Widget notesWidget = save(user, uiDefinitionService.getWidgetDefinitionById('notes'), false)
+        save(user, uiDefinitionService.getWidgetDefinitionById('quickProjects'))
+        save(user, uiDefinitionService.getWidgetDefinitionById('tasks'))
+        save(user, uiDefinitionService.getWidgetDefinitionById('feed'))
+        Widget notesWidget = save(user, uiDefinitionService.getWidgetDefinitionById('notes'))
         def noteProperties = notesWidget.properties.collectEntries { key, val -> [(key): val] }
         noteProperties.settings = [text: '']
         try { // Required because it will failed if no request (bootstraping)
@@ -93,14 +94,12 @@ class WidgetService {
             noteProperties.settings.text = g.message(code: 'is.ui.widget.notes.default')
         } catch (Exception) {}
         update(notesWidget, noteProperties)
-        save(user, uiDefinitionService.getWidgetDefinitionById('feed'), true)
-        save(user, uiDefinitionService.getWidgetDefinitionById('tasks'), true)
     }
 
     void delete(Widget widget) {
         User user = widget.userPreferences.user
         widget.delete()
-        Widget.findAllByOnRightAndUserPreferences(widget.onRight, widget.userPreferences, [sort: 'position'])?.eachWithIndex { it, index ->
+        Widget.findAllByUserPreferences(widget.userPreferences, [sort: 'position'])?.eachWithIndex { it, index ->
             it.position = index + 1
         }
         try {
@@ -124,27 +123,14 @@ class WidgetService {
         }
     }
 
-    private updatePosition(Widget widget, int position, boolean onRight) {
+    private updatePosition(Widget widget, int position) {
         def currentWidgets
-        if (onRight) {
-            currentWidgets = Widget.findAllByOnRightAndUserPreferences(true, widget.userPreferences)
-            if (!currentWidgets.contains(widget)) {
-                widget.onRight = onRight
-                widget.position = currentWidgets.size() + 1
-                def widgetsOnLeft = Widget.findAllByOnRightAndUserPreferences(false, widget.userPreferences)
-                if (widgetsOnLeft.contains(widget)) {
-                    updatePosition(widget, widgetsOnLeft.size() - 1, false)
-                }
-            }
-        } else {
-            currentWidgets = Widget.findAllByOnRightAndUserPreferences(false, widget.userPreferences)
-            if (!currentWidgets.contains(widget)) {
-                widget.onRight = onRight
-                widget.position = currentWidgets.size() + 1
-                def widgetsOnRight = Widget.findAllByOnRightAndUserPreferences(true, widget.userPreferences)
-                if (widgetsOnRight.contains(widget)) {
-                    updatePosition(widget, widgetsOnRight.size() - 1, true)
-                }
+        currentWidgets = Widget.findAllByUserPreferences(widget.userPreferences)
+        if (!currentWidgets.contains(widget)) {
+            widget.position = currentWidgets.size() + 1
+            def widgets = Widget.findAllByUserPreferences(widget.userPreferences)
+            if (widgets.contains(widget)) {
+                updatePosition(widget, widgets.size() - 1)
             }
         }
         def from = widget.position
@@ -177,7 +163,6 @@ class WidgetService {
         Widget.withTransaction(readOnly: !options.save) { transaction ->
             def widget = new Widget(
                     position: widgetXml.position.toInteger(),
-                    onRight: widgetXml.onRight.toBoolean(),
                     settingsData: widgetXml.settingsData.text() ?: null,
                     widgetDefinitionId: widgetXml.widgetDefinitionId.text())
             // Reference on other object

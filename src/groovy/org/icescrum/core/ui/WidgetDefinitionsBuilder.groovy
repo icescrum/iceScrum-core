@@ -53,9 +53,9 @@ class WidgetDefinitionsBuilder {
             if (widgetsDefinitionsById[name]) {
                 log.warn("UI widget definition for $name will be overriden")
             }
-            widgetDefinition.templatePath = widgetDefinition.templatePath ?: "/${widgetDefinition.id}/widget"
-            widgetDefinition.footer = groovyPageLocator.findTemplate(widgetDefinition.id, "widget/footer") ? true : false
-            widgetDefinition.settings = groovyPageLocator.findTemplate(widgetDefinition.id, "widget/settings") ? true : false
+            widgetDefinition.templatePath = "/widgets/${widgetDefinition.id}/widget"
+            widgetDefinition.footer = groovyPageLocator.findTemplateByPath("/widgets/${widgetDefinition.id}/footer") ? true : false
+            widgetDefinition.settings = groovyPageLocator.findTemplateByPath("/widgets/${widgetDefinition.id}/settings") ? true : false
             widgetsDefinitionsById[name] = widgetDefinition
             if (log.debugEnabled) {
                 log.debug("Added new UI widget definition for $name and status is : ${disabled ? 'disabled' : 'enabled'}")

@@ -32,6 +32,8 @@ class Backlog {
     String  code
     String  notes
     String  filter
+    String  chartType
+
     User    owner
     boolean shared
 
@@ -74,6 +76,7 @@ class Backlog {
             builder.code(this.code)
             builder.shared(this.shared)
             builder.filter(this.filter)
+            builder.chartType(this.chartType)
             builder.notes { builder.mkp.yieldUnescaped("<![CDATA[${this.notes ?: ''}]]>") }
             if (this.owner) {
                 builder.owner(uid: this.owner.uid)
