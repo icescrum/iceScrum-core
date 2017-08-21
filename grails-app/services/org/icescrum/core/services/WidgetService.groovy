@@ -97,11 +97,9 @@ class WidgetService {
     }
 
     void delete(Widget widget) {
-        User user = widget.userPreferences.user
-        widget.delete()
-        Widget.findAllByUserPreferences(widget.userPreferences, [sort: 'position'])?.eachWithIndex { it, index ->
-            it.position = index + 1
-        }
+        UserPreferences userPreferences = widget.userPreferences
+        widget.delete(flush: true)
+        cleanPositions(userPreferences.widgets)
         try {
             uiDefinitionService.getWidgetDefinitionById(widget.widgetDefinitionId).onDelete(widget)
         } catch (Exception e) {
@@ -112,6 +110,7 @@ class WidgetService {
                 throw new BusinessException(code: 'is.widget.error.delete')
             }
         }
+        User user = userPreferences.user
         user.lastUpdated = new Date()
         user.save()
     }
@@ -123,35 +122,30 @@ class WidgetService {
         }
     }
 
-    private updatePosition(Widget widget, int position) {
-        def currentWidgets
-        currentWidgets = Widget.findAllByUserPreferences(widget.userPreferences)
-        if (!currentWidgets.contains(widget)) {
-            widget.position = currentWidgets.size() + 1
-            def widgets = Widget.findAllByUserPreferences(widget.userPreferences)
-            if (widgets.contains(widget)) {
-                updatePosition(widget, widgets.size() - 1)
-            }
+    private cleanPositions(Collection<Widget> widgets) {
+        widgets.eachWithIndex { it, index ->
+            it.position = index + 1
         }
-        def from = widget.position
-        from = from ?: 1
-        def to = position
-        if (from != to) {
-            if (from > to) {
-                currentWidgets.each { Widget it ->
-                    if (it.position >= to && it.position <= from && it.id != widget.id) {
-                        it.position++
-                    } else if (it.id == widget.id) {
-                        it.position = position
-                    }
+    }
+
+    private updatePosition(Widget widget, int newPosition) {
+        def widgets = widget.userPreferences.widgets
+        cleanPositions(widgets) // Migration
+        def oldPosition = widget.position ?: 1
+        if (oldPosition > newPosition) {
+            widgets.each { Widget it ->
+                if (it.position >= newPosition && it.position <= oldPosition && it.id != widget.id) {
+                    it.position++
+                } else if (it.id == widget.id) {
+                    it.position = newPosition
                 }
-            } else {
-                currentWidgets.each { Widget it ->
-                    if (it.position <= to && it.position >= from && it.id != widget.id) {
-                        it.position--
-                    } else if (it.id == widget.id) {
-                        it.position = position
-                    }
+            }
+        } else if (oldPosition < newPosition) {
+            widgets.each { Widget it ->
+                if (it.position <= newPosition && it.position >= oldPosition && it.id != widget.id) {
+                    it.position--
+                } else if (it.id == widget.id) {
+                    it.position = newPosition
                 }
             }
         }
