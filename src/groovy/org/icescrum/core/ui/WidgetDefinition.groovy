@@ -37,7 +37,7 @@ class WidgetDefinition {
 
     int height = 1
     int width = 4
-    
+
     String id
     String name
     String help = ''

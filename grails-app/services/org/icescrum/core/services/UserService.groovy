@@ -155,12 +155,11 @@ class UserService extends IceScrumEventPublisher {
         publishSynchronousEvent(IceScrumEventType.UPDATE, user, dirtyProperties)
     }
 
-    void delete(User user, User substitute, boolean deleteDataOwned = false){
+    void delete(User user, User substitute, boolean deleteDataOwned = false) {
         pushService.disablePushForThisThread()
-        publishSynchronousEvent(IceScrumEventType.BEFORE_DELETE, user, [substitutedBy:substitute, deleteDataOwned:deleteDataOwned])
-        //Project & teams owner
-        Team.findAllByOwner(user.username, [:]).each{
-            if(!deleteDataOwned){
+        publishSynchronousEvent(IceScrumEventType.BEFORE_DELETE, user, [substitutedBy: substitute, deleteDataOwned: deleteDataOwned])
+        Team.findAllByOwner(user.username, [:]).each {
+            if (!deleteDataOwned) {
                 securityService.changeOwner(substitute, it)
                 it.projects.each { Project project ->
                     securityService.changeOwner(substitute, project)
@@ -172,86 +171,71 @@ class UserService extends IceScrumEventPublisher {
                 teamService.delete(it)
             }
         }
-        //remove permissions on active projects
-        Project.findAllByRole(user, [BasePermission.WRITE, BasePermission.READ], [:], true, false, "").each{ Project project ->
+        Project.findAllByRole(user, [BasePermission.WRITE, BasePermission.READ], [:], true, false, "").each { Project project ->
             securityService.deleteProductOwnerPermissions(user, project)
             securityService.deleteTeamMemberPermissions(user, project.teams[0])
             securityService.deleteScrumMasterPermissions(user, project.teams[0])
         }
-        //remove permissions on archived projects
-        Project.findAllByRole(user, [BasePermission.WRITE, BasePermission.READ], [:], true, true, "").each{ Project project ->
+        Project.findAllByRole(user, [BasePermission.WRITE, BasePermission.READ], [:], true, true, "").each { Project project ->
             securityService.deleteProductOwnerPermissions(user, project)
             securityService.deleteTeamMemberPermissions(user, project.teams[0])
             securityService.deleteScrumMasterPermissions(user, project.teams[0])
         }
-        //remove from members
         Team.where {
             members { id == user.id }
-        }.list().each{
+        }.list().each {
             it.removeFromMembers(user)
         }
-        //Followers
         Story.where {
             followers { id == user.id }
         }.list().each {
             it.removeFromFollowers(user)
         }
-        //Voters
         Story.where {
             voters { id == user.id }
         }.list().each {
             it.removeFromVoters(user)
         }
-        //Stories
-        Story.findAllByCreator(user).each{
+        Story.findAllByCreator(user).each {
             it.creator = substitute
             it.save()
         }
-        //Tasks
-        Task.findAllByCreatorOrResponsible(user, user)?.each{
+        Task.findAllByCreatorOrResponsible(user, user)?.each {
             it.creator = it.creator == user ? substitute : it.creator
             it.responsible = it.responsible == user ? substitute : it.responsible
             it.save()
         }
-        //Comments
-        Comment.findAllByPosterId(user.id).each{
+        Comment.findAllByPosterId(user.id).each {
             it.posterId = substitute.id
             it.save()
         }
-        //Attachments
-        Attachment.findAllByPosterId(user.id).each{
+        Attachment.findAllByPosterId(user.id).each {
             it.posterId = substitute.id
             it.save()
         }
-        //Activity
-        Activity.findAllByPoster(user).each{
+        Activity.findAllByPoster(user).each {
             it.poster = substitute
             it.save()
         }
-        //acceptance tests
-        AcceptanceTest.findAllByCreator(user).each{
+        AcceptanceTest.findAllByCreator(user).each {
             it.creator = substitute
             it.save()
         }
-        //backlogs
-        Backlog.findAllByOwner(user).each{
+        Backlog.findAllByOwner(user).each {
             it.owner = substitute
             it.save()
         }
-        //Widget
         Widget.findAllByUserPreferences(user.preferences)*.delete()
-        //Window
         Window.findByUser(user)*.delete()
-        //PrincipalSid
         def aclSid = AclSid.findBySidAndPrincipal(user.username, true)
         if (aclSid) {
             AclEntry.findAllBySid(aclSid)*.delete()
             aclSid.delete()
             aclCache.clearCache()
         }
-        user.delete(flush:true)
+        user.delete(flush: true)
         pushService.enablePushForThisThread()
-        publishSynchronousEvent(IceScrumEventType.DELETE, user, [substitutedBy:substitute, deleteDataOwned:deleteDataOwned])
+        publishSynchronousEvent(IceScrumEventType.DELETE, user, [substitutedBy: substitute, deleteDataOwned: deleteDataOwned])
     }
 
     def resetPassword(User user) {

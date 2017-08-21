@@ -25,7 +25,6 @@
 package org.icescrum.core.domain
 
 import grails.converters.JSON
-import grails.plugin.springsecurity.SpringSecurityService
 import grails.util.Holders
 import org.icescrum.core.domain.preferences.UserPreferences
 import org.icescrum.core.services.UiDefinitionService
