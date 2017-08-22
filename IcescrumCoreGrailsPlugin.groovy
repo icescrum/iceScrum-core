@@ -464,20 +464,20 @@ ERROR: iceScrum v7 has detected that you attempt to run it on an existing R6 ins
         serviceGrailsClass.clazz.declaredMethods.each { Method method ->
             IceScrumListener listener = method.getAnnotation(IceScrumListener)
             if (listener) {
-                def listenerService = ctx.getBean(serviceGrailsClass.propertyName)
                 def domains = listener.domain() ? [listener.domain()] : listener.domains()
                 domains.each { domain ->
                     def publisherService = ctx.getBean(domain + 'Service')
                     if (publisherService && publisherService instanceof IceScrumEventPublisher) {
+                        def serviceName = serviceGrailsClass.propertyName
                         if (listener.eventType() == IceScrumEventType.UGLY_HACK_BECAUSE_ANNOTATION_CANT_BE_NULL) {
 //                            println 'Add listener on all ' + domain + ' events: ' + serviceGrailsClass.propertyName + '.' + method.name
                             publisherService.registerListener(domain) { eventType, object, dirtyProperties ->
-                                listenerService."$method.name"(eventType, object, dirtyProperties)
+                                ctx.getBean(serviceName)."$method.name"(eventType, object, dirtyProperties) // Service bean must be loaded in the callback, not extracted above, because we need the freshest one
                             }
                         } else {
 //                            println 'Add listener on ' + domain + ' ' + listener.eventType().toString() + ' events: ' + serviceGrailsClass.propertyName + '.' + method.name
                             publisherService.registerListener(domain, listener.eventType()) { eventType, object, dirtyProperties ->
-                                listenerService."$method.name"(object, dirtyProperties)
+                                ctx.getBean(serviceName)."$method.name"(object, dirtyProperties)  // Service bean must be loaded in the callback, not extracted above, because we need the freshest one
                             }
                         }
                     }
