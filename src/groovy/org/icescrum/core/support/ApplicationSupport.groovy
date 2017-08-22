@@ -105,7 +105,7 @@ class ApplicationSupport {
                 serverUrl += (':' + port)
             }
             serverUrl += req.contextPath
-            if (req.admin && false) { // Disabled
+            if (grailsRequest.params.debugServerURL) {
                 log.debug('URL: \n' + '\tx-forwarded-proto: ' + req.getHeader('x-forwarded-proto') + '\n'
                         + '\tselected proto: ' + scheme + '\n'
                         + '\tx-forwarded-port: ' + req.getHeader('x-forwarded-port') + '\n'
