@@ -110,11 +110,19 @@ class UserService extends IceScrumEventPublisher {
         try {
             if (props.avatar) {
                 def ext
+                def generated = false
                 if (props.avatar == 'initials') {
                     ext = "png"
                     def path = "${grailsApplication.config.icescrum.images.users.dir}${user.id}.${ext}"
-                    ApplicationSupport.generateInitialsAvatar(user.firstName, user.lastName, new FileOutputStream(new File(path)))
-                } else {
+                    try {
+                        generated = ApplicationSupport.generateInitialsAvatar(user.firstName, user.lastName, new FileOutputStream(new File(path)))
+                    } catch (Exception e) {
+                        if (log.debugEnabled) {
+                            log.debug('Avatar generating failed: ' + e.message)
+                        }
+                    }
+                }
+                if (!generated) {
                     ext = FilenameUtils.getExtension(props.avatar)
                     def path = "${grailsApplication.config.icescrum.images.users.dir}${user.id}.${ext}"
                     def source = new File((String) props.avatar)

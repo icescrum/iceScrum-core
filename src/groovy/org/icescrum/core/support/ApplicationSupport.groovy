@@ -681,7 +681,7 @@ class ApplicationSupport {
         return error
     }
 
-    static generateInitialsAvatar(String firstName, String lastName, OutputStream outputStream) {
+    static boolean generateInitialsAvatar(String firstName, String lastName, OutputStream outputStream) {
         def initials = "${firstName?.charAt(0)?.toUpperCase()}${lastName?.charAt(0)?.toUpperCase()}"
         BufferedImage img = new BufferedImage(120, 120, BufferedImage.TYPE_INT_RGB)
 
@@ -701,7 +701,10 @@ class ApplicationSupport {
         int y = (img.height - stringBounds.height) / 2 + fm.ascent
         graphics.drawString(initials, x, y)
         ImageIO.write(img, "png", outputStream)
+
+        return true
     }
+
 
     private static colorFromName(String name) {
         def i, lon = name.size(), charIndex = 0, colorIndex
