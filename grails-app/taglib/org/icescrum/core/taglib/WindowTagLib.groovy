@@ -61,6 +61,8 @@ class WindowTagLib {
         out << "</div>"
         if (attrs.footer != false) {
             out << """<div class="modal-footer">"""
+            def closeButton = attrs.closeButton ?: message(code: 'is.dialog.close')
+            out << """  <button type="button" class="btn btn-default" ng-click="\$close()">$closeButton</button>"""
             if (attrs.button) {
                 attrs.button.each { button ->
                     out << "<button type='${button.type ?: 'button'}' " +
@@ -68,8 +70,6 @@ class WindowTagLib {
                             "class='btn btn-${button.color ?: 'primary'} ${button.class ?: ''}'>${button.text}</button>"
                 }
             }
-            def closeButton = attrs.closeButton ?: message(code: 'is.dialog.close')
-            out << """  <button type="button" class="btn btn-default" ng-click="\$close()">$closeButton</button>"""
             if (attrs.submitButton) {
                 out << "<button type='submit' ${attrs.validate ? 'ng-disabled="' + attrs.name + '.$invalid"' : ''} class='btn btn-${attrs.submitButtonColor ?: 'primary'}'>${attrs.submitButton}</button>"
             }
