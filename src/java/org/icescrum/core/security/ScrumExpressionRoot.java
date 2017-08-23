@@ -29,16 +29,22 @@ import org.icescrum.core.domain.Team;
 public interface ScrumExpressionRoot {
 
     public boolean inProject(Project p);
+
     public boolean inProject(long p);
+
     public boolean inProject();
 
 
     public boolean inTeam(Team t);
+
     public boolean inTeam(long t);
+
     public boolean inTeam();
 
     public boolean archivedProject(Project p);
+
     public boolean archivedProject();
+
     public boolean archivedProject(long p);
 
 }

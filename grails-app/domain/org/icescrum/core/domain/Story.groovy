@@ -517,14 +517,18 @@ class Story extends BacklogElement implements Cloneable, Serializable {
     }
 
     enum TestState {
+
         NOTEST(0),
         TOCHECK(1),
         FAILED(5),
         SUCCESS(10)
 
         final Integer id
+
         static TestState byId(Integer id) { values().find { TestState stateEnum -> stateEnum.id == id } }
+
         private TestState(Integer id) { this.id = id }
+
         String toString() { "is.story.teststate." + name().toLowerCase() }
     }
 
