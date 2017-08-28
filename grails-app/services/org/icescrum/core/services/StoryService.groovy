@@ -336,7 +336,7 @@ class StoryService extends IceScrumEventPublisher {
     }
 
     // TODO check rights
-    private void setRank(Story story, Long rank) {
+    void setRank(Story story, Long rank) {
         rank = adjustRankAccordingToDependences(story, rank)
         def stories = story.sameBacklogStories
         stories.findAll { it.rank >= rank }.each {
@@ -368,8 +368,7 @@ class StoryService extends IceScrumEventPublisher {
         }
     }
 
-    // TODO check rights
-    private void resetRank(Story story) {
+    void resetRank(Story story) {
         story.sameBacklogStories.findAll { it.rank > story.rank }.each {
             it.rank--
             it.save()
