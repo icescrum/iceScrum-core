@@ -314,21 +314,13 @@ class ProjectService extends IceScrumEventPublisher {
             options.entitiesToSave = []
 
             def saveMode = options.save
-            options.save = false
+            options.save = false // Don't save users yet because save triggers validation and we want to validate them separately
             projectXml.teams.team.each { team ->
                 teamService.unMarshall(team, options)
             }
-            options.save = saveMode
-
             if (!project.teams) {
                 throw new BusinessException(text: 'Error, the project has no team')
             }
-
-            Project pExist = (Project) Project.findByPkey(project.pkey)
-            if (pExist && securityService.productOwner(pExist, springSecurityService.authentication)) {
-                project.erasableByUser = true
-            }
-
             def userService = (UserService) grailsApplication.mainContext.getBean('userService')
             def getUser = { userXml ->
                 User user = project.getUserByUid(userXml.@uid.text())
@@ -342,6 +334,12 @@ class ProjectService extends IceScrumEventPublisher {
             if (project.preferences.hidden) {
                 project.stakeHolders = projectXml.stakeHolders.user.collect(getUser)
             }
+            options.save = saveMode
+
+            Project pExist = (Project) Project.findByPkey(project.pkey)
+            if (pExist && securityService.productOwner(pExist, springSecurityService.authentication)) {
+                project.erasableByUser = true
+            }
 
             def erase = options.changes?.erase ? true : false
             if (options.changes) {
@@ -350,44 +348,28 @@ class ProjectService extends IceScrumEventPublisher {
                     team.name = options.changes.team.name
                 }
                 if (options.changes?.usernames) {
-                    if (options.changes.usernames."${team.owner.uid}") {
-                        team.owner.username = options.changes.usernames."${team.owner.uid}"
+                    def updateUsername = { user ->
+                        if (options.changes.usernames."${user.uid}") {
+                            user.username = options.changes.usernames."${user.uid}"
                     }
-                    team.members?.each {
-                        if (options.changes.usernames."${it.uid}") {
-                            it.username = options.changes.usernames."${it.uid}"
                         }
-                    }
-                    team.scrumMasters?.each {
-                        if (options.changes.usernames."${it.uid}") {
-                            it.username = options.changes.usernames."${it.uid}"
-                        }
-                    }
-                    project.productOwners?.each {
-                        if (options.changes.usernames."${it.uid}") {
-                            it.username = options.changes.usernames."${it.uid}"
-                        }
-                    }
+                    updateUsername(team.owner)
+                    team.members?.each { updateUsername(it) }
+                    team.scrumMasters?.each { updateUsername(it) }
+                    project.productOwners?.each { updateUsername(it) }
+                    project.stakeHolders?.each { updateUsername(it) }
                 }
                 if (options.changes?.emails) {
-                    if (options.changes.emails."${team.owner.uid}") {
-                        team.owner.email = options.changes.emails."${team.owner.uid}"
+                    def updateEmail = { user ->
+                        if (options.changes.emails."${user.uid}") {
+                            user.email = options.changes.emails."${user.uid}"
                     }
-                    team.members?.each {
-                        if (options.changes.emails."${it.uid}") {
-                            it.email = options.changes.emails."${it.uid}"
                         }
-                    }
-                    team.scrumMasters?.each {
-                        if (options.changes.emails."${it.uid}") {
-                            it.email = options.changes.emails."${it.uid}"
-                        }
-                    }
-                    project.productOwners?.each {
-                        if (options.changes.emails."${it.uid}") {
-                            it.email = options.changes.emails."${it.uid}"
-                        }
-                    }
+                    updateEmail(team.owner)
+                    team.members?.each { updateEmail(it) }
+                    team.scrumMasters?.each { updateEmail(it) }
+                    project.productOwners?.each { updateEmail(it) }
+                    project.stakeHolders?.each { updateEmail(it) }
                 }
                 project.pkey = !erase && options.changes?.project?.pkey != null ? options.changes.project.pkey : project.pkey
                 project.name = !erase && options.changes?.project?.name != null ? options.changes.project.name : project.name
@@ -407,6 +389,12 @@ class ProjectService extends IceScrumEventPublisher {
                     if (t.id == null) {
                         teamService.saveImport(t)
                     }
+                }
+                project.productOwners?.each { p ->
+                    p.save()
+                }
+                project.stakeHolders?.each { t ->
+                    t.save()
                 }
                 options.entitiesToSave.each {
                     it.save()
@@ -535,6 +523,34 @@ class ProjectService extends IceScrumEventPublisher {
     def validate(Project project, boolean erase = false) {
         def changes = [:]
         Project.withNewSession {
+            def validateUsers = { users ->
+                users?.each { user ->
+                    user.validate()
+                    if (user.errors.errorCount == 1) {
+                        if (!changes.usernames) {
+                            changes.usernames = [:]
+                        }
+                        if (!changes.emails) {
+                            changes.emails = [:]
+                        }
+                        if (user.errors.fieldErrors[0]?.field == 'username' && !(user.username in changes.usernames)) {
+                            changes.usernames."$user.uid" = user.username
+                        } else if (user.errors.fieldErrors[0]?.field == 'email' && !(user.email in changes.emails)) {
+                            changes.emails."$user.uid" = user.email
+                        } else {
+                            if (log.infoEnabled) {
+                                log.info("User validation error (${user.username}): " + user.errors)
+                            }
+                            throw new ValidationException('Validation errors occurred during user import', user.errors)
+                        }
+                    } else if (user.errors.errorCount > 1) {
+                        if (log.infoEnabled) {
+                            log.info("User validation error (${user.username}): " + user.errors)
+                        }
+                        throw new ValidationException('Validation errors occurred during user import', user.errors)
+                    }
+                }
+            }
             project.teams.each { team ->
                 team.validate()
                 if (team.errors.errorCount == 1) {
@@ -553,51 +569,10 @@ class ProjectService extends IceScrumEventPublisher {
                     }
                     throw new ValidationException('Validation errors occurred during team import', team.errors)
                 }
-                team.members.each { member ->
-                    member.validate()
-                    if (member.errors.errorCount == 1) {
-                        changes.usernames = changes.usernames ?: [:]
-                        changes.emails = changes.emails ?: [:]
-                        if (member.errors.fieldErrors[0]?.field == 'username') {
-                            changes.usernames."$member.uid" = member.username
-                        } else if (member.errors.fieldErrors[0]?.field == 'email') {
-                            changes.emails."$member.uid" = member.email
-                        } else {
-                            if (log.infoEnabled) {
-                                log.info("User validation error (${member.username}): " + member.errors)
+                validateUsers(team.members)
                             }
-                            throw new ValidationException('Validation errors occurred during user import', member.errors)
-                        }
-                    } else if (member.errors.errorCount > 1) {
-                        if (log.infoEnabled) {
-                            log.info("User validation error (${member.username}): " + member.errors)
-                        }
-                        throw new ValidationException('Validation errors occurred during user import', member.errors)
-                    }
-                }
-            }
-            project.productOwners?.each { productOwner ->
-                productOwner.validate()
-                if (productOwner.errors.errorCount == 1) {
-                    changes.usernames = changes.usernames ?: [:]
-                    changes.emails = changes.emails ?: [:]
-                    if (productOwner.errors.fieldErrors[0]?.field == 'username' && !(productOwner.username in changes.usernames)) {
-                        changes.usernames."$productOwner.uid" = productOwner.username
-                    } else if (productOwner.errors.fieldErrors[0]?.field == 'email' && !(productOwner.email in changes.emails)) {
-                        changes.emails."$productOwner.uid" = productOwner.email
-                    } else {
-                        if (log.infoEnabled) {
-                            log.info("User validation error (${productOwner.username}): " + productOwner.errors)
-                        }
-                        throw new ValidationException('Validation errors occurred during Product Owner import', productOwner.errors)
-                    }
-                } else if (productOwner.errors.errorCount > 1) {
-                    if (log.infoEnabled) {
-                        log.info("User validation error (${productOwner.username}): " + productOwner.errors)
-                    }
-                    throw new ValidationException('Validation errors occurred during Product Owner import', productOwner.errors)
-                }
-            }
+            validateUsers(project.productOwners)
+            validateUsers(project.stakeHolders)
             project.validate()
             if (project.errors.errorCount && project.errors.errorCount <= 2 && !erase) {
                 changes.project = [:]
