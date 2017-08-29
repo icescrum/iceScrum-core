@@ -409,8 +409,8 @@ class StoryService extends IceScrumEventPublisher {
         if (story.dependsOn?.state == Story.STATE_SUGGESTED) {
             throw new BusinessException(code: 'is.story.error.dependsOn.suggested', args: [story.name, story.dependsOn.name])
         }
+        def rank = newRank ?: ((Story.countByBacklogAndStateInList(story.backlog, [Story.STATE_ACCEPTED, Story.STATE_ESTIMATED]) ?: 0) + 1) // Do it before resetRank to prevent flushing dirty ranks that need to be pushed
         resetRank(story)
-        def rank = newRank ?: ((Story.countAllAcceptedOrEstimated(story.backlog.id)?.list()[0] ?: 0) + 1)
         story.state = Story.STATE_ACCEPTED
         story.acceptedDate = new Date()
         activityService.addActivity(story, springSecurityService.currentUser, 'acceptAs', story.name)

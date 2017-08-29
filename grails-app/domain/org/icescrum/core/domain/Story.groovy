@@ -191,19 +191,6 @@ class Story extends BacklogElement implements Cloneable, Serializable {
             }
         }
 
-        countAllAcceptedOrEstimated { p ->
-            backlog {
-                eq 'id', p
-            }
-            or {
-                eq 'state', Story.STATE_ACCEPTED
-                eq 'state', Story.STATE_ESTIMATED
-            }
-            projections {
-                rowCount()
-            }
-        }
-
         findPossiblesDependences { Story story ->
             backlog {
                 eq 'id', story.backlog.id
