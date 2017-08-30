@@ -121,11 +121,7 @@ class FeatureService extends IceScrumEventPublisher {
         return stories
     }
 
-    double calculateCompletion(Feature feature, Release release = null) {
-        def stories = Story.filterByFeature(feature.backlog, feature, release).list()
-        if (stories.size() == 0) {
-            return 0d
-        }
+    private double calculateCompletion(stories) {
         double items = stories.size()
         double itemsDone = stories.findAll { it.state == Story.STATE_DONE }.size()
         return itemsDone / items
@@ -144,18 +140,24 @@ class FeatureService extends IceScrumEventPublisher {
 
     def projectParkingLotValues(Project project) {
         def values = []
-        project.features?.each { it ->
-            def value = 100d * calculateCompletion(it)
-            values << [label: it.name, value: value, color: it.color]
+        project.features?.each { feature ->
+            def stories = Story.findAllByBacklogAndFeature(project, feature)
+            if (stories) {
+                def value = 100d * calculateCompletion(stories)
+                values << [label: feature.name, value: value, color: feature.color]
+            }
         }
         return values
     }
 
     def releaseParkingLotValues(Release release) {
         def values = []
-        release.parentProject.features?.each { it ->
-            def value = 100d * calculateCompletion(it, release)
-            values << [label: it.name, value: value, color: it.color]
+        release.parentProject.features?.each { feature ->
+            def stories = Story.findAllByReleaseAndFeature(release, feature).list()
+            if (stories) {
+                def value = 100d * calculateCompletion(stories)
+                values << [label: feature.name, value: value, color: feature.color]
+            }
         }
         return values
     }

@@ -233,15 +233,10 @@ class Story extends BacklogElement implements Cloneable, Serializable {
             }
         }
 
-        filterByFeature { p, f, r = null ->
-            backlog {
-                eq 'id', p.id
-            }
-            if (r) {
-                parentSprint {
-                    parentRelease {
-                        eq 'id', r.id
-                    }
+        findAllByReleaseAndFeature { Release r, Feature f ->
+            parentSprint {
+                parentRelease {
+                    eq 'id', r.id
                 }
             }
             feature {
