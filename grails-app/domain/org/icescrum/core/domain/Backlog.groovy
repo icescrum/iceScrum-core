@@ -54,6 +54,7 @@ class Backlog {
         code(blank: false, maxSize: 100, unique: 'project', matches: '[a-z0-9_]+')
         notes(maxSize: 5000, nullable: true)
         owner(nullable: true)
+        chartType(nullable: true) // Must be nullable at creation for postgres because it doesn't set default value. The not nullable constraint is added in migration.
     }
 
     def getCount() {
