@@ -229,6 +229,12 @@ class SprintService extends IceScrumEventPublisher {
         }
         if (!values.isEmpty()) {
             values.first()?.idealTime = sprint.initialRemainingTime ?: 0
+            if (Sprint.STATE_INPROGRESS == sprint.state && values.last().label != sprint.endDate.clone().clearTime().time) {
+                values << [
+                        remainingTime: null,
+                        label        : sprint.endDate.clone().clearTime().time
+                ]
+            }
             values.last()?.idealTime = 0
         }
         return values
