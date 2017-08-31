@@ -598,6 +598,21 @@ class ApplicationSupport {
         }
     }
 
+    public static List getChartTickValues(List xDomain) {
+        def tickValues = []
+        if (xDomain) {
+            def firstDay = new Date(xDomain[0]).clearTime()
+            def nbDays = new Date(xDomain[1]).clearTime() - firstDay + 1
+            def interval = nbDays <= 10 ? 1 : nbDays <= 20 ? 2 : nbDays <= 30 ? 3 : 7
+            nbDays.times { i ->
+                if (i % interval == 0) {
+                    tickValues << (firstDay + i).time
+                }
+            }
+        }
+        return tickValues
+    }
+
     static ConfigObject mergeConfig(final ConfigObject currentConfig, final ConfigObject secondary) {
         ConfigObject config = new ConfigObject();
         if (secondary == null) {

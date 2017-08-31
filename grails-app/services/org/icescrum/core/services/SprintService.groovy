@@ -208,13 +208,11 @@ class SprintService extends IceScrumEventPublisher {
         clicheService.createOrUpdateDailyTasksCliche(sprint)
     }
 
-    // TODO check rights
     def sprintBurndownRemainingValues(Sprint sprint) {
         def values = []
         def lastDaycliche = sprint.inProgressDate
         def date = (sprint.state == Sprint.STATE_DONE) ? sprint.doneDate : (sprint.state == Sprint.STATE_INPROGRESS) ? new Date() : sprint.endDate
         clicheService.createOrUpdateDailyTasksCliche(sprint)
-
         sprint.cliches?.sort { a, b -> a.datePrise <=> b.datePrise }?.eachWithIndex { cliche, index ->
             if (cliche.datePrise <= date) {
                 def xmlRoot = new XmlSlurper().parseText(cliche.data)
@@ -229,16 +227,6 @@ class SprintService extends IceScrumEventPublisher {
                 }
             }
         }
-        if (Sprint.STATE_INPROGRESS == sprint.state) {
-            def nbDays = sprint.endDate - lastDaycliche
-            nbDays.times {
-                if ((ServicesUtils.isDateWeekend(lastDaycliche + (it + 1)) && !sprint.parentRelease.parentProject.preferences.hideWeekend) || !ServicesUtils.isDateWeekend(lastDaycliche + (it + 1)))
-                    values << [
-                            remainingTime: null,
-                            label        : (lastDaycliche + (it + 1)).clearTime().time
-                    ]
-            }
-        }
         if (!values.isEmpty()) {
             values.first()?.idealTime = sprint.initialRemainingTime ?: 0
             values.last()?.idealTime = 0
@@ -246,14 +234,11 @@ class SprintService extends IceScrumEventPublisher {
         return values
     }
 
-    // TODO check rights
     def sprintBurnupTasksValues(Sprint sprint) {
         def values = []
         def lastDaycliche = sprint.inProgressDate
         def date = (sprint.state == Sprint.STATE_DONE) ? sprint.doneDate : (sprint.state == Sprint.STATE_INPROGRESS) ? new Date() : sprint.endDate
-
         clicheService.createOrUpdateDailyTasksCliche(sprint)
-
         sprint.cliches?.sort { a, b -> a.datePrise <=> b.datePrise }?.eachWithIndex { cliche, index ->
             if (cliche.datePrise <= date) {
                 def xmlRoot = new XmlSlurper().parseText(cliche.data)
@@ -269,23 +254,9 @@ class SprintService extends IceScrumEventPublisher {
                 }
             }
         }
-
-        if (Sprint.STATE_INPROGRESS == sprint.state) {
-            def nbDays = sprint.endDate - lastDaycliche
-            nbDays.times {
-                if ((ServicesUtils.isDateWeekend(lastDaycliche + (it + 1)) && !sprint.parentRelease.parentProject.preferences.hideWeekend) || !ServicesUtils.isDateWeekend(lastDaycliche + (it + 1))) {
-                    values << [
-                            tasksDone: null,
-                            tasks    : null,
-                            label    : (lastDaycliche + (it + 1)).clearTime().time
-                    ]
-                }
-            }
-        }
         return values
     }
 
-    // TODO check rights
     def sprintBurnupStoriesValues(Sprint sprint) {
         def values = []
         def lastDaycliche = sprint.inProgressDate
@@ -305,20 +276,6 @@ class SprintService extends IceScrumEventPublisher {
                                 label      : lastDaycliche.clone().clearTime().time
                         ]
                     }
-                }
-            }
-        }
-        if (Sprint.STATE_INPROGRESS == sprint.state) {
-            def nbDays = sprint.endDate - lastDaycliche
-            nbDays.times {
-                if ((ServicesUtils.isDateWeekend(lastDaycliche + (it + 1)) && !sprint.parentRelease.parentProject.preferences.hideWeekend) || !ServicesUtils.isDateWeekend(lastDaycliche + (it + 1))) {
-                    values << [
-                            storiesDone: null,
-                            stories    : null,
-                            pointsDone : null,
-                            totalPoints: null,
-                            label      : (lastDaycliche + (it + 1)).clearTime().time
-                    ]
                 }
             }
         }
