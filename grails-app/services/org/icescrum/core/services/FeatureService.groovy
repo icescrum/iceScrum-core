@@ -147,7 +147,7 @@ class FeatureService extends IceScrumEventPublisher {
                 values << [label: feature.name, value: value, color: feature.color]
             }
         }
-        return values
+        return values.sort { a, b -> a.value <=> b.value ?: a.label <=> b.label }
     }
 
     def releaseParkingLotValues(Release release) {
@@ -159,7 +159,7 @@ class FeatureService extends IceScrumEventPublisher {
                 values << [label: feature.name, value: value, color: feature.color]
             }
         }
-        return values
+        return values.sort { a, b -> a.value <=> b.value ?: a.label <=> b.label }
     }
 
     def unMarshall(def featureXml, def options) {
