@@ -227,15 +227,25 @@ class SprintService extends IceScrumEventPublisher {
                 }
             }
         }
-        if (!values.isEmpty()) {
-            values.first()?.idealTime = sprint.initialRemainingTime ?: 0
-            if (Sprint.STATE_INPROGRESS == sprint.state && values.last().label != sprint.endDate.clone().clearTime().time) {
-                values << [
-                        remainingTime: null,
-                        label        : sprint.endDate.clone().clearTime().time
-                ]
+        // Insert missing days because we need them for idealTime that needs every point because it is not linear anymore
+        if (Sprint.STATE_INPROGRESS == sprint.state) {
+            def nbDays = sprint.endDate - lastDaycliche
+            nbDays.times {
+                if ((ServicesUtils.isDateWeekend(lastDaycliche + (it + 1)) && !sprint.parentRelease.parentProject.preferences.hideWeekend) || !ServicesUtils.isDateWeekend(lastDaycliche + (it + 1)))
+                    values << [
+                            remainingTime: null,
+                            label        : (lastDaycliche + (it + 1)).clearTime().time
+                    ]
             }
-            values.last()?.idealTime = 0
+        }
+        // Hiding weekends is hard on d3 timescale, here we work around that by creating every point of the ideal line
+        // As weekends days don't appear in values if the option is enabled, the line will decrease more slowly during weekends
+        if (!values.isEmpty() && sprint.initialRemainingTime) {
+            def unit = sprint.initialRemainingTime / (values.size() - 1)
+            values.eachWithIndex { value, index ->
+                value.idealTime = sprint.initialRemainingTime - index * unit
+            }
+            values.last().idealTime = 0 // Fix floating point errors
         }
         return values
     }
