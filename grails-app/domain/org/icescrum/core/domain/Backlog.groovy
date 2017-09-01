@@ -24,6 +24,7 @@
 package org.icescrum.core.domain
 
 import grails.converters.JSON
+import org.hibernate.ObjectNotFoundException
 
 
 class Backlog {
@@ -55,6 +56,26 @@ class Backlog {
         notes(maxSize: 5000, nullable: true)
         owner(nullable: true)
         chartType(nullable: true) // Must be nullable at creation for postgres because it doesn't set default value. The not nullable constraint is added in migration.
+    }
+
+    static namedQueries = {
+        getInProject { p, id ->
+            project {
+                eq 'id', p
+            }
+            and {
+                eq 'id', id
+            }
+            uniqueResult = true
+        }
+    }
+
+    static Backlog withBacklog(long projectId, long id) {
+        Backlog backlog = (Backlog)getInProject(projectId, id).list()
+        if (!backlog) {
+            throw new ObjectNotFoundException(id, 'Backlog')
+        }
+        return backlog
     }
 
     def getCount() {
