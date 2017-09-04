@@ -144,7 +144,7 @@ class FeatureService extends IceScrumEventPublisher {
             def stories = Story.findAllByBacklogAndFeature(project, feature)
             if (stories) {
                 def value = 100d * calculateCompletion(stories)
-                values << [label: feature.name, value: value, color: feature.color]
+                values << [label: feature.name, value: value, color: feature.color, feature: feature]
             }
         }
         return values.sort { a, b -> a.value <=> b.value ?: a.label <=> b.label }
