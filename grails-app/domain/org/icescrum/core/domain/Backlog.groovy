@@ -71,7 +71,7 @@ class Backlog {
     }
 
     static Backlog withBacklog(long projectId, long id) {
-        Backlog backlog = (Backlog)getInProject(projectId, id).list()
+        Backlog backlog = (Backlog) getInProject(projectId, id).list()
         if (!backlog) {
             throw new ObjectNotFoundException(id, 'Backlog')
         }
