@@ -159,7 +159,7 @@ class ProjectService extends IceScrumEventPublisher {
                             planned   : xmlRoot."${Cliche.PLANNED_STORIES}".toInteger(),
                             inprogress: xmlRoot."${Cliche.INPROGRESS_STORIES}".toInteger(),
                             done      : xmlRoot."${Cliche.FINISHED_STORIES}".toInteger(),
-                            label     : index == 0 ? "Start" : xmlRoot."${Cliche.SPRINT_ID}".toString() + "${cliche.id ? '' : " (progress)"}"
+                            label     : index == 0 ? "Start" : Sprint.getNameByReleaseAndClicheSprintId(release, xmlRoot."${Cliche.SPRINT_ID}".toString()) + "${cliche.id ? '' : " (progress)"}"
                     ]
                 }
             }
@@ -195,7 +195,7 @@ class ProjectService extends IceScrumEventPublisher {
                     values << [
                             all  : xmlRoot."${Cliche.PROJECT_POINTS}".toBigDecimal(),
                             done : c,
-                            label: index == 0 ? "Start" : xmlRoot."${Cliche.SPRINT_ID}".toString() + "${cliche.id ? '' : " (progress)"}"
+                            label: index == 0 ? "Start" : Sprint.getNameByReleaseAndClicheSprintId(release, xmlRoot."${Cliche.SPRINT_ID}".toString()) + "${cliche.id ? '' : " (progress)"}"
                     ]
                 }
             }
@@ -216,15 +216,15 @@ class ProjectService extends IceScrumEventPublisher {
     @PreAuthorize('stakeHolder(#project) or inProject(#project)')
     def projectVelocityValues(Project project) {
         def values = []
-        project.releases?.sort { a, b -> a.orderNumber <=> b.orderNumber }?.each {
-            Cliche.findAllByParentTimeBoxAndType(it, Cliche.TYPE_CLOSE, [sort: "datePrise", order: "asc"])?.each { cliche ->
+        project.releases?.sort { a, b -> a.orderNumber <=> b.orderNumber }?.each { release ->
+            Cliche.findAllByParentTimeBoxAndType(release, Cliche.TYPE_CLOSE, [sort: "datePrise", order: "asc"])?.each { cliche ->
                 def xmlRoot = new XmlSlurper().parseText(cliche.data)
                 if (xmlRoot) {
                     def sprintEntry = [
                             userstories     : xmlRoot."${Cliche.FUNCTIONAL_STORY_VELOCITY}".toBigDecimal(),
                             defectstories   : xmlRoot."${Cliche.DEFECT_STORY_VELOCITY}".toBigDecimal(),
                             technicalstories: xmlRoot."${Cliche.TECHNICAL_STORY_VELOCITY}".toBigDecimal(),
-                            label           : xmlRoot."${Cliche.SPRINT_ID}".toString()
+                            label           : Sprint.getNameByReleaseAndClicheSprintId(release, xmlRoot."${Cliche.SPRINT_ID}".toString())
                     ]
                     sprintEntry << computeLabelsForSprintEntry(sprintEntry)
                     values << sprintEntry
@@ -238,13 +238,13 @@ class ProjectService extends IceScrumEventPublisher {
     def projectVelocityCapacityValues(Project project) {
         def values = []
         def capacity = 0, label = ""
-        project.releases?.sort { a, b -> a.orderNumber <=> b.orderNumber }?.each {
-            Cliche.findAllByParentTimeBox(it, [sort: "datePrise", order: "asc"])?.each { cliche ->
+        project.releases?.sort { a, b -> a.orderNumber <=> b.orderNumber }?.each { release ->
+            Cliche.findAllByParentTimeBox(release, [sort: "datePrise", order: "asc"])?.each { cliche ->
                 def xmlRoot = new XmlSlurper().parseText(cliche.data)
                 if (xmlRoot) {
                     if (cliche.type == Cliche.TYPE_ACTIVATION) {
                         capacity = xmlRoot."${Cliche.SPRINT_CAPACITY}".toBigDecimal()
-                        label = xmlRoot."${Cliche.SPRINT_ID}".toString()
+                        label = Sprint.getNameByReleaseAndClicheSprintId(release, xmlRoot."${Cliche.SPRINT_ID}".toString())
                     }
                     if (cliche.type == Cliche.TYPE_CLOSE) {
                         values << [

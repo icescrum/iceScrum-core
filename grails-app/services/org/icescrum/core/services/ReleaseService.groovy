@@ -192,7 +192,7 @@ class ReleaseService extends IceScrumEventPublisher {
                         userstories     : xmlRoot."${Cliche.FUNCTIONAL_STORY_PROJECT_REMAINING_POINTS}".toBigDecimal(),
                         technicalstories: xmlRoot."${Cliche.TECHNICAL_STORY_PROJECT_REMAINING_POINTS}".toBigDecimal(),
                         defectstories   : xmlRoot."${Cliche.DEFECT_STORY_PROJECT_REMAINING_POINTS}".toBigDecimal(),
-                        label           : index == 0 ? "Start" : xmlRoot."${Cliche.SPRINT_ID}".toString() + "${cliche.id ? '' : " (progress)"}"
+                        label           : index == 0 ? "Start" : Sprint.getNameByReleaseAndClicheSprintId(release, xmlRoot."${Cliche.SPRINT_ID}".toString()) + "${cliche.id ? '' : " (progress)"}"
                 ]
                 sprintEntry << computeLabelsForSprintEntry(sprintEntry)
                 values << sprintEntry

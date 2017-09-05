@@ -62,7 +62,7 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
     ]
 
     static transients = [
-            'recurrentTasks', 'urgentTasks', 'hasNextSprint', 'parentReleaseId', 'activable', 'effectiveEndDate', 'effectiveStartDate', 'totalRemaining', 'parentProject', 'totalEffort', 'previousSprint', 'nextSprint', 'parentReleaseName', 'index', 'attachments_count'
+            'recurrentTasks', 'urgentTasks', 'hasNextSprint', 'parentReleaseId', 'activable', 'effectiveEndDate', 'effectiveStartDate', 'totalRemaining', 'parentProject', 'totalEffort', 'previousSprint', 'nextSprint', 'parentReleaseName', 'index', 'attachments_count', 'fullName'
     ]
 
     static namedQueries = {
@@ -183,6 +183,14 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
         return sprints
     }
 
+    static String getNameByReleaseAndClicheSprintId(Release release, String clicheSprintId) {
+        Sprint sprint
+        if (clicheSprintId?.contains('S')) {
+            sprint = findByParentReleaseAndOrderNumber(release, clicheSprintId.split('S')[1].toInteger())
+        }
+        return sprint ? sprint.fullName : '?'
+    }
+
     @Override
     int hashCode() {
         final int prime = 31
@@ -267,6 +275,10 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
 
     int getAttachments_count() {
         return this.getTotalAttachments()
+    }
+
+    String getFullName() {
+        return (parentRelease.name.size() > 4 ? ('R' + parentRelease.orderNumber) : parentRelease.name)  + 'S' + index
     }
 
     Sprint getPreviousSprint() {
