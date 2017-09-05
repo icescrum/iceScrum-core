@@ -51,7 +51,7 @@ class WindowTagLib {
         }
         out << """  <div class="modal-header">
                         <button type="button" class="close" ng-click="\$dismiss()" tabindex="-1" aria-hidden="true">&times;</button>
-                        <h4 class="modal-title" id="modal${attrs.name?:''}">${attrs.title}</h4>
+                        <h4 class="modal-title" id="modal${attrs.name ?: ''}">${attrs.title}</h4>
                     </div>
                     <div class="modal-body">
                         ${body()}"""
