@@ -352,7 +352,6 @@ class DummyService {
         storyPropertiesBySprint.each { sprintIndex, storyProperties ->
             storiesBySprint[sprintIndex] = storyProperties.collect { createStory(it) }
         }
-        sandboxStoryProperties.each { createStory(it) }
         if(largeDummyze){
             backlogStoryProperties.eachWithIndex { it, index ->
                 it.name = "$index - $it.name"
@@ -363,6 +362,7 @@ class DummyService {
                 createStory(it)
             }
         }
+        sandboxStoryProperties.each { createStory(it) } // Create sandbox stories after backlog ones to preserve "chronological" order
         project.save()
         sessionFactory.currentSession.flush()
         // Plan Stories
