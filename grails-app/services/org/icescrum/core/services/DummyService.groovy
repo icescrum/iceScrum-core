@@ -53,7 +53,7 @@ class DummyService {
         pushService.disablePushForThisThread()
         // Project & team
         def projectName = ("Peetic " + user.username).take(100)
-        def largeDummyze = System.getProperty("largeDummyze") ? true : false
+        def largeDummyze = System.getProperty("icescrum.largeDummyze") ? true : false
         def startDate = new Date() - 16
         startDate.clearTime()
         Project project = new Project(name: projectName, pkey: toPkey(user), startDate: startDate, endDate: startDate + 102)
