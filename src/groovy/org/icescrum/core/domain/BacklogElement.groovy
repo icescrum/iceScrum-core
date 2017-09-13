@@ -41,6 +41,9 @@ abstract class BacklogElement implements Attachmentable, Commentable, Serializab
     Date todoDate = new Date()
     int uid
 
+    Integer comments_count = 0
+    Integer attachments_count = 0
+
     TimeBox backlog
     SortedSet<Activity> activities
 

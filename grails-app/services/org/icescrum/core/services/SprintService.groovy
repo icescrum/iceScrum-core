@@ -385,6 +385,7 @@ class SprintService extends IceScrumEventPublisher {
                         User user = project.getUserByUidOrOwner(uid)
                         ApplicationSupport.importAttachment(sprint, user, options.path, _attachmentXml)
                     }
+                    sprint.attachments_count = sprintXml.attachments.attachment.size() ?: 0
                 }
             }
             options.sprint = null

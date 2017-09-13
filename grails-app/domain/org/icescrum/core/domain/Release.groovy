@@ -46,13 +46,15 @@ class Release extends TimeBox implements Cloneable, Attachmentable {
     Date inProgressDate
     Date doneDate
 
+    Integer attachments_count = 0
+
     static belongsTo = [parentProject: Project]
 
     static hasMany = [sprints: Sprint, features: Feature]
 
     static mappedBy = [sprints: 'parentRelease', features: 'parentRelease']
 
-    static transients = ['firstDate', 'closable', 'activable', 'meanVelocity', 'previousRelease', 'nextRelease', 'attachments_count']
+    static transients = ['firstDate', 'closable', 'activable', 'meanVelocity', 'previousRelease', 'nextRelease']
 
     static mapping = {
         cache true
@@ -192,10 +194,6 @@ class Release extends TimeBox implements Cloneable, Attachmentable {
     Integer getMeanVelocity() {
         def doneSprints = sprints.findAll { it.state == Sprint.STATE_DONE }
         return doneSprints ? ((Integer) doneSprints.sum { it.velocity.toBigDecimal() }).intdiv(doneSprints.size()) : 0
-    }
-
-    int getAttachments_count() {
-        return this.getTotalAttachments()
     }
 
     def xml(builder) {

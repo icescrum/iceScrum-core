@@ -394,11 +394,13 @@ class TaskService extends IceScrumEventPublisher {
                         User user = project.getUserByUidOrOwner(uid)
                         ApplicationSupport.importComment(task, user, _commentXml.body.text(), ApplicationSupport.parseDate(_commentXml.dateCreated.text()))
                     }
+                    task.comments_count = taskXml.comments.comment.size() ?: 0
                     taskXml.attachments.attachment.each { _attachmentXml ->
                         def uid = options.userUIDByImportedID?."${_attachmentXml.posterId.text().toInteger()}" ?: null
                         User user = project.getUserByUidOrOwner(uid)
                         ApplicationSupport.importAttachment(task, user, options.path, _attachmentXml)
                     }
+                    task.attachments_count = taskXml.attachments.attachment.size() ?: 0
                 }
             }
             // Child objects

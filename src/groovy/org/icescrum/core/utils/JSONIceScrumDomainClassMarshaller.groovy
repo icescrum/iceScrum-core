@@ -147,10 +147,12 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
                                     }
                                     writer.endArray()
                                 } else {
-                                    int count = domainClass.getClazz().withSession { session ->
-                                        session.createFilter(referenceObject, 'select count(*)').uniqueResult()
+                                    if (!referenceObject.hasProperty(property.getName() + "_count")) {
+                                        int count = domainClass.getClazz().withSession { session ->
+                                            session.createFilter(referenceObject, 'select count(*)').uniqueResult()
+                                        }
+                                        writer.key(property.getName() + "_count").value(count)
                                     }
-                                    writer.key(property.getName() + "_count").value(count)
                                 }
                             } else if (referenceObject instanceof Map) {
                                 writer.key(property.getName())

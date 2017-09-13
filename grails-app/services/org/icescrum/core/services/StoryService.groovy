@@ -735,11 +735,13 @@ class StoryService extends IceScrumEventPublisher {
                         User user = project.getUserByUidOrOwner(uid)
                         ApplicationSupport.importComment(story, user, _commentXml.body.text(), ApplicationSupport.parseDate(_commentXml.dateCreated.text()))
                     }
+                    story.comments_count = storyXml.comments.comment.size() ?: 0
                     storyXml.attachments.attachment.each { _attachmentXml ->
                         def uid = options.userUIDByImportedID?."${_attachmentXml.posterId.text().toInteger()}" ?: null
                         User user = project.getUserByUidOrOwner(uid)
                         ApplicationSupport.importAttachment(story, user, options.path, _attachmentXml)
                     }
+                    story.attachments_count = storyXml.attachments.attachment.size() ?: 0
                     storyXml.followers.user.each { _userXml ->
                         User user = User.findByUid(_userXml.@uid.text())
                         if (user) {

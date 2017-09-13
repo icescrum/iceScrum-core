@@ -47,6 +47,8 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
     Double dailyWorkTime = 8d
     Float initialRemainingTime
 
+    Integer attachments_count = 0
+
     static mappedBy = [
             stories: "parentSprint",
             tasks  : "backlog"
@@ -62,7 +64,7 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
     ]
 
     static transients = [
-            'recurrentTasks', 'urgentTasks', 'hasNextSprint', 'parentReleaseId', 'activable', 'effectiveEndDate', 'effectiveStartDate', 'totalRemaining', 'parentProject', 'totalEffort', 'previousSprint', 'nextSprint', 'parentReleaseName', 'index', 'attachments_count', 'fullName'
+            'recurrentTasks', 'urgentTasks', 'hasNextSprint', 'parentReleaseId', 'activable', 'effectiveEndDate', 'effectiveStartDate', 'totalRemaining', 'parentProject', 'totalEffort', 'previousSprint', 'nextSprint', 'parentReleaseName', 'index', 'fullName'
     ]
 
     static namedQueries = {
@@ -273,12 +275,8 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
         return parentRelease.id
     }
 
-    int getAttachments_count() {
-        return this.getTotalAttachments()
-    }
-
     String getFullName() {
-        return (parentRelease.name.size() > 4 ? ('R' + parentRelease.orderNumber) : parentRelease.name)  + 'S' + index
+        return (parentRelease.name.size() > 4 ? ('R' + parentRelease.orderNumber) : parentRelease.name) + 'S' + index
     }
 
     Sprint getPreviousSprint() {

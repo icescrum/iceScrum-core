@@ -60,7 +60,7 @@ class Task extends BacklogElement implements Serializable {
 
     static hasMany = [participants: User]
 
-    static transients = ['sprint', 'activity', 'comments_count', 'attachments_count']
+    static transients = ['sprint', 'activity']
 
     static mapping = {
         cache true
@@ -231,14 +231,6 @@ class Task extends BacklogElement implements Serializable {
 
     def getActivity() {
         return activities.sort { a, b -> b.dateCreated <=> a.dateCreated }
-    }
-
-    int getComments_count() {
-        return this.getTotalComments()
-    }
-
-    int getAttachments_count() {
-        return this.getTotalAttachments()
     }
 
     static search(project, options) {

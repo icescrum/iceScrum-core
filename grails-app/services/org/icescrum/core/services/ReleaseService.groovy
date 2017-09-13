@@ -262,6 +262,7 @@ class ReleaseService extends IceScrumEventPublisher {
                         User user = project.getUserByUidOrOwner(uid)
                         ApplicationSupport.importAttachment(release, user, options.path, _attachmentXml)
                     }
+                    release.attachments_count = releaseXml.attachments.attachment.size() ?: 0
                 }
             }
             // Child objects

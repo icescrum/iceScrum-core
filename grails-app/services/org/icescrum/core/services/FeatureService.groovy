@@ -192,6 +192,7 @@ class FeatureService extends IceScrumEventPublisher {
                     User user = project.getUserByUidOrOwner(uid)
                     ApplicationSupport.importAttachment(feature, user, options.path, _attachmentXml)
                 }
+                feature.attachments_count = featureXml.attachments.attachment.size() ?: 0
             }
             // Child objects
             options.feature = feature

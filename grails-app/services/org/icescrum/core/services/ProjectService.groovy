@@ -351,8 +351,8 @@ class ProjectService extends IceScrumEventPublisher {
                     def updateUsername = { user ->
                         if (options.changes.usernames."${user.uid}") {
                             user.username = options.changes.usernames."${user.uid}"
-                    }
                         }
+                    }
                     updateUsername(team.owner)
                     team.members?.each { updateUsername(it) }
                     team.scrumMasters?.each { updateUsername(it) }
@@ -363,8 +363,8 @@ class ProjectService extends IceScrumEventPublisher {
                     def updateEmail = { user ->
                         if (options.changes.emails."${user.uid}") {
                             user.email = options.changes.emails."${user.uid}"
-                    }
                         }
+                    }
                     updateEmail(team.owner)
                     team.members?.each { updateEmail(it) }
                     team.scrumMasters?.each { updateEmail(it) }
@@ -408,6 +408,7 @@ class ProjectService extends IceScrumEventPublisher {
                     User user = project.getUserByUidOrOwner(uid)
                     ApplicationSupport.importAttachment(project, user, options.path, _attachmentXml)
                 }
+                project.attachments_count = projectXml.attachments.attachment.size() ?: 0
 
                 project.productOwners?.each { user ->
                     user = User.get(user.id)
@@ -570,7 +571,7 @@ class ProjectService extends IceScrumEventPublisher {
                     throw new ValidationException('Validation errors occurred during team import', team.errors)
                 }
                 validateUsers(team.members)
-                            }
+            }
             validateUsers(project.productOwners)
             validateUsers(project.stakeHolders)
             project.validate()
