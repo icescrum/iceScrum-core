@@ -64,7 +64,7 @@ class PushService {
         def channel = '/stream/app/*'
         Broadcaster broadcaster = atmosphereMeteor.broadcasterFactory?.lookup(IceScrumBroadcaster.class, channel)
         if (broadcaster) {
-            try{
+            try {
                 Set<AtmosphereResource> resources = broadcaster.atmosphereResources?.findAll { AtmosphereResource resource ->
                     resource.request?.getAttribute(IceScrumAtmosphereEventListener.USER_CONTEXT)?.username in usernames
                 }
@@ -72,9 +72,8 @@ class PushService {
                     log.debug('Broadcast to ' + resources*.uuid().join(', ') + ' on channel ' + channel)
                     broadcaster.broadcast(buildMessage(namespace, eventType, object), resources)
                 }
-            }catch(Exception e){
-                //Request object no longer valid. This object has been cancelled
-                //https://github.com/Atmosphere/atmosphere/issues/1052
+            } catch (Exception e) {
+                // Request object no longer valid. This object has been cancelled, see https://github.com/Atmosphere/atmosphere/issues/1052
             }
         }
     }

@@ -105,7 +105,6 @@ class DummyService {
                 [name: 'Batch delete pet profiles', description: '', feature: featureAdmin, value: 1, type: Story.TYPE_USER_STORY, state: Story.STATE_SUGGESTED],
                 [name: 'Search by behavior', description: '', feature: featureSearch, type: Story.TYPE_USER_STORY, state: Story.STATE_SUGGESTED]
         ]
-
         def backlogStoryProperties = []
         100.times {
             backlogStoryProperties << [name: 'Add videos to my pet profile', description: "As a $petOwnerTag\nI can add videos to my pet profile \nIn order show how it is gorgeous to the other pet owners and make them choose it", feature: featurePetProfile, value: 3, type: Story.TYPE_USER_STORY, effort: 3, state: Story.STATE_ESTIMATED]
@@ -156,13 +155,13 @@ class DummyService {
         storyPropertiesBySprint.each { sprintIndex, storyProperties ->
             storiesBySprint[sprintIndex] = storyProperties.collect { createStory(it) }
         }
-        if(largeDummyze){
+        if (largeDummyze) {
             backlogStoryProperties.eachWithIndex { it, index ->
                 it.name = "$index - $it.name"
                 createStory(it)
             }
         } else {
-            backlogStoryProperties[0..5].each{
+            backlogStoryProperties[0..5].each {
                 createStory(it)
             }
         }
