@@ -248,26 +248,19 @@ class ClicheService {
         }
         def clicheData = {
             cliche {
-                //Total stories
                 "${Cliche.TOTAL_STORIES}"(storiesDoneCount + storiesInProgressCount)
-                //Stories by state
                 "${Cliche.STORIES_INPROGRESS}"(storiesInProgressCount)
                 "${Cliche.STORIES_DONE}"(storiesDoneCount)
-                //Points
                 "${Cliche.STORIES_TOTAL_POINTS}"(totalPointsStories)
                 "${Cliche.STORIES_POINTS_DONE}"(pointsDoneStories)
-                //Total tasks
                 "${Cliche.TOTAL_TASKS}"(waitCount + inprogressCount + doneCount)
-                // Tasks by states
                 "${Cliche.TASKS_WAIT}"(waitCount)
                 "${Cliche.TASKS_INPROGRESS}"(inprogressCount)
                 "${Cliche.TASKS_DONE}"(doneCount)
-                // Tasks by type
                 "${Cliche.TASKS_SPRINT}"(recurrentCount + urgentCount)
                 "${Cliche.TASKS_RECURRENT}"(recurrentCount)
                 "${Cliche.TASKS_URGENT}"(urgentCount)
                 "${Cliche.TASKS_STORY}"(storyCount)
-                //daily remainingTime
                 "${Cliche.REMAINING_TIME}"(remainingTime)
             }
         }
@@ -277,11 +270,28 @@ class ClicheService {
         if (lastCliche) {
             def days = today - lastCliche.datePrise
             if (days < 1) {
-                def data = xmlBuilder.bind(clicheData).toString()
-                if (data.encodeAsMD5() != lastCliche.data.encodeAsMD5()) {
+                // Horrible hack:
+                // Cliche data may be written outside of here from plugins
+                // That means that if there is already a cliche to update, we need to merge data instead of replacing thus preserving existing data we don't own
+                // There is no easy way to merge data with XML nodes so we convert them to maps to merge them, then convert them back to XML through the builder
+                def xmlToMap = { String data ->
+                    new XmlSlurper().parseText(data).children().collectEntries {
+                        [it.name(), it.text()]
+                    }
+                }
+                Map newData = xmlToMap(xmlBuilder.bind(clicheData).toString())
+                Map oldData = xmlToMap(lastCliche.data)
+                String mergedData = xmlBuilder.bind {
+                    cliche {
+                        (oldData + newData).each { k, v -> // The "+" operator merges newData into oldData
+                            "$k"(v)
+                        }
+                    }
+                }.toString()
+                if (mergedData.encodeAsMD5() != lastCliche.data.encodeAsMD5()) {
                     sprint.lastUpdated = new Date()
                     sprint.save()
-                    lastCliche.data = data
+                    lastCliche.data = mergedData
                     lastCliche.save()
                 }
                 return
