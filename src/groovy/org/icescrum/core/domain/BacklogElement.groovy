@@ -55,6 +55,8 @@ abstract class BacklogElement implements Attachmentable, Commentable, Serializab
         description(maxSize: 3000, nullable: true)
         notes(maxSize: 5000, nullable: true)
         name(blank: false, maxSize: 100)
+        attachments_count(nullable: true) // Must be nullable at creation for postgres because it doesn't set default value. The not nullable constraint is added in migration.
+        comments_count(nullable: true) // Must be nullable at creation for postgres because it doesn't set default value. The not nullable constraint is added in migration.
     }
 
     static mapping = {

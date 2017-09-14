@@ -96,6 +96,7 @@ class Project extends TimeBox implements Serializable, Attachmentable {
         tasks cascade: 'all-delete-orphan', batchSize: 10, cache: true
         pkey(index: 'p_key_index')
         name(index: 'p_name_index')
+        attachments_count(nullable: true) // Must be nullable at creation for postgres because it doesn't set default value. The not nullable constraint is added in migration.
         preferences lazy: true
     }
 
