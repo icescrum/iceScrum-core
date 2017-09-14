@@ -149,7 +149,7 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
         inProgressDate nullable: true
         doneDate nullable: true
         initialRemainingTime nullable: true
-        /*endDate(validator: { val, obj ->
+        endDate(validator: { val, obj ->
             if (val > obj.parentRelease.endDate)
                 return ['out.of.release.bounds']
             return true
@@ -161,7 +161,7 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
             if (previousSprint && val <= previousSprint.endDate)
                 return ['previous.overlap']
             return true
-        })*/
+        })
     }
 
     void setDone() {
