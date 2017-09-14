@@ -103,12 +103,12 @@ class Story extends BacklogElement implements Cloneable, Serializable {
         affectVersion(nullable: true)
         effort(nullable: true, validator: { newEffort, story -> newEffort == null || (newEffort >= 0 && newEffort < 1000) ?: 'invalid' })
         creator(nullable: true) // in case of a user deletion, the story can remain without owner
-        dependsOn(nullable: true, validator: { newDependsOn, story -> newDependsOn == null ||
+        /*dependsOn(nullable: true, validator: { newDependsOn, story -> newDependsOn == null ||
                                                (newDependsOn.backlog.id == story.backlog.id && (
                                                        newDependsOn.state >= story.state ||
                                                        newDependsOn.state == STATE_ACCEPTED && story.state == STATE_ESTIMATED ||
                                                        newDependsOn.state == STATE_INPROGRESS && story.state == STATE_DONE
-                                               )) ?: 'invalid' })
+                                               )) ?: 'invalid' })*/
         origin(nullable: true)
     }
 
