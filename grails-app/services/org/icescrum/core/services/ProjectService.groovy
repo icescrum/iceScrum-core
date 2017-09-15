@@ -19,10 +19,12 @@
  *
  * Vincent Barrier (vbarrier@kagilum.com)
  * Nicolas Noullet (nnoullet@kagilum.com)
+ * Colin Bontemps (cbontemps@kagilum.com)
  */
 
 package org.icescrum.core.services
 
+import grails.converters.JSON
 import grails.plugin.springsecurity.SpringSecurityUtils
 import grails.transaction.Transactional
 import grails.validation.ValidationException
@@ -58,6 +60,7 @@ class ProjectService extends IceScrumEventPublisher {
         project.orderNumber = (Project.count() ?: 0) + 1
         project.save(flush: true)
         createDefaultBacklogs(project)
+        createDefaultTimeBoxNotesTemplates(project)
         securityService.secureDomain(project)
         if (productOwners) {
             for (productOwner in User.getAll(productOwners*.toLong())) {
@@ -877,5 +880,46 @@ class ProjectService extends IceScrumEventPublisher {
         new Backlog(project: project, shared: true, filter: '{"story":{"state":[2,3]}}', notes: "p. ${g.message(code: 'is.ui.backlogs.filter.backlog.description')}", name: 'is.ui.backlog', code: 'backlog', chartType: 'state').save()
         new Backlog(project: project, shared: true, filter: '{"story":{"state":7}}', notes: "p. ${g.message(code: 'is.ui.backlogs.filter.done.description')}", name: 'todo.is.ui.backlog.done', code: 'done', chartType: 'type').save()
         new Backlog(project: project, shared: true, filter: '{"story":{}}', notes: "p. ${g.message(code: 'is.ui.backlogs.filter.all.description')}", name: 'todo.is.ui.backlog.all', code: 'all', chartType: 'state').save()
+    }
+
+    private void createDefaultTimeBoxNotesTemplates(Project project) {
+        new TimeBoxNotesTemplate(
+                name: "HTML Release Note Template",
+                header: "<h1> My HTML release Note </h1>",
+                footer: "<span> Release note end </span>",
+                parentProject: project,
+                configsData: ([
+                        [header      : "<h2> Features </h2> <ul>",
+                         footer      : "</ul>",
+                         storyType   : Story.TYPE_USER_STORY,
+                         lineTemplate: '<li>${story.name}</li>'
+                        ],
+                        [header      : "<h2> Bug Fixes </h2> <ul>",
+                         footer      : "</ul>",
+                         storyType   : Story.TYPE_DEFECT, //defect
+                         lineTemplate: '<li>${story.name}</li>'
+                        ]
+                ] as JSON).toString()
+        ).save()
+
+        new TimeBoxNotesTemplate(
+                name: "Markdown Release Note Template",
+                header: "# My Markdown release Note",
+                footer: "",
+                parentProject: project,
+                configsData: ([
+                        [header      : "## Features",
+                         footer      : "",
+                         storyType   : Story.TYPE_USER_STORY, //user
+                         lineTemplate: '* ${story.name}'
+                        ],
+                        [header      : "## Bug Fixes",
+                         footer      : "",
+                         storyType   : Story.TYPE_DEFECT, //defect
+                         lineTemplate: '* ${story.name}'
+                        ]
+                ] as JSON).toString()
+        ).save()
+
     }
 }

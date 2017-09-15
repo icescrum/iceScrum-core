@@ -21,6 +21,7 @@
  * Stéphane Maldini (stephane.maldini@icescrum.com)
  * Manuarii Stein (manuarii.stein@icescrum.com)
  * Nicolas Noullet (nnoullet@kagilum.com)
+ * Colin Bontemps (cbontemps@kagilum.com)
  */
 
 package org.icescrum.core.domain
@@ -47,14 +48,15 @@ class Project extends TimeBox implements Serializable, Attachmentable {
     SortedSet<Release> releases
 
     static hasMany = [
-            actors           : Actor,
-            features         : Feature,
-            stories          : Story,
-            releases         : Release,
-            teams            : Team,
-            backlogs         : Backlog,
-            tasks            : Task,
-            simpleProjectApps: SimpleProjectApp
+            actors               : Actor,
+            features             : Feature,
+            stories              : Story,
+            releases             : Release,
+            teams                : Team,
+            backlogs             : Backlog,
+            tasks                : Task,
+            simpleProjectApps    : SimpleProjectApp,
+            timeBoxNotesTemplates: TimeBoxNotesTemplate
     ]
 
     static mappedBy = [
@@ -424,6 +426,11 @@ class Project extends TimeBox implements Serializable, Attachmentable {
             builder.simpleProjectApps() {
                 this.simpleProjectApps.each { _simpleProjectApp ->
                     _simpleProjectApp.xml(builder)
+                }
+            }
+            builder.timeBoxNotesTemplates() {
+                this.timeBoxNotesTemplates.each { _timeBoxNotesTemplate ->
+                    _timeBoxNotesTemplate.xml(builder)
                 }
             }
             exportDomainsPlugins(builder)
