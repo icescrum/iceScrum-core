@@ -160,7 +160,7 @@ class TaskService extends IceScrumEventPublisher {
             service.done(story)
         }
         if (user) {
-            activityService.addActivity(task, user, 'taskFinish', task.name)
+            activityService.addActivity(task, task.responsible, 'taskFinish', task.name)
         }
     }
 
@@ -295,9 +295,9 @@ class TaskService extends IceScrumEventPublisher {
                     || securityService.productOwner(project, springSecurityService.authentication)
                     || securityService.scrumMaster(null, springSecurityService.authentication)) {
                 if (newState == Task.STATE_BUSY && task.state != Task.STATE_BUSY) {
-                    activityService.addActivity(task, user, 'taskInprogress', task.name)
+                    activityService.addActivity(task, task.responsible, 'taskInprogress', task.name)
                 } else if (newState == Task.STATE_WAIT && task.state != Task.STATE_WAIT) {
-                    activityService.addActivity(task, user, 'taskWait', task.name)
+                    activityService.addActivity(task, task.responsible, 'taskWait', task.name)
                 }
                 task.state = newState
             }
