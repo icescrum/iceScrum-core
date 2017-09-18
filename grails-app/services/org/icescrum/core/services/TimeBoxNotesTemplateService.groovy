@@ -47,22 +47,20 @@ class TimeBoxNotesTemplateService extends IceScrumEventPublisher {
 
     @PreAuthorize('inProject(#release.parentProject)')
     def computeReleaseNotes(Release release, TimeBoxNotesTemplate template) {
-
         def result = new StringBuffer()
         if (template.header) {
             result << template.header
             result << '\n'
         }
-
         template.configs.each { config ->
             if (config.header) {
                 result << config.header
                 result << '\n'
             }
-            Closure tagCondition = {!(config.storyTags) || it.tags.intersect(config.storyTags)}
-            Closure typeCondition = {!(config.containsKey('storyType')) || (config.storyType == it.type)}
+            Closure tagCondition = { !(config.storyTags) || it.tags.intersect(config.storyTags) }
+            Closure typeCondition = { !(config.containsKey('storyType')) || (config.storyType == it.type) }
             def allStories = release.sprints*.stories.flatten()
-            def filteredStories = allStories.findAll {tagCondition(it) && typeCondition(it)}
+            def filteredStories = allStories.findAll { tagCondition(it) && typeCondition(it) }
 
             if (filteredStories) {
                 filteredStories.each { story ->
@@ -129,6 +127,4 @@ class TimeBoxNotesTemplateService extends IceScrumEventPublisher {
             return value
         }
     }
-
-
 }

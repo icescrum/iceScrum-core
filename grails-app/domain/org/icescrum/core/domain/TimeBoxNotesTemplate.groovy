@@ -38,17 +38,15 @@ class TimeBoxNotesTemplate implements Serializable {
     ]
 
     static constraints = {
-            name(blank: false, unique: true)
-            header(nullable: true)
-            footer(nullable: true)
-            configsData(blank: false)
+        name(blank: false, unique: true)
+        header(nullable: true)
+        footer(nullable: true)
+        configsData(blank: false)
     }
 
     static mapping = {
         configsData type: 'text'
     }
-
-
 
     void setConfigs(List configs) {
         configsData = configs ? configs as JSON : null
