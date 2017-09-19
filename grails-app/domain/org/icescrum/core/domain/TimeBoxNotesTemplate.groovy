@@ -38,7 +38,7 @@ class TimeBoxNotesTemplate implements Serializable {
     ]
 
     static constraints = {
-        name(blank: false, unique: true)
+        name(blank: false, unique: 'parentProject')
         header(nullable: true)
         footer(nullable: true)
         configsData(blank: false)
