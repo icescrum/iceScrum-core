@@ -199,7 +199,7 @@ class User implements Serializable, Attachmentable {
 
     def beforeValidate() {
         //Create uid before first save object
-        this.email = this.email.trim()
+        this.email = this.email?.trim()
         if (!this.id && !this.uid) {
             this.uid = (this.username + this.email).encodeAsMD5()
         }
