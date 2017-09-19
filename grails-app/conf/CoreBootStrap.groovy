@@ -32,8 +32,8 @@ class CoreBootStrap {
     def init = { servletContext ->
         if (Environment.current == Environment.DEVELOPMENT && !System.properties['icescrum.noDummyze'] && User.count() <= 1) {
             println "Creating dummy users"
-            userService.save(new User(username: "a", email: "a@gmail.com", firstName: "Roberto", password: "a", preferences: new UserPreferences(language: 'en', activity: 'Consultant')))
-            userService.save(new User(username: "z", email: "z@gmail.com", firstName: "Bernardo", password: "z", preferences:
+            userService.save(new User(username: "a", email: "a@gmail.com", firstName: "Roberto", lastName: 'Doe', password: "a", preferences: new UserPreferences(language: 'en', activity: 'Consultant')))
+            userService.save(new User(username: "z", email: "z@gmail.com", firstName: "Bernardo", lastName: 'Doe', password: "z", preferences:
                              new UserPreferences(language: 'en', activity: 'WebDesigner', menu: ["taskBoard": "1", "planning": "2", "backlog": "3", "feature": "4", "project": "5"])))
         }
     }
