@@ -39,8 +39,8 @@ class User implements Serializable, Attachmentable {
 
     static final long serialVersionUID = 813639032272976126L
 
-    String lastName = "Doe"
-    String firstName = "John"
+    String lastName = ""
+    String firstName = ""
     String username = ""
     String password = ""
     String email
@@ -79,7 +79,7 @@ class User implements Serializable, Attachmentable {
     }
 
     static constraints = {
-        email(blank: false, unique: true, validator: { newEmail, user -> (newEmail && newEmail.split('@')[0] && newEmail.split('@')[1]) ?: 'invalid' })
+        email(blank: false, unique: true, validator: { newEmail, user -> (newEmail && newEmail.split('@').size() > 1 && newEmail.split('@')[1]) ?: 'invalid' })
         username(blank: false, unique: true)
         password(blank: false)
         lastName(blank: false)
