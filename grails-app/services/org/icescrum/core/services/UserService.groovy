@@ -68,8 +68,12 @@ class UserService extends IceScrumEventPublisher {
     def pushService
 
     void save(User user, String token = null) {
-        user.password = springSecurityService.encodePassword(user.password)
-        !user.save()
+        if (user.password) {
+            user.password = springSecurityService.encodePassword(user.password)
+        } else if (user.accountExternal) {
+            user.password = 'passwordDefinedExternally'
+        }
+        user.save()
         publishSynchronousEvent(IceScrumEventType.CREATE, user)
         if (token && grailsApplication.config.icescrum.invitation.enable) {
             def invitations = Invitation.findAllByToken(token)
