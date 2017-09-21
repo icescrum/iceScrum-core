@@ -24,20 +24,17 @@ package org.icescrum.core.services
 import grails.transaction.Transactional
 import groovy.text.SimpleTemplateEngine
 import org.icescrum.core.domain.*
-import org.icescrum.core.event.IceScrumEventPublisher
-import org.icescrum.core.event.IceScrumEventType
 import org.springframework.security.access.prepost.PreAuthorize
 
 //TODO: implement event publisher
 @Transactional
-class TimeBoxNotesTemplateService extends IceScrumEventPublisher {
+class TimeBoxNotesTemplateService {
 
     @PreAuthorize('inProject(#project)')
     void save(TimeBoxNotesTemplate template, Project project) {
         template.parentProject = project
         template.save(flush: true)
         project.addToTimeBoxNotesTemplates(template)
-        publishSynchronousEvent(IceScrumEventType.CREATE, template)
     }
 
     @PreAuthorize('inProject(#template.parentProject)')
@@ -50,7 +47,6 @@ class TimeBoxNotesTemplateService extends IceScrumEventPublisher {
         template.delete()
     }
 
-
     @PreAuthorize('inProject(#release.parentProject)')
     def computeReleaseNotes(Release release, TimeBoxNotesTemplate template) {
         def result = new StringBuffer()
@@ -59,7 +55,7 @@ class TimeBoxNotesTemplateService extends IceScrumEventPublisher {
             result << '\n'
         }
         template.configs.each { config ->
-            // filter stories
+            // Filter stories
             Closure tagCondition = { !(config.storyTags) || it.tags.intersect(config.storyTags) }
             Closure typeCondition = { !(config.containsKey('storyType')) || (config.storyType == it.type) }
             def allStories = release.sprints*.stories.flatten()
@@ -80,7 +76,7 @@ class TimeBoxNotesTemplateService extends IceScrumEventPublisher {
             result << '\n'
         }
         template.configs.each { config ->
-            // filter stories
+            // Filter stories
             Closure tagCondition = { !(config.storyTags) || it.tags.intersect(config.storyTags) }
             Closure typeCondition = { !(config.containsKey('storyType')) || (config.storyType == it.type) }
             def filteredStories = sprint.stories.findAll { tagCondition(it) && typeCondition(it) }
@@ -94,20 +90,16 @@ class TimeBoxNotesTemplateService extends IceScrumEventPublisher {
 
     private static String computeTimeBoxNotesSection(Collection stories, def config) {
         def result = new StringBuffer()
-        // header
         if (config.header) {
             result << config.header
             result << '\n'
         }
         if (config.lineTemplate) {
-            if (stories) {
-                stories.each { story ->
-                    result << parseStoryVariables(story, config.lineTemplate)
-                    result << '\n'
-                }
+            stories?.each { story ->
+                result << parseStoryVariables(story, config.lineTemplate)
+                result << '\n'
             }
         }
-        //footer
         if (config.footer) {
             result << config.footer
             result << '\n'
@@ -117,40 +109,40 @@ class TimeBoxNotesTemplateService extends IceScrumEventPublisher {
 
     private static String parseStoryVariables(Story story, String value) {
         def simple = new SimpleTemplateEngine()
-        def binding = [project  : [
-                id         : story.backlog.id,
-                name       : story.backlog.name,
-                pkey       : story.backlog.pkey,
-                description: story.backlog.description,
-                startDate  : story.backlog.startDate,
-                endDate    : story.backlog.endDate
-        ], story                : [id            : story.uid,
-                                   name          : story.name,
-                                   description   : story.description,
-                                   notes         : story.notes,
-                                   origin        : story.origin,
-                                   effort        : story.effort,
-                                   rank          : story.rank,
-                                   affectVersion : story.affectVersion,
-                                   suggestedDate : story.suggestedDate,
-                                   acceptedDate  : story.acceptedDate,
-                                   plannedDate   : story.plannedDate,
-                                   estimatedDate : story.estimatedDate,
-                                   inProgressDate: story.inProgressDate,
-                                   doneDate      : story.doneDate,
-                                   comments      : story.comments
-        ], sprint               : story.parentSprint ? [goal            : story.parentSprint.goal,
-                                                        startDate       : story.parentSprint.startDate,
-                                                        velocity        : story.parentSprint.velocity,
-                                                        capacity        : story.parentSprint.capacity,
-                                                        endDate         : story.parentSprint.endDate,
-                                                        deliveredVersion: story.parentSprint.deliveredVersion,
-                                                        orderNumber     : story.parentSprint.orderNumber,
-                                                        index           : story.parentSprint.index] : null
-                       , release: story.parentSprint?.parentRelease ? [name       : story.parentSprint.parentRelease.name,
-                                                                       startDate  : story.parentSprint.parentRelease.startDate,
-                                                                       endDate    : story.parentSprint.parentRelease.endDate,
-                                                                       orderNumber: story.parentSprint.parentRelease.orderNumber] : null]
+        def binding = [
+                project: [id         : story.backlog.id,
+                          name       : story.backlog.name,
+                          pkey       : story.backlog.pkey,
+                          description: story.backlog.description,
+                          startDate  : story.backlog.startDate,
+                          endDate    : story.backlog.endDate],
+                story  : [id            : story.uid,
+                          name          : story.name,
+                          description   : story.description,
+                          notes         : story.notes,
+                          origin        : story.origin,
+                          effort        : story.effort,
+                          rank          : story.rank,
+                          affectVersion : story.affectVersion,
+                          suggestedDate : story.suggestedDate,
+                          acceptedDate  : story.acceptedDate,
+                          plannedDate   : story.plannedDate,
+                          estimatedDate : story.estimatedDate,
+                          inProgressDate: story.inProgressDate,
+                          doneDate      : story.doneDate,
+                          comments      : story.comments],
+                sprint : [goal            : story.parentSprint.goal,
+                          startDate       : story.parentSprint.startDate,
+                          velocity        : story.parentSprint.velocity,
+                          capacity        : story.parentSprint.capacity,
+                          endDate         : story.parentSprint.endDate,
+                          deliveredVersion: story.parentSprint.deliveredVersion,
+                          orderNumber     : story.parentSprint.orderNumber,
+                          index           : story.parentSprint.index],
+                release: [name       : story.parentSprint.parentRelease.name,
+                          startDate  : story.parentSprint.parentRelease.startDate,
+                          endDate    : story.parentSprint.parentRelease.endDate,
+                          orderNumber: story.parentSprint.parentRelease.orderNumber]]
         try {
             return simple.createTemplate(value).make(binding).toString()
         } catch (Exception e) {
