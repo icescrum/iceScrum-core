@@ -23,10 +23,7 @@ package org.icescrum.core.services
 
 import grails.transaction.Transactional
 import groovy.text.SimpleTemplateEngine
-import org.icescrum.core.domain.Project
-import org.icescrum.core.domain.Release
-import org.icescrum.core.domain.Story
-import org.icescrum.core.domain.TimeBoxNotesTemplate
+import org.icescrum.core.domain.*
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
 import org.springframework.security.access.prepost.PreAuthorize
@@ -35,15 +32,24 @@ import org.springframework.security.access.prepost.PreAuthorize
 @Transactional
 class TimeBoxNotesTemplateService extends IceScrumEventPublisher {
 
-    @PreAuthorize('inProject(#template.parentProject)')
-    void delete(TimeBoxNotesTemplate template) {
-        template.delete()
+    @PreAuthorize('inProject(#project)')
+    void save(TimeBoxNotesTemplate template, Project project) {
+        template.parentProject = project
+        template.save(flush: true)
+        project.addToTimeBoxNotesTemplates(template)
+        publishSynchronousEvent(IceScrumEventType.CREATE, template)
     }
 
     @PreAuthorize('inProject(#template.parentProject)')
     void update(TimeBoxNotesTemplate template) {
         template.save(flush: true)
     }
+
+    @PreAuthorize('inProject(#template.parentProject)')
+    void delete(TimeBoxNotesTemplate template) {
+        template.delete()
+    }
+
 
     @PreAuthorize('inProject(#release.parentProject)')
     def computeReleaseNotes(Release release, TimeBoxNotesTemplate template) {
@@ -53,36 +59,60 @@ class TimeBoxNotesTemplateService extends IceScrumEventPublisher {
             result << '\n'
         }
         template.configs.each { config ->
-            if (config.header) {
-                result << config.header
-                result << '\n'
-            }
+            // filter stories
             Closure tagCondition = { !(config.storyTags) || it.tags.intersect(config.storyTags) }
             Closure typeCondition = { !(config.containsKey('storyType')) || (config.storyType == it.type) }
             def allStories = release.sprints*.stories.flatten()
             def filteredStories = allStories.findAll { tagCondition(it) && typeCondition(it) }
+            result << computeTimeBoxNotesSection(filteredStories, config)
+        }
+        if (template.footer) {
+            result.append(template.footer)
+        }
+        return result.toString()
+    }
 
-            if (filteredStories) {
-                filteredStories.each { story ->
+    @PreAuthorize('inProject(#sprint.parentRelease.parentProject)')
+    def computeSprintNotes(Sprint sprint, TimeBoxNotesTemplate template) {
+        def result = new StringBuffer()
+        if (template.header) {
+            result << template.header
+            result << '\n'
+        }
+        template.configs.each { config ->
+            // filter stories
+            Closure tagCondition = { !(config.storyTags) || it.tags.intersect(config.storyTags) }
+            Closure typeCondition = { !(config.containsKey('storyType')) || (config.storyType == it.type) }
+            def filteredStories = sprint.stories.findAll { tagCondition(it) && typeCondition(it) }
+            result << computeTimeBoxNotesSection(filteredStories, config)
+        }
+        if (template.footer) {
+            result.append(template.footer)
+        }
+        return result.toString()
+    }
+
+    private static String computeTimeBoxNotesSection(Collection stories, def config) {
+        def result = new StringBuffer()
+        // header
+        if (config.header) {
+            result << config.header
+            result << '\n'
+        }
+        if (config.lineTemplate) {
+            if (stories) {
+                stories.each { story ->
                     result << parseStoryVariables(story, config.lineTemplate)
                     result << '\n'
                 }
             }
-            if (config.footer) {
-                result << config.footer
-                result << '\n'
-            }
         }
-        result.append(template.footer)
+        //footer
+        if (config.footer) {
+            result << config.footer
+            result << '\n'
+        }
         return result.toString()
-    }
-
-    @PreAuthorize('inProject(#project)')
-    void save(TimeBoxNotesTemplate template, Project project) {
-        template.parentProject = project
-        template.save(flush: true)
-        project.addToTimeBoxNotesTemplates(template) // TODO : does not requires save ???
-        publishSynchronousEvent(IceScrumEventType.CREATE, template)
     }
 
     private static String parseStoryVariables(Story story, String value) {
