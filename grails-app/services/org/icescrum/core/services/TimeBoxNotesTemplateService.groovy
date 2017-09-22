@@ -24,6 +24,7 @@ package org.icescrum.core.services
 import grails.transaction.Transactional
 import groovy.text.SimpleTemplateEngine
 import org.icescrum.core.domain.*
+import org.icescrum.core.support.ApplicationSupport
 import org.springframework.security.access.prepost.PreAuthorize
 
 //TODO: implement event publisher
@@ -110,39 +111,43 @@ class TimeBoxNotesTemplateService {
     private static String parseStoryVariables(Story story, String value) {
         def simple = new SimpleTemplateEngine()
         def binding = [
-                project: [id         : story.backlog.id,
-                          name       : story.backlog.name,
-                          pkey       : story.backlog.pkey,
-                          description: story.backlog.description,
-                          startDate  : story.backlog.startDate,
-                          endDate    : story.backlog.endDate],
-                story  : [id            : story.uid,
-                          name          : story.name,
-                          description   : story.description,
-                          notes         : story.notes,
-                          origin        : story.origin,
-                          effort        : story.effort,
-                          rank          : story.rank,
-                          affectVersion : story.affectVersion,
-                          suggestedDate : story.suggestedDate,
-                          acceptedDate  : story.acceptedDate,
-                          plannedDate   : story.plannedDate,
-                          estimatedDate : story.estimatedDate,
-                          inProgressDate: story.inProgressDate,
-                          doneDate      : story.doneDate,
-                          comments      : story.comments],
-                sprint : [goal            : story.parentSprint.goal,
-                          startDate       : story.parentSprint.startDate,
-                          velocity        : story.parentSprint.velocity,
-                          capacity        : story.parentSprint.capacity,
-                          endDate         : story.parentSprint.endDate,
-                          deliveredVersion: story.parentSprint.deliveredVersion,
-                          orderNumber     : story.parentSprint.orderNumber,
-                          index           : story.parentSprint.index],
-                release: [name       : story.parentSprint.parentRelease.name,
-                          startDate  : story.parentSprint.parentRelease.startDate,
-                          endDate    : story.parentSprint.parentRelease.endDate,
-                          orderNumber: story.parentSprint.parentRelease.orderNumber]]
+                serverUrl: ApplicationSupport.serverURL(),
+                baseUrl  : ApplicationSupport.serverURL() + '/' + story.backlog.pkey,
+                project  : [id         : story.backlog.id,
+                            name       : story.backlog.name,
+                            pkey       : story.backlog.pkey,
+                            description: story.backlog.description,
+                            startDate  : story.backlog.startDate,
+                            endDate    : story.backlog.endDate],
+                story    : [id            : story.uid,
+                            name          : story.name,
+                            description   : story.description,
+                            notes         : story.notes,
+                            origin        : story.origin,
+                            effort        : story.effort,
+                            rank          : story.rank,
+                            affectVersion : story.affectVersion,
+                            suggestedDate : story.suggestedDate,
+                            acceptedDate  : story.acceptedDate,
+                            plannedDate   : story.plannedDate,
+                            estimatedDate : story.estimatedDate,
+                            inProgressDate: story.inProgressDate,
+                            doneDate      : story.doneDate,
+                            comments      : story.comments],
+                sprint   : [id              : story.parentSprint.id,
+                            goal            : story.parentSprint.goal,
+                            startDate       : story.parentSprint.startDate,
+                            velocity        : story.parentSprint.velocity,
+                            capacity        : story.parentSprint.capacity,
+                            endDate         : story.parentSprint.endDate,
+                            deliveredVersion: story.parentSprint.deliveredVersion,
+                            orderNumber     : story.parentSprint.orderNumber,
+                            index           : story.parentSprint.index],
+                release  : [id         : story.parentSprint.parentRelease.id,
+                            name       : story.parentSprint.parentRelease.name,
+                            startDate  : story.parentSprint.parentRelease.startDate,
+                            endDate    : story.parentSprint.parentRelease.endDate,
+                            orderNumber: story.parentSprint.parentRelease.orderNumber]]
         try {
             return simple.createTemplate(value).make(binding).toString()
         } catch (Exception e) {

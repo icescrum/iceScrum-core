@@ -886,18 +886,17 @@ class ProjectService extends IceScrumEventPublisher {
         new TimeBoxNotesTemplate(
                 name: "HTML Release Note Template",
                 header: "<h1> My HTML release Note </h1>",
-                footer: "<span> Release note end </span>",
                 parentProject: project,
                 configsData: ([
-                        [header      : "<h2> Features </h2> <ul>",
+                        [header      : "<h2>New Features</h2><ul>",
                          footer      : "</ul>",
                          storyType   : Story.TYPE_USER_STORY,
-                         lineTemplate: '<li>${story.name}</li>'
+                         lineTemplate: '<li><a href="${baseUrl}-${story.id}">${story.name}</a></li>'
                         ],
-                        [header      : "<h2> Bug Fixes </h2> <ul>",
+                        [header      : "<h2>Bug Fixes</h2><ul>",
                          footer      : "</ul>",
                          storyType   : Story.TYPE_DEFECT, //defect
-                         lineTemplate: '<li>${story.name}</li>'
+                         lineTemplate: '<li><a href="${baseUrl}-${story.id}">${story.name}</a></li>'
                         ]
                 ] as JSON).toString()
         ).save()
@@ -905,18 +904,17 @@ class ProjectService extends IceScrumEventPublisher {
         new TimeBoxNotesTemplate(
                 name: "Markdown Release Note Template",
                 header: "# My Markdown release Note",
-                footer: "",
                 parentProject: project,
                 configsData: ([
-                        [header      : "## Features",
+                        [header      : "## New Features",
                          footer      : "",
                          storyType   : Story.TYPE_USER_STORY, //user
-                         lineTemplate: '* ${story.name}'
+                         lineTemplate: '* [${story.name}](${baseUrl}-${story.id})'
                         ],
                         [header      : "## Bug Fixes",
                          footer      : "",
                          storyType   : Story.TYPE_DEFECT, //defect
-                         lineTemplate: '* ${story.name}'
+                         lineTemplate: '* [${story.name}](${baseUrl}-${story.id})'
                         ]
                 ] as JSON).toString()
         ).save()
