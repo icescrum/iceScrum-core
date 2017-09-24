@@ -108,6 +108,25 @@ class TimeBoxNotesTemplateService {
         return result.toString()
     }
 
+    def unMarshall(def timeBoxNotesTemplateXml, def options) {
+        Project project = options.project
+        TimeBoxNotesTemplate.withTransaction(readOnly: !options.save) { transaction ->
+            def timeBoxNotesTemplate = new TimeBoxNotesTemplate(
+                    name: timeBoxNotesTemplateXml.name.text(),
+                    header: timeBoxNotesTemplateXml.header.text(),
+                    footer: timeBoxNotesTemplateXml.footer.text(),
+                    configsData: timeBoxNotesTemplateXml.configsData.text()
+            )
+            if (project) {
+                timeBoxNotesTemplate.parentProject = project
+            }
+            if (options.save) {
+                timeBoxNotesTemplate.save()
+            }
+            return (TimeBoxNotesTemplate) importDomainsPlugins(timeBoxNotesTemplateXml, timeBoxNotesTemplate, options)
+        }
+    }
+
     private static String parseStoryVariables(Story story, String value) {
         def simple = new SimpleTemplateEngine()
         def binding = [

@@ -48,6 +48,7 @@ class TimeBoxNotesTemplate implements Serializable {
         configsData length: 5000
         header length: 5000
         footer length: 5000
+        table   name:'is_tbn_tpls'
     }
 
     void setConfigs(List configs) {
@@ -67,11 +68,11 @@ class TimeBoxNotesTemplate implements Serializable {
     }
 
     def xml(builder) {
-        builder.rnTemplate(this.id) {
-            builder.name(this.name)
-            builder.header(this.header)
-            builder.footer(this.footer)
-            builder.configsData(this.configsData)
+        builder.timeBoxNotesTemplate(this.id) {
+            builder.name { builder.mkp.yieldUnescaped("<![CDATA[${this.name}]]>") }
+            builder.header { builder.mkp.yieldUnescaped("<![CDATA[${this.header ?: ''}]]>") }
+            builder.footer { builder.mkp.yieldUnescaped("<![CDATA[${this.footer ?: ''}]]>") }
+            builder.configsData { builder.mkp.yieldUnescaped("<![CDATA[${this.configsData}]]>") }
             exportDomainsPlugins(builder)
         }
     }

@@ -429,6 +429,10 @@ class ProjectService extends IceScrumEventPublisher {
             projectXml.simpleProjectApps.simpleProjectApp.each {
                 appService.unMarshall(it, options)
             }
+            def timeBoxNotesTemplateService = (TimeBoxNotesTemplateService) grailsApplication.mainContext.getBean('timeBoxNotesTemplateService')
+            projectXml.timeBoxNotesTemplates.timeBoxNotesTemplate.each {
+                timeBoxNotesTemplateService.unMarshall(it, options)
+            }
             def featureService = (FeatureService) grailsApplication.mainContext.getBean('featureService')
             projectXml.features.feature.each { it ->
                 featureService.unMarshall(it, options)
