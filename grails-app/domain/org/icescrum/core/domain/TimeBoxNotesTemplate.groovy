@@ -48,7 +48,7 @@ class TimeBoxNotesTemplate implements Serializable {
         configsData length: 5000
         header length: 5000
         footer length: 5000
-        table   name:'is_tbn_tpls'
+        table name: 'is_tbn_tpls'
     }
 
     void setConfigs(List configs) {
