@@ -899,12 +899,11 @@ class ProjectService extends IceScrumEventPublisher {
                         ],
                         [header      : "<h2>Bug Fixes</h2><ul>",
                          footer      : "</ul>",
-                         storyType   : Story.TYPE_DEFECT, //defect
+                         storyType   : Story.TYPE_DEFECT,
                          lineTemplate: '<li><a href="${baseUrl}-${story.id}">${story.name}</a></li>'
                         ]
                 ] as JSON).toString()
         ).save()
-
         new TimeBoxNotesTemplate(
                 name: "Markdown Release Note Template",
                 header: "# My Markdown release Note",
@@ -912,16 +911,15 @@ class ProjectService extends IceScrumEventPublisher {
                 configsData: ([
                         [header      : "## New Features",
                          footer      : "",
-                         storyType   : Story.TYPE_USER_STORY, //user
+                         storyType   : Story.TYPE_USER_STORY,
                          lineTemplate: '* [${story.name}](${baseUrl}-${story.id})'
                         ],
                         [header      : "## Bug Fixes",
                          footer      : "",
-                         storyType   : Story.TYPE_DEFECT, //defect
+                         storyType   : Story.TYPE_DEFECT,
                          lineTemplate: '* [${story.name}](${baseUrl}-${story.id})'
                         ]
                 ] as JSON).toString()
         ).save()
-
     }
 }
