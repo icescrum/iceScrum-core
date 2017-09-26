@@ -119,6 +119,7 @@ class TimeBoxNotesTemplateService {
             )
             if (project) {
                 timeBoxNotesTemplate.parentProject = project
+                project.addToTimeBoxNotesTemplates(timeBoxNotesTemplate)
             }
             if (options.save) {
                 timeBoxNotesTemplate.save()

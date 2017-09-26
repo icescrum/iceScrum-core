@@ -490,6 +490,9 @@ class ProjectService extends IceScrumEventPublisher {
             }
 
             createDefaultBacklogs(project)
+            if (!project.timeBoxNotesTemplates) {
+                createDefaultTimeBoxNotesTemplates(project)
+            }
 
             if (options.save) {
                 project.save()
