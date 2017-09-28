@@ -177,15 +177,13 @@ class Team implements Serializable, Comparable {
                         AND lower(t.name) LIKE lower(:term)""", [sid: user, term: term], params ?: [:])
     }
 
-    static namedQueries = {
-        projectTeam { p, u ->
-            projects {
-                idEq(p)
-            }
-            members {
-                idEq(u)
-            }
-        }
+    static Team findTeamByProjectAndUser(Long projectId, Long userId) {
+        executeQuery("""SELECT DISTINCT t
+                        FROM org.icescrum.core.domain.Team t
+                        INNER JOIN t.members m
+                        INNER JOIN t.projects p
+                        WHERE p.id = :projectId
+                        AND m.id = :userId""", [userId: userId, projectId: projectId], [cache:true])[0]
     }
 
     def getScrumMasters() {

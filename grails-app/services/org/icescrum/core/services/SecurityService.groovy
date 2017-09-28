@@ -196,13 +196,8 @@ class SecurityService {
     }
 
     Team openProjectTeam(Long projectId, Long principalId) {
-        def computeResult = {
-            def team = Team.projectTeam(projectId, principalId).list(max: 1)
-            return team ? team[0] : null
-        }
-        return computeResult()
+        return Team.findTeamByProjectAndUser(projectId, principalId)
     }
-
 
     boolean scrumMaster(team, auth) {
         if (!springSecurityService.isLoggedIn()) {
