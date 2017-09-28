@@ -53,6 +53,7 @@ import org.grails.comments.CommentLink
 import org.icescrum.core.app.AppDefinition
 import org.icescrum.core.domain.Project
 import org.icescrum.core.domain.SimpleProjectApp
+import org.icescrum.core.domain.Sprint
 import org.icescrum.core.domain.Team
 import org.icescrum.core.domain.User
 import org.icescrum.core.domain.preferences.UserPreferences
@@ -596,6 +597,19 @@ class ApplicationSupport {
         } finally {
             xml.delete()
         }
+    }
+
+    public static List getSprintXDomain(Sprint sprint, List values) {
+        def xDomain = []
+        if (values) {
+            xDomain = [values.label.min()]
+            if (sprint.state == Sprint.STATE_INPROGRESS) {
+                xDomain << [sprint.endDate.clone().clearTime().time, values.label.max()].max()
+            } else {
+                xDomain << values.label.max()
+            }
+        }
+        return xDomain
     }
 
     public static List getChartTickValues(List xDomain) {
