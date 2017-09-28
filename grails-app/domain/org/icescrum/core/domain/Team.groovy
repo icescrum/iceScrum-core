@@ -147,20 +147,24 @@ class Team implements Serializable, Comparable {
     }
 
     static List<Project> findAllActiveProjectsByTeamOwner(String username, String term = '%%', params) {
-        executeQuery("""SELECT DISTINCT p
-                        FROM org.icescrum.core.domain.Project p,
-                             org.icescrum.core.domain.Team t,
-                             grails.plugin.springsecurity.acl.AclClass ac,
-                             grails.plugin.springsecurity.acl.AclObjectIdentity ai,
-                             grails.plugin.springsecurity.acl.AclSid acl
-                        INNER JOIN t.projects p
-                        WHERE p.preferences.archived = false
-                        AND lower(p.name) LIKE lower(:term)
-                        AND t.id = ai.objectId
-                        AND acl.id = ai.owner
-                        AND ai.owner.sid = :sid
-                        AND ai.aclClass = ac.id
-                        AND ac.className = 'org.icescrum.core.domain.Team'""", [sid: username, term: term], params ?: [:])
+        executeQuery("""SELECT p
+                        FROM org.icescrum.core.domain.Project as p
+                        WHERE p.id IN (
+                            SELECT DISTINCT p.id
+                            FROM org.icescrum.core.domain.Project p,
+                                 org.icescrum.core.domain.Team t,
+                                 grails.plugin.springsecurity.acl.AclClass ac,
+                                 grails.plugin.springsecurity.acl.AclObjectIdentity ai,
+                                 grails.plugin.springsecurity.acl.AclSid acl
+                            INNER JOIN t.projects p
+                            WHERE p.preferences.archived = false
+                            AND lower(p.name) LIKE lower(:term)
+                            AND t.id = ai.objectId
+                            AND acl.id = ai.owner
+                            AND ai.owner.sid = :sid
+                            AND ai.aclClass = ac.id
+                            AND ac.className = 'org.icescrum.core.domain.Team'
+                        )""", [sid: username, term: term], params ?: [:])
     }
 
     static countByOwner(String user, params, String term = '%%') {
