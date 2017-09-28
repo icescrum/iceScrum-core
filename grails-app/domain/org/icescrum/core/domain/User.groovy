@@ -88,17 +88,6 @@ class User implements Serializable, Attachmentable {
         lastLogin(nullable: true)
     }
 
-    static findExceptTeam(Long id, term, params) {
-        executeQuery(
-                "SELECT DISTINCT u " +
-                        "FROM org.icescrum.core.domain.User as u " +
-                        "WHERE u.id != :uid and (lower(u.username) like lower(:term) or lower(u.firstName) like lower(:term) " +
-                        "or lower(u.lastName) like lower(:term)) and u.id not in " +
-                        "(SELECT DISTINCT u2.id FROM org.icescrum.core.domain.User as u2 " +
-                        "INNER JOIN u2.teams as t " +
-                        "WHERE t.id = :t) ", [uid: SCH.context.authentication.principal?.id, t: id, term: "%$term%"], params ?: [:])
-    }
-
     static findUsersLike(term, excludeCurrentUser, showDisabled, params) {
         executeQuery("""SELECT DISTINCT u
                         FROM org.icescrum.core.domain.User AS u
