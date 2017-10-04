@@ -32,11 +32,9 @@ public class IceScrumGormConfiguration extends GrailsAnnotationConfiguration {
                     // Duplicates happen when FK on timebox because it generates not one but two FK for the same table and column, e.g. one to is_timebox and one to is_release
                     // Be careful, foreign keys in join table (many to many) don't use this method to generate key names
                     if ("true".equals(System.getProperty("icescrum.oracle"))) {
-                        System.out.println("Oracle key naming");
                         // New naming that avoids duplicate while staying under 30 characters
                         fkName = generateName(table, fk);
                     } else {
-                        System.out.println("Normal key naming");
                         // Below is legacy naming that avoids duplicated but exceeds 30 characters
                         String tableName = fk.getReferencedTable().getName().replaceAll("_", "");
                         fkName = fk.getName() + tableName;
