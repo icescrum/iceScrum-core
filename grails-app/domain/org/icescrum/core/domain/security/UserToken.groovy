@@ -39,6 +39,6 @@ class UserToken implements Serializable {
         cache true
         version false
         id generator: "assigned", column: "id", unique: "true"
-        table System.properties['icescrum.oracle'] ? 'is_u_tokens' : 'is_user_tokens'
+        table 'is_user_tokens'
     }
 }

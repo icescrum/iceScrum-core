@@ -80,7 +80,6 @@ class Activity implements Serializable, Comparable {
         code in Holders.grailsApplication.config.icescrum.activities.important
     }
 
-    // May not work on ORACLE
     static List<List> storyActivities(User user) {
         def projects = Project.findAllByRole(user, [BasePermission.WRITE, BasePermission.READ], [cache: true], true, false)
         def activitiesAndStories = []
