@@ -19,6 +19,7 @@
  *
  * Nicolas Noullet (nnoullet@kagilum.com)
  * Vincent Barrier (vbarrier@kagilum.com)
+ * Colin Bontemps (cbontemps@kagilum.com)
  *
  */
 package org.icescrum.core.app
@@ -32,10 +33,12 @@ class AppDefinition {
     boolean isProject = false
     boolean isNew = false
     boolean reloadUIOnStateChange = false
+    int realm = 0
     String id
     String logo = 'logo.png'
     String version
     String author
+    String appUrl
     String docUrl
     String websiteUrl
     List<String> screenshots = []
@@ -63,6 +66,10 @@ class AppDefinition {
 
     void author(String author) {
         this.author = author
+    }
+
+    void appUrl(String appUrl) {
+        this.appUrl = appUrl
     }
 
     void docUrl(String docUrl) {
@@ -102,6 +109,10 @@ class AppDefinition {
         this.reloadUIOnStateChange = reloadUIOnStateChange
     }
 
+    void realm(int realm) {
+        this.realm = realm
+    }
+
     void reportUsageData(Closure reportUsageData) {
         this.reportUsageData = reportUsageData
     }
@@ -131,11 +142,15 @@ class AppDefinition {
     // Getters
 
     boolean getAvailableForServer() {
-        return isAvailableForServer ? isAvailableForServer(Holders.grailsApplication) : true
+        return isAvailableForServer ? isAvailableForServer(Holders.grailsApplication, this) : true
     }
 
     boolean getEnabledForServer() {
         return isEnabledForServer ? isEnabledForServer(Holders.grailsApplication) : true
+    }
+
+    String getAppUrl() {
+        return appUrl ? appUrl : 'https://www.icescrum.com/apps/' + this.id
     }
 
     // Utility
