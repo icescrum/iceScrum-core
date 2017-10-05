@@ -537,24 +537,26 @@ class ProjectService extends IceScrumEventPublisher {
             def validateUsers = { users ->
                 users?.each { user ->
                     user.validate()
-                    if (user.errors.errorCount == 1) {
+                    if (user.errors.errorCount && user.errors.errorCount <= 2) {
                         if (!changes.usernames) {
                             changes.usernames = [:]
                         }
                         if (!changes.emails) {
                             changes.emails = [:]
                         }
-                        if (user.errors.fieldErrors[0]?.field == 'username' && !(user.username in changes.usernames)) {
-                            changes.usernames."$user.uid" = user.username
-                        } else if (user.errors.fieldErrors[0]?.field == 'email' && !(user.email in changes.emails)) {
-                            changes.emails."$user.uid" = user.email
-                        } else {
-                            if (log.infoEnabled) {
-                                log.info("User validation error (${user.username}): " + user.errors)
+                        user.errors.fieldErrors*.field.each { field ->
+                            if (!(field in ['username', 'email'])) {
+                                if (log.infoEnabled) {
+                                    log.info("User validation error (${user.username}): " + user.errors)
+                                }
+                                throw new ValidationException('Validation errors occurred during user import', user.errors)
+                            } else if (field == 'username' && !(user.username in changes.usernames)) {
+                                changes.usernames."$user.uid" = user.username
+                            } else if (field == 'email' && !(user.email in changes.emails)) {
+                                changes.emails."$user.uid" = user.email
                             }
-                            throw new ValidationException('Validation errors occurred during user import', user.errors)
                         }
-                    } else if (user.errors.errorCount > 1) {
+                    } else if (user.errors.errorCount > 2) {
                         if (log.infoEnabled) {
                             log.info("User validation error (${user.username}): " + user.errors)
                         }
