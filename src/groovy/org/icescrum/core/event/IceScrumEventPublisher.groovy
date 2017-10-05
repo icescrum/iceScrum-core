@@ -27,6 +27,7 @@ import grails.util.GrailsNameUtils
 import grails.util.Holders
 import org.codehaus.groovy.grails.commons.DefaultGrailsDomainClass
 import org.codehaus.groovy.grails.commons.GrailsApplication
+import org.hibernate.proxy.HibernateProxyHelper
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -58,7 +59,7 @@ abstract class IceScrumEventPublisher {
 
     Map publishSynchronousEvent(IceScrumEventType type, object, Map dirtyProperties = extractDirtyProperties(type, object)) {
         logEvent(type, object, dirtyProperties)
-        def domain = GrailsNameUtils.getPropertyNameRepresentation(object.class)
+        def domain = GrailsNameUtils.getPropertyNameRepresentation(HibernateProxyHelper.getClassWithoutInitializingProxy(object))
         Holders.grailsApplication.config.icescrum.listenersByDomain.getAt(domain)?.getAt(type)?.each {
             it(type, object, dirtyProperties)
         }
