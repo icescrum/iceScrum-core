@@ -283,6 +283,8 @@ class NotificationEmailService {
                         async true
                     if (options.from)
                         from options.from
+                    if (options.replyTo)
+                        replyTo options.replyTo
                     to toEmail
                     subject options.subject
                     body(
@@ -305,6 +307,8 @@ class NotificationEmailService {
                     cc options.cc
                 if (options.bcc)
                     bcc options.bcc
+                if (options.replyTo)
+                    replyTo options.replyTo
                 subject options.subject
                 body(
                         view: options.view,
