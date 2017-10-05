@@ -534,7 +534,7 @@ class ProjectService extends IceScrumEventPublisher {
     def validate(Project project, boolean erase = false) {
         def changes = [:]
         Project.withNewSession {
-            def validateUsers = { users ->
+            def validateUsers = { Collection<User> users ->
                 users?.each { user ->
                     user.validate()
                     if (user.errors.errorCount && user.errors.errorCount <= 2) {
@@ -583,6 +583,7 @@ class ProjectService extends IceScrumEventPublisher {
                     throw new ValidationException('Validation errors occurred during team import', team.errors)
                 }
                 validateUsers(team.members)
+                validateUsers([team.owner])
             }
             validateUsers(project.productOwners)
             validateUsers(project.stakeHolders)
