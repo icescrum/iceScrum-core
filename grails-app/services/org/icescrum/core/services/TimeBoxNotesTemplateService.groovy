@@ -60,7 +60,7 @@ class TimeBoxNotesTemplateService {
             Closure tagCondition = { !(config.storyTags) || it.tags.intersect(config.storyTags) }
             Closure typeCondition = { !(config.containsKey('storyType')) || (config.storyType == it.type) }
             def allStories = release.sprints*.stories.flatten()
-            def filteredStories = allStories.findAll { tagCondition(it) && typeCondition(it) }
+            def filteredStories = allStories.findAll { it.state == Story.STATE_DONE && tagCondition(it) && typeCondition(it) }
             result << computeTimeBoxNotesSection(filteredStories, config)
         }
         if (template.footer) {
@@ -80,7 +80,7 @@ class TimeBoxNotesTemplateService {
             // Filter stories
             Closure tagCondition = { !(config.storyTags) || it.tags.intersect(config.storyTags) }
             Closure typeCondition = { !(config.containsKey('storyType')) || (config.storyType == it.type) }
-            def filteredStories = sprint.stories.findAll { tagCondition(it) && typeCondition(it) }
+            def filteredStories = sprint.stories.findAll { it.state == Story.STATE_DONE && tagCondition(it) && typeCondition(it) }
             result << computeTimeBoxNotesSection(filteredStories, config)
         }
         if (template.footer) {
