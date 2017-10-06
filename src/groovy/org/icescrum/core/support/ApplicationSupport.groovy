@@ -57,6 +57,8 @@ import org.icescrum.core.domain.Sprint
 import org.icescrum.core.domain.Team
 import org.icescrum.core.domain.User
 import org.icescrum.core.domain.preferences.UserPreferences
+import org.icescrum.core.domain.security.Authority
+import org.icescrum.core.domain.security.UserAuthority
 import org.icescrum.core.security.WebScrumExpressionHandler
 import org.icescrum.core.services.ProjectService
 import org.icescrum.core.ui.WindowDefinition
@@ -115,6 +117,14 @@ class ApplicationSupport {
             }
         }
         return serverUrl
+    }
+
+    public static def getFirstAdministrator(){
+        return UserAuthority.findAllByAuthority(Authority.findByAuthority(Authority.ROLE_ADMIN)).collect { it.user }?.first()
+    }
+
+    public static def getAllAdministrators(){
+        return UserAuthority.findAllByAuthority(Authority.findByAuthority(Authority.ROLE_ADMIN)).collect { it.user }
     }
 
     public static def controllerExist(def controllerName, def actionName = '') {
