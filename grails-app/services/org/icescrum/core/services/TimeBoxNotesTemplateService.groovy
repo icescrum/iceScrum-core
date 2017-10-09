@@ -52,7 +52,7 @@ class TimeBoxNotesTemplateService {
     def computeReleaseNotes(Release release, TimeBoxNotesTemplate template) {
         def result = new StringBuffer()
         if (template.header) {
-            result << template.header
+            result << result << parseReleaseVariables(release, template.header)
             result << '\n'
         }
         template.configs.each { config ->
@@ -64,7 +64,7 @@ class TimeBoxNotesTemplateService {
             result << computeTimeBoxNotesSection(filteredStories, config)
         }
         if (template.footer) {
-            result.append(template.footer)
+            result << parseReleaseVariables(release, template.footer)
         }
         return result.toString()
     }
@@ -73,7 +73,7 @@ class TimeBoxNotesTemplateService {
     def computeSprintNotes(Sprint sprint, TimeBoxNotesTemplate template) {
         def result = new StringBuffer()
         if (template.header) {
-            result << template.header
+            result << parseSprintVariables(sprint, template.header)
             result << '\n'
         }
         template.configs.each { config ->
@@ -84,7 +84,7 @@ class TimeBoxNotesTemplateService {
             result << computeTimeBoxNotesSection(filteredStories, config)
         }
         if (template.footer) {
-            result.append(template.footer)
+            result << parseSprintVariables(sprint, template.footer)
         }
         return result.toString()
     }
@@ -168,6 +168,61 @@ class TimeBoxNotesTemplateService {
                             startDate  : story.parentSprint.parentRelease.startDate,
                             endDate    : story.parentSprint.parentRelease.endDate,
                             orderNumber: story.parentSprint.parentRelease.orderNumber]]
+        try {
+            return simple.createTemplate(value).make(binding).toString()
+        } catch (Exception e) {
+            return value
+        }
+    }
+
+    private static String parseSprintVariables(Sprint sprint, String value) {
+        def simple = new SimpleTemplateEngine()
+        def binding = [
+                serverUrl: ApplicationSupport.serverURL(),
+                baseUrl  : ApplicationSupport.serverURL() + '/' + sprint.parentRelease.parentProject.pkey,
+                project  : [id         : sprint.parentRelease.parentProject.id,
+                            name       : sprint.parentRelease.parentProject.name,
+                            pkey       : sprint.parentRelease.parentProject.pkey,
+                            description: sprint.parentRelease.parentProject.description,
+                            startDate  : sprint.parentRelease.parentProject.startDate,
+                            endDate    : sprint.parentRelease.parentProject.endDate],
+                sprint   : [id              : sprint.id,
+                            goal            : sprint.goal,
+                            startDate       : sprint.startDate,
+                            velocity        : sprint.velocity,
+                            capacity        : sprint.capacity,
+                            endDate         : sprint.endDate,
+                            deliveredVersion: sprint.deliveredVersion,
+                            orderNumber     : sprint.orderNumber,
+                            index           : sprint.index],
+                release  : [id         : sprint.parentRelease.id,
+                            name       : sprint.parentRelease.name,
+                            startDate  : sprint.parentRelease.startDate,
+                            endDate    : sprint.parentRelease.endDate,
+                            orderNumber: sprint.parentRelease.orderNumber]]
+        try {
+            return simple.createTemplate(value).make(binding).toString()
+        } catch (Exception e) {
+            return value
+        }
+    }
+
+    private static String parseReleaseVariables(Release release, String value) {
+        def simple = new SimpleTemplateEngine()
+        def binding = [
+                serverUrl: ApplicationSupport.serverURL(),
+                baseUrl  : ApplicationSupport.serverURL() + '/' + release.parentProject.pkey,
+                project  : [id         : release.parentProject.id,
+                            name       : release.parentProject.name,
+                            pkey       : release.parentProject.pkey,
+                            description: release.parentProject.description,
+                            startDate  : release.parentProject.startDate,
+                            endDate    : release.parentProject.endDate],
+                release  : [id         : release.id,
+                            name       : release.name,
+                            startDate  : release.startDate,
+                            endDate    : release.endDate,
+                            orderNumber: release.orderNumber]]
         try {
             return simple.createTemplate(value).make(binding).toString()
         } catch (Exception e) {
