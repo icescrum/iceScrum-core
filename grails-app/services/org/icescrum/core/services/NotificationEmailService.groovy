@@ -238,7 +238,7 @@ class NotificationEmailService {
 
     void sendNewPassword(User user, String password) {
         def request = RCH.currentRequestAttributes().getRequest()
-        def link = grailsApplication.config.icescrum.serverURL + '/login'
+        def link = grailsApplication.config.icescrum.serverURL
         if (log.debugEnabled) {
             log.debug "Send email, retrieve password to : ${user.email} (${user.username})"
         }
