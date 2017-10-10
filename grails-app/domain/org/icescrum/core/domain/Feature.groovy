@@ -167,6 +167,11 @@ class Feature extends BacklogElement implements Serializable {
         return state == STATE_DONE ? stories.collect { it.doneDate }.findAll { it != null }.sort().first() : null
     }
 
+    def getActivity() {
+        def activities = stories*.activities.flatten().findAll { Activity a -> a.important && a.code != Activity.CODE_SAVE }
+        return activities.sort { Activity a, Activity b -> b.dateCreated <=> a.dateCreated }
+    }
+
     static search(project, options) {
         def criteria = {
             backlog {
