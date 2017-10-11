@@ -119,11 +119,11 @@ class ApplicationSupport {
         return serverUrl
     }
 
-    public static def getFirstAdministrator(){
+    public static def getFirstAdministrator() {
         return UserAuthority.findAllByAuthority(Authority.findByAuthority(Authority.ROLE_ADMIN)).collect { it.user }?.first()
     }
 
-    public static def getAllAdministrators(){
+    public static def getAllAdministrators() {
         return UserAuthority.findAllByAuthority(Authority.findByAuthority(Authority.ROLE_ADMIN)).collect { it.user }
     }
 
@@ -206,20 +206,23 @@ class ApplicationSupport {
     static public generateFolders = { def config ->
         def dirPath = config.icescrum.baseDir.toString() + File.separator + "images" + File.separator + "users" + File.separator
         def dir = new File(dirPath)
-        if (!dir.exists())
+        if (!dir.exists()) {
             dir.mkdirs()
+        }
         config.icescrum.images.users.dir = dirPath
 
         dirPath = config.icescrum.baseDir.toString() + File.separator + "images" + File.separator + "projects" + File.separator
         dir = new File(dirPath)
-        if (!dir.exists())
+        if (!dir.exists()) {
             dir.mkdirs()
+        }
         config.icescrum.projects.users.dir = dirPath
 
         dirPath = config.icescrum.baseDir.toString() + File.separator + "images" + File.separator + "teams" + File.separator
         dir = new File(dirPath)
-        if (!dir.exists())
+        if (!dir.exists()) {
             dir.mkdirs()
+        }
         config.icescrum.projects.teams.dir = dirPath
     }
 
@@ -234,8 +237,9 @@ class ApplicationSupport {
         def map = [:]
         st?.split(separatorV)?.each { param ->
             def nameAndValue = param.split(separatorK)
-            if (nameAndValue.size() == 2)
+            if (nameAndValue.size() == 2) {
                 map[nameAndValue[0]] = nameAndValue[1]
+            }
         }
         map
     }
@@ -685,8 +689,9 @@ class ApplicationSupport {
     static void importComment(def object, User poster, String body, Date dateCreated) {
         def posterClass = poster.class.name
         def i = posterClass.indexOf('_$$_javassist')
-        if (i > -1)
+        if (i > -1) {
             posterClass = posterClass[0..i - 1]
+        }
         def c = new Comment(body: body, posterId: poster.id, posterClass: posterClass)
         c.save()
         def link = new CommentLink(comment: c, commentRef: object.id, type: GrailsNameUtils.getPropertyName(object.class))
@@ -713,10 +718,10 @@ class ApplicationSupport {
     static def extractError(Map attrs) {
         def g = Holders.grailsApplication.mainContext.getBean('org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib')
         def error = attrs.errors ? attrs.errors.allErrors.collect { [text: g.message(error: it) + ' - ' + it.field] } :
-                attrs.code ? [text: g.message(code: attrs.code)] :
-                        attrs.text ? [text: attrs.text] :
-                                attrs.exception?.message ? [text: attrs.exception.message] :
-                                        [text: 'An unexpected error has occurred']
+                    attrs.code ? [text: g.message(code: attrs.code)] :
+                    attrs.text ? [text: attrs.text] :
+                    attrs.exception?.message ? [text: attrs.exception.message] :
+                    [text: 'An unexpected error has occurred']
         return error
     }
 

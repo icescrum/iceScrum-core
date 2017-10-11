@@ -29,13 +29,13 @@ import org.hibernate.ObjectNotFoundException
 
 class Backlog {
 
-    String  name
-    String  code
-    String  notes
-    String  filter
-    String  chartType
+    String name
+    String code
+    String notes
+    String filter
+    String chartType
 
-    User    owner
+    User owner
     boolean shared
 
     static belongsTo = [

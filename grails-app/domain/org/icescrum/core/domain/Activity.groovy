@@ -68,12 +68,12 @@ class Activity implements Serializable, Comparable {
 
     @Override
     int compareTo(Object o) {
-        parentType.compareTo(o.parentType) ?:
-                parentRef.compareTo(o.parentRef) ?:
-                        dateCreated.compareTo(o.dateCreated) ?:
-                                code.compareTo(o.code) ?:
-                                        field?.compareTo(o.field) ?:
-                                                0
+        return parentType.compareTo(o.parentType) ?:
+               parentRef.compareTo(o.parentRef) ?:
+               dateCreated.compareTo(o.dateCreated) ?:
+               code.compareTo(o.code) ?:
+               field?.compareTo(o.field) ?:
+               0
     }
 
     boolean getImportant() {

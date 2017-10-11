@@ -123,18 +123,23 @@ class Project extends TimeBox implements Serializable, Attachmentable {
 
     @Override
     boolean equals(obj) {
-        if (this.is(obj))
+        if (this.is(obj)) {
             return true
-        if (obj == null)
+        }
+        if (obj == null) {
             return false
-        if (getClass() != obj.getClass())
+        }
+        if (getClass() != obj.getClass()) {
             return false
+        }
         final Project other = (Project) obj
         if (name == null) {
-            if (other.name != null)
+            if (other.name != null) {
                 return false
-        } else if (!name.equals(other.name))
+            }
+        } else if (!name.equals(other.name)) {
             return false
+        }
         return true
     }
 
@@ -199,7 +204,7 @@ class Project extends TimeBox implements Serializable, Attachmentable {
                             SELECT DISTINCT p.id
                             FROM org.icescrum.core.domain.Project as p
                             WHERE """
-                                + ( members ? """
+                + (members ? """
                                 p.id IN (
                                     SELECT DISTINCT p.id
                                     FROM org.icescrum.core.domain.Project as p
@@ -212,7 +217,7 @@ class Project extends TimeBox implements Serializable, Attachmentable {
                                     )
                                 )
                                 OR"""
-                                : "") + """
+                           : "") + """
                                 p IN (
                                     SELECT DISTINCT p
                                     FROM org.icescrum.core.domain.Project as p,
@@ -230,7 +235,7 @@ class Project extends TimeBox implements Serializable, Attachmentable {
                                 )
                         )
                         AND lower(p.name) LIKE lower(:term)""" +
-                        (archived ? '' : "AND p.preferences.archived = false "), vars, params ?: [:])
+                     (archived ? '' : "AND p.preferences.archived = false "), vars, params ?: [:])
     }
 
     static findAllByUserAndActive(User user, params, String term) {

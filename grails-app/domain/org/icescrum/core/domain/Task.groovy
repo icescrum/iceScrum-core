@@ -170,12 +170,12 @@ class Task extends BacklogElement implements Serializable {
 
     static findLastUpdatedComment(def element) {
         executeQuery("SELECT c.lastUpdated " +
-                "FROM org.grails.comments.Comment as c, org.grails.comments.CommentLink as cl, ${element.class.name} as b " +
-                "WHERE c = cl.comment " +
-                "AND cl.commentRef = b " +
-                "AND cl.type = :type " +
-                "AND b.id = :id " +
-                "ORDER BY c.lastUpdated DESC",
+                     "FROM org.grails.comments.Comment as c, org.grails.comments.CommentLink as cl, ${element.class.name} as b " +
+                     "WHERE c = cl.comment " +
+                     "AND cl.commentRef = b " +
+                     "AND cl.type = :type " +
+                     "AND b.id = :id " +
+                     "ORDER BY c.lastUpdated DESC",
                 [id: element.id, type: GrailsNameUtils.getPropertyName(element.class)],
                 [max: 1])[0]
     }
@@ -207,18 +207,23 @@ class Task extends BacklogElement implements Serializable {
 
     @Override
     boolean equals(Object obj) {
-        if (this.is(obj))
+        if (this.is(obj)) {
             return true
-        if (obj == null)
+        }
+        if (obj == null) {
             return false
-        if (getClass() != obj.getClass())
+        }
+        if (getClass() != obj.getClass()) {
             return false
+        }
         final Task other = (Task) obj
         if (name == null) {
-            if (other.name != null)
+            if (other.name != null) {
                 return false
-        } else if (!name.equals(other.name))
+            }
+        } else if (!name.equals(other.name)) {
             return false
+        }
         if (id != other.id) {
             return false;
         }

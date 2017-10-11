@@ -103,12 +103,14 @@ class Story extends BacklogElement implements Cloneable, Serializable {
         affectVersion(nullable: true)
         effort(nullable: true, validator: { newEffort, story -> newEffort == null || (newEffort >= 0 && newEffort < 1000) ?: 'invalid' })
         creator(nullable: true) // in case of a user deletion, the story can remain without owner
-        dependsOn(nullable: true, validator: { newDependsOn, story -> newDependsOn == null ||
-                                               (newDependsOn.backlog.id == story.backlog.id && (
-                                                       newDependsOn.state >= story.state ||
-                                                       newDependsOn.state == STATE_ACCEPTED && story.state == STATE_ESTIMATED ||
-                                                       newDependsOn.state == STATE_INPROGRESS && story.state == STATE_DONE
-                                               )) ?: 'invalid' })
+        dependsOn(nullable: true, validator: { newDependsOn, story ->
+            newDependsOn == null ||
+            (newDependsOn.backlog.id == story.backlog.id && (
+                    newDependsOn.state >= story.state ||
+                    newDependsOn.state == STATE_ACCEPTED && story.state == STATE_ESTIMATED ||
+                    newDependsOn.state == STATE_INPROGRESS && story.state == STATE_DONE
+            )) ?: 'invalid'
+        })
         origin(nullable: true)
     }
 
@@ -294,12 +296,12 @@ class Story extends BacklogElement implements Cloneable, Serializable {
 
     static findLastUpdatedComment(def element) {
         executeQuery("SELECT c.lastUpdated " +
-                "FROM org.grails.comments.Comment as c, org.grails.comments.CommentLink as cl, ${element.class.name} as b " +
-                "WHERE c = cl.comment " +
-                "AND cl.commentRef = b " +
-                "AND cl.type = :type " +
-                "AND b.id = :id " +
-                "ORDER BY c.lastUpdated DESC",
+                     "FROM org.grails.comments.Comment as c, org.grails.comments.CommentLink as cl, ${element.class.name} as b " +
+                     "WHERE c = cl.comment " +
+                     "AND cl.commentRef = b " +
+                     "AND cl.type = :type " +
+                     "AND b.id = :id " +
+                     "ORDER BY c.lastUpdated DESC",
                 [id: element.id, type: GrailsNameUtils.getPropertyName(element.class)],
                 [max: 1, readOnly: true])[0]
     }
@@ -322,38 +324,51 @@ class Story extends BacklogElement implements Cloneable, Serializable {
 
     @Override
     boolean equals(obj) {
-        if (this.is(obj))
+        if (this.is(obj)) {
             return true
-        if (obj == null)
+        }
+        if (obj == null) {
             return false
-        if (getClass() != obj.getClass())
+        }
+        if (getClass() != obj.getClass()) {
             return false
+        }
         Story other = (Story) obj
         if (effort == null) {
-            if (other.effort != null)
+            if (other.effort != null) {
                 return false
-        } else if (!effort.equals(other.effort))
+            }
+        } else if (!effort.equals(other.effort)) {
             return false
+        }
         if (name == null) {
-            if (other.name != null)
+            if (other.name != null) {
                 return false
-        } else if (!name.equals(other.name))
+            }
+        } else if (!name.equals(other.name)) {
             return false
+        }
         if (backlog == null) {
-            if (other.backlog != null)
+            if (other.backlog != null) {
                 return false
-        } else if (!backlog.equals(other.backlog))
+            }
+        } else if (!backlog.equals(other.backlog)) {
             return false
+        }
         if (parentSprint == null) {
-            if (other.parentSprint != null)
+            if (other.parentSprint != null) {
                 return false
-        } else if (!parentSprint.equals(other.parentSprint))
+            }
+        } else if (!parentSprint.equals(other.parentSprint)) {
             return false
+        }
         if (state == null) {
-            if (other.state != null)
+            if (other.state != null) {
                 return false
-        } else if (!state.equals(other.state))
+            }
+        } else if (!state.equals(other.state)) {
             return false
+        }
         return true
     }
 

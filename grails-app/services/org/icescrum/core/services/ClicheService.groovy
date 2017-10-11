@@ -61,18 +61,21 @@ class ClicheService {
                 switch (story.type) {
                     case Story.TYPE_USER_STORY:
                         cUS += story.effort
-                        if (story.state == Story.STATE_DONE)
+                        if (story.state == Story.STATE_DONE) {
                             cUSDone += story.effort
+                        }
                         break
                     case Story.TYPE_DEFECT:
                         cDefect += story.effort
-                        if (story.state == Story.STATE_DONE)
+                        if (story.state == Story.STATE_DONE) {
                             cDefectDone += story.effort
+                        }
                         break
                     case Story.TYPE_TECHNICAL_STORY:
                         cTechnical += story.effort
-                        if (story.state == Story.STATE_DONE)
+                        if (story.state == Story.STATE_DONE) {
                             cTechnicalDone += story.effort
+                        }
                         break
                     default:
                         break

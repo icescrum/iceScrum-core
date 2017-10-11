@@ -279,12 +279,15 @@ class NotificationEmailService {
         if (grailsApplication.config.icescrum.alerts.emailPerAccount && options.emails) {
             options.emails.each { toEmail ->
                 mailService.sendMail {
-                    if (options.async) // Warning : if async then error cannot be caught
+                    if (options.async) {  // Warning : if async then error cannot be caught
                         async true
-                    if (options.from)
+                    }
+                    if (options.from) {
                         from options.from
-                    if (options.replyTo)
+                    }
+                    if (options.replyTo) {
                         replyTo options.replyTo
+                    }
                     to toEmail
                     subject options.subject
                     body(
@@ -297,18 +300,24 @@ class NotificationEmailService {
         } else {
             options.bcc = options.emails ?: options.bcc
             mailService.sendMail {
-                if (options.async) // Warning : if async then error cannot be caught
+                if (options.async) { // Warning : if async then error cannot be caught
                     async true
-                if (options.from)
+                }
+                if (options.from) {
                     from options.from
-                if (options.to)
+                }
+                if (options.to) {
                     to options.to
-                if (options.cc)
+                }
+                if (options.cc) {
                     cc options.cc
-                if (options.bcc)
+                }
+                if (options.bcc) {
                     bcc options.bcc
-                if (options.replyTo)
+                }
+                if (options.replyTo) {
                     replyTo options.replyTo
+                }
                 subject options.subject
                 body(
                         view: options.view,

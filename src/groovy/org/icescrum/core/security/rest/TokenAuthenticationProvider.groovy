@@ -32,9 +32,9 @@ class TokenAuthenticationProvider implements AuthenticationProvider {
 
     @Override
     Authentication authenticate(Authentication authentication) throws AuthenticationException {
-        if (!supports(authentication.class))
+        if (!supports(authentication.class)) {
             throw new IllegalArgumentException("Only RestAuthenticationToken is supported")
-
+        }
         RestAuthenticationToken authToken = (RestAuthenticationToken) authentication
         if (authToken.token) {
             UserDetails userDetails = tokenStorageService.loadUserByToken(authToken.getToken())

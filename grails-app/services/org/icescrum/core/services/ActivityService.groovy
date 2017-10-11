@@ -40,8 +40,10 @@ class ActivityService extends IceScrumEventPublisher {
         }
         def itemClass = HibernateProxyHelper.getClassWithoutInitializingProxy(item)
         def itemType = GrailsNameUtils.getPropertyName(itemClass)
-        def activity = new Activity(poster: poster, parentRef: item.id, parentType: itemType,
-                                    code: code, label: label, field: field, beforeValue: beforeValue, afterValue: afterValue, afterLabel: afterLabel)
+        def activity = new Activity(
+                poster: poster, parentRef: item.id, parentType: itemType,
+                code: code, label: label, field: field, beforeValue: beforeValue, afterValue: afterValue, afterLabel: afterLabel
+        )
         activity.save()
         item.addToActivities(activity)
         publishSynchronousEvent(IceScrumEventType.CREATE, activity)

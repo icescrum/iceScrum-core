@@ -162,23 +162,30 @@ class User implements Serializable, Attachmentable {
     }
 
     boolean equals(obj) {
-        if (this.is(obj))
+        if (this.is(obj)) {
             return true
-        if (obj == null)
+        }
+        if (obj == null) {
             return false
-        if (!getClass().isAssignableFrom(obj.getClass()))
+        }
+        if (!getClass().isAssignableFrom(obj.getClass())) {
             return false
+        }
         User other = (User) obj
         if (username == null) {
-            if (other.username != null)
+            if (other.username != null) {
                 return false
-        } else if (!username.equals(other.username))
+            }
+        } else if (!username.equals(other.username)) {
             return false
+        }
         if (email == null) {
-            if (other.email != null)
+            if (other.email != null) {
                 return false
-        } else if (!email.equals(other.email))
+            }
+        } else if (!email.equals(other.email)) {
             return false
+        }
         return true
     }
 

@@ -81,8 +81,9 @@ class Release extends TimeBox implements Cloneable, Attachmentable {
             return true
         })
         state(validator: { val, obj ->
-            if (val == STATE_DONE && obj.sprints.any { it.state != Sprint.STATE_DONE })
+            if (val == STATE_DONE && obj.sprints.any { it.state != Sprint.STATE_DONE }) {
                 return ['sprint.not.done']
+            }
             return true
         })
     }
@@ -148,23 +149,30 @@ class Release extends TimeBox implements Cloneable, Attachmentable {
     }
 
     boolean equals(Object obj) {
-        if (this.is(obj))
+        if (this.is(obj)) {
             return true
-        if (obj == null)
+        }
+        if (obj == null) {
             return false
-        if (getClass() != obj.getClass())
+        }
+        if (getClass() != obj.getClass()) {
             return false
+        }
         final Release other = (Release) obj
         if (name == null) {
-            if (other.name != null)
+            if (other.name != null) {
                 return false
-        } else if (name != other.name)
+            }
+        } else if (name != other.name) {
             return false
+        }
         if (parentProject == null) {
-            if (other.parentProject != null)
+            if (other.parentProject != null) {
                 return false
-        } else if (!parentProject.equals(other.parentProject))
+            }
+        } else if (!parentProject.equals(other.parentProject)) {
             return false
+        }
         return true
     }
 

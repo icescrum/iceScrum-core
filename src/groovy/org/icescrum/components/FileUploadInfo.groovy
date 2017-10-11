@@ -2,9 +2,9 @@ package org.icescrum.components
 
 public class FileUploadInfo {
 
-    int    chunkSize
-    long   totalSize
-    int    totalChunks
+    int chunkSize
+    long totalSize
+    int totalChunks
     String identifier
     String filename
     String relativePath

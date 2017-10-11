@@ -67,7 +67,7 @@ grails.project.dependency.resolution = {
         compile ':cache-ehcache:1.0.5'
 
         runtime ':hibernate4:4.3.10'
-        build  (':release:3.1.2') {
+        build(':release:3.1.2') {
             export = false
         }
         compile 'org.icescrum:icescrum-attachmentable:1.0.3'

@@ -50,7 +50,7 @@ class WidgetDefinition {
     String ngController = null
     String secured = 'permitAll()'
 
-    Closure onSave   = { def widget -> }
+    Closure onSave = { def widget -> }
     Closure onUpdate = { def widget, settings -> }
     Closure onDelete = { def widget -> }
 

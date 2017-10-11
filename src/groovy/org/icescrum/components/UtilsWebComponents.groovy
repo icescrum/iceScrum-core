@@ -39,14 +39,14 @@ public final class UtilsWebComponents {
 
     public static boolean rendered(attrs) {
         def isRendered = ([attrs.rendered, attrs.restrictOnAccess, attrs.renderedOnRoles, attrs.renderedOnNotRoles, attrs.restrictOnRoles, attrs.renderedOnAccess, attrs.renderedOnNotAccess] ==
-                [null, null, null, null, null, null]) ||
-                ((attrs.rendered == null || attrs.rendered.asBoolean()) &&
-                        (attrs.renderedOnRoles == null || SpringSecurityUtils.ifAnyGranted(attrs.renderedOnRoles)) &&
-                        (attrs.restrictOnRoles == null || SpringSecurityUtils.ifAnyGranted(attrs.restrictOnRoles)) &&
-                        (attrs.renderedOnNotRoles == null || SpringSecurityUtils.ifNotGranted(attrs.renderedOnNotRoles)) &&
-                        (attrs.renderedOnAccess == null || sec.access(expression: attrs.renderedOnAccess, IS_ALLOWED)) &&
-                        (attrs.restrictOnAccess == null || sec.access(expression: attrs.restrictOnAccess, IS_ALLOWED)) &&
-                        (attrs.renderedOnNotAccess == null || sec.access(expression: attrs.renderedOnNotAccess, IS_ALLOWED)))
+                          [null, null, null, null, null, null]) ||
+                         ((attrs.rendered == null || attrs.rendered.asBoolean()) &&
+                          (attrs.renderedOnRoles == null || SpringSecurityUtils.ifAnyGranted(attrs.renderedOnRoles)) &&
+                          (attrs.restrictOnRoles == null || SpringSecurityUtils.ifAnyGranted(attrs.restrictOnRoles)) &&
+                          (attrs.renderedOnNotRoles == null || SpringSecurityUtils.ifNotGranted(attrs.renderedOnNotRoles)) &&
+                          (attrs.renderedOnAccess == null || sec.access(expression: attrs.renderedOnAccess, IS_ALLOWED)) &&
+                          (attrs.restrictOnAccess == null || sec.access(expression: attrs.restrictOnAccess, IS_ALLOWED)) &&
+                          (attrs.renderedOnNotAccess == null || sec.access(expression: attrs.renderedOnNotAccess, IS_ALLOWED)))
         attrs.remove('rendered')
         attrs.remove('restrictOnRoles')
         attrs.remove('restrictOnAccess')
@@ -66,11 +66,11 @@ public final class UtilsWebComponents {
      */
     public static boolean enabled(attrs) {
         def isEnabled = ([attrs.disabled, attrs.disabledOnRoles, attrs.disabledOnNotRoles, attrs.disabledOnAccess, attrs.disableOnNotAccess] == [null, null, null, null, null]) ||
-                ((attrs.disabled == null || !attrs.disabled.asBoolean()) &&
-                        (attrs.disabledOnRoles == null || SpringSecurityUtils.ifNotGranted(attrs.disabledOnRoles)) &&
-                        (attrs.disabledOnAccess == null || sec.access(expression: attrs.disabledOnAccess, IS_ALLOWED)) &&
-                        (attrs.disabledOnAccess == null || sec.access(expression: attrs.disableOnNotAccess, IS_ALLOWED)) &&
-                        (attrs.disabledOnNotRoles == null || SpringSecurityUtils.ifAllGranted(attrs.disabledOnNotRoles)))
+                        ((attrs.disabled == null || !attrs.disabled.asBoolean()) &&
+                         (attrs.disabledOnRoles == null || SpringSecurityUtils.ifNotGranted(attrs.disabledOnRoles)) &&
+                         (attrs.disabledOnAccess == null || sec.access(expression: attrs.disabledOnAccess, IS_ALLOWED)) &&
+                         (attrs.disabledOnAccess == null || sec.access(expression: attrs.disableOnNotAccess, IS_ALLOWED)) &&
+                         (attrs.disabledOnNotRoles == null || SpringSecurityUtils.ifAllGranted(attrs.disabledOnNotRoles)))
         attrs.remove('disabled')
         attrs.remove('disabledOnRoles')
         attrs.remove('disabledOnNotRoles')
@@ -134,8 +134,9 @@ public final class UtilsWebComponents {
         for (entry in params) {
             def value = entry.value
             def key = entry.key
-            if (value)
+            if (value) {
                 allParams << "${key.encodeAsURL()}=${value.encodeAsURL()}".encodeAsJavaScript()
+            }
         }
         if (allParams.size() == 1) {
             return allParams[0]

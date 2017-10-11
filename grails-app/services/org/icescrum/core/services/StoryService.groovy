@@ -280,8 +280,9 @@ class StoryService extends IceScrumEventPublisher {
                     unPlan(it)
                 }
                 // Recalculate the sprint estimated velocity (capacite)
-                if (sprint.state == Sprint.STATE_WAIT)
+                if (sprint.state == Sprint.STATE_WAIT) {
                     sprint.capacity = (Double) sprint.stories?.sum { it.effort } ?: 0
+                }
                 storiesUnPlanned.addAll(stories)
             }
         }
@@ -359,8 +360,9 @@ class StoryService extends IceScrumEventPublisher {
         if (error) {
             stories.eachWithIndex { story, ind ->
                 if (story.rank != ind + 1) {
-                    if (log.debugEnabled)
+                    if (log.debugEnabled) {
                         log.debug("story ${story.uid} as rank ${story.rank} but should have ${ind + 1} fixing!!")
+                    }
                     story.rank = ind + 1
                     story.save()
                 }

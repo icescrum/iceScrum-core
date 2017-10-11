@@ -70,11 +70,11 @@ class Team implements Serializable, Comparable {
     static findExceptProject(Long id, term, params) {
         executeQuery(
                 "SELECT DISTINCT t " +
-                        "FROM org.icescrum.core.domain.Team as t " +
-                        "WHERE lower(t.name) like lower(:term) and t.id not in " +
-                        "(SELECT DISTINCT t2.id FROM org.icescrum.core.domain.Team as t2 " +
-                        "INNER JOIN t2.projects as p " +
-                        "WHERE p.id = :p) ", [p: id, term: "%$term%"], params ?: [:])
+                "FROM org.icescrum.core.domain.Team as t " +
+                "WHERE lower(t.name) like lower(:term) and t.id not in " +
+                "(SELECT DISTINCT t2.id FROM org.icescrum.core.domain.Team as t2 " +
+                "INNER JOIN t2.projects as p " +
+                "WHERE p.id = :p) ", [p: id, term: "%$term%"], params ?: [:])
     }
 
     static findAllByOwner(String user, params, String term = '%%') {
@@ -187,7 +187,7 @@ class Team implements Serializable, Comparable {
                         INNER JOIN t.members m
                         INNER JOIN t.projects p
                         WHERE p.id = :projectId
-                        AND m.id = :userId""", [userId: userId, projectId: projectId], [cache:true])[0]
+                        AND m.id = :userId""", [userId: userId, projectId: projectId], [cache: true])[0]
     }
 
     def getScrumMasters() {

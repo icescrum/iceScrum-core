@@ -82,7 +82,8 @@ class TimeBox implements Comparable<TimeBox>, Serializable {
         tablePerHierarchy false
         cliches cascade: 'all-delete-orphan', cache: true
         activities cascade: 'delete-orphan'
-        sort: orderNumber:'asc'
+        sort:
+        orderNumber: 'asc'
     }
 
     def beforeValidate() {

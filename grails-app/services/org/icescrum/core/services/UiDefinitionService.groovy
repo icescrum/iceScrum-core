@@ -103,10 +103,11 @@ class UiDefinitionService {
     }
 
     WindowDefinition getWindowDefinitionById(String id) {
-        if (windowsDefinitionsById[id] && !windowsDefinitionsById[id]?.disabled)
+        if (windowsDefinitionsById[id] && !windowsDefinitionsById[id]?.disabled) {
             windowsDefinitionsById[id]
-        else
+        } else {
             null
+        }
     }
 
     def getWindowDefinitions() {
@@ -118,10 +119,11 @@ class UiDefinitionService {
     }
 
     WidgetDefinition getWidgetDefinitionById(String id) {
-        if (widgetsDefinitionsById[id] && !widgetsDefinitionsById[id]?.disabled)
+        if (widgetsDefinitionsById[id] && !widgetsDefinitionsById[id]?.disabled) {
             widgetsDefinitionsById[id]
-        else
+        } else {
             null
+        }
     }
 
     def getWidgetDefinitions() {

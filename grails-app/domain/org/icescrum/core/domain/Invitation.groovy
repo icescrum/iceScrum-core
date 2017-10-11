@@ -39,10 +39,14 @@ class Invitation implements Serializable {
         email(blank: false, email: true)
         team(nullable: true)
         project(nullable: true)
-        type(validator: { newType, Invitation -> newType == InvitationType.TEAM         && Invitation.team != null && Invitation.project == null ||
-                                                 newType == InvitationType.PROJECT      && Invitation.team == null && Invitation.project != null ?: 'invalid'})
-        futureRole(validator: { newRole, Invitation -> newRole in [Authority.MEMBER,      Authority.SCRUMMASTER]  && Invitation.team != null && Invitation.project == null ||
-                                                       newRole in [Authority.STAKEHOLDER, Authority.PRODUCTOWNER] && Invitation.team == null && Invitation.project != null ?: 'invalid'})
+        type(validator: { newType, Invitation ->
+            newType == InvitationType.TEAM && Invitation.team != null && Invitation.project == null ||
+            newType == InvitationType.PROJECT && Invitation.team == null && Invitation.project != null ?: 'invalid'
+        })
+        futureRole(validator: { newRole, Invitation ->
+            newRole in [Authority.MEMBER, Authority.SCRUMMASTER] && Invitation.team != null && Invitation.project == null ||
+            newRole in [Authority.STAKEHOLDER, Authority.PRODUCTOWNER] && Invitation.team == null && Invitation.project != null ?: 'invalid'
+        })
     }
 
     static mapping = {

@@ -51,7 +51,7 @@ class WindowDefinition {
     MenuDefinition menu
     Closure before = null
 
-    Closure onSave   = { def window -> }
+    Closure onSave = { def window -> }
     Closure onUpdate = { def window, settings -> }
     Closure onDelete = { def window -> }
 

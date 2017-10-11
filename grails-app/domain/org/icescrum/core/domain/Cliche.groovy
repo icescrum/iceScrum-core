@@ -38,7 +38,8 @@ class Cliche implements Serializable {
         cache true
         data type: 'text'
         table 'is_cliche'
-        sort: datePrise:'asc'
+        sort:
+        datePrise: 'asc'
     }
 
     static constraints = {

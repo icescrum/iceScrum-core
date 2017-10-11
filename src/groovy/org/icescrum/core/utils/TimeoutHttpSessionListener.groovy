@@ -24,6 +24,7 @@ import javax.servlet.http.HttpSessionListener
  *
  * Vincent Barrier (vbarrier@kagilum.com)
  */
+
 class TimeoutHttpSessionListener implements HttpSessionListener {
     def config
     @Override

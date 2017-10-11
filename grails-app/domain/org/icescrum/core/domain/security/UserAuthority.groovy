@@ -37,9 +37,8 @@ class UserAuthority implements Serializable {
         if (!(other instanceof UserAuthority)) {
             return false
         }
-
-        other.user?.id == user?.id &&
-                other.authority?.id == authority?.id
+        return other.user?.id == user?.id &&
+               other.authority?.id == authority?.id
     }
 
     int hashCode() {

@@ -219,11 +219,12 @@ class SprintService extends IceScrumEventPublisher {
                 if (xmlRoot) {
                     lastDaycliche = cliche.datePrise
                     def currentRemaining = xmlRoot."${Cliche.REMAINING_TIME}".toFloat()
-                    if ((ServicesUtils.isDateWeekend(lastDaycliche) && !sprint.parentRelease.parentProject.preferences.hideWeekend) || !ServicesUtils.isDateWeekend(lastDaycliche))
+                    if ((ServicesUtils.isDateWeekend(lastDaycliche) && !sprint.parentRelease.parentProject.preferences.hideWeekend) || !ServicesUtils.isDateWeekend(lastDaycliche)) {
                         values << [
                                 remainingTime: currentRemaining,
                                 label        : lastDaycliche.clone().clearTime().time
                         ]
+                    }
                 }
             }
         }
@@ -231,11 +232,12 @@ class SprintService extends IceScrumEventPublisher {
         if (Sprint.STATE_INPROGRESS == sprint.state) {
             def nbDays = sprint.endDate - lastDaycliche
             nbDays.times {
-                if ((ServicesUtils.isDateWeekend(lastDaycliche + (it + 1)) && !sprint.parentRelease.parentProject.preferences.hideWeekend) || !ServicesUtils.isDateWeekend(lastDaycliche + (it + 1)))
+                if ((ServicesUtils.isDateWeekend(lastDaycliche + (it + 1)) && !sprint.parentRelease.parentProject.preferences.hideWeekend) || !ServicesUtils.isDateWeekend(lastDaycliche + (it + 1))) {
                     values << [
                             remainingTime: null,
                             label        : (lastDaycliche + (it + 1)).clearTime().time
                     ]
+                }
             }
         }
         // Hiding weekends is hard on d3 timescale, here we work around that by creating every point of the ideal line

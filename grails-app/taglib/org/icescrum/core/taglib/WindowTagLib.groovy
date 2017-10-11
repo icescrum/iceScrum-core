@@ -66,8 +66,8 @@ class WindowTagLib {
             if (attrs.button) {
                 attrs.button.each { button ->
                     out << "<button type='${button.type ?: 'button'}' " +
-                            "ng-click='${button.action ?: 'button'}' " +
-                            "class='btn btn-${button.color ?: 'primary'} ${button.class ?: ''}'>${button.text}</button>"
+                    "ng-click='${button.action ?: 'button'}' " +
+                    "class='btn btn-${button.color ?: 'primary'} ${button.class ?: ''}'>${button.text}</button>"
                 }
             }
             if (attrs.submitButton) {
@@ -88,11 +88,13 @@ class WindowTagLib {
             attrs.controller = controllerName
         }
         if (attrs.controller || attrs.view) {
-            def mapping = new ForwardUrlMappingInfo(controller: attrs.controller,
-                                                    action: attrs.action,
-                                                    view: attrs.view,
-                                                    id: attrs.id,
-                                                    params: attrs.params)
+            def mapping = new ForwardUrlMappingInfo(
+                    controller: attrs.controller,
+                    action: attrs.action,
+                    view: attrs.view,
+                    id: attrs.id,
+                    params: attrs.params
+            )
             return UrlMappingUtils.includeForUrlMappingInfo(request, response, mapping, attrs.model ?: [:])
         }
     }
