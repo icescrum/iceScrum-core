@@ -82,6 +82,9 @@ class TaskService extends IceScrumEventPublisher {
         if (props.state != null) {
             state(task, props.state, user)
         }
+        if(props.responsible != null && !task.responsible && task.state == Task.STATE_WAIT){
+            activityService.addActivity(task, props.responsible, 'taskUnassign', task.name)
+        }
         def sprint = task.sprint
         if (sprint?.state == Sprint.STATE_DONE) {
             throw new BusinessException(code: 'is.sprint.error.state.not.inProgress')
@@ -296,7 +299,7 @@ class TaskService extends IceScrumEventPublisher {
                     || securityService.scrumMaster(null, springSecurityService.authentication)) {
                 if (newState == Task.STATE_BUSY && task.state != Task.STATE_BUSY) {
                     activityService.addActivity(task, task.responsible, 'taskInprogress', task.name)
-                } else if (newState == Task.STATE_WAIT && task.state != Task.STATE_WAIT) {
+                } else if (newState == Task.STATE_WAIT && task.state != Task.STATE_WAIT && task.responsible) {
                     activityService.addActivity(task, task.responsible, 'taskWait', task.name)
                 }
                 task.state = newState
