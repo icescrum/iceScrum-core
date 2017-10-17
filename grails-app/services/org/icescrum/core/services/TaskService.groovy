@@ -82,7 +82,7 @@ class TaskService extends IceScrumEventPublisher {
         if (props.state != null) {
             state(task, props.state, user)
         }
-        if(props.responsible != null && !task.responsible && task.state == Task.STATE_WAIT){
+        if (props.responsible != null && !task.responsible && task.state == Task.STATE_WAIT) {
             activityService.addActivity(task, props.responsible, 'taskUnassign', task.name)
         }
         def sprint = task.sprint
