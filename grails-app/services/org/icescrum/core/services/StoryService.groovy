@@ -431,6 +431,9 @@ class StoryService extends IceScrumEventPublisher {
         if (!(story.state in [Story.STATE_ESTIMATED, Story.STATE_ACCEPTED])) {
             throw new BusinessException(code: 'is.story.error.not.in.backlog')
         }
+        if (story.dependences?.find { it.state > Story.STATE_SUGGESTED }) {
+            throw new BusinessException(code: 'is.story.error.dependences.returntosandbox', args: [story.name, story.dependences.find { it.state > Story.STATE_SUGGESTED }.name])
+        }
         resetRank(story)
         story.state = Story.STATE_SUGGESTED
         story.acceptedDate = null
