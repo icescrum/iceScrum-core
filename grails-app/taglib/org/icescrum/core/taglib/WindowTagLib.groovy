@@ -71,7 +71,7 @@ class WindowTagLib {
                 }
             }
             if (attrs.submitButton) {
-                out << "<button type='submit' ${attrs.validate ? 'ng-disabled="' + attrs.name + '.$invalid"' : ''} class='btn btn-${attrs.submitButtonColor ?: 'primary'}'>${attrs.submitButton}</button>"
+                out << "<button type='submit' ng-disabled='application.submitting${attrs.validate ? ' || ' + attrs.name + '.$invalid' : ''}' class='btn btn-${attrs.submitButtonColor ?: 'primary'}'>${attrs.submitButton}</button>"
             }
             out << """  </div>"""
         }
