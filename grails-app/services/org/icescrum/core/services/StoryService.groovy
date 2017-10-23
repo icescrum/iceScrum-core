@@ -604,24 +604,34 @@ class StoryService extends IceScrumEventPublisher {
         }
     }
 
-    @PreAuthorize('inProject(#stories[0].backlog) and !archivedProject(#stories[0].backlog)')
-    def copy(List<Story> stories) {
+    @PreAuthorize('inProject(#stories[0].backlog) and !archivedProject(#stories[0].backlog) and inProject(#project) and !archivedProject(#project)')
+    def copy(List<Story> stories, Project project) {
         def copiedStories = []
-        def project = stories[0].backlog
+        def sameProject = stories.first().backlog.id == project.id
         stories.each { story ->
             def copiedStory = new Story(
-                    name: story.name + '_1',
-                    state: Story.STATE_SUGGESTED,
+                    name: story.name,
                     description: story.description,
                     notes: story.notes,
                     dateCreated: new Date(),
                     type: story.type,
                     backlog: project,
                     affectVersion: story.affectVersion,
-                    origin: story.name,
-                    feature: story.feature,
-                    value: story.value,
+                    value: story.value
             )
+            if (sameProject) {
+                copiedStory.state = Story.STATE_SUGGESTED
+                copiedStory.origin = story.name
+                copiedStory.name += '_1'
+                copiedStory.feature = story.feature
+            } else {
+                copiedStory.state = story.state <= Story.STATE_ESTIMATED ? story.state : Story.STATE_ESTIMATED
+                copiedStory.origin = story.backlog.name
+                copiedStory.suggestedDate = story.state >= Story.STATE_SUGGESTED ? story.suggestedDate : null
+                copiedStory.acceptedDate = story.state >= Story.STATE_ACCEPTED ? story.acceptedDate : null
+                copiedStory.estimatedDate = story.effort ? story.estimatedDate : null
+                copiedStory.effort = story.effort
+            }
             copiedStory.validate()
             def i = 1
             while (copiedStory.hasErrors()) {
@@ -636,7 +646,7 @@ class StoryService extends IceScrumEventPublisher {
                     throw new ValidationException('Validation Error(s) occurred during save()', copiedStory.errors)
                 }
             }
-            save(copiedStory, (Project) story.backlog, (User) springSecurityService.currentUser)
+            save(copiedStory, project, (User) springSecurityService.currentUser)
             story.attachments?.each { Attachment a ->
                 def currentFile = attachmentableService.getFile(a)
                 def newFile = File.createTempFile(a.name, a.ext)
