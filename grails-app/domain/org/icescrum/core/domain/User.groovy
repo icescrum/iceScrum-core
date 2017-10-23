@@ -206,8 +206,10 @@ class User implements Serializable, Attachmentable {
     }
 
     boolean getAdmin() {
-        def securityService = (SecurityService) Holders.grailsApplication.mainContext.getBean('securityService')
-        return securityService.hasRoleAdmin(this)
+        executeQuery("""SELECT COUNT(*)
+                        FROM UserAuthority ua
+                        WHERE ua.user.id = :userId
+                        AND ua.authority.authority = :adminAuthority""", [userId: this.id, adminAuthority: Authority.ROLE_ADMIN], [cache: true])[0] > 0
     }
 
     def xml(builder) {

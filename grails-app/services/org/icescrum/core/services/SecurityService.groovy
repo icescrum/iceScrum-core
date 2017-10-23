@@ -395,10 +395,6 @@ class SecurityService {
         }
     }
 
-    boolean hasRoleAdmin(User user) {
-        UserAuthority.countByAuthorityAndUser(Authority.findByAuthority(Authority.ROLE_ADMIN, [cache: true]), user, [cache: true])
-    }
-
     Long parseCurrentRequestProject(request) {
         def res = request['project_id']
         if (!res) {
