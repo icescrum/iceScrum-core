@@ -218,8 +218,8 @@ class Project extends TimeBox implements Serializable, Attachmentable {
                                 )
                                 OR"""
                            : "") + """
-                                p IN (
-                                    SELECT DISTINCT p
+                                p.id IN (
+                                    SELECT DISTINCT p.id
                                     FROM org.icescrum.core.domain.Project as p,
                                          grails.plugin.springsecurity.acl.AclClass as ac,
                                          grails.plugin.springsecurity.acl.AclObjectIdentity as ai,
