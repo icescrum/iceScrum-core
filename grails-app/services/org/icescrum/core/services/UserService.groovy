@@ -78,7 +78,7 @@ class UserService extends IceScrumEventPublisher {
         if (token && grailsApplication.config.icescrum.invitation.enable) {
             def invitations = Invitation.findAllByToken(token)
             invitations.each { invitation ->
-                def userAdmin = UserAuthority.findByAuthority(Authority.findByAuthority(Authority.ROLE_ADMIN)).user
+                def userAdmin = ApplicationSupport.getFirstAdministrator()
                 SpringSecurityUtils.doWithAuth(userAdmin ? userAdmin.username : 'admin') {
                     if (invitation.type == InvitationType.PROJECT) {
                         Project project = invitation.project

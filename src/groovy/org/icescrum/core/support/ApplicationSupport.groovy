@@ -119,11 +119,11 @@ class ApplicationSupport {
         return serverUrl
     }
 
-    public static def getFirstAdministrator() {
-        return UserAuthority.findAllByAuthority(Authority.findByAuthority(Authority.ROLE_ADMIN)).collect { it.user }?.first()
+    public static User getFirstAdministrator() {
+        return UserAuthority.findByAuthority(Authority.findByAuthority(Authority.ROLE_ADMIN)).user
     }
 
-    public static def getAllAdministrators() {
+    public static List<User> getAllAdministrators() {
         return UserAuthority.findAllByAuthority(Authority.findByAuthority(Authority.ROLE_ADMIN)).collect { it.user }
     }
 
