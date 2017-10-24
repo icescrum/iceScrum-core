@@ -80,20 +80,41 @@ class Activity implements Serializable, Comparable {
         code in Holders.grailsApplication.config.icescrum.activities.important
     }
 
-    static List<List> storyActivities(User user) {
+    static List<List> importantStoryActivities(User user) {
         def projects = Project.findAllByRole(user, [BasePermission.WRITE, BasePermission.READ], [cache: true], true, false)
         def activitiesAndStories = []
         if (projects) {
-            activitiesAndStories = executeQuery("""SELECT DISTINCT a, s
-                        FROM org.icescrum.core.domain.Activity as a, org.icescrum.core.domain.Story as s
-                        WHERE a.parentType = 'story'
-                        AND a.poster.id != :uid
-                        AND a.parentRef = s.id
-                        AND s.backlog.id in (${projects*.id.join(',')})
-                        ORDER BY a.dateCreated DESC""", [uid: user.id], [cache: true])
-            activitiesAndStories = activitiesAndStories.findAll { it[0].important }
+            activitiesAndStories = executeQuery("""SELECT a, s
+                                                   FROM Activity a, Story s
+                                                   WHERE a.parentType = 'story'
+                                                   AND a.poster.id != :uid
+                                                   AND a.parentRef = s.id
+                                                   AND a.code in (:codes)
+                                                   AND s.backlog.id in (:projects)
+                                                   ORDER BY a.dateCreated DESC""", [uid     : user.id,
+                                                                                    codes   : Holders.grailsApplication.config.icescrum.activities.important,
+                                                                                    projects: projects*.id], [cache: true, max: 15])
         }
         activitiesAndStories
+    }
+
+    static Integer countNewImportantStoryActivities(User user) {
+        def projects = Project.findAllByRole(user, [BasePermission.WRITE, BasePermission.READ], [cache: true], true, false)
+        if (projects) {
+            return executeQuery("""SELECT COUNT(*)
+                                   FROM Activity a, Story s
+                                   WHERE a.parentType = 'story'
+                                   AND a.poster.id != :uid
+                                   AND a.parentRef = s.id
+                                   AND a.code in (:codes)
+                                   AND a.dateCreated > :lastReadActivity
+                                   AND s.backlog.id in (:projects)""", [uid             : user.id,
+                                                                        codes           : Holders.grailsApplication.config.icescrum.activities.important,
+                                                                        projects        : projects*.id,
+                                                                        lastReadActivity: user.preferences.lastReadActivities,], [cache: true])[0]
+        } else {
+            return 0
+        }
     }
 
     static recentProjectActivity(Project project) {
