@@ -137,6 +137,17 @@ class User implements Serializable, Attachmentable {
                         AND enabled = :enabled """, [term: "%$term%", enabled: enabled], params ?: [:])[0]
     }
 
+    static Locale getLocale(Long userId) {
+        String language = executeQuery("""SELECT p.language
+                                          FROM UserPreferences p
+                                          WHERE p.user.id = :userId""", [userId: userId], [cache: true])[0]
+        return getLocaleFromLanguage(language)
+    }
+
+    static Locale getLocaleFromLanguage(String language) {
+        new Locale(*language.split('_', 3))
+    }
+
     static User withUser(long id) {
         User user = get(id)
         if (!user) {
@@ -199,7 +210,7 @@ class User implements Serializable, Attachmentable {
     }
 
     Locale getLocale() {
-        new Locale(*preferences.language.split('_', 3))
+        getLocaleFromLanguage(preferences.language)
     }
 
     boolean getAdmin() {
