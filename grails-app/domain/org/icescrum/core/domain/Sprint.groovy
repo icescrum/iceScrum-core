@@ -64,7 +64,7 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
     ]
 
     static transients = [
-            'recurrentTasks', 'urgentTasks', 'hasNextSprint', 'parentReleaseId', 'activable', 'effectiveEndDate', 'effectiveStartDate', 'totalRemaining', 'parentProject', 'totalEffort', 'previousSprint', 'nextSprint', 'parentReleaseName', 'index', 'fullName'
+            'recurrentTasks', 'urgentTasks', 'hasNextSprint', 'parentReleaseId', 'activable', 'effectiveEndDate', 'effectiveStartDate', 'totalRemaining', 'parentProject', 'totalEffort', 'previousSprint', 'nextSprint', 'parentReleaseName', 'parentReleaseOrderNumber', 'index', 'fullName'
     ]
 
     static namedQueries = {
@@ -321,6 +321,10 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
 
     String getParentReleaseName() {
         return parentRelease.name
+    }
+
+    String getParentReleaseOrderNumber() {
+        return parentRelease.orderNumber
     }
 
     int getIndex() {
