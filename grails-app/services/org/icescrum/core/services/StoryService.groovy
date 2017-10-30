@@ -631,6 +631,9 @@ class StoryService extends IceScrumEventPublisher {
                 copiedStory.acceptedDate = story.state >= Story.STATE_ACCEPTED ? story.acceptedDate : null
                 copiedStory.estimatedDate = story.effort ? story.estimatedDate : null
                 copiedStory.effort = story.effort
+                if (story.feature) {
+                    copiedStory.feature = Feature.findByBacklogAndNameIlike(project, story.feature.name)
+                }
             }
             copiedStory.validate()
             def i = 1
