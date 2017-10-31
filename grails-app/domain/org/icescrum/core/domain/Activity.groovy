@@ -62,6 +62,9 @@ class Activity implements Serializable, Comparable {
         beforeValue type: "text" // TODO check if relevant
         afterValue type: "text" // TODO check if relevant
         afterLabel type: "text"
+        parentRef index: 'activity_parent_ref_index'
+        parentType index: 'activity_parent_type_index'
+        code index: 'activity_code_index'
         cache true
         table 'is_activity'
     }
