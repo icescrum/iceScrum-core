@@ -141,6 +141,10 @@ class ApplicationSupport {
         if (!viewDefinition || !((getCurrentContext(params)?.name ?: null) in contexts)) {
             return false
         }
+        // authentication should never be null, however it happens sometimes. See S194 and S230
+        if (!SCH.context.getAuthentication()) {
+            return false
+        }
         //secured on uiDefinition
         if (viewDefinition.secured) {
             Expression expression = webExpressionHandler.expressionParser.parseExpression(viewDefinition.secured)
