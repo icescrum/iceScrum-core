@@ -289,26 +289,33 @@ class ApplicationSupport {
         def config = Holders.grailsApplication.config
         def filePath = config.icescrum.baseDir.toString() + File.separator + "appID.txt"
         def fileID = new File(filePath)
-        def line = fileID.exists() ? fileID.readLines()[0] : null
-
-        if (!line || line == 'd41d8cd9-8f00-b204-e980-0998ecf8427e') {
-            def uid
+        def existingID = fileID.exists() ? fileID.readLines()[0] : null
+        boolean docker = config.icescrum.environment == 'docker'
+        if (!existingID || existingID == 'd41d8cd9-8f00-b204-e980-0998ecf8427e' || docker) {
+            def newID
             try {
-                uid = NetworkInterface.networkInterfaces?.nextElement()?.hardwareAddress
-                if (uid) {
+                newID = NetworkInterface.networkInterfaces?.nextElement()?.hardwareAddress
+                if (newID) {
                     MessageDigest md = MessageDigest.getInstance("MD5")
-                    md.update(uid)
-                    uid = new BigInteger(1, md.digest()).toString(16).padLeft(32, '0')
-                    uid = uid.substring(0, 8) + '-' + uid.substring(8, 12) + '-' + uid.substring(12, 16) + '-' + uid.substring(16, 20) + '-' + uid.substring(20, 32)
+                    md.update(newID)
+                    newID = new BigInteger(1, md.digest()).toString(16).padLeft(32, '0')
+                    newID = newID.substring(0, 8) + '-' + newID.substring(8, 12) + '-' + newID.substring(12, 16) + '-' + newID.substring(16, 20) + '-' + newID.substring(20, 32)
                 }
             } catch (IOException ioe) {
                 if (log.debugEnabled) {
                     log.debug "Warning could not access network interfaces, message: $ioe.message"
                 }
             }
-            config.icescrum.appID = uid ?: UUID.randomUUID().toString()
+            if (docker) {
+                if (newID == existingID || (existingID in ['dde5840d-2193-ead2-f4f3-5c131453d19d', '48e1b46b-68ba-8fad-1e7f-9807d121a81d'])) {
+                    newID = null
+                } else {
+                    newID = existingID
+                }
+            }
+            config.icescrum.appID = newID ?: UUID.randomUUID().toString()
             if (log.debugEnabled) {
-                log.debug "Generated (${uid ? 'm' : 'r'}) appID: $config.icescrum.appID"
+                log.debug "Generated (${newID ? 'm' : 'r'}) appID: $config.icescrum.appID"
             }
             try {
                 if (!fileID.exists()) fileID.parentFile.mkdirs()
@@ -323,7 +330,7 @@ class ApplicationSupport {
                 throw ioe
             }
         } else {
-            config.icescrum.appID = line
+            config.icescrum.appID = existingID
             if (log.debugEnabled) {
                 log.debug "Retrieved appID: $config.icescrum.appID"
             }
