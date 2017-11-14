@@ -29,11 +29,11 @@ class MenuDefinition {
 
     private final log = LoggerFactory.getLogger(this.class.name)
 
-    String title = ''
+    def title // Can be Closure or String
     boolean defaultVisibility
     int defaultPosition
 
-    void title(String title) {
+    void title(title) {
         this.title = title
     }
 

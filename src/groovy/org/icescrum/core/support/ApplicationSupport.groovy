@@ -61,7 +61,6 @@ import org.icescrum.core.domain.security.Authority
 import org.icescrum.core.domain.security.UserAuthority
 import org.icescrum.core.security.WebScrumExpressionHandler
 import org.icescrum.core.services.ProjectService
-import org.icescrum.core.ui.WindowDefinition
 import org.springframework.expression.Expression
 import org.springframework.security.access.expression.ExpressionUtils
 import org.springframework.security.core.context.SecurityContextHolder as SCH
@@ -566,23 +565,6 @@ class ApplicationSupport {
             httpClient.connectionManager.shutdown()
         }
         return resp
-    }
-
-    public static List getUserMenusContext(Map windowDefinitions, Map params) {
-        def menus = []
-        windowDefinitions.each { String windowDefinitionId, WindowDefinition windowDefinition ->
-            def menu = windowDefinition.menu
-            if (menu && isAllowed(windowDefinition, params)) {
-                def menuPositions = menuPositionFromUserPreferences(windowDefinition) ?: [visible: menu.defaultVisibility, pos: menu.defaultPosition]
-                menus << [title   : menu.title,
-                          id      : windowDefinitionId,
-                          shortcut: 'ctrl+' + (menus.size() + 1),
-                          icon    : windowDefinition.icon,
-                          position: menuPositions.pos.toInteger(),
-                          visible : menuPositions.visible]
-            }
-        }
-        return menus
     }
 
     public static void exportProjectZIP(Project project, def outputStream) {

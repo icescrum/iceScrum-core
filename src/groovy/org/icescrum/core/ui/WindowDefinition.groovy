@@ -38,7 +38,6 @@ class WindowDefinition {
     String id
     String icon = ''
     String help = ''
-    String title = ''
     String pluginName = null
     String templatePath = null
     String context = "project"
@@ -67,15 +66,10 @@ class WindowDefinition {
         menuClosure.resolveStrategy = Closure.DELEGATE_FIRST
         menuClosure()
         this.menu = menu
-        this.menu.title = this.title
     }
 
     void icon(String icon) {
         this.icon = icon
-    }
-
-    void title(String title) {
-        this.title = title
     }
 
     void context(String context) {
