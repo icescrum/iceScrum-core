@@ -30,16 +30,11 @@ class MenuDefinition {
     private final log = LoggerFactory.getLogger(this.class.name)
 
     String title = ''
-    def show // no type because it can be a closure
     boolean defaultVisibility
     int defaultPosition
 
     void title(String title) {
         this.title = title
-    }
-
-    void show(show) {
-        this.show = show
     }
 
     void defaultVisibility(boolean defaultVisibility) {

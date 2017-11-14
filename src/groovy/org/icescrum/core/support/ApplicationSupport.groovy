@@ -137,22 +137,21 @@ class ApplicationSupport {
     public static boolean isAllowed(def viewDefinition, def params, def widget = false) {
         def grailsApplication = Holders.grailsApplication
         WebScrumExpressionHandler webExpressionHandler = (WebScrumExpressionHandler) grailsApplication.mainContext.getBean(WebScrumExpressionHandler.class)
-        def contexts = viewDefinition?.context ? (viewDefinition.context instanceof String) ? [viewDefinition.context] : viewDefinition.context : [null]
-        if (!viewDefinition || !((getCurrentContext(params)?.name ?: null) in contexts)) {
+        if (!viewDefinition || viewDefinition.context != getCurrentContext(params)?.name) {
             return false
         }
-        // authentication should never be null, however it happens sometimes. See S194 and S230
+        // Authentication should never be null, however it happens sometimes. See S194 and S230
         if (!SCH.context.getAuthentication()) {
             return false
         }
-        //secured on uiDefinition
+        // Secured on uiDefinition
         if (viewDefinition.secured) {
             Expression expression = webExpressionHandler.expressionParser.parseExpression(viewDefinition.secured)
             FilterInvocation fi = new FilterInvocation(SRH.request, SRH.response, DUMMY_CHAIN)
             def ctx = webExpressionHandler.createEvaluationContext(SCH.context.getAuthentication(), fi)
             return ExpressionUtils.evaluateAsBoolean(expression, ctx)
         } else {
-            //secured on controller
+            // Secured on controller
             if (controllerExist(viewDefinition.id, widget ? 'widget' : 'window')) {
                 ApplicationTagLib g = (ApplicationTagLib) grailsApplication.mainContext.getBean(ApplicationTagLib.class)
                 WebInvocationPrivilegeEvaluator webInvocationPrivilegeEvaluator = (WebInvocationPrivilegeEvaluator) grailsApplication.mainContext.getBean(WebInvocationPrivilegeEvaluator.class)
@@ -450,16 +449,15 @@ class ApplicationSupport {
         return dir
     }
 
-    public static getCurrentContext(def params, def id = null) {
+    public static Map getCurrentContext(def params, def id = null) {
         def context = Holders.grailsApplication.config.icescrum.contexts.find { id ? it.key == id : params."$it.key" }
         if (context) {
             def object = params.long("$context.key") ? context.value.contextClass.get(params.long("$context.key")) : null
             return object ? [name        : context.key,
                              object      : object,
-                             contextScope: context.value.contextScope,
                              config      : context.value.config(object),
                              params      : context.value.params(object),
-                             indexScrumOS: context.value.indexScrumOS] : false
+                             indexScrumOS: context.value.indexScrumOS] : null
         }
     }
 
@@ -570,23 +568,18 @@ class ApplicationSupport {
         return resp
     }
 
-    public static def getUserMenusContext(Map windowDefinitions, Map params) {
+    public static List getUserMenusContext(Map windowDefinitions, Map params) {
         def menus = []
         windowDefinitions.each { String windowDefinitionId, WindowDefinition windowDefinition ->
             def menu = windowDefinition.menu
-            menu?.show = menu ? isAllowed(windowDefinition, params) ? menuPositionFromUserPreferences(windowDefinition) ?: [visible: menu.defaultVisibility, pos: menu.defaultPosition] : false : false
-            def show = menu?.show
-            if (show in Closure) {
-                show.delegate = delegate
-                show = show()
-            }
-            if (show) {
-                menus << [title   : menu?.title,
+            if (menu && isAllowed(windowDefinition, params)) {
+                def menuPositions = menuPositionFromUserPreferences(windowDefinition) ?: [visible: menu.defaultVisibility, pos: menu.defaultPosition]
+                menus << [title   : menu.title,
                           id      : windowDefinitionId,
-                          shortcut: "ctrl+" + (menus.size() + 1),
+                          shortcut: 'ctrl+' + (menus.size() + 1),
                           icon    : windowDefinition.icon,
-                          position: show instanceof Map ? show.pos.toInteger() ?: 1 : 1,
-                          visible : show.visible]
+                          position: menuPositions.pos.toInteger(),
+                          visible : menuPositions.visible]
             }
         }
         return menus
