@@ -17,7 +17,7 @@
   - along with iceScrum.  If not, see <http://www.gnu.org/licenses/>.
   --}%
 %{-- view --}%
-<div id="view-${windowDefinition.id}" class="view ${windowDefinition.flex ? 'flex' : ''}" ${windowDefinition.details ? 'ng-class="displayDetailsView()"' : ''}>
+<div id="view-${windowDefinition.id}" class="view ${windowDefinition.flex ? 'flex' : ''}" ${windowDefinition.details ? 'ng-class="[displayDetailsView(), {\'detached\':application.detachedDetailsView}, {\'minimized\':application.minimizedDetailsView}]"' : ''}>
     <div class="content">
         ${content}
     </div>
