@@ -136,7 +136,7 @@ class ApplicationSupport {
     public static boolean isAllowed(def viewDefinition, def params, def widget = false) {
         def grailsApplication = Holders.grailsApplication
         WebScrumExpressionHandler webExpressionHandler = (WebScrumExpressionHandler) grailsApplication.mainContext.getBean(WebScrumExpressionHandler.class)
-        if (!viewDefinition || viewDefinition.context != getCurrentContext(params)?.name) {
+        if (!viewDefinition || viewDefinition.workspace != getCurrentWorkspace(params)?.name) {
             return false
         }
         // Authentication should never be null, however it happens sometimes. See S194 and S230
@@ -448,15 +448,15 @@ class ApplicationSupport {
         return dir
     }
 
-    public static Map getCurrentContext(def params, def id = null) {
-        def context = Holders.grailsApplication.config.icescrum.contexts.find { id ? it.key == id : params."$it.key" }
-        if (context) {
-            def object = params.long("$context.key") ? context.value.contextClass.get(params.long("$context.key")) : null
-            return object ? [name        : context.key,
+    public static Map getCurrentWorkspace(def params, def id = null) {
+        def workspace = Holders.grailsApplication.config.icescrum.workspaces.find { id ? it.key == id : params."$it.key" }
+        if (workspace) {
+            def object = params.long("$workspace.key") ? workspace.value.objectClass.get(params.long("$workspace.key")) : null
+            return object ? [name        : workspace.key,
                              object      : object,
-                             config      : context.value.config(object),
-                             params      : context.value.params(object),
-                             indexScrumOS: context.value.indexScrumOS] : null
+                             config      : workspace.value.config(object),
+                             params      : workspace.value.params(object),
+                             indexScrumOS: workspace.value.indexScrumOS] : null
         }
     }
 

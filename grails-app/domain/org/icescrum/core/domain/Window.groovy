@@ -29,8 +29,8 @@ class Window implements Serializable {
 
     static final long serialVersionUID = 813639045722976162L
 
-    String context
-    Long contextId
+    String workspace
+    Long workspaceId
     String settingsData
     String windowDefinitionId
 
@@ -39,8 +39,8 @@ class Window implements Serializable {
     static transients = ["settings"]
 
     static constraints = {
-        context nullable: true
-        contextId nullable: true
+        workspace nullable: true
+        workspaceId nullable: true
         settingsData nullable: true
     }
 
@@ -49,8 +49,8 @@ class Window implements Serializable {
         settingsData type: 'text'
         table 'is_up_window'
         user index: 'is_up_win_index'
-        context index: 'is_up_win_index'
-        contextId index: 'is_up_win_index'
+        workspace index: 'is_up_win_index', column: 'context'
+        workspaceId index: 'is_up_win_index', column: 'context_id'
         windowDefinitionId index: 'is_up_win_index'
     }
 

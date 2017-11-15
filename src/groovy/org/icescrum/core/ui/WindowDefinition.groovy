@@ -40,7 +40,7 @@ class WindowDefinition {
     String help = ''
     String pluginName = null
     String templatePath = null
-    String context = "project"
+    String workspace = "project"
     String secured = 'permitAll()'
 
     def options = [:]
@@ -72,8 +72,8 @@ class WindowDefinition {
         this.icon = icon
     }
 
-    void context(String context) {
-        this.context = context
+    void workspace(String workspace) {
+        this.workspace = workspace
     }
 
     void secured(String secured) {

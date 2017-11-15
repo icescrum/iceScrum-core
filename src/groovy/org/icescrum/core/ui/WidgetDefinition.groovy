@@ -43,7 +43,7 @@ class WidgetDefinition {
     String help = ''
     String icon = ''
     String title = ''
-    String context = null
+    String workspace = null
     String description = ''
     String pluginName = null
     String templatePath = null
@@ -84,8 +84,8 @@ class WidgetDefinition {
         this.width = width
     }
 
-    void context(String context) {
-        this.context = context
+    void workspace(String workspace) {
+        this.workspace = workspace
     }
 
     void secured(String secured) {

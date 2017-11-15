@@ -32,21 +32,21 @@ class WindowService {
     def uiDefinitionService
     def grailsApplication
 
-    Window retrieve(WindowDefinition windowDefinition, User user, def context) {
+    Window retrieve(WindowDefinition windowDefinition, User user, def workspace) {
         def window = null
         if (user) {
-            window = context ? Window.findByWindowDefinitionIdAndUserAndContextAndContextId(windowDefinition.id, user, context.name, context.object.id) : Window.findByWindowDefinitionIdAndUser(windowDefinition.id, user)
+            window = workspace ? Window.findByWindowDefinitionIdAndUserAndWorkspaceAndWorkspaceId(windowDefinition.id, user, workspace.name, workspace.object.id) : Window.findByWindowDefinitionIdAndUser(windowDefinition.id, user)
             if (!window && windowDefinition.alwaysInitSettings) {
-                window = save(windowDefinition, user, context)
+                window = save(windowDefinition, user, workspace)
             }
         }
         return window
     }
 
-    Window save(WindowDefinition windowDefinition, User user, def context) {
+    Window save(WindowDefinition windowDefinition, User user, def workspace) {
         def window = null
         if (user) {
-            window = context ? new Window(windowDefinitionId: windowDefinition.id, user: user, context: context.name, contextId: context.object.id, settings: windowDefinition.defaultSettings) : new Window(windowDefinitionId: windowDefinition.id, user: user)
+            window = workspace ? new Window(windowDefinitionId: windowDefinition.id, user: user, workspace: workspace.name, workspaceId: workspace.object.id, settings: windowDefinition.defaultSettings) : new Window(windowDefinitionId: windowDefinition.id, user: user)
             try {
                 windowDefinition.onSave(window)
             } catch (Exception e) {
@@ -79,8 +79,8 @@ class WindowService {
         window.save()
     }
 
-    void delete(String contextName, long contextId) {
-        def windows = Window.findAllByContextAndContextId(contextName, contextId)
+    void delete(String workspaceName, long workspaceId) {
+        def windows = Window.findAllByWorkspaceAndWorkspaceId(workspaceName, workspaceId)
         windows.each { Window window ->
             try {
                 uiDefinitionService.getWindowDefinitionById(window.windowDefinitionId).onDelete(window)
