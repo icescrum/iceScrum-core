@@ -645,12 +645,18 @@ class ApplicationSupport {
 
     static void addWarning(String id, String icon, Map title, Map message, boolean hideable = false) {
         def warnings = Holders.grailsApplication.config.icescrum.warnings
-        if (!warnings.find { it.id == id }) {
+        def warningExist = warnings.find { it.id == id }
+        if (!warningExist) {
             def newWarning = [id: id, title: title, message: message, icon: icon, silent: false, hideable: hideable]
             if (log.debugEnabled) {
                 log.debug('Adding warning ' + newWarning.inspect())
             }
             warnings << newWarning
+        } else {
+            warningExist.title = title
+            warningExist.message = message
+            warningExist.icon = icon
+            warningExist.hideable = hideable
         }
     }
 
