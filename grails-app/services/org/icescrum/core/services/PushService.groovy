@@ -33,6 +33,7 @@ import org.icescrum.atmosphere.IceScrumBroadcaster
 import org.icescrum.core.domain.User
 import org.icescrum.core.event.IceScrumEventType
 
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 
 @Transactional(readOnly = true)
@@ -40,13 +41,12 @@ class PushService {
 
     def atmosphereMeteor
     def disabledThreads = new CopyOnWriteArrayList<>()
+    def bufferedThreads = new ConcurrentHashMap<Long, ConcurrentHashMap<String, ArrayList>>()
 
-    void broadcastToChannel(String namespace, String eventType, object, String channel = '/stream/app/*') {
-        Broadcaster broadcaster = atmosphereMeteor.broadcasterFactory?.lookup(IceScrumBroadcaster.class, channel)
-        if (broadcaster) {
-            log.debug("Broadcast to everybody on channel " + channel)
-            broadcaster.broadcast(buildMessage(namespace, eventType, object))
-        }
+    private static final String BUFFER_MESSAGE_DELIMITER = "#-|-#"
+
+    void broadcastToProjectChannel(IceScrumEventType eventType, object, long projectId) {
+        broadcastToProjectChannel(getNamespaceFromDomain(object), eventType.name(), object, projectId)
     }
 
     void broadcastToProjectChannel(String namespace, String eventType, object, long projectId) {
@@ -54,9 +54,22 @@ class PushService {
         broadcastToChannel(namespace, eventType, object, channel)
     }
 
-    void broadcastToProjectChannel(IceScrumEventType eventType, object, long projectId) {
-        if (!isDisabledThread()) {
-            broadcastToProjectChannel(getNamespaceFromDomain(object), eventType.name(), object, projectId)
+    void broadcastToChannel(String namespace, String eventType, object, String channel = '/stream/app/*') {
+        if (!isDisabledPushThread()) {
+            if (!isBufferedThread()) {
+                Broadcaster broadcaster = atmosphereMeteor.broadcasterFactory?.lookup(IceScrumBroadcaster.class, channel)
+                if (broadcaster) {
+                    if (log.debugEnabled) {
+                        log.debug("Broadcast to everybody on channel $channel - $namespace - $eventType")
+                    }
+                    broadcaster.broadcast((buildMessage(namespace, eventType, object) as JSON).toString())
+                }
+            } else {
+                if (log.debugEnabled) {
+                    log.debug("Buffered broadcast for channel $channel - $namespace - $eventType")
+                }
+                bufferMessage(channel, buildMessage(namespace, eventType, object))
+            }
         }
     }
 
@@ -69,42 +82,84 @@ class PushService {
                     resource.request?.getAttribute(IceScrumAtmosphereEventListener.USER_CONTEXT)?.username in usernames
                 }
                 if (resources) {
-                    log.debug('Broadcast to ' + resources*.uuid().join(', ') + ' on channel ' + channel)
-                    broadcaster.broadcast(buildMessage(namespace, eventType, object), resources)
+                    if (log.debugEnabled) {
+                        log.debug('Broadcast to ' + resources*.uuid().join(', ') + ' on channel ' + channel)
+                    }
+                    broadcaster.broadcast((buildMessage(namespace, eventType, object) as JSON).toString(), resources)
                 }
             } catch (Exception e) {
-                // Request object no longer valid. This object has been cancelled, see https://github.com/Atmosphere/atmosphere/issues/1052
+                // Request object no longer valid.  This object has been cancelled, see https://github.com/Atmosphere/atmosphere/issues/1052
             }
         }
     }
 
     void broadcastToUsers(IceScrumEventType eventType, object, Collection<User> users) {
-        if (!isDisabledThread()) {
+        if (!isDisabledPushThread()) {
             broadcastToUsers(getNamespaceFromDomain(object), eventType.name(), object, users*.username)
         }
     }
 
+    void bufferMessage(channel, message) {
+        if (!bufferedThreads.get(Thread.currentThread().getId())."$channel") {
+            bufferedThreads.get(Thread.currentThread().getId())."$channel" = []
+        }
+        def existingMessage = bufferedThreads.get(Thread.currentThread().getId())."$channel".find { it.messageId == message.messageId }
+        if (!existingMessage) {
+            bufferedThreads.get(Thread.currentThread().getId())."$channel" << message
+        } else {
+            existingMessage.object = message.object
+            if (log.debugEnabled) {
+                log.debug('replace with latest content message (' + message.messageId + ') on channel ' + channel)
+            }
+        }
+    }
+
     void disablePushForThisThread() {
-        if (!isDisabledThread()) {
+        if (!isDisabledPushThread()) {
             disabledThreads.add(Thread.currentThread().getId())
         }
     }
 
     void enablePushForThisThread() {
-        if (isDisabledThread()) {
+        if (isDisabledPushThread()) {
             disabledThreads.remove(Thread.currentThread().getId())
         }
     }
 
-    private boolean isDisabledThread() {
+    boolean isDisabledPushThread() {
         return disabledThreads.contains(Thread.currentThread().getId())
     }
 
-    private getNamespaceFromDomain(domain) {
+    void bufferPushForThisThread() {
+        bufferedThreads.putIfAbsent(Thread.currentThread().getId(), new ConcurrentHashMap<String, ArrayList>())
+    }
+
+    void resumePushForThisThread() {
+        if (isBufferedThread()) {
+            def messagesPerChannels = bufferedThreads.remove(Thread.currentThread().getId())
+            messagesPerChannels?.each { channel, messages ->
+                Broadcaster broadcaster = atmosphereMeteor.broadcasterFactory?.lookup(IceScrumBroadcaster.class, channel)
+                if (broadcaster) {
+                    if (log.debugEnabled) {
+                        log.debug("broadcast " + messages.size() + " buffered messages on channel $channel")
+                    }
+                    broadcaster.broadcast(messages.collect({ (it as JSON).toString() }).join(BUFFER_MESSAGE_DELIMITER))
+                }
+            }
+        }
+    }
+
+    boolean isBufferedThread() {
+        return bufferedThreads.containsKey(Thread.currentThread().getId())
+    }
+
+    private static getNamespaceFromDomain(domain) {
         return GrailsNameUtils.getShortName(domain.class).toLowerCase()
     }
 
-    private String buildMessage(String namespace, String eventType, object) {
-        return ([namespace: namespace, eventType: eventType, object: object] as JSON).toString() // toString() required to serialize eagerly (otherwise error because no session in atmosphere thread)
+    private static def buildMessage(String namespace, String eventType, object) {
+        def messageId = object.hasProperty('messageId') ? object.messageId : namespace + "-" + eventType + "-" + object.id
+        def message = [messageId: messageId, namespace: namespace, eventType: eventType, object: object]
+        return message // toString() required to serialize eagerly (otherwise error because no session in atmosphere thread)
     }
 }
