@@ -199,9 +199,10 @@ class StoryService extends IceScrumEventPublisher {
             throw new BusinessException(code: 'is.sprint.error.associate.story.done')
         }
         if (story.parentSprint != null) {
-            unPlan(story, false)
+            prepareToshiftToAnotherSprint(story)
+        } else {
+            resetRank(story)
         }
-        resetRank(story)
         User user = (User) springSecurityService.currentUser
         sprint.addToStories(story)
         if (sprint.state == Sprint.STATE_WAIT) {
@@ -250,21 +251,28 @@ class StoryService extends IceScrumEventPublisher {
         if (sprint.state == Sprint.STATE_WAIT) {
             sprint.capacity = sprint.totalEffort
         }
-        User user = (User) springSecurityService.currentUser
-        activityService.addActivity(story, user, 'unPlan', story.name, 'parentSprint', sprint.id.toString())
         story.parentSprint = null
-        story.state = Story.STATE_ESTIMATED
         story.inProgressDate = null
         story.plannedDate = null
-        setRank(story, 1)
-        update(story)
-        story.tasks.each { Task task ->
-            if (task.state != Task.STATE_DONE) {
-                def props = task.state == Task.STATE_WAIT ? [:] : [state: Task.STATE_WAIT]
-                task.backlog = null
-                taskService.update(task, user, false, props)
+        if (fullUnPlan) {
+            User user = (User) springSecurityService.currentUser
+            activityService.addActivity(story, user, 'unPlan', story.name, 'parentSprint', sprint.id.toString())
+            story.state = Story.STATE_ESTIMATED
+            setRank(story, 1)
+            update(story)
+            story.tasks.each { Task task ->
+                if (task.state != Task.STATE_DONE) {
+                    def props = task.state == Task.STATE_WAIT ? [:] : [state: Task.STATE_WAIT]
+                    task.backlog = null
+                    taskService.update(task, user, false, props)
+                }
             }
         }
+    }
+
+    @PreAuthorize('(productOwner(#story.backlog) or scrumMaster(#story.backlog)) and !archivedProject(#story.backlog)')
+    private void prepareToshiftToAnotherSprint(Story story) {
+        unPlan(story, false)
     }
 
     // TODO check rights
