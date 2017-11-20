@@ -62,7 +62,7 @@ class PushService {
                     if (log.debugEnabled) {
                         log.debug("Broadcast to everybody on channel $channel - $namespace - $eventType")
                     }
-                    broadcaster.broadcast((buildMessage(namespace, eventType, object) as JSON).toString())
+                    broadcaster.broadcast(buildMessage(namespace, eventType, object).content)
                 }
             } else {
                 if (log.debugEnabled) {
@@ -85,7 +85,7 @@ class PushService {
                     if (log.debugEnabled) {
                         log.debug('Broadcast to ' + resources*.uuid().join(', ') + ' on channel ' + channel)
                     }
-                    broadcaster.broadcast((buildMessage(namespace, eventType, object) as JSON).toString(), resources)
+                    broadcaster.broadcast(buildMessage(namespace, eventType, object).content, resources)
                 }
             } catch (Exception e) {
                 // Request object no longer valid.  This object has been cancelled, see https://github.com/Atmosphere/atmosphere/issues/1052
@@ -107,7 +107,7 @@ class PushService {
         if (!existingMessage) {
             bufferedThreads.get(Thread.currentThread().getId())."$channel" << message
         } else {
-            existingMessage.object = message.object
+            existingMessage = message
             if (log.debugEnabled) {
                 log.debug('replace with latest content message (' + message.messageId + ') on channel ' + channel)
             }
@@ -143,7 +143,7 @@ class PushService {
                     if (log.debugEnabled) {
                         log.debug("broadcast " + messages.size() + " buffered messages on channel $channel")
                     }
-                    broadcaster.broadcast(messages.collect({ (it as JSON).toString() }).join(BUFFER_MESSAGE_DELIMITER))
+                    broadcaster.broadcast(messages.collect({ it.content }).join(BUFFER_MESSAGE_DELIMITER))
                 }
             }
         }
@@ -160,6 +160,7 @@ class PushService {
     private static def buildMessage(String namespace, String eventType, object) {
         def messageId = object.hasProperty('messageId') ? object.messageId : namespace + "-" + eventType + "-" + object.id
         def message = [messageId: messageId, namespace: namespace, eventType: eventType, object: object]
+        message.content = (message as JSON).toString()
         return message // toString() required to serialize eagerly (otherwise error because no session in atmosphere thread)
     }
 }
