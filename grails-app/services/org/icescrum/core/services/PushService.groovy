@@ -100,9 +100,11 @@ class PushService {
     }
 
     void bufferMessage(channel, message) {
-        def messages = bufferedThreads.get(Thread.currentThread().getId())."$channel"
+        def threadId = Thread.currentThread().getId()
+        def messages = bufferedThreads.get(threadId)."$channel"
         if (!messages) {
-            messages = []
+            bufferedThreads.get(threadId)."$channel" = []
+            messages = bufferedThreads.get(threadId)."$channel"
         }
         def existingMessage = messages.find { it.messageId == message.messageId }
         if (!existingMessage) {
