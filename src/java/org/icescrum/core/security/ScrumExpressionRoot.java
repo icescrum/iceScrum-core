@@ -47,4 +47,5 @@ public interface ScrumExpressionRoot {
 
     public boolean archivedProject(long p);
 
+    public boolean appEnabledProject(String appDefinitionId);
 }

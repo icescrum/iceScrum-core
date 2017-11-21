@@ -50,6 +50,7 @@ class SecurityService {
     def grailsUrlMappingsHolder
     def grailsApplication
     def aclService
+    def appService
 
     static final productOwnerPermissions = [BasePermission.WRITE]
     static final stakeHolderPermissions = [BasePermission.READ]
@@ -487,6 +488,18 @@ class SecurityService {
         } else {
             return false
         }
+    }
+
+    boolean appEnabledProject(String appDefinitionId) {
+        Long project = parseCurrentRequestProject(RCH.requestAttributes.currentRequest)
+        def authorized = false
+        if (project) {
+            Project _project = Project.load(project)
+            if (_project) {
+                authorized = appService.isEnabledAppForProject(_project, appDefinitionId)
+            }
+        }
+        return authorized
     }
 
     def filterRequest(force = false) {

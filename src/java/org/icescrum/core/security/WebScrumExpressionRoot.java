@@ -152,4 +152,8 @@ public class WebScrumExpressionRoot extends WebSecurityExpressionRoot implements
     public boolean archivedProject(long p) {
         return securityService.archivedProject(p);
     }
+
+    public boolean appEnabledProject(String appDefinitionId) {
+        return securityService.appEnabledProject(appDefinitionId);
+    }
 }
