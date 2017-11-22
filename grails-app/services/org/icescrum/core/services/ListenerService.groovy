@@ -175,7 +175,7 @@ class ListenerService {
         def project = task.parentProject
         def newStoryUpdated = false
         if (!pushService.isDisabledPushThread() && ['rank', 'parentStory', 'type', 'state'].any { dirtyProperties.containsKey(it) }) { //isDisabledPushThread() called to avoid useless findAll
-            project.tasks.findAll { it.isDirty('rank') && it.id != task.id }.each { // If others tasks have been updated, push them
+            task.sprint?.tasks?.findAll { it.isDirty('rank') && it.id != task.id }?.each { // If others tasks have been updated, push them
                 pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, [class: 'Task', id: it.id, rank: it.rank, messageId: 'task-' + it.id + '-rank'], project.id)
             }
         }
