@@ -226,7 +226,7 @@ class StoryService extends IceScrumEventPublisher {
             story.plannedDate = new Date()
         }
         def maxRank = (sprint.stories?.findAll { it.state != Story.STATE_DONE }?.size() ?: 1)
-        def rank = newRank ? (newRank <= maxRank ? newRank : maxRank) : 1
+        def rank = (newRank && newRank <= maxRank) ? newRank : maxRank
         setRank(story, rank)
         update(story)
         story.tasks.findAll { it.state == Task.STATE_WAIT }.each {
