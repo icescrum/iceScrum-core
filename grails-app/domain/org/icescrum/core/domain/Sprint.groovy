@@ -139,7 +139,7 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
         retrospective type: 'text'
         doneDefinition type: 'text'
         attachments_count(nullable: true) // Must be nullable at creation for postgres because it doesn't set default value. The not nullable constraint is added in migration.
-        stories cascade: 'delete', batchSize: 15, cache: true
+        stories sort: "rank", order: "desc", cascade: 'delete', batchSize: 15, cache: true
         orderNumber index: 's_order_index'
     }
 

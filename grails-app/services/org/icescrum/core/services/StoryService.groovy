@@ -225,7 +225,8 @@ class StoryService extends IceScrumEventPublisher {
             story.state = Story.STATE_PLANNED
             story.plannedDate = new Date()
         }
-        def rank = newRank ?: (sprint.stories?.findAll { it.state != Story.STATE_DONE }?.size() ?: 1)
+        def maxRank = (sprint.stories?.findAll { it.state != Story.STATE_DONE }?.size() ?: 1)
+        def rank = newRank <= maxRank ? newRank : maxRank
         setRank(story, rank)
         update(story)
         story.tasks.findAll { it.state == Task.STATE_WAIT }.each {
@@ -603,7 +604,9 @@ class StoryService extends IceScrumEventPublisher {
             story.parentSprint.velocity -= story.effort
             //Move story to last rank of in progress stories in sprint
             updateRank(story, Story.countByParentSprintAndState(story.parentSprint, Story.STATE_INPROGRESS) + 1)
+            def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_UPDATE, story)
             story.save()
+            publishSynchronousEvent(IceScrumEventType.UPDATE, story, dirtyProperties)
             User user = (User) springSecurityService.currentUser
             activityService.addActivity(story, user, 'unDone', story.name)
         }
