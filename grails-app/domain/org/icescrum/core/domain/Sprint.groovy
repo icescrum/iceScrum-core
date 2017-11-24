@@ -64,7 +64,7 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
     ]
 
     static transients = [
-            'recurrentTasks', 'urgentTasks', 'hasNextSprint', 'parentReleaseId', 'activable', 'effectiveEndDate', 'effectiveStartDate', 'totalRemaining', 'parentProject', 'totalEffort', 'previousSprint', 'nextSprint', 'parentReleaseName', 'parentReleaseOrderNumber', 'index', 'fullName'
+            'recurrentTasks', 'urgentTasks', 'hasNextSprint', 'parentReleaseId', 'activable', 'reactivable', 'effectiveEndDate', 'effectiveStartDate', 'totalRemaining', 'parentProject', 'totalEffort', 'previousSprint', 'nextSprint', 'parentReleaseName', 'parentReleaseOrderNumber', 'index', 'fullName'
     ]
 
     static namedQueries = {
@@ -305,6 +305,10 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
 
     def getActivable() {
         return state == STATE_WAIT && parentRelease.state == Release.STATE_INPROGRESS && (orderNumber == 1 || previousSprint && previousSprint.state == STATE_DONE)
+    }
+
+    def getReactivable() {
+        return state == STATE_DONE && parentRelease.state == Release.STATE_INPROGRESS && (!nextSprint || nextSprint && nextSprint.state == STATE_WAIT)
     }
 
     BigDecimal getTotalRemaining() {

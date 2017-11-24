@@ -174,6 +174,26 @@ class SprintService extends IceScrumEventPublisher {
     }
 
     @PreAuthorize('(productOwner(#sprint.parentRelease.parentProject) or scrumMaster(#sprint.parentRelease.parentProject)) and !archivedProject(#sprint.parentRelease.parentProject)')
+    void reactivate(Sprint sprint) {
+        if (sprint.parentRelease.state != Release.STATE_INPROGRESS) {
+            throw new BusinessException(code: 'is.sprint.error.activate.release.not.inprogress')
+        }
+        sprint.parentRelease.sprints.each {
+            if (it.state == Sprint.STATE_INPROGRESS) {
+                throw new BusinessException(code: 'is.sprint.error.activate.other.inprogress')
+            } else if (it.orderNumber > sprint.orderNumber && it.state == Sprint.STATE_DONE) {
+                throw new BusinessException(code: 'is.sprint.error.reactivate.next.closed')
+            }
+        }
+        sprint.state = Sprint.STATE_INPROGRESS
+        sprint.doneDate = null
+        sprint.velocity = 0d
+        update(sprint)
+        clicheService.removeLastSprintCliche(sprint.refresh(), Cliche.TYPE_CLOSE)
+        clicheService.createOrUpdateDailyTasksCliche(sprint)
+    }
+
+    @PreAuthorize('(productOwner(#sprint.parentRelease.parentProject) or scrumMaster(#sprint.parentRelease.parentProject)) and !archivedProject(#sprint.parentRelease.parentProject)')
     void close(Sprint sprint) {
         if (sprint.state != Sprint.STATE_INPROGRESS) {
             throw new BusinessException(code: 'is.sprint.error.close.not.inprogress')

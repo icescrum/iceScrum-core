@@ -102,6 +102,14 @@ class ClicheService {
         save(c, s.parentRelease)
     }
 
+    void removeLastSprintCliche(Sprint s, int type) {
+        def cliche = Cliche.findByTypeAndParentTimeBox(Cliche.TYPE_CLOSE, s.parentRelease, [sort: "datePrise", order: "desc"])
+        if (cliche) {
+            s.parentRelease.removeFromCliches(cliche)
+            cliche.delete()
+        }
+    }
+
     def generateSprintClicheData(Sprint sprint, int clicheType) {
         // Retrieve the current release and the current sprint
         Release release = sprint.parentRelease
