@@ -21,6 +21,7 @@
  * Stéphane Maldini (stephane.maldini@icescrum.com)
  * Manuarii Stein (manuarii.stein@icescrum.com)
  * Nicolas Noullet (nnoullet@kagilum.com)
+ * Colin Bontemps (cbontemps@kagilum.com)
  */
 
 package org.icescrum.core.services
@@ -40,6 +41,8 @@ import org.icescrum.core.support.ApplicationSupport
 import org.icescrum.plugins.attachmentable.domain.Attachment
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.security.access.prepost.PreAuthorize
+
+import java.util.regex.Matcher
 
 @Transactional
 class StoryService extends IceScrumEventPublisher {
@@ -96,8 +99,10 @@ class StoryService extends IceScrumEventPublisher {
             if (!(story.creator.id == springSecurityService.currentUser?.id) && !securityService.productOwner(project.id, springSecurityService.authentication)) {
                 throw new BusinessException(code: 'is.story.error.not.deleted.permission')
             }
-            if (story.actor) {
-                story.actor.removeFromStories(story)
+            if (story.actors) {
+                story.actors.each { actor ->
+                    actor.removeFromStories(story)
+                }
             }
             if (story.feature) {
                 story.feature.removeFromStories(story)
@@ -707,7 +712,7 @@ class StoryService extends IceScrumEventPublisher {
             )
             // References on other objects
             if (project) {
-                if (!storyXml.feature.@uid.isEmpty() && project) {
+                if (!storyXml.feature.@uid.isEmpty()) {
                     Feature feature = project.features.find {
                         it.uid == storyXml.feature.@uid.text().toInteger()
                     }
@@ -715,7 +720,16 @@ class StoryService extends IceScrumEventPublisher {
                         feature.addToStories(story)
                     }
                 }
-                if (!storyXml.actor.@uid.isEmpty() && project) {
+                storyXml?.actors?.actor.each { actorXml ->
+                    if (!actorXml.@uid.isEmpty()) {
+                        Actor actor = project.actors.find { it.uid == actorXml.@uid.text().toInteger() }
+                        if (actor) {
+                            actor.addToStories(story)
+                        }
+                    }
+                }
+                // Handle legacy exports with one actor per story
+                if (!storyXml.actor.@uid.isEmpty()) {
                     Actor actor = project.actors.find { it.uid == storyXml.actor.@uid.text().toInteger() }
                     if (actor) {
                         actor.addToStories(story)
@@ -800,25 +814,31 @@ class StoryService extends IceScrumEventPublisher {
         }
     }
 
-    public void manageActors(story, project) {
-        def newActor
+    void manageActors(story, project) {
+        Set<Actor> actorSet = new HashSet<>()
         if (story.description) {
-            def actorIdMatcher = story.description =~ /A\[(.+?)-.*?\]/
-            if (actorIdMatcher) {
-                def uidString = actorIdMatcher[0][1]
-                if (uidString.isInteger()) {
-                    newActor = project.actors.find { it.uid == uidString.toInteger() }
+            Matcher actorIdMatcher = story.description =~ /A\[(\d+)-.+?]/
+            while (actorIdMatcher.find()) {
+                String actorId = actorIdMatcher.group(1)
+                actorSet.add(project.actors.find { it.uid == actorId.toInteger() })
+            }
+        }
+        if (!actorSet.isEmpty()) {
+            if (story.actors) {
+                (actorSet - story.actors).each { actor ->
+                    actor.removeFromStories(story)
+                    actor.addToStories(story)
+                }
+                (story.actors - actorSet).each { actor ->
+                    actor.removeFromStories(story)
                 }
             }
-        }
-        if (newActor) {
-            if (story.actor != newActor) {
-                story.actor?.removeFromStories(story)
-                newActor.addToStories(story)
+        } else {
+            story.actors?.each { actor ->
+                actor.removeFromStories(story)
             }
-        } else if (story.actor) {
-            story.actor.removeFromStories(story)
         }
+        story.actors = actorSet
     }
 
     private Long adjustRankAccordingToDependences(story, Long rank) {

@@ -19,6 +19,7 @@
  *
  * Vincent Barrier (vbarrier@kagilum.com)
  * Nicolas Noullet (nnoullet@kagilum.com)
+ * Colin Bontemps (cbontemps@kagilum.com)
  */
 
 
@@ -63,7 +64,6 @@ class Story extends BacklogElement implements Cloneable, Serializable {
             creator     : User,
             feature     : Feature,
             parentSprint: Sprint,
-            actor       : Actor,
             dependsOn   : Story
     ]
 
@@ -71,6 +71,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
             tasks          : Task,
             voters         : User,
             followers      : User,
+            actors         : Actor,
             dependences    : Story,
             acceptanceTests: AcceptanceTest
     ]
@@ -99,7 +100,11 @@ class Story extends BacklogElement implements Cloneable, Serializable {
         doneDate(nullable: true)
         parentSprint(nullable: true, validator: { newSprint, story -> newSprint == null || newSprint.parentProject.id == story.backlog.id ?: 'invalid' })
         feature(nullable: true, validator: { newFeature, story -> newFeature == null || newFeature.backlog.id == story.backlog.id ?: 'invalid' })
-        actor(nullable: true, validator: { newActor, story -> newActor == null || newActor.parentProject.id == story.backlog.id ?: 'invalid' })
+        actors(nullable: true, validator: { newActors, story ->
+            newActors == null || newActors.every {
+                newActor -> newActor.parentProject.id == story.backlog.id
+            } ?: 'invalid'
+        })
         affectVersion(nullable: true)
         effort(nullable: true, validator: { newEffort, story -> newEffort == null || (newEffort >= 0 && newEffort < 1000) ?: 'invalid' })
         creator(nullable: true) // in case of a user deletion, the story can remain without owner
@@ -412,7 +417,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                     }
                 }
                 if (options.story.actor) {
-                    actor {
+                    actors {
                         or {
                             getList(options.story.actor).each { actor ->
                                 eq 'id', new Long(actor)
@@ -587,9 +592,6 @@ class Story extends BacklogElement implements Cloneable, Serializable {
             if (this.feature) {
                 builder.feature(uid: this.feature.uid)
             }
-            if (this.actor) {
-                builder.actor(uid: this.actor.uid)
-            }
             if (dependsOn) {
                 builder.dependsOn(uid: this.dependsOn.uid)
             }
@@ -612,6 +614,11 @@ class Story extends BacklogElement implements Cloneable, Serializable {
             builder.acceptanceTests() {
                 this.acceptanceTests.each { _acceptanceTest ->
                     _acceptanceTest.xml(builder)
+                }
+            }
+            builder.actors() {
+                this.actors.each { _actor ->
+                    builder.actor(uid: _actor.uid)
                 }
             }
             builder.followers() {

@@ -21,6 +21,7 @@
  * Nicolas Noullet (nnoullet@kagilum.com)
  * Stéphane Maldini (stephane.maldini@icescrum.com)
  * Manuarii Stein (manuarii.stein@icescrum.com)
+ * Colin Bontemps (cbontemps@kagilum.com)
  */
 
 package org.icescrum.core.services
@@ -52,7 +53,7 @@ class ActorService extends IceScrumEventPublisher {
     @PreAuthorize('productOwner(#actor.parentProject) and !archivedProject(#actor.parentProject)')
     void delete(Actor actor) {
         Project project = (Project) actor.parentProject
-        def hasStories = project.stories.any { it.actor?.id == actor.id }
+        def hasStories = project.stories?.actors?.any { it.id == actor.id }
         if (hasStories) {
             throw new BusinessException(code: 'is.actor.error.still.hasStories')
         }

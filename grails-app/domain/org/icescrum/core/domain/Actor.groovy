@@ -20,6 +20,7 @@
  * Vincent Barrier (vbarrier@kagilum.com)
  * Manuarii Stein (manuarii.stein@icescrum.com)
  * Nicolas Noullet (nnoullet@kagilum.com)
+ * Colin Bontemps (cbontemps@kagilum.com)
  */
 
 
@@ -34,12 +35,11 @@ class Actor implements Serializable, Comparable<Actor> {
 
     String name
     int uid
+    Project parentProject
 
     static hasMany = [stories: Story]
 
-    static mappedBy = [stories: "actor"]
-
-    static belongsTo = [parentProject: Project]
+    static belongsTo = [Story, Project]
 
     static constraints = {
         name(blank: false, unique: 'parentProject', maxSize: 100)
