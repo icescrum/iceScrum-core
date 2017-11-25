@@ -54,7 +54,7 @@ class Release extends TimeBox implements Cloneable, Attachmentable {
 
     static mappedBy = [sprints: 'parentRelease', features: 'parentRelease']
 
-    static transients = ['firstDate', 'closable', 'activable', 'meanVelocity', 'previousRelease', 'nextRelease']
+    static transients = ['firstDate', 'closable', 'activable', 'reactivable', 'meanVelocity', 'previousRelease', 'nextRelease']
 
     static mapping = {
         cache true
@@ -190,6 +190,10 @@ class Release extends TimeBox implements Cloneable, Attachmentable {
 
     boolean getActivable() {
         return state == STATE_WAIT && (orderNumber == 1 || previousRelease && previousRelease.state == STATE_DONE)
+    }
+
+    def getReactivable() {
+        return state == STATE_DONE && (!previousRelease || previousRelease && previousRelease.state == STATE_WAIT)
     }
 
     Release getPreviousRelease() {
