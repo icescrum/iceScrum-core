@@ -105,6 +105,12 @@ class ListenerService {
                     activityService.addActivity(story, user, Activity.CODE_UPDATE, story.name, property)
                 }
             }
+            ['parentSprint'].each { property ->
+                if (dirtyProperties.containsKey(property)) {
+                    def tasksData = [class: 'Task', ids: story.tasks.collect({ it.id }), properties: [class: 'Task', state: Task.STATE_WAIT, parentSprint: story.parentSprint ?: null, inProgressDate: null], messageId: 'story-' + story.id + '-tasks']
+                    pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, tasksData, story.backlog.id)
+                }
+            }
         }
         pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, story, project.id)
     }

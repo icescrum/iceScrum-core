@@ -55,6 +55,7 @@ class StoryService extends IceScrumEventPublisher {
     def acceptanceTestService
     def activityService
     def grailsApplication
+    def pushService
 
     @PreAuthorize('isAuthenticated() and !archivedProject(#project)')
     void save(Story story, Project project, User user) {
@@ -234,10 +235,12 @@ class StoryService extends IceScrumEventPublisher {
         def rank = (newRank && newRank <= maxRank) ? newRank : maxRank
         setRank(story, rank)
         update(story)
+        pushService.disablePushForThisThread()
         story.tasks.findAll { it.state == Task.STATE_WAIT }.each {
             it.backlog = sprint
             taskService.update(it, user)
         }
+        pushService.enablePushForThisThread()
     }
 
     @PreAuthorize('(productOwner(#story.backlog) or scrumMaster(#story.backlog)) and !archivedProject(#story.backlog)')
@@ -266,6 +269,7 @@ class StoryService extends IceScrumEventPublisher {
             story.state = Story.STATE_ESTIMATED
             setRank(story, 1)
             update(story)
+            pushService.disablePushForThisThread()
             story.tasks.each { Task task ->
                 if (task.state != Task.STATE_DONE) {
                     def props = task.state == Task.STATE_WAIT ? [:] : [state: Task.STATE_WAIT]
@@ -273,6 +277,7 @@ class StoryService extends IceScrumEventPublisher {
                     taskService.update(task, user, false, props)
                 }
             }
+            pushService.enablePushForThisThread()
         }
     }
 
