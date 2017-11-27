@@ -193,7 +193,7 @@ class Release extends TimeBox implements Cloneable, Attachmentable {
     }
 
     def getReactivable() {
-        return state == STATE_DONE && (!previousRelease || previousRelease && previousRelease.state == STATE_WAIT)
+        return state == STATE_DONE && (!nextRelease || nextRelease.state == STATE_WAIT)
     }
 
     Release getPreviousRelease() {

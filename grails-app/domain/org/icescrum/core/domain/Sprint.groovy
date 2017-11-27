@@ -308,7 +308,7 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
     }
 
     def getReactivable() {
-        return state == STATE_DONE && parentRelease.state == Release.STATE_INPROGRESS && (!nextSprint || nextSprint && nextSprint.state == STATE_WAIT)
+        return state == STATE_DONE && parentRelease.state == Release.STATE_INPROGRESS && (!nextSprint || nextSprint.state == STATE_WAIT)
     }
 
     BigDecimal getTotalRemaining() {
