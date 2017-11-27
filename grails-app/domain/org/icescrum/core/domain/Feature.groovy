@@ -55,9 +55,9 @@ class Feature extends BacklogElement implements Serializable {
     static mapping = {
         cache true
         table 'is_feature'
-        stories cascade: "refresh", sort: 'rank', 'name': 'asc', cache: true
+        stories cascade: "refresh", sort: 'rank', 'name': 'asc', batchSize: 25, cache: true
         sort "id"
-        activities cascade: 'delete-orphan' // Doesn't work on BacklogElement
+        activities cascade: 'delete-orphan', batchSize: 25, cache: true // Doesn't work on BacklogElement
     }
 
     static constraints = {

@@ -62,7 +62,7 @@ class Release extends TimeBox implements Cloneable, Attachmentable {
         vision type: 'text'
         name index: 'rel_name_index'
         attachments_count(nullable: true) // Must be nullable at creation for postgres because it doesn't set default value. The not nullable constraint is added in migration.
-        sprints cascade: 'all-delete-orphan', cache: true
+        sprints cascade: 'all-delete-orphan', batchSize: 5, cache: true
     }
 
     static constraints = {

@@ -181,6 +181,13 @@ class StoryService extends IceScrumEventPublisher {
     }
 
     @PreAuthorize('(productOwner(#sprint.parentProject) or scrumMaster(#sprint.parentProject)) and !archivedProject(#sprint.parentProject)')
+    public void planMultiple(Sprint sprint, def stories) {
+        stories.each {
+            plan(sprint, it)
+        }
+    }
+
+    @PreAuthorize('(productOwner(#sprint.parentProject) or scrumMaster(#sprint.parentProject)) and !archivedProject(#sprint.parentProject)')
     public void plan(Sprint sprint, Story story, Long newRank = null) {
         if (story.dependsOn) {
             if (story.dependsOn.state < Story.STATE_PLANNED) {
