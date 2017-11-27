@@ -579,6 +579,7 @@ class StoryService extends IceScrumEventPublisher {
             publishSynchronousEvent(IceScrumEventType.UPDATE, story, dirtyProperties)
             User user = (User) springSecurityService.currentUser
             activityService.addActivity(story, user, 'done', story.name)
+            pushService.disablePushForThisThread()
             story.tasks?.findAll { it.state != Task.STATE_DONE }?.each { t ->
                 taskService.update(t, user, false, [state: Task.STATE_DONE])
             }
@@ -588,6 +589,7 @@ class StoryService extends IceScrumEventPublisher {
                     acceptanceTestService.update(acceptanceTest)
                 }
             }
+            pushService.enablePushForThisThread()
         }
         if (stories) {
             clicheService.createOrUpdateDailyTasksCliche(stories[0]?.parentSprint)

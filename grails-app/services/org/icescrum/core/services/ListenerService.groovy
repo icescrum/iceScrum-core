@@ -87,6 +87,8 @@ class ListenerService {
             if (dirtyProperties.containsKey('state') && Story.STATE_DONE in [dirtyProperties.state, story.state] && story.parentSprint && !newUpdatedProperties['parentSprint']) {
                 story.parentSprint.lastUpdated = new Date()
                 pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, story.parentSprint, project.id)
+                def tasksData = [class: 'Task', ids: story.tasks.collect({ it.id }), properties: [class: 'Task', state: Task.STATE_DONE, doneDate: new Date()], messageId: 'story-' + story.id + '-tasks']
+                pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, tasksData, story.backlog.id)
             }
             def user = (User) springSecurityService.currentUser
             ['name', 'type', 'value', 'effort'].each { property ->
@@ -107,7 +109,9 @@ class ListenerService {
             }
             ['parentSprint'].each { property ->
                 if (dirtyProperties.containsKey(property)) {
-                    def tasksData = [class: 'Task', ids: story.tasks.collect({ it.id }), properties: [class: 'Task', state: Task.STATE_WAIT, parentSprint: story.parentSprint ?: null, inProgressDate: null], messageId: 'story-' + story.id + '-tasks']
+                    def tasksData = [class: 'Task', ids: story.tasks.findAll { it.state != Task.STATE_DONE }.collect({
+                        it.id
+                    }), properties        : [class: 'Task', state: Task.STATE_WAIT, parentSprint: story.parentSprint ?: null, inProgressDate: null], messageId: 'story-' + story.id + '-tasks']
                     pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, tasksData, story.backlog.id)
                 }
             }
