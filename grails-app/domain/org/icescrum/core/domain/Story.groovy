@@ -101,11 +101,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
         doneDate(nullable: true)
         parentSprint(nullable: true, validator: { newSprint, story -> newSprint == null || newSprint.parentProject.id == story.backlog.id ?: 'invalid' })
         feature(nullable: true, validator: { newFeature, story -> newFeature == null || newFeature.backlog.id == story.backlog.id ?: 'invalid' })
-        actors(nullable: true, validator: { newActors, story ->
-            newActors == null || newActors.every {
-                newActor -> newActor.parentProject.id == story.backlog.id
-            } ?: 'invalid'
-        })
+        actors(nullable: true)
         affectVersion(nullable: true)
         effort(nullable: true, validator: { newEffort, story -> newEffort == null || (newEffort >= 0 && newEffort < 1000) ?: 'invalid' })
         creator(nullable: true) // in case of a user deletion, the story can remain without owner
