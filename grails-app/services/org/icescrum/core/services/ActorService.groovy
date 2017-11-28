@@ -53,8 +53,7 @@ class ActorService extends IceScrumEventPublisher {
     @PreAuthorize('productOwner(#actor.parentProject) and !archivedProject(#actor.parentProject)')
     void delete(Actor actor) {
         Project project = (Project) actor.parentProject
-        def hasStories = project.stories?.actors?.any { it.id == actor.id }
-        if (hasStories) {
+        if (actor.stories) {
             throw new BusinessException(code: 'is.actor.error.still.hasStories')
         }
         def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_DELETE, actor)

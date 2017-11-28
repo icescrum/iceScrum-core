@@ -734,7 +734,7 @@ class StoryService extends IceScrumEventPublisher {
                         feature.addToStories(story)
                     }
                 }
-                storyXml?.actors?.actor.each { actorXml ->
+                Closure importActor = { actorXml ->
                     if (!actorXml.@uid.isEmpty()) {
                         Actor actor = project.actors.find { it.uid == actorXml.@uid.text().toInteger() }
                         if (actor) {
@@ -742,13 +742,9 @@ class StoryService extends IceScrumEventPublisher {
                         }
                     }
                 }
+                storyXml?.actors?.actor.each(importActor)
                 // Handle legacy exports with one actor per story
-                if (!storyXml.actor.@uid.isEmpty()) {
-                    Actor actor = project.actors.find { it.uid == storyXml.actor.@uid.text().toInteger() }
-                    if (actor) {
-                        actor.addToStories(story)
-                    }
-                }
+                importActor(storyXml.actor)
                 story.creator = creator
                 project.addToStories(story)
             }
@@ -835,21 +831,6 @@ class StoryService extends IceScrumEventPublisher {
             while (actorIdMatcher.find()) {
                 String actorId = actorIdMatcher.group(1)
                 actorSet.add(project.actors.find { it.uid == actorId.toInteger() })
-            }
-        }
-        if (!actorSet.isEmpty()) {
-            if (story.actors) {
-                (actorSet - story.actors).each { actor ->
-                    actor.removeFromStories(story)
-                    actor.addToStories(story)
-                }
-                (story.actors - actorSet).each { actor ->
-                    actor.removeFromStories(story)
-                }
-            }
-        } else {
-            story.actors?.each { actor ->
-                actor.removeFromStories(story)
             }
         }
         story.actors = actorSet
