@@ -23,14 +23,20 @@
  */
 package org.icescrum.core.domain
 
+import grails.plugin.springsecurity.acl.AclUtilService
+import grails.util.Holders
 import org.hibernate.ObjectNotFoundException
-import org.icescrum.core.domain.Project
+import org.springframework.security.acls.model.Acl
 
 class Portfolio {
 
     String fkey
     Date dateCreated
     Date lastUpdated
+
+    def owner
+
+    static transients = ['owner']
 
     static hasMany = [projects: Project]
 
@@ -50,5 +56,20 @@ class Portfolio {
             throw new ObjectNotFoundException(id, 'Portfolio')
         }
         return portfolio
+    }
+
+    def getOwner() {
+        if (this.owner) {
+            return this.owner
+        } else if (this.id) {
+            return User.findByUsername(retrieveAclPortfolio().owner.principal, [cache: true])
+        } else {
+            null
+        }
+    }
+
+    private Acl retrieveAclPortfolio() {
+        def aclUtilService = (AclUtilService) Holders.grailsApplication.mainContext.getBean('aclUtilService')
+        return aclUtilService.readAcl(this.getClass(), this.id)
     }
 }
