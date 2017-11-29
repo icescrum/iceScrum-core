@@ -30,9 +30,12 @@ import org.springframework.security.acls.model.Acl
 
 class Portfolio {
 
+    String name
     String fkey
+    String description
     Date dateCreated
     Date lastUpdated
+    boolean hidden = false
 
     def owner
 
@@ -44,10 +47,13 @@ class Portfolio {
         cache true
         table 'is_portfolio'
         fkey(index: 'portfolio_key_index')
+        description(length: 5000)
     }
 
     static constraints = {
+        name(blank: false, maxSize: 200)
         fkey(blank: false, maxSize: 10, matches: /^[A-Z0-9]*$/, unique: true)
+        description(maxSize: 5000, nullable: true)
     }
 
     static Portfolio withPortfolio(long id) {
