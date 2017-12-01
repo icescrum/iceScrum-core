@@ -25,6 +25,7 @@ package org.icescrum.core.domain
 
 import grails.plugin.springsecurity.acl.AclUtilService
 import grails.util.Holders
+import org.grails.datastore.gorm.GormStaticApi
 import org.hibernate.ObjectNotFoundException
 import org.springframework.security.acls.model.Acl
 
@@ -58,7 +59,7 @@ class Portfolio {
     }
 
     static Portfolio withPortfolio(long id) {
-        Portfolio portfolio = get(id)
+        Portfolio portfolio = GormStaticApi.get(id)
         if (!portfolio) {
             throw new ObjectNotFoundException(id, 'Portfolio')
         }
