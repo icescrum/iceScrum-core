@@ -212,7 +212,7 @@ class StoryService extends IceScrumEventPublisher {
             throw new BusinessException(code: 'is.sprint.error.associate.story.done')
         }
         if (story.parentSprint != null) {
-            prepareToshiftToAnotherSprint(story)
+            unPlan(story, false)
         } else {
             resetRank(story)
         }
@@ -243,9 +243,9 @@ class StoryService extends IceScrumEventPublisher {
         setRank(story, rank)
         update(story)
         pushService.disablePushForThisThread()
-        story.tasks.findAll { it.state == Task.STATE_WAIT }.each {
-            it.backlog = sprint
-            taskService.update(it, user)
+        story.tasks.findAll { it.state == Task.STATE_WAIT }.each { Task task ->
+            task.backlog = sprint
+            taskService.update(task, user)
         }
         pushService.enablePushForThisThread()
     }
@@ -270,27 +270,26 @@ class StoryService extends IceScrumEventPublisher {
         story.parentSprint = null
         story.inProgressDate = null
         story.plannedDate = null
+        User user = (User) springSecurityService.currentUser
         if (fullUnPlan) {
-            User user = (User) springSecurityService.currentUser
             activityService.addActivity(story, user, 'unPlan', story.name, 'parentSprint', sprint.id.toString())
             story.state = Story.STATE_ESTIMATED
             setRank(story, 1)
             update(story)
-            pushService.disablePushForThisThread()
-            story.tasks.each { Task task ->
-                if (task.state != Task.STATE_DONE) {
-                    def props = task.state == Task.STATE_WAIT ? [:] : [state: Task.STATE_WAIT]
+        }
+        pushService.disablePushForThisThread()
+        story.tasks.each { Task task ->
+            if (task.state != Task.STATE_DONE) {
+                def props = task.state == Task.STATE_WAIT ? [:] : [state: Task.STATE_WAIT]
+                if (fullUnPlan) {
                     task.backlog = null
+                }
+                if (props || fullUnPlan) {
                     taskService.update(task, user, false, props)
                 }
             }
-            pushService.enablePushForThisThread()
         }
-    }
-
-    @PreAuthorize('(productOwner(#story.backlog) or scrumMaster(#story.backlog)) and !archivedProject(#story.backlog)')
-    private void prepareToshiftToAnotherSprint(Story story) {
-        unPlan(story, false)
+        pushService.enablePushForThisThread()
     }
 
     // TODO check rights
@@ -742,9 +741,8 @@ class StoryService extends IceScrumEventPublisher {
                         }
                     }
                 }
-                storyXml?.actors?.actor.each(importActor)
-                // Handle legacy exports with one actor per story
-                importActor(storyXml.actor)
+                storyXml?.actors?.actor?.each(importActor)
+                importActor(storyXml.actor) // Handle legacy exports with one actor per story
                 story.creator = creator
                 project.addToStories(story)
             }
