@@ -83,7 +83,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
     static mapping = {
         cache true
         table 'is_story'
-        tasks cascade: 'all', batchSize: 25, cache: true
+        tasks cascade: 'all', batchSize: 25
         dependences cache: true, sort: "state", order: "asc"
         acceptanceTests sort: 'uid', batchSize: 10, cache: true
         effort precision: 5, scale: 2

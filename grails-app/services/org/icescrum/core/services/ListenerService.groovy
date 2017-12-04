@@ -39,6 +39,7 @@ class ListenerService {
     def storyService
     def acceptanceTestService
     def taskService
+    def grailsApplication
 
     @IceScrumListener(domain = 'story', eventType = IceScrumEventType.CREATE)
     void storyCreate(Story story, Map dirtyProperties) {
@@ -55,7 +56,7 @@ class ListenerService {
                 project.stories.findAll { it.isDirty('rank') && it.id != story.id }.each { // If others stories have been updated, push them
                     def storyData = [class: 'Story', id: it.id, rank: it.rank, messageId: 'story-' + it.id + '-rank'] // Avoid pushing everything, which is very costly
                     if (it.parentSprint) {
-                        storyData.parentSprint = [id: it.parentSprint.id];
+                        storyData.parentSprint = getSprintAsShort(it.parentSprint)
                     }
                     pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, storyData, project.id)
                 }
@@ -87,7 +88,10 @@ class ListenerService {
             if (dirtyProperties.containsKey('state') && Story.STATE_DONE in [dirtyProperties.state, story.state] && story.parentSprint && !newUpdatedProperties['parentSprint']) {
                 story.parentSprint.lastUpdated = new Date()
                 pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, story.parentSprint, project.id)
-                def tasksData = [class: 'Task', ids: story.tasks.collect({ it.id }), properties: [class: 'Task', state: Task.STATE_DONE, doneDate: new Date()], messageId: 'story-' + story.id + '-tasks']
+                def tasksData = [class     : 'Task',
+                                 ids       : story.tasks*.id,
+                                 properties: [class: 'Task', state: Task.STATE_DONE, doneDate: new Date(), estimation: 0],
+                                 messageId : 'story-' + story.id + '-tasks']
                 pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, tasksData, story.backlog.id)
             }
             def user = (User) springSecurityService.currentUser
@@ -109,9 +113,10 @@ class ListenerService {
             }
             ['parentSprint'].each { property ->
                 if (dirtyProperties.containsKey(property)) {
-                    def tasksData = [class: 'Task', ids: story.tasks.findAll { it.state != Task.STATE_DONE }.collect({
-                        it.id
-                    }), properties        : [class: 'Task', state: Task.STATE_WAIT, parentSprint: story.parentSprint ?: null, inProgressDate: null], messageId: 'story-' + story.id + '-tasks']
+                    def tasksData = [class     : 'Task',
+                                     ids       : story.tasks.findAll { it.state != Task.STATE_DONE }*.id,
+                                     properties: [class: 'Task', state: Task.STATE_WAIT, backlog: story.parentSprint ? getSprintAsShort(story.parentSprint) : null, inProgressDate: null],
+                                     messageId : 'story-' + story.id + '-tasks']
                     pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, tasksData, story.backlog.id)
                 }
             }
@@ -382,5 +387,13 @@ class ListenerService {
     @IceScrumListener(domains = ['story', 'feature', 'task', 'sprint', 'release', 'acceptanceTest', 'project'], eventType = IceScrumEventType.BEFORE_UPDATE)
     void invalidCacheBeforeUpdate(object, Map dirtyProperties) {
         object.lastUpdated = new Date()
+    }
+
+    private Map getSprintAsShort(Sprint sprint) {
+        def sprintData = [id: sprint.id, class: 'Sprint']
+        grailsApplication.config.icescrum.marshaller.sprint.asShort.each { String sprintProperty ->
+            sprintData[sprintProperty] = sprint[sprintProperty]
+        }
+        return sprintData
     }
 }
