@@ -589,13 +589,13 @@ class StoryService extends IceScrumEventPublisher {
             story.tasks?.findAll { it.state != Task.STATE_DONE }?.each { t ->
                 taskService.update(t, user, false, [state: Task.STATE_DONE])
             }
+            pushService.enablePushForThisThread()
             story.acceptanceTests.each { AcceptanceTest acceptanceTest ->
                 if (acceptanceTest.stateEnum != AcceptanceTestState.SUCCESS) {
                     acceptanceTest.stateEnum = AcceptanceTestState.SUCCESS
                     acceptanceTestService.update(acceptanceTest)
                 }
             }
-            pushService.enablePushForThisThread()
         }
         if (stories) {
             clicheService.createOrUpdateDailyTasksCliche(stories[0]?.parentSprint)
