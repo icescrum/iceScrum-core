@@ -26,7 +26,6 @@ package org.icescrum.core.services
 import grails.transaction.Transactional
 import org.icescrum.core.domain.Portfolio
 import org.icescrum.core.domain.Project
-import org.springframework.security.access.prepost.PreAuthorize
 
 @Transactional
 class PortfolioService {
@@ -35,7 +34,6 @@ class PortfolioService {
 
     void save(Portfolio portfolio, List<Project> projects) {
         portfolio.save()
-        securityService.secureDomain(portfolio)
         projects.each {
             portfolio.addToProjects(it)
         }
@@ -47,6 +45,5 @@ class PortfolioService {
             portfolio.removeFromProjects(it)
         }
         portfolio.delete()
-        securityService.unsecureDomain(portfolio)
     }
 }
