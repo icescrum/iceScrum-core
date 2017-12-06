@@ -175,17 +175,15 @@ class SprintService extends IceScrumEventPublisher {
 
     @PreAuthorize('(productOwner(#sprint.parentRelease.parentProject) or scrumMaster(#sprint.parentRelease.parentProject)) and !archivedProject(#sprint.parentRelease.parentProject)')
     void reactivate(Sprint sprint) {
-        if (sprint.state != Sprint.STATE_DONE) {
-            throw new BusinessException(code: 'is.sprint.error.not.state.done')
-        }
-        if (sprint.parentRelease.state != Release.STATE_INPROGRESS) {
-            throw new BusinessException(code: 'is.sprint.error.activate.release.not.inprogress')
+        if (!sprint.reactivable) {
+            if (sprint.parentRelease.state != Release.STATE_INPROGRESS) {
+                throw new BusinessException(code: 'is.sprint.error.activate.release.not.inprogress')
+            } else {
+                throw new BusinessException(code: 'is.sprint.error.reactivate.next.not.wait')
+            }
         }
         if (sprint.parentRelease.sprints.find { it.state == Sprint.STATE_INPROGRESS }) {
             throw new BusinessException(code: 'is.sprint.error.activate.other.inprogress')
-        }
-        if (sprint.nextSprint && sprint.nextSprint.state != Sprint.STATE_WAIT) {
-            throw new BusinessException(code: 'is.sprint.error.reactivate.next.not.wait')
         }
         sprint.state = Sprint.STATE_INPROGRESS
         sprint.doneDate = null

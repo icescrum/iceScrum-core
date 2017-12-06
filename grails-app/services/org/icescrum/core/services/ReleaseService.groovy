@@ -136,14 +136,7 @@ class ReleaseService extends IceScrumEventPublisher {
 
     @PreAuthorize('(productOwner(#release.parentProject) or scrumMaster(#release.parentProject)) and !archivedProject(#release.parentProject)')
     void reactivate(Release release) {
-        if (release.state != Release.STATE_DONE) {
-            throw new BusinessException(code: 'is.release.error.not.state.done')
-        }
-        def project = release.parentProject
-        if (project.releases.find { it.state == Release.STATE_INPROGRESS }) {
-            throw new BusinessException(code: 'is.release.error.not.reactivable')
-        }
-        if (release.nextRelease.state != Release.STATE_WAIT) {
+        if (!release.reactivable || release.parentProject.releases.find { it.state == Release.STATE_INPROGRESS }) {
             throw new BusinessException(code: 'is.release.error.not.reactivable')
         }
         release.state = Release.STATE_INPROGRESS
