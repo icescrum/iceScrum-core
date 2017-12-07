@@ -76,8 +76,8 @@ class User implements Serializable, Attachmentable {
     }
 
     static constraints = {
-        email(blank: false, unique: true, validator: { newEmail, user -> (newEmail && newEmail.split('@').size() > 1 && newEmail.split('@')[1]) ?: 'invalid' })
-        username(blank: false, unique: true)
+        email(blank: false, unique: true, validator: { newEmail, user -> (newEmail && newEmail.split('@').size() > 1 && newEmail.split('@')[1]) ?: 'invalid' }, shared: 'keyMaxSize')
+        username(blank: false, unique: true, shared: 'keyMaxSize')
         password(blank: false)
         lastName(blank: false)
         firstName(blank: false)

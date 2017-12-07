@@ -41,4 +41,8 @@ class UserToken implements Serializable {
         id generator: "assigned", column: "id", unique: "true"
         table 'is_user_tokens'
     }
+
+    static constraints = {
+        id shared: 'keyMaxSize'
+    }
 }

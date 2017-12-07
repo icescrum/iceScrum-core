@@ -46,6 +46,7 @@ class Widget implements Serializable {
         settingsData nullable: true
         type nullable: true
         typeId nullable: true
+        widgetDefinitionId shared: 'keyMaxSize'
     }
 
     static mapping = {

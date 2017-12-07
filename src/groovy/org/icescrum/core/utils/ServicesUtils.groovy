@@ -1,7 +1,9 @@
 package org.icescrum.core.utils
 
+import grails.util.Holders
 import org.eclipse.mylyn.wikitext.core.parser.MarkupParser
 import org.eclipse.mylyn.wikitext.textile.core.TextileLanguage
+import org.icescrum.core.support.ApplicationSupport
 
 import javax.crypto.Mac
 import javax.crypto.SecretKey
@@ -68,20 +70,24 @@ class ServicesUtils {
     }
 
     public static String cleanXml(String xmlString) {
-        StringBuffer out = new StringBuffer()
-        for (c in xmlString) {
-            if ((c == 0x9) ||
-                (c == 0xA) ||
-                (c == 0xD) ||
-                ((c >= 0x20) && (c <= 0xD7FF)) ||
-                ((c >= 0xE000) && (c <= 0xFFFD)) ||
-                ((c >= 0x10000) && (c <= 0x10FFFF))) {
-                out.append(c)
-            } else {
-                out.append(' ')
+        if (Holders.grailsApplication.config.dataSource.driverClassName.contains('mysql') && !ApplicationSupport.isMySQLUTF8mb4()) { //only Mysql with UTF8 can't handle utf8 unicode...
+            StringBuffer out = new StringBuffer()
+            for (c in xmlString) {
+                if ((c == 0x9) ||
+                    (c == 0xA) ||
+                    (c == 0xD) ||
+                    ((c >= 0x20) && (c <= 0xD7FF)) ||
+                    ((c >= 0xE000) && (c <= 0xFFFD)) ||
+                    ((c >= 0x10000) && (c <= 0x10FFFF))) {
+                    out.append(c)
+                } else {
+                    out.append(' ')
+                }
             }
+            out.toString()
+        } else {
+            return xmlString
         }
-        out.toString()
     }
 
     public static String textileToHtml(String text) {

@@ -47,7 +47,7 @@ class Authority implements Serializable {
     }
 
     static constraints = {
-        authority blank: false, unique: true
+        authority blank: false, unique: true, shared: 'keyMaxSize'
     }
 
     static String getAuthorityString(String authority, Team team) {

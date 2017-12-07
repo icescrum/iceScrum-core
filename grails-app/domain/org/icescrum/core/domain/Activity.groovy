@@ -48,7 +48,7 @@ class Activity implements Serializable, Comparable {
     static transients = ['important']
 
     static constraints = {
-        code blank: false
+        code blank: false, shared: 'keyMaxSize'
         label blank: false
         field(nullable: true, validator: { newField, activity -> (activity.beforeValue == null && activity.afterValue == null) || newField != null ?: 'invalid' })
         beforeValue nullable: true

@@ -29,6 +29,8 @@ import grails.util.Environment
 import grails.util.GrailsNameUtils
 import grails.util.Holders
 import grails.util.Metadata
+import groovy.sql.Sql
+import groovy.transform.CompileStatic
 import org.apache.commons.logging.LogFactory
 import org.apache.http.HttpHost
 import org.apache.http.HttpResponse
@@ -83,8 +85,9 @@ import java.util.zip.ZipOutputStream
 
 class ApplicationSupport {
 
-    private static final log = LogFactory.getLog(this)
     public static final CONFIG_ENV_NAME = 'icescrum_config_location'
+    private static def mySQLUTF8mb4 = null //only one check per app start
+    private static final log = LogFactory.getLog(this)
     protected static final FilterChain DUMMY_CHAIN = [
             doFilter: { req, res -> throw new UnsupportedOperationException() }
     ] as FilterChain
@@ -116,6 +119,35 @@ class ApplicationSupport {
             }
         }
         return serverUrl
+    }
+
+    public static String getDatabaseName() {
+        def url = Holders.grailsApplication.config.dataSource.url
+        return url.split('/').toList().last().tokenize('?')[0]
+    }
+
+    public static boolean isMySQLUTF8mb4() {
+        if (mySQLUTF8mb4 == null) {
+            def dataSource = Holders.grailsApplication.config.dataSource
+            if (dataSource.driverClassName == 'com.mysql.jdbc.Driver' && Environment.current != Environment.DEVELOPMENT) {
+                try {
+                    Sql.withInstance(dataSource.url, dataSource.username, dataSource.password, dataSource.driverClassName) { Sql sql ->
+                        def values = sql.firstRow("SHOW VARIABLES LIKE 'character_set_server'").values()
+                        println values
+                        mySQLUTF8mb4 = values.contains("utf8mb4")
+                    }
+                } catch (Exception e) {
+                    if (log.debugEnabled) {
+                        log.debug(e)
+                    }
+                    mySQLUTF8mb4 = false
+                }
+
+            } else {
+                mySQLUTF8mb4 = false
+            }
+        }
+        return mySQLUTF8mb4
     }
 
     public static User getFirstAdministrator() {

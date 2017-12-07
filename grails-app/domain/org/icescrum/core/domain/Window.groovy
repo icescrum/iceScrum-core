@@ -39,9 +39,10 @@ class Window implements Serializable {
     static transients = ["settings"]
 
     static constraints = {
-        workspace nullable: true
+        workspace nullable: true, shared: 'keyMaxSize'
         workspaceId nullable: true
         settingsData nullable: true
+        windowDefinitionId shared: 'keyMaxSize'
     }
 
     static mapping = {

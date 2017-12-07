@@ -59,7 +59,7 @@ class Team implements Serializable, Comparable {
 
     static constraints = {
         description(nullable: true, maxSize: 1000)
-        name(blank: false, unique: true)
+        name(blank: false, unique: true, shared: 'keyMaxSize')
     }
 
     static mapping = {

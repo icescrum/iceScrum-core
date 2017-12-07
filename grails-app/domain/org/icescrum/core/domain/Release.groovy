@@ -69,7 +69,7 @@ class Release extends TimeBox implements Cloneable, Attachmentable {
         vision nullable: true
         inProgressDate nullable: true
         doneDate nullable: true
-        name(blank: false, unique: 'parentProject')
+        name(blank: false, unique: 'parentProject', shared: 'keyMaxSize')
         startDate(validator: { val, obj ->
             if (val.before(obj.parentProject.startDate)) {
                 return ['before.projectStartDate']

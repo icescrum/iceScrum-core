@@ -38,6 +38,7 @@ class UserPreferences implements Serializable {
     String emailsSettingsData //[onStory:['pkey','pkey2'...],onUrgentTask:['pkey','pkey2'...],autoFollow['pkey','pkey2'...]]
     String filterTask = "allTasks"
 
+    boolean displayReleaseNotes = false
     boolean displayWhatsNew = false
     boolean displayWelcomeTour = true
     boolean displayFullProjectTour = true
@@ -103,6 +104,7 @@ class UserPreferences implements Serializable {
             builder.activity(this.activity)
             builder.filterTask(this.filterTask)
             builder.menuHidden(this.menuHidden)
+            builder.displayReleaseNotes(this.displayReleaseNotes)
             builder.displayWhatsNew(this.displayWhatsNew)
             builder.lastProjectOpened(this.lastProjectOpened)
             builder.emailsSettingsData(this.emailsSettingsData)
