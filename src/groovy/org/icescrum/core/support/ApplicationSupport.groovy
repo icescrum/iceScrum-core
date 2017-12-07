@@ -30,7 +30,6 @@ import grails.util.GrailsNameUtils
 import grails.util.Holders
 import grails.util.Metadata
 import groovy.sql.Sql
-import groovy.transform.CompileStatic
 import org.apache.commons.logging.LogFactory
 import org.apache.http.HttpHost
 import org.apache.http.HttpResponse
@@ -86,7 +85,7 @@ import java.util.zip.ZipOutputStream
 class ApplicationSupport {
 
     public static final CONFIG_ENV_NAME = 'icescrum_config_location'
-    private static def mySQLUTF8mb4 = null //only one check per app start
+    private static def mySQLUTF8mb4 = null // Only one check per app start
     private static final log = LogFactory.getLog(this)
     protected static final FilterChain DUMMY_CHAIN = [
             doFilter: { req, res -> throw new UnsupportedOperationException() }
