@@ -23,7 +23,6 @@
  */
 package org.icescrum.core.domain
 
-import org.grails.datastore.gorm.GormStaticApi
 import org.hibernate.ObjectNotFoundException
 
 class Portfolio {
@@ -52,7 +51,7 @@ class Portfolio {
     }
 
     static Portfolio withPortfolio(long id) {
-        Portfolio portfolio = GormStaticApi.get(id)
+        Portfolio portfolio = get(id)
         if (!portfolio) {
             throw new ObjectNotFoundException(id, 'Portfolio')
         }
