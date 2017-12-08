@@ -495,19 +495,21 @@ class SecurityService {
 
     def filterRequest(force = false) {
         def request = RCH.requestAttributes.currentRequest
-        if (!force && (!request || (request && request.filtered))) {
+        if (force) {
+            request.filtered = false
+        } else if (!request || request.filtered) {
             return
         }
-        request.filtered = force ? false : request.filtered
-
-        request.scrumMaster = request.filtered ? request.scrumMaster : scrumMaster(null, springSecurityService.authentication)
-        request.productOwner = request.filtered ? request.productOwner : productOwner(null, springSecurityService.authentication)
-        request.teamMember = request.filtered ? request.teamMember : teamMember(null, springSecurityService.authentication)
-        request.stakeHolder = request.filtered ? request.stakeHolder : stakeHolder(null, springSecurityService.authentication, false)
-        request.owner = request.filtered ? request.owner : owner(null, springSecurityService.authentication)
-        request.inProject = request.filtered ? request.inProject : request.scrumMaster ?: request.productOwner ?: request.teamMember ?: false
-        request.inTeam = request.filtered ? request.inTeam : request.scrumMaster ?: request.teamMember ?: false
-        request.admin = request.filtered ? request.admin : admin(springSecurityService.authentication) ?: false
+        if (!request.filtered) {
+            request.scrumMaster = scrumMaster(null, springSecurityService.authentication)
+            request.productOwner = productOwner(null, springSecurityService.authentication)
+            request.teamMember = teamMember(null, springSecurityService.authentication)
+            request.stakeHolder = stakeHolder(null, springSecurityService.authentication, false)
+            request.owner = owner(null, springSecurityService.authentication)
+            request.inProject = request.scrumMaster || request.productOwner || request.teamMember
+            request.inTeam = request.scrumMaster || request.teamMember
+            request.admin = admin(springSecurityService.authentication)
+        }
         if (request.owner && !request.inProject && !request.admin) {
             request.stakeholder = true
         }
@@ -520,7 +522,7 @@ class SecurityService {
             request.owner = false
             request.archivedProject = true
         }
-        request.filtered = request.filtered ?: true
+        request.filtered = true
     }
 
     def getRolesRequest(force) {
