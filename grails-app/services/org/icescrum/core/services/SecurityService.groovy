@@ -128,7 +128,7 @@ class SecurityService {
                 if (request.filtered) {
                     return request.inProject
                 } else {
-                    project = parseCurrentRequestProject(request)
+                    project = getProjectIdFromRequest(request)
                 }
             } else if (project in Project) {
                 p = project
@@ -164,7 +164,7 @@ class SecurityService {
             if (request.filtered) {
                 return request.archivedProject ?: false
             } else {
-                project = parseCurrentRequestProject(request)
+                project = getProjectIdFromRequest(request)
             }
         } else if (project in Project) {
             p = project
@@ -204,7 +204,7 @@ class SecurityService {
             if (request.filtered) {
                 return request.scrumMaster
             } else {
-                def parsedProject = parseCurrentRequestProject(request)
+                def parsedProject = getProjectIdFromRequest(request)
                 if (parsedProject) {
                     def p = Project.get(parsedProject)
                     //case project doesn't exist
@@ -253,7 +253,7 @@ class SecurityService {
             if (request.filtered && !controllerName) {
                 return request.stakeHolder
             } else {
-                project = parseCurrentRequestProject(request)
+                project = getProjectIdFromRequest(request)
                 if (request.stakeHolder) {
                     stakeHolder = request.stakeHolder
                 }
@@ -296,7 +296,7 @@ class SecurityService {
             if (request.filtered) {
                 return request.productOwner
             } else {
-                project = parseCurrentRequestProject(request)
+                project = getProjectIdFromRequest(request)
             }
         } else if (project in Project) {
             p = GrailsHibernateUtil.unwrapIfProxy(project)
@@ -358,7 +358,7 @@ class SecurityService {
             if (request.filtered) {
                 return request.inTeam
             } else {
-                def parsedProject = parseCurrentRequestProject(request)
+                def parsedProject = getProjectIdFromRequest(request)
                 if (parsedProject) {
                     if (SpringSecurityUtils.ifAnyGranted(Authority.ROLE_ADMIN)) {
                         return true
@@ -390,19 +390,16 @@ class SecurityService {
         }
     }
 
-    Long parseCurrentRequestProject(request) {
-        def res = request['project_id']
-        if (!res) {
-            def param = request.getParameter('project')
-            if (!param) {
+    Long getProjectIdFromRequest(request) {
+        if (!request['project_id']) {
+            def projectId = request.getParameter('project')
+            if (!projectId) {
                 def mappingInfo = grailsUrlMappingsHolder.match(request.forwardURI.replaceFirst(request.contextPath, ''))
-                res = mappingInfo?.parameters?.getAt('project')?.decodeProjectKey()?.toLong()
-            } else {
-                res = param?.decodeProjectKey()?.toLong()
+                projectId = mappingInfo?.parameters?.getAt('project')
             }
-            request['project_id'] = res
+            request['project_id'] = projectId?.decodeProjectKey()?.toLong()
         }
-        return res
+        return request['project_id']
     }
 
     MutableAcl createAcl(ObjectIdentity objectIdentity, parent = null) throws AlreadyExistsException {
@@ -443,7 +440,7 @@ class SecurityService {
             if (request.filtered) {
                 return request.owner
             } else {
-                def parsedProject = parseCurrentRequestProject(request)
+                def parsedProject = getProjectIdFromRequest(request)
                 if (parsedProject) {
                     def p = Project.get(parsedProject)
                     //case project doesn't exist
@@ -485,7 +482,7 @@ class SecurityService {
     }
 
     boolean appEnabledProject(String appDefinitionId) {
-        Long project = parseCurrentRequestProject(RCH.requestAttributes.currentRequest)
+        Long project = getProjectIdFromRequest(RCH.requestAttributes.currentRequest)
         def authorized = false
         if (project) {
             Project _project = Project.load(project)
