@@ -31,7 +31,6 @@ import org.icescrum.core.domain.Project
 import org.icescrum.core.domain.Team
 import org.icescrum.core.domain.User
 import org.icescrum.core.domain.security.Authority
-import org.icescrum.core.domain.security.UserAuthority
 import org.springframework.security.acls.domain.BasePermission
 import org.springframework.security.acls.domain.PrincipalSid
 import org.springframework.security.acls.model.*
@@ -58,67 +57,62 @@ class SecurityService {
     static final scrumMasterPermissions = [BasePermission.WRITE]
 
     Acl secureDomain(o) {
-        createAcl objectIdentityRetrievalStrategy.getObjectIdentity(o)
+        createAcl(objectIdentityRetrievalStrategy.getObjectIdentity(o))
     }
 
     void unsecureDomain(o) {
-        aclUtilService.deleteAcl GrailsHibernateUtil.unwrapIfProxy(o)
+        aclUtilService.deleteAcl(GrailsHibernateUtil.unwrapIfProxy(o))
     }
 
-    void changeOwner(User u, o) {
-        aclUtilService.changeOwner GrailsHibernateUtil.unwrapIfProxy(o), u.username
-        u.lastUpdated = new Date()
-        u.save()
+    void changeOwner(User user, o) {
+        aclUtilService.changeOwner(GrailsHibernateUtil.unwrapIfProxy(o), user.username)
+        user.lastUpdated = new Date()
+        user.save()
     }
 
-    void createProductOwnerPermissions(User u, Project p) {
-        aclUtilService.addPermission GrailsHibernateUtil.unwrapIfProxy(p), u.username, WRITE
-        u.lastUpdated = new Date()
-        u.save()
+    // Project
+    void createProductOwnerPermissions(User user, Project project) {
+        createPermissions(project, user, productOwnerPermissions)
+    }
+    void deleteProductOwnerPermissions(User user, Project project) {
+        deletePermissions(project, user, productOwnerPermissions)
+    }
+    void createStakeHolderPermissions(User user, Project project) {
+        createPermissions(project, user, stakeHolderPermissions)
+    }
+    void deleteStakeHolderPermissions(User user, Project project) {
+        deletePermissions(project, user, stakeHolderPermissions)
     }
 
-    void deleteProductOwnerPermissions(User u, Project p) {
-        aclUtilService.deletePermission GrailsHibernateUtil.unwrapIfProxy(p), u.username, WRITE
-        u.lastUpdated = new Date()
-        u.save()
+    // Team
+    void createTeamMemberPermissions(User user, Team team) {
+        createPermissions(team, user, teamMemberPermissions)
+    }
+    void deleteTeamMemberPermissions(User user, Team team) {
+        deletePermissions(team, user, teamMemberPermissions)
+    }
+    void createScrumMasterPermissions(User user, Team team) {
+        createPermissions(team, user, [WRITE, ADMINISTRATION])
+    }
+    void deleteScrumMasterPermissions(User user, Team team) {
+        deletePermissions(team, user, [WRITE, ADMINISTRATION])
     }
 
-    void createTeamMemberPermissions(User u, Team t) {
-        aclUtilService.addPermission GrailsHibernateUtil.unwrapIfProxy(t), u.username, READ
-        u.lastUpdated = new Date()
-        u.save()
+    // Utility
+    private void createPermissions(Object o, User user, List<Permission> permissions) {
+        changePermissions(o, user, permissions, aclUtilService.&addPermission)
     }
-
-    void deleteTeamMemberPermissions(User u, Team t) {
-        aclUtilService.deletePermission GrailsHibernateUtil.unwrapIfProxy(t), u.username, READ
-        u.lastUpdated = new Date()
-        u.save()
+    private void deletePermissions(Object o, User user, List<Permission> permissions) {
+        changePermissions(o, user, permissions, aclUtilService.&deletePermission)
     }
-
-    void createScrumMasterPermissions(User u, Team t) {
-        aclUtilService.addPermission GrailsHibernateUtil.unwrapIfProxy(t), u.username, WRITE
-        aclUtilService.addPermission GrailsHibernateUtil.unwrapIfProxy(t), u.username, ADMINISTRATION
-        u.lastUpdated = new Date()
-        u.save()
-    }
-
-    void deleteScrumMasterPermissions(User u, Team t) {
-        aclUtilService.deletePermission GrailsHibernateUtil.unwrapIfProxy(t), u.username, WRITE
-        aclUtilService.deletePermission GrailsHibernateUtil.unwrapIfProxy(t), u.username, ADMINISTRATION
-        u.lastUpdated = new Date()
-        u.save()
-    }
-
-    void createStakeHolderPermissions(User u, Project p) {
-        aclUtilService.addPermission GrailsHibernateUtil.unwrapIfProxy(p), u.username, READ
-        u.lastUpdated = new Date()
-        u.save()
-    }
-
-    void deleteStakeHolderPermissions(User u, Project p) {
-        aclUtilService.deletePermission GrailsHibernateUtil.unwrapIfProxy(p), u.username, READ
-        u.lastUpdated = new Date()
-        u.save()
+    private void changePermissions(Object o, User user, List<Permission> permissions, Closure change) {
+        def unwrappedObject = GrailsHibernateUtil.unwrapIfProxy(o)
+        def username = user.username
+        permissions.each { permission ->
+            change(unwrappedObject, username, permission)
+        }
+        user.lastUpdated = new Date()
+        user.save()
     }
 
     @SuppressWarnings("GroovyMissingReturnStatement")
