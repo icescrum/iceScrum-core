@@ -593,9 +593,6 @@ class SecurityService {
             request.inTeam = request.scrumMaster || request.teamMember
             request.admin = admin(springSecurityService.authentication)
         }
-        if (request.owner && !request.inProject && !request.admin) {
-            request.stakeholder = true
-        }
         if ((request.inProject || request.stakeHolder) && archivedProject(null)) {
             request.scrumMaster = false
             request.productOwner = false
