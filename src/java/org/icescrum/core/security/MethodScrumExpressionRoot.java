@@ -32,7 +32,10 @@ import org.springframework.security.core.Authentication;
 
 import java.io.Serializable;
 
-public class MethodScrumExpressionRoot extends SecurityExpressionRoot implements ScrumExpressionRoot {
+// Used in services through @PreAuthorize annotations
+// Don't provide methods without params since there is no request to look into
+// Methods with ID as param are probably useless since services seem to always have an object as param
+public class MethodScrumExpressionRoot extends SecurityExpressionRoot {
 
     private SecurityService securityService;
 
@@ -44,7 +47,6 @@ public class MethodScrumExpressionRoot extends SecurityExpressionRoot implements
         super(a);
     }
 
-
     private PermissionEvaluator permissionEvaluator;
     private Object filterObject;
     private Object returnObject;
@@ -54,11 +56,9 @@ public class MethodScrumExpressionRoot extends SecurityExpressionRoot implements
     public final String delete = "delete";
     public final String admin = "administration";
 
-
     public boolean hasPermission(Object target, Object permission) {
         return permissionEvaluator.hasPermission(authentication, target, permission);
     }
-
     public boolean hasPermission(Object targetId, String targetType, Object permission) {
         return permissionEvaluator.hasPermission(authentication, (Serializable) targetId, targetType, permission);
     }
@@ -66,7 +66,6 @@ public class MethodScrumExpressionRoot extends SecurityExpressionRoot implements
     public void setFilterObject(Object filterObject) {
         this.filterObject = filterObject;
     }
-
     public Object getFilterObject() {
         return filterObject;
     }
@@ -74,7 +73,6 @@ public class MethodScrumExpressionRoot extends SecurityExpressionRoot implements
     public void setReturnObject(Object returnObject) {
         this.returnObject = returnObject;
     }
-
     public Object getReturnObject() {
         return returnObject;
     }
@@ -86,94 +84,44 @@ public class MethodScrumExpressionRoot extends SecurityExpressionRoot implements
     public boolean inProject(Project p) {
         return securityService.inProject(p, super.authentication);
     }
-
     public boolean inProject(long p) {
         return securityService.inProject(p, super.authentication);
-    }
-
-    public boolean inProject() {
-        return inProject(null);
     }
 
     public boolean inTeam(Team t) {
         return securityService.inTeam(t, super.authentication);
     }
-
     public boolean inTeam(long t) {
         return securityService.inTeam(t, super.authentication);
-    }
-
-    public boolean inTeam() {
-        return inTeam(null);
-    }
-
-
-    public boolean productOwner() {
-        return securityService.productOwner(null, super.authentication);
     }
 
     public boolean productOwner(long p) {
         return securityService.productOwner(p, super.authentication);
     }
-
     public boolean productOwner(Project p) {
         return securityService.productOwner(p, super.authentication);
-    }
-
-    public boolean teamMember() {
-        return securityService.teamMember(null, super.authentication);
-    }
-
-    public boolean teamMember(long t) {
-        return securityService.teamMember(t, super.authentication);
-    }
-
-    public boolean teamMember(Team t) {
-        return securityService.teamMember(t, super.authentication);
-    }
-
-    public boolean teamMember(Project p) {
-        Team team = p.getTeam();
-        return team != null && securityService.teamMember(team, super.authentication);
-    }
-
-    public boolean scrumMaster() {
-        return securityService.scrumMaster(null, super.authentication);
     }
 
     public boolean scrumMaster(long t) {
         return securityService.scrumMaster(t, super.authentication);
     }
-
     public boolean scrumMaster(Team t) {
         return securityService.scrumMaster(t, super.authentication);
     }
-
     public boolean scrumMaster(Project p) {
         Team team = p.getTeam();
         return team != null && securityService.scrumMaster(team, super.authentication);
     }
 
-    public boolean stakeHolder() {
-        return securityService.stakeHolder(null, super.authentication, false);
-    }
-
     public boolean stakeHolder(long p) {
         return securityService.stakeHolder(p, super.authentication, false);
     }
-
     public boolean stakeHolder(Project p) {
         return securityService.stakeHolder(p, super.authentication, false);
     }
-
     public boolean stakeHolder(Project p, boolean onlyPrivate) {
         return securityService.stakeHolder(p, super.authentication, onlyPrivate);
     }
-
-    public boolean owner() {
-        return securityService.owner(null, super.authentication);
-    }
-
 
     public boolean owner(Object o) {
         return securityService.owner(o, super.authentication);
@@ -182,16 +130,7 @@ public class MethodScrumExpressionRoot extends SecurityExpressionRoot implements
     public boolean archivedProject(Project p) {
         return securityService.archivedProject(p);
     }
-
-    public boolean archivedProject() {
-        return securityService.archivedProject(null);
-    }
-
     public boolean archivedProject(long p) {
         return securityService.archivedProject(p);
-    }
-
-    public boolean appEnabledProject(String appDefinitionId) {
-        return securityService.appEnabledProject(appDefinitionId);
     }
 }

@@ -30,7 +30,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.web.FilterInvocation;
 import org.springframework.security.web.access.expression.WebSecurityExpressionRoot;
 
-public class WebScrumExpressionRoot extends WebSecurityExpressionRoot implements ScrumExpressionRoot {
+// Used in controllers through @Secured annotations
+// Methods with object as params may seem useless but they are used when called when the param is null
+public class WebScrumExpressionRoot extends WebSecurityExpressionRoot {
 
     private org.icescrum.core.services.SecurityService securityService;
 
@@ -45,11 +47,9 @@ public class WebScrumExpressionRoot extends WebSecurityExpressionRoot implements
     public boolean inProject(Project p) {
         return securityService.inProject(p, super.authentication);
     }
-
     public boolean inProject(long p) {
         return securityService.inProject(p, super.authentication);
     }
-
     public boolean inProject() {
         return inProject(null);
     }
@@ -57,57 +57,32 @@ public class WebScrumExpressionRoot extends WebSecurityExpressionRoot implements
     public boolean inTeam(Team t) {
         return securityService.inTeam(t, super.authentication);
     }
-
     public boolean inTeam(long t) {
         return securityService.inTeam(t, super.authentication);
     }
-
     public boolean inTeam() {
         return inTeam(null);
     }
 
-
     public boolean productOwner() {
         return securityService.productOwner(null, super.authentication);
     }
-
     public boolean productOwner(long p) {
         return securityService.productOwner(p, super.authentication);
     }
-
     public boolean productOwner(Project p) {
         return securityService.productOwner(p, super.authentication);
-    }
-
-    public boolean teamMember() {
-        return securityService.teamMember(null, super.authentication);
-    }
-
-    public boolean teamMember(long t) {
-        return securityService.teamMember(t, super.authentication);
-    }
-
-    public boolean teamMember(Team t) {
-        return securityService.teamMember(t, super.authentication);
-    }
-
-    public boolean teamMember(Project p) {
-        Team team = p.getTeam();
-        return team != null && securityService.teamMember(team, super.authentication);
     }
 
     public boolean scrumMaster() {
         return securityService.scrumMaster(null, super.authentication);
     }
-
     public boolean scrumMaster(long t) {
         return securityService.scrumMaster(t, super.authentication);
     }
-
     public boolean scrumMaster(Team t) {
         return securityService.scrumMaster(t, super.authentication);
     }
-
     public boolean scrumMaster(Project p) {
         Team team = p.getTeam();
         return team != null && securityService.scrumMaster(team, super.authentication);
@@ -116,39 +91,26 @@ public class WebScrumExpressionRoot extends WebSecurityExpressionRoot implements
     public boolean stakeHolder() {
         return securityService.stakeHolder(null, super.authentication, false, this.request.getAttribute(GrailsApplicationAttributes.CONTROLLER_NAME_ATTRIBUTE));
     }
-
     public boolean stakeHolder(long p) {
         return securityService.stakeHolder(p, super.authentication, false, this.request.getAttribute(GrailsApplicationAttributes.CONTROLLER_NAME_ATTRIBUTE));
     }
-
     public boolean stakeHolder(Project p) {
         return securityService.stakeHolder(p, super.authentication, false, this.request.getAttribute(GrailsApplicationAttributes.CONTROLLER_NAME_ATTRIBUTE));
-    }
-
-    public boolean stakeHolder(Project p, boolean onlyPrivate) {
-        return securityService.stakeHolder(p, super.authentication, onlyPrivate, this.request.getAttribute(GrailsApplicationAttributes.CONTROLLER_NAME_ATTRIBUTE));
     }
 
     public boolean owner() {
         return securityService.owner(null, super.authentication);
     }
-
     public boolean owner(Object o) {
         return securityService.owner(o, super.authentication);
-    }
-
-    public boolean admin() {
-        return securityService.admin(super.authentication);
     }
 
     public boolean archivedProject(Project p) {
         return securityService.archivedProject(p);
     }
-
     public boolean archivedProject() {
         return securityService.archivedProject(null);
     }
-
     public boolean archivedProject(long p) {
         return securityService.archivedProject(p);
     }
