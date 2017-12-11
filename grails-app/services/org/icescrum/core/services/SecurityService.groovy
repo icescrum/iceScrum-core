@@ -608,12 +608,8 @@ class SecurityService {
     def getRolesRequest(force) {
         filterRequest(force)
         def request = RCH.requestAttributes.currentRequest
-        return [businessOwner       : request.businessOwner,
-                portfolioStakeHolder: request.portfolioStakeHolder,
-                productOwner        : request.productOwner,
-                scrumMaster         : request.scrumMaster,
-                teamMember          : request.teamMember,
-                stakeHolder         : request.stakeHolder,
-                admin               : request.admin]
+        return ['businessOwner', 'portfolioStakeHolder', 'productOwner', 'scrumMaster', 'teamMember', 'stakeHolder', 'admin'].collectEntries { key ->
+            return [(key): request[key]]
+        }
     }
 }
