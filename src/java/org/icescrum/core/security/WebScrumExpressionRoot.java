@@ -23,6 +23,7 @@
 package org.icescrum.core.security;
 
 import org.codehaus.groovy.grails.web.servlet.GrailsApplicationAttributes;
+import org.icescrum.core.domain.Portfolio;
 import org.icescrum.core.domain.Project;
 import org.icescrum.core.domain.Team;
 import org.icescrum.core.services.SecurityService;
@@ -96,6 +97,26 @@ public class WebScrumExpressionRoot extends WebSecurityExpressionRoot {
     }
     public boolean stakeHolder(Project p) {
         return securityService.stakeHolder(p, super.authentication, false, this.request.getAttribute(GrailsApplicationAttributes.CONTROLLER_NAME_ATTRIBUTE));
+    }
+
+    public boolean businessOwner() {
+        return securityService.businessOwner(null, super.authentication);
+    }
+    public boolean businessOwner(long portfolioId) {
+        return securityService.businessOwner(portfolioId, super.authentication);
+    }
+    public boolean businessOwner(Portfolio portfolio) {
+        return securityService.businessOwner(portfolio, super.authentication);
+    }
+
+    public boolean portfolioStakeHolder() {
+        return securityService.portfolioStakeHolder(null, super.authentication, false);
+    }
+    public boolean portfolioStakeHolder(long portfolioId) {
+        return securityService.portfolioStakeHolder(portfolioId, super.authentication, false);
+    }
+    public boolean portfolioStakeHolder(Portfolio portfolio) {
+        return securityService.portfolioStakeHolder(portfolio, super.authentication, false);
     }
 
     public boolean owner() {

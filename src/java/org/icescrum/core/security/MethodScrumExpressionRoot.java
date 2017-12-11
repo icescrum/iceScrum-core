@@ -23,6 +23,7 @@
 
 package org.icescrum.core.security;
 
+import org.icescrum.core.domain.Portfolio;
 import org.icescrum.core.domain.Project;
 import org.icescrum.core.domain.Team;
 import org.icescrum.core.services.SecurityService;
@@ -121,6 +122,13 @@ public class MethodScrumExpressionRoot extends SecurityExpressionRoot {
     }
     public boolean stakeHolder(Project p, boolean onlyPrivate) {
         return securityService.stakeHolder(p, super.authentication, onlyPrivate);
+    }
+
+    public boolean businessOwner(Portfolio portfolio) {
+        return securityService.businessOwner(portfolio, super.authentication);
+    }
+    public boolean portfolioStakeHolder(Portfolio portfolio) {
+        return securityService.portfolioStakeHolder(portfolio, super.authentication, false);
     }
 
     public boolean owner(Object o) {

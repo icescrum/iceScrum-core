@@ -36,6 +36,7 @@ import org.icescrum.core.domain.Activity
 import org.icescrum.core.domain.Backlog
 import org.icescrum.core.domain.Invitation
 import org.icescrum.core.domain.Invitation.InvitationType
+import org.icescrum.core.domain.Portfolio
 import org.icescrum.core.domain.Project
 import org.icescrum.core.domain.Story
 import org.icescrum.core.domain.Task
@@ -44,8 +45,6 @@ import org.icescrum.core.domain.User
 import org.icescrum.core.domain.Widget
 import org.icescrum.core.domain.Window
 import org.icescrum.core.domain.preferences.UserPreferences
-import org.icescrum.core.domain.security.Authority
-import org.icescrum.core.domain.security.UserAuthority
 import org.icescrum.core.error.BusinessException
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
@@ -182,6 +181,10 @@ class UserService extends IceScrumEventPublisher {
                 }
                 teamService.delete(it)
             }
+        }
+        Portfolio.findAllByMember(user).each { Portfolio portfolio ->
+            securityService.deleteBusinessOwnerPermissions(user, portfolio)
+            securityService.deletePortfolioStakeHolderPermissions(user, portfolio)
         }
         Project.findAllByRole(user, [BasePermission.WRITE, BasePermission.READ], [:], true, false, "").each { Project project ->
             securityService.deleteProductOwnerPermissions(user, project)

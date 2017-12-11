@@ -23,7 +23,12 @@
  */
 package org.icescrum.core.domain
 
+import grails.plugin.springsecurity.acl.AclUtilService
+import grails.util.Holders
 import org.hibernate.ObjectNotFoundException
+import org.icescrum.core.services.SecurityService
+import org.springframework.security.acls.domain.BasePermission
+import org.springframework.security.acls.model.Permission
 
 class Portfolio {
 
@@ -48,6 +53,54 @@ class Portfolio {
         fkey(blank: false, maxSize: 10, matches: /^[A-Z0-9]*$/, unique: true)
         description(maxSize: 5000, nullable: true)
         projects(maxSize: 10)
+    }
+
+    static transients = ['businessOwners', 'stakeHolders']
+
+    List<User> businessOwners
+    List<User> stakeHolders
+
+    List<User> getBusinessOwners() {
+        if (this.businessOwners != null) {
+            this.businessOwners // Used only when portfolio is being imported
+        } else if (this.id) {
+            findAllUsersByPermissions(SecurityService.businessOwnerPermissions)
+        } else {
+            return []
+        }
+    }
+
+    List<User> getStakeHolders() {
+        if (this.stakeHolders != null) {
+            this.stakeHolders // Used only when the portfolio is being imported
+        } else if (this.id) {
+            findAllUsersByPermissions(SecurityService.portfolioStakeHolderPermissions)
+        } else {
+            return []
+        }
+    }
+
+    static findAllByMember(User user) {
+        executeQuery("""SELECT portfolio
+                        FROM Portfolio portfolio
+                             grails.plugin.springsecurity.acl.AclObjectIdentity aoi,
+                             grails.plugin.springsecurity.acl.AclEntry ae
+                        WHERE aoi.objectId = portfolio.id
+                        AND aoi.aclClass.className = 'org.icescrum.core.domain.Project'
+                        AND ae.aclObjectIdentity.id = aoi.id
+                        AND ae.mask IN(:permissions)
+                        AND ae.sid.sid = :sid""", [sid: user.username, permissions: [BasePermission.WRITE, BasePermission.READ]*.mask])
+    }
+
+    private List<User> findAllUsersByPermissions(List<Permission> permissions) {
+        def aclUtilService = (AclUtilService) Holders.grailsApplication.mainContext.getBean('aclUtilService')
+        def acl = aclUtilService.readAcl(this.getClass(), this.id)
+        def users = acl.entries.findAll { it.permission in permissions }*.sid*.principal
+        if (users) {
+            return User.findAll("from User as u where u.username in (:users)", [users: users], [cache: true])
+        } else {
+            return []
+        }
     }
 
     static Portfolio withPortfolio(long id) {

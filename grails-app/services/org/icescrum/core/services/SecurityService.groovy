@@ -27,6 +27,7 @@ import grails.plugin.springsecurity.acl.AclClass
 import grails.plugin.springsecurity.acl.AclObjectIdentity
 import grails.plugin.springsecurity.acl.AclSid
 import org.codehaus.groovy.grails.orm.hibernate.cfg.GrailsHibernateUtil
+import org.icescrum.core.domain.Portfolio
 import org.icescrum.core.domain.Project
 import org.icescrum.core.domain.Team
 import org.icescrum.core.domain.User
@@ -55,6 +56,8 @@ class SecurityService {
     static final stakeHolderPermissions = [BasePermission.READ]
     static final teamMemberPermissions = [BasePermission.READ]
     static final scrumMasterPermissions = [BasePermission.WRITE]
+    static final businessOwnerPermissions = [BasePermission.WRITE]
+    static final portfolioStakeHolderPermissions = [BasePermission.READ]
 
     Acl secureDomain(o) {
         createAcl(objectIdentityRetrievalStrategy.getObjectIdentity(o))
@@ -96,6 +99,20 @@ class SecurityService {
     }
     void deleteScrumMasterPermissions(User user, Team team) {
         deletePermissions(team, user, [WRITE, ADMINISTRATION])
+    }
+
+    // Portfolio
+    void createBusinessOwnerPermissions(User user, Portfolio portfolio) {
+        createPermissions(portfolio, user, businessOwnerPermissions)
+    }
+    void deleteBusinessOwnerPermissions(User user, Portfolio portfolio) {
+        deletePermissions(portfolio, user, businessOwnerPermissions)
+    }
+    void createPortfolioStakeHolderPermissions(User user, Portfolio portfolio) {
+        createPermissions(portfolio, user, portfolioStakeHolderPermissions)
+    }
+    void deletePortfolioStakeHolderPermissions(User user, Portfolio portfolio) {
+        deletePermissions(portfolio, user, portfolioStakeHolderPermissions)
     }
 
     // Utility
@@ -402,6 +419,70 @@ class SecurityService {
         return request['project_id']
     }
 
+    boolean businessOwner(portfolio, auth) {
+        if (!springSecurityService.isLoggedIn()) {
+            return false
+        }
+        Portfolio _portfolio
+        if (portfolio instanceof Portfolio) {
+            _portfolio = portfolio
+        } else {
+            if (!portfolio) {
+                def request = RCH.requestAttributes.currentRequest
+                if (request.filtered) {
+                    return request.businessOwner
+                } else {
+                    portfolio = getPortfolioIdFromRequest(request)
+                }
+            }
+            _portfolio = Portfolio.get(portfolio)
+        }
+        if (_portfolio && auth) {
+            return SpringSecurityUtils.ifAnyGranted(Authority.ROLE_ADMIN) ||
+                   aclUtilService.hasPermission(auth, GrailsHibernateUtil.unwrapIfProxy(_portfolio), SecurityService.businessOwnerPermissions)
+        } else {
+            return false
+        }
+    }
+
+    boolean portfolioStakeHolder(portfolio, auth, onlyPrivate) {
+        if (!springSecurityService.isLoggedIn() && onlyPrivate) {
+            return false
+        }
+        Portfolio _portfolio
+        if (portfolio instanceof Portfolio) {
+            _portfolio = portfolio
+        } else {
+            if (!portfolio) {
+                def request = RCH.requestAttributes.currentRequest
+                if (request.filtered) {
+                    return request.portfolioStakeHolder
+                } else {
+                    portfolio = getPortfolioIdFromRequest(request)
+                }
+            }
+            _portfolio = Portfolio.get(portfolio)
+        }
+        if (_portfolio && auth) {
+            return SpringSecurityUtils.ifAnyGranted(Authority.ROLE_ADMIN) ||
+                   (_portfolio.hidden ? aclUtilService.hasPermission(auth, GrailsHibernateUtil.unwrapIfProxy(_portfolio), SecurityService.portfolioStakeHolderPermissions) : !onlyPrivate)
+        } else {
+            return false
+        }
+    }
+
+    Long getPortfolioIdFromRequest(request) {
+        if (!request['portfolio_id']) {
+            def portfolioId = request.getParameter('portfolio')
+            if (!portfolioId) {
+                def mappingInfo = grailsUrlMappingsHolder.match(request.forwardURI.replaceFirst(request.contextPath, ''))
+                portfolioId = mappingInfo?.parameters?.getAt('portfolio')
+            }
+            request['portfolio_id'] = portfolioId?.decodePortfolioKey()?.toLong()
+        }
+        return request['portfolio_id']
+    }
+
     MutableAcl createAcl(ObjectIdentity objectIdentity, parent = null) throws AlreadyExistsException {
         Assert.notNull objectIdentity, 'Object Identity required'
         // Check this object identity hasn't already been persisted
@@ -501,10 +582,12 @@ class SecurityService {
             return
         }
         if (!request.filtered) {
+            request.businessOwner = businessOwner(null, springSecurityService.authentication)
+            request.portfolioStakeHolder = portfolioStakeHolder(null, springSecurityService.authentication, false)
             request.scrumMaster = scrumMaster(null, springSecurityService.authentication)
-            request.productOwner = productOwner(null, springSecurityService.authentication)
+            request.productOwner = request.businessOwner || productOwner(null, springSecurityService.authentication)
             request.teamMember = teamMember(null, springSecurityService.authentication)
-            request.stakeHolder = stakeHolder(null, springSecurityService.authentication, false)
+            request.stakeHolder = request.portfolioStakeHolder || stakeHolder(null, springSecurityService.authentication, false)
             request.owner = owner(null, springSecurityService.authentication)
             request.inProject = request.scrumMaster || request.productOwner || request.teamMember
             request.inTeam = request.scrumMaster || request.teamMember
@@ -528,10 +611,12 @@ class SecurityService {
     def getRolesRequest(force) {
         filterRequest(force)
         def request = RCH.requestAttributes.currentRequest
-        return [productOwner: request.productOwner,
-                scrumMaster : request.scrumMaster,
-                teamMember  : request.teamMember,
-                stakeHolder : request.stakeHolder,
-                admin       : request.admin]
+        return [businessOwner       : request.businessOwner,
+                portfolioStakeHolder: request.portfolioStakeHolder,
+                productOwner        : request.productOwner,
+                scrumMaster         : request.scrumMaster,
+                teamMember          : request.teamMember,
+                stakeHolder         : request.stakeHolder,
+                admin               : request.admin]
     }
 }

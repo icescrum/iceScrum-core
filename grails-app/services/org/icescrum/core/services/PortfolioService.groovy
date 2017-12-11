@@ -26,23 +26,36 @@ package org.icescrum.core.services
 import grails.transaction.Transactional
 import org.icescrum.core.domain.Portfolio
 import org.icescrum.core.domain.Project
+import org.icescrum.core.domain.User
 
 @Transactional
 class PortfolioService {
 
     def securityService
 
-    void save(Portfolio portfolio, List<Project> projects) {
+    void save(Portfolio portfolio, List<Project> projects, List<User> businessOwners, List<User> portfolioStakeHolders) {
         portfolio.save()
-        projects.each {
-            portfolio.addToProjects(it)
+        projects.each { project ->
+            portfolio.addToProjects(project)
+        }
+        businessOwners.each { bo ->
+            securityService.createBusinessOwnerPermissions(bo, portfolio)
+        }
+        portfolioStakeHolders.each { psh ->
+            securityService.createPortfolioStakeHolderPermissions(psh, portfolio)
         }
         portfolio.save(flush: true)
     }
 
     void delete(Portfolio portfolio) {
-        portfolio.projects.each {
-            portfolio.removeFromProjects(it)
+        portfolio.projects.each { project ->
+            portfolio.removeFromProjects(project)
+        }
+        portfolio.businessOwners.each { bo ->
+            securityService.deleteBusinessOwnerPermissions(bo, portfolio)
+        }
+        portfolio.stakeHolders.each { psh ->
+            securityService.deletePortfolioStakeHolderPermissions(psh, portfolio)
         }
         portfolio.delete()
     }
