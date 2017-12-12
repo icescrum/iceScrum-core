@@ -23,7 +23,7 @@
 <g:message
         locale="${locale}"
         code='is.template.email.story.commented.text'
-        args="[storyName, permalink, by, comment]"/>
+        args="[storyName, permalink, by, comment.encodeAsRaw()]"/>
 <br/><br/>--<br/>
 <g:message locale="${locale}" code='is.template.email.footer.reason.follow' args="[link, linkName]"/>
 <g:message locale="${locale}" code='is.template.email.footer.unfollow' args="[permalink]"/>
