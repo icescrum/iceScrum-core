@@ -680,10 +680,14 @@ class StoryService extends IceScrumEventPublisher {
             }
             save(copiedStory, project, (User) springSecurityService.currentUser)
             story.attachments?.each { Attachment a ->
-                def currentFile = attachmentableService.getFile(a)
-                def newFile = File.createTempFile(a.name, a.ext)
-                FileUtils.copyFile(currentFile, newFile)
-                copiedStory.addAttachment(a.poster, newFile, a.name + (a.ext ? '.' + a.ext : ''))
+                if (!a.url) {
+                    def currentFile = attachmentableService.getFile(a)
+                    def newFile = File.createTempFile(a.name, a.ext)
+                    FileUtils.copyFile(currentFile, newFile)
+                    copiedStory.addAttachment(a.poster, newFile, a.name + (a.ext ? '.' + a.ext : ''))
+                } else {
+                    copiedStory.addAttachment(a.poster, [url: a.url, provider: a.provider, length: a.length], a.name + (a.ext ? '.' + a.ext : ''))
+                }
             }
             story.comments?.each { Comment c ->
                 copiedStory.addComment(c.poster, c.body)
