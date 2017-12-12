@@ -149,6 +149,11 @@ class ApplicationSupport {
         return mySQLUTF8mb4
     }
 
+    public static boolean isUTF8Database() {
+        def dataSource = Holders.grailsApplication.config.dataSource
+        return isMySQLUTF8mb4() || dataSource.driverClassName != 'com.mysql.jdbc.Driver'
+    }
+
     public static User getFirstAdministrator() {
         return UserAuthority.findByAuthority(Authority.findByAuthority(Authority.ROLE_ADMIN)).user
     }
