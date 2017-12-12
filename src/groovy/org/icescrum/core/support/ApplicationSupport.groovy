@@ -490,6 +490,7 @@ class ApplicationSupport {
             def object = params.long("$workspace.key") ? workspace.value.objectClass.get(params.long("$workspace.key")) : null
             return object ? [name        : workspace.key,
                              object      : object,
+                             icon        : workspace.value.icon,
                              config      : workspace.value.config(object),
                              params      : workspace.value.params(object),
                              indexScrumOS: workspace.value.indexScrumOS] : null
