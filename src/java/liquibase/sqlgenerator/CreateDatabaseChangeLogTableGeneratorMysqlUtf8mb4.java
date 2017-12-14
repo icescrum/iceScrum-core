@@ -1,5 +1,6 @@
 package liquibase.sqlgenerator;
 
+import grails.util.Environment;
 import liquibase.database.Database;
 import liquibase.database.core.MySQLDatabase;
 import liquibase.sqlgenerator.core.CreateDatabaseChangeLogTableGenerator;
@@ -15,7 +16,7 @@ public class CreateDatabaseChangeLogTableGeneratorMysqlUtf8mb4 extends CreateDat
     }
 
     public boolean supports(CreateDatabaseChangeLogTableStatement statement, Database database) {
-        return database instanceof MySQLDatabase && ApplicationSupport.isMySQLUTF8mb4();
+        return ((database instanceof MySQLDatabase && ApplicationSupport.isMySQLUTF8mb4()) || (database instanceof MySQLDatabase && Environment.isDevelopmentMode()));
     }
 
     protected String getFilenameColumnSize() {
