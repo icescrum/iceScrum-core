@@ -127,7 +127,7 @@ class ApplicationSupport {
     public static boolean isMySQLUTF8mb4() {
         if (mySQLUTF8mb4 == null) {
             def dataSource = Holders.grailsApplication.config.dataSource
-            if (dataSource.driverClassName == 'com.mysql.jdbc.Driver' && Environment.current != Environment.DEVELOPMENT) {
+            if (dataSource.driverClassName == 'com.mysql.jdbc.Driver') {
                 try {
                     Sql.withInstance(dataSource.url, dataSource.username, dataSource.password, dataSource.driverClassName) { Sql sql ->
                         def values = sql.firstRow("SHOW VARIABLES LIKE 'character_set_server'").values()
