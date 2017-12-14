@@ -46,7 +46,7 @@ import org.apache.http.impl.client.BasicAuthCache
 import org.apache.http.impl.client.DefaultHttpClient
 import org.apache.http.protocol.BasicHttpContext
 import org.apache.http.util.EntityUtils
-import org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib
+import org.codehaus.groovy.grails.web.servlet.GrailsApplicationAttributes
 import org.codehaus.groovy.grails.web.servlet.mvc.GrailsWebRequest
 import org.codehaus.groovy.grails.web.util.WebUtils
 import org.grails.comments.Comment
@@ -66,7 +66,6 @@ import org.springframework.expression.Expression
 import org.springframework.security.access.expression.ExpressionUtils
 import org.springframework.security.core.context.SecurityContextHolder as SCH
 import org.springframework.security.web.FilterInvocation
-import org.springframework.security.web.access.WebInvocationPrivilegeEvaluator
 
 import javax.imageio.ImageIO
 import javax.servlet.FilterChain
@@ -182,18 +181,13 @@ class ApplicationSupport {
         // Secured on uiDefinition
         if (viewDefinition.secured) {
             Expression expression = webExpressionHandler.expressionParser.parseExpression(viewDefinition.secured)
-            FilterInvocation fi = new FilterInvocation(SRH.request, SRH.response, DUMMY_CHAIN)
-            def ctx = webExpressionHandler.createEvaluationContext(SCH.context.getAuthentication(), fi)
-            return ExpressionUtils.evaluateAsBoolean(expression, ctx)
-        } else {
-            // Secured on controller
-            if (controllerExist(viewDefinition.id, widget ? 'widget' : 'window')) {
-                ApplicationTagLib g = (ApplicationTagLib) grailsApplication.mainContext.getBean(ApplicationTagLib.class)
-                WebInvocationPrivilegeEvaluator webInvocationPrivilegeEvaluator = (WebInvocationPrivilegeEvaluator) grailsApplication.mainContext.getBean(WebInvocationPrivilegeEvaluator.class)
-                def url = g.createLink(controller: viewDefinition.id, action: widget ? 'widget' : 'window')
-                url = url.toString() - SRH.request.contextPath
-                return webInvocationPrivilegeEvaluator.isAllowed(SRH.request.contextPath, url, 'GET', SCH.context?.authentication)
-            }
+            HttpServletRequest request = SRH.request
+            String oldController = request.getAttribute(GrailsApplicationAttributes.CONTROLLER_NAME_ATTRIBUTE)
+            request.setAttribute(GrailsApplicationAttributes.CONTROLLER_NAME_ATTRIBUTE, viewDefinition.id) // Hack to check stakeholder permissions against the correct controller name
+            def ctx = webExpressionHandler.createEvaluationContext(SCH.context.getAuthentication(), new FilterInvocation(request, SRH.response, DUMMY_CHAIN))
+            def secured = ExpressionUtils.evaluateAsBoolean(expression, ctx)
+            request.setAttribute(GrailsApplicationAttributes.CONTROLLER_NAME_ATTRIBUTE, oldController) // Reinstall the proper controllerName
+            return secured
         }
         return false
     }
