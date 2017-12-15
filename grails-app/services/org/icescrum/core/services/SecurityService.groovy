@@ -582,8 +582,8 @@ class SecurityService {
             return
         }
         if (!request.filtered) {
-            request.businessOwner = false // businessOwner(null, springSecurityService.authentication)
-            request.portfolioStakeHolder = false // portfolioStakeHolder(null, springSecurityService.authentication, false)
+            request.businessOwner = false // businessOwner(null, springSecurityService.authentication) // TODO REINSTALL
+            request.portfolioStakeHolder = false // portfolioStakeHolder(null, springSecurityService.authentication, false) // TODO REINSTALL
             request.scrumMaster = scrumMaster(null, springSecurityService.authentication)
             request.productOwner = request.businessOwner || productOwner(null, springSecurityService.authentication)
             request.teamMember = teamMember(null, springSecurityService.authentication)
