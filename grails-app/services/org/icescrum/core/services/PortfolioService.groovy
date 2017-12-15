@@ -27,15 +27,23 @@ import grails.transaction.Transactional
 import org.icescrum.core.domain.Portfolio
 import org.icescrum.core.domain.Project
 import org.icescrum.core.domain.User
+import org.icescrum.core.error.BusinessException
 
 @Transactional
 class PortfolioService {
 
     def securityService
+    def springSecurityService
 
     void save(Portfolio portfolio, List<Project> projects, List<User> businessOwners, List<User> portfolioStakeHolders) {
         portfolio.save()
         projects.each { project ->
+            if (project.id && !project.productOwners.contains(springSecurityService.currentUser)) {
+                throw new BusinessException(code: 'is.portoflio.add.project.not.productOwner', args: [project.name])
+            }
+            if (project.portfolio) {
+                throw new BusinessException(code: 'is.project.error.already.in.portfolio', args: [project.name])
+            }
             portfolio.addToProjects(project)
         }
         businessOwners.each { bo ->
