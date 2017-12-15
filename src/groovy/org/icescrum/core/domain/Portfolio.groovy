@@ -25,6 +25,7 @@ package org.icescrum.core.domain
 
 import grails.plugin.springsecurity.acl.AclUtilService
 import grails.util.Holders
+import org.grails.datastore.gorm.GormStaticApi
 import org.hibernate.ObjectNotFoundException
 import org.icescrum.core.services.SecurityService
 import org.springframework.security.acls.domain.BasePermission
@@ -81,7 +82,7 @@ class Portfolio {
     }
 
     static findAllByMember(User user) {
-        executeQuery("""SELECT portfolio
+        GormStaticApi.executeQuery("""SELECT portfolio
                         FROM Portfolio portfolio
                              grails.plugin.springsecurity.acl.AclObjectIdentity aoi,
                              grails.plugin.springsecurity.acl.AclEntry ae
@@ -104,7 +105,7 @@ class Portfolio {
     }
 
     static Portfolio withPortfolio(long id) {
-        Portfolio portfolio = get(id)
+        Portfolio portfolio = GormStaticApi.get(id)
         if (!portfolio) {
             throw new ObjectNotFoundException(id, 'Portfolio')
         }
