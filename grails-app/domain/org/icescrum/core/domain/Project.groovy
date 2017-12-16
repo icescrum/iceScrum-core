@@ -47,10 +47,9 @@ class Project extends TimeBox implements Serializable, Attachmentable {
     SortedSet<Team> teams // DO NOT USE DIRECTLY, rather use transient "team" that resolves the first and only team
     SortedSet<Release> releases
 
-// TODO REINSTALL
-//    static belongsTo = [
-//            portfolio: Portfolio
-//    ]
+    static belongsTo = [
+            portfolio: Portfolio
+    ]
 
     static hasMany = [
             actors               : Actor,
@@ -115,8 +114,8 @@ class Project extends TimeBox implements Serializable, Attachmentable {
                 return ['no.game']
             }
             return true
-        }) //TODO custom message
-//        portfolio(nullable: true)  // TODO REINSTALL
+        })
+        portfolio(nullable: true)
     }
 
     @Override

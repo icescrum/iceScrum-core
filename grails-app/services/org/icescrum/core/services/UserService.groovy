@@ -182,11 +182,10 @@ class UserService extends IceScrumEventPublisher {
                 teamService.delete(it)
             }
         }
-        // TODO REINSTALL
-//        Portfolio.findAllByMember(user).each { Portfolio portfolio ->
-//            securityService.deleteBusinessOwnerPermissions(user, portfolio)
-//            securityService.deletePortfolioStakeHolderPermissions(user, portfolio)
-//        }
+        Portfolio.findAllByMember(user).each { Portfolio portfolio ->
+            securityService.deleteBusinessOwnerPermissions(user, portfolio)
+            securityService.deletePortfolioStakeHolderPermissions(user, portfolio)
+        }
         Project.findAllByRole(user, [BasePermission.WRITE, BasePermission.READ], [:], true, false, "").each { Project project ->
             securityService.deleteProductOwnerPermissions(user, project)
             securityService.deleteTeamMemberPermissions(user, project.teams[0])
