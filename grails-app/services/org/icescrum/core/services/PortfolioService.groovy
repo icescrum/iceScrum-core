@@ -27,14 +27,11 @@ import grails.transaction.Transactional
 import org.icescrum.core.domain.Invitation
 import org.icescrum.core.domain.Portfolio
 import org.icescrum.core.domain.Project
-import org.icescrum.core.domain.Team
 import org.icescrum.core.domain.User
 import org.icescrum.core.domain.security.Authority
 import org.icescrum.core.error.BusinessException
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
-
-import javax.sound.sampled.Port
 
 @Transactional
 class PortfolioService extends IceScrumEventPublisher {
@@ -117,7 +114,7 @@ class PortfolioService extends IceScrumEventPublisher {
 
     void delete(Portfolio portfolio) {
         def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_DELETE, portfolio)
-        portfolio.projects.collect().each { project -> //use collect first to do not mutate portfolio.projects
+        portfolio.projects.collect().each { project -> // Use collect first to avoid mutating portfolio.projects
             portfolio.removeFromProjects(project)
         }
         portfolio.businessOwners.each { bo ->
