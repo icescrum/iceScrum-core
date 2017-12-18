@@ -123,6 +123,8 @@ class PortfolioService extends IceScrumEventPublisher {
         portfolio.stakeHolders.each { psh ->
             securityService.deletePortfolioStakeHolderPermissions(psh, portfolio)
         }
+        portfolio.invitedStakeHolders*.delete()
+        portfolio.invitedBusinessOwners*.delete()
         portfolio.delete()
         publishSynchronousEvent(IceScrumEventType.DELETE, portfolio, dirtyProperties)
     }
@@ -139,9 +141,9 @@ class PortfolioService extends IceScrumEventPublisher {
         def currentInvitations = Invitation.findAllByTypeAndPortfolio(type, porfolio)
         def newInvitations = []
         assert !invitedBusinessOwners.intersect(invitedStakeHolders)
-        newInvitations.addAll(invitedBusinessOwners.collect { [role: Authority.PRODUCTOWNER, email: it] })
+        newInvitations.addAll(invitedBusinessOwners.collect { [role: Authority.BUSINESSOWNER, email: it] })
         if (invitedStakeHolders) {
-            newInvitations.addAll(invitedStakeHolders.collect { [role: Authority.STAKEHOLDER, email: it] })
+            newInvitations.addAll(invitedStakeHolders.collect { [role: Authority.PORTFOLIOSTAKEHOLDER, email: it] })
         }
         manageInvitations(currentInvitations, newInvitations, type, porfolio)
     }

@@ -26,6 +26,7 @@ package org.icescrum.core.domain
 import grails.plugin.springsecurity.acl.AclUtilService
 import grails.util.Holders
 import org.hibernate.ObjectNotFoundException
+import org.icescrum.core.domain.security.Authority
 import org.icescrum.core.services.SecurityService
 import org.springframework.security.acls.domain.BasePermission
 import org.springframework.security.acls.model.Permission
@@ -54,7 +55,7 @@ class Portfolio {
         projects(maxSize: 10)
     }
 
-    static transients = ['businessOwners', 'stakeHolders']
+    static transients = ['businessOwners', 'stakeHolders', 'invitedBusinessOwners', 'invitedStakeHolders']
 
     List<User> businessOwners
     List<User> stakeHolders
@@ -93,6 +94,15 @@ class Portfolio {
                         AND ae.mask IN(:permissions)
                         AND lower(portfolio.name) LIKE lower(:term)
                         AND ae.sid.sid = :sid""", [sid: user.username, permissions: [BasePermission.WRITE, BasePermission.READ]*.mask, term: term], params ?: [:])
+    }
+
+
+    List<Invitation> getInvitedBusinessOwners() {
+        return Invitation.findAllByTypeAndPortfolioAndFutureRole(Invitation.InvitationType.PORTFOLIO, this, Authority.BUSINESSOWNER)
+    }
+
+    List<Invitation> getInvitedStakeHolders() {
+        return Invitation.findAllByTypeAndPortfolioAndFutureRole(Invitation.InvitationType.PORTFOLIO, this, Authority.PORTFOLIOSTAKEHOLDER)
     }
 
     private List<User> findAllUsersByPermissions(List<Permission> permissions) {

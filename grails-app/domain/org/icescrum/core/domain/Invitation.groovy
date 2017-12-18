@@ -42,13 +42,13 @@ class Invitation implements Serializable {
         portfolio(nullable: true)
         type(validator: { newType, Invitation ->
             newType == InvitationType.TEAM && Invitation.team != null && Invitation.project == null && Invitation.portfolio == null ||
-            newType == InvitationType.PROJECT && Invitation.team == null && Invitation.portfolio == null && Invitation.project != null ||
+            newType == InvitationType.PROJECT && Invitation.team == null && Invitation.project != null && Invitation.portfolio == null ||
             newType == InvitationType.PORTFOLIO && Invitation.team == null && Invitation.project == null && Invitation.portfolio != null ?: 'invalid'
         })
         futureRole(validator: { newRole, Invitation ->
             newRole in [Authority.MEMBER, Authority.SCRUMMASTER] && Invitation.team != null && Invitation.project == null && Invitation.portfolio == null ||
-            newRole in [Authority.STAKEHOLDER, Authority.PRODUCTOWNER] && Invitation.team == null && Invitation.portfolio == null && Invitation.project != null ||
-            newRole in [Authority.STAKEHOLDER, Authority.PRODUCTOWNER] && Invitation.portfolio != null && Invitation.team == null && Invitation.project == null ?: 'invalid' //TODO
+            newRole in [Authority.STAKEHOLDER, Authority.PRODUCTOWNER] && Invitation.team == null && Invitation.project != null && Invitation.portfolio == null ||
+            newRole in [Authority.PORTFOLIOSTAKEHOLDER, Authority.BUSINESSOWNER] && Invitation.team == null && Invitation.project == null && Invitation.portfolio != null ?: 'invalid'
         })
     }
 

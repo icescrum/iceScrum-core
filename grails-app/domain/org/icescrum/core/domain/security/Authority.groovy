@@ -40,6 +40,8 @@ class Authority implements Serializable {
     static final int PRODUCTOWNER = 2
     static final int STAKEHOLDER = 3
     static final int PO_AND_SM = 4
+    static final int BUSINESSOWNER = 5
+    static final int PORTFOLIOSTAKEHOLDER = 6
 
     String authority
     static mapping = {
