@@ -198,7 +198,7 @@ class Project extends TimeBox implements Serializable, Attachmentable {
         }
     }
 
-    static findAllByRole(User user, List<BasePermission> permission, params, members = true, archived = true, String term = '%%') {
+    static findAllByRole(User user, List<BasePermission> permission, params, members = true, archived = true, owner = true, String term = '%%') {
         def vars = [sid: user?.username ?: '', p: permission*.mask, term: term]
         if (members) {
             vars.uid = user?.id ?: 0L
@@ -209,6 +209,10 @@ class Project extends TimeBox implements Serializable, Attachmentable {
                             SELECT DISTINCT p.id
                             FROM org.icescrum.core.domain.Project as p
                             WHERE """
+                + (owner ? """
+                                p.owner.id = :uid 
+                                OR"""
+                         : "")
                 + (members ? """
                                 p.id IN (
                                     SELECT DISTINCT p.id
@@ -247,7 +251,7 @@ class Project extends TimeBox implements Serializable, Attachmentable {
         if (!term) {
             term = '%%'
         }
-        return findAllByRole(user, [BasePermission.WRITE, BasePermission.READ], params, true, false, term)
+        return findAllByRole(user, [BasePermission.WRITE, BasePermission.READ], params, true, false, false, term)
     }
 
     static findAllByMember(long userid, params) {
@@ -272,6 +276,15 @@ class Project extends TimeBox implements Serializable, Attachmentable {
             throw new ObjectNotFoundException(id, 'Project')
         }
         return project
+    }
+
+    static List<Project> withProjects(def params, def id = 'id', def productOwnerOrOwner) {
+        def ids = params[id]?.contains(',') ? params[id].split(',')*.toLong() : params.list(id)
+        List<Project> projects = ids ? getAll(ids).findAll { return productOwnerOrOwner ? (it.productOwners.contains(productOwnerOrOwner) || it.owner == productOwnerOrOwner) : true } : null
+        if (!projects) {
+            throw new ObjectNotFoundException(ids, 'Project')
+        }
+        return projects
     }
 
     List<User> getProductOwners() {

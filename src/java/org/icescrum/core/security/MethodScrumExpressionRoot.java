@@ -128,7 +128,7 @@ public class MethodScrumExpressionRoot extends SecurityExpressionRoot {
         return securityService.businessOwner(portfolio, super.authentication);
     }
     public boolean portfolioStakeHolder(Portfolio portfolio) {
-        return securityService.portfolioStakeHolder(portfolio, super.authentication, false);
+        return securityService.portfolioStakeHolder(portfolio, super.authentication);
     }
 
     public boolean owner(Object o) {

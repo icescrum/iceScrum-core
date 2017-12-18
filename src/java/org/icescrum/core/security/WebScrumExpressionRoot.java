@@ -110,13 +110,13 @@ public class WebScrumExpressionRoot extends WebSecurityExpressionRoot {
     }
 
     public boolean portfolioStakeHolder() {
-        return securityService.portfolioStakeHolder(null, super.authentication, false);
+        return securityService.portfolioStakeHolder(null, super.authentication);
     }
     public boolean portfolioStakeHolder(long portfolioId) {
-        return securityService.portfolioStakeHolder(portfolioId, super.authentication, false);
+        return securityService.portfolioStakeHolder(portfolioId, super.authentication);
     }
     public boolean portfolioStakeHolder(Portfolio portfolio) {
-        return securityService.portfolioStakeHolder(portfolio, super.authentication, false);
+        return securityService.portfolioStakeHolder(portfolio, super.authentication);
     }
 
     public boolean owner() {

@@ -25,7 +25,6 @@ package org.icescrum.core.domain
 
 import grails.plugin.springsecurity.acl.AclUtilService
 import grails.util.Holders
-import org.grails.datastore.gorm.GormStaticApi
 import org.hibernate.ObjectNotFoundException
 import org.icescrum.core.services.SecurityService
 import org.springframework.security.acls.domain.BasePermission
@@ -38,7 +37,6 @@ class Portfolio {
     String description
     Date dateCreated
     Date lastUpdated
-    boolean hidden = false
 
     static hasMany = [projects: Project]
 
@@ -81,16 +79,20 @@ class Portfolio {
         }
     }
 
-    static findAllByMember(User user) {
-        GormStaticApi.executeQuery("""SELECT portfolio
-                        FROM Portfolio portfolio
+    static findAllByUser(User user, Map params, String term) {
+        if (!term) {
+            term = '%%'
+        }
+        executeQuery("""SELECT portfolio
+                        FROM Portfolio portfolio,
                              grails.plugin.springsecurity.acl.AclObjectIdentity aoi,
                              grails.plugin.springsecurity.acl.AclEntry ae
                         WHERE aoi.objectId = portfolio.id
-                        AND aoi.aclClass.className = 'org.icescrum.core.domain.Project'
+                        AND aoi.aclClass.className = 'org.icescrum.core.domain.Portfolio'
                         AND ae.aclObjectIdentity.id = aoi.id
                         AND ae.mask IN(:permissions)
-                        AND ae.sid.sid = :sid""", [sid: user.username, permissions: [BasePermission.WRITE, BasePermission.READ]*.mask])
+                        AND lower(portfolio.name) LIKE lower(:term)
+                        AND ae.sid.sid = :sid""", [sid: user.username, permissions: [BasePermission.WRITE, BasePermission.READ]*.mask, term: term], params ?: [:])
     }
 
     private List<User> findAllUsersByPermissions(List<Permission> permissions) {
@@ -105,7 +107,7 @@ class Portfolio {
     }
 
     static Portfolio withPortfolio(long id) {
-        Portfolio portfolio = GormStaticApi.get(id)
+        Portfolio portfolio = Portfolio.get(id)
         if (!portfolio) {
             throw new ObjectNotFoundException(id, 'Portfolio')
         }

@@ -445,8 +445,8 @@ class SecurityService {
         }
     }
 
-    boolean portfolioStakeHolder(portfolio, auth, onlyPrivate) {
-        if (!springSecurityService.isLoggedIn() && onlyPrivate) {
+    boolean portfolioStakeHolder(portfolio, auth) {
+        if (!springSecurityService.isLoggedIn()) {
             return false
         }
         Portfolio _portfolio
@@ -465,7 +465,7 @@ class SecurityService {
         }
         if (_portfolio && auth) {
             return SpringSecurityUtils.ifAnyGranted(Authority.ROLE_ADMIN) ||
-                   (_portfolio.hidden ? aclUtilService.hasPermission(auth, GrailsHibernateUtil.unwrapIfProxy(_portfolio), SecurityService.portfolioStakeHolderPermissions) : !onlyPrivate)
+                   aclUtilService.hasPermission(auth, GrailsHibernateUtil.unwrapIfProxy(_portfolio), SecurityService.portfolioStakeHolderPermissions)
         } else {
             return false
         }
@@ -583,7 +583,7 @@ class SecurityService {
         }
         if (!request.filtered) {
             request.businessOwner = businessOwner(null, springSecurityService.authentication)
-            request.portfolioStakeHolder = portfolioStakeHolder(null, springSecurityService.authentication, false)
+            request.portfolioStakeHolder = portfolioStakeHolder(null, springSecurityService.authentication)
             request.scrumMaster = scrumMaster(null, springSecurityService.authentication)
             request.productOwner = request.businessOwner || productOwner(null, springSecurityService.authentication)
             request.teamMember = teamMember(null, springSecurityService.authentication)

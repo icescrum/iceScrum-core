@@ -33,19 +33,22 @@ class Invitation implements Serializable {
     Integer futureRole // don't use "role" because it is a reserved keyword in some SQL dialects
     String token
 
-    static belongsTo = [team: Team, project: Project]
+    static belongsTo = [team: Team, project: Project, portfolio: Portfolio]
 
     static constraints = {
         email(blank: false, email: true)
         team(nullable: true)
         project(nullable: true)
+        portfolio(nullable: true)
         type(validator: { newType, Invitation ->
-            newType == InvitationType.TEAM && Invitation.team != null && Invitation.project == null ||
-            newType == InvitationType.PROJECT && Invitation.team == null && Invitation.project != null ?: 'invalid'
+            newType == InvitationType.TEAM && Invitation.team != null && Invitation.project == null && Invitation.portfolio == null ||
+            newType == InvitationType.PROJECT && Invitation.team == null && Invitation.portfolio == null && Invitation.project != null ||
+            newType == InvitationType.PORTFOLIO && Invitation.team == null && Invitation.project == null && Invitation.portfolio != null ?: 'invalid'
         })
         futureRole(validator: { newRole, Invitation ->
-            newRole in [Authority.MEMBER, Authority.SCRUMMASTER] && Invitation.team != null && Invitation.project == null ||
-            newRole in [Authority.STAKEHOLDER, Authority.PRODUCTOWNER] && Invitation.team == null && Invitation.project != null ?: 'invalid'
+            newRole in [Authority.MEMBER, Authority.SCRUMMASTER] && Invitation.team != null && Invitation.project == null && Invitation.portfolio == null ||
+            newRole in [Authority.STAKEHOLDER, Authority.PRODUCTOWNER] && Invitation.team == null && Invitation.portfolio == null && Invitation.project != null ||
+            newRole in [Authority.STAKEHOLDER, Authority.PRODUCTOWNER] && Invitation.portfolio != null && Invitation.team == null && Invitation.project == null ?: 'invalid' //TODO
         })
     }
 
@@ -55,7 +58,7 @@ class Invitation implements Serializable {
     }
 
     enum InvitationType {
-        TEAM, PROJECT
+        TEAM, PROJECT, PORTFOLIO
     }
 
     def beforeValidate() {

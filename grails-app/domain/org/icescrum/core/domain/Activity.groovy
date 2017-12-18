@@ -84,7 +84,7 @@ class Activity implements Serializable, Comparable {
     }
 
     static List<List> importantStoryActivities(User user) {
-        def projects = Project.findAllByRole(user, [BasePermission.WRITE, BasePermission.READ], [cache: true], true, false)
+        def projects = Project.findAllByRole(user, [BasePermission.WRITE, BasePermission.READ], [cache: true], true, false, false)
         def activitiesAndStories = []
         if (projects) {
             activitiesAndStories = executeQuery("""SELECT a, s
@@ -102,7 +102,7 @@ class Activity implements Serializable, Comparable {
     }
 
     static Integer countNewImportantStoryActivities(User user) {
-        def projects = Project.findAllByRole(user, [BasePermission.WRITE, BasePermission.READ], [cache: true], true, false)
+        def projects = Project.findAllByRole(user, [BasePermission.WRITE, BasePermission.READ], [cache: true], true, false, false)
         if (projects) {
             return executeQuery("""SELECT COUNT(*)
                                    FROM Activity a, Story s
