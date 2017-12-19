@@ -132,8 +132,6 @@ class ApplicationSupport {
                     Sql.withInstance(dataSource.url, dataSource.username, dataSource.password, dataSource.driverClassName) { Sql sql ->
                         def values = sql.firstRow("SHOW VARIABLES LIKE 'character_set_server'").values()
                         mySQLUTF8mb4 = values.contains("utf8mb4")
-                        println values
-                        println mySQLUTF8mb4
                     }
                 } catch (Exception e) {
                     if (log.debugEnabled) {
