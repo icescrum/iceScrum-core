@@ -54,7 +54,7 @@ class Activity implements Serializable, Comparable {
         beforeValue nullable: true
         afterValue nullable: true
         afterLabel nullable: true
-        parentType blank: false
+        parentType blank: false, shared: 'keyMaxSize'
     }
 
     static mapping = {
