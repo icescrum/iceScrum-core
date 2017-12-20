@@ -171,7 +171,7 @@ class ApplicationSupport {
         return actionName ? controllerClass?.metaClass?.respondsTo(actionName) : controllerClass
     }
 
-    public static boolean isAllowed(def viewDefinition, def params, def widget = false) {
+    public static boolean isAllowed(def viewDefinition, def params) {
         def grailsApplication = Holders.grailsApplication
         WebScrumExpressionHandler webExpressionHandler = (WebScrumExpressionHandler) grailsApplication.mainContext.getBean(WebScrumExpressionHandler.class)
         if (!viewDefinition || viewDefinition.workspace != getCurrentWorkspace(params)?.name) {
