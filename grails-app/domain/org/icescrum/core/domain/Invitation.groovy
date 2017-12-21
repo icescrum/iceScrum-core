@@ -40,15 +40,15 @@ class Invitation implements Serializable {
         team(nullable: true)
         project(nullable: true)
         portfolio(nullable: true)
-        type(validator: { newType, Invitation ->
-            newType == InvitationType.TEAM && Invitation.team != null && Invitation.project == null && Invitation.portfolio == null ||
-            newType == InvitationType.PROJECT && Invitation.team == null && Invitation.project != null && Invitation.portfolio == null ||
-            newType == InvitationType.PORTFOLIO && Invitation.team == null && Invitation.project == null && Invitation.portfolio != null ?: 'invalid'
+        type(validator: { newType, invitation ->
+            newType == InvitationType.TEAM && invitation.team != null && invitation.project == null && invitation.portfolio == null ||
+            newType == InvitationType.PROJECT && invitation.team == null && invitation.project != null && invitation.portfolio == null ||
+            newType == InvitationType.PORTFOLIO && invitation.team == null && invitation.project == null && invitation.portfolio != null ?: 'invalid'
         })
-        futureRole(validator: { newRole, Invitation ->
-            newRole in [Authority.MEMBER, Authority.SCRUMMASTER] && Invitation.team != null && Invitation.project == null && Invitation.portfolio == null ||
-            newRole in [Authority.STAKEHOLDER, Authority.PRODUCTOWNER] && Invitation.team == null && Invitation.project != null && Invitation.portfolio == null ||
-            newRole in [Authority.PORTFOLIOSTAKEHOLDER, Authority.BUSINESSOWNER] && Invitation.team == null && Invitation.project == null && Invitation.portfolio != null ?: 'invalid'
+        futureRole(validator: { newRole, invitation ->
+            newRole in [Authority.MEMBER, Authority.SCRUMMASTER] && invitation.team != null && invitation.project == null && invitation.portfolio == null ||
+            newRole in [Authority.STAKEHOLDER, Authority.PRODUCTOWNER] && invitation.team == null && invitation.project != null && invitation.portfolio == null ||
+            newRole in [Authority.PORTFOLIOSTAKEHOLDER, Authority.BUSINESSOWNER] && invitation.team == null && invitation.project == null && invitation.portfolio != null ?: 'invalid'
         })
     }
 
