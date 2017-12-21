@@ -39,13 +39,17 @@ class Portfolio {
     Date dateCreated
     Date lastUpdated
 
-    static hasMany = [projects: Project]
+    static hasMany = [
+            projects: Project,
+            widgets: Widget
+    ]
 
     static mapping = {
         cache true
         table 'is_portfolio'
         fkey(index: 'portfolio_key_index')
         description(length: 5000)
+        widgets(sort: 'position')
     }
 
     static constraints = {

@@ -26,6 +26,7 @@ package org.icescrum.core.domain
 
 import grails.converters.JSON
 import grails.util.Holders
+import org.hibernate.ObjectNotFoundException
 import org.icescrum.core.domain.preferences.UserPreferences
 import org.icescrum.core.services.UiDefinitionService
 
@@ -35,18 +36,25 @@ class Widget implements Serializable {
 
     int position
 
+    WidgetParentType parentType
     String settingsData
     String widgetDefinitionId
     String type
     Long typeId
 
-    static belongsTo = [userPreferences: UserPreferences]
+    static belongsTo = [userPreferences: UserPreferences, portfolio: Portfolio]
 
     static constraints = {
-        settingsData nullable: true
-        type nullable: true
-        typeId nullable: true
-        widgetDefinitionId shared: 'keyMaxSize'
+        settingsData(nullable: true)
+        type(nullable: true)
+        typeId(nullable: true)
+        widgetDefinitionId(shared: 'keyMaxSize')
+        userPreferences(nullable: true)
+        portfolio(nullable: true)
+        parentType(nullable: true, validator: { newParentType, widget ->
+            newParentType == WidgetParentType.USER && widget.userPreferences != null && widget.portfolio == null ||
+            newParentType == WidgetParentType.PORTFOLIO && widget.userPreferences == null && widget.portfolio != null ?: 'invalid'
+        })
     }
 
     static mapping = {
@@ -57,7 +65,7 @@ class Widget implements Serializable {
         widgetDefinitionId index: 'up_wdi_index'
     }
 
-    static transients = ["settings", "width", "height"]
+    static transients = ['settings', 'width', 'height', 'parent']
 
     void setSettings(Map settings) {
         settingsData = settings ? settings as JSON : null
@@ -77,6 +85,32 @@ class Widget implements Serializable {
         uiDefinitionService.getWidgetDefinitionById(widgetDefinitionId).height
     }
 
+    private String getParentPropertyName() {
+        def propertyNames = [(WidgetParentType.USER): 'userPreferences', (WidgetParentType.PORTFOLIO): 'portfolio']
+        return propertyNames[parentType]
+    }
+
+    def getParent() {
+        return this."$parentPropertyName"
+    }
+
+    def setParent(parent) {
+        this."$parentPropertyName" = parent
+    }
+
+    static Widget withWidget(long id) {
+        Widget widget = Widget.get(id)
+        if (!widget) {
+            throw new ObjectNotFoundException(id, 'Widget')
+        }
+        return widget
+    }
+
+    enum WidgetParentType {
+        USER, PORTFOLIO
+    }
+
+    // BE CAREFUL: Only export user widgets
     def xml = { builder ->
         builder.widget() {
             builder.position(this.position)

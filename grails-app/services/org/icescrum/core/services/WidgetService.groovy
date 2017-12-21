@@ -27,6 +27,7 @@ import grails.transaction.Transactional
 import org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib
 import org.icescrum.core.domain.User
 import org.icescrum.core.domain.Widget
+import org.icescrum.core.domain.Widget.WidgetParentType
 import org.icescrum.core.domain.preferences.UserPreferences
 import org.icescrum.core.error.BusinessException
 import org.icescrum.core.ui.WidgetDefinition
@@ -37,12 +38,19 @@ class WidgetService {
     def uiDefinitionService
     def grailsApplication
 
-    Widget save(User user, WidgetDefinition widgetDefinition) {
-        int duplicate = Widget.countByUserPreferencesAndWidgetDefinitionId(user.preferences, widgetDefinition.id)
-        if (duplicate && !widgetDefinition.allowDuplicate) {
+    Widget save(WidgetDefinition widgetDefinition, WidgetParentType parentType, parent) {
+        parent.refresh() // When the parent has just been created, the collections are not initialized yet + we want the size() to be up to date
+        def widgetList = parent.widgets
+        if (widgetList.find { it -> it.widgetDefinitionId == widgetDefinition.id } && !widgetDefinition.allowDuplicate) {
             throw new BusinessException(code: 'is.widget.error.duplicate')
         }
-        Widget widget = new Widget(position: Widget.countByUserPreferences(user.preferences) + 1, widgetDefinitionId: widgetDefinition.id, userPreferences: user.preferences, settings: widgetDefinition.defaultSettings)
+        Widget widget = new Widget(
+                position: widgetList.size() + 1,
+                widgetDefinitionId: widgetDefinition.id,
+                settings: widgetDefinition.defaultSettings,
+                parentType: parentType
+        )
+        widget.parent = parent
         try {
             widgetDefinition.onSave(widget)
         } catch (Exception e) {
@@ -54,13 +62,10 @@ class WidgetService {
             }
         }
         widget.save(flush: true)
-        user.lastUpdated = new Date()
-        user.save()
         return widget
     }
 
     void update(Widget widget, Map props) {
-        User user = widget.userPreferences.user
         if (props.position != widget.position) {
             updatePosition(widget, props.position)
         }
@@ -78,15 +83,13 @@ class WidgetService {
             }
         }
         widget.save()
-        user.lastUpdated = new Date()
-        user.save()
     }
 
     void initUserWidgets(User user) {
-        save(user, uiDefinitionService.getWidgetDefinitionById('quickProjects'))
-        save(user, uiDefinitionService.getWidgetDefinitionById('tasks'))
-        save(user, uiDefinitionService.getWidgetDefinitionById('feed'))
-        Widget notesWidget = save(user, uiDefinitionService.getWidgetDefinitionById('notes'))
+        save(uiDefinitionService.getWidgetDefinitionById('quickProjects'), WidgetParentType.USER, user.preferences)
+        save(uiDefinitionService.getWidgetDefinitionById('tasks'), WidgetParentType.USER, user.preferences)
+        save(uiDefinitionService.getWidgetDefinitionById('feed'), WidgetParentType.USER, user.preferences)
+        Widget notesWidget = save(uiDefinitionService.getWidgetDefinitionById('notes'), WidgetParentType.USER, user.preferences)
         def noteProperties = notesWidget.properties.collectEntries { key, val -> [(key): val] }
         noteProperties.settings = [text: '']
         try { // Required because it will failed if no request (bootstraping)
@@ -97,9 +100,9 @@ class WidgetService {
     }
 
     void delete(Widget widget) {
-        UserPreferences userPreferences = widget.userPreferences
+        def parent = widget.parent
         widget.delete(flush: true)
-        cleanPositions(userPreferences.widgets)
+        cleanPositions(parent.widgets)
         try {
             uiDefinitionService.getWidgetDefinitionById(widget.widgetDefinitionId).onDelete(widget)
         } catch (Exception e) {
@@ -110,9 +113,6 @@ class WidgetService {
                 throw new BusinessException(code: 'is.widget.error.delete')
             }
         }
-        User user = userPreferences.user
-        user.lastUpdated = new Date()
-        user.save()
     }
 
     void delete(String type, long typeId) {
@@ -129,7 +129,7 @@ class WidgetService {
     }
 
     private updatePosition(Widget widget, int newPosition) {
-        def widgets = widget.userPreferences.widgets
+        def widgets = widget.parent.widgets
         cleanPositions(widgets) // Migration
         def oldPosition = widget.position ?: 1
         if (oldPosition > newPosition) {
@@ -149,16 +149,17 @@ class WidgetService {
                 }
             }
         }
-        widget.userPreferences.user.lastUpdated = new Date()
-        widget.userPreferences.user.save()
     }
 
+    // BE CAREFUL: Only import user widgets
     def unMarshall(def widgetXml, def options) {
         Widget.withTransaction(readOnly: !options.save) { transaction ->
             def widget = new Widget(
+                    parentType: WidgetParentType.USER,
                     position: widgetXml.position.toInteger(),
                     settingsData: widgetXml.settingsData.text() ?: null,
-                    widgetDefinitionId: widgetXml.widgetDefinitionId.text())
+                    widgetDefinitionId: widgetXml.widgetDefinitionId.text()
+            )
             // Reference on other object
             if (options.userPreferences) {
                 UserPreferences userPreferences = options.userPreferences
