@@ -23,14 +23,8 @@
 
 package org.icescrum.core.taglib
 
-import org.codehaus.groovy.grails.web.mapping.ForwardUrlMappingInfo
-import org.codehaus.groovy.grails.web.mapping.UrlMappingUtils
-import org.codehaus.groovy.grails.web.metaclass.ControllerDynamicMethods
-import org.codehaus.groovy.grails.web.servlet.GrailsApplicationAttributes
-
 class WindowTagLib {
     static namespace = 'is'
-    def groovyPageLocator
 
     def window = { attrs, body ->
         assert attrs.windowDefinition
@@ -79,23 +73,5 @@ class WindowTagLib {
             out << "</form>"
         }
         out << """ </div>"""
-    }
-
-    def includeContent(attrs) {
-        if (attrs.action && !attrs.controller) {
-            def controller = request?.getAttribute(GrailsApplicationAttributes.CONTROLLER)
-            def controllerName = controller?.getProperty(ControllerDynamicMethods.CONTROLLER_NAME_PROPERTY)
-            attrs.controller = controllerName
-        }
-        if (attrs.controller || attrs.view) {
-            def mapping = new ForwardUrlMappingInfo(
-                    controller: attrs.controller,
-                    action: attrs.action,
-                    view: attrs.view,
-                    id: attrs.id,
-                    params: attrs.params
-            )
-            return UrlMappingUtils.includeForUrlMappingInfo(request, response, mapping, attrs.model ?: [:])
-        }
     }
 }
