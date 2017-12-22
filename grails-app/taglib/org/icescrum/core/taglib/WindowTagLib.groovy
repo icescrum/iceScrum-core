@@ -24,11 +24,12 @@
 package org.icescrum.core.taglib
 
 class WindowTagLib {
+
     static namespace = 'is'
 
     def window = { attrs, body ->
         assert attrs.windowDefinition
-        out << g.render(template: '/components/window', plugin: 'icescrum-core', model: [windowDefinition: attrs.windowDefinition, content: body()])
+        out << g.render(template: '/components/window', plugin: 'icescrum-core', model: [windowDefinition: attrs.windowDefinition, content: body(), 'classes': attrs.classes ?: ''])
     }
 
     def widget = { attrs, body ->
