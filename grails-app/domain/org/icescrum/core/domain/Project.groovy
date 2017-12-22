@@ -210,7 +210,18 @@ class Project extends TimeBox implements Serializable, Attachmentable {
                             FROM org.icescrum.core.domain.Project as p
                             WHERE """
                 + (owner ? """
-                                p.owner.id = :uid 
+                                p.id IN (
+                                    SELECT DISTINCT p.id
+                                        FROM org.icescrum.core.domain.Project as p,
+                                             grails.plugin.springsecurity.acl.AclClass as ac,
+                                             grails.plugin.springsecurity.acl.AclObjectIdentity as ai,
+                                             grails.plugin.springsecurity.acl.AclSid as acl
+                                        WHERE ac.className = 'org.icescrum.core.domain.Team'
+                                        AND ai.aclClass = ac.id
+                                        AND ai.owner.sid = :sid
+                                        AND acl.id = ai.owner
+                                        AND p.id = ai.objectId
+                                )
                                 OR"""
                          : "")
                 + (members ? """
