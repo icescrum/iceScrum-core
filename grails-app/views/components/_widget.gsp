@@ -24,6 +24,7 @@
             <div class="btn-settings btn-group visible-on-hover">
                 <g:if test="${widget && widgetDefinition.settings}">
                     <button class="btn btn-default btn-sm"
+                            ng-if="authorizedWidget('update', widget)"
                             ng-click="toggleSettings(widget)"
                             uib-tooltip="${message(code: 'todo.is.ui.setting')}">
                         <i class="fa" ng-class="{ 'fa-cog':!showSettings, 'fa-save':showSettings }"></i>
@@ -31,6 +32,7 @@
                 </g:if>
                 <g:if test="${widget && widgetDefinition.allowRemove}">
                     <button class="btn btn-default btn-sm"
+                            ng-if="authorizedWidget('delete', widget)"
                             ng-click="delete(widget)"
                             uib-tooltip="${message(code: 'is.ui.widget.remove')}">
                         <i class="fa fa-times"></i>
@@ -47,6 +49,7 @@
         ${widgetDefinition.settings ? '</div>' : ''}
         <g:if test="${widgetDefinition.settings}">
             <form ng-switch-when="true"
+                  ng-if="authorizedWidget('update', widget)"
                   ng-submit="update(widget)"
                   class="form-horizontal">
                 <g:render template="/widgets/${widgetDefinition.id}/settings" plugin="${widgetDefinition.pluginName}"/>
