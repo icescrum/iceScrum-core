@@ -41,7 +41,7 @@ class Portfolio {
 
     static hasMany = [
             projects: Project,
-            widgets: Widget
+            widgets : Widget
     ]
 
     static mapping = {
@@ -81,6 +81,15 @@ class Portfolio {
             findAllUsersByPermissions(SecurityService.portfolioStakeHolderPermissions)
         } else {
             return []
+        }
+    }
+
+    static List<Portfolio> findAllByTerm(params = [:], String term = '') {
+        return createCriteria().list(params) {
+            or {
+                ilike 'name', "%${term}%"
+                ilike 'fkey', "%${term}%"
+            }
         }
     }
 
