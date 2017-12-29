@@ -56,7 +56,7 @@ class PortfolioService extends IceScrumEventPublisher {
             addBusinessOwner(portfolio, businessOwner)
         }
         portfolioStakeHolders.each { portfolioStakeHolder ->
-            addStakeHolder(portfolio, businessOwner)
+            addStakeHolder(portfolio, portfolioStakeHolder)
         }
         publishSynchronousEvent(IceScrumEventType.CREATE, portfolio)
         portfolio.save(flush: true)
@@ -87,7 +87,7 @@ class PortfolioService extends IceScrumEventPublisher {
         if (businessOwners != null) {
             portfolio.businessOwners.each { businessOwner ->
                 if (!businessOwners.contains(businessOwner)) {
-                    addStakeHolder(portfolio, businessOwner)
+                    removeBusinessOwner(portfolio, businessOwner)
                 }
             }
             businessOwners.each { businessOwner ->
