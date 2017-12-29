@@ -27,6 +27,7 @@ import grails.transaction.Transactional
 import org.icescrum.core.domain.Invitation
 import org.icescrum.core.domain.Portfolio
 import org.icescrum.core.domain.Project
+import org.icescrum.core.domain.Team
 import org.icescrum.core.domain.User
 import org.icescrum.core.domain.security.Authority
 import org.icescrum.core.error.BusinessException
@@ -52,10 +53,10 @@ class PortfolioService extends IceScrumEventPublisher {
             portfolio.addToProjects(project)
         }
         businessOwners.each { businessOwner ->
-            securityService.createBusinessOwnerPermissions(businessOwner, portfolio)
+            addBusinessOwner(portfolio, businessOwner)
         }
         portfolioStakeHolders.each { portfolioStakeHolder ->
-            securityService.createPortfolioStakeHolderPermissions(portfolioStakeHolder, portfolio)
+            addStakeHolder(portfolio, businessOwner)
         }
         publishSynchronousEvent(IceScrumEventType.CREATE, portfolio)
         portfolio.save(flush: true)
@@ -86,24 +87,24 @@ class PortfolioService extends IceScrumEventPublisher {
         if (businessOwners != null) {
             portfolio.businessOwners.each { businessOwner ->
                 if (!businessOwners.contains(businessOwner)) {
-                    securityService.deleteBusinessOwnerPermissions(businessOwner, portfolio)
+                    addStakeHolder(portfolio, businessOwner)
                 }
             }
             businessOwners.each { businessOwner ->
                 if (!portfolio.businessOwners.contains(businessOwner)) {
-                    securityService.createBusinessOwnerPermissions(businessOwner, portfolio)
+                    addBusinessOwner(portfolio, businessOwner)
                 }
             }
         }
         if (portfolioStakeHolders != null) {
             portfolio.stakeHolders.each { portfolioStakeHolder ->
                 if (!portfolioStakeHolders.contains(portfolioStakeHolder)) {
-                    securityService.deletePortfolioStakeHolderPermissions(portfolioStakeHolder, portfolio)
+                    removeStakeHolder(portfolio, portfolioStakeHolder)
                 }
             }
             portfolioStakeHolders.each { portfolioStakeHolder ->
                 if (!portfolio.stakeHolders.contains(portfolioStakeHolder)) {
-                    securityService.createPortfolioStakeHolderPermissions(portfolioStakeHolder, portfolio)
+                    addStakeHolder(portfolio, portfolioStakeHolder)
                 }
             }
         }
@@ -118,10 +119,10 @@ class PortfolioService extends IceScrumEventPublisher {
             portfolio.removeFromProjects(project)
         }
         portfolio.businessOwners.each { bo ->
-            securityService.deleteBusinessOwnerPermissions(bo, portfolio)
+            removeBusinessOwner(portfolio, bo)
         }
         portfolio.stakeHolders.each { psh ->
-            securityService.deletePortfolioStakeHolderPermissions(psh, portfolio)
+            removeStakeHolder(portfolio, psh)
         }
         portfolio.invitedStakeHolders*.delete()
         portfolio.invitedBusinessOwners*.delete()
@@ -132,6 +133,39 @@ class PortfolioService extends IceScrumEventPublisher {
     List<Portfolio> getAllPortfoliosByUser(User user, String searchTerm = '') {
         def portfolios = Portfolio.findAllByUser(user, [sort: "name", order: "asc", cache: true], searchTerm)
         return portfolios
+    }
+
+    void addRole(portfolio, User user, int role) {
+        if (role == Authority.BUSINESSOWNER) {
+            addBusinessOwner(portfolio, user)
+        } else if (role == Authority.PORTFOLIOSTAKEHOLDER) {
+            addStakeHolder(portfolio, user)
+        }
+    }
+
+    void managePortfolioEvents(Portfolio portfolio, Map oldMembers) {
+        Map newMembers = getAllMembersPortfolioByRole(portfolio)
+        if (portfolio.hasProperty('membersByRole')) {
+            portfolio.membersByRole = newMembers
+        } else {
+            portfolio.metaClass.membersByRole = newMembers
+        }
+        publishSynchronousEvent(IceScrumEventType.BEFORE_UPDATE, portfolio, [membersByRole: oldMembers])
+        publishSynchronousEvent(IceScrumEventType.UPDATE, portfolio, [membersByRole: oldMembers])
+    }
+
+    Map getAllMembersPortfolioByRole(Portfolio portfolio) {
+        def usersByRole = [:]
+        def businessOwners = portfolio.businessOwners
+        businessOwners?.each { User businessOwner ->
+            if (!usersByRole.containsKey(businessOwner)) {
+                usersByRole[businessOwner] = Authority.BUSINESSOWNER
+            }
+        }
+        portfolio.stakeHolders?.each { User stakeHolder ->
+            usersByRole[stakeHolder] = Authority.PORTFOLIOSTAKEHOLDER
+        }
+        return usersByRole
     }
 
     void managePortfolioInvitations(Portfolio porfolio, invitedBusinessOwners, invitedStakeHolders) {
@@ -174,5 +208,21 @@ class PortfolioService extends IceScrumEventPublisher {
         currentInvitations.findAll { currentInvitation ->
             !newInvitations*.email.contains(currentInvitation.email)
         }*.delete()
+    }
+
+    private void addBusinessOwner(Portfolio portfolio, User businessOwner) {
+        securityService.createBusinessOwnerPermissions businessOwner, portfolio
+    }
+
+    private void addStakeHolder(Portfolio portfolio, User portfolioStakeHolder) {
+        securityService.createPortfolioStakeHolderPermissions portfolioStakeHolder, portfolio
+    }
+
+    private void removeBusinessOwner(Portfolio portfolio, User businessOwner) {
+        securityService.deleteBusinessOwnerPermissions businessOwner, portfolio
+    }
+
+    private void removeStakeHolder(Portfolio portfolio, User portfolioStakeHolder) {
+        securityService.deletePortfolioStakeHolderPermissions portfolioStakeHolder, portfolio
     }
 }

@@ -58,6 +58,7 @@ class UserService extends IceScrumEventPublisher {
     def securityService
     def widgetService
     def projectService
+    def portfolioService
     def teamService
     def hdImageService
     def grailsApplication
@@ -84,6 +85,11 @@ class UserService extends IceScrumEventPublisher {
                         def oldMembers = projectService.getAllMembersProjectByRole(project)
                         projectService.addRole(project, user, invitation.futureRole)
                         projectService.manageProjectEvents(project, oldMembers)
+                    } else if (invitation.type == InvitationType.PORTFOLIO) {
+                        Portfolio portfolio = invitation.portfolio
+                        def oldMembers = portfolioService.getAllMembersPortfolioByRole(portfolio)
+                        portfolioService.addRole(portfolio, user, invitation.futureRole)
+                        portfolioService.managePortfolioEvents(portfolio, oldMembers)
                     } else {
                         Team team = invitation.team
                         def oldMembersByProject = [:]

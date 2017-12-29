@@ -1,3 +1,4 @@
+<%@ page import="org.icescrum.core.domain.Invitation" contentType="text/html" %>
 %{--
 -
 - Copyright (c) 2015 Kagilum SAS
@@ -21,17 +22,21 @@
 - Vincent Barrier (vbarrier@kagilum.com)
 - Nicolas Noullet (nnoullet@kagilum.com)
 --}%
-<%@ page contentType="text/html" %>
-<g:if test="${isProjectInvitation}">
+<g:if test="${invitationType == Invitation.InvitationType.PROJECT}">
     <g:message locale="${locale}"
                code='is.template.email.user.invitation.project.text'
                args="[(inviter.firstName + ' ' + inviter.lastName), inviter.username, invitedIn, role]"/>
-</g:if><g:else>
+</g:if>
+<g:elseif test="${invitationType == Invitation.InvitationType.PORTFOLIO}">
+    <g:message locale="${locale}"
+               code='is.template.email.user.invitation.portfolio.text'
+               args="[(inviter.firstName + ' ' + inviter.lastName), inviter.username, invitedIn, role]"/>
+</g:elseif>
+<g:elseif test="${invitationType == Invitation.InvitationType.TEAM}">
     <g:message locale="${locale}"
                code='is.template.email.user.invitation.team.text'
                args="[(inviter.firstName + ' ' + inviter.lastName), inviter.username, invitedIn, role]"/>
-</g:else>
-
+</g:elseif>
 <br/><br/>
 <g:message locale="${locale}"
            code='is.template.email.user.invitation.text'

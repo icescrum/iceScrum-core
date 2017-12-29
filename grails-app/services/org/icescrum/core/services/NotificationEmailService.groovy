@@ -252,15 +252,26 @@ class NotificationEmailService {
 
     void sendInvitation(Invitation invitation, User inviter) {
         def link = grailsApplication.config.icescrum.serverURL + '/#/user/register/' + invitation.token
-        def isProjectInvitation = invitation.type == Invitation.InvitationType.PROJECT
-        def invitedIn = isProjectInvitation ? invitation.project.name.encodeAsHTML() : invitation.team.name.encodeAsHTML()
+        def invitedIn
+        switch (invitation.type) {
+            case Invitation.InvitationType.PORTFOLIO:
+                invitedIn = invitation.portfolio.name.encodeAsHTML()
+                break
+            case Invitation.InvitationType.TEAM:
+                invitedIn = invitation.team.name.encodeAsHTML()
+                break
+            case Invitation.InvitationType.PROJECT:
+            default:
+                invitedIn = invitation.project.name.encodeAsHTML()
+                break
+        }
         def locale = inviter.locale
         def role = getMessage(grailsApplication.config.icescrum.resourceBundles.roles[invitation.futureRole], locale)
         send([
                 to     : invitation.email,
                 subject: grailsApplication.config.icescrum.alerts.subject_prefix + getMessage('is.template.email.user.invitation.subject', locale),
                 view   : "/emails-templates/invitation",
-                model  : [inviter: inviter, locale: locale, link: link, isProjectInvitation: isProjectInvitation, invitedIn: invitedIn, role: role]
+                model  : [inviter: inviter, locale: locale, link: link, invitationType: invitation.type, invitedIn: invitedIn, role: role]
         ])
         if (log.debugEnabled) {
             log.debug "Send invitation to: $invitation.email"
