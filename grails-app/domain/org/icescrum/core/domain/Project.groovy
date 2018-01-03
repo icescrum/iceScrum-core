@@ -289,7 +289,7 @@ class Project extends TimeBox implements Serializable, Attachmentable {
         return project
     }
 
-    static List<Project> withProjects(def params, def id = 'id', def productOwnerOrOwner) {
+    static List<Project> withProjects(def params, String id = 'id', User productOwnerOrOwner) {
         def ids = params[id]?.contains(',') ? params[id].split(',')*.toLong() : params.list(id)
         List<Project> projects = ids ? getAll(ids).findAll { return productOwnerOrOwner ? (it.productOwners.contains(productOwnerOrOwner) || it.owner == productOwnerOrOwner) : true } : null
         if (!projects) {
