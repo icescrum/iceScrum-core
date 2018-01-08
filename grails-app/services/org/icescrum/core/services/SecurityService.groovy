@@ -600,6 +600,7 @@ class SecurityService {
             request.inTeam = false
             request.inProject = false
             request.owner = false
+            request.stakeHolder = true //force stakeHolder
             request.archivedProject = true
         }
         request.filtered = true
