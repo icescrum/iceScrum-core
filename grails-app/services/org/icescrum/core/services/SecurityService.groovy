@@ -297,7 +297,7 @@ class SecurityService {
                     return access
                 }
             }
-            return computeResult()
+            return computeResult() || (p.portfolio && portfolioStakeHolder(p.portfolio, auth))
         } else {
             return false
         }
@@ -332,7 +332,7 @@ class SecurityService {
             }
             Team t = GrailsHibernateUtil.unwrapIfProxy(p.team)
             long team = t.id
-            return isOwner(team, auth, grailsApplication.getDomainClass(Team.class.name).newInstance(), t)
+            return isOwner(team, auth, grailsApplication.getDomainClass(Team.class.name).newInstance(), t) || (p.portfolio && businessOwner(p.portfolio, auth))
         } else {
             return false
         }
@@ -477,6 +477,15 @@ class SecurityService {
             if (!portfolioId) {
                 def mappingInfo = grailsUrlMappingsHolder.match(request.forwardURI.replaceFirst(request.contextPath, ''))
                 portfolioId = mappingInfo?.parameters?.getAt('portfolio')
+            }
+            if (!portfolioId) {
+                Long projectId = getProjectIdFromRequest(request)
+                if (projectId) {
+                    Project project = Project.get(projectId)
+                    if (project.portfolio) {
+                        portfolioId = project.portfolio.id
+                    }
+                }
             }
             request['portfolio_id'] = portfolioId?.decodePortfolioKey()?.toLong()
         }
