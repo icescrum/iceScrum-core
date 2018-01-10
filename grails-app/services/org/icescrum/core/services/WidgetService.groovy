@@ -39,7 +39,8 @@ class WidgetService {
     def grailsApplication
 
     Widget save(WidgetDefinition widgetDefinition, WidgetParentType parentType, parent) {
-        parent.refresh() // When the parent has just been created, the collections are not initialized yet + we want the size() to be up to date
+        parent.save(flush: true)
+        parent.refresh() // When the parent has just been created, the collections are not initialized yet + we want the size() to be up to date - Must save(flush: true) before refresh
         def widgetList = parent.widgets
         if (widgetList.find { it -> it.widgetDefinitionId == widgetDefinition.id } && !widgetDefinition.allowDuplicate) {
             throw new BusinessException(code: 'is.widget.error.duplicate')
