@@ -88,7 +88,7 @@ class FeatureService extends IceScrumEventPublisher {
     }
 
     @PreAuthorize('productOwner(#features[0].backlog) and !archivedProject(#features[0].backlog)')
-    def copyToBacklog(List<Feature> features) {
+    def createStoryEpic(List<Feature> features) {
         def stories = []
         StoryService storyService = (StoryService) grailsApplication.mainContext.getBean('storyService')
         features.each { Feature feature ->

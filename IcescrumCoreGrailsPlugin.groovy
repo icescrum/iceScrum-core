@@ -24,6 +24,7 @@
 
 import com.quirklabs.hdimageutils.HdImageService
 import grails.converters.JSON
+import grails.plugin.cache.web.filter.DefaultWebKeyGenerator
 import grails.plugin.springsecurity.SecurityFilterPosition
 import grails.plugin.springsecurity.SpringSecurityService
 import grails.plugin.springsecurity.SpringSecurityUtils
@@ -35,6 +36,7 @@ import org.codehaus.groovy.grails.plugins.jasper.JasperExportFormat
 import org.codehaus.groovy.grails.plugins.jasper.JasperReportDef
 import org.codehaus.groovy.grails.plugins.jasper.JasperService
 import org.icescrum.core.app.AppDefinitionArtefactHandler
+import org.icescrum.core.cache.IsControllerWebKeyGenerator
 import org.icescrum.core.cors.CorsFilter
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
@@ -76,7 +78,7 @@ class IcescrumCoreGrailsPlugin {
             "file:./grails-app/services/*Service.groovy"
     ]
     def observe = ['controllers', 'services']
-    def loadAfter = ['controllers', 'feeds', 'hibernate', 'springSecurityCore']
+    def loadAfter = ['controllers', 'feeds', 'hibernate', 'springSecurityCore', 'cache']
     def loadBefore = ['grails-atmosphere-meteor', 'asset-pipeline']
     def author = "iceScrum"
     def authorEmail = "contact@icescrum.org"
@@ -164,6 +166,8 @@ ERROR: iceScrum v7 has detected that you attempt to run it on an existing R6 ins
         SpringSecurityUtils.registerProvider 'tokenAuthenticationProvider'
         SpringSecurityUtils.registerFilter 'tokenAuthenticationFilter', SecurityFilterPosition.BASIC_AUTH_FILTER.order - 1
         SpringSecurityUtils.registerFilter 'restExceptionTranslationFilter', SecurityFilterPosition.EXCEPTION_TRANSLATION_FILTER.order + 1
+
+        webCacheKeyGenerator(IsControllerWebKeyGenerator)
     }
 
     def doWithDynamicMethods = { ctx ->
