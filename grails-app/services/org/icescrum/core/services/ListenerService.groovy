@@ -45,6 +45,15 @@ class ListenerService {
     void storyCreate(Story story, Map dirtyProperties) {
         def user = (User) springSecurityService.currentUser
         activityService.addActivity(story, user ?: story.creator, Activity.CODE_SAVE, story.name)
+        ['feature'].each { property ->
+            def relationalProperty = story."$property"
+            if (relationalProperty != null) {
+                relationalProperty.lastUpdated = new Date()
+                relationalProperty.save(flush: true)
+                relationalProperty.refresh()
+                pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, relationalProperty, story.backlog.id)
+            }
+        }
         pushService.broadcastToProjectChannel(IceScrumEventType.CREATE, story, story.backlog.id)
     }
 
@@ -130,6 +139,13 @@ class ListenerService {
             def project = Project.get(dirtyProperties.backlog.id)
             project.stories.findAll { it.isDirty('rank') && it.id != dirtyProperties.id }.each {
                 pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, [class: 'Story', id: it.id, rank: it.rank, messageId: 'story-' + it.id + '-rank'], project.id)
+            }
+            if (dirtyProperties.feature) {
+                def feature = dirtyProperties.feature
+                feature.lastUpdated = new Date()
+                feature.save(flush: true)
+                feature.refresh()
+                pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, feature, project.id)
             }
             pushService.broadcastToProjectChannel(IceScrumEventType.DELETE, [class: 'Story', id: dirtyProperties.id, state: dirtyProperties.state, messageId: 'story-' + dirtyProperties.id + '-delete'], project.id)
 
