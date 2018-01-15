@@ -94,6 +94,10 @@ class ListenerService {
                 story.feature.lastUpdated = new Date()
                 pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, story.feature, project.id)
             }
+            if (dirtyProperties.containsKey('state') && story.state >= Story.STATE_ESTIMATED && dirtyProperties.state >= Story.STATE_ESTIMATED && story.feature) {
+                story.feature.lastUpdated = new Date()
+                pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, story.feature, project.id)
+            }
             if (dirtyProperties.containsKey('state') && Story.STATE_DONE in [dirtyProperties.state, story.state] && story.parentSprint && !newUpdatedProperties['parentSprint']) {
                 story.parentSprint.lastUpdated = new Date()
                 pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, story.parentSprint, project.id)
