@@ -27,6 +27,7 @@ package org.icescrum.core.services
 import grails.transaction.Transactional
 import grails.validation.ValidationException
 import org.icescrum.core.domain.*
+import org.icescrum.core.error.BusinessException
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
 import org.icescrum.core.support.ApplicationSupport
@@ -38,6 +39,7 @@ class FeatureService extends IceScrumEventPublisher {
     def springSecurityService
     def grailsApplication
     def activityService
+    def securityService
 
     @PreAuthorize('productOwner(#project) and !archivedProject(#project)')
     void save(Feature feature, Project project) {
@@ -77,6 +79,10 @@ class FeatureService extends IceScrumEventPublisher {
     void update(Feature feature) {
         feature.name = feature.name.trim()
         if (feature.isDirty('rank')) {
+            Project project = (Project) feature.backlog
+            if (project.portfolio && !securityService.businessOwner(project.portfolio, springSecurityService.authentication)) {
+                throw new BusinessException(code: 'is.feature.error.not.business.owner')
+            }
             rank(feature)
         }
         def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_UPDATE, feature)
