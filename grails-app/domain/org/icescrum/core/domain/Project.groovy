@@ -29,6 +29,7 @@ package org.icescrum.core.domain
 import grails.plugin.springsecurity.acl.AclUtilService
 import grails.util.Holders
 import org.hibernate.ObjectNotFoundException
+import org.hibernate.criterion.CriteriaSpecification
 import org.icescrum.core.domain.Invitation.InvitationType
 import org.icescrum.core.domain.preferences.ProjectPreferences
 import org.icescrum.core.domain.security.Authority
@@ -84,6 +85,7 @@ class Project extends TimeBox implements Serializable, Attachmentable {
             'team',
             'versions',
             'sprints',
+            'currentOrNextRelease'
     ]
 
     Integer attachments_count = 0
@@ -364,6 +366,41 @@ class Project extends TimeBox implements Serializable, Attachmentable {
 
     def getSprints() {
         return this.releases*.sprints.flatten()
+    }
+
+    def getCurrentOrNextRelease() {
+        def release = Release.withCriteria(uniqueResult: true) {
+            resultTransformer CriteriaSpecification.ALIAS_TO_ENTITY_MAP
+            eq('parentProject', this)
+            ne('state', Release.STATE_DONE)
+            projections {
+                property("id", "id")
+                property("name", "name")
+                property("state", "state")
+                property("firstSprintIndex", "firstSprintIndex")
+            }
+            order("state", "desc")
+            maxResults(1)
+        }
+        if (release.id) {
+            def sprint = Sprint.withCriteria(uniqueResult: true) {
+                resultTransformer CriteriaSpecification.ALIAS_TO_ENTITY_MAP
+                eq('parentRelease.id', release.id)
+                ne('state', Sprint.STATE_DONE)
+                projections {
+                    property("id", "id")
+                    property("goal", "goal")
+                    property("orderNumber", "orderNumber")
+                }
+                order("state", "desc")
+                maxResults(1)
+            }
+            if (sprint.id) {
+                sprint.index = sprint.remove('orderNumber') + release.remove('firstSprintIndex') - 1
+            }
+            release.currentOrNextSprint = sprint
+        }
+        return release
     }
 
     private Acl retrieveAclProject() {

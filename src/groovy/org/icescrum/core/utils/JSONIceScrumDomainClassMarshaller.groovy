@@ -31,6 +31,7 @@ import org.codehaus.groovy.grails.support.proxy.ProxyHandler
 import org.codehaus.groovy.grails.web.converters.exceptions.ConverterException
 import org.codehaus.groovy.grails.web.converters.marshaller.json.DomainClassMarshaller
 import org.codehaus.groovy.grails.web.json.JSONWriter
+import org.codehaus.groovy.grails.web.util.WebUtils
 import org.springframework.beans.BeanWrapper
 import org.springframework.beans.BeanWrapperImpl
 
@@ -61,6 +62,7 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
         GrailsDomainClass domainClass = grailsApplication.getDomainClass(clazz.getName())
         BeanWrapper beanWrapper = new BeanWrapperImpl(value)
         def configName = GrailsNameUtils.getShortName(clazz).toLowerCase()
+        def request = WebUtils.retrieveGrailsWebRequest()?.getCurrentRequest()
 
         writer.object()
 
@@ -90,6 +92,10 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
         if (propertiesMap."${configName}"?.include) { // Treated separately after the main loop
             excludes.addAll(propertiesMap."${configName}".include)
         }
+        if (request?.marshaller?."${configName}"?.include) {
+            excludes.addAll(request.marshaller."${configName}".include)
+        }
+
         properties.removeAll { it.getName() in excludes }
 
         for (GrailsDomainClassProperty property : properties) {
@@ -173,47 +179,70 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
         def user = grailsApplication.mainContext.springSecurityService.currentUser
 
         propertiesMap."${configName}"?.include?.each {
+            propertyInclude(json, writer, value, configName, user, it)
+        }
+
+        request?.marshaller?."${configName}"?.include?.each {
+            propertyInclude(json, writer, value, configName, user, it)
+        }
+
+        propertiesMap."${configName}"?.withIds?.each {
+            //because same withIds works for gorm properties we need to check if it has been done already
+            propertyWithIds(writer, properties, value, configName, user, it)
+        }
+
+        request?.marshaller?."${configName}"?.withIds?.each {
+            propertyWithIds(writer, properties, value, configName, user, it)
+        }
+
+        propertiesMap."${configName}"?.textile?.each {
+            propertyTextile(writer, value, it)
+        }
+
+        request?.marshaller?."${configName}"?.textile?.each {
+            propertyTextile(writer, value, it)
+        }
+
+        writer.endObject()
+    }
+
+    private void propertyTextile(def writer, def value, def it) {
+        def val = value.properties."${it}"
+        writer.key(it + "_html").value(ServicesUtils.textileToHtml(val))
+    }
+
+    private void propertyInclude(def json, def writer, def value, def configName, def user, def it) {
+        def granted = propertiesMap."${configName}".security?."${it}" != null ? propertiesMap."${configName}".security?."${it}" : true
+        granted = granted instanceof Closure ? granted(value, grailsApplication, user) : granted
+        if (granted) {
+            def val = value.properties."${it}"
+            if (val != null) {
+                writer.key(it);
+                json.convertAnother(val);
+            }
+        }
+    }
+
+    private void propertyWithIds(def writer, def properties, def value, def configName, def user, def it) {
+        def gormPropertiesName = properties.collect { it.name }
+        if (!gormPropertiesName.contains(it)) {
             def granted = propertiesMap."${configName}".security?."${it}" != null ? propertiesMap."${configName}".security?."${it}" : true
             granted = granted instanceof Closure ? granted(value, grailsApplication, user) : granted
             if (granted) {
                 def val = value.properties."${it}"
-                if (val != null) {
-                    writer.key(it);
-                    json.convertAnother(val);
-                }
-            }
-        }
-
-        def gormPropertiesName = properties.collect { it.name }
-
-        propertiesMap."${configName}"?.withIds?.each {
-            //because same withIds works for gorm properties we need to check if it has been done already
-            if (!gormPropertiesName.contains(it)) {
-                def granted = propertiesMap."${configName}".security?."${it}" != null ? propertiesMap."${configName}".security?."${it}" : true
-                granted = granted instanceof Closure ? granted(value, grailsApplication, user) : granted
-                if (granted) {
-                    def val = value.properties."${it}"
-                    if (val instanceof Collection) {
-                        writer.key(it + "_ids")
-                        writer.array()
-                        for (Object el : val) {
-                            writer.object()
-                            writer.key("id").value(el.id)
-                            writer.endObject()
-                        }
-                        writer.endArray()
+                if (val instanceof Collection) {
+                    writer.key(it + "_ids")
+                    writer.array()
+                    for (Object el : val) {
+                        writer.object()
+                        writer.key("id").value(el.id)
+                        writer.endObject()
                     }
+                    writer.endArray()
                 }
             }
         }
-
-        propertiesMap."${configName}"?.textile?.each {
-            def val = value.properties."${it}"
-            writer.key(it + "_html").value(ServicesUtils.textileToHtml(val))
-        }
-        writer.endObject()
     }
-
     @Override
     protected void asShortObject(Object refObj, JSON json, GrailsDomainClassProperty idProperty, GrailsDomainClass referencedDomainClass) throws ConverterException {
 
@@ -238,12 +267,15 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
         writer.key("id").value(idValue)
 
         def configName = GrailsNameUtils.getShortName(referencedDomainClass.getName()).toLowerCase()
+        def request = WebUtils.retrieveGrailsWebRequest()?.getCurrentRequest()
+        def user = grailsApplication.mainContext.springSecurityService.currentUser
+
         propertiesMap."${configName}"?.asShort?.each {
-            def val = refObj.properties."${it}"
-            if (val != null) {
-                writer.key(it)
-                json.convertAnother(val)
-            }
+            propertyInclude(json, writer, refObj, configName, user, it)
+        }
+
+        request?.marshaller?."${configName}"?.asShort?.each {
+            propertyInclude(json, writer, refObj, configName, user, it)
         }
 
         writer.endObject()
