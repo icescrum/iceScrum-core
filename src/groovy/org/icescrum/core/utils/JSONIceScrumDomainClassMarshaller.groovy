@@ -32,6 +32,7 @@ import org.codehaus.groovy.grails.web.converters.exceptions.ConverterException
 import org.codehaus.groovy.grails.web.converters.marshaller.json.DomainClassMarshaller
 import org.codehaus.groovy.grails.web.json.JSONWriter
 import org.codehaus.groovy.grails.web.util.WebUtils
+import org.icescrum.core.domain.User
 import org.springframework.beans.BeanWrapper
 import org.springframework.beans.BeanWrapperImpl
 
@@ -94,27 +95,25 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
             marshallProperty(property, beanWrapper, writer, json, domainClass, config, requestConfig)
         }
 
-        def user = grailsApplication.mainContext.springSecurityService.currentUser
-
         if (!requestConfig?.include?.contains(OVERRIDE_JSON_PROPERTIES)) {
             config.include?.each {
-                propertyInclude(json, writer, value, config, user, it)
+                propertyInclude(json, writer, value, config, it)
             }
         }
         requestConfig?.include?.each {
             if (it != OVERRIDE_JSON_PROPERTIES) {
-                propertyInclude(json, writer, value, config, user, it)
+                propertyInclude(json, writer, value, config, it)
             }
         }
         if (!requestConfig?.withIds?.contains(OVERRIDE_JSON_PROPERTIES)) {
             config.withIds?.each {
                 //because same withIds works for gorm properties we need to check if it has been done already
-                propertyWithIds(writer, properties, value, config, user, it)
+                propertyWithIds(writer, properties, value, config, it)
             }
         }
         requestConfig?.withIds?.each {
             if (it != OVERRIDE_JSON_PROPERTIES) {
-                propertyWithIds(writer, properties, value, config, user, it)
+                propertyWithIds(writer, properties, value, config, it)
             }
         }
         if (!requestConfig?.textile?.contains(OVERRIDE_JSON_PROPERTIES)) {
@@ -211,8 +210,9 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
         writer.key(it + '_html').value(ServicesUtils.textileToHtml(val))
     }
 
-    private void propertyInclude(def json, def writer, def value, def config, def user, def it) {
+    private void propertyInclude(def json, def writer, def value, def config, def it) {
         def granted = config.security?."$it" != null ? config.security?."$it" : true
+        User user = (User) grailsApplication.mainContext.springSecurityService.currentUser
         granted = granted instanceof Closure ? granted(value, grailsApplication, user) : granted
         if (granted) {
             def val = value.properties."$it"
@@ -223,10 +223,11 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
         }
     }
 
-    private void propertyWithIds(def writer, def properties, def value, def config, def user, def it) {
+    private void propertyWithIds(def writer, def properties, def value, def config, def it) {
         def gormPropertiesName = properties.collect { it.name }
         if (!gormPropertiesName.contains(it)) {
             def granted = config.security?."$it" != null ? config.security?."$it" : true
+            User user = (User) grailsApplication.mainContext.springSecurityService.currentUser
             granted = granted instanceof Closure ? granted(value, grailsApplication, user) : granted
             if (granted) {
                 def val = value.properties."$it"
@@ -264,17 +265,16 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
         def configName = GrailsNameUtils.getShortName(referencedDomainClass.name).toLowerCase()
         def config = propertiesMap."$configName"
         def requestConfig = WebUtils.retrieveGrailsWebRequest()?.currentRequest?.marshaller?."$configName"
-        def user = grailsApplication.mainContext.springSecurityService.currentUser
 
         if (!requestConfig?.asShort?.contains(OVERRIDE_JSON_PROPERTIES)) {
             config?.asShort?.each {
-                propertyInclude(json, writer, refObj, config, user, it)
+                propertyInclude(json, writer, refObj, config, it)
             }
         }
 
         requestConfig?.asShort?.each {
             if (it != OVERRIDE_JSON_PROPERTIES) {
-                propertyInclude(json, writer, refObj, config, user, it)
+                propertyInclude(json, writer, refObj, config, it)
             }
         }
 
