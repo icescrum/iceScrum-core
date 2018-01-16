@@ -41,8 +41,6 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
     private ProxyHandler proxyHandler
     private Map propertiesMap
     private GrailsApplication grailsApplication
-    public static final EXCLUDES_ALL_JSON_PROPERTIES = "*"
-    public static final OVERRIDE_JSON_PROPERTIES = "#"
 
     public JSONIceScrumDomainClassMarshaller(GrailsApplication grailsApplication, Map propertiesMap) {
         super(false, grailsApplication)
@@ -71,7 +69,7 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
         json.property('id', extractValue(value, domainClass.identifier))
 
         List<GrailsDomainClassProperty> properties
-        if (requestConfig?.exclude?.contains(EXCLUDES_ALL_JSON_PROPERTIES)) {
+        if (requestConfig?.excludeAll) {
             properties = []
         } else {
             properties = domainClass.persistentProperties.toList()
@@ -83,7 +81,7 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
                 excludes.addAll(requestConfig.exclude)
             }
             if (config.include) { // Treated separately after the main loop
-                excludes.addAll(config.include.findAll { it != OVERRIDE_JSON_PROPERTIES })
+                excludes.addAll(config.include)
             }
             if (requestConfig?.include) {
                 excludes.addAll(requestConfig.include)
@@ -94,35 +92,29 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
             marshallProperty(property, beanWrapper, writer, json, domainClass, config, requestConfig)
         }
 
-        if (!requestConfig?.include?.contains(OVERRIDE_JSON_PROPERTIES)) {
+        if (!requestConfig?.overrideInclude) {
             config.include?.each {
                 propertyInclude(json, writer, value, config, it)
             }
         }
         requestConfig?.include?.each {
-            if (it != OVERRIDE_JSON_PROPERTIES) {
-                propertyInclude(json, writer, value, config, it)
-            }
+            propertyInclude(json, writer, value, config, it)
         }
-        if (!requestConfig?.withIds?.contains(OVERRIDE_JSON_PROPERTIES)) {
+        if (!requestConfig?.overrideWithIds) {
             config.withIds?.each {
                 propertyWithIds(writer, properties, value, config, it)
             }
         }
         requestConfig?.withIds?.each {
-            if (it != OVERRIDE_JSON_PROPERTIES) {
-                propertyWithIds(writer, properties, value, config, it)
-            }
+            propertyWithIds(writer, properties, value, config, it)
         }
-        if (!requestConfig?.textile?.contains(OVERRIDE_JSON_PROPERTIES)) {
+        if (!requestConfig?.overrideTextile) {
             config.textile?.each {
                 propertyTextile(writer, value, it)
             }
         }
         requestConfig?.textile?.each {
-            if (it != OVERRIDE_JSON_PROPERTIES) {
-                propertyTextile(writer, value, it)
-            }
+            propertyTextile(writer, value, it)
         }
 
         writer.endObject()
@@ -237,15 +229,13 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
         def config = propertiesMap."$configName"
         def requestConfig = WebUtils.retrieveGrailsWebRequest()?.currentRequest?.marshaller?."$configName"
 
-        if (!requestConfig?.asShort?.contains(OVERRIDE_JSON_PROPERTIES)) {
+        if (!requestConfig?.overrideAsShort) {
             config?.asShort?.each {
                 propertyInclude(json, writer, refObj, config, it)
             }
         }
         requestConfig?.asShort?.each {
-            if (it != OVERRIDE_JSON_PROPERTIES) {
-                propertyInclude(json, writer, refObj, config, it)
-            }
+            propertyInclude(json, writer, refObj, config, it)
         }
 
         writer.endObject()
