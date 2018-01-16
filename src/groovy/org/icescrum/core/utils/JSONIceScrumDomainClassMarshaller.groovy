@@ -70,27 +70,26 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
         writer.key('class').value(GrailsNameUtils.getShortName(domainClass.clazz.name))
         json.property('id', extractValue(value, domainClass.identifier))
 
-        List<GrailsDomainClassProperty> properties = domainClass.persistentProperties.toList()
-
-        def excludes = []
-        if (config.exclude) {
-            excludes.addAll(config.exclude)
-        }
-        if (requestConfig?.exclude) {
-            excludes.addAll(requestConfig.exclude)
-        }
-        if (config.include) { // Treated separately after the main loop
-            excludes.addAll(config.include.findAll { it != OVERRIDE_JSON_PROPERTIES })
-        }
-        if (requestConfig?.include) {
-            excludes.addAll(requestConfig.include)
-        }
+        List<GrailsDomainClassProperty> properties
         if (requestConfig?.exclude?.contains(EXCLUDES_ALL_JSON_PROPERTIES)) {
             properties = []
         } else {
+            properties = domainClass.persistentProperties.toList()
+            def excludes = []
+            if (config.exclude) {
+                excludes.addAll(config.exclude)
+            }
+            if (requestConfig?.exclude) {
+                excludes.addAll(requestConfig.exclude)
+            }
+            if (config.include) { // Treated separately after the main loop
+                excludes.addAll(config.include.findAll { it != OVERRIDE_JSON_PROPERTIES })
+            }
+            if (requestConfig?.include) {
+                excludes.addAll(requestConfig.include)
+            }
             properties.removeAll { it.name in excludes }
         }
-
         properties.each { GrailsDomainClassProperty property ->
             marshallProperty(property, beanWrapper, writer, json, domainClass, config, requestConfig)
         }
@@ -107,7 +106,6 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
         }
         if (!requestConfig?.withIds?.contains(OVERRIDE_JSON_PROPERTIES)) {
             config.withIds?.each {
-                //because same withIds works for gorm properties we need to check if it has been done already
                 propertyWithIds(writer, properties, value, config, it)
             }
         }
@@ -224,8 +222,7 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
     }
 
     private void propertyWithIds(def writer, def properties, def value, def config, def it) {
-        def gormPropertiesName = properties.collect { it.name }
-        if (!gormPropertiesName.contains(it)) {
+        if (!properties.collect { it.name }.contains(it)) {
             def granted = config.security?."$it" != null ? config.security?."$it" : true
             User user = (User) grailsApplication.mainContext.springSecurityService.currentUser
             granted = granted instanceof Closure ? granted(value, grailsApplication, user) : granted
@@ -246,9 +243,7 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
     }
     @Override
     protected void asShortObject(Object refObj, JSON json, GrailsDomainClassProperty idProperty, GrailsDomainClass referencedDomainClass) throws ConverterException {
-
         Object idValue
-
         if (proxyHandler instanceof EntityProxyHandler) {
             idValue = ((EntityProxyHandler) proxyHandler).getProxyIdentifier(refObj)
             if (idValue == null) {
@@ -267,11 +262,10 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
         def requestConfig = WebUtils.retrieveGrailsWebRequest()?.currentRequest?.marshaller?."$configName"
 
         if (!requestConfig?.asShort?.contains(OVERRIDE_JSON_PROPERTIES)) {
-            config?.asShort?.each {
+            config.asShort?.each {
                 propertyInclude(json, writer, refObj, config, it)
             }
         }
-
         requestConfig?.asShort?.each {
             if (it != OVERRIDE_JSON_PROPERTIES) {
                 propertyInclude(json, writer, refObj, config, it)
