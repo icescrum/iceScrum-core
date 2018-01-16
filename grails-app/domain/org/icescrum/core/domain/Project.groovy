@@ -382,7 +382,7 @@ class Project extends TimeBox implements Serializable, Attachmentable {
             order("state", "desc")
             maxResults(1)
         }
-        if (release.id) {
+        if (release?.id) {
             def sprint = Sprint.withCriteria(uniqueResult: true) {
                 resultTransformer CriteriaSpecification.ALIAS_TO_ENTITY_MAP
                 eq('parentRelease.id', release.id)
