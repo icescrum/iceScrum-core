@@ -62,7 +62,8 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
         GrailsDomainClass domainClass = grailsApplication.getDomainClass(clazz.name)
         BeanWrapper beanWrapper = new BeanWrapperImpl(value)
         def configName = GrailsNameUtils.getShortName(clazz).toLowerCase()
-        def request = WebUtils.retrieveGrailsWebRequest()?.currentRequest
+        def config = propertiesMap."$configName"
+        def requestConfig = WebUtils.retrieveGrailsWebRequest()?.currentRequest?.marshaller?."$configName"
 
         writer.object()
 
@@ -78,20 +79,20 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
         if (propertiesMap.exclude) {
             excludes.addAll(propertiesMap.exclude)
         }
-        if (propertiesMap."$configName".exclude) {
-            excludes.addAll(propertiesMap."$configName".exclude)
+        if (config.exclude) {
+            excludes.addAll(config.exclude)
         }
-        if (request?.marshaller?."$configName"?.exclude) {
-            excludes.addAll(request.marshaller."$configName".exclude)
+        if (requestConfig.exclude) {
+            excludes.addAll(requestConfig.exclude)
         }
-        if (propertiesMap."$configName"?.include) { // Treated separately after the main loop
-            excludes.addAll(propertiesMap."$configName".include.findAll { it != OVERRIDE_JSON_PROPERTIES })
+        if (config?.include) { // Treated separately after the main loop
+            excludes.addAll(config.include.findAll { it != OVERRIDE_JSON_PROPERTIES })
         }
-        if (request?.marshaller?."$configName"?.include) {
-            excludes.addAll(request.marshaller."$configName".include)
+        if (requestConfig.include) {
+            excludes.addAll(requestConfig.include)
         }
 
-        if (request?.marshaller?."$configName"?.exclude?.contains(EXCLUDES_ALL_JSON_PROPERTIES)) {
+        if (requestConfig.exclude?.contains(EXCLUDES_ALL_JSON_PROPERTIES)) {
             properties = []
         } else {
             properties.removeAll { it.name in excludes }
@@ -142,7 +143,7 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
                             GrailsDomainClassProperty referencedIdProperty = referencedDomainClass.identifier
                             if (referenceObject instanceof Collection) {
                                 Collection o = (Collection) referenceObject
-                                if (propertiesMap[configName]?.withIds?.contains(property.name) || request?.marshaller?."$configName"?.withIds?.contains(property.name)) {
+                                if (config?.withIds?.contains(property.name) || requestConfig.withIds?.contains(property.name)) {
                                     writer.key(property.name + '_ids')
                                     writer.array()
                                     for (Object el : o) {
@@ -177,38 +178,38 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
 
         def user = grailsApplication.mainContext.springSecurityService.currentUser
 
-        if (!request?.marshaller?."$configName"?.include?.contains(OVERRIDE_JSON_PROPERTIES)) {
-            propertiesMap."$configName"?.include?.each {
-                propertyInclude(json, writer, value, configName, user, it)
+        if (!requestConfig.include?.contains(OVERRIDE_JSON_PROPERTIES)) {
+            config?.include?.each {
+                propertyInclude(json, writer, value, config, user, it)
             }
         }
 
-        request?.marshaller?."$configName"?.include?.each {
+        requestConfig.include?.each {
             if (it != OVERRIDE_JSON_PROPERTIES) {
-                propertyInclude(json, writer, value, configName, user, it)
+                propertyInclude(json, writer, value, config, user, it)
             }
         }
 
-        if (!request?.marshaller?."$configName"?.withIds?.contains(OVERRIDE_JSON_PROPERTIES)) {
-            propertiesMap."$configName"?.withIds?.each {
+        if (!requestConfig.withIds?.contains(OVERRIDE_JSON_PROPERTIES)) {
+            config?.withIds?.each {
                 //because same withIds works for gorm properties we need to check if it has been done already
-                propertyWithIds(writer, properties, value, configName, user, it)
+                propertyWithIds(writer, properties, value, config, user, it)
             }
         }
 
-        request?.marshaller?."$configName"?.withIds?.each {
+        requestConfig.withIds?.each {
             if (it != OVERRIDE_JSON_PROPERTIES) {
-                propertyWithIds(writer, properties, value, configName, user, it)
+                propertyWithIds(writer, properties, value, config, user, it)
             }
         }
 
-        if (!request?.marshaller?."$configName"?.textile?.contains(OVERRIDE_JSON_PROPERTIES)) {
-            propertiesMap."$configName"?.textile?.each {
+        if (!requestConfig.textile?.contains(OVERRIDE_JSON_PROPERTIES)) {
+            config?.textile?.each {
                 propertyTextile(writer, value, it)
             }
         }
 
-        request?.marshaller?."$configName"?.textile?.each {
+        requestConfig.textile?.each {
             if (it != OVERRIDE_JSON_PROPERTIES) {
                 propertyTextile(writer, value, it)
             }
@@ -222,8 +223,8 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
         writer.key(it + '_html').value(ServicesUtils.textileToHtml(val))
     }
 
-    private void propertyInclude(def json, def writer, def value, def configName, def user, def it) {
-        def granted = propertiesMap."$configName".security?."$it" != null ? propertiesMap."$configName".security?."$it" : true
+    private void propertyInclude(def json, def writer, def value, def config, def user, def it) {
+        def granted = config.security?."$it" != null ? config.security?."$it" : true
         granted = granted instanceof Closure ? granted(value, grailsApplication, user) : granted
         if (granted) {
             def val = value.properties."$it"
@@ -234,10 +235,10 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
         }
     }
 
-    private void propertyWithIds(def writer, def properties, def value, def configName, def user, def it) {
+    private void propertyWithIds(def writer, def properties, def value, def config, def user, def it) {
         def gormPropertiesName = properties.collect { it.name }
         if (!gormPropertiesName.contains(it)) {
-            def granted = propertiesMap."$configName".security?."$it" != null ? propertiesMap."$configName".security?."$it" : true
+            def granted = config.security?."$it" != null ? config.security?."$it" : true
             granted = granted instanceof Closure ? granted(value, grailsApplication, user) : granted
             if (granted) {
                 def val = value.properties."$it"
@@ -275,18 +276,19 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
         writer.key('id').value(idValue)
 
         def configName = GrailsNameUtils.getShortName(referencedDomainClass.name).toLowerCase()
-        def request = WebUtils.retrieveGrailsWebRequest()?.currentRequest
+        def config = propertiesMap."$configName"
+        def requestConfig = WebUtils.retrieveGrailsWebRequest()?.currentRequest?.marshaller?."$configName"
         def user = grailsApplication.mainContext.springSecurityService.currentUser
 
-        if (!request?.marshaller?."$configName"?.asShort?.contains(OVERRIDE_JSON_PROPERTIES)) {
-            propertiesMap."$configName"?.asShort?.each {
-                propertyInclude(json, writer, refObj, configName, user, it)
+        if (!requestConfig.asShort?.contains(OVERRIDE_JSON_PROPERTIES)) {
+            config?.asShort?.each {
+                propertyInclude(json, writer, refObj, config, user, it)
             }
         }
 
-        request?.marshaller?."$configName"?.asShort?.each {
+        requestConfig.asShort?.each {
             if (it != OVERRIDE_JSON_PROPERTIES) {
-                propertyInclude(json, writer, refObj, configName, user, it)
+                propertyInclude(json, writer, refObj, config, user, it)
             }
         }
 
