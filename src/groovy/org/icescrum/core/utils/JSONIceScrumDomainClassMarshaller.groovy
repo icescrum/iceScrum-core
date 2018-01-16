@@ -152,7 +152,7 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
                             GrailsDomainClassProperty referencedIdProperty = referencedDomainClass.getIdentifier()
                             if (referenceObject instanceof Collection) {
                                 Collection o = (Collection) referenceObject
-                                if (propertiesMap[configName]?.withIds?.contains(property.name)) {
+                                if (propertiesMap[configName]?.withIds?.contains(property.name) || request?.marshaller?."${configName}"?.withIds?.contains(property.name)) {
                                     writer.key(property.getName() + "_ids")
                                     writer.array()
                                     for (Object el : o) {
