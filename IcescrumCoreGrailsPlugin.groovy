@@ -200,7 +200,7 @@ ERROR: iceScrum v7 has detected that you attempt to run it on an existing R6 ins
 
     def doWithApplicationContext = { applicationContext ->
         Map properties = application.config?.icescrum?.marshaller
-        JSON.registerObjectMarshaller(new JSONIceScrumDomainClassMarshaller(application, false, true, properties), 1)
+        JSON.registerObjectMarshaller(new JSONIceScrumDomainClassMarshaller(application, properties), 1)
         applicationContext.bootStrapService.start()
     }
 

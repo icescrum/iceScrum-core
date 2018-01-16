@@ -39,84 +39,74 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
 
     private ProxyHandler proxyHandler
     private Map propertiesMap
-    private boolean includeClass
     private GrailsApplication grailsApplication
     public static final EXCLUDES_ALL_JSON_PROPERTIES = "*"
     public static final OVERRIDE_JSON_PROPERTIES = "#"
 
-    public JSONIceScrumDomainClassMarshaller(GrailsApplication grailsApplication, boolean includeVersion, boolean includeClass, Map propertiesMap) {
-        super(includeVersion, grailsApplication)
+    public JSONIceScrumDomainClassMarshaller(GrailsApplication grailsApplication, Map propertiesMap) {
+        super(false, grailsApplication)
         this.proxyHandler = new DefaultProxyHandler()
         this.propertiesMap = propertiesMap
-        this.includeClass = includeClass
         this.grailsApplication = grailsApplication
     }
 
     public boolean supports(Object object) {
-        def configName = GrailsNameUtils.getShortName(object.getClass()).toLowerCase()
-        return (DomainClassArtefactHandler.isDomainClass(object.getClass()) && propertiesMap."${configName}" != null)
+        def configName = GrailsNameUtils.getShortName(object.class).toLowerCase()
+        return (DomainClassArtefactHandler.isDomainClass(object.class) && propertiesMap."$configName" != null)
     }
 
     public void marshalObject(Object value, JSON json) throws ConverterException {
-        JSONWriter writer = json.getWriter()
+        JSONWriter writer = json.writer
         value = proxyHandler.unwrapIfProxy(value)
-        Class<?> clazz = value.getClass()
-        GrailsDomainClass domainClass = grailsApplication.getDomainClass(clazz.getName())
+        Class<?> clazz = value.class
+        GrailsDomainClass domainClass = grailsApplication.getDomainClass(clazz.name)
         BeanWrapper beanWrapper = new BeanWrapperImpl(value)
         def configName = GrailsNameUtils.getShortName(clazz).toLowerCase()
-        def request = WebUtils.retrieveGrailsWebRequest()?.getCurrentRequest()
+        def request = WebUtils.retrieveGrailsWebRequest()?.currentRequest
 
         writer.object()
 
-        if (this.includeClass) {
-            writer.key("class").value(GrailsNameUtils.getShortName(domainClass.getClazz().getName()))
-        }
+        writer.key("class").value(GrailsNameUtils.getShortName(domainClass.clazz.name))
 
-        GrailsDomainClassProperty id = domainClass.getIdentifier()
+        GrailsDomainClassProperty id = domainClass.identifier
         Object idValue = extractValue(value, id)
-        json.property("id", idValue)
+        json.property('id', idValue)
 
-        if (isIncludeVersion()) {
-            GrailsDomainClassProperty versionProperty = domainClass.getVersion()
-            Object version = extractValue(value, versionProperty)
-            json.property("version", version)
-        }
-
-        List<GrailsDomainClassProperty> properties = domainClass.getPersistentProperties().toList()
+        List<GrailsDomainClassProperty> properties = domainClass.persistentProperties.toList()
 
         def excludes = []
         if (propertiesMap.exclude) {
             excludes.addAll(propertiesMap.exclude)
         }
-        if (propertiesMap."${configName}".exclude) {
-            excludes.addAll(propertiesMap."${configName}".exclude)
+        if (propertiesMap."$configName".exclude) {
+            excludes.addAll(propertiesMap."$configName".exclude)
         }
-        if (request?.marshaller?."${configName}"?.exclude) {
-            excludes.addAll(request.marshaller."${configName}".exclude)
+        if (request?.marshaller?."$configName"?.exclude) {
+            excludes.addAll(request.marshaller."$configName".exclude)
         }
-        if (propertiesMap."${configName}"?.include) { // Treated separately after the main loop
-            excludes.addAll(propertiesMap."${configName}".include.findAll { it != OVERRIDE_JSON_PROPERTIES })
+        if (propertiesMap."$configName"?.include) { // Treated separately after the main loop
+            excludes.addAll(propertiesMap."$configName".include.findAll { it != OVERRIDE_JSON_PROPERTIES })
         }
-        if (request?.marshaller?."${configName}"?.include) {
-            excludes.addAll(request.marshaller."${configName}".include)
+        if (request?.marshaller?."$configName"?.include) {
+            excludes.addAll(request.marshaller."$configName".include)
         }
 
-        if (request?.marshaller?."${configName}"?.exclude?.contains(EXCLUDES_ALL_JSON_PROPERTIES)) {
+        if (request?.marshaller?."$configName"?.exclude?.contains(EXCLUDES_ALL_JSON_PROPERTIES)) {
             properties = []
         } else {
-            properties.removeAll { it.getName() in excludes }
+            properties.removeAll { it.name in excludes }
         }
 
         for (GrailsDomainClassProperty property : properties) {
             if (!property.isAssociation()) {
                 // Write non-relation property
-                writer.key(property.getName())
-                Object val = beanWrapper.getPropertyValue(property.getName())
+                writer.key(property.name)
+                Object val = beanWrapper.getPropertyValue(property.name)
                 json.convertAnother(val)
             } else {
-                Object referenceObject = beanWrapper.getPropertyValue(property.getName())
+                Object referenceObject = beanWrapper.getPropertyValue(property.name)
                 if (isRenderDomainClassRelations()) {
-                    writer.key(property.getName())
+                    writer.key(property.name)
                     if (referenceObject == null) {
                         writer.value(null)
                     } else {
@@ -136,43 +126,43 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
                     }
                 } else {
                     if (referenceObject == null) {
-                        writer.key(property.getName())
+                        writer.key(property.name)
                         json.value(null)
                     } else {
-                        GrailsDomainClass referencedDomainClass = property.getReferencedDomainClass()
+                        GrailsDomainClass referencedDomainClass = property.referencedDomainClass
 
                         // Embedded are now always fully rendered
-                        if (referencedDomainClass == null || property.isEmbedded() || GrailsClassUtils.isJdk5Enum(property.getType())) {
-                            writer.key(property.getName())
+                        if (referencedDomainClass == null || property.isEmbedded() || GrailsClassUtils.isJdk5Enum(property.type)) {
+                            writer.key(property.name)
                             json.convertAnother(referenceObject)
                         } else if (property.isOneToOne() || property.isManyToOne() || property.isEmbedded()) {
-                            writer.key(property.getName())
-                            asShortObject(referenceObject, json, referencedDomainClass.getIdentifier(), referencedDomainClass)
+                            writer.key(property.name)
+                            asShortObject(referenceObject, json, referencedDomainClass.identifier, referencedDomainClass)
                         } else {
-                            GrailsDomainClassProperty referencedIdProperty = referencedDomainClass.getIdentifier()
+                            GrailsDomainClassProperty referencedIdProperty = referencedDomainClass.identifier
                             if (referenceObject instanceof Collection) {
                                 Collection o = (Collection) referenceObject
-                                if (propertiesMap[configName]?.withIds?.contains(property.name) || request?.marshaller?."${configName}"?.withIds?.contains(property.name)) {
-                                    writer.key(property.getName() + "_ids")
+                                if (propertiesMap[configName]?.withIds?.contains(property.name) || request?.marshaller?."$configName"?.withIds?.contains(property.name)) {
+                                    writer.key(property.name + '_ids')
                                     writer.array()
                                     for (Object el : o) {
                                         writer.object()
-                                        writer.key("id").value(extractValue(el, referencedIdProperty))
+                                        writer.key('id').value(extractValue(el, referencedIdProperty))
                                         writer.endObject()
                                     }
                                     writer.endArray()
-                                } else if (!referenceObject.hasProperty(property.getName() + "_count")) {
-                                    int count = domainClass.getClazz().withSession { session ->
+                                } else if (!referenceObject.hasProperty(property.name + '_count')) {
+                                    int count = domainClass.clazz.withSession { session ->
                                         session.createFilter(referenceObject, 'select count(*)').uniqueResult()
                                     }
-                                    writer.key(property.getName() + "_count").value(count)
+                                    writer.key(property.name + '_count').value(count)
                                 }
                             } else if (referenceObject instanceof Map) {
-                                writer.key(property.getName())
+                                writer.key(property.name)
                                 Map<Object, Object> map = (Map<Object, Object>) referenceObject
                                 for (Map.Entry<Object, Object> entry : map.entrySet()) {
-                                    String key = String.valueOf(entry.getKey())
-                                    Object o = entry.getValue()
+                                    String key = String.valueOf(entry.key)
+                                    Object o = entry.value
                                     writer.object()
                                     writer.key(key)
                                     asShortObject(o, json, referencedIdProperty, referencedDomainClass)
@@ -187,38 +177,38 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
 
         def user = grailsApplication.mainContext.springSecurityService.currentUser
 
-        if (!request?.marshaller?."${configName}"?.include?.contains(OVERRIDE_JSON_PROPERTIES)) {
-            propertiesMap."${configName}"?.include?.each {
+        if (!request?.marshaller?."$configName"?.include?.contains(OVERRIDE_JSON_PROPERTIES)) {
+            propertiesMap."$configName"?.include?.each {
                 propertyInclude(json, writer, value, configName, user, it)
             }
         }
 
-        request?.marshaller?."${configName}"?.include?.each {
+        request?.marshaller?."$configName"?.include?.each {
             if (it != OVERRIDE_JSON_PROPERTIES) {
                 propertyInclude(json, writer, value, configName, user, it)
             }
         }
 
-        if (!request?.marshaller?."${configName}"?.withIds?.contains(OVERRIDE_JSON_PROPERTIES)) {
-            propertiesMap."${configName}"?.withIds?.each {
+        if (!request?.marshaller?."$configName"?.withIds?.contains(OVERRIDE_JSON_PROPERTIES)) {
+            propertiesMap."$configName"?.withIds?.each {
                 //because same withIds works for gorm properties we need to check if it has been done already
                 propertyWithIds(writer, properties, value, configName, user, it)
             }
         }
 
-        request?.marshaller?."${configName}"?.withIds?.each {
+        request?.marshaller?."$configName"?.withIds?.each {
             if (it != OVERRIDE_JSON_PROPERTIES) {
                 propertyWithIds(writer, properties, value, configName, user, it)
             }
         }
 
-        if (!request?.marshaller?."${configName}"?.textile?.contains(OVERRIDE_JSON_PROPERTIES)) {
-            propertiesMap."${configName}"?.textile?.each {
+        if (!request?.marshaller?."$configName"?.textile?.contains(OVERRIDE_JSON_PROPERTIES)) {
+            propertiesMap."$configName"?.textile?.each {
                 propertyTextile(writer, value, it)
             }
         }
 
-        request?.marshaller?."${configName}"?.textile?.each {
+        request?.marshaller?."$configName"?.textile?.each {
             if (it != OVERRIDE_JSON_PROPERTIES) {
                 propertyTextile(writer, value, it)
             }
@@ -228,15 +218,15 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
     }
 
     private static void propertyTextile(def writer, def value, def it) {
-        def val = value.properties."${it}"
-        writer.key(it + "_html").value(ServicesUtils.textileToHtml(val))
+        def val = value.properties."$it"
+        writer.key(it + '_html').value(ServicesUtils.textileToHtml(val))
     }
 
     private void propertyInclude(def json, def writer, def value, def configName, def user, def it) {
-        def granted = propertiesMap."${configName}".security?."${it}" != null ? propertiesMap."${configName}".security?."${it}" : true
+        def granted = propertiesMap."$configName".security?."$it" != null ? propertiesMap."$configName".security?."$it" : true
         granted = granted instanceof Closure ? granted(value, grailsApplication, user) : granted
         if (granted) {
-            def val = value.properties."${it}"
+            def val = value.properties."$it"
             if (val != null) {
                 writer.key(it);
                 json.convertAnother(val);
@@ -247,10 +237,10 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
     private void propertyWithIds(def writer, def properties, def value, def configName, def user, def it) {
         def gormPropertiesName = properties.collect { it.name }
         if (!gormPropertiesName.contains(it)) {
-            def granted = propertiesMap."${configName}".security?."${it}" != null ? propertiesMap."${configName}".security?."${it}" : true
+            def granted = propertiesMap."$configName".security?."$it" != null ? propertiesMap."$configName".security?."$it" : true
             granted = granted instanceof Closure ? granted(value, grailsApplication, user) : granted
             if (granted) {
-                def val = value.properties."${it}"
+                def val = value.properties."$it"
                 if (val instanceof Collection) {
                     writer.key(it + "_ids")
                     writer.array()
@@ -274,30 +264,27 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
             if (idValue == null) {
                 idValue = extractValue(refObj, idProperty)
             }
-
         } else {
             idValue = extractValue(refObj, idProperty)
         }
-        JSONWriter writer = json.getWriter()
+        JSONWriter writer = json.writer
         writer.object()
 
-        if (this.includeClass) {
-            writer.key("class").value(GrailsNameUtils.getShortName(referencedDomainClass.getName()))
-        }
+        writer.key('class').value(GrailsNameUtils.getShortName(referencedDomainClass.name))
 
-        writer.key("id").value(idValue)
+        writer.key('id').value(idValue)
 
-        def configName = GrailsNameUtils.getShortName(referencedDomainClass.getName()).toLowerCase()
-        def request = WebUtils.retrieveGrailsWebRequest()?.getCurrentRequest()
+        def configName = GrailsNameUtils.getShortName(referencedDomainClass.name).toLowerCase()
+        def request = WebUtils.retrieveGrailsWebRequest()?.currentRequest
         def user = grailsApplication.mainContext.springSecurityService.currentUser
 
-        if (!request?.marshaller?."${configName}"?.asShort?.contains(OVERRIDE_JSON_PROPERTIES)) {
-            propertiesMap."${configName}"?.asShort?.each {
+        if (!request?.marshaller?."$configName"?.asShort?.contains(OVERRIDE_JSON_PROPERTIES)) {
+            propertiesMap."$configName"?.asShort?.each {
                 propertyInclude(json, writer, refObj, configName, user, it)
             }
         }
 
-        request?.marshaller?."${configName}"?.asShort?.each {
+        request?.marshaller?."$configName"?.asShort?.each {
             if (it != OVERRIDE_JSON_PROPERTIES) {
                 propertyInclude(json, writer, refObj, configName, user, it)
             }
