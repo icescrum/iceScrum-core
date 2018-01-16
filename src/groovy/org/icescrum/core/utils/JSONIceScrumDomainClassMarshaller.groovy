@@ -133,70 +133,46 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
         if (!property.isAssociation()) {
             writer.key(property.name)
             json.convertAnother(propertyValue)
+        } else if (propertyValue == null) {
+            writer.key(property.name)
+            json.value(null)
         } else {
-            if (isRenderDomainClassRelations()) {
+            GrailsDomainClass referencedDomainClass = property.referencedDomainClass
+            if (referencedDomainClass == null || property.isEmbedded() || GrailsClassUtils.isJdk5Enum(property.type)) {
                 writer.key(property.name)
-                if (propertyValue == null) {
-                    writer.value(null)
-                } else {
-                    propertyValue = proxyHandler.unwrapIfProxy(propertyValue)
-                    if (propertyValue instanceof SortedMap) {
-                        propertyValue = new TreeMap((SortedMap) propertyValue)
-                    } else if (propertyValue instanceof SortedSet) {
-                        propertyValue = new TreeSet((SortedSet) propertyValue)
-                    } else if (propertyValue instanceof Set) {
-                        propertyValue = new HashSet((Set) propertyValue)
-                    } else if (propertyValue instanceof Map) {
-                        propertyValue = new HashMap((Map) propertyValue)
-                    } else if (propertyValue instanceof Collection) {
-                        propertyValue = new ArrayList((Collection) propertyValue)
-                    }
-                    json.convertAnother(propertyValue)
-                }
+                json.convertAnother(propertyValue)
+            } else if (property.isOneToOne() || property.isManyToOne() || property.isEmbedded()) {
+                writer.key(property.name)
+                asShortObject(propertyValue, json, referencedDomainClass.identifier, referencedDomainClass)
             } else {
-                if (propertyValue == null) {
-                    writer.key(property.name)
-                    json.value(null)
-                } else {
-                    GrailsDomainClass referencedDomainClass = property.referencedDomainClass
-                    // Embedded are now always fully rendered
-                    if (referencedDomainClass == null || property.isEmbedded() || GrailsClassUtils.isJdk5Enum(property.type)) {
-                        writer.key(property.name)
-                        json.convertAnother(propertyValue)
-                    } else if (property.isOneToOne() || property.isManyToOne() || property.isEmbedded()) {
-                        writer.key(property.name)
-                        asShortObject(propertyValue, json, referencedDomainClass.identifier, referencedDomainClass)
-                    } else {
-                        GrailsDomainClassProperty referencedIdProperty = referencedDomainClass.identifier
-                        if (propertyValue instanceof Collection) {
-                            Collection o = (Collection) propertyValue
-                            if (config.withIds?.contains(property.name) || requestConfig?.withIds?.contains(property.name)) {
-                                writer.key(property.name + '_ids')
-                                writer.array()
-                                for (Object el : o) {
-                                    writer.object()
-                                    writer.key('id').value(extractValue(el, referencedIdProperty))
-                                    writer.endObject()
-                                }
-                                writer.endArray()
-                            } else if (!propertyValue.hasProperty(property.name + '_count')) {
-                                int count = domainClass.clazz.withSession { session ->
-                                    session.createFilter(propertyValue, 'select count(*)').uniqueResult()
-                                }
-                                writer.key(property.name + '_count').value(count)
-                            }
-                        } else if (propertyValue instanceof Map) {
-                            writer.key(property.name)
-                            Map<Object, Object> map = (Map<Object, Object>) propertyValue
-                            for (Map.Entry<Object, Object> entry : map.entrySet()) {
-                                String key = String.valueOf(entry.key)
-                                Object o = entry.value
-                                writer.object()
-                                writer.key(key)
-                                asShortObject(o, json, referencedIdProperty, referencedDomainClass)
-                                writer.endObject()
-                            }
+                GrailsDomainClassProperty referencedIdProperty = referencedDomainClass.identifier
+                if (propertyValue instanceof Collection) {
+                    Collection o = (Collection) propertyValue
+                    if (config.withIds?.contains(property.name) || requestConfig?.withIds?.contains(property.name)) {
+                        writer.key(property.name + '_ids')
+                        writer.array()
+                        for (Object el : o) {
+                            writer.object()
+                            writer.key('id').value(extractValue(el, referencedIdProperty))
+                            writer.endObject()
                         }
+                        writer.endArray()
+                    } else if (!propertyValue.hasProperty(property.name + '_count')) {
+                        int count = domainClass.clazz.withSession { session ->
+                            session.createFilter(propertyValue, 'select count(*)').uniqueResult()
+                        }
+                        writer.key(property.name + '_count').value(count)
+                    }
+                } else if (propertyValue instanceof Map) {
+                    writer.key(property.name)
+                    Map<Object, Object> map = (Map<Object, Object>) propertyValue
+                    for (Map.Entry<Object, Object> entry : map.entrySet()) {
+                        String key = String.valueOf(entry.key)
+                        Object o = entry.value
+                        writer.object()
+                        writer.key(key)
+                        asShortObject(o, json, referencedIdProperty, referencedDomainClass)
+                        writer.endObject()
                     }
                 }
             }
