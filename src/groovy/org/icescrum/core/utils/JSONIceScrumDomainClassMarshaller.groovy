@@ -103,14 +103,11 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
 
         if (request?.marshaller?."${configName}"?.exclude?.contains(EXCLUDES_ALL_JSON_PROPERTIES)) {
             properties = []
-            println "ici"
         } else {
-            println "la"
             properties.removeAll { it.getName() in excludes }
         }
 
         for (GrailsDomainClassProperty property : properties) {
-            println property.getName()
             if (!property.isAssociation()) {
                 // Write non-relation property
                 writer.key(property.getName())
