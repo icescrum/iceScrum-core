@@ -76,9 +76,6 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
         List<GrailsDomainClassProperty> properties = domainClass.persistentProperties.toList()
 
         def excludes = []
-        if (propertiesMap.exclude) {
-            excludes.addAll(propertiesMap.exclude)
-        }
         if (config.exclude) {
             excludes.addAll(config.exclude)
         }
