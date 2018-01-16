@@ -41,6 +41,8 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
     private Map propertiesMap
     private boolean includeClass
     private GrailsApplication grailsApplication
+    public static final EXCLUDES_ALL_JSON_PROPERTIES = "*"
+    public static final OVERRIDE_JSON_PROPERTIES = "#"
 
     public JSONIceScrumDomainClassMarshaller(GrailsApplication grailsApplication, boolean includeVersion, boolean includeClass, Map propertiesMap) {
         super(includeVersion, grailsApplication)
@@ -89,16 +91,26 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
         if (propertiesMap."${configName}".exclude) {
             excludes.addAll(propertiesMap."${configName}".exclude)
         }
+        if (request?.marshaller?."${configName}"?.exclude) {
+            excludes.addAll(request.marshaller."${configName}".exclude)
+        }
         if (propertiesMap."${configName}"?.include) { // Treated separately after the main loop
-            excludes.addAll(propertiesMap."${configName}".include)
+            excludes.addAll(propertiesMap."${configName}".include.findAll { it != OVERRIDE_JSON_PROPERTIES })
         }
         if (request?.marshaller?."${configName}"?.include) {
             excludes.addAll(request.marshaller."${configName}".include)
         }
 
-        properties.removeAll { it.getName() in excludes }
+        if (request?.marshaller?."${configName}"?.exclude?.contains(EXCLUDES_ALL_JSON_PROPERTIES)) {
+            properties = []
+            println "ici"
+        } else {
+            println "la"
+            properties.removeAll { it.getName() in excludes }
+        }
 
         for (GrailsDomainClassProperty property : properties) {
+            println property.getName()
             if (!property.isAssociation()) {
                 // Write non-relation property
                 writer.key(property.getName())
@@ -178,35 +190,47 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
 
         def user = grailsApplication.mainContext.springSecurityService.currentUser
 
-        propertiesMap."${configName}"?.include?.each {
-            propertyInclude(json, writer, value, configName, user, it)
+        if (!request?.marshaller?."${configName}"?.include?.contains(OVERRIDE_JSON_PROPERTIES)) {
+            propertiesMap."${configName}"?.include?.each {
+                propertyInclude(json, writer, value, configName, user, it)
+            }
         }
 
         request?.marshaller?."${configName}"?.include?.each {
-            propertyInclude(json, writer, value, configName, user, it)
+            if (it != OVERRIDE_JSON_PROPERTIES) {
+                propertyInclude(json, writer, value, configName, user, it)
+            }
         }
 
-        propertiesMap."${configName}"?.withIds?.each {
-            //because same withIds works for gorm properties we need to check if it has been done already
-            propertyWithIds(writer, properties, value, configName, user, it)
+        if (!request?.marshaller?."${configName}"?.withIds?.contains(OVERRIDE_JSON_PROPERTIES)) {
+            propertiesMap."${configName}"?.withIds?.each {
+                //because same withIds works for gorm properties we need to check if it has been done already
+                propertyWithIds(writer, properties, value, configName, user, it)
+            }
         }
 
         request?.marshaller?."${configName}"?.withIds?.each {
-            propertyWithIds(writer, properties, value, configName, user, it)
+            if (it != OVERRIDE_JSON_PROPERTIES) {
+                propertyWithIds(writer, properties, value, configName, user, it)
+            }
         }
 
-        propertiesMap."${configName}"?.textile?.each {
-            propertyTextile(writer, value, it)
+        if (!request?.marshaller?."${configName}"?.textile?.contains(OVERRIDE_JSON_PROPERTIES)) {
+            propertiesMap."${configName}"?.textile?.each {
+                propertyTextile(writer, value, it)
+            }
         }
 
         request?.marshaller?."${configName}"?.textile?.each {
-            propertyTextile(writer, value, it)
+            if (it != OVERRIDE_JSON_PROPERTIES) {
+                propertyTextile(writer, value, it)
+            }
         }
 
         writer.endObject()
     }
 
-    private void propertyTextile(def writer, def value, def it) {
+    private static void propertyTextile(def writer, def value, def it) {
         def val = value.properties."${it}"
         writer.key(it + "_html").value(ServicesUtils.textileToHtml(val))
     }
@@ -270,12 +294,16 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
         def request = WebUtils.retrieveGrailsWebRequest()?.getCurrentRequest()
         def user = grailsApplication.mainContext.springSecurityService.currentUser
 
-        propertiesMap."${configName}"?.asShort?.each {
-            propertyInclude(json, writer, refObj, configName, user, it)
+        if (!request?.marshaller?."${configName}"?.asShort?.contains(OVERRIDE_JSON_PROPERTIES)) {
+            propertiesMap."${configName}"?.asShort?.each {
+                propertyInclude(json, writer, refObj, configName, user, it)
+            }
         }
 
         request?.marshaller?."${configName}"?.asShort?.each {
-            propertyInclude(json, writer, refObj, configName, user, it)
+            if (it != OVERRIDE_JSON_PROPERTIES) {
+                propertyInclude(json, writer, refObj, configName, user, it)
+            }
         }
 
         writer.endObject()
