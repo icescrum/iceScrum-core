@@ -209,6 +209,7 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
             }
         }
     }
+
     @Override
     protected void asShortObject(Object refObj, JSON json, GrailsDomainClassProperty idProperty, GrailsDomainClass referencedDomainClass) throws ConverterException {
         Object idValue

@@ -292,7 +292,7 @@ class SecurityService {
             def computeResult = {
                 def access = stakeHolder ?: p.preferences.hidden ? aclUtilService.hasPermission(auth, GrailsHibernateUtil.unwrapIfProxy(p), SecurityService.stakeHolderPermissions) : !onlyPrivate
                 if (access && controllerName) {
-                    return !(controllerName in p.preferences.stakeHolderRestrictedViews?.split(','))
+                    return controllerName == 'project' || !(controllerName in p.preferences.stakeHolderRestrictedViews?.split(','))
                 } else {
                     return access
                 }
