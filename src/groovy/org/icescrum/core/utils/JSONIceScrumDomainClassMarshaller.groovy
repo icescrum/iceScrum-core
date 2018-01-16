@@ -52,14 +52,14 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
     }
 
     public boolean supports(Object object) {
-        def configName = GrailsNameUtils.getShortName(object.class).toLowerCase()
-        return (DomainClassArtefactHandler.isDomainClass(object.class) && propertiesMap."$configName" != null)
+        def configName = GrailsNameUtils.getShortName(object.getClass()).toLowerCase()
+        return (DomainClassArtefactHandler.isDomainClass(object.getClass()) && propertiesMap."$configName" != null)
     }
 
     public void marshalObject(Object value, JSON json) throws ConverterException {
         JSONWriter writer = json.writer
         value = proxyHandler.unwrapIfProxy(value)
-        Class<?> clazz = value.class
+        Class<?> clazz = value.getClass()
         GrailsDomainClass domainClass = grailsApplication.getDomainClass(clazz.name)
         BeanWrapper beanWrapper = new BeanWrapperImpl(value)
         def configName = GrailsNameUtils.getShortName(clazz).toLowerCase()
@@ -262,7 +262,7 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
         def requestConfig = WebUtils.retrieveGrailsWebRequest()?.currentRequest?.marshaller?."$configName"
 
         if (!requestConfig?.asShort?.contains(OVERRIDE_JSON_PROPERTIES)) {
-            config.asShort?.each {
+            config?.asShort?.each {
                 propertyInclude(json, writer, refObj, config, it)
             }
         }
