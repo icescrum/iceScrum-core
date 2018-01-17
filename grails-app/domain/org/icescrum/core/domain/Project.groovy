@@ -390,6 +390,7 @@ class Project extends TimeBox implements Serializable, Attachmentable {
                 projections {
                     property("id", "id")
                     property("goal", "goal")
+                    property("state", "state")
                     property("orderNumber", "orderNumber")
                 }
                 order("state", "desc")
