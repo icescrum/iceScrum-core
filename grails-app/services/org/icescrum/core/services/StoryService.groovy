@@ -403,12 +403,12 @@ class StoryService extends IceScrumEventPublisher {
     }
 
     // TODO check rights
-    private void updateRank(Story story, Long rank) {
+    private void updateRank(Story story, Long rank, Boolean force = false) {
         rank = adjustRankAccordingToDependences(story, rank)
         if ((story.dependsOn || story.dependences) && story.rank == rank) {
             return
         }
-        if (story.state == Story.STATE_DONE) {
+        if (story.state == Story.STATE_DONE && !force) {
             throw new BusinessException(code: 'is.story.rank.error')
         }
         def stories = story.sameBacklogStories
@@ -616,12 +616,11 @@ class StoryService extends IceScrumEventPublisher {
             if (story.parentSprint.state != Sprint.STATE_INPROGRESS) {
                 throw new BusinessException(code: 'is.sprint.error.declareAsUnDone.state.not.inProgress')
             }
+            updateRank(story, Story.countByParentSprintAndState(story.parentSprint, Story.STATE_INPROGRESS) + 1, true) // Move story to last rank of in progress stories in sprint
             story.state = Story.STATE_INPROGRESS
             story.inProgressDate = new Date()
             story.doneDate = null
             story.parentSprint.velocity -= story.effort
-            //Move story to last rank of in progress stories in sprint
-            updateRank(story, Story.countByParentSprintAndState(story.parentSprint, Story.STATE_INPROGRESS) + 1)
             def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_UPDATE, story)
             story.save()
             publishSynchronousEvent(IceScrumEventType.UPDATE, story, dirtyProperties)
