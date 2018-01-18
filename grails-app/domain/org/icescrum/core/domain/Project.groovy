@@ -383,21 +383,30 @@ class Project extends TimeBox implements Serializable, Attachmentable {
             maxResults(1)
         }
         if (release?.id) {
-            def sprint = Sprint.withCriteria(uniqueResult: true) {
+            def sprintAndCount = Sprint.withCriteria() {
                 resultTransformer CriteriaSpecification.ALIAS_TO_ENTITY_MAP
                 eq('parentRelease.id', release.id)
                 ne('state', Sprint.STATE_DONE)
+                createAlias('stories', 'stories')
                 projections {
                     property("id", "id")
                     property("goal", "goal")
                     property("state", "state")
                     property("orderNumber", "orderNumber")
+                    groupProperty("stories.state", "stories_state")
+                    count("stories", "stories_count")
                 }
                 order("state", "desc")
-                maxResults(1)
+                order("stories_state", "desc")
+                maxResults(2)
             }
-            if (sprint.id) {
+            def sprint = sprintAndCount[0]
+            if (sprintAndCount) {
+                sprint.remove('stories_state')
+                sprint.remove('stories_count')
                 sprint.index = sprint.remove('orderNumber') + release.remove('firstSprintIndex') - 1
+                sprint.doneStories = sprintAndCount[0].stories_state == Story.STATE_DONE ? sprintAndCount[0].stories_count : (sprintAndCount.size() == 2 && sprintAndCount[1].stories_state == Story.STATE_DONE ? sprintAndCount[1].stories_count : 0)
+                sprint.inProgresstories = sprintAndCount[0].stories_state == Story.STATE_INPROGRESS ? sprintAndCount[0].stories_count : (sprintAndCount.size() == 2 && sprintAndCount[1].stories_state == Story.STATE_INPROGRESS ? sprintAndCount[1].stories_count : 0)
             }
             release.currentOrNextSprint = sprint
         }

@@ -91,6 +91,7 @@ class ServicesUtils {
     }
 
     public static String textileToHtml(String text) {
-        return text ? new MarkupParser(markupLanguage: new TextileLanguage()).parseToHtml(text) : ''
+        String html = text ? new MarkupParser(markupLanguage: new TextileLanguage()).parseToHtml(text) : ''
+        return html ? html.substring((html.indexOf("<body>") + "<body>".size()), html.indexOf("</body>")) : html
     }
 }
