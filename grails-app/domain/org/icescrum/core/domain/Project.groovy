@@ -383,11 +383,11 @@ class Project extends TimeBox implements Serializable, Attachmentable {
             maxResults(1)
         }
         if (release?.id) {
-            def sprint = Sprint.withCriteria() {
+            def sprintAndCount = Sprint.withCriteria() {
                 resultTransformer CriteriaSpecification.ALIAS_TO_ENTITY_MAP
                 eq('parentRelease.id', release.id)
                 ne('state', Sprint.STATE_DONE)
-                createAlias('stories', 'stories')
+                createAlias('tasks', 'tasks')
                 projections {
                     property("id", "id")
                     property("goal", "goal")
@@ -396,14 +396,26 @@ class Project extends TimeBox implements Serializable, Attachmentable {
                     property("velocity", "velocity")
                     property("capacity", "capacity")
                     property("endDate", "endDate")
+                    property("endDate", "endDate")
+                    projections {
+                        property("id", "id")
+                        property("goal", "goal")
+                        property("state", "state")
+                        property("orderNumber", "orderNumber")
+                        groupProperty("tasks.state", "tasks_state")
+                        count("tasks", "tasks_count")
+
+                    }
+                    order("stories_state", "desc")
+                    order("state", "desc")
+                    maxResults(3)
                 }
-                order("state", "desc")
-                maxResults(1)
             }
-            sprint
-            if (sprint) {
-                sprint = sprint[0]
+            if (sprintAndCount) {
+                def sprint = sprintAndCount[0]
                 sprint.index = sprint.remove('orderNumber') + release.remove('firstSprintIndex') - 1
+                sprint.tasks_left = sprintAndCount.sum { it.tasks_count }
+                sprint.remove('tasks_count')
             }
             release.currentOrNextSprint = sprint
         }
