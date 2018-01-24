@@ -92,7 +92,7 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
             marshallProperty(property, beanWrapper, writer, json, domainClass, config, requestConfig)
         }
 
-        if (!requestConfig?.overrideInclude) {
+        if (!requestConfig?.overrideInclude && !requestConfig?.overrideAll) {
             config.include?.each {
                 propertyInclude(json, writer, value, config, it)
             }
@@ -100,7 +100,7 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
         requestConfig?.include?.each {
             propertyInclude(json, writer, value, config, it)
         }
-        if (!requestConfig?.overrideWithIds) {
+        if (!requestConfig?.overrideWithIds && !requestConfig?.overrideAll) {
             config.withIds?.each {
                 propertyWithIds(writer, properties, value, config, it)
             }
@@ -108,7 +108,7 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
         requestConfig?.withIds?.each {
             propertyWithIds(writer, properties, value, config, it)
         }
-        if (!requestConfig?.overrideTextile) {
+        if (!requestConfig?.overrideTextile && !requestConfig?.overrideAll) {
             config.textile?.each {
                 propertyTextile(writer, value, it)
             }
@@ -230,7 +230,7 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
         def config = propertiesMap."$configName"
         def requestConfig = WebUtils.retrieveGrailsWebRequest()?.currentRequest?.marshaller?."$configName"
 
-        if (!requestConfig?.overrideAsShort) {
+        if (!requestConfig?.overrideAsShort && !requestConfig?.overrideAll) {
             config?.asShort?.each {
                 propertyInclude(json, writer, refObj, config, it)
             }
