@@ -200,11 +200,12 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
 
     @Override
     int hashCode() {
-        final int prime = 31
+        final int prime = 26
         int result = 1
         result = prime * result + ((!endDate) ? 0 : endDate.hashCode())
         result = prime * result + ((!parentRelease) ? 0 : parentRelease.hashCode())
         result = prime * result + ((!startDate) ? 0 : startDate.hashCode())
+        result = prime * result + ((!id) ? 0 : id.hashCode())
         return result
     }
 

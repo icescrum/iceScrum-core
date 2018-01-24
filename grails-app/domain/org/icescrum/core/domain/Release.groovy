@@ -141,10 +141,11 @@ class Release extends TimeBox implements Cloneable, Attachmentable {
     }
 
     int hashCode() {
-        final int prime = 31
+        final int prime = 32
         int result = 1
         result = prime * result + ((!name) ? 0 : name.hashCode())
         result = prime * result + ((!parentProject) ? 0 : parentProject.hashCode())
+        result = prime * result + ((!id) ? 0 : id.hashCode())
         return result
     }
 
