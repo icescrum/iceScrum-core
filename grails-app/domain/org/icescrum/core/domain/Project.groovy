@@ -383,41 +383,17 @@ class Project extends TimeBox implements Serializable, Attachmentable {
             maxResults(1)
         }
         if (release?.id) {
-            def sprintAndCount = Sprint.withCriteria() {
-                resultTransformer CriteriaSpecification.ALIAS_TO_ENTITY_MAP
-                eq('parentRelease.id', release.id)
-                ne('state', Sprint.STATE_DONE)
-                createAlias('tasks', 'tasks')
-                projections {
-                    property("id", "id")
-                    property("goal", "goal")
-                    property("state", "state")
-                    property("orderNumber", "orderNumber")
-                    property("velocity", "velocity")
-                    property("capacity", "capacity")
-                    property("endDate", "endDate")
-                    property("endDate", "endDate")
-                    projections {
-                        property("id", "id")
-                        property("goal", "goal")
-                        property("state", "state")
-                        property("orderNumber", "orderNumber")
-                        groupProperty("tasks.state", "tasks_state")
-                        count("tasks", "tasks_count")
+            def sprintAndCount = Sprint.executeQuery("""
+                SELECT s.id, s.goal, s.state, s.orderNumber, s.velocity, s.capacity, s.endDate, count(t) 
+                FROM Sprint s, Task t 
+                WHERE s.parentRelease.id = :parentReleaseId AND s.state in (:states) 
+                GROUP BY (s) order by s.state DESC """, [parentReleaseId: release.id, states: [Sprint.STATE_INPROGRESS, Sprint.STATE_WAIT]], [max: 1])[0]
 
-                    }
-                    order("stories_state", "desc")
-                    order("state", "desc")
-                    maxResults(3)
-                }
-            }
             if (sprintAndCount) {
-                def sprint = sprintAndCount[0]
-                sprint.index = sprint.remove('orderNumber') + release.remove('firstSprintIndex') - 1
-                sprint.tasks_left = sprintAndCount.sum { it.tasks_count }
-                sprint.remove('tasks_count')
+                def sprint = [id: sprintAndCount[0], goal: sprintAndCount[1], state: sprintAndCount[2], orderNumber: sprintAndCount[3], velocity: sprintAndCount[4], capacity: sprintAndCount[5], endDate: sprintAndCount[6], tasks_count: sprintAndCount[7]]
+                sprint.index = sprint.orderNumber + release.remove('firstSprintIndex') - 1
+                release.currentOrNextSprint = sprint
             }
-            release.currentOrNextSprint = sprint
         }
         return release
     }
