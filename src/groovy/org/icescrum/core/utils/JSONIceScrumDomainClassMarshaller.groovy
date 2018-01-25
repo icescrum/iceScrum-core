@@ -62,7 +62,8 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
         BeanWrapper beanWrapper = new BeanWrapperImpl(value)
         def configName = GrailsNameUtils.getShortName(clazz).toLowerCase()
         def config = propertiesMap."$configName"
-        def requestConfig = WebUtils.retrieveGrailsWebRequest()?.currentRequest?.marshaller?."$configName"
+        def isRestAPI = WebUtils.retrieveGrailsWebRequest()?.currentRequest?.restAPI ?: false
+        def requestConfig = !isRestAPI ? WebUtils.retrieveGrailsWebRequest()?.currentRequest?.marshaller?."$configName" : null
 
         writer.object()
         writer.key('class').value(GrailsNameUtils.getShortName(domainClass.clazz.name))
