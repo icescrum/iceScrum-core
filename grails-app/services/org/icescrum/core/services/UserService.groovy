@@ -188,7 +188,7 @@ class UserService extends IceScrumEventPublisher {
                 teamService.delete(it)
             }
         }
-        Portfolio.findAllByUser(user, null).each { Portfolio portfolio ->
+        Portfolio.findAllByUser(user).each { Portfolio portfolio ->
             securityService.deleteBusinessOwnerPermissions(user, portfolio)
             securityService.deletePortfolioStakeHolderPermissions(user, portfolio)
         }

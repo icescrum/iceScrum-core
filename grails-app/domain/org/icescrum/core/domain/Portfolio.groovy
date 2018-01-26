@@ -93,10 +93,7 @@ class Portfolio {
         }
     }
 
-    static findAllByUser(User user, Map params, String term) {
-        if (!term) {
-            term = '%%'
-        }
+    static findAllByUser(User user, Map params = [:], String term = '%%') {
         executeQuery("""SELECT portfolio
                         FROM Portfolio portfolio,
                              grails.plugin.springsecurity.acl.AclObjectIdentity aoi,
@@ -106,7 +103,7 @@ class Portfolio {
                         AND ae.aclObjectIdentity.id = aoi.id
                         AND ae.mask IN(:permissions)
                         AND lower(portfolio.name) LIKE lower(:term)
-                        AND ae.sid.sid = :sid""", [sid: user.username, permissions: [BasePermission.WRITE, BasePermission.READ]*.mask, term: term], params ?: [:])
+                        AND ae.sid.sid = :sid""", [sid: user.username, permissions: [BasePermission.WRITE, BasePermission.READ]*.mask, term: term], params)
     }
 
 
