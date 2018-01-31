@@ -3,9 +3,6 @@ package org.icescrum.core.utils
 import org.eclipse.mylyn.wikitext.core.parser.MarkupParser
 import org.eclipse.mylyn.wikitext.textile.core.TextileLanguage
 
-import javax.crypto.Mac
-import javax.crypto.SecretKey
-import javax.crypto.spec.SecretKeySpec
 import java.text.SimpleDateFormat
 
 /*
@@ -28,6 +25,7 @@ import java.text.SimpleDateFormat
  * Authors:
  *
  * Vincent Barrier (vbarrier@kagilum.com)
+ * Nicolas Noullet (nnoullet@kagilum.com)
  */
 
 class ServicesUtils {
@@ -50,23 +48,9 @@ class ServicesUtils {
         return df.parse(input)
     }
 
-    public static byte[] calculateHMACMd5(String data, String key) {
-        SecretKey skey = new SecretKeySpec(key.getBytes(), "HmacMD5")
-        Mac m = Mac.getInstance("HmacMD5")
-        m.init(skey)
-        m.update(data.getBytes())
-        byte[] mac = m.doFinal()
-        return mac
-    }
-
-    public static String getHexString(byte[] b) throws Exception {
-        String result = "";
-        for (int i = 0; i < b.length; i++) {
-            result += Integer.toString((b[i] & 0xff) + 0x100, 16).substring(1);
-        }
-        return result;
-    }
-
+    // The XML spec limits the unicode character range that is authorized
+    // This methods removes the invalid unicode characters
+    // It uses Integer code points instead of the Java Char type to take into account emojis: one emoji span several Java chars (surrogate pairs)
     public static String cleanXml(String xmlString) {
         if (!xmlString) {
             return xmlString
