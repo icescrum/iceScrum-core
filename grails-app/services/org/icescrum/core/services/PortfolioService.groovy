@@ -130,7 +130,7 @@ class PortfolioService extends IceScrumEventPublisher {
         publishSynchronousEvent(IceScrumEventType.DELETE, portfolio, dirtyProperties)
     }
 
-    List<Portfolio> getAllPortfoliosByUser(User user, String searchTerm = '') {
+    List<Portfolio> getAllPortfoliosByUser(User user, String searchTerm = '%%') {
         def portfolios = Portfolio.findAllByUser(user, [sort: "name", order: "asc", cache: true], searchTerm)
         return portfolios
     }
