@@ -482,15 +482,18 @@ class ApplicationSupport {
     }
 
     public static Map getCurrentWorkspace(def params, def id = null) {
-        def workspace = Holders.grailsApplication.config.icescrum.workspaces.find { id ? it.key == id : params."$it.key" }
-        if (workspace) {
-            def object = params.long("$workspace.key") ? workspace.value.objectClass.get(params.long("$workspace.key")) : null
-            return object ? [name        : workspace.key,
+        def workspaceEntry = Holders.grailsApplication.config.icescrum.workspaces.find { id ? it.key == id : params."$it.key" }
+        if (workspaceEntry) {
+            def workspace = workspaceEntry.value
+            def workspaceName = workspaceEntry.key
+            def object = params.long("${workspaceName}") ? workspace.objectClass.get(params.long("${workspaceName}")) : null
+            return object ? [name        : workspaceName,
                              object      : object,
-                             icon        : workspace.value.icon,
-                             config      : workspace.value.config(object),
-                             params      : workspace.value.params(object),
-                             indexScrumOS: workspace.value.indexScrumOS] : null
+                             icon        : workspace.icon,
+                             config      : workspace.config(object),
+                             params      : workspace.params(object),
+                             enabled     : workspace.enabled(Holders.grailsApplication),
+                             indexScrumOS: workspace.indexScrumOS] : null
         }
     }
 
