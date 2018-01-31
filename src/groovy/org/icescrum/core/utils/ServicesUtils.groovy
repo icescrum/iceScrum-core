@@ -68,20 +68,25 @@ class ServicesUtils {
     }
 
     public static String cleanXml(String xmlString) {
+        if (!xmlString) {
+            return xmlString
+        }
         StringBuffer out = new StringBuffer()
-        for (c in xmlString) {
-            if ((c == 0x9) ||
-                (c == 0xA) ||
-                (c == 0xD) ||
-                ((c >= 0x20) && (c <= 0xD7FF)) ||
-                ((c >= 0xE000) && (c <= 0xFFFD)) ||
-                ((c >= 0x10000) && (c <= 0x10FFFF))) {
-                out.append(c)
+        int i, c = 0
+        for (i = 0; i < xmlString.length(); i += Character.charCount(c)) {
+            c = xmlString.codePointAt(i)
+            if (c == 9 ||                     // 0x9
+                c == 10 ||                    // 0xA
+                c == 13 ||                    // 0xD
+                c >= 32 && c <= 55295 ||      // c >= 0x20    && c <= 0xD7FF
+                c >= 57344 && c <= 65533 ||   // c >= 0xE000  && c <= 0xFFFD
+                c >= 65536 && c <= 1114111) { // c >= 0x10000 && c <= 0x10FFFF
+                out.append(Character.toChars(c))
             } else {
                 out.append(' ')
             }
         }
-        out.toString()
+        return out.toString()
     }
 
     public static String textileToHtml(String text) {
