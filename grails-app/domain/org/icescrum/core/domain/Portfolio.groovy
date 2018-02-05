@@ -47,7 +47,6 @@ class Portfolio {
     static mapping = {
         cache true
         table 'is_portfolio'
-        fkey(index: 'portfolio_key_index')
         description(length: 5000)
         widgets(sort: 'position')
     }
