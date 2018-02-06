@@ -622,4 +622,19 @@ class SecurityService {
             return [(key): request[key]]
         }
     }
+
+    boolean decodeKeys(params) {
+        if (params.project) {
+            params.project = params.project.decodeProjectKey()
+            if (!params.project) {
+                return false
+            }
+        } else if (params.portfolio) {
+            params.portfolio = params.portfolio.decodePortfolioKey()
+            if (!params.portfolio) {
+                return false
+            }
+        }
+        return true
+    }
 }
