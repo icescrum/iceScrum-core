@@ -482,7 +482,7 @@ class SecurityService {
                 Long projectId = getProjectIdFromRequest(request)
                 if (projectId) {
                     Project project = Project.get(projectId)
-                    if (project.portfolio) {
+                    if (project?.portfolio) {
                         portfolioId = project.portfolio.id
                     }
                 }
