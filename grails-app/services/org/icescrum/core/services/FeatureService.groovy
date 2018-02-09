@@ -93,40 +93,6 @@ class FeatureService extends IceScrumEventPublisher {
         publishSynchronousEvent(IceScrumEventType.UPDATE, feature, dirtyProperties)
     }
 
-    @PreAuthorize('productOwner(#features[0].backlog) and !archivedProject(#features[0].backlog)')
-    def createStoryEpic(List<Feature> features) {
-        def stories = []
-        StoryService storyService = (StoryService) grailsApplication.mainContext.getBean('storyService')
-        features.each { Feature feature ->
-            def story = new Story(
-                    name: feature.name,
-                    description: feature.description,
-                    suggestedDate: new Date(),
-                    acceptedDate: new Date(), // The proper state will be set automatically
-                    feature: feature,
-                    backlog: feature.backlog, // Will be set again by storyService but required to pass validation
-            )
-            feature.addToStories(story)
-            story.validate()
-            def i = 1
-            while (story.hasErrors()) {
-                if (story.errors.getFieldError('name')?.defaultMessage?.contains("unique")) {
-                    i += 1
-                    story.name = story.name + '_' + i
-                    story.validate()
-                } else if (story.errors.getFieldError('name')?.code?.contains("maxSize.exceeded")) {
-                    story.name = story.name[0..20]
-                    story.validate()
-                } else {
-                    throw new ValidationException('Validation Error(s) occurred during save()', story.errors)
-                }
-            }
-            storyService.save(story, story.backlog, (User) springSecurityService.currentUser)
-            stories << story
-        }
-        return stories
-    }
-
     private double calculateCompletion(stories) {
         double items = stories.size()
         double itemsDone = stories.findAll { it.state == Story.STATE_DONE }.size()
