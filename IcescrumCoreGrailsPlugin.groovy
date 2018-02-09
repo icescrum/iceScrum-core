@@ -24,7 +24,6 @@
 
 import com.quirklabs.hdimageutils.HdImageService
 import grails.converters.JSON
-import grails.plugin.cache.web.filter.DefaultWebKeyGenerator
 import grails.plugin.springsecurity.SecurityFilterPosition
 import grails.plugin.springsecurity.SpringSecurityService
 import grails.plugin.springsecurity.SpringSecurityUtils
