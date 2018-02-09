@@ -224,7 +224,6 @@ class SecurityService {
                 def parsedProject = getProjectIdFromRequest(request)
                 if (parsedProject) {
                     def p = Project.get(parsedProject)
-                    //case project doesn't exist
                     if (!p) {
                         return false
                     }
@@ -326,7 +325,6 @@ class SecurityService {
             if (!p) {
                 p = Project.get(project)
             }
-            //case project doesn't exist
             if (!p) {
                 return false
             }
@@ -338,7 +336,7 @@ class SecurityService {
         }
     }
 
-    boolean admin(auth) {
+    boolean admin() {
         if (!springSecurityService.isLoggedIn()) {
             return false
         }
@@ -600,7 +598,7 @@ class SecurityService {
             request.owner = owner(null, springSecurityService.authentication)
             request.inProject = request.scrumMaster || request.productOwner || request.teamMember
             request.inTeam = request.scrumMaster || request.teamMember
-            request.admin = admin(springSecurityService.authentication)
+            request.admin = admin()
         }
         if ((request.inProject || request.stakeHolder) && archivedProject(null)) {
             request.scrumMaster = false

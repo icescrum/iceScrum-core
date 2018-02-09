@@ -38,17 +38,7 @@ class ClicheService {
         cliche.save()
     }
 
-    /**
-     * Closure analysing effort from a PBI list and returning a map containing the data retrieved
-     * @param pbis The list of pbis to analyse
-     * @param inLoop A optional closure, to process additional instructions during the pbi analysing loop
-     * (the current pbi is passed in argument of the closure each time). If not null, the closure is called as the
-     * first instruction of the loop.
-     * @return A map containing the result of the analyse.
-     * Index availables in the map : compteurUS, compteurDefect, compteurTechnical,
-     * compteurUSFinish, compteurDefectFinish, compteurTechnicalFinish
-     */
-    def computeDataOnType = { stories, Closure inLoop = null ->
+    def computeDataOnType = { stories ->
         def cUS = 0
         def cDefect = 0
         def cTechnical = 0
@@ -102,7 +92,7 @@ class ClicheService {
         save(c, s.parentRelease)
     }
 
-    void removeLastSprintCliche(Sprint s, int type) {
+    void removeLastSprintCliche(Sprint s) {
         def cliche = Cliche.findByTypeAndParentTimeBox(Cliche.TYPE_CLOSE, s.parentRelease, [sort: "datePrise", order: "desc"])
         if (cliche) {
             s.parentRelease.removeFromCliches(cliche)

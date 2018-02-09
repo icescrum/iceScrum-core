@@ -81,7 +81,6 @@ class Cliche implements Serializable {
     static final DEFECT_STORY_PROJECT_REMAINING_POINTS = 'defectStoryProductRemainingPoints'
     static final TECHNICAL_STORY_PROJECT_REMAINING_POINTS = 'technicalStoryProductRemainingPoints'
     // Release Remaining Points
-    static final RELEASE_REMAINING_POINTS = 'functionalStoryReleaseRemainingPoints'
     static final FUNCTIONAL_STORY_RELEASE_REMAINING_POINTS = 'functionalStoryReleaseRemainingPoints'
     static final DEFECT_STORY_RELEASE_REMAINING_POINTS = 'defectStoryReleaseRemainingPoints'
     static final TECHNICAL_STORY_RELEASE_REMAINING_POINTS = 'technicalStoryReleaseRemainingPoints'
