@@ -198,35 +198,15 @@ class ReleaseService extends IceScrumEventPublisher {
         cliches?.eachWithIndex { cliche, index ->
             def xmlRoot = new XmlSlurper().parseText(cliche.data)
             if (xmlRoot) {
-                def sprintEntry = [
+                values << [
                         userstories     : xmlRoot."${Cliche.FUNCTIONAL_STORY_PROJECT_REMAINING_POINTS}".toBigDecimal(),
                         technicalstories: xmlRoot."${Cliche.TECHNICAL_STORY_PROJECT_REMAINING_POINTS}".toBigDecimal(),
                         defectstories   : xmlRoot."${Cliche.DEFECT_STORY_PROJECT_REMAINING_POINTS}".toBigDecimal(),
                         label           : index == 0 ? "Start" : Sprint.getNameByReleaseAndClicheSprintId(release, xmlRoot."${Cliche.SPRINT_ID}".toString()) + "${cliche.id ? '' : " (progress)"}"
                 ]
-                sprintEntry << computeLabelsForSprintEntry(sprintEntry)
-                values << sprintEntry
             }
         }
         return values
-    }
-
-    private static Map computeLabelsForSprintEntry(sprintEntry) {
-        def computePercents = { part ->
-            def total = sprintEntry.userstories + sprintEntry.technicalstories + sprintEntry.defectstories
-            total ? (Integer) Math.ceil(part / total * 100) : 0
-        }
-        def generateLabel = { part, percents ->
-            percents > 0 ? part + ' (' + percents + '%)' : ''
-        }
-        def labels = [:]
-        def percentsUS = computePercents(sprintEntry.userstories)
-        def percentsTechnical = computePercents(sprintEntry.technicalstories)
-        def percentsDefect = 100 - percentsUS - percentsTechnical
-        labels['userstoriesLabel'] = generateLabel(sprintEntry.userstories, percentsUS)
-        labels['technicalstoriesLabel'] = generateLabel(sprintEntry.userstories + sprintEntry.technicalstories, percentsTechnical)
-        labels['defectstoriesLabel'] = generateLabel(sprintEntry.userstories + sprintEntry.technicalstories + sprintEntry.defectstories, percentsDefect)
-        labels
     }
 
     def unMarshall(def releaseXml, def options) {
