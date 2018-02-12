@@ -338,7 +338,8 @@ class ApplicationSupport {
                 }
             }
             if (docker) {
-                if (newID == existingID || (existingID in ['dde5840d-2193-ead2-f4f3-5c131453d19d', '48e1b46b-68ba-8fad-1e7f-9807d121a81d'])) {
+                def bannedAppIds = ['dde5840d-2193-ead2-f4f3-5c131453d19d', '48e1b46b-68ba-8fad-1e7f-9807d121a81d']
+                if (newID == existingID || existingID in bannedAppIds || newID in bannedAppIds) {
                     newID = null
                 } else {
                     newID = existingID
