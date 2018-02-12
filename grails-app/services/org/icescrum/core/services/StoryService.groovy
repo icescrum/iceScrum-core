@@ -202,6 +202,9 @@ class StoryService extends IceScrumEventPublisher {
                 throw new BusinessException(code: 'is.story.error.dependences.beforePlanned', args: [story.name])
             }
         }
+        if (![Story.TYPE_USER_STORY, Story.TYPE_DEFECT, Story.TYPE_TECHNICAL_STORY].contains(story.type)) {
+            throw new BusinessException(code: 'is.story.error.plan.type')
+        }
         if (sprint.state == Sprint.STATE_DONE) {
             throw new BusinessException(code: 'is.sprint.error.associate.done')
         }
@@ -322,7 +325,9 @@ class StoryService extends IceScrumEventPublisher {
         sprints = sprints.findAll { it.state == Sprint.STATE_WAIT }.sort { it.orderNumber }
         int maxSprint = sprints.size()
         // Get the list of stories that have been estimated
-        Collection<Story> itemsList = project.stories.findAll { it.state == Story.STATE_ESTIMATED }.sort { it.rank }
+        Collection<Story> itemsList = project.stories.findAll { story ->
+            story.state == Story.STATE_ESTIMATED && [Story.TYPE_USER_STORY, Story.TYPE_DEFECT, Story.TYPE_TECHNICAL_STORY].contains(story.type)
+        }.sort { it.rank }
         Sprint currentSprint = null
         def plannedStories = []
         // Associate story in each sprint
