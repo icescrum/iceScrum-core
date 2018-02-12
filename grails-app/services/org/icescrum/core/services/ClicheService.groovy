@@ -46,7 +46,6 @@ class ClicheService {
         def cDefectDone = 0
         def cTechnicalDone = 0
         stories.each { story ->
-            inLoop?.call(story)
             if (story.effort > 0) {
                 switch (story.type) {
                     case Story.TYPE_USER_STORY:
