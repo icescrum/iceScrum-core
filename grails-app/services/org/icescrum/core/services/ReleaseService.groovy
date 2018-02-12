@@ -198,12 +198,14 @@ class ReleaseService extends IceScrumEventPublisher {
         cliches?.eachWithIndex { cliche, index ->
             def xmlRoot = new XmlSlurper().parseText(cliche.data)
             if (xmlRoot) {
-                values << [
-                        userstories     : xmlRoot."${Cliche.FUNCTIONAL_STORY_PROJECT_REMAINING_POINTS}".toBigDecimal(),
-                        technicalstories: xmlRoot."${Cliche.TECHNICAL_STORY_PROJECT_REMAINING_POINTS}".toBigDecimal(),
-                        defectstories   : xmlRoot."${Cliche.DEFECT_STORY_PROJECT_REMAINING_POINTS}".toBigDecimal(),
-                        label           : index == 0 ? "Start" : Sprint.getNameByReleaseAndClicheSprintId(release, xmlRoot."${Cliche.SPRINT_ID}".toString()) + "${cliche.id ? '' : " (progress)"}"
-                ]
+                def storyTypes = grailsApplication.config.icescrum.storyTypes
+                def sprintEntry = [:]
+                storyTypes.each { storyType ->
+                    def value = xmlRoot."${grailsApplication.config.icescrum.resourceBundles.storyTypesCliche[storyType]}"
+                    sprintEntry[storyType] = value.toString() ? value.toBigDecimal() : 0
+                }
+                sprintEntry.label = index == 0 ? "Start" : Sprint.getNameByReleaseAndClicheSprintId(release, xmlRoot."${Cliche.SPRINT_ID}".toString()) + "${cliche.id ? '' : " (progress)"}"
+                values << sprintEntry
             }
         }
         return values

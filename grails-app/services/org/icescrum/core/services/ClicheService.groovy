@@ -33,54 +33,31 @@ import org.icescrum.core.support.ApplicationSupport
 @Transactional
 class ClicheService {
 
+    def grailsApplication
+
     private static void save(Cliche cliche, TimeBox timeBox) {
         timeBox.addToCliches(cliche)
         cliche.save()
     }
 
-    def computeDataOnType = { stories ->
-        def cUS = 0
-        def cDefect = 0
-        def cTechnical = 0
-        def cUSDone = 0
-        def cDefectDone = 0
-        def cTechnicalDone = 0
-        stories.each { story ->
+    private Map getPointsByType(stories) {
+        int allTotal = 0
+        int remainingTotal = 0
+        def storyTypes = grailsApplication.config.icescrum.storyTypes
+        def allPointsByType = storyTypes.collectEntries { storyType -> [(storyType): 0] }
+        def remainingPointsByType = storyTypes.collectEntries { storyType -> [(storyType): 0] }
+        stories.each { Story story ->
             if (story.effort > 0) {
-                switch (story.type) {
-                    case Story.TYPE_USER_STORY:
-                        cUS += story.effort
-                        if (story.state == Story.STATE_DONE) {
-                            cUSDone += story.effort
-                        }
-                        break
-                    case Story.TYPE_DEFECT:
-                        cDefect += story.effort
-                        if (story.state == Story.STATE_DONE) {
-                            cDefectDone += story.effort
-                        }
-                        break
-                    case Story.TYPE_TECHNICAL_STORY:
-                        cTechnical += story.effort
-                        if (story.state == Story.STATE_DONE) {
-                            cTechnicalDone += story.effort
-                        }
-                        break
-                    default:
-                        break
+                allPointsByType[story.type] += story.effort
+                allTotal += story.effort
+                if (story.state != Story.STATE_DONE) {
+                    remainingPointsByType[story.type] += story.effort
+                    remainingTotal += story.effort
                 }
             }
         }
-        [
-                compteurUS             : cUS,
-                compteurDefect         : cDefect,
-                compteurTechnical      : cTechnical,
-                compteurUSFinish       : cUSDone,
-                compteurDefectFinish   : cDefectDone,
-                compteurTechnicalFinish: cTechnicalDone
-        ]
+        return [all: allPointsByType, remaining: remainingPointsByType, allTotal: allTotal, remainingTotal: remainingTotal]
     }
-
 
     void createSprintCliche(Sprint s, Date d, int type) {
         Cliche c = new Cliche(
@@ -100,92 +77,61 @@ class ClicheService {
     }
 
     def generateSprintClicheData(Sprint sprint, int clicheType) {
+        def storyTypes = grailsApplication.config.icescrum.storyTypes
         // Retrieve the current release and the current sprint
         Release release = sprint.parentRelease
         Project project = release.parentProject
         // Browse the stories and add their estimated velocity to the corresponding counter
-        def currentSprintData = computeDataOnType(sprint.stories)
-        // Retrieve all the stories of the release
-        List<Story> allItemsInRelease = Story.storiesByRelease(release).list()
-        def allItemsReleaseData = computeDataOnType(allItemsInRelease)
-        // Product Backlog points + Remaining project points
-        def allItemsProjectData = computeDataOnType(project.stories)
+        def sprintPoints = getPointsByType(sprint.stories)
+        def releasePoints = getPointsByType(Story.storiesByRelease(release).list())
+        def projectPoints = getPointsByType(project.stories)
         // Stories by state
-        int doneCount = 0
-        int inprogressCount = 0
-        int plannedCount = 0
-        int estimatedCount = 0
-        int acceptedCount = 0
-        int suggestedCount = 0
+        def storyStates = [Story.STATE_SUGGESTED, Story.STATE_ACCEPTED, Story.STATE_ESTIMATED, Story.STATE_PLANNED, Story.STATE_INPROGRESS, Story.STATE_DONE]
+        def countByState = storyStates.collectEntries { storyState -> [(storyState): 0]}
         project.stories.each { story ->
-            switch (story.state) {
-                case Story.STATE_DONE:
-                    doneCount++
-                    break
-                case Story.STATE_INPROGRESS:
-                    inprogressCount++
-                    break
-                case Story.STATE_PLANNED:
-                    plannedCount++
-                    break
-                case Story.STATE_ESTIMATED:
-                    estimatedCount++
-                    break
-                case Story.STATE_ACCEPTED:
-                    acceptedCount++
-                    break
-                case Story.STATE_SUGGESTED:
-                    suggestedCount++
-                    break
-                default:
-                    break
+            if (story.state in storyStates) {
+                countByState[story.state] ++
             }
         }
+        // Data
         def clicheData = {
             cliche {
                 "${Cliche.SPRINT_ID}"("R${release.orderNumber}S${sprint.orderNumber}")
                 if (clicheType == Cliche.TYPE_ACTIVATION) {
-                    // Activation Date
-                    "${Cliche.INPROGRESS_DATE}"(sprint.inProgressDate)
-                    // Capacity
-                    "${Cliche.SPRINT_CAPACITY}"(currentSprintData['compteurUS'] + currentSprintData['compteurTechnical'] + currentSprintData['compteurDefect'])
-                    "${Cliche.FUNCTIONAL_STORY_CAPACITY}"(currentSprintData['compteurUS'])
-                    "${Cliche.TECHNICAL_STORY_CAPACITY}"(currentSprintData['compteurTechnical'])
-                    "${Cliche.DEFECT_STORY_CAPACITY}"(currentSprintData['compteurDefect'])
+                    "${Cliche.INPROGRESS_DATE}"(sprint.inProgressDate) // TODO NOT USED
+                    "${Cliche.SPRINT_CAPACITY}"(sprintPoints.allTotal)
+                    "${Cliche.FUNCTIONAL_STORY_CAPACITY}"(sprintPoints.all[Story.TYPE_USER_STORY]) // TODO NOT USED
+                    "${Cliche.TECHNICAL_STORY_CAPACITY}"(sprintPoints.all[Story.TYPE_TECHNICAL_STORY]) // TODO NOT USED
+                    "${Cliche.DEFECT_STORY_CAPACITY}"(sprintPoints.all[Story.TYPE_DEFECT]) // TODO NOT USED
                 }
                 if (clicheType == Cliche.TYPE_CLOSE) {
-                    // Close Date
-                    "${Cliche.DONE_DATE}"(sprint.doneDate)
-                    // Capacity
-                    "${Cliche.SPRINT_VELOCITY}"(currentSprintData['compteurUS'] + currentSprintData['compteurTechnical'] + currentSprintData['compteurDefect'])
-                    "${Cliche.FUNCTIONAL_STORY_VELOCITY}"(currentSprintData['compteurUS'])
-                    "${Cliche.TECHNICAL_STORY_VELOCITY}"(currentSprintData['compteurTechnical'])
-                    "${Cliche.DEFECT_STORY_VELOCITY}"(currentSprintData['compteurDefect'])
+                    "${Cliche.DONE_DATE}"(sprint.doneDate) // TODO NOT USED
+                    "${Cliche.SPRINT_VELOCITY}"(sprintPoints.allTotal)
+                    "${Cliche.FUNCTIONAL_STORY_VELOCITY}"(sprintPoints.all[Story.TYPE_USER_STORY])
+                    "${Cliche.TECHNICAL_STORY_VELOCITY}"(sprintPoints.all[Story.TYPE_TECHNICAL_STORY])
+                    "${Cliche.DEFECT_STORY_VELOCITY}"(sprintPoints.all[Story.TYPE_DEFECT])
                 }
                 // Project points
-                "${Cliche.FUNCTIONAL_STORY_PROJECT_POINTS}"(allItemsProjectData['compteurUS'])
-                "${Cliche.TECHNICAL_STORY_PROJECT_POINTS}"(allItemsProjectData['compteurTechnical'])
-                "${Cliche.DEFECT_STORY_PROJECT_POINTS}"(allItemsProjectData['compteurDefect'])
-                "${Cliche.PROJECT_POINTS}"(allItemsProjectData['compteurUS'] + allItemsProjectData['compteurTechnical'] + allItemsProjectData['compteurDefect'])
-                // Remaining backlog points
-                def srp = allItemsProjectData['compteurUS'] - allItemsProjectData['compteurUSFinish']
-                def trp = allItemsProjectData['compteurTechnical'] - allItemsProjectData['compteurTechnicalFinish']
-                def drp = allItemsProjectData['compteurDefect'] - allItemsProjectData['compteurDefectFinish']
-                "${Cliche.FUNCTIONAL_STORY_PROJECT_REMAINING_POINTS}"(srp)
-                "${Cliche.TECHNICAL_STORY_PROJECT_REMAINING_POINTS}"(trp)
-                "${Cliche.DEFECT_STORY_PROJECT_REMAINING_POINTS}"(drp)
-                "${Cliche.PROJECT_REMAINING_POINTS}"(srp + trp + drp)
+                "${Cliche.FUNCTIONAL_STORY_PROJECT_POINTS}"(projectPoints.all[Story.TYPE_USER_STORY]) // TODO NOT USED
+                "${Cliche.TECHNICAL_STORY_PROJECT_POINTS}"(projectPoints.all[Story.TYPE_TECHNICAL_STORY]) // TODO NOT USED
+                "${Cliche.DEFECT_STORY_PROJECT_POINTS}"(projectPoints.all[Story.TYPE_DEFECT]) // TODO NOT USED
+                "${Cliche.PROJECT_POINTS}"(projectPoints.allTotal)
+                // Project remaining points
+                storyTypes.each { storyType ->
+                    "${grailsApplication.config.icescrum.resourceBundles.storyTypesCliche[storyType]}"(projectPoints.remaining[storyType])
+                }
+                "${Cliche.PROJECT_REMAINING_POINTS}"(projectPoints.remainingTotal)
                 // Release remaining points
-                "${Cliche.FUNCTIONAL_STORY_RELEASE_REMAINING_POINTS}"(allItemsReleaseData['compteurUS'] - allItemsReleaseData['compteurUSFinish'])
-                "${Cliche.TECHNICAL_STORY_RELEASE_REMAINING_POINTS}"(allItemsReleaseData['compteurTechnical'] - allItemsReleaseData['compteurTechnicalFinish'])
-                "${Cliche.DEFECT_STORY_RELEASE_REMAINING_POINTS}"(allItemsReleaseData['compteurDefect'] - allItemsReleaseData['compteurDefectFinish'])
+                "${Cliche.FUNCTIONAL_STORY_RELEASE_REMAINING_POINTS}"(releasePoints.remaining[Story.TYPE_USER_STORY]) // TODO NOT USED
+                "${Cliche.TECHNICAL_STORY_RELEASE_REMAINING_POINTS}"(releasePoints.remaining[Story.TYPE_TECHNICAL_STORY]) // TODO NOT USED
+                "${Cliche.DEFECT_STORY_RELEASE_REMAINING_POINTS}"(releasePoints.remaining[Story.TYPE_DEFECT]) // TODO NOT USED
                 // Stories points by states
-                "${Cliche.FINISHED_STORIES}"(doneCount)
-                "${Cliche.INPROGRESS_STORIES}"(inprogressCount)
-                "${Cliche.PLANNED_STORIES}"(plannedCount)
-                "${Cliche.ESTIMATED_STORIES}"(estimatedCount)
-                "${Cliche.ACCEPTED_STORIES}"(acceptedCount)
-                "${Cliche.SUGGESTED_STORIES}"(suggestedCount)
+                "${Cliche.FINISHED_STORIES}"(countByState[Story.STATE_DONE])
+                "${Cliche.INPROGRESS_STORIES}"(countByState[Story.STATE_INPROGRESS])
+                "${Cliche.PLANNED_STORIES}"(countByState[Story.STATE_PLANNED])
+                "${Cliche.ESTIMATED_STORIES}"(countByState[Story.STATE_ESTIMATED])
+                "${Cliche.ACCEPTED_STORIES}"(countByState[Story.STATE_ACCEPTED])
+                "${Cliche.SUGGESTED_STORIES}"(countByState[Story.STATE_SUGGESTED])
             }
         }
         StreamingMarkupBuilder xmlBuilder = new StreamingMarkupBuilder()
@@ -196,38 +142,14 @@ class ClicheService {
         if (sprint.state == Sprint.STATE_WAIT || sprint.state == Sprint.STATE_DONE) {
             return
         }
-        int doneCount = 0
-        int inprogressCount = 0
-        int waitCount = 0
-        int recurrentCount = 0
-        int urgentCount = 0
-        int storyCount = 0
+        def taskStates = [Task.STATE_WAIT, Task.STATE_BUSY, Task.STATE_DONE]
+        def tasksByState = taskStates.collectEntries { taskState -> [(taskState): 0]}
+        def taskTypes = [null, Task.TYPE_RECURRENT, Task.TYPE_URGENT]
+        def tasksByType = taskTypes.collectEntries { taskType -> [(taskType): 0]}
         float remainingTime = 0
         sprint.tasks.each { task ->
-            switch (task.state) {
-                case Task.STATE_DONE:
-                    doneCount++
-                    break
-                case Task.STATE_BUSY:
-                    inprogressCount++
-                    break
-                case Task.STATE_WAIT:
-                    waitCount++
-                    break
-                default:
-                    break
-            }
-            switch (task.type) {
-                case Task.TYPE_RECURRENT:
-                    recurrentCount++
-                    break
-                case Task.TYPE_URGENT:
-                    urgentCount++
-                    break
-                default:
-                    storyCount++
-                    break
-            }
+            tasksByState[task.state] ++
+            tasksByType[task.type] ++
             remainingTime += task.estimation ?: 0
         }
         int storiesDoneCount = 0
@@ -249,18 +171,18 @@ class ClicheService {
         def clicheData = {
             cliche {
                 "${Cliche.TOTAL_STORIES}"(storiesDoneCount + storiesInProgressCount)
-                "${Cliche.STORIES_INPROGRESS}"(storiesInProgressCount)
+                "${Cliche.STORIES_INPROGRESS}"(storiesInProgressCount) // TODO NOT USED
                 "${Cliche.STORIES_DONE}"(storiesDoneCount)
                 "${Cliche.STORIES_TOTAL_POINTS}"(totalPointsStories)
                 "${Cliche.STORIES_POINTS_DONE}"(pointsDoneStories)
-                "${Cliche.TOTAL_TASKS}"(waitCount + inprogressCount + doneCount)
-                "${Cliche.TASKS_WAIT}"(waitCount)
-                "${Cliche.TASKS_INPROGRESS}"(inprogressCount)
-                "${Cliche.TASKS_DONE}"(doneCount)
-                "${Cliche.TASKS_SPRINT}"(recurrentCount + urgentCount)
-                "${Cliche.TASKS_RECURRENT}"(recurrentCount)
-                "${Cliche.TASKS_URGENT}"(urgentCount)
-                "${Cliche.TASKS_STORY}"(storyCount)
+                "${Cliche.TOTAL_TASKS}"(tasksByState[Task.STATE_WAIT] + tasksByState[Task.STATE_BUSY] + tasksByState[Task.STATE_DONE])
+                "${Cliche.TASKS_WAIT}"(tasksByState[Task.STATE_WAIT]) // TODO NOT USED
+                "${Cliche.TASKS_INPROGRESS}"(tasksByState[Task.STATE_BUSY]) // TODO NOT USED
+                "${Cliche.TASKS_DONE}"(tasksByState[Task.STATE_DONE])
+                "${Cliche.TASKS_SPRINT}"(tasksByType[Task.TYPE_RECURRENT] + tasksByType[Task.TYPE_URGENT]) // TODO NOT USED
+                "${Cliche.TASKS_RECURRENT}"(tasksByType[Task.TYPE_RECURRENT]) // TODO NOT USED
+                "${Cliche.TASKS_URGENT}"(tasksByType[Task.TYPE_URGENT]) // TODO NOT USED
+                "${Cliche.TASKS_STORY}"(tasksByType[null]) // TODO NOT USED
                 "${Cliche.REMAINING_TIME}"(remainingTime)
             }
         }
