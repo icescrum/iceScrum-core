@@ -198,7 +198,7 @@ class ReleaseService extends IceScrumEventPublisher {
         cliches?.eachWithIndex { cliche, index ->
             def xmlRoot = new XmlSlurper().parseText(cliche.data)
             if (xmlRoot) {
-                def storyTypes = grailsApplication.config.icescrum.storyTypes
+                def storyTypes = grailsApplication.config.icescrum.resourceBundles.storyTypes.keySet()
                 def sprintEntry = [:]
                 storyTypes.each { storyType ->
                     def value = xmlRoot."${grailsApplication.config.icescrum.resourceBundles.storyTypesCliche[storyType]}"

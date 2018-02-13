@@ -43,7 +43,7 @@ class ClicheService {
     private Map getPointsByType(stories) {
         int allTotal = 0
         int remainingTotal = 0
-        def storyTypes = grailsApplication.config.icescrum.storyTypes
+        def storyTypes = grailsApplication.config.icescrum.resourceBundles.storyTypes.keySet()
         def allPointsByType = storyTypes.collectEntries { storyType -> [(storyType): 0] }
         def remainingPointsByType = storyTypes.collectEntries { storyType -> [(storyType): 0] }
         stories.each { Story story ->
@@ -77,7 +77,7 @@ class ClicheService {
     }
 
     def generateSprintClicheData(Sprint sprint, int clicheType) {
-        def storyTypes = grailsApplication.config.icescrum.storyTypes
+        def storyTypes = grailsApplication.config.icescrum.resourceBundles.storyTypes.keySet()
         // Retrieve the current release and the current sprint
         Release release = sprint.parentRelease
         Project project = release.parentProject
