@@ -390,7 +390,7 @@ class Project extends TimeBox implements Serializable, Attachmentable {
         }
         if (release?.id) {
             def sprintAndCount = Sprint.executeQuery("""
-                SELECT s.id, s.goal, s.state, s.orderNumber, s.velocity, s.capacity, s.endDate, , s.startDate
+                SELECT s.id, s.goal, s.state, s.orderNumber, s.velocity, s.capacity, s.endDate, s.startDate
                 FROM Sprint s
                 WHERE s.parentRelease.id = :parentReleaseId
                 AND s.state in (:states)
