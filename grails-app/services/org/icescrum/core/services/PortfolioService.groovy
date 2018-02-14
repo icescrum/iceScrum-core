@@ -44,13 +44,7 @@ class PortfolioService extends IceScrumEventPublisher {
     void save(Portfolio portfolio, List<Project> projects, List<User> businessOwners, List<User> portfolioStakeHolders) {
         portfolio.save()
         projects.each { project ->
-            if (project.id && !project.productOwners.contains(springSecurityService.currentUser)) {
-                throw new BusinessException(code: 'is.portoflio.add.project.not.productOwner', args: [project.name])
-            }
-            if (project.portfolio) {
-                throw new BusinessException(code: 'is.project.error.already.in.portfolio', args: [project.name])
-            }
-            portfolio.addToProjects(project)
+            addProjectToPortfolio(portfolio, project)
         }
         businessOwners.each { businessOwner ->
             addBusinessOwner(portfolio, businessOwner)
@@ -74,13 +68,7 @@ class PortfolioService extends IceScrumEventPublisher {
             }
             projects.each { project ->
                 if (!portfolio.projects?.contains(project)) {
-                    if (project.id && !project.productOwners.contains(springSecurityService.currentUser)) {
-                        throw new BusinessException(code: 'is.portoflio.add.project.not.productOwner', args: [project.name])
-                    }
-                    if (project.portfolio) {
-                        throw new BusinessException(code: 'is.project.error.already.in.portfolio', args: [project.name])
-                    }
-                    portfolio.addToProjects(project)
+                    addProjectToPortfolio(portfolio, project)
                 }
             }
         }
@@ -224,5 +212,15 @@ class PortfolioService extends IceScrumEventPublisher {
 
     private void removeStakeHolder(Portfolio portfolio, User portfolioStakeHolder) {
         securityService.deletePortfolioStakeHolderPermissions portfolioStakeHolder, portfolio
+    }
+
+    private void addProjectToPortfolio(Portfolio portfolio, Project project) {
+        if (project.id && !project.productOwners.contains(springSecurityService.currentUser) && project.owner != springSecurityService.currentUser) {
+            throw new BusinessException(code: 'is.portoflio.add.project.not.productOwner', args: [project.name])
+        }
+        if (project.portfolio) {
+            throw new BusinessException(code: 'is.project.error.already.in.portfolio', args: [project.name])
+        }
+        portfolio.addToProjects(project)
     }
 }
