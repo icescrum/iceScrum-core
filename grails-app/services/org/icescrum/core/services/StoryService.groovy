@@ -78,6 +78,7 @@ class StoryService extends IceScrumEventPublisher {
         }
         def rank = story.sameBacklogStories ? story.sameBacklogStories.max { it.rank }.rank + 1 : 1
         setRank(story, rank)
+        publishSynchronousEvent(IceScrumEventType.BEFORE_CREATE, story)
         story.save(flush: true)
         story.refresh() // required to initialize collections to empty list
         project.addToStories(story)
