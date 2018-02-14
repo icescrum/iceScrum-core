@@ -390,13 +390,13 @@ class Project extends TimeBox implements Serializable, Attachmentable {
         }
         if (release?.id) {
             def sprintAndCount = Sprint.executeQuery("""
-                SELECT s.id, s.goal, s.state, s.orderNumber, s.velocity, s.capacity, s.endDate
+                SELECT s.id, s.goal, s.state, s.orderNumber, s.velocity, s.capacity, s.endDate, , s.startDate
                 FROM Sprint s
                 WHERE s.parentRelease.id = :parentReleaseId
                 AND s.state in (:states)
                 ORDER BY s.state DESC """, [parentReleaseId: release.id, states: [Sprint.STATE_INPROGRESS, Sprint.STATE_WAIT]], [max: 1])[0]
             if (sprintAndCount) {
-                def sprint = [id: sprintAndCount[0], goal: sprintAndCount[1], state: sprintAndCount[2], orderNumber: sprintAndCount[3], velocity: sprintAndCount[4], capacity: sprintAndCount[5], endDate: sprintAndCount[6]]
+                def sprint = [id: sprintAndCount[0], goal: sprintAndCount[1], state: sprintAndCount[2], orderNumber: sprintAndCount[3], velocity: sprintAndCount[4], capacity: sprintAndCount[5], endDate: sprintAndCount[6], startDate: sprintAndCount[7]]
                 sprint.index = sprint.orderNumber + release.remove('firstSprintIndex') - 1
                 release.currentOrNextSprint = sprint
             }
