@@ -25,7 +25,6 @@
 package org.icescrum.core.services
 
 import grails.transaction.Transactional
-import grails.validation.ValidationException
 import org.icescrum.core.domain.*
 import org.icescrum.core.error.BusinessException
 import org.icescrum.core.event.IceScrumEventPublisher
