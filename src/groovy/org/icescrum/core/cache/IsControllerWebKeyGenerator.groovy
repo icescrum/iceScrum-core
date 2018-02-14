@@ -11,7 +11,7 @@ class IsControllerWebKeyGenerator implements WebKeyGenerator {
     @Override
     String generate(HttpServletRequest request) {
         def _request = WebUtils.retrieveGrailsWebRequest()
-        def springContext =  Holders.grailsApplication.getMainContext()
+        def springContext = Holders.grailsApplication.getMainContext()
         springContext.getBean('securityService').decodeKeys(_request.params)
         def params = _request.params.clone()
         String controllerName = params.remove('controller')

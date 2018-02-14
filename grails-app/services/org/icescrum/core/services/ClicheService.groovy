@@ -87,10 +87,10 @@ class ClicheService {
         def projectPoints = getPointsByType(project.stories)
         // Stories by state
         def storyStates = [Story.STATE_SUGGESTED, Story.STATE_ACCEPTED, Story.STATE_ESTIMATED, Story.STATE_PLANNED, Story.STATE_INPROGRESS, Story.STATE_DONE]
-        def countByState = storyStates.collectEntries { storyState -> [(storyState): 0]}
+        def countByState = storyStates.collectEntries { storyState -> [(storyState): 0] }
         project.stories.each { story ->
             if (story.state in storyStates) {
-                countByState[story.state] ++
+                countByState[story.state]++
             }
         }
         // Data
@@ -143,13 +143,13 @@ class ClicheService {
             return
         }
         def taskStates = [Task.STATE_WAIT, Task.STATE_BUSY, Task.STATE_DONE]
-        def tasksByState = taskStates.collectEntries { taskState -> [(taskState): 0]}
+        def tasksByState = taskStates.collectEntries { taskState -> [(taskState): 0] }
         def taskTypes = [null, Task.TYPE_RECURRENT, Task.TYPE_URGENT]
-        def tasksByType = taskTypes.collectEntries { taskType -> [(taskType): 0]}
+        def tasksByType = taskTypes.collectEntries { taskType -> [(taskType): 0] }
         float remainingTime = 0
         sprint.tasks.each { task ->
-            tasksByState[task.state] ++
-            tasksByType[task.type] ++
+            tasksByState[task.state]++
+            tasksByType[task.type]++
             remainingTime += task.estimation ?: 0
         }
         int storiesDoneCount = 0
