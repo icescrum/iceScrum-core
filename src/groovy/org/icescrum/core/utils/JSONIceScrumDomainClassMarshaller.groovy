@@ -31,10 +31,10 @@ import org.codehaus.groovy.grails.support.proxy.ProxyHandler
 import org.codehaus.groovy.grails.web.converters.exceptions.ConverterException
 import org.codehaus.groovy.grails.web.converters.marshaller.json.DomainClassMarshaller
 import org.codehaus.groovy.grails.web.json.JSONWriter
-import org.codehaus.groovy.grails.web.util.WebUtils
 import org.icescrum.core.domain.User
 import org.springframework.beans.BeanWrapper
 import org.springframework.beans.BeanWrapperImpl
+import org.springframework.web.context.request.RequestContextHolder
 
 public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
 
@@ -62,8 +62,7 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
         BeanWrapper beanWrapper = new BeanWrapperImpl(value)
         def configName = GrailsNameUtils.getShortName(clazz).toLowerCase()
         def config = propertiesMap."$configName"
-        def isRestAPI = WebUtils.retrieveGrailsWebRequest()?.currentRequest?.restAPI ?: false
-        def requestConfig = !isRestAPI ? WebUtils.retrieveGrailsWebRequest()?.currentRequest?.marshaller?."$configName" : null
+        def requestConfig = getRequestConfig(configName)
 
         writer.object()
         writer.key('class').value(GrailsNameUtils.getShortName(domainClass.clazz.name))
@@ -229,7 +228,7 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
 
         def configName = GrailsNameUtils.getShortName(referencedDomainClass.name).toLowerCase()
         def config = propertiesMap."$configName"
-        def requestConfig = WebUtils.retrieveGrailsWebRequest()?.currentRequest?.marshaller?."$configName"
+        def requestConfig = getRequestConfig(configName)
 
         if (!requestConfig?.overrideAsShort && !requestConfig?.overrideAll) {
             config?.asShort?.each {
@@ -241,5 +240,10 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
         }
 
         writer.endObject()
+    }
+
+    private getRequestConfig(configName) {
+        def request = RequestContextHolder.requestAttributes?.currentRequest
+        return request?.restAPI ? null : request?.marshaller?."$configName"
     }
 }
