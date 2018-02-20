@@ -338,6 +338,7 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
     }
 
     def beforeValidate() {
+        super.beforeValidate()
         retrospective = ServicesUtils.cleanXml(retrospective)
         doneDefinition = ServicesUtils.cleanXml(doneDefinition)
     }
