@@ -698,8 +698,18 @@ class StoryService extends IceScrumEventPublisher {
                 copiedStory.addComment(c.poster, c.body)
             }
             copiedStory.tags = story.tags
-            story.acceptanceTests?.each {
-                acceptanceTestService.save(new AcceptanceTest(name: it.name, description: it.description), copiedStory, (User) springSecurityService.currentUser)
+            story.acceptanceTests?.each { acceptanceTest ->
+                acceptanceTestService.save(new AcceptanceTest(name: acceptanceTest.name, description: acceptanceTest.description), copiedStory, (User) springSecurityService.currentUser)
+            }
+            story.tasks?.each { task ->
+                taskService.save(new Task(
+                        name: task.name,
+                        description: task.description,
+                        notes: task.notes,
+                        estimation: task.estimation ?: null,
+                        color: task.color,
+                        parentStory: copiedStory
+                ), (User) springSecurityService.currentUser)
             }
             copiedStories << copiedStory.refresh()
         }
