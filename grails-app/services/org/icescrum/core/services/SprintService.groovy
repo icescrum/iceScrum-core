@@ -61,7 +61,7 @@ class SprintService extends IceScrumEventPublisher {
                     throw new BusinessException(code: 'is.sprint.error.update.done')
                 }
             }
-            if (sprint.state == Sprint.STATE_INPROGRESS && startDate && sprint.startDate != startDate) {
+            if (sprint.state == Sprint.STATE_INPROGRESS && startDate && ApplicationSupport.getMidnightTime(sprint.startDate) != ApplicationSupport.getMidnightTime(startDate)) {
                 throw new BusinessException(code: 'is.sprint.error.update.startdate.inprogress')
             }
         }
