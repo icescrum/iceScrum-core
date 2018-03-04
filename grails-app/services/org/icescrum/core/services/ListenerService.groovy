@@ -209,6 +209,9 @@ class ListenerService {
             task.sprint?.tasks?.findAll { it.isDirty('rank') && it.id != task.id }?.each { // If others tasks have been updated, push them
                 pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, [class: 'Task', id: it.id, rank: it.rank, messageId: 'task-' + it.id + '-rank'], project.id)
             }
+            task.parentStory?.tasks?.findAll { it.isDirty('rank') && it.id != task.id }?.each { // If others tasks have been updated, push them
+                pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, [class: 'Task', id: it.id, rank: it.rank, messageId: 'task-' + it.id + '-rank'], project.id)
+            }
         }
         if (dirtyProperties.containsKey('parentStory')) {
             def oldStory = dirtyProperties.parentStory
