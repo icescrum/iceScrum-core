@@ -90,22 +90,26 @@ class TimeBoxNotesTemplateService {
     }
 
     private static String computeTimeBoxNotesSection(Collection stories, def config) {
-        def result = new StringBuffer()
-        if (config.header) {
-            result << config.header
-            result << '\n'
-        }
-        if (config.lineTemplate) {
-            stories?.each { story ->
-                result << parseStoryVariables(story, config.lineTemplate)
+        if (!stories) {
+            return ""
+        } else {
+            def result = new StringBuffer()
+            if (config.header) {
+                result << config.header
                 result << '\n'
             }
+            if (config.lineTemplate) {
+                stories?.each { story ->
+                    result << parseStoryVariables(story, config.lineTemplate)
+                    result << '\n'
+                }
+            }
+            if (config.footer) {
+                result << config.footer
+                result << '\n'
+            }
+            return result.toString()
         }
-        if (config.footer) {
-            result << config.footer
-            result << '\n'
-        }
-        return result.toString()
     }
 
     def unMarshall(def timeBoxNotesTemplateXml, def options) {
