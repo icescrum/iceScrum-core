@@ -242,7 +242,7 @@ class TaskService extends IceScrumEventPublisher {
             throw new BusinessException(code: 'is.task.error.copy.done')
         }
         def clonedTask = new Task(
-                name: task.name + '_1',
+                name: task.name,
                 state: clonedState,
                 creator: user,
                 color: task.color,
@@ -258,18 +258,8 @@ class TaskService extends IceScrumEventPublisher {
             clonedTask.participants << it
         }
         clonedTask.validate()
-        def i = 1
         while (clonedTask.hasErrors()) {
-            if (clonedTask.errors.getFieldError('name')?.defaultMessage?.contains("unique")) {
-                i += 1
-                clonedTask.name = clonedTask.name + '_' + i
-                clonedTask.validate()
-            } else if (clonedTask.errors.getFieldError('name')?.code?.contains("maxSize.exceeded")) {
-                clonedTask.name = clonedTask.name[0..20]
-                clonedTask.validate()
-            } else {
-                throw new ValidationException('Validation Error(s) occurred during save()', clonedTask.errors)
-            }
+            throw new ValidationException('Validation Error(s) occurred during save()', clonedTask.errors)
         }
         save(clonedTask, user)
         if (task.sprint) {
