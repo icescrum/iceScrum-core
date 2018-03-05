@@ -668,6 +668,22 @@ class StoryService extends IceScrumEventPublisher {
                 if (story.feature) {
                     copiedStory.feature = Feature.findByBacklogAndNameIlike(project, story.feature.name)
                 }
+                if (story.actors && copiedStory.description) {
+                    // fetch old project's actors in desc or directly in story ??
+                    Matcher actorIdMatcher = copiedStory.description =~ /A\[\d+-([^]]*)]/
+                    while (actorIdMatcher.find()) {
+                        String actorName = actorIdMatcher.group(1)
+                        // fetch new project's actors with same name
+                        Actor newActor = project.actors.find { it.name == actorName }
+                        if (newActor) {
+                            // update id for existing actors in description
+                            copiedStory.description = copiedStory.description.replace(actorIdMatcher.group(0), "A[${newActor.uid}-${newActor.name}]")
+                        } else {
+                            // remove id and tag for non existing actors
+                            copiedStory.description = copiedStory.description.replace(actorIdMatcher.group(0), actorName)
+                        }
+                    }
+                }
             }
             copiedStory.validate()
             def i = 1
