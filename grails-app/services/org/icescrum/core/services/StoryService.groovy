@@ -690,7 +690,7 @@ class StoryService extends IceScrumEventPublisher {
             while (copiedStory.hasErrors()) {
                 if (copiedStory.errors.getFieldError('name')?.defaultMessage?.contains("unique")) {
                     i += 1
-                    copiedStory.name = copiedStory.name + '_' + i
+                    copiedStory.name = story.name + '_' + i
                     copiedStory.validate()
                 } else if (copiedStory.errors.getFieldError('name')?.code?.contains("maxSize.exceeded")) {
                     copiedStory.name = copiedStory.name[0..20]
