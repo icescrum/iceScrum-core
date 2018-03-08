@@ -27,6 +27,11 @@ import grails.converters.JSON
 import grails.plugin.springsecurity.SecurityFilterPosition
 import grails.plugin.springsecurity.SpringSecurityService
 import grails.plugin.springsecurity.SpringSecurityUtils
+import liquibase.util.file.FilenameUtils
+import net.sf.jasperreports.engine.JasperCompileManager
+import org.apache.commons.io.FileUtils
+import org.apache.commons.io.filefilter.RegexFileFilter
+import org.apache.commons.io.filefilter.TrueFileFilter
 import org.codehaus.groovy.grails.commons.ControllerArtefactHandler
 import org.codehaus.groovy.grails.commons.GrailsClassUtils
 import org.codehaus.groovy.grails.commons.ServiceArtefactHandler
@@ -371,6 +376,26 @@ ERROR: iceScrum v7 has detected that you attempt to run it on an existing R6 ins
 
     private void addJasperMethod(source, springSecurityService, jasperService) {
         try {
+            /*source.metaClass.compileReport = {
+                // Get currently running directory
+                String currentPath = System.getProperty("user.dir");
+                System.out.println("Current path is: " + currentPath);
+
+                // Go to directory where all the reports are
+                File rootDir = new File(currentPath + "/web-app/reports");
+
+                // Get all *.jrxml files
+                Collection<File> files = FileUtils.listFiles(rootDir,
+                        new RegexFileFilter("^(.*\\.jrxml)"), TrueFileFilter.INSTANCE);
+
+                for (File file : files) {
+                    System.out.println("Compiling: " + file.getAbsolutePath());
+                    System.out.println("Output: " + file.getName() + ".jasper");
+                    // Actual compiling
+                    JasperCompileManager.compileReportToFile(file.getAbsolutePath(), currentPath + "/web-app/reports/subreports2/" + FilenameUtils.getBaseName(file.getName()) + ".jasper");
+                    System.out.println("Compiling: completed!");
+                }
+            }*/
             source.metaClass.renderReport = { String reportName, String format, def data, String outputName = null, def parameters = null ->
                 outputName = (outputName ? outputName.replaceAll("[^\\-a-zA-Z\\s]", "").replaceAll(" ", "") + '-' + reportName : reportName) + '-' + (g.formatDate(formatName: 'is.date.file'))
                 if (!session.progress) {
