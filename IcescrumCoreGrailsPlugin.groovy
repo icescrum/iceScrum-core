@@ -376,6 +376,7 @@ ERROR: iceScrum v7 has detected that you attempt to run it on an existing R6 ins
 
     private void addJasperMethod(source, springSecurityService, jasperService) {
         try {
+            //Only for DEV, Compile reports when changing jrxml for subreports without install ireport designer...
             /*source.metaClass.compileReport = {
                 // Get currently running directory
                 String currentPath = System.getProperty("user.dir");
