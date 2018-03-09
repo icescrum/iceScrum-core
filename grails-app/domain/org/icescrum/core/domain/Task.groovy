@@ -77,7 +77,7 @@ class Task extends BacklogElement implements Serializable {
         doneDate nullable: true
         estimation nullable: true, validator: { newEstimation, task -> newEstimation == null || newEstimation >= 0 ?: 'invalid' }
         responsible nullable: true
-        parentStory nullable: true
+        parentStory nullable: true, validator: { newParentStory, task -> newParentStory != null ? (newParentStory.backlog == task.backlog.parentProject) : 'invalid' }
         parentProject validator: { newParentProject, task -> newParentProject == task.backlog?.parentProject || newParentProject == task.parentStory?.backlog ?: 'invalid' }
         inProgressDate nullable: true
     }
