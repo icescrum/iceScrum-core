@@ -27,7 +27,6 @@ import grails.transaction.Transactional
 import org.icescrum.core.domain.Invitation
 import org.icescrum.core.domain.Portfolio
 import org.icescrum.core.domain.Project
-import org.icescrum.core.domain.Team
 import org.icescrum.core.domain.User
 import org.icescrum.core.domain.security.Authority
 import org.icescrum.core.error.BusinessException
