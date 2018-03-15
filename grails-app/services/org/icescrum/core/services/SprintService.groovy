@@ -54,6 +54,12 @@ class SprintService extends IceScrumEventPublisher {
 
     @PreAuthorize('(productOwner(#sprint.parentRelease.parentProject) or scrumMaster(#sprint.parentRelease.parentProject)) and !archivedProject(#sprint.parentRelease.parentProject)')
     void update(Sprint sprint, Date startDate = null, Date endDate = null, def checkIntegrity = true, boolean updateRelease = true) {
+        if (startDate) {
+            startDate = DateUtils.getMidnightDate(startDate)
+        }
+        if (endDate) {
+            endDate = DateUtils.getMidnightDate(endDate)
+        }
         if (checkIntegrity) {
             if (sprint.state == Sprint.STATE_DONE) {
                 def illegalDirtyProperties = sprint.dirtyPropertyNames - ['goal', 'deliveredVersion', 'retrospective', 'doneDefinition']
@@ -61,23 +67,24 @@ class SprintService extends IceScrumEventPublisher {
                     throw new BusinessException(code: 'is.sprint.error.update.done')
                 }
             }
-            if (sprint.state == Sprint.STATE_INPROGRESS && startDate && DateUtils.getMidnightDate(sprint.startDate) != DateUtils.getMidnightDate(startDate)) {
+            if (sprint.state == Sprint.STATE_INPROGRESS && startDate && DateUtils.getMidnightDate(sprint.startDate) != startDate) {
                 throw new BusinessException(code: 'is.sprint.error.update.startdate.inprogress')
             }
         }
         if (startDate && endDate) {
             def nextSprint = sprint.parentRelease.sprints?.find { it.orderNumber == sprint.orderNumber + 1 }
-            if (sprint.endDate != endDate && nextSprint && endDate >= nextSprint.startDate) {
-                if (nextSprint) {
-                    def deltaDays = (endDate - nextSprint.startDate) + 1
-                    if (nextSprint.endDate + deltaDays <= sprint.parentRelease.endDate) {
-                        update(nextSprint, nextSprint.startDate + deltaDays, nextSprint.endDate + deltaDays, false)
+            if (DateUtils.getMidnightDate(sprint.endDate) != endDate && nextSprint && endDate >= DateUtils.getMidnightDate(nextSprint.startDate)) {
+                def nextSprintStartDate = DateUtils.getMidnightDate(nextSprint.startDate)
+                def nextSprintEndDate = DateUtils.getMidnightDate(nextSprint.endDate)
+                def parentReleaseEndDate = DateUtils.getMidnightDate(sprint.parentRelease.endDate)
+                def deltaDays = (endDate - nextSprintStartDate) + 1
+                if (nextSprintEndDate + deltaDays <= parentReleaseEndDate) {
+                    update(nextSprint, nextSprintStartDate + deltaDays, nextSprintEndDate + deltaDays, false)
+                } else {
+                    if (nextSprintStartDate + deltaDays >= parentReleaseEndDate) {
+                        delete(nextSprint)
                     } else {
-                        if (nextSprint.startDate + deltaDays >= sprint.parentRelease.endDate) {
-                            delete(nextSprint)
-                        } else {
-                            update(nextSprint, nextSprint.startDate + deltaDays, sprint.parentRelease.endDate, false, updateRelease)
-                        }
+                        update(nextSprint, nextSprintStartDate + deltaDays, parentReleaseEndDate, false, updateRelease)
                     }
                 }
             }

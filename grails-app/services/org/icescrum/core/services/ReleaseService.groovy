@@ -64,8 +64,8 @@ class ReleaseService extends IceScrumEventPublisher {
                 throw new BusinessException(code: 'is.release.error.update.state.done')
             }
         }
-        startDate = startDate ?: release.startDate
-        endDate = endDate ?: release.endDate
+        startDate = DateUtils.getMidnightDate(startDate ?: release.startDate)
+        endDate = DateUtils.getMidnightDate(endDate ?: release.endDate)
         def nextRelease = release.nextRelease
         if (nextRelease && nextRelease.startDate <= endDate) {
             def nextStartDate = endDate + 1
@@ -77,13 +77,13 @@ class ReleaseService extends IceScrumEventPublisher {
         if (!release.sprints.isEmpty()) {
             def sprintService = (SprintService) grailsApplication.mainContext.getBean('sprintService')
             def firstSprint = release.sprints.min { it.startDate }
-            if (firstSprint.startDate.before(startDate)) {
+            if (DateUtils.getMidnightDate(firstSprint.startDate).before(startDate)) {
                 if (firstSprint.state >= Sprint.STATE_INPROGRESS) {
                     throw new BusinessException(code: 'is.release.error.startDate.after.inprogress.sprint')
                 }
                 sprintService.update(firstSprint, startDate, (startDate + firstSprint.duration - 1), false, false)
             }
-            def outOfBoundsSprints = release.sprints.findAll { it.startDate >= endDate }
+            def outOfBoundsSprints = release.sprints.findAll { DateUtils.getMidnightDate(it.startDate) >= endDate }
             if (outOfBoundsSprints) {
                 Collection<Sprint> sprints = outOfBoundsSprints.findAll { Sprint sprint ->
                     return sprint.tasks || sprint.stories?.any { Story story -> story.tasks }
@@ -95,7 +95,7 @@ class ReleaseService extends IceScrumEventPublisher {
                 }
                 sprintService.delete(outOfBoundsSprints.min { it.startDate })
             }
-            def overlappingSprint = release.sprints.find { it.endDate.after(endDate) }
+            def overlappingSprint = release.sprints.find { DateUtils.getMidnightDate(it.endDate).after(endDate) }
             if (overlappingSprint) {
                 if (overlappingSprint.state > Sprint.STATE_INPROGRESS) {
                     throw new BusinessException(code: 'is.release.error.endDate.before.inprogress.sprint')
@@ -103,10 +103,10 @@ class ReleaseService extends IceScrumEventPublisher {
                 sprintService.update(overlappingSprint, overlappingSprint.startDate, endDate, false, false)
             }
         }
-        if (startDate != release.startDate) {
+        if (startDate != DateUtils.getMidnightDate(release.startDate)) {
             release.startDate = startDate
         }
-        if (endDate != release.endDate) {
+        if (endDate != DateUtils.getMidnightDate(release.endDate)) {
             release.endDate = endDate
             if (release.orderNumber == release.parentProject.releases.size()) {
                 release.parentProject.endDate = endDate
