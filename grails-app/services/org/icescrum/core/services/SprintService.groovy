@@ -30,7 +30,7 @@ import org.icescrum.core.error.BusinessException
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
 import org.icescrum.core.support.ApplicationSupport
-import org.icescrum.core.utils.ServicesUtils
+import org.icescrum.core.utils.DateUtils
 import org.springframework.security.access.prepost.PreAuthorize
 
 @Transactional
@@ -61,7 +61,7 @@ class SprintService extends IceScrumEventPublisher {
                     throw new BusinessException(code: 'is.sprint.error.update.done')
                 }
             }
-            if (sprint.state == Sprint.STATE_INPROGRESS && startDate && ApplicationSupport.getMidnightTime(sprint.startDate) != ApplicationSupport.getMidnightTime(startDate)) {
+            if (sprint.state == Sprint.STATE_INPROGRESS && startDate && DateUtils.getMidnightDate(sprint.startDate) != DateUtils.getMidnightDate(startDate)) {
                 throw new BusinessException(code: 'is.sprint.error.update.startdate.inprogress')
             }
         }
@@ -122,7 +122,7 @@ class SprintService extends IceScrumEventPublisher {
         if (release.sprints) {
             startDate = release.sprints*.endDate.max() + 1
         }
-        int freeDays = ApplicationSupport.getMidnightTime(release.endDate) - ApplicationSupport.getMidnightTime(startDate) + 1
+        int freeDays = DateUtils.getMidnightDate(release.endDate) - DateUtils.getMidnightDate(startDate) + 1
         int sprintDuration = release.parentProject.preferences.estimatedSprintsDuration
         int nbNewSprints = Math.floor(freeDays / sprintDuration)
         if (nbNewSprints == 0) {
@@ -239,7 +239,7 @@ class SprintService extends IceScrumEventPublisher {
                 if (xmlRoot) {
                     lastDaycliche = cliche.datePrise
                     def currentRemaining = xmlRoot."${Cliche.REMAINING_TIME}".toFloat()
-                    if ((ServicesUtils.isDateWeekend(lastDaycliche) && !sprint.parentRelease.parentProject.preferences.hideWeekend) || !ServicesUtils.isDateWeekend(lastDaycliche)) {
+                    if ((DateUtils.isDateWeekend(lastDaycliche) && !sprint.parentRelease.parentProject.preferences.hideWeekend) || !DateUtils.isDateWeekend(lastDaycliche)) {
                         values << [
                                 remainingTime: currentRemaining,
                                 label        : lastDaycliche.clone().clearTime().time
@@ -252,7 +252,7 @@ class SprintService extends IceScrumEventPublisher {
         if (Sprint.STATE_INPROGRESS == sprint.state) {
             def nbDays = sprint.endDate - lastDaycliche
             nbDays.times {
-                if ((ServicesUtils.isDateWeekend(lastDaycliche + (it + 1)) && !sprint.parentRelease.parentProject.preferences.hideWeekend) || !ServicesUtils.isDateWeekend(lastDaycliche + (it + 1))) {
+                if ((DateUtils.isDateWeekend(lastDaycliche + (it + 1)) && !sprint.parentRelease.parentProject.preferences.hideWeekend) || !DateUtils.isDateWeekend(lastDaycliche + (it + 1))) {
                     values << [
                             remainingTime: null,
                             label        : (lastDaycliche + (it + 1)).clearTime().time
@@ -282,7 +282,7 @@ class SprintService extends IceScrumEventPublisher {
                 def xmlRoot = new XmlSlurper().parseText(cliche.data)
                 if (xmlRoot) {
                     lastDaycliche = cliche.datePrise
-                    if ((ServicesUtils.isDateWeekend(lastDaycliche) && !sprint.parentRelease.parentProject.preferences.hideWeekend) || !ServicesUtils.isDateWeekend(lastDaycliche)) {
+                    if ((DateUtils.isDateWeekend(lastDaycliche) && !sprint.parentRelease.parentProject.preferences.hideWeekend) || !DateUtils.isDateWeekend(lastDaycliche)) {
                         values << [
                                 tasksDone: xmlRoot."${Cliche.TASKS_DONE}".toInteger(),
                                 tasks    : xmlRoot."${Cliche.TOTAL_TASKS}".toInteger(),
@@ -305,7 +305,7 @@ class SprintService extends IceScrumEventPublisher {
                 def xmlRoot = new XmlSlurper().parseText(cliche.data)
                 if (xmlRoot) {
                     lastDaycliche = cliche.datePrise
-                    if ((ServicesUtils.isDateWeekend(lastDaycliche) && !sprint.parentRelease.parentProject.preferences.hideWeekend) || !ServicesUtils.isDateWeekend(lastDaycliche)) {
+                    if ((DateUtils.isDateWeekend(lastDaycliche) && !sprint.parentRelease.parentProject.preferences.hideWeekend) || !DateUtils.isDateWeekend(lastDaycliche)) {
                         values << [
                                 storiesDone: xmlRoot."${Cliche.STORIES_DONE}".toInteger(),
                                 stories    : xmlRoot."${Cliche.TOTAL_STORIES}".toInteger(),
@@ -353,15 +353,15 @@ class SprintService extends IceScrumEventPublisher {
             def sprint = new Sprint(
                     retrospective: sprintXml.retrospective.text() ?: null,
                     doneDefinition: sprintXml.doneDefinition.text() ?: null,
-                    doneDate: ApplicationSupport.parseDate(sprintXml.doneDate.text()),
-                    inProgressDate: ApplicationSupport.parseDate(sprintXml.inProgressDate.text()),
+                    doneDate: DateUtils.parseDateFromExport(sprintXml.doneDate.text()),
+                    inProgressDate: DateUtils.parseDateFromExport(sprintXml.inProgressDate.text()),
                     state: sprintXml.state.text().toInteger(),
                     velocity: sprintXml.velocity.text().isNumber() ? sprintXml.velocity.text().toDouble() : 0d,
                     dailyWorkTime: (sprintXml.dailyWorkTime.text().isNumber()) ? sprintXml.dailyWorkTime.text().toDouble() : 8d,
                     capacity: sprintXml.capacity.text().isNumber() ? sprintXml.capacity.text().toDouble() : 0d,
-                    todoDate: ApplicationSupport.parseDate(sprintXml.todoDate.text()),
-                    startDate: ApplicationSupport.parseDate(sprintXml.startDate.text()),
-                    endDate: ApplicationSupport.parseDate(sprintXml.endDate.text()),
+                    todoDate: DateUtils.parseDateFromExport(sprintXml.todoDate.text()),
+                    startDate: DateUtils.parseDateFromExport(sprintXml.startDate.text()),
+                    endDate: DateUtils.parseDateFromExport(sprintXml.endDate.text()),
                     orderNumber: sprintXml.orderNumber.text().toInteger(),
                     description: sprintXml.description.text() ?: null,
                     goal: sprintXml.goal.text() ?: null,

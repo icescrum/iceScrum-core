@@ -30,6 +30,7 @@ import org.icescrum.core.error.BusinessException
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
 import org.icescrum.core.support.ApplicationSupport
+import org.icescrum.core.utils.DateUtils
 import org.springframework.security.access.prepost.PreAuthorize
 
 @Transactional
@@ -217,11 +218,11 @@ class ReleaseService extends IceScrumEventPublisher {
             def release = new Release(
                     state: releaseXml.state.text().toInteger(),
                     name: releaseXml.name.text(),
-                    todoDate: ApplicationSupport.parseDate(releaseXml.todoDate.text()),
-                    startDate: ApplicationSupport.parseDate(releaseXml.startDate.text()),
-                    doneDate: ApplicationSupport.parseDate(releaseXml.doneDate.text()),
-                    inProgressDate: ApplicationSupport.parseDate(releaseXml.inProgressDate.text()),
-                    endDate: ApplicationSupport.parseDate(releaseXml.endDate.text()),
+                    todoDate: DateUtils.parseDateFromExport(releaseXml.todoDate.text()),
+                    startDate: DateUtils.parseDateFromExport(releaseXml.startDate.text()),
+                    doneDate: DateUtils.parseDateFromExport(releaseXml.doneDate.text()),
+                    inProgressDate: DateUtils.parseDateFromExport(releaseXml.inProgressDate.text()),
+                    endDate: DateUtils.parseDateFromExport(releaseXml.endDate.text()),
                     orderNumber: releaseXml.orderNumber.text().toInteger(),
                     firstSprintIndex: releaseXml.firstSprintIndex.text().toInteger(),
                     description: releaseXml.description.text() ?: null,

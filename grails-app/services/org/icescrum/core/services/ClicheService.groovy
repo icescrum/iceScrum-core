@@ -28,7 +28,7 @@ package org.icescrum.core.services
 import grails.transaction.Transactional
 import groovy.xml.StreamingMarkupBuilder
 import org.icescrum.core.domain.*
-import org.icescrum.core.support.ApplicationSupport
+import org.icescrum.core.utils.DateUtils
 
 @Transactional
 class ClicheService {
@@ -233,7 +233,7 @@ class ClicheService {
         Cliche.withTransaction(readOnly: !options.save) { transaction ->
             def cliche = new Cliche(
                     type: clicheXml.type.text().toInteger(),
-                    datePrise: ApplicationSupport.parseDate(clicheXml.datePrise.text()),
+                    datePrise: DateUtils.parseDateFromExport(clicheXml.datePrise.text()),
                     data: clicheXml.data.text()
             )
             if (timebox) {

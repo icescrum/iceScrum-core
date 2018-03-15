@@ -3,8 +3,6 @@ package org.icescrum.core.utils
 import org.eclipse.mylyn.wikitext.core.parser.MarkupParser
 import org.eclipse.mylyn.wikitext.textile.core.TextileLanguage
 
-import java.text.SimpleDateFormat
-
 /*
  * Copyright (c) 2015 Kagilum SAS
  *
@@ -29,24 +27,6 @@ import java.text.SimpleDateFormat
  */
 
 class ServicesUtils {
-
-    public static boolean isDateWeekend(Date date) {
-        def c = Calendar.getInstance()
-        c.setTime(date)
-        switch (c.get(Calendar.DAY_OF_WEEK)) {
-            case Calendar.SATURDAY:
-            case Calendar.SUNDAY:
-                return true
-                break
-            default:
-                return false
-        }
-    }
-
-    public static parseDateISO8601(String input) {
-        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX")
-        return df.parse(input)
-    }
 
     // The XML spec limits the unicode character range that is authorized
     // This methods removes the invalid unicode characters

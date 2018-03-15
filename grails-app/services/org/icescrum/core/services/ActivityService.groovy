@@ -30,7 +30,7 @@ import org.icescrum.core.domain.Project
 import org.icescrum.core.domain.User
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
-import org.icescrum.core.support.ApplicationSupport
+import org.icescrum.core.utils.DateUtils
 
 class ActivityService extends IceScrumEventPublisher {
 
@@ -75,7 +75,7 @@ class ActivityService extends IceScrumEventPublisher {
             if (options.save) {
                 activity.save()
                 //can't be in constructor
-                activity.dateCreated = ApplicationSupport.parseDate(activityXml.dateCreated.text())
+                activity.dateCreated = DateUtils.parseDateFromExport(activityXml.dateCreated.text())
                 activity.save()
                 if (parent) {
                     parent.addToActivities(activity)

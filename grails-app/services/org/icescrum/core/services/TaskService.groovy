@@ -33,6 +33,7 @@ import org.icescrum.core.error.BusinessException
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
 import org.icescrum.core.support.ApplicationSupport
+import org.icescrum.core.utils.DateUtils
 import org.springframework.context.ApplicationContext
 import org.springframework.security.access.prepost.PreAuthorize
 
@@ -347,9 +348,9 @@ class TaskService extends IceScrumEventPublisher {
                     initial: (taskXml.initial.text().isNumber()) ? taskXml.initial.text().toFloat() : null,
                     rank: taskXml.rank.text().toInteger(),
                     name: taskXml."${'name'}".text(),
-                    todoDate: ApplicationSupport.parseDate(taskXml.todoDate.text()),
-                    inProgressDate: ApplicationSupport.parseDate(taskXml.inProgressDate.text()),
-                    doneDate: ApplicationSupport.parseDate(taskXml.doneDate.text()),
+                    todoDate: DateUtils.parseDateFromExport(taskXml.todoDate.text()),
+                    inProgressDate: DateUtils.parseDateFromExport(taskXml.inProgressDate.text()),
+                    doneDate: DateUtils.parseDateFromExport(taskXml.doneDate.text()),
                     state: taskXml.state.text().toInteger(),
                     blocked: taskXml.blocked.text().toBoolean(),
                     uid: taskXml.@uid.text().toInteger(),
@@ -386,7 +387,7 @@ class TaskService extends IceScrumEventPublisher {
                     taskXml.comments.comment.each { _commentXml ->
                         def uid = options.userUIDByImportedID?."${_commentXml.posterId.text().toInteger()}" ?: null
                         User user = project.getUserByUidOrOwner(uid)
-                        ApplicationSupport.importComment(task, user, _commentXml.body.text(), ApplicationSupport.parseDate(_commentXml.dateCreated.text()))
+                        ApplicationSupport.importComment(task, user, _commentXml.body.text(), DateUtils.parseDateFromExport(_commentXml.dateCreated.text()))
                     }
                     task.comments_count = taskXml.comments.comment.size() ?: 0
                     taskXml.attachments.attachment.each { _attachmentXml ->

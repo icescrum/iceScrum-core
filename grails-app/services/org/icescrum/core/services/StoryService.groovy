@@ -38,6 +38,7 @@ import org.icescrum.core.error.BusinessException
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
 import org.icescrum.core.support.ApplicationSupport
+import org.icescrum.core.utils.DateUtils
 import org.icescrum.plugins.attachmentable.domain.Attachment
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.security.access.prepost.PreAuthorize
@@ -739,12 +740,12 @@ class StoryService extends IceScrumEventPublisher {
             User creator = project ? project.getUserByUidOrOwner(storyXml.creator.@uid.text()) : null
             def story = new Story(
                     type: storyXml.type.text().toInteger(),
-                    suggestedDate: ApplicationSupport.parseDate(storyXml.suggestedDate.text()),
-                    acceptedDate: ApplicationSupport.parseDate(storyXml.acceptedDate.text()),
-                    estimatedDate: ApplicationSupport.parseDate(storyXml.estimatedDate.text()),
-                    plannedDate: ApplicationSupport.parseDate(storyXml.plannedDate.text()),
-                    inProgressDate: ApplicationSupport.parseDate(storyXml.inProgressDate.text()),
-                    doneDate: ApplicationSupport.parseDate(storyXml.doneDate.text()),
+                    suggestedDate: DateUtils.parseDateFromExport(storyXml.suggestedDate.text()),
+                    acceptedDate: DateUtils.parseDateFromExport(storyXml.acceptedDate.text()),
+                    estimatedDate: DateUtils.parseDateFromExport(storyXml.estimatedDate.text()),
+                    plannedDate: DateUtils.parseDateFromExport(storyXml.plannedDate.text()),
+                    inProgressDate: DateUtils.parseDateFromExport(storyXml.inProgressDate.text()),
+                    doneDate: DateUtils.parseDateFromExport(storyXml.doneDate.text()),
                     origin: storyXml.origin.text() ?: null,
                     effort: storyXml.effort.text().isEmpty() ? null : storyXml.effort.text().toBigDecimal(),
                     rank: storyXml.rank.text().toInteger(),
@@ -755,7 +756,7 @@ class StoryService extends IceScrumEventPublisher {
                     name: storyXml."${'name'}".text(),
                     description: storyXml.description.text() ?: null,
                     notes: storyXml.notes.text() ?: null,
-                    todoDate: ApplicationSupport.parseDate(storyXml.todoDate.text()),
+                    todoDate: DateUtils.parseDateFromExport(storyXml.todoDate.text()),
                     uid: storyXml.@uid.text().toInteger(),
             )
             // References on other objects
@@ -819,7 +820,7 @@ class StoryService extends IceScrumEventPublisher {
                     storyXml.comments.comment.each { _commentXml ->
                         def uid = options.userUIDByImportedID?."${_commentXml.posterId.text().toInteger()}" ?: null
                         User user = project.getUserByUidOrOwner(uid)
-                        ApplicationSupport.importComment(story, user, _commentXml.body.text(), ApplicationSupport.parseDate(_commentXml.dateCreated.text()))
+                        ApplicationSupport.importComment(story, user, _commentXml.body.text(), DateUtils.parseDateFromExport(_commentXml.dateCreated.text()))
                     }
                     story.comments_count = storyXml.comments.comment.size() ?: 0
                     storyXml.attachments.attachment.each { _attachmentXml ->

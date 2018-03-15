@@ -76,7 +76,6 @@ import java.awt.Graphics2D
 import java.awt.RenderingHints
 import java.awt.image.BufferedImage
 import java.security.MessageDigest
-import java.text.SimpleDateFormat
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
@@ -366,29 +365,6 @@ class ApplicationSupport {
             if (log.debugEnabled) {
                 log.debug "Retrieved appID: $config.icescrum.appID"
             }
-        }
-    }
-
-    public static Date getMidnightTime(Date time) {
-        def midnightTime = Calendar.getInstance()
-        midnightTime.setTime(time)
-        midnightTime.set(Calendar.HOUR_OF_DAY, 0)
-        midnightTime.set(Calendar.MINUTE, 0)
-        midnightTime.set(Calendar.SECOND, 0)
-        midnightTime.set(Calendar.MILLISECOND, 0)
-        return midnightTime.getTime()
-    }
-
-    // Parse date from an XML export
-    public static Date parseDate(String date) {
-        if (!date) {
-            return null
-        }
-        try {
-            return new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(date)
-        } catch (Exception e) { // Ugly hack because export is toString and if java.util.Date has been exported instead of a java.sql.Date the format is different
-            String utcDate = date.take(20) + 'UTC' + date.drop(23) // Fix date that has been exported with server not UTC
-            return new SimpleDateFormat('EEE MMM d HH:mm:ss zzz yyyy').parse(utcDate)
         }
     }
 

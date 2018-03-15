@@ -30,6 +30,7 @@ import org.icescrum.core.error.BusinessException
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
 import org.icescrum.core.support.ApplicationSupport
+import org.icescrum.core.utils.DateUtils
 import org.springframework.security.access.prepost.PreAuthorize
 
 @Transactional
@@ -141,7 +142,7 @@ class FeatureService extends IceScrumEventPublisher {
                     description: featureXml.description.text(),
                     notes: featureXml.notes.text(),
                     color: featureXml.color.text(),
-                    todoDate: ApplicationSupport.parseDate(featureXml.todoDate.text()),
+                    todoDate: DateUtils.parseDateFromExport(featureXml.todoDate.text()),
                     value: featureXml.value.text().isEmpty() ? 0 : featureXml.value.text().toInteger(),
                     type: featureXml.type.text().toInteger(),
                     rank: featureXml.rank.text().toInteger(),

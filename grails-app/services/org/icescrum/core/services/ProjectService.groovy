@@ -37,6 +37,7 @@ import org.icescrum.core.error.BusinessException
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
 import org.icescrum.core.support.ApplicationSupport
+import org.icescrum.core.utils.DateUtils
 import org.icescrum.core.utils.ServicesUtils
 import org.springframework.security.access.prepost.PreAuthorize
 import org.xml.sax.SAXParseException
@@ -267,10 +268,10 @@ class ProjectService extends IceScrumEventPublisher {
                     name: projectXml."${'name'}".text(),
                     pkey: projectXml.pkey.text(),
                     description: projectXml.description.text(),
-                    lastUpdated: ApplicationSupport.parseDate(projectXml.lastUpdated.text()),
-                    todoDate: ApplicationSupport.parseDate(projectXml.todoDate.text()),
-                    startDate: ApplicationSupport.parseDate(projectXml.startDate.text()),
-                    endDate: ApplicationSupport.parseDate(projectXml.endDate.text()),
+                    lastUpdated: DateUtils.parseDateFromExport(projectXml.lastUpdated.text()),
+                    todoDate: DateUtils.parseDateFromExport(projectXml.todoDate.text()),
+                    startDate: DateUtils.parseDateFromExport(projectXml.startDate.text()),
+                    endDate: DateUtils.parseDateFromExport(projectXml.endDate.text()),
                     planningPokerGameType: projectXml.planningPokerGameType.text().toInteger())
 
             project.preferences = new ProjectPreferences(
