@@ -24,6 +24,7 @@
 
 package org.icescrum.core.utils
 
+import java.text.ParseException
 import java.text.SimpleDateFormat
 
 class DateUtils {
@@ -39,7 +40,16 @@ class DateUtils {
     }
 
     static parseDateISO8601(String date) {
-        return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX").parse(date)
+        try {
+            return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXX").parse(date) // hhmm - default format sent by our client
+        } catch(ParseException e1) {
+            // Manage other formats that can be sent by external applications
+            try {
+                return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse(date) // hh:mm
+            } catch(ParseException e2) {
+                return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX").parse(date) // hh
+            }
+        }
     }
 
     static Date parseDateFromExport(String date) {
