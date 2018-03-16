@@ -110,7 +110,7 @@ class Project extends TimeBox implements Serializable, Attachmentable {
 
     static constraints = {
         name(blank: false, shared: 'keyMaxSize')
-        pkey(blank: false, maxSize: 10, matches: /^[A-Z0-9]*[A-Z]+[A-Z0-9]*$/, unique: true)   //TODO custom message
+        pkey(blank: false, maxSize: 10, matches: /^[A-Z0-9]*[A-Z][A-Z0-9]*$/, unique: true)   //TODO custom message
         planningPokerGameType(validator: { val, obj ->
             if (!(val in [PlanningPokerGame.INTEGER_SUITE, PlanningPokerGame.FIBO_SUITE, PlanningPokerGame.CUSTOM_SUITE])) {
                 return ['no.game']
