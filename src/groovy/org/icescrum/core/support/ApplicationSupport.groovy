@@ -348,23 +348,29 @@ class ApplicationSupport {
             if (log.debugEnabled) {
                 log.debug "Generated (${newID ? 'm' : 'r'}) appID: $config.icescrum.appID"
             }
-            try {
-                if (!fileID.exists()) fileID.parentFile.mkdirs()
-                if (fileID.exists()) fileID.delete()
-                if (fileID.createNewFile()) {
-                    fileID << config.icescrum.appID
-                } else {
-                    log.error "Error could not create file: ${filePath} please check directory & user permission"
-                }
-            } catch (IOException ioe) {
-                log.error "Error (exception) could not create file: ${filePath} please check directory & user permission"
-                throw ioe
-            }
+            saveFileUUID(config.icescrum.baseDir.toString(), config.icescrum.appID.toString())
         } else {
             config.icescrum.appID = existingID
             if (log.debugEnabled) {
                 log.debug "Retrieved appID: $config.icescrum.appID"
             }
+        }
+    }
+
+    static public saveFileUUID(String dirPath, String uuid) {
+        def filePath = dirPath + File.separator + "appID.txt"
+        def fileID = new File(filePath)
+        try {
+            if (!fileID.exists()) fileID.parentFile.mkdirs()
+            if (fileID.exists()) fileID.delete()
+            if (fileID.createNewFile()) {
+                fileID << uuid
+            } else {
+                log.error "Error could not create file: ${filePath} please check directory & user permission"
+            }
+        } catch (IOException ioe) {
+            log.error "Error (exception) could not create file: ${filePath} please check directory & user permission"
+            throw ioe
         }
     }
 
