@@ -16,7 +16,7 @@ class I18nService {
 
         def _request = null
         try {
-            _request = WebUtils.retrieveGrailsWebRequest()
+            _request = WebUtils.retrieveGrailsWebRequest().getCurrentRequest()
         } catch (Exception e) {}
 
         def locale = _request ? RequestContextUtils.getLocale(_request) : localeResolver.defaultLocale
