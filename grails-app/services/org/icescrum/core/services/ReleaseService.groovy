@@ -40,6 +40,7 @@ class ReleaseService extends IceScrumEventPublisher {
     def clicheService
     def springSecurityService
     def grailsApplication
+    def i18nService
 
     @PreAuthorize('(productOwner(#project) or scrumMaster(#project)) and !archivedProject(#project)')
     void save(Release release, Project project) {
@@ -89,8 +90,7 @@ class ReleaseService extends IceScrumEventPublisher {
                     return sprint.tasks || sprint.stories?.any { Story story -> story.tasks }
                 }
                 if (sprints) {
-                    def g = grailsApplication.mainContext.getBean("org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib")
-                    def sprintNames = sprints.collect { Sprint sprint -> g.message(code: 'is.sprint') + ' ' + sprint.index }.join(', ')
+                    def sprintNames = sprints.collect { Sprint sprint -> i18nService.message(code: 'is.sprint') + ' ' + sprint.index }.join(', ')
                     throw new BusinessException(code: 'is.release.error.sprint.tasks', args: [sprintNames])
                 }
                 sprintService.delete(outOfBoundsSprints.min { it.startDate })

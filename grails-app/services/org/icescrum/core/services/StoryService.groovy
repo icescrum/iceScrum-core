@@ -57,6 +57,7 @@ class StoryService extends IceScrumEventPublisher {
     def activityService
     def grailsApplication
     def pushService
+    def i18nService
 
     @PreAuthorize('isAuthenticated() and !archivedProject(#project)')
     void save(Story story, Project project, User user) {
@@ -520,7 +521,6 @@ class StoryService extends IceScrumEventPublisher {
     def acceptToUrgentTask(List<Story> stories) {
         def tasks = []
         def project = stories[0].backlog
-        def g = grailsApplication.mainContext.getBean("org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib")
         stories.each { story ->
             if (story.state > Story.STATE_SUGGESTED) {
                 throw new BusinessException(code: 'is.story.error.not.state.suggested')
@@ -530,7 +530,7 @@ class StoryService extends IceScrumEventPublisher {
             def task = new Task(storyProperties)
             task.type = Task.TYPE_URGENT
             task.state = Task.STATE_WAIT
-            task.description = (story.affectVersion ? g.message(code: 'is.story.affectVersion') + ': ' + story.affectVersion : '') + (task.description ?: '')
+            task.description = (story.affectVersion ? i18nService.message(code: 'is.story.affectVersion') + ': ' + story.affectVersion : '') + (task.description ?: '')
             def sprint = (Sprint) Sprint.findCurrentSprint(project.id).list()
             if (!sprint) {
                 throw new BusinessException(code: 'is.story.error.not.acceptedAsUrgentTask')

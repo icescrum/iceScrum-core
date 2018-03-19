@@ -691,11 +691,12 @@ class ApplicationSupport {
     }
 
     static def getLastWarning() {
-        def g = Holders.grailsApplication.mainContext.getBean('org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib')
+
+        def i18nService = Holders.grailsApplication.mainContext.getBean('i18nService')
         def lastWarning = Holders.grailsApplication.config.icescrum.warnings?.reverse()?.find { it ->
             !it.silent
         }
-        return lastWarning ? [id: lastWarning.id, icon: lastWarning.icon, title: g.message(lastWarning.title), message: g.message(lastWarning.message), hideable: lastWarning.hideable, silent: lastWarning.silent] : null
+        return lastWarning ? [id: lastWarning.id, icon: lastWarning.icon, title: i18nService.message(lastWarning.title), message: i18nService.message(lastWarning.message), hideable: lastWarning.hideable, silent: lastWarning.silent] : null
     }
 
     static void importComment(def object, User poster, String body, Date dateCreated) {
@@ -728,9 +729,9 @@ class ApplicationSupport {
     }
 
     static def extractError(Map attrs) {
-        def g = Holders.grailsApplication.mainContext.getBean('org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib')
-        def error = attrs.errors ? attrs.errors.allErrors.collect { [text: g.message(error: it) + ' - ' + it.field] } :
-                    attrs.code ? [text: g.message(code: attrs.code)] :
+        def i18nService = Holders.grailsApplication.mainContext.getBean('i18nService')
+        def error = attrs.errors ? attrs.errors.allErrors.collect { [text: i18nService.message(error: it) + ' - ' + it.field] } :
+                    attrs.code ? [text: i18nService.message(code: attrs.code)] :
                     attrs.text ? [text: attrs.text] :
                     attrs.exception?.message ? [text: attrs.exception.message] :
                     [text: 'An unexpected error has occurred']

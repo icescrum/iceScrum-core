@@ -24,7 +24,6 @@
 package org.icescrum.core.services
 
 import grails.transaction.Transactional
-import org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib
 import org.icescrum.core.domain.User
 import org.icescrum.core.domain.Widget
 import org.icescrum.core.domain.Widget.WidgetParentType
@@ -37,6 +36,7 @@ class WidgetService {
 
     def uiDefinitionService
     def grailsApplication
+    def i18nService
 
     Widget save(WidgetDefinition widgetDefinition, WidgetParentType parentType, parent) {
         parent.save(flush: true)
@@ -94,8 +94,7 @@ class WidgetService {
         def noteProperties = notesWidget.properties.collectEntries { key, val -> [(key): val] }
         noteProperties.settings = [text: '']
         try { // Required because it will failed if no request (bootstraping)
-            ApplicationTagLib g = grailsApplication.mainContext.getBean('org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib')
-            noteProperties.settings.text = g.message(code: 'is.ui.widget.notes.default')
+            noteProperties.settings.text = i18nService.message(code: 'is.ui.widget.notes.default')
         } catch (Exception) {}
         update(notesWidget, noteProperties)
     }
