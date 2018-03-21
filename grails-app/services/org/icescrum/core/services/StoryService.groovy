@@ -55,7 +55,6 @@ class StoryService extends IceScrumEventPublisher {
     def securityService
     def acceptanceTestService
     def activityService
-    def grailsApplication
     def pushService
     def i18nService
 

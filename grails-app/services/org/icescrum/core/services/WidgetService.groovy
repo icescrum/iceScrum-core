@@ -35,7 +35,6 @@ import org.icescrum.core.ui.WidgetDefinition
 class WidgetService {
 
     def uiDefinitionService
-    def grailsApplication
     def i18nService
 
     Widget save(WidgetDefinition widgetDefinition, WidgetParentType parentType, parent) {
