@@ -275,13 +275,16 @@ class TaskService extends IceScrumEventPublisher {
         if (task.sprint?.state != Sprint.STATE_INPROGRESS && newState >= Task.STATE_BUSY) {
             throw new BusinessException(code: 'is.sprint.error.state.not.inProgress')
         }
-        if (task.state == Task.STATE_DONE && task.doneDate && newState == Task.STATE_DONE) {
+        if (task.state == Task.STATE_DONE && task.doneDate && newState == Task.STATE_DONE) { // Move task from one story to another
             def story = task.type ? null : Story.get(task.parentStory?.id)
             if (story && story.state == Story.STATE_DONE) {
                 throw new BusinessException(code: 'is.story.error.done')
             }
             task.doneDate = null
         } else {
+            if (task.state == Task.STATE_DONE && newState != task.state && task.sprint && task.parentStory && task.parentStory.parentSprint != task.sprint) { // Task on Shifted story
+                throw new BusinessException(code: 'is.sprint.error.state.not.inProgress')
+            }
             if (task.responsible == null && project.preferences.assignOnBeginTask && newState >= Task.STATE_BUSY) {
                 task.responsible = user
             }
