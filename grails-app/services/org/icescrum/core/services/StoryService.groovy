@@ -259,10 +259,10 @@ class StoryService extends IceScrumEventPublisher {
     public void unPlan(Story story, Boolean fullUnPlan = true) {
         def sprint = story.parentSprint
         if (!sprint) {
-            throw new BusinessException(code: 'is.story.error.not.associated')
+            throw new BusinessException(code: 'is.story.error.not.planned')
         }
         if (story.state == Story.STATE_DONE) {
-            throw new BusinessException(code: 'is.sprint.error.dissociate.story.done')
+            throw new BusinessException(code: 'is.story.error.unplan.done')
         }
         if (fullUnPlan && story.dependences?.find { it.state > Story.STATE_ESTIMATED }) {
             throw new BusinessException(code: 'is.story.error.dependences.dissociate', args: [story.name, story.dependences.find { it.state > Story.STATE_ESTIMATED }.name])
