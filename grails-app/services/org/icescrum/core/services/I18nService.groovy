@@ -24,32 +24,26 @@
 
 package org.icescrum.core.services
 
-import org.codehaus.groovy.grails.web.util.WebUtils
-import org.springframework.context.MessageSource
+import org.codehaus.groovy.grails.plugins.web.taglib.ValidationTagLib
+import org.icescrum.core.domain.User
+import org.springframework.web.context.request.RequestContextHolder
 import org.springframework.web.servlet.i18n.SessionLocaleResolver
-import org.springframework.web.servlet.support.RequestContextUtils
 
 class I18nService {
 
     boolean transactional = false
 
     SessionLocaleResolver localeResolver
-    MessageSource messageSource
-
-    def msg(String msgKey, String defaultMessage = null, List objs = null) {
-        def _request = null
-        try {
-            _request = WebUtils.retrieveGrailsWebRequest().getCurrentRequest()
-        } catch (Exception e) {}
-        def locale = _request ? RequestContextUtils.getLocale(_request) : localeResolver.defaultLocale
-        def msg = messageSource.getMessage(msgKey, objs?.toArray(), defaultMessage, locale)
-        if (msg == null || msg == defaultMessage) {
-            msg = defaultMessage
-        }
-        return msg
-    }
+    def grailsApplication
+    def springSecurityService
 
     def message(Map args) {
-        return msg(args.code, args.default, args.attrs)
+        def _request = RequestContextHolder.requestAttributes?.currentRequest
+        if (!_request) {
+            args.locale = springSecurityService.isLoggedIn() ? User.getLocale(springSecurityService.principal.id) : localeResolver.defaultLocale
+        }
+        ValidationTagLib validationTagLib = (ValidationTagLib) grailsApplication.mainContext.getBean('org.codehaus.groovy.grails.plugins.web.taglib.ValidationTagLib')
+        def messageMethod = validationTagLib.message // Big hack because closure cannot be called directly because taglibs don't work without request
+        return messageMethod(args)
     }
 }
