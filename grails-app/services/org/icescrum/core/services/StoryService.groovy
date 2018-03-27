@@ -102,11 +102,6 @@ class StoryService extends IceScrumEventPublisher {
             if (!(story.creator.id == springSecurityService.currentUser?.id) && !securityService.productOwner(project.id, springSecurityService.authentication)) {
                 throw new BusinessException(code: 'is.story.error.not.deleted.permission')
             }
-            if (story.actors) {
-                story.actors.each { actor ->
-                    actor.removeFromStories(story)
-                }
-            }
             if (story.feature) {
                 story.feature.removeFromStories(story)
             }
