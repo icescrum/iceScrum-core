@@ -775,10 +775,10 @@ class ApplicationSupport {
                 Integer.valueOf(_bgcolor.substring(5, 7), 16))
     }
 
-    static Integer getJavaMaxMemory() {
-        Integer maxMemory
+    static BigDecimal getJavaMaxMemory() {
+        BigDecimal maxMemory
         try {
-            maxMemory = Math.round(Runtime.getRuntime().maxMemory() / 1073741824)
+            maxMemory = new BigDecimal(Math.round((Runtime.getRuntime().maxMemory() / 1073741824) * 10)) / 10
         } catch(Exception) {}
         return maxMemory
     }
