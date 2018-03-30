@@ -36,12 +36,12 @@ class Story extends BacklogElement implements Cloneable, Serializable {
 
     static final long serialVersionUID = -6800252507987149001L
 
-    static final int STATE_SUGGESTED = 100
-    static final int STATE_ACCEPTED = 200
-    static final int STATE_ESTIMATED = 300
-    static final int STATE_PLANNED = 400
-    static final int STATE_INPROGRESS = 500
-    static final int STATE_DONE = 700
+    static final int STATE_SUGGESTED = 1
+    static final int STATE_ACCEPTED = 2
+    static final int STATE_ESTIMATED = 3
+    static final int STATE_PLANNED = 4
+    static final int STATE_INPROGRESS = 5
+    static final int STATE_DONE = 7
     static final int TYPE_USER_STORY = 0
     static final int TYPE_DEFECT = 2
     static final int TYPE_TECHNICAL_STORY = 3
@@ -57,7 +57,6 @@ class Story extends BacklogElement implements Cloneable, Serializable {
     BigDecimal effort = null
     int rank = 0
     int state = Story.STATE_SUGGESTED
-    int subState = 0
     int value = 0
     String affectVersion
 
