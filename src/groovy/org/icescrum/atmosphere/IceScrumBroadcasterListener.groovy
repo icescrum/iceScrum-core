@@ -39,7 +39,7 @@ class IceScrumBroadcasterListener implements BroadcasterListener {
         if (broadcaster.getID() == GLOBAL_CONTEXT) {
             updateUsersAndConnections(resources)
         } else {
-            updateUsersOnProject(broadcaster, resources)
+            updateUsersOnProject(broadcaster, resources, atmosphereResource)
         }
     }
 
@@ -49,7 +49,7 @@ class IceScrumBroadcasterListener implements BroadcasterListener {
         if (broadcaster.getID() == GLOBAL_CONTEXT) {
             updateUsersAndConnections(resources)
         } else {
-            updateUsersOnProject(broadcaster, resources)
+            updateUsersOnProject(broadcaster, resources, null)
         }
     }
 
@@ -72,14 +72,18 @@ class IceScrumBroadcasterListener implements BroadcasterListener {
         }
     }
 
-    private synchronized void updateUsersOnProject(Broadcaster broadcaster, List<AtmosphereResource> resources) {
+    private synchronized void updateUsersOnProject(Broadcaster broadcaster, List<AtmosphereResource> resources, AtmosphereResource excludeResource) {
         def users = resources.collect {
             it.request.getAttribute(IceScrumAtmosphereEventListener.USER_CONTEXT) ? it.request.getAttribute(IceScrumAtmosphereEventListener.USER_CONTEXT).username : 'anonymous'
         }.unique {
             a, b -> a != 'anonymous' ? a <=> b : 1 //to keep multiple anonymous
         }
         def message = PushService.buildMessage("projectUsers", "update", [messageId: "online-users-${broadcaster.getID()}", users: users]).content
-        broadcaster.broadcast(message)
+        if (excludeResource) {
+            broadcaster.broadcast(message, (resources - excludeResource).toSet())
+        } else {
+            broadcaster.broadcast(message)
+        }
     }
 
     @Override
