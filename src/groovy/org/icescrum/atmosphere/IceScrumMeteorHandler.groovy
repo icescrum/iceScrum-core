@@ -12,8 +12,6 @@ import org.springframework.security.web.context.HttpSessionSecurityContextReposi
 import javax.servlet.http.HttpServlet
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
-import static org.atmosphere.cpr.AtmosphereResource.TRANSPORT.LONG_POLLING;
-
 
 class IceScrumMeteorHandler extends HttpServlet {
 
@@ -26,7 +24,6 @@ class IceScrumMeteorHandler extends HttpServlet {
         response.setContentType("text/plain;charset=UTF-8")
         Meteor meteor = Meteor.build(request)
         meteor.addListener(new IceScrumAtmosphereEventListener())
-        meteor.resumeOnBroadcast(meteor.transport() == LONG_POLLING).suspend(-1)
     }
 
     @Override

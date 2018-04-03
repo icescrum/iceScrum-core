@@ -164,7 +164,7 @@ class PushService {
         return GrailsNameUtils.getShortName(domain.class).toLowerCase()
     }
 
-    private static def buildMessage(String namespace, String eventType, object) {
+    public static def buildMessage(String namespace, String eventType, object) {
         def messageId = object instanceof Map ? object.messageId : namespace + "-" + eventType + "-" + object.id
         def message = [messageId: messageId, namespace: namespace, eventType: eventType, object: object]
         message.content = (message as JSON).toString()

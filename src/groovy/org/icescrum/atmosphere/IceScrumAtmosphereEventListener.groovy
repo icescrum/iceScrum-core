@@ -77,8 +77,8 @@ class IceScrumAtmosphereEventListener implements AtmosphereResourceEventListener
 
     @Override
     void onBroadcast(AtmosphereResourceEvent event) {
-        def user = event.resource.request.getAttribute(USER_CONTEXT) ?: null
         if (log.isDebugEnabled()) {
+            def user = event.resource.request.getAttribute(USER_CONTEXT) ?: null
             log.debug("broadcast to user ${user?.username} with UUID ${event.resource.uuid()}")
         }
     }
