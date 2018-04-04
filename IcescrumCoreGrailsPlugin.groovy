@@ -116,6 +116,7 @@ ERROR: iceScrum v7 has detected that you attempt to run it on an existing R6 ins
  """
             throw new RuntimeException('\nERROR: Cannot run iceScrum v7 on an iceScrum R6 installation')
         }
+        ApplicationSupport.initEnvironment(application.config) // DO NOT MOVE IT ELSEWHERE, IT MUST BE DONE BEFORE CREATING UUID
         ApplicationSupport.createUUID()
         System.setProperty('lbdsl.home', "${application.config.icescrum.baseDir.toString()}${File.separator}lbdsl")
         // Init config.icescrum.export for plugins to be able to register without an if exist / create test

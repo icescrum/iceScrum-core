@@ -46,7 +46,6 @@ class BootStrapService {
 
         ApplicationSupport.checkInitialConfig(config)
         ApplicationSupport.generateFolders(config)
-        ApplicationSupport.initEnvironment(config)
 
         if (!dev) {
             ApplicationSupport.checkForUpdateAndReportUsage(config)
