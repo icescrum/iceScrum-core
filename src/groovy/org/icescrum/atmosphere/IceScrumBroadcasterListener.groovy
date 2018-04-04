@@ -39,7 +39,9 @@ class IceScrumBroadcasterListener implements BroadcasterListener {
         if (broadcaster.getID() == GLOBAL_CONTEXT) {
             updateUsersAndConnections(resources)
         } else {
-            updateUsersOnProject(broadcaster, resources)
+            if (grailsApplication.config.icescrum.beta.enable) {
+                updateUsersOnProject(broadcaster, resources)
+            }
         }
     }
 
@@ -49,16 +51,18 @@ class IceScrumBroadcasterListener implements BroadcasterListener {
         if (broadcaster.getID() == GLOBAL_CONTEXT) {
             updateUsersAndConnections(resources)
         } else {
-            updateUsersOnProject(broadcaster, resources)
+            if (grailsApplication.config.icescrum.beta.enable) {
+                updateUsersOnProject(broadcaster, resources)
+            }
         }
     }
 
     private synchronized void updateUsersAndConnections(List<AtmosphereResource> resources) {
         def config = grailsApplication.config.icescrum.atmosphere
         def users = resources.collect {
-            it.request.getAttribute(IceScrumAtmosphereEventListener.USER_CONTEXT) ? it.request.getAttribute(IceScrumAtmosphereEventListener.USER_CONTEXT).username : 'anonymous'
+            it.request.getAttribute(IceScrumAtmosphereEventListener.USER_CONTEXT) ? [username: it.request.getAttribute(IceScrumAtmosphereEventListener.USER_CONTEXT).username, transport: it.transport().toString()] : [username: 'anonymous', transport: it.transport().toString()]
         }.unique {
-            a, b -> a != 'anonymous' ? a <=> b : 1 //to keep multiple anonymous
+            a, b -> a.username != 'anonymous' ? a.username <=> b.username : 1 //to keep multiple anonymous
         }
         config.liveUsers = users
         if (users.size() > config.maxUsers.size()) {
@@ -74,9 +78,9 @@ class IceScrumBroadcasterListener implements BroadcasterListener {
 
     private synchronized void updateUsersOnProject(Broadcaster broadcaster, List<AtmosphereResource> resources) {
         def users = resources.collect {
-            it.request.getAttribute(IceScrumAtmosphereEventListener.USER_CONTEXT) ? it.request.getAttribute(IceScrumAtmosphereEventListener.USER_CONTEXT).username : 'anonymous'
+            it.request.getAttribute(IceScrumAtmosphereEventListener.USER_CONTEXT) ? [username: it.request.getAttribute(IceScrumAtmosphereEventListener.USER_CONTEXT).username, transport: it.transport().toString()] : [username: 'anonymous', transport: it.transport().toString()]
         }.unique {
-            a, b -> a != 'anonymous' ? a <=> b : 1 //to keep multiple anonymous
+            a, b -> a.username != 'anonymous' ? a.username <=> b.username : 1 //to keep multiple anonymous
         }
         def message = PushService.buildMessage("projectUsers", "update", [messageId: "online-users-${broadcaster.getID()}", users: users]).content
         broadcaster.broadcast(message, resources.findAll { !it.resumeOnBroadcast() }.toSet())
