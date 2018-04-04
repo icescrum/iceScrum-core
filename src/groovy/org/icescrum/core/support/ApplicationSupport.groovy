@@ -315,8 +315,8 @@ class ApplicationSupport {
     }
 
     static public createUUID = {
-        log.debug "Retrieving appID..."
         def config = Holders.grailsApplication.config
+        log.debug "Retrieving appID in environment ${config.icescrum.environment ?: 'production'}..."
         def filePath = config.icescrum.baseDir.toString() + File.separator + "appID.txt"
         def fileID = new File(filePath)
         def existingID = fileID.exists() ? fileID.readLines()[0] : null
@@ -343,6 +343,9 @@ class ApplicationSupport {
                 } else {
                     newID = existingID
                 }
+            }
+            if (!newID) {
+                log.debug("Generating new appID...")
             }
             config.icescrum.appID = newID ?: UUID.randomUUID().toString()
             if (log.debugEnabled) {
