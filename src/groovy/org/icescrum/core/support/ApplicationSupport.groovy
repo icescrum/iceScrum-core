@@ -338,11 +338,7 @@ class ApplicationSupport {
             }
             if (docker) {
                 def bannedAppIds = ['dde5840d-2193-ead2-f4f3-5c131453d19d', '48e1b46b-68ba-8fad-1e7f-9807d121a81d']
-                if (newID == existingID || existingID in bannedAppIds || newID in bannedAppIds) {
-                    newID = null
-                } else {
-                    newID = existingID
-                }
+                newID = (newID == existingID || existingID in bannedAppIds) ? null : existingID
             }
             if (!newID) {
                 log.debug("Generating new appID...")
