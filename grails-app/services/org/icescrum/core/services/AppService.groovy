@@ -37,7 +37,7 @@ class AppService extends IceScrumEventPublisher {
     def appDefinitionService
     def grailsApplication
 
-    @PreAuthorize('scrumMaster(#project)')
+    @PreAuthorize('productOwner(#project) or scrumMaster(#project)')
     void updateEnabledForProject(Project project, String appDefinitionId, boolean enabledForProject) {
         AppDefinition appDefinition = appDefinitionService.getAppDefinitions().find { it.id == appDefinitionId }
         if (!appDefinition.isProject) {
