@@ -77,7 +77,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
     ]
 
     static transients = [
-            'deliveredVersion', 'testState', 'testStateEnum', 'activity', 'hasVotedFor', 'sameBacklogStories', 'countDoneTasks'
+            'deliveredVersion', 'testState', 'testStateEnum', 'activity', 'sameBacklogStories', 'countDoneTasks'
     ]
 
     static mapping = {
@@ -147,11 +147,6 @@ class Story extends BacklogElement implements Cloneable, Serializable {
 
     int getTestState() {
         getTestStateEnum().id
-    }
-
-    boolean getHasVotedFor() {
-        def springSecurityService = (SpringSecurityService) Holders.grailsApplication.mainContext.getBean('springSecurityService')
-        return voters ? voters.contains(springSecurityService.currentUser) : false
     }
 
     static namedQueries = {
