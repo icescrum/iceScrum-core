@@ -48,6 +48,7 @@ class ProjectService extends IceScrumEventPublisher {
     def springSecurityService
     def securityService
     def teamService
+    def taskService
     def actorService
     def grailsApplication
     def clicheService
@@ -468,6 +469,16 @@ class ProjectService extends IceScrumEventPublisher {
                             story.save()
                         }
                     }
+                }
+            }
+
+            options.delayedTasksToImport?.each { def taskData ->
+                Sprint originalSprint = (Sprint) options.sprintsImported.find { it.idFromXml == taskData.sprintIdFromXml }?.sprint
+                if (originalSprint) {
+                    options.sprint = originalSprint
+                    options.story = taskData.parentStory
+                    taskService.unMarshall(taskData.taskXml, options)
+                    sprint.save()
                 }
             }
 

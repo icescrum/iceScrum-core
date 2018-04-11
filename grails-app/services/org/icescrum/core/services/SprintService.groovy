@@ -357,6 +357,7 @@ class SprintService extends IceScrumEventPublisher {
         Project project = options.project
         def release = options.release
         Sprint.withTransaction(readOnly: !options.save) { transaction ->
+            def sprintIdFromXml = !sprintXml.@id.isEmpty() ? sprintXml.@id.text().toInteger() : null
             def sprint = new Sprint(
                     retrospective: sprintXml.retrospective.text() ?: null,
                     doneDefinition: sprintXml.doneDefinition.text() ?: null,
@@ -393,6 +394,12 @@ class SprintService extends IceScrumEventPublisher {
             }
             options.sprint = sprint
             options.timebox = sprint
+
+            if (!options.sprintsImported) {
+                options.sprintsImported = []
+            }
+            options.sprintsImported << [idFromXml: sprintIdFromXml, sprint: options.sprint]
+
             // Child objects
             sprintXml.cliches.cliche.each {
                 clicheService.unMarshall(it, options)

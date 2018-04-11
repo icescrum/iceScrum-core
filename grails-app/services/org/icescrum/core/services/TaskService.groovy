@@ -343,6 +343,20 @@ class TaskService extends IceScrumEventPublisher {
         Task.withTransaction(readOnly: options.save) { transaction ->
             User creator = project ? project.getUserByUidOrOwner(taskXml.creator.@uid.text()) : null
             User responsible = project && !taskXml.responsible.@uid.isEmpty() ? project.getUserByUidOrOwner(taskXml.responsible.@uid.text()) : null
+            def sprintIdFromXml = !taskXml.sprint.@id.isEmpty() ? taskXml.sprint.@id.text().toInteger() : null
+            def taskUid = taskXml.@uid.text().toInteger()
+            if (sprintIdFromXml) {
+                Sprint originalSprint = (Sprint) options.sprintsImported.find { it.idFromXml == sprintIdFromXml }?.sprint
+                if (originalSprint) {
+                    sprint = originalSprint
+                } else {
+                    if (!options.delayedTasksToImport) {
+                        options.delayedTasksToImport = []
+                    }
+                    options.delayedTasksToImport << [taskXml: taskXml, sprintIdFromXml: sprintIdFromXml, parentStory: story]
+                    return //we will delay the import to a later stage
+                }
+            }
             def task = new Task(
                     type: (taskXml.type.text().isNumber()) ? taskXml.type.text().toInteger() : null,
                     description: taskXml.description.text() ?: null,
@@ -356,7 +370,7 @@ class TaskService extends IceScrumEventPublisher {
                     doneDate: DateUtils.parseDateFromExport(taskXml.doneDate.text()),
                     state: taskXml.state.text().toInteger(),
                     blocked: taskXml.blocked.text().toBoolean(),
-                    uid: taskXml.@uid.text().toInteger(),
+                    uid: taskUid,
                     color: taskXml.color.text())
             if (project) {
                 task.creator = creator

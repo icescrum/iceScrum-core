@@ -315,6 +315,10 @@ class Task extends BacklogElement implements Serializable {
 
             builder.creator(uid: this.creator.uid)
 
+            if (this.sprint) {
+                builder.sprint(id: this.sprint.id)
+            }
+
             if (this.responsible) {
                 builder.responsible(uid: this.responsible.uid)
             }
