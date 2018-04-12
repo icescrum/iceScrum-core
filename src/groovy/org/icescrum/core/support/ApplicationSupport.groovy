@@ -108,7 +108,7 @@ class ApplicationSupport {
             }
             serverUrl += req.contextPath
             if (grailsRequest.params.debugServerURL) {
-                log.debug('URL: \n' + '\tx-forwarded-proto: ' + req.getHeader('x-forwarded-proto') + '\n'
+                log.info('URL: \n' + '\tx-forwarded-proto: ' + req.getHeader('x-forwarded-proto') + '\n'
                         + '\tselected proto: ' + scheme + '\n'
                         + '\tx-forwarded-port: ' + req.getHeader('x-forwarded-port') + '\n'
                         + '\tselected port: ' + port + '\n'
