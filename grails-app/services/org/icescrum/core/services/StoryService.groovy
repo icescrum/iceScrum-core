@@ -108,7 +108,7 @@ class StoryService extends IceScrumEventPublisher {
             if (story.dependsOn) {
                 story.dependsOn.removeFromDependences(story)
             }
-            story.dependences?.each {
+            story.dependences?.collect { it }?.each { // Collect to avoid ConcurrentModificationException
                 story.removeFromDependences(it)
                 it.dependsOn = null
                 it.save()
