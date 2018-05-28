@@ -101,6 +101,7 @@ class ProjectService extends IceScrumEventPublisher {
         // Switch team
         project.removeFromTeams(oldTeam)
         project.addToTeams(newTeam)
+        securityService.changeOwner(newTeam.owner, project) // Required if Admin changes the team
         // Remove conflicting POs and SHs
         removeConflictingPOandSH(newTeam, project)
         removeConflictingInvitedPOandSH(newTeam, project)
