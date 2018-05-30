@@ -182,7 +182,7 @@ class UserService extends IceScrumEventPublisher {
                     securityService.changeOwner(substitute, project)
                 }
             } else {
-                it.projects.each { Project project ->
+                it.projects.collect { it }.each { Project project -> // Collect to avoid ConcurrentModificationException
                     projectService.delete(project)
                 }
                 teamService.delete(it)
