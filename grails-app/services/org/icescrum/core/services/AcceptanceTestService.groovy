@@ -43,6 +43,7 @@ class AcceptanceTestService extends IceScrumEventPublisher {
         acceptanceTest.parentStory = parentStory
         acceptanceTest.save()
         publishSynchronousEvent(IceScrumEventType.CREATE, acceptanceTest)
+        parentStory.addToAcceptanceTests(acceptanceTest) // Required otherwise the AT is not seen attached on the story immediately & not taken into account for JSON or delete
         def storyService = (StoryService) grailsApplication.mainContext.getBean('storyService')
         storyService.update(parentStory)
     }
