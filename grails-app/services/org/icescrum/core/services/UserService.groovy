@@ -172,20 +172,20 @@ class UserService extends IceScrumEventPublisher {
         publishSynchronousEvent(IceScrumEventType.UPDATE, user, dirtyProperties)
     }
 
-    void delete(User user, User substitute, boolean deleteDataOwned = false) {
+    void delete(User user, User substitute, boolean deleteOwnedData = false) {
         pushService.disablePushForThisThread()
-        publishSynchronousEvent(IceScrumEventType.BEFORE_DELETE, user, [substitutedBy: substitute, deleteDataOwned: deleteDataOwned])
+        publishSynchronousEvent(IceScrumEventType.BEFORE_DELETE, user, [substitutedBy: substitute, deleteOwnedData: deleteOwnedData])
         Team.findAllByOwner(user.username, [:]).each {
-            if (!deleteDataOwned) {
-                securityService.changeOwner(substitute, it)
-                it.projects.each { Project project ->
-                    securityService.changeOwner(substitute, project)
-                }
-            } else {
+            if (deleteOwnedData) {
                 it.projects.collect { it }.each { Project project -> // Collect to avoid ConcurrentModificationException
                     projectService.delete(project)
                 }
                 teamService.delete(it)
+            } else {
+                securityService.changeOwner(substitute, it)
+                it.projects.each { Project project ->
+                    securityService.changeOwner(substitute, project)
+                }
             }
         }
         Portfolio.findAllByUser(user).each { Portfolio portfolio ->
@@ -256,7 +256,7 @@ class UserService extends IceScrumEventPublisher {
         }
         user.delete(flush: true)
         pushService.enablePushForThisThread()
-        publishSynchronousEvent(IceScrumEventType.DELETE, user, [substitutedBy: substitute, deleteDataOwned: deleteDataOwned])
+        publishSynchronousEvent(IceScrumEventType.DELETE, user, [substitutedBy: substitute, deleteOwnedData: deleteOwnedData])
     }
 
     def resetPassword(User user) {
