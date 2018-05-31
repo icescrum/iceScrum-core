@@ -664,18 +664,17 @@ class StoryService extends IceScrumEventPublisher {
                     copiedStory.feature = Feature.findByBacklogAndNameIlike(project, story.feature.name)
                 }
                 if (story.actors && copiedStory.description) {
-                    // fetch old project's actors in desc or directly in story ??
-                    Matcher actorIdMatcher = copiedStory.description =~ /A\[\d+-([^]]*)]/
-                    while (actorIdMatcher.find()) {
-                        String actorName = actorIdMatcher.group(1)
-                        // fetch new project's actors with same name
-                        Actor newActor = project.actors.find { it.name == actorName }
+                    // Fetch old project's actors in text rather than domain because it can be different and it is least astonishing
+                    Matcher actorNameMatcher = copiedStory.description =~ /A\[\d+-([^]]*)]/
+                    while (actorNameMatcher.find()) {
+                        String actorName = actorNameMatcher.group(1)
+                        Actor newActor = Actor.findByNameIlikeAndParentProject(actorName, project)
                         if (newActor) {
-                            // update id for existing actors in description
-                            copiedStory.description = copiedStory.description.replace(actorIdMatcher.group(0), "A[${newActor.uid}-${newActor.name}]")
+                            // Update id for existing actors in description
+                            copiedStory.description = copiedStory.description.replace(actorNameMatcher.group(0), "A[${newActor.uid}-${newActor.name}]")
                         } else {
-                            // remove id and tag for non existing actors
-                            copiedStory.description = copiedStory.description.replace(actorIdMatcher.group(0), actorName)
+                            // Remove id and tag for non existing actors
+                            copiedStory.description = copiedStory.description.replace(actorNameMatcher.group(0), actorName)
                         }
                     }
                 }
@@ -857,8 +856,13 @@ class StoryService extends IceScrumEventPublisher {
         if (story.description) {
             Matcher actorIdMatcher = story.description =~ /A\[(\d+)-.+?]/
             while (actorIdMatcher.find()) {
-                String actorId = actorIdMatcher.group(1)
-                actorSet.add(project.actors.find { it.uid == actorId.toInteger() })
+                Integer actorUid = actorIdMatcher.group(1).toInteger()
+                Actor actor = Actor.findByUidAndParentProject(actorUid, project)
+                if (actor) {
+                    actorSet.add(actor)
+                } else {
+                    throw new BusinessException(code: "Error, no actor with UID $actorUid can be found on this project. Please change your story description.") // TODO i18n
+                }
             }
         }
         story.actors = actorSet
