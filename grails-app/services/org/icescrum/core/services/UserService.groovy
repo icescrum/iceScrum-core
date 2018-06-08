@@ -254,6 +254,10 @@ class UserService extends IceScrumEventPublisher {
             aclSid.delete()
             aclCache.clearCache()
         }
+        File avatarFile = getAvatarFile(user)
+        if (avatarFile?.exists()) {
+            avatarFile.delete()
+        }
         user.delete(flush: true)
         pushService.enablePushForThisThread()
         publishSynchronousEvent(IceScrumEventType.DELETE, user, [substitutedBy: substitute, deleteOwnedData: deleteOwnedData])
@@ -314,6 +318,11 @@ class UserService extends IceScrumEventPublisher {
         }
         user.lastUpdated = new Date()
         user.save()
+    }
+
+    File getAvatarFile(User user) {
+        File[] files = new File(grailsApplication.config.icescrum.images.users.dir.toString()).listFiles((FilenameFilter) new WildcardFileFilter("${user.id}.*"))
+        return files ? files[0] : null
     }
 
     User unMarshall(def userXml, def options) {
