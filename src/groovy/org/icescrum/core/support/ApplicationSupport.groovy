@@ -39,7 +39,12 @@ import org.apache.http.util.EntityUtils
 import org.codehaus.groovy.grails.commons.ApplicationHolder
 import grails.util.Metadata
 import org.apache.commons.logging.LogFactory
+import org.icescrum.core.domain.Feature
 import org.icescrum.core.domain.Product
+import org.icescrum.core.domain.Release
+import org.icescrum.core.domain.Sprint
+import org.icescrum.core.domain.Story
+import org.icescrum.core.domain.Task
 import org.icescrum.core.domain.User
 import org.icescrum.plugins.attachmentable.domain.Attachment
 
@@ -269,14 +274,14 @@ class ApplicationSupport {
                 }
             }
             def files = []
-            project.stories*.attachments.findAll { it.size() > 0 }?.each { it?.each { att -> files << attachmentableService.getFile(att) } }
-            project.features*.attachments.findAll { it.size() > 0 }?.each { it?.each { att -> files << attachmentableService.getFile(att) } }
-            project.releases*.attachments.findAll { it.size() > 0 }?.each { it?.each { att -> files << attachmentableService.getFile(att) } }
-            project.sprints*.attachments.findAll { it.size() > 0 }?.each { it?.each { att -> files << attachmentableService.getFile(att) } }
+            project.stories?.collect { Story.get(it.id).attachments }?.findAll { it.size() > 0 }?.each { it?.each { att -> files << attachmentableService.getFile(att) } }
+            project.features?.collect { Feature.get(it.id).attachments }?.findAll { it.size() > 0 }?.each { it?.each { att -> files << attachmentableService.getFile(att) } }
+            project.releases?.collect { Release.get(it.id).attachments }?.findAll { it.size() > 0 }?.each { it?.each { att -> files << attachmentableService.getFile(att) } }
+            project.sprints?.collect { Sprint.get(it.id).attachments }?.findAll { it.size() > 0 }?.each { it?.each { att -> files << attachmentableService.getFile(att) } }
             project.attachments.each { it?.each { att -> files << attachmentableService.getFile(att) } }
             def tasks = []
             project.releases*.each { it.sprints*.each { s -> tasks.addAll(s.tasks) } }
-            tasks*.attachments.findAll { it.size() > 0 }?.each {
+            tasks?.collect { Task.get(it.id).attachments }?.findAll { it.size() > 0 }?.each {
                 it?.each { att -> files << attachmentableService.getFile(att) }
             }
             zipExportFile(outputStream, files, xml, 'attachments')
