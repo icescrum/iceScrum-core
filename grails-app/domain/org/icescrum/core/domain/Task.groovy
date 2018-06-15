@@ -41,6 +41,8 @@ class Task extends BacklogElement implements Serializable {
     String color = "#f9f157"
 
     Integer type
+
+    //Times
     Float estimation
     Float initial
     Integer rank = 0

@@ -146,10 +146,12 @@ class ClicheService {
         def tasksByState = taskStates.collectEntries { taskState -> [(taskState): 0] }
         def taskTypes = [null, Task.TYPE_RECURRENT, Task.TYPE_URGENT]
         def tasksByType = taskTypes.collectEntries { taskType -> [(taskType): 0] }
+        float spentTime = 0
         float remainingTime = 0
         sprint.tasks.each { task ->
             tasksByState[task.state]++
             tasksByType[task.type]++
+            spentTime += task.spent ?: 0
             remainingTime += task.estimation ?: 0
         }
         int storiesDoneCount = 0
@@ -184,6 +186,7 @@ class ClicheService {
                 "${Cliche.TASKS_URGENT}"(tasksByType[Task.TYPE_URGENT]) // TODO NOT USED
                 "${Cliche.TASKS_STORY}"(tasksByType[null]) // TODO NOT USED
                 "${Cliche.REMAINING_TIME}"(remainingTime)
+                "${Cliche.SPENT_TIME}"(spentTime)
             }
         }
         StreamingMarkupBuilder xmlBuilder = new StreamingMarkupBuilder()
