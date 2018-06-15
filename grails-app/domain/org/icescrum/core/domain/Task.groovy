@@ -42,9 +42,10 @@ class Task extends BacklogElement implements Serializable {
 
     Integer type
 
-    //Times
     Float estimation
     Float initial
+    Float spent
+
     Integer rank = 0
     boolean blocked = false
 
@@ -78,6 +79,7 @@ class Task extends BacklogElement implements Serializable {
         backlog nullable: true
         doneDate nullable: true
         estimation nullable: true, validator: { newEstimation, task -> newEstimation == null || newEstimation >= 0 ?: 'invalid' }
+        spent nullable: true, validator: { newSpent, task -> newSpent == null || newSpent >= 0 ?: 'invalid' }
         responsible nullable: true
         parentStory nullable: true, validator: { newParentStory, task -> newParentStory != null && newParentStory.backlog != task.parentProject ? 'invalid' : true }
         parentProject validator: { newParentProject, task -> newParentProject == task.backlog?.parentProject || newParentProject == task.parentStory?.backlog ?: 'invalid' }
