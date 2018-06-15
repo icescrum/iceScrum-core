@@ -311,6 +311,7 @@ class Task extends BacklogElement implements Serializable {
             builder.color(this.color)
             builder.state(this.state)
             builder.blocked(this.blocked)
+            builder.spent(this.spent)
             builder.initial(this.initial)
             builder.doneDate(this.doneDate)
             builder.estimation(this.estimation)
