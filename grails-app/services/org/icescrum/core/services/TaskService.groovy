@@ -363,6 +363,7 @@ class TaskService extends IceScrumEventPublisher {
                     notes: taskXml.notes.text() ?: null,
                     estimation: (taskXml.estimation.text().isNumber()) ? taskXml.estimation.text().toFloat() : null,
                     initial: (taskXml.initial.text().isNumber()) ? taskXml.initial.text().toFloat() : null,
+                    spent: (taskXml.spent.text().isNumber()) ? taskXml.spent.text().toFloat() : null,
                     rank: taskXml.rank.text().toInteger(),
                     name: taskXml."${'name'}".text(),
                     todoDate: DateUtils.parseDateFromExport(taskXml.todoDate.text()),
