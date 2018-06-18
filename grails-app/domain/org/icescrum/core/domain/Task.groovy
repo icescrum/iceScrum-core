@@ -242,65 +242,105 @@ class Task extends BacklogElement implements Serializable {
         return activities.sort { a, b -> b.dateCreated <=> a.dateCreated }
     }
 
-    static search(project, options) {
+    static search(project, options, rowCount = false) {
+        List<Task> tasks = []
+        def getList = { it instanceof List ? it : (it instanceof Object[] ? it as List : [it]) }
         def criteria = {
-            backlog {
-                if (options.task?.parentSprint?.isLong() && options.task.parentSprint.toLong() in project.releases*.sprints*.id.flatten()) {
-                    eq 'id', options.task.parentSprint.toLong()
-                } else if (options.task?.parentRelease?.isLong() && options.task.parentRelease.toLong() in project.releases*.id) {
-                    'in' 'id', project.releases.find { it.id == options.task.parentRelease.toLong() }.sprints*.id
-                } else {
-                    'in' 'id', project.releases*.sprints*.id.flatten()
-                }
+            parentProject {
+                eq 'id', project
             }
-
-            if (options.term || options.task != null) {
-                if (options.term) {
+            if (options.task) {
+                if (options.task.term) {
                     or {
-                        if (options.term?.isInteger()) {
-                            eq 'uid', options.term.toInteger()
+                        if (options.task.term instanceof List) {
+                            options.task.term.each {
+                                ilike 'name', '%' + it + '%'
+                                ilike 'description', '%' + it + '%'
+                                ilike 'notes', '%' + it + '%'
+                            }
+                        } else if (options.task.term?.isInteger()) {
+                            eq 'uid', options.task.term.toInteger()
                         } else {
-                            ilike 'name', '%' + options.term + '%'
-                            ilike 'description', '%' + options.term + '%'
-                            ilike 'notes', '%' + options.term + '%'
+                            ilike 'name', '%' + options.task.term + '%'
+                            ilike 'description', '%' + options.task.term + '%'
+                            ilike 'notes', '%' + options.task.term + '%'
                         }
                     }
                 }
-                if (options.task?.type?.isInteger()) {
-                    eq 'type', options.task.type.toInteger()
+                if (options.task.type != null) {
+                    or {
+                        getList(options.task.type).each { type ->
+                            eq 'type', new Integer(type)
+                        }
+                    }
                 }
-                if (options.task?.state?.isInteger()) {
-                    eq 'state', options.task.state.toInteger()
+                if (options.task.state != null) {
+                    or {
+                        getList(options.task.state).each { state ->
+                            eq 'state', new Integer(state)
+                        }
+                    }
                 }
-                if (options.task?.parentStory?.isLong()) {
+                if (options.task.parentRelease != null) {
+                    backlog {
+                        or {
+                            getList(options.task.parentRelease).each { parentRelease ->
+                                'in' 'id', Release.findById(new Long(parentRelease)).sprints*.id
+                            }
+                        }
+                    }
+                }
+                if (options.task.parentSprint != null) {
+                    backlog {
+                        or {
+                            getList(options.task.parentSprint).each { parentSprint ->
+                                eq 'id', new Long(parentSprint)
+                            }
+                        }
+                    }
+                }
+                if (options.task.parentStory != null) {
                     parentStory {
-                        eq 'id', options.task.parentStory.toLong()
+                        or {
+                            getList(options.task.parentStory).each { parentStory ->
+                                eq 'id', new Long(parentStory)
+                            }
+                        }
                     }
                 }
-                if (options.task?.creator?.isLong()) {
+                if (options.task.creator) {
                     creator {
-                        eq 'id', options.task.creator.toLong()
+                        or {
+                            getList(options.task.creator).each { creator ->
+                                eq 'id', new Long(creator)
+                            }
+                        }
                     }
                 }
-                if (options.task?.responsible?.isLong()) {
+                if (options.task.responsible) {
                     responsible {
-                        eq 'id', options.task.responsible.toLong()
+                        or {
+                            getList(options.task.responsible).each { responsible ->
+                                eq 'id', new Long(responsible)
+                            }
+                        }
                     }
                 }
             }
         }
-        if (options.tag) {
-            return Task.findAllByTagWithCriteria(options.tag) {
-                criteria.delegate = delegate
-                criteria.call()
-            }
-        } else if (options.term || options.task) {
-            return Task.createCriteria().list {
-                criteria.delegate = delegate
-                criteria.call()
-            }
+        def criteriaCall = {
+            criteria.delegate = delegate
+            criteria.call()
+        }
+        if (options.task?.tag) {
+            tasks = Task.findAllByTagsWithCriteria(getList(options.task.tag), criteriaCall)
+        } else if (options.task != null) {
+            tasks = Task.createCriteria().list(options.list ?: [:], criteriaCall)
+        }
+        if (rowCount) {
+            return tasks ? tasks.get(0) : 0
         } else {
-            return Collections.EMPTY_LIST
+            return tasks ?: Collections.EMPTY_LIST
         }
     }
 
