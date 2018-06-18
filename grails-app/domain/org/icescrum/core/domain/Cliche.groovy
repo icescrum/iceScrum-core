@@ -123,7 +123,7 @@ class Cliche implements Serializable {
     static final TASKS_STORY = 'storyTasks'
 
     static final REMAINING_TIME = 'remainingHours'
-    static final SPENT_TIME = 'spentHours'
+    static final TIME_SPENT = 'spentHours'
     // ******************
     // End XML Daily cliche Tags names
     // ******************

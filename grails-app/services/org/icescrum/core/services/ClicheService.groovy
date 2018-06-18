@@ -186,7 +186,7 @@ class ClicheService {
                 "${Cliche.TASKS_URGENT}"(tasksByType[Task.TYPE_URGENT]) // TODO NOT USED
                 "${Cliche.TASKS_STORY}"(tasksByType[null]) // TODO NOT USED
                 "${Cliche.REMAINING_TIME}"(remainingTime)
-                "${Cliche.SPENT_TIME}"(spentTime)
+                "${Cliche.TIME_SPENT}"(spentTime)
             }
         }
         StreamingMarkupBuilder xmlBuilder = new StreamingMarkupBuilder()
