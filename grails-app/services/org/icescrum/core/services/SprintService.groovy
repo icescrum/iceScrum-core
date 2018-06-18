@@ -246,9 +246,11 @@ class SprintService extends IceScrumEventPublisher {
                 if (xmlRoot) {
                     lastDaycliche = cliche.datePrise
                     def currentRemaining = xmlRoot."${Cliche.REMAINING_TIME}".toFloat()
+                    def currentSpent = xmlRoot."${Cliche.SPENT_TIME}" != "" ? xmlRoot."${Cliche.SPENT_TIME}".toFloat() : 0
                     if ((DateUtils.isDateWeekend(lastDaycliche) && !sprint.parentRelease.parentProject.preferences.hideWeekend) || !DateUtils.isDateWeekend(lastDaycliche)) {
                         values << [
                                 remainingTime: currentRemaining,
+                                spentTime    : currentSpent,
                                 label        : lastDaycliche.clone().clearTime().time
                         ]
                     }
@@ -262,6 +264,7 @@ class SprintService extends IceScrumEventPublisher {
                 if ((DateUtils.isDateWeekend(lastDaycliche + (it + 1)) && !sprint.parentRelease.parentProject.preferences.hideWeekend) || !DateUtils.isDateWeekend(lastDaycliche + (it + 1))) {
                     values << [
                             remainingTime: null,
+                            spentTime    : null,
                             label        : (lastDaycliche + (it + 1)).clearTime().time
                     ]
                 }
