@@ -26,7 +26,7 @@
                     <button class="btn btn-default btn-sm"
                             ng-if="authorizedWidget('update', widget)"
                             ng-click="toggleSettings(widget)"
-                            uib-tooltip="${message(code: 'todo.is.ui.setting')}">
+                            defer-tooltip="${message(code: 'todo.is.ui.setting')}">
                         <i class="fa" ng-class="{ 'fa-cog':!showSettings, 'fa-save':showSettings }"></i>
                     </button>
                 </g:if>
@@ -34,7 +34,7 @@
                     <button class="btn btn-default btn-sm"
                             ng-if="authorizedWidget('delete', widget)"
                             ng-click="delete(widget)"
-                            uib-tooltip="${message(code: 'is.ui.widget.remove')}">
+                            defer-tooltip="${message(code: 'is.ui.widget.remove')}">
                         <i class="fa fa-times"></i>
                     </button>
                 </g:if>
