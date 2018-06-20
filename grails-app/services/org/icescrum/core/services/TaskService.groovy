@@ -84,7 +84,7 @@ class TaskService extends IceScrumEventPublisher {
             state(task, props.state, user)
         }
         if (props.containsKey('responsible') && props.responsible == null && task.responsible) {
-            activityService.addActivity(task, task.responsible, 'taskUnassign', task.name)
+            activityService.addActivity(task, task.responsible?:user, 'taskUnassign', task.name)
             task.responsible = null
         }
         def sprint = task.sprint
@@ -165,7 +165,7 @@ class TaskService extends IceScrumEventPublisher {
             service.done(story)
         }
         if (user) {
-            activityService.addActivity(task, task.responsible, 'taskFinish', task.name)
+            activityService.addActivity(task, task.responsible?:user, 'taskFinish', task.name)
         }
     }
 
