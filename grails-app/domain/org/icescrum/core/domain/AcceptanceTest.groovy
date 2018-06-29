@@ -43,7 +43,7 @@ class AcceptanceTest implements Serializable {
             parentStory: Story
     ]
 
-    static hasMany = [activities: Activity]
+    static hasMany = [activities: Activity, metaDatas: MetaData]
 
     static constraints = {
         description(nullable: true, maxSize: 1000)
@@ -53,6 +53,7 @@ class AcceptanceTest implements Serializable {
     static mapping = {
         cache true
         table 'is_acceptance_test'
+        metaDatas cascade: 'delete-orphan'
         activities cascade: 'delete-orphan'
     }
 

@@ -45,11 +45,13 @@ abstract class BacklogElement implements Attachmentable, Commentable, Serializab
     Integer attachments_count = 0
 
     TimeBox backlog
+    Set<MetaData> metaDatas
     SortedSet<Activity> activities
 
     static belongsTo = [backlog: TimeBox]
 
-    static hasMany = [activities: Activity]
+    static hasMany = [metaDatas : MetaData,
+                      activities: Activity]
 
     static constraints = {
         description(maxSize: 3000, nullable: true)

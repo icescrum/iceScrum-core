@@ -55,6 +55,7 @@ class StoryService extends IceScrumEventPublisher {
     def securityService
     def acceptanceTestService
     def activityService
+    def metaDataService
     def pushService
     def i18nService
 
@@ -483,6 +484,7 @@ class StoryService extends IceScrumEventPublisher {
             def storyProperties = [:] << story.properties
             storyProperties.remove('type')
             storyProperties.remove('activities')
+            storyProperties.remove('metadatas')
             def feature = new Feature(storyProperties)
             feature.description = (feature.description ?: '')
             feature.validate()
@@ -521,6 +523,7 @@ class StoryService extends IceScrumEventPublisher {
             }
             def storyProperties = [:] << story.properties
             storyProperties.remove('activities')
+            storyProperties.remove('metadatas')
             def task = new Task(storyProperties)
             task.type = Task.TYPE_URGENT
             task.state = Task.STATE_WAIT
@@ -841,6 +844,9 @@ class StoryService extends IceScrumEventPublisher {
             options.parent = story
             storyXml.activities.activity.each { def activityXml ->
                 activityService.unMarshall(activityXml, options)
+            }
+            storyXml.metadatas.metadata.each { def metadataXml ->
+                metaDataService.unMarshall(metadataXml, options)
             }
             options.parent = null
             if (options.save) {

@@ -38,10 +38,12 @@ class TimeBox implements Comparable<TimeBox>, Serializable {
     Date todoDate = new Date()
     Date lastUpdated
 
+    Set<MetaData> metaDatas
     SortedSet<Activity> activities
 
     static hasMany = [
             cliches   : Cliche,
+            metaDatas : MetaData,
             activities: Activity
     ]
 
@@ -81,6 +83,7 @@ class TimeBox implements Comparable<TimeBox>, Serializable {
         description type: 'text'
         tablePerHierarchy false
         cliches cascade: 'all-delete-orphan', cache: true
+        metaDatas cascade: 'delete-orphan', cache: true
         activities cascade: 'delete-orphan'
         sort:
         orderNumber: 'asc'

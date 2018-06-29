@@ -57,6 +57,7 @@ class Feature extends BacklogElement implements Serializable {
         table 'is_feature'
         stories cascade: "refresh", sort: 'rank', 'name': 'asc', batchSize: 25, cache: true
         sort "id"
+        metaDatas cascade: 'delete-orphan', batchSize: 10, cache: true // Doesn't work on BacklogElement
         activities cascade: 'delete-orphan', batchSize: 25, cache: true // Doesn't work on BacklogElement
     }
 
