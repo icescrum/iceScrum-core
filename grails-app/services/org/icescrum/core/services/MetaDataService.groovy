@@ -30,32 +30,32 @@ import org.icescrum.core.utils.DateUtils
 
 class MetaDataService extends IceScrumEventPublisher {
 
-    void addOrUpdateMetadata(def object, String key, String value) {
+    void addOrUpdateMetadata(def object, String metaKey, String metaValue) {
         def type = object.class.name
-        def meta = MetaData.findByParentRefAndParentTypeAndKey(object.id, type, key)
+        def meta = MetaData.findByParentRefAndParentTypeAndMetaKey(object.id, type, metaKey)
         if (meta) {
-            meta.value = value
+            meta.metaValue = metaValue
         } else {
-            meta = new MetaData(parentRef: object.id, parentType: type, key: key, value: value)
+            meta = new MetaData(parentRef: object.id, parentType: type, metaKey: metaKey, metaValue: metaValue)
         }
         meta.save()
     }
 
-    void addOrUpdateMetadata(def object, String key, def value) {
-        addOrUpdateMetadata(object, key, (value as JSON).toString())
+    void addOrUpdateMetadata(def object, String metaKey, def metaValue) {
+        addOrUpdateMetadata(object, metaKey, (metaValue as JSON).toString())
     }
 
-    def getMetadata(def object, String key, boolean isJSON) {
-        def meta = MetaData.findByParentRefAndParentTypeAndKey(object.id,  object.class.name, key)
-        return meta ? (isJSON ? JSON.parse(meta.value) : meta.value) : null
+    def getMetadata(def object, String metaKey, boolean isJSON) {
+        def meta = MetaData.findByParentRefAndParentTypeAndMetaKey(object.id,  object.class.name, metaKey)
+        return meta ? (isJSON ? JSON.parse(meta.metaValue) : meta.metaValue) : null
     }
 
     def unMarshall(def metaDataXml, def options) {
         def parent = options.parent
         MetaData.withTransaction(readOnly: !options.save) { transaction ->
             def metaData = new MetaData(
-                    key: metaDataXml.code.text(),
-                    value: metaDataXml.label.text(),
+                    metaKey: metaDataXml.metaKey.text(),
+                    metaValue: metaDataXml.metaValue.text(),
                     parentType: metaDataXml.parentType.text()
             )
             // References to object
