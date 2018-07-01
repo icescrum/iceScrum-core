@@ -54,6 +54,10 @@ class ServicesUtils {
     }
 
     public static String textileToHtml(String text) {
+        if(text){
+            text = text.replaceAll('\\[ *\\]', '<i class="fa fa-square-o"></i>');
+            text = text.replaceAll('\\[ *[xX] *\\]', '<i class="fa fa-check-square-o"></i>');
+        }
         String html = text ? new MarkupParser(markupLanguage: new TextileLanguage()).parseToHtml(text) : ''
         return html ? html.substring((html.indexOf("<body>") + "<body>".size()), html.indexOf("</body>")) : html
     }
