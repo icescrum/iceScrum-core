@@ -200,7 +200,7 @@ class DummyService {
             sprint.todoDate = startDate
             sprint.goal = ''
             sprint.deliveredVersion = sprint.orderNumber == release1.sprints.size() ? 'v1.0' : 'v0.' + sprint.orderNumber
-            sprint.doneDefinition = "* All tasks are done\n* All code is merged in master branch\n* All acceptance tests pass\n* There are automated unit tests\n* There are automated functional tests\n* Implemented web UI features are compatible with modern browsers"
+            sprint.doneDefinition = "* [x] All tasks are done\n* [x] All code is merged in master branch\n* [x] All acceptance tests pass\n* [x] There are automated unit tests\n* [] There are automated functional tests\n* [x] Implemented web UI features are compatible with modern browsers"
             sprint.stories.each { story ->
                 (sprint.orderNumber + (largeDummyze ? 30 : 0)).times {
                     taskService.save(new Task(estimation: 3, name: randomWords(15, 5, 200), description: randomWords(50, 0, 2900), responsible: user, parentStory: story, backlog: sprint), user)
