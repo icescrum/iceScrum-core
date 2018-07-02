@@ -38,6 +38,7 @@ class ReleaseService extends IceScrumEventPublisher {
 
     def storyService
     def clicheService
+    def sprintService
     def springSecurityService
     def grailsApplication
     def i18nService
@@ -166,6 +167,9 @@ class ReleaseService extends IceScrumEventPublisher {
             storyService.unPlanAll(release.sprints)
         }
         release.features?.each { release.removeFromFeatures(it) }
+        release.sprints.each {
+            sprintService.delete(it)
+        }
         def project = release.parentProject
         project.removeFromReleases(release)
         if (project.releases) {
