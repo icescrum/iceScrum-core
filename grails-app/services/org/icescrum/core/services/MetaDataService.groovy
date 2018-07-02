@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 Kagilum SAS.
+ * Copyright (c) 2018 Kagilum SAS.
  *
  * This file is part of iceScrum.
  *
@@ -46,7 +46,7 @@ class MetaDataService extends IceScrumEventPublisher {
     }
 
     def getMetadata(def object, String metaKey, boolean isJSON) {
-        def meta = MetaData.findByParentRefAndParentTypeAndMetaKey(object.id,  object.class.name, metaKey)
+        def meta = MetaData.findByParentRefAndParentTypeAndMetaKey(object.id, object.class.name, metaKey)
         return meta ? (isJSON ? JSON.parse(meta.metaValue) : meta.metaValue) : null
     }
 

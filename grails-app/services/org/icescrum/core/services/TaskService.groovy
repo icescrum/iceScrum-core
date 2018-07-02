@@ -84,7 +84,7 @@ class TaskService extends IceScrumEventPublisher {
             state(task, props.state, user)
         }
         if (props.containsKey('responsible') && props.responsible == null && task.responsible) {
-            activityService.addActivity(task, task.responsible?:user, 'taskUnassign', task.name)
+            activityService.addActivity(task, task.responsible ?: user, 'taskUnassign', task.name)
             task.responsible = null
         }
         def sprint = task.sprint
@@ -165,7 +165,7 @@ class TaskService extends IceScrumEventPublisher {
             service.done(story)
         }
         if (user) {
-            activityService.addActivity(task, task.responsible?:user, 'taskFinish', task.name)
+            activityService.addActivity(task, task.responsible ?: user, 'taskFinish', task.name)
         }
     }
 
@@ -293,9 +293,9 @@ class TaskService extends IceScrumEventPublisher {
                     || securityService.productOwner(project, springSecurityService.authentication)
                     || securityService.scrumMaster(null, springSecurityService.authentication)) {
                 if (newState == Task.STATE_BUSY && task.state != Task.STATE_BUSY) {
-                    activityService.addActivity(task, task.responsible?:user, 'taskInprogress', task.name)
+                    activityService.addActivity(task, task.responsible ?: user, 'taskInprogress', task.name)
                 } else if (newState == Task.STATE_WAIT && task.state != Task.STATE_WAIT && task.responsible) {
-                    activityService.addActivity(task, task.responsible?:user, 'taskWait', task.name)
+                    activityService.addActivity(task, task.responsible ?: user, 'taskWait', task.name)
                 }
                 task.state = newState
             }

@@ -54,7 +54,7 @@ class ServicesUtils {
     }
 
     public static String textileToHtml(String text) {
-        if(text){
+        if (text) {
             text = text.replaceAll('\\[ *\\]', '<i class="fa fa-square-o"></i>');
             text = text.replaceAll('\\[ *[xX] *\\]', '<i class="fa fa-check-square-o"></i>');
         }
