@@ -25,12 +25,9 @@
 
 package org.icescrum.core.domain
 
-import grails.plugin.springsecurity.SpringSecurityService
 import grails.util.GrailsNameUtils
-import grails.util.Holders
 import org.hibernate.ObjectNotFoundException
 import org.icescrum.core.domain.AcceptanceTest.AcceptanceTestState
-
 
 class Story extends BacklogElement implements Cloneable, Serializable {
 
