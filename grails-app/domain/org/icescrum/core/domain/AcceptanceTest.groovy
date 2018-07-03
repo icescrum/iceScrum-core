@@ -37,6 +37,7 @@ class AcceptanceTest implements Serializable {
     int state = AcceptanceTestState.TOCHECK.id
 
     SortedSet<Activity> activities
+    Set<MetaData> metaDatas
 
     static belongsTo = [
             creator    : User,
