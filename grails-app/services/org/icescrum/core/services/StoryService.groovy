@@ -474,7 +474,7 @@ class StoryService extends IceScrumEventPublisher {
     }
 
     @PreAuthorize('productOwner(#stories[0].backlog) and !archivedProject(#stories[0].backlog)')
-    def acceptToFeature(List<Story> stories) {
+    def turnIntoFeature(List<Story> stories) {
         def features = []
         stories.each { story ->
             if (story.state > Story.STATE_SUGGESTED) {
@@ -484,7 +484,7 @@ class StoryService extends IceScrumEventPublisher {
             def storyProperties = [:] << story.properties
             storyProperties.remove('type')
             storyProperties.remove('activities')
-            storyProperties.remove('metadatas')
+            storyProperties.remove('metaDatas')
             def feature = new Feature(storyProperties)
             feature.description = (feature.description ?: '')
             feature.validate()
@@ -514,7 +514,7 @@ class StoryService extends IceScrumEventPublisher {
     }
 
     @PreAuthorize('productOwner(#stories[0].backlog) and !archivedProject(#stories[0].backlog)')
-    def acceptToUrgentTask(List<Story> stories) {
+    def turnIntoUrgentTask(List<Story> stories) {
         def tasks = []
         def project = stories[0].backlog
         stories.each { story ->
@@ -523,7 +523,7 @@ class StoryService extends IceScrumEventPublisher {
             }
             def storyProperties = [:] << story.properties
             storyProperties.remove('activities')
-            storyProperties.remove('metadatas')
+            storyProperties.remove('metaDatas')
             def task = new Task(storyProperties)
             task.type = Task.TYPE_URGENT
             task.state = Task.STATE_WAIT
@@ -844,9 +844,6 @@ class StoryService extends IceScrumEventPublisher {
             options.parent = story
             storyXml.activities.activity.each { def activityXml ->
                 activityService.unMarshall(activityXml, options)
-            }
-            storyXml.metadatas.metadata.each { def metadataXml ->
-                metaDataService.unMarshall(metadataXml, options)
             }
             options.parent = null
             if (options.save) {

@@ -57,7 +57,7 @@ class MetaData implements Serializable, Comparable {
     }
 
     def xml(builder) {
-        builder.metadata() {
+        builder.metaData() {
             builder.dateCreated(this.dateCreated)
             builder.lastUpdated(this.lastUpdated)
             builder.metaKey(this.metaKey)
