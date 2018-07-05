@@ -165,11 +165,9 @@ class ReleaseService extends IceScrumEventPublisher {
         def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_DELETE, release)
         if (release.sprints) {
             storyService.unPlanAll(release.sprints)
+            sprintService.delete(release.sprints[0]) // Deleting the first sprint deletes all of them
         }
         release.features?.each { release.removeFromFeatures(it) }
-        release.sprints.each {
-            sprintService.delete(it)
-        }
         def project = release.parentProject
         project.removeFromReleases(release)
         if (project.releases) {
