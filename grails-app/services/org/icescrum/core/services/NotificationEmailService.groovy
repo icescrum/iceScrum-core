@@ -140,7 +140,7 @@ class NotificationEmailService {
         if (!ApplicationSupport.booleanValue(grailsApplication.config.icescrum.alerts.enable)) {
             return
         }
-        def project = story.backlog
+        Project project = story.backlog
         def subjectArgs = [project.name, story.name]
         def baseUrl = grailsApplication.config.icescrum.serverURL + '/p/' + project.pkey
         def permalink = baseUrl + '-' + story.uid
@@ -155,7 +155,7 @@ class NotificationEmailService {
                     emails : group*.email.toArray(),
                     subject: grailsApplication.config.icescrum.alerts.subject_prefix + getMessage('is.template.email.story.changedState.subject', (Locale) locale, subjectArgs),
                     view   : '/emails-templates/storyChangedState',
-                    model  : [state: getMessage(grailsApplication.config.icescrum.resourceBundles.storyStates[story.state], (Locale) locale), locale: locale, storyName: story.name, permalink: permalink, linkName: project.name, link: projectLink],
+                    model  : [state: getMessage(project.getStoryStateNames()[story.state], (Locale) locale), locale: locale, storyName: story.name, permalink: permalink, linkName: project.name, link: projectLink],
                     async  : true
             ])
         }

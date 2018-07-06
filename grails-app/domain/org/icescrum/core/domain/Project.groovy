@@ -370,6 +370,10 @@ class Project extends TimeBox implements Serializable, Attachmentable {
         return versions.unique()
     }
 
+    Map<Integer, String> getStoryStateNames() {
+        return Holders.grailsApplication.config.icescrum.resourceBundles.storyStates
+    }
+
     def getSprints() {
         return this.releases*.sprints.flatten()
     }
