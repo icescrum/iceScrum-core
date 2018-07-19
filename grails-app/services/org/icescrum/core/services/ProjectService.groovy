@@ -479,7 +479,7 @@ class ProjectService extends IceScrumEventPublisher {
                     options.sprint = originalSprint
                     options.story = taskData.parentStory
                     taskService.unMarshall(taskData.taskXml, options)
-                    sprint.save()
+                    originalSprint.save()
                 }
             }
 
