@@ -838,6 +838,7 @@ class CheckerTimerTask extends IsTimerTask {
                         log.debug('Automatic check for update - iceScrum is up to date')
                     }
                 }
+                Holders.grailsApplication.config.icescrum.check.response = resp.data.collectEntries { key, val -> [(key): val] } // create a copy
             }
             if (interval != configInterval) {
                 // Back to normal delay
