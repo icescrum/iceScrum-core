@@ -187,17 +187,13 @@ class StoryService extends IceScrumEventPublisher {
 
     @PreAuthorize('(productOwner(#sprint.parentProject) or scrumMaster(#sprint.parentProject)) and !archivedProject(#sprint.parentProject)')
     public void plan(Sprint sprint, Story story, Long newRank = null) {
-        if (story.dependsOn) {
-            if (story.dependsOn.state < Story.STATE_PLANNED) {
-                throw new BusinessException(code: 'is.story.error.dependsOn.notPlanned', args: [story.name, story.dependsOn.name])
-            } else if (story.dependsOn.parentSprint.startDate > sprint.startDate) {
-                throw new BusinessException(code: 'is.story.error.dependsOn.beforePlanned', args: [story.name, story.dependsOn.name])
-            }
+        if (story.dependsOn && (story.dependsOn.state < Story.STATE_PLANNED || story.dependsOn.parentSprint.startDate > sprint.startDate)) {
+            throw new BusinessException(code: 'is.story.error.dependsOn', args: [story.name, story.dependsOn.name])
         }
         if (story.dependences) {
-            def startDate = story.dependences.findAll { it.parentSprint }?.collect { it.parentSprint.startDate }?.min()
-            if (startDate && sprint.startDate > startDate) {
-                throw new BusinessException(code: 'is.story.error.dependences.beforePlanned', args: [story.name])
+            Story dependence = story.dependences.findAll { it.parentSprint }?.min { it.parentSprint.startDate }
+            if (dependence && sprint.startDate > dependence.parentSprint.startDate) {
+                throw new BusinessException(code: 'is.story.error.dependences', args: [story.name, dependence.name])
             }
         }
         if (![Story.TYPE_USER_STORY, Story.TYPE_DEFECT, Story.TYPE_TECHNICAL_STORY].contains(story.type)) {
@@ -261,7 +257,7 @@ class StoryService extends IceScrumEventPublisher {
             throw new BusinessException(code: 'is.story.error.unplan.done')
         }
         if (fullUnPlan && story.dependences?.find { it.state > Story.STATE_ESTIMATED }) {
-            throw new BusinessException(code: 'is.story.error.dependences.dissociate', args: [story.name, story.dependences.find { it.state > Story.STATE_ESTIMATED }.name])
+            throw new BusinessException(code: 'is.story.error.dependences', args: [story.name, story.dependences.find { it.state > Story.STATE_ESTIMATED }.name])
         }
         resetRank(story)
         sprint.removeFromStories(story)
@@ -437,7 +433,7 @@ class StoryService extends IceScrumEventPublisher {
             throw new BusinessException(code: 'is.story.error.not.state.suggested')
         }
         if (story.dependsOn?.state == Story.STATE_SUGGESTED) {
-            throw new BusinessException(code: 'is.story.error.dependsOn.suggested', args: [story.name, story.dependsOn.name])
+            throw new BusinessException(code: 'is.story.error.dependsOn', args: [story.name, story.dependsOn.name])
         }
         def rank = newRank ?: ((Story.countByBacklogAndStateInList(story.backlog, [Story.STATE_ACCEPTED, Story.STATE_ESTIMATED]) ?: 0) + 1) // Do it before resetRank to prevent flushing dirty ranks that need to be pushed
         resetRank(story)
@@ -460,7 +456,7 @@ class StoryService extends IceScrumEventPublisher {
             throw new BusinessException(code: 'is.story.error.not.in.backlog')
         }
         if (story.dependences?.find { it.state > Story.STATE_SUGGESTED }) {
-            throw new BusinessException(code: 'is.story.error.dependences.returntosandbox', args: [story.name, story.dependences.find { it.state > Story.STATE_SUGGESTED }.name])
+            throw new BusinessException(code: 'is.story.error.dependences', args: [story.name, story.dependences.find { it.state > Story.STATE_SUGGESTED }.name])
         }
         resetRank(story)
         story.state = Story.STATE_SUGGESTED
