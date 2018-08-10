@@ -62,6 +62,7 @@ import org.icescrum.core.domain.security.Authority
 import org.icescrum.core.domain.security.UserAuthority
 import org.icescrum.core.security.WebScrumExpressionHandler
 import org.icescrum.core.services.ProjectService
+import org.icescrum.core.utils.DateUtils
 import org.icescrum.plugins.attachmentable.domain.Attachment
 import org.springframework.expression.Expression
 import org.springframework.security.access.expression.ExpressionUtils
@@ -716,11 +717,12 @@ class ApplicationSupport {
 
     static void importAttachment(def attachmentable, def user, def importPath, def attachmentXml) {
         def originalName = attachmentXml.inputName.text()
+        Attachment attachment
         if (attachmentXml.url.text()) {
-            attachmentable.addAttachment(user, [name    : originalName,
-                                                url     : attachmentXml.url.text(),
-                                                provider: attachmentXml.provider.text(),
-                                                length  : attachmentXml.length.toInteger()])
+            attachment = attachmentable.addAttachment(user, [name    : originalName,
+                                                             url     : attachmentXml.url.text(),
+                                                             provider: attachmentXml.provider.text(),
+                                                             length  : attachmentXml.length.toInteger()])
         } else {
             def path = "${importPath}${File.separator}attachments${File.separator}${attachmentXml.@id.text()}"
             if (attachmentXml.ext.text()) {
@@ -728,11 +730,14 @@ class ApplicationSupport {
             }
             def attachmentFile = new File(path)
             if (attachmentFile.exists()) {
-                Attachment attachment = attachmentable.addAttachment(user, attachmentFile, originalName)
+                attachment = attachmentable.addAttachment(user, attachmentFile, originalName)
                 if (attachmentXml.provider.text()) {
                     attachment.provider = attachmentXml.provider.text()
                 }
             }
+        }
+        if (attachment) {
+            attachment.dateCreated = DateUtils.parseDateFromExport(attachmentXml.dateCreated.text())
         }
     }
 
