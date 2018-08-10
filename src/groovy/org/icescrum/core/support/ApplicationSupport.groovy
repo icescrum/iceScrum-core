@@ -62,6 +62,7 @@ import org.icescrum.core.domain.security.Authority
 import org.icescrum.core.domain.security.UserAuthority
 import org.icescrum.core.security.WebScrumExpressionHandler
 import org.icescrum.core.services.ProjectService
+import org.icescrum.plugins.attachmentable.domain.Attachment
 import org.springframework.expression.Expression
 import org.springframework.security.access.expression.ExpressionUtils
 import org.springframework.security.core.context.SecurityContextHolder as SCH
@@ -713,18 +714,24 @@ class ApplicationSupport {
         c.dateCreated = dateCreated
     }
 
-    static void importAttachment(def object, def user, def importPath, def attachmentXml) {
+    static void importAttachment(def attachmentable, def user, def importPath, def attachmentXml) {
         def originalName = attachmentXml.inputName.text()
         if (attachmentXml.url.text()) {
-            object.addAttachment(user, [name    : originalName,
-                                        url     : attachmentXml.url.text(),
-                                        provider: attachmentXml.provider.text(),
-                                        length  : attachmentXml.length.toInteger()])
+            attachmentable.addAttachment(user, [name    : originalName,
+                                                url     : attachmentXml.url.text(),
+                                                provider: attachmentXml.provider.text(),
+                                                length  : attachmentXml.length.toInteger()])
         } else {
-            def path = "${importPath}${File.separator}attachments${File.separator}${attachmentXml.@id.text()}.${attachmentXml.ext.text()}"
-            def fileAttch = new File(path)
-            if (fileAttch.exists()) {
-                object.addAttachment(user, fileAttch, originalName)
+            def path = "${importPath}${File.separator}attachments${File.separator}${attachmentXml.@id.text()}"
+            if (attachmentXml.ext.text()) {
+                path += '.' + attachmentXml.ext.text()
+            }
+            def attachmentFile = new File(path)
+            if (attachmentFile.exists()) {
+                Attachment attachment = attachmentable.addAttachment(user, attachmentFile, originalName)
+                if (attachmentXml.provider.text()) {
+                    attachment.provider = attachmentXml.provider.text()
+                }
             }
         }
     }
@@ -780,7 +787,7 @@ class ApplicationSupport {
         BigDecimal maxMemory
         try {
             maxMemory = new BigDecimal(Math.round((Runtime.getRuntime().maxMemory() / 1073741824) * 10)) / 10
-        } catch(Exception) {}
+        } catch (Exception) {}
         return maxMemory
     }
 }
