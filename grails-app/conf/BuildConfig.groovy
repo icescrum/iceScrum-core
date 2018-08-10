@@ -71,7 +71,7 @@ grails.project.dependency.resolution = {
         build(':release:3.1.2') {
             export = false
         }
-        compile 'org.icescrum:icescrum-attachmentable:1.0.3'
+        compile 'org.icescrum:icescrum-attachmentable:1.0.4'
         compile 'org.icescrum:commentable:1.3'
     }
 }
