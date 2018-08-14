@@ -203,10 +203,10 @@ class StoryService extends IceScrumEventPublisher {
             throw new BusinessException(code: 'is.sprint.error.associate.done')
         }
         if (story.state < Story.STATE_ESTIMATED) {
-            throw new BusinessException(code: 'is.sprint.error.associate.story.noEstimated')
+            throw new BusinessException(code: 'is.sprint.error.associate.story.noEstimated', args: [sprint.parentProject.getStoryStateNames()[Story.STATE_ESTIMATED]])
         }
         if (story.state == Story.STATE_DONE) {
-            throw new BusinessException(code: 'is.sprint.error.associate.story.done')
+            throw new BusinessException(code: 'is.sprint.error.associate.story.done', args: [sprint.parentProject.getStoryStateNames()[Story.STATE_DONE]])
         }
         if (story.parentSprint != null) {
             unPlan(story, false)
