@@ -570,12 +570,13 @@ class StoryService extends IceScrumEventPublisher {
 
     @PreAuthorize('(productOwner(#stories[0].backlog) or scrumMaster(#stories[0].backlog)) and !archivedProject(#stories[0].backlog)')
     void done(List<Story> stories) {
+        def storyStateNames = ((Project) stories[0].backlog).getStoryStateNames()
         stories.each { story ->
             if (story.parentSprint.state != Sprint.STATE_INPROGRESS) {
                 throw new BusinessException(code: 'is.sprint.error.declareAsDone.state.not.inProgress')
             }
             if (story.state != Story.STATE_INPROGRESS) {
-                throw new BusinessException(code: 'is.story.error.declareAsDone.state.not.inProgress')
+                throw new BusinessException(code: 'is.story.error.workflow', args: [storyStateNames[Story.STATE_INPROGRESS], storyStateNames[Story.STATE_DONE]])
             }
             //Move story to last rank in sprint
             updateRank(story, Story.countByParentSprint(story.parentSprint))
@@ -611,9 +612,10 @@ class StoryService extends IceScrumEventPublisher {
 
     @PreAuthorize('(productOwner(#stories[0].backlog) or scrumMaster(#stories[0].backlog)) and !archivedProject(#stories[0].backlog)')
     void unDone(List<Story> stories) {
+        def storyStateNames = ((Project) stories[0].backlog).getStoryStateNames()
         stories.each { story ->
             if (story.state != Story.STATE_DONE) {
-                throw new BusinessException(code: 'is.story.error.declareAsUnDone.state.not.done')
+                throw new BusinessException(code: 'is.story.error.workflow', args: [storyStateNames[Story.STATE_DONE], storyStateNames[Story.STATE_INPROGRESS]])
             }
             if (story.parentSprint.state != Sprint.STATE_INPROGRESS) {
                 throw new BusinessException(code: 'is.sprint.error.declareAsUnDone.state.not.inProgress')
