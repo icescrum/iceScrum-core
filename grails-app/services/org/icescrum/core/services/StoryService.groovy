@@ -55,7 +55,6 @@ class StoryService extends IceScrumEventPublisher {
     def securityService
     def acceptanceTestService
     def activityService
-    def metaDataService
     def pushService
     def i18nService
 
@@ -429,18 +428,19 @@ class StoryService extends IceScrumEventPublisher {
 
     @PreAuthorize('productOwner(#story.backlog) and !archivedProject(#story.backlog)')
     def acceptToBacklog(Story story, Long newRank = null) {
+        Project project = (Project) story.backlog
         if (story.state > Story.STATE_SUGGESTED) {
-            throw new BusinessException(code: 'is.story.error.not.state.suggested')
+            throw new BusinessException(code: 'is.story.error.not.state.suggested', args: [project.getStoryStateNames()[Story.STATE_SUGGESTED]])
         }
         if (story.dependsOn?.state == Story.STATE_SUGGESTED) {
             throw new BusinessException(code: 'is.story.error.dependsOn', args: [story.name, story.dependsOn.name])
         }
-        def rank = newRank ?: ((Story.countByBacklogAndStateInList(story.backlog, [Story.STATE_ACCEPTED, Story.STATE_ESTIMATED]) ?: 0) + 1) // Do it before resetRank to prevent flushing dirty ranks that need to be pushed
+        def rank = newRank ?: ((Story.countByBacklogAndStateInList(project, [Story.STATE_ACCEPTED, Story.STATE_ESTIMATED]) ?: 0) + 1) // Do it before resetRank to prevent flushing dirty ranks that need to be pushed
         resetRank(story)
         story.state = Story.STATE_ACCEPTED
         story.acceptedDate = new Date()
         activityService.addActivity(story, springSecurityService.currentUser, 'acceptAs', story.name)
-        if (((Project) story.backlog).preferences.noEstimation) {
+        if (project.preferences.noEstimation) {
             story.estimatedDate = new Date()
             story.effort = 1
             story.state = Story.STATE_ESTIMATED
@@ -453,7 +453,8 @@ class StoryService extends IceScrumEventPublisher {
     @PreAuthorize('productOwner(#story.backlog) and !archivedProject(#story.backlog)')
     void returnToSandbox(Story story, Long newRank) {
         if (!(story.state in [Story.STATE_ESTIMATED, Story.STATE_ACCEPTED])) {
-            throw new BusinessException(code: 'is.story.error.not.in.backlog')
+            def storyStatesByName = ((Project) story.backlog).getStoryStateNames()
+            throw new BusinessException(code: 'is.story.error.not.in.backlog', args: [storyStatesByName[Story.STATE_ACCEPTED], storyStatesByName[Story.STATE_ESTIMATED]])
         }
         if (story.dependences?.find { it.state > Story.STATE_SUGGESTED }) {
             throw new BusinessException(code: 'is.story.error.dependences', args: [story.name, story.dependences.find { it.state > Story.STATE_SUGGESTED }.name])
@@ -472,9 +473,10 @@ class StoryService extends IceScrumEventPublisher {
     @PreAuthorize('productOwner(#stories[0].backlog) and !archivedProject(#stories[0].backlog)')
     def turnIntoFeature(List<Story> stories) {
         def features = []
+        Project project = (Project) stories[0].backlog
         stories.each { story ->
             if (story.state > Story.STATE_SUGGESTED) {
-                throw new BusinessException(code: 'is.story.error.not.state.suggested')
+                throw new BusinessException(code: 'is.story.error.not.state.suggested', args: [project.getStoryStateNames()[Story.STATE_SUGGESTED]])
             }
             User user = (User) springSecurityService.currentUser
             def storyProperties = [:] << story.properties
@@ -497,7 +499,7 @@ class StoryService extends IceScrumEventPublisher {
                     throw new ValidationException('Validation Error(s) occurred during save()', feature.errors)
                 }
             }
-            featureService.save(feature, (Project) story.backlog)
+            featureService.save(feature, project)
             story.attachments.each { attachment ->
                 feature.addAttachment(story.creator, attachmentableService.getFile(attachment), attachment.filename)
             }
@@ -512,10 +514,10 @@ class StoryService extends IceScrumEventPublisher {
     @PreAuthorize('productOwner(#stories[0].backlog) and !archivedProject(#stories[0].backlog)')
     def turnIntoUrgentTask(List<Story> stories) {
         def tasks = []
-        def project = stories[0].backlog
+        Project project = (Project) stories[0].backlog
         stories.each { story ->
             if (story.state > Story.STATE_SUGGESTED) {
-                throw new BusinessException(code: 'is.story.error.not.state.suggested')
+                throw new BusinessException(code: 'is.story.error.not.state.suggested', args: [project.getStoryStateNames()[Story.STATE_SUGGESTED]])
             }
             def storyProperties = [:] << story.properties
             storyProperties.remove('activities')

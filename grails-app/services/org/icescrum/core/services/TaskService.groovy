@@ -110,7 +110,7 @@ class TaskService extends IceScrumEventPublisher {
                 } else if (task.doneDate) {
                     def story = task.type ? null : Story.get(task.parentStory?.id)
                     if (story && story.state == Story.STATE_DONE) {
-                        throw new BusinessException(code: 'is.story.error.done')
+                        throw new BusinessException(code: 'is.story.error.done', args: [project.getStoryStateNames()[Story.STATE_DONE]])
                     }
                     if (task.estimation == 0f) {
                         task.estimation = null
@@ -278,7 +278,7 @@ class TaskService extends IceScrumEventPublisher {
         if (task.state == Task.STATE_DONE && task.doneDate && newState == Task.STATE_DONE) { // Move task from one story to another
             def story = task.type ? null : Story.get(task.parentStory?.id)
             if (story && story.state == Story.STATE_DONE) {
-                throw new BusinessException(code: 'is.story.error.done')
+                throw new BusinessException(code: 'is.story.error.done', args: [project.getStoryStateNames()[Story.STATE_DONE]])
             }
             task.doneDate = null
         } else {
