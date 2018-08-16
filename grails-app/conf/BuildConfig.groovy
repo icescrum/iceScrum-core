@@ -43,7 +43,7 @@ grails.project.dependency.resolution = {
         mavenRepo "https://repo.eclipse.org/content/repositories/mylyn/" // For wikitext
     }
     dependencies {
-        compile('org.atmosphere:atmosphere-runtime:2.4.23') {
+        compile('org.atmosphere:atmosphere-runtime:2.4.30') {
             excludes 'slf4j-api'
         }
         compile('org.codehaus.groovy.modules.http-builder:http-builder:0.7.2') {
