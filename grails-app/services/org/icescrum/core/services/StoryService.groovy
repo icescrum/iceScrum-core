@@ -142,7 +142,6 @@ class StoryService extends IceScrumEventPublisher {
                 if (story.state == Story.STATE_ACCEPTED) {
                     story.state = Story.STATE_ESTIMATED
                     story.estimatedDate = new Date()
-                    activityService.addActivity(story, springSecurityService.currentUser, 'estimate', story.name)
                 }
                 story.effort = props.effort
             }
@@ -218,7 +217,6 @@ class StoryService extends IceScrumEventPublisher {
             sprint.capacity = sprint.totalEffort
         }
         story.parentSprint = sprint
-        activityService.addActivity(story, user, 'plan', story.name, 'parentSprint', null, sprint.id.toString())
         if (sprint.state == Sprint.STATE_INPROGRESS) {
             story.state = Story.STATE_INPROGRESS
             story.inProgressDate = new Date()
@@ -268,7 +266,6 @@ class StoryService extends IceScrumEventPublisher {
         story.plannedDate = null
         User user = (User) springSecurityService.currentUser
         if (fullUnPlan) {
-            activityService.addActivity(story, user, 'unPlan', story.name, 'parentSprint', sprint.id.toString())
             story.state = Story.STATE_ESTIMATED
             setRank(story, 1)
             update(story)
@@ -439,12 +436,10 @@ class StoryService extends IceScrumEventPublisher {
         resetRank(story)
         story.state = Story.STATE_ACCEPTED
         story.acceptedDate = new Date()
-        activityService.addActivity(story, springSecurityService.currentUser, 'acceptAs', story.name)
         if (project.preferences.noEstimation) {
             story.estimatedDate = new Date()
             story.effort = 1
             story.state = Story.STATE_ESTIMATED
-            activityService.addActivity(story, springSecurityService.currentUser, 'estimate', story.name)
         }
         setRank(story, rank)
         update(story)
@@ -464,7 +459,6 @@ class StoryService extends IceScrumEventPublisher {
         story.acceptedDate = null
         story.estimatedDate = null
         story.effort = null
-        activityService.addActivity(story, springSecurityService.currentUser, 'returnToSandbox', story.name)
         def rank = newRank ?: 1
         setRank(story, rank)
         update(story)
@@ -587,7 +581,6 @@ class StoryService extends IceScrumEventPublisher {
             story.save()
             publishSynchronousEvent(IceScrumEventType.UPDATE, story, dirtyProperties)
             User user = (User) springSecurityService.currentUser
-            activityService.addActivity(story, user, 'done', story.name)
             pushService.disablePushForThisThread()
             story.tasks?.findAll { it.state != Task.STATE_DONE }?.each { t ->
                 taskService.update(t, user, false, [state: Task.STATE_DONE])
@@ -629,7 +622,6 @@ class StoryService extends IceScrumEventPublisher {
             story.save()
             publishSynchronousEvent(IceScrumEventType.UPDATE, story, dirtyProperties)
             User user = (User) springSecurityService.currentUser
-            activityService.addActivity(story, user, 'unDone', story.name)
         }
         if (stories) {
             clicheService.createOrUpdateDailyTasksCliche(stories[0]?.parentSprint)

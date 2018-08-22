@@ -180,7 +180,7 @@ class DummyService {
                 sprint.addToStories(story)
                 story.parentSprint = sprint
                 story.plannedDate = startDate + 2
-                addStoryActivity(story, user, 'plan', story.plannedDate)
+                addStoryActivity(story, user, 'updateState', story.plannedDate, 'state', Story.STATE_ESTIMATED)
                 story.state = Story.STATE_PLANNED
             }
             sprint.capacity = sprint.totalEffort
@@ -252,7 +252,8 @@ class DummyService {
     private void updateContentDoneSprint(Sprint sprint, Set<User> members) {
         sprint.stories.each { story ->
             story.state = Story.STATE_DONE
-            addStoryActivity(story, ((int) story.id) % 2 == 0 ? members.first() : members.last(), 'done', sprint.endDate)
+            def user = ((int) story.id) % 2 == 0 ? members.first() : members.last()
+            addStoryActivity(story, user, 'updateState', sprint.endDate, 'state', Story.STATE_INPROGRESS)
             story.doneDate = sprint.endDate
             story.save()
         }
@@ -290,7 +291,7 @@ class DummyService {
         }
         def lastStory = sprint.stories.sort { it.rank }.last()
         lastStory.state = Story.STATE_DONE
-        addStoryActivity(lastStory, lastStory.creator, 'done', new Date())
+        addStoryActivity(lastStory, lastStory.creator, 'updateState', new Date(), 'state', Story.STATE_INPROGRESS)
         lastStory.doneDate = new Date()
         lastStory.save()
         lastStory.tasks.each { Task task ->
@@ -337,8 +338,13 @@ class DummyService {
         }
     }
 
-    private addStoryActivity(Story story, User poster, String code, dateCreated) {
+    private addStoryActivity(Story story, User poster, String code, dateCreated, field = null, beforeValue = null) {
         def activity = new Activity(poster: poster, parentRef: story.id, parentType: 'story', code: code, label: story.name, dateCreated: dateCreated)
+        if (field) {
+            activity.afterValue = story[field]
+            activity.beforeValue = beforeValue
+            activity.field = field
+        }
         activity.save()
         story.addToActivities(activity)
     }

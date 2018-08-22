@@ -104,6 +104,9 @@ class ListenerService {
                 pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, tasksData, story.backlog.id)
             }
             def user = (User) springSecurityService.currentUser
+            if (dirtyProperties.containsKey('state')) {
+                activityService.addActivity(story, user, 'updateState', story.name, 'state', dirtyProperties.state?.toString(), story.state?.toString())
+            }
             ['name', 'type', 'value', 'effort'].each { property ->
                 if (dirtyProperties.containsKey(property)) {
                     activityService.addActivity(story, user, Activity.CODE_UPDATE, story.name, property, dirtyProperties[property]?.toString(), story."$property"?.toString())
@@ -120,14 +123,13 @@ class ListenerService {
                     activityService.addActivity(story, user, Activity.CODE_UPDATE, story.name, property)
                 }
             }
-            ['parentSprint'].each { property ->
-                if (dirtyProperties.containsKey(property)) {
-                    def tasksData = [class     : 'Task',
-                                     ids       : story.tasks.findAll { it.state != Task.STATE_DONE }*.id,
-                                     properties: [class: 'Task', state: Task.STATE_WAIT, backlog: story.parentSprint ? getSprintAsShort(story.parentSprint) : null, inProgressDate: null],
-                                     messageId : 'story-' + story.id + '-tasks']
-                    pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, tasksData, story.backlog.id)
-                }
+            if (dirtyProperties.containsKey('parentSprint')) {
+                activityService.addActivity(story, user, Activity.CODE_UPDATE, story.name, 'parentSprint', dirtyProperties.parentSprint?.id?.toString(), story.parentSprint?.id?.toString(), story.parentSprint?.fullName)
+                def tasksData = [class     : 'Task',
+                                 ids       : story.tasks.findAll { it.state != Task.STATE_DONE }*.id,
+                                 properties: [class: 'Task', state: Task.STATE_WAIT, backlog: story.parentSprint ? getSprintAsShort(story.parentSprint) : null, inProgressDate: null],
+                                 messageId : 'story-' + story.id + '-tasks']
+                pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, tasksData, story.backlog.id)
             }
         }
         pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, story, project.id)
