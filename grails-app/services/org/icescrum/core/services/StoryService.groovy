@@ -576,7 +576,7 @@ class StoryService extends IceScrumEventPublisher {
                 throw new BusinessException(code: 'is.story.error.markAsDone.not.inProgress', args: [storyStateNames[Story.STATE_DONE]])
             }
             if (story.state != Story.STATE_INPROGRESS) {
-                throw new BusinessException(code: 'is.story.error.workflow', args: [storyStateNames[Story.STATE_INPROGRESS], storyStateNames[Story.STATE_DONE]])
+                throw new BusinessException(code: 'is.story.error.workflow', args: [storyStateNames[Story.STATE_DONE], storyStateNames[story.state]])
             }
             //Move story to last rank in sprint
             updateRank(story, Story.countByParentSprint(story.parentSprint))
@@ -615,7 +615,7 @@ class StoryService extends IceScrumEventPublisher {
         def storyStateNames = ((Project) stories[0].backlog).getStoryStateNames()
         stories.each { story ->
             if (story.state != Story.STATE_DONE) {
-                throw new BusinessException(code: 'is.story.error.workflow', args: [storyStateNames[Story.STATE_DONE], storyStateNames[Story.STATE_INPROGRESS]])
+                throw new BusinessException(code: 'is.story.error.workflow', args: [storyStateNames[Story.STATE_INPROGRESS], storyStateNames[story.state]])
             }
             if (story.parentSprint.state != Sprint.STATE_INPROGRESS) {
                 throw new BusinessException(code: 'is.sprint.error.declareAsUnDone.state.not.inProgress')
