@@ -264,7 +264,6 @@ class StoryService extends IceScrumEventPublisher {
         story.parentSprint = null
         story.inProgressDate = null
         story.plannedDate = null
-        User user = (User) springSecurityService.currentUser
         if (fullUnPlan) {
             story.state = Story.STATE_ESTIMATED
             setRank(story, 1)
@@ -278,7 +277,7 @@ class StoryService extends IceScrumEventPublisher {
                     task.backlog = null
                 }
                 if (props || fullUnPlan) {
-                    taskService.update(task, user, false, props)
+                    taskService.update(task, (User) springSecurityService.currentUser, false, props)
                 }
             }
         }
@@ -621,7 +620,6 @@ class StoryService extends IceScrumEventPublisher {
             def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_UPDATE, story)
             story.save()
             publishSynchronousEvent(IceScrumEventType.UPDATE, story, dirtyProperties)
-            User user = (User) springSecurityService.currentUser
         }
         if (stories) {
             clicheService.createOrUpdateDailyTasksCliche(stories[0]?.parentSprint)
