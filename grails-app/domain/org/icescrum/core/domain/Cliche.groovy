@@ -91,7 +91,6 @@ class Cliche implements Serializable {
     static final ESTIMATED_STORIES = 'estimatedStories'
     static final ACCEPTED_STORIES = 'acceptedStories'
     static final SUGGESTED_STORIES = 'suggestedStories'
-    static final INREVIEW_STORIES = 'inReviewStories'
 
     // Sprint Resources
     static final SPRINT_RESOURCES = 'sprintResources'

@@ -165,7 +165,6 @@ class ProjectService extends IceScrumEventPublisher {
                             (Story.STATE_ESTIMATED) : xmlRoot."${Cliche.ESTIMATED_STORIES}".toInteger(),
                             (Story.STATE_PLANNED)   : xmlRoot."${Cliche.PLANNED_STORIES}".toInteger(),
                             (Story.STATE_INPROGRESS): xmlRoot."${Cliche.INPROGRESS_STORIES}".toInteger(),
-                            (Story.STATE_INREVIEW)  : xmlRoot."${Cliche.INREVIEW_STORIES}".toString().isInteger() ? xmlRoot."${Cliche.INREVIEW_STORIES}".toInteger() : 0,
                             (Story.STATE_DONE)      : xmlRoot."${Cliche.FINISHED_STORIES}".toInteger(),
                             label     : index == 0 ? "Start" : Sprint.getNameByReleaseAndClicheSprintId(release, xmlRoot."${Cliche.SPRINT_ID}".toString()) + "${cliche.id ? '' : " (progress)"}"
                     ]
