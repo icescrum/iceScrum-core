@@ -86,7 +86,7 @@ class ClicheService {
         def releasePoints = getPointsByType(Story.storiesByRelease(release).list())
         def projectPoints = getPointsByType(project.stories)
         // Stories by state
-        def storyStates = [Story.STATE_SUGGESTED, Story.STATE_ACCEPTED, Story.STATE_ESTIMATED, Story.STATE_PLANNED, Story.STATE_INPROGRESS, Story.STATE_DONE]
+        def storyStates = [Story.STATE_SUGGESTED, Story.STATE_ACCEPTED, Story.STATE_ESTIMATED, Story.STATE_PLANNED, Story.STATE_INPROGRESS, Story.STATE_INREVIEW, Story.STATE_DONE]
         def countByState = storyStates.collectEntries { storyState -> [(storyState): 0] }
         project.stories.each { story ->
             if (story.state in storyStates) {
@@ -132,6 +132,7 @@ class ClicheService {
                 "${Cliche.ESTIMATED_STORIES}"(countByState[Story.STATE_ESTIMATED])
                 "${Cliche.ACCEPTED_STORIES}"(countByState[Story.STATE_ACCEPTED])
                 "${Cliche.SUGGESTED_STORIES}"(countByState[Story.STATE_SUGGESTED])
+                "${Cliche.INREVIEW_STORIES}"(countByState[Story.STATE_INREVIEW])
             }
         }
         StreamingMarkupBuilder xmlBuilder = new StreamingMarkupBuilder()

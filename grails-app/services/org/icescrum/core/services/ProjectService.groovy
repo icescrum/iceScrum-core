@@ -160,12 +160,13 @@ class ProjectService extends IceScrumEventPublisher {
                 def xmlRoot = new XmlSlurper().parseText(cliche.data)
                 if (xmlRoot) {
                     values << [
-                            suggested : xmlRoot."${Cliche.SUGGESTED_STORIES}".toInteger(),
-                            accepted  : xmlRoot."${Cliche.ACCEPTED_STORIES}".toInteger(),
-                            estimated : xmlRoot."${Cliche.ESTIMATED_STORIES}".toInteger(),
-                            planned   : xmlRoot."${Cliche.PLANNED_STORIES}".toInteger(),
-                            inprogress: xmlRoot."${Cliche.INPROGRESS_STORIES}".toInteger(),
-                            done      : xmlRoot."${Cliche.FINISHED_STORIES}".toInteger(),
+                            (Story.STATE_SUGGESTED) : xmlRoot."${Cliche.SUGGESTED_STORIES}".toInteger(),
+                            (Story.STATE_ACCEPTED)  : xmlRoot."${Cliche.ACCEPTED_STORIES}".toInteger(),
+                            (Story.STATE_ESTIMATED) : xmlRoot."${Cliche.ESTIMATED_STORIES}".toInteger(),
+                            (Story.STATE_PLANNED)   : xmlRoot."${Cliche.PLANNED_STORIES}".toInteger(),
+                            (Story.STATE_INPROGRESS): xmlRoot."${Cliche.INPROGRESS_STORIES}".toInteger(),
+                            (Story.STATE_INREVIEW)  : xmlRoot."${Cliche.INREVIEW_STORIES}".toString().isInteger() ? xmlRoot."${Cliche.INREVIEW_STORIES}".toInteger() : 0,
+                            (Story.STATE_DONE)      : xmlRoot."${Cliche.FINISHED_STORIES}".toInteger(),
                             label     : index == 0 ? "Start" : Sprint.getNameByReleaseAndClicheSprintId(release, xmlRoot."${Cliche.SPRINT_ID}".toString()) + "${cliche.id ? '' : " (progress)"}"
                     ]
                 }
