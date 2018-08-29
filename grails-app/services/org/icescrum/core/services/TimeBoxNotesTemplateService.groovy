@@ -209,11 +209,13 @@ class TimeBoxNotesTemplateService {
                         effort        : story.effort,
                         rank          : story.rank,
                         affectVersion : story.affectVersion,
+                        frozenDate    : story.frozenDate,
                         suggestedDate : story.suggestedDate,
                         acceptedDate  : story.acceptedDate,
                         plannedDate   : story.plannedDate,
                         estimatedDate : story.estimatedDate,
                         inProgressDate: story.inProgressDate,
+                        inReviewDate  : story.inReviewDate,
                         doneDate      : story.doneDate,
                         comments      : story.comments]
         ]

@@ -33,22 +33,26 @@ class Story extends BacklogElement implements Cloneable, Serializable {
 
     static final long serialVersionUID = -6800252507987149001L
 
+    static final int STATE_FROZEN = -1
     static final int STATE_SUGGESTED = 1
     static final int STATE_ACCEPTED = 2
     static final int STATE_ESTIMATED = 3
     static final int STATE_PLANNED = 4
     static final int STATE_INPROGRESS = 5
+    static final int STATE_INREVIEW = 6
     static final int STATE_DONE = 7
     static final int TYPE_USER_STORY = 0
     static final int TYPE_DEFECT = 2
     static final int TYPE_TECHNICAL_STORY = 3
 
     int type = 0
+    Date frozenDate
     Date suggestedDate
     Date acceptedDate
     Date plannedDate
     Date estimatedDate
     Date inProgressDate
+    Date inReviewDate
     Date doneDate
     String origin
     BigDecimal effort = null
@@ -91,11 +95,13 @@ class Story extends BacklogElement implements Cloneable, Serializable {
 
     static constraints = {
         name(unique: 'backlog')
+        frozenDate(nullable: true)
         suggestedDate(nullable: true)
         acceptedDate(nullable: true)
         estimatedDate(nullable: true)
         plannedDate(nullable: true)
         inProgressDate(nullable: true)
+        inReviewDate(nullable: true)
         doneDate(nullable: true)
         parentSprint(nullable: true, validator: { newSprint, story -> newSprint == null || newSprint.parentProject.id == story.backlog.id ?: 'invalid' })
         feature(nullable: true, validator: { newFeature, story -> newFeature == null || newFeature.backlog.id == story.backlog.id ?: 'invalid' })
@@ -563,9 +569,11 @@ class Story extends BacklogElement implements Cloneable, Serializable {
             builder.lastUpdated(this.lastUpdated)
             builder.dateCreated(this.dateCreated)
             builder.affectVersion(this.affectVersion)
+            builder.frozenDate(this.frozenDate)
             builder.suggestedDate(this.suggestedDate)
             builder.estimatedDate(this.estimatedDate)
             builder.inProgressDate(this.inProgressDate)
+            builder.inReviewDate(this.inReviewDate)
 
             builder.tags { builder.mkp.yieldUnescaped("<![CDATA[${this.tags ?: ''}]]>") }
             builder.name { builder.mkp.yieldUnescaped("<![CDATA[${this.name}]]>") }

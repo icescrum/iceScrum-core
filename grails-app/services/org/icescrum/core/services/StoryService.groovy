@@ -726,11 +726,13 @@ class StoryService extends IceScrumEventPublisher {
             User creator = project ? project.getUserByUidOrOwner(storyXml.creator.@uid.text()) : null
             def story = new Story(
                     type: storyXml.type.text().toInteger(),
+                    frozenDate: DateUtils.parseDateFromExport(storyXml.frozenDate.text()),
                     suggestedDate: DateUtils.parseDateFromExport(storyXml.suggestedDate.text()),
                     acceptedDate: DateUtils.parseDateFromExport(storyXml.acceptedDate.text()),
                     estimatedDate: DateUtils.parseDateFromExport(storyXml.estimatedDate.text()),
                     plannedDate: DateUtils.parseDateFromExport(storyXml.plannedDate.text()),
                     inProgressDate: DateUtils.parseDateFromExport(storyXml.inProgressDate.text()),
+                    inReviewDate: DateUtils.parseDateFromExport(storyXml.inReviewDate.text()),
                     doneDate: DateUtils.parseDateFromExport(storyXml.doneDate.text()),
                     origin: storyXml.origin.text() ?: null,
                     effort: storyXml.effort.text().isEmpty() ? null : storyXml.effort.text().toBigDecimal(),
