@@ -795,6 +795,13 @@ class ApplicationSupport {
         } catch (Exception) {}
         return maxMemory
     }
+
+    static removeTrailingSlash(path) {
+        if (path && path instanceof String && path.endsWith('/')) {
+            path  = path[0..-2]
+        }
+        return path
+    }
 }
 
 abstract class IsTimerTask extends TimerTask {

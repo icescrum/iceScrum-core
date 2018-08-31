@@ -51,6 +51,8 @@ class BootStrapService {
             ApplicationSupport.checkForUpdateAndReportUsage(config)
         }
 
+        config.icescrum.serverURL = ApplicationSupport.removeTrailingSlash(config.icescrum.serverURL)
+
         config.grails.attachmentable.baseDir = config.icescrum.baseDir.toString()
         config.grails.mail.default.from = config.icescrum.alerts.default.from
 
