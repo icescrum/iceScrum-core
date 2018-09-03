@@ -397,16 +397,16 @@ class StoryService extends IceScrumEventPublisher {
     }
 
     // TODO check rights
-    private void updateRank(Story story, Long rank, Boolean force = false) {
+    private void updateRank(Story story, Long rank, Integer newState = null) {
         rank = adjustRankAccordingToDependences(story, rank)
         if ((story.dependsOn || story.dependences) && story.rank == rank) {
             return
         }
-        if (story.state == Story.STATE_DONE && !force) {
-            throw new BusinessException(code: 'is.story.rank.error')
+        if (story.state == Story.STATE_DONE && newState != Story.STATE_INPROGRESS) {
+            throw new BusinessException(code: 'is.story.error.done', args: [((Project) story.backlog).getStoryStateNames()[Story.STATE_DONE]])
         }
         def stories = story.sameBacklogStories
-        if (story.state == Story.STATE_INPROGRESS) {
+        if (story.state == Story.STATE_INPROGRESS && newState != Story.STATE_DONE) {
             def maxRankInProgress = stories.findAll { it.state != Story.STATE_DONE }.size()
             if (rank > maxRankInProgress) {
                 rank = maxRankInProgress
@@ -572,7 +572,7 @@ class StoryService extends IceScrumEventPublisher {
                 throw new BusinessException(code: 'is.story.error.workflow', args: [storyStateNames[Story.STATE_DONE], storyStateNames[story.state]])
             }
             // Move story to last rank in sprint
-            updateRank(story, Story.countByParentSprint(story.parentSprint))
+            updateRank(story, Story.countByParentSprint(story.parentSprint), Story.STATE_DONE)
             story.state = Story.STATE_DONE
             story.doneDate = new Date()
             story.parentSprint.velocity += story.effort
@@ -612,7 +612,7 @@ class StoryService extends IceScrumEventPublisher {
             if (story.parentSprint.state != Sprint.STATE_INPROGRESS) {
                 throw new BusinessException(code: 'is.sprint.error.declareAsUnDone.state.not.inProgress')
             }
-            updateRank(story, Story.countByParentSprintAndState(story.parentSprint, Story.STATE_INPROGRESS) + 1, true) // Move story to last rank of in progress stories in sprint
+            updateRank(story, Story.countByParentSprintAndState(story.parentSprint, Story.STATE_INPROGRESS) + 1, Story.STATE_INPROGRESS) // Move story to last rank of in progress stories in sprint
             story.state = Story.STATE_INPROGRESS
             story.inProgressDate = new Date()
             story.doneDate = null
