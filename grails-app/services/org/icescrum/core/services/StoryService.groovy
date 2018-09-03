@@ -568,10 +568,10 @@ class StoryService extends IceScrumEventPublisher {
             if (story.parentSprint?.state != Sprint.STATE_INPROGRESS) {
                 throw new BusinessException(code: 'is.story.error.markAsDone.not.inProgress', args: [storyStateNames[Story.STATE_DONE]])
             }
-            if (story.state < Story.STATE_INPROGRESS & story.state >= Story.STATE_DONE) {
+            if (story.state < Story.STATE_INPROGRESS || story.state >= Story.STATE_DONE) {
                 throw new BusinessException(code: 'is.story.error.workflow', args: [storyStateNames[Story.STATE_DONE], storyStateNames[story.state]])
             }
-            //Move story to last rank in sprint
+            // Move story to last rank in sprint
             updateRank(story, Story.countByParentSprint(story.parentSprint))
             story.state = Story.STATE_DONE
             story.doneDate = new Date()
