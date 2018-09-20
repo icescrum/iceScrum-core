@@ -200,6 +200,9 @@ class ListenerService {
     void taskCreate(Task task, Map dirtyProperties) {
         def user = (User) springSecurityService.currentUser
         activityService.addActivity(task, user ?: task.creator, 'taskSave', task.name)
+        if (task.parentStory) {
+            pushStory(task.parentStory)
+        }
         pushService.broadcastToProjectChannel(IceScrumEventType.CREATE, task, task.parentProject.id)
     }
 
@@ -217,19 +220,11 @@ class ListenerService {
             pushOtherRank(task.parentStory?.tasks)
         }
         if (dirtyProperties.containsKey('parentStory')) {
-            def oldStory = dirtyProperties.parentStory
-            if (oldStory != null) {
-                oldStory.lastUpdated = new Date()
-                oldStory.save(flush: true)
-                oldStory.refresh()
-                pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, oldStory, project.id)
+            if (dirtyProperties.parentStory != null) {
+                pushStory(dirtyProperties.parentStory)
             }
-            def newStory = task.parentStory
-            if (newStory != null) {
-                newStory.lastUpdated = new Date()
-                newStory.save(flush: true)
-                newStory.refresh()
-                pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, newStory, project.id)
+            if (task.parentStory != null) {
+                pushStory(task.parentStory)
                 newStoryUpdated = true;
             }
         }
@@ -246,6 +241,9 @@ class ListenerService {
             def container = dirtyProperties.parentStory ?: dirtyProperties.backlog
             container.tasks.findAll { it.isDirty('rank') && it.id != dirtyProperties.id }.each {
                 pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, [class: 'Task', id: it.id, rank: it.rank, messageId: 'task-' + it.id + '-rank'], it.parentProject.id)
+            }
+            if (dirtyProperties.parentStory) {
+                pushStory(dirtyProperties.parentStory)
             }
             pushService.broadcastToProjectChannel(IceScrumEventType.DELETE, [class: 'Task', id: dirtyProperties.id, messageId: 'task-' + dirtyProperties.id + '-delete'], dirtyProperties.parentProject.id)
         }
@@ -417,5 +415,12 @@ class ListenerService {
             sprintData[sprintProperty] = sprint[sprintProperty]
         }
         return sprintData
+    }
+
+    private boolean pushStory(Story story) {
+        story.lastUpdated = new Date()
+        story.save(flush: true)
+        story.refresh()
+        pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, story, story.backlog.id)
     }
 }
