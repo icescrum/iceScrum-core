@@ -305,7 +305,7 @@ class SprintService extends IceScrumEventPublisher {
         return values
     }
 
-    def sprintBurnupStoriesValues(Sprint sprint) {
+    def sprintStoriesValues(Sprint sprint) {
         def values = []
         def lastDaycliche = sprint.inProgressDate
         def date = (sprint.state == Sprint.STATE_DONE) ? sprint.doneDate : (sprint.state == Sprint.STATE_INPROGRESS) ? new Date() : sprint.endDate
@@ -316,12 +316,15 @@ class SprintService extends IceScrumEventPublisher {
                 if (xmlRoot) {
                     lastDaycliche = cliche.datePrise
                     if ((DateUtils.isDateWeekend(lastDaycliche) && !sprint.parentRelease.parentProject.preferences.hideWeekend) || !DateUtils.isDateWeekend(lastDaycliche)) {
+                        def pointsDone = xmlRoot."${Cliche.STORIES_POINTS_DONE}"?.toString()?.isBigDecimal() ? xmlRoot."${Cliche.STORIES_POINTS_DONE}".toBigDecimal() : 0
+                        def totalPoints = xmlRoot."${Cliche.STORIES_TOTAL_POINTS}"?.toString()?.isBigDecimal() ? xmlRoot."${Cliche.STORIES_TOTAL_POINTS}".toBigDecimal() : 0
                         values << [
-                                storiesDone: xmlRoot."${Cliche.STORIES_DONE}".toInteger(),
-                                stories    : xmlRoot."${Cliche.TOTAL_STORIES}".toInteger(),
-                                pointsDone : xmlRoot."${Cliche.STORIES_POINTS_DONE}"?.toString()?.isBigDecimal() ? xmlRoot."${Cliche.STORIES_POINTS_DONE}".toBigDecimal() : 0,
-                                totalPoints: xmlRoot."${Cliche.STORIES_TOTAL_POINTS}"?.toString()?.isBigDecimal() ? xmlRoot."${Cliche.STORIES_TOTAL_POINTS}".toBigDecimal() : 0,
-                                label      : lastDaycliche.clone().clearTime().time
+                                storiesDone    : xmlRoot."${Cliche.STORIES_DONE}".toInteger(),
+                                stories        : xmlRoot."${Cliche.TOTAL_STORIES}".toInteger(),
+                                pointsDone     : pointsDone,
+                                totalPoints    : totalPoints,
+                                remainingPoints: totalPoints - pointsDone,
+                                label          : lastDaycliche.clone().clearTime().time
                         ]
                     }
                 }
