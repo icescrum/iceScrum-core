@@ -202,6 +202,7 @@ class UserService extends IceScrumEventPublisher {
             securityService.deleteTeamMemberPermissions(user, project.teams[0])
             securityService.deleteScrumMasterPermissions(user, project.teams[0])
         }
+        Window.findAllByUser(user).collect { it }.each { it.delete() } // Collect to avoid ConcurrentModificationException
         Team.where {
             members { id == user.id }
         }.list().each {
