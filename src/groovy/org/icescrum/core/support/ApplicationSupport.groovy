@@ -312,7 +312,7 @@ class ApplicationSupport {
         def oneHour = CheckerTimerTask.minutesToMilliseconds(60)
         // CheckForUpdate
         def intervalCheckVersion = CheckerTimerTask.minutesToMilliseconds(config.icescrum.check.interval)
-        timer.scheduleAtFixedRate(new CheckerTimerTask(timer, intervalCheckVersion), oneHour, intervalCheckVersion)
+        timer.scheduleAtFixedRate(new CheckerTimerTask(timer, intervalCheckVersion), CheckerTimerTask.minutesToMilliseconds(1), intervalCheckVersion)
         // ReportUsage
         def intervalReport = CheckerTimerTask.minutesToMilliseconds(config.icescrum.reportUsage.interval)
         timer.scheduleAtFixedRate(new ReportUsageTimerTask(timer, intervalReport), 3 * 24 * oneHour, intervalReport)
