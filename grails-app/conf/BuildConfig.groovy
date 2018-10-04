@@ -53,6 +53,9 @@ grails.project.dependency.resolution = {
         compile 'org.eclipse.mylyn.docs:org.eclipse.mylyn.wikitext.textile.core:2.8.0-SNAPSHOT'
         compile 'com.google.guava:guava:15.0' // For wikitext (was previously brought by asset-pipeline but they left the dependency: https://github.com/bertramdev/asset-pipeline/pull/117)
         compile 'org.liquibase:liquibase-core:2.0.5'
+        compile "org.apache.poi:poi:3.17" // 4.0 works only with Java 8
+        compile "org.apache.poi:poi-ooxml:3.17"
+        compile "org.apache.poi:ooxml-schemas:1.3" // Recommended by http://poi.apache.org/help/faq.html instead of poi-ooxml-schemas
     }
     plugins {
         compile ':atmosphere-meteor:1.0.5'
@@ -62,7 +65,9 @@ grails.project.dependency.resolution = {
         compile 'org.icescrum:taggable:1.1.6'
         compile ':jdbc-pool:7.0.47'
         compile 'org.icescrum:mail:1.0.9' // Forked because of https://github.com/gpc/grails-mail/issues/32 which prevents config change
-        compile ':jasper:1.11.0'
+        compile(':jasper:1.11.0') {
+            excludes 'poi', 'poi-ooxml', 'poi-ooxml-schemas' // 3.10 brought by jasper is wayyy outdated
+        }
         compile ':feeds:1.6'
         compile ':cache:1.1.8'
         compile ':cache-ehcache:1.0.5'
