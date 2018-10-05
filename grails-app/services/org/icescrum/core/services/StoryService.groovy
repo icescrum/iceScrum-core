@@ -307,7 +307,7 @@ class StoryService extends IceScrumEventPublisher {
     }
 
     // TODO check rights
-    def autoPlan(List<Sprint> sprints, Double capacity) {
+    def autoPlan(List<Sprint> sprints, Double plannedVelocity) {
         def nbPoints = 0
         int nbSprint = 0
         def project = sprints.first().parentProject
@@ -321,12 +321,12 @@ class StoryService extends IceScrumEventPublisher {
         def plannedStories = []
         // Associate story in each sprint
         for (Story story : itemsList) {
-            if ((nbPoints + story.effort) > capacity || currentSprint == null) {
+            if ((nbPoints + story.effort) > plannedVelocity || currentSprint == null) {
                 nbPoints = 0
                 if (nbSprint < maxSprint) {
                     currentSprint = sprints[nbSprint++]
                     nbPoints += currentSprint.capacity
-                    while (nbPoints + story.effort > capacity && currentSprint.capacity > 0) {
+                    while (nbPoints + story.effort > plannedVelocity && currentSprint.capacity > 0) {
                         nbPoints = 0
                         if (nbSprint < maxSprint) {
                             currentSprint = sprints[nbSprint++]
