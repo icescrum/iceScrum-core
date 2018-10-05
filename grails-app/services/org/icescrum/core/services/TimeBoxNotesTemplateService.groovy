@@ -191,7 +191,7 @@ class TimeBoxNotesTemplateService {
                          goal            : sprint.goal,
                          startDate       : sprint.startDate,
                          velocity        : sprint.velocity,
-                         capacity        : sprint.capacity,
+                         plannedVelocity : sprint.plannedVelocity,
                          endDate         : sprint.endDate,
                          deliveredVersion: sprint.deliveredVersion,
                          orderNumber     : sprint.orderNumber,

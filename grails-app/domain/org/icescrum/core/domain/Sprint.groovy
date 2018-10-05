@@ -43,7 +43,7 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
     Date inProgressDate
     Date doneDate
     Double velocity = 0d
-    Double capacity = 0d
+    Double capacity = 0d // Now called "planned velocity" in the UI
     Double dailyWorkTime = 8d
     Float initialRemainingTime
 
@@ -64,7 +64,7 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
     ]
 
     static transients = [
-            'recurrentTasks', 'urgentTasks', 'hasNextSprint', 'parentReleaseId', 'activable', 'reactivable', 'effectiveEndDate', 'effectiveStartDate', 'totalRemaining', 'parentProject', 'totalEffort', 'previousSprint', 'nextSprint', 'parentReleaseName', 'parentReleaseOrderNumber', 'index', 'fullName'
+            'recurrentTasks', 'urgentTasks', 'hasNextSprint', 'parentReleaseId', 'activable', 'reactivable', 'effectiveEndDate', 'effectiveStartDate', 'totalRemaining', 'parentProject', 'totalEffort', 'previousSprint', 'nextSprint', 'parentReleaseName', 'parentReleaseOrderNumber', 'index', 'fullName', 'plannedVelocity'
     ]
 
     static namedQueries = {
@@ -279,6 +279,10 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
 
     def getParentReleaseId() {
         return parentRelease.id
+    }
+
+    Double getPlannedVelocity() { // Alias to "capacity"
+        return capacity
     }
 
     String getFullName() {
