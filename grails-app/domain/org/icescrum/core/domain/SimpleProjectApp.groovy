@@ -24,9 +24,11 @@
 
 package org.icescrum.core.domain
 
-class SimpleProjectApp implements Serializable {
 
-    def appDefinitionService // injected service
+import grails.util.Holders
+import org.icescrum.core.services.AppDefinitionService
+
+class SimpleProjectApp implements Serializable {
 
     boolean enabled = false
     String appDefinitionId
@@ -57,10 +59,12 @@ class SimpleProjectApp implements Serializable {
     }
 
     boolean getAvailableForServer() {
+        AppDefinitionService appDefinitionService = (AppDefinitionService) Holders.grailsApplication.mainContext.getBean('appDefinitionService')
         return appDefinitionService.getAppDefinition(appDefinitionId)?.availableForServer ?: false
     }
 
     boolean getEnabledForServer() {
+        AppDefinitionService appDefinitionService = (AppDefinitionService) Holders.grailsApplication.mainContext.getBean('appDefinitionService')
         return appDefinitionService.getAppDefinition(appDefinitionId)?.enabledForServer ?: false
     }
 
