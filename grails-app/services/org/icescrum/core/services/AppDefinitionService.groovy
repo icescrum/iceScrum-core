@@ -35,6 +35,10 @@ class AppDefinitionService {
         return grailsApplication.config.icescrum.appDefinitions ? grailsApplication.config.icescrum.appDefinitions.values() as List : []
     }
 
+    AppDefinition getAppDefinition(String appDefinitionId) {
+        return getAppDefinitions().find { it.id == appDefinitionId }
+    }
+
     void registerAppDefinitions(List<AppDefinition> appDefinitions) {
         if (!grailsApplication.config.icescrum.appDefinitions) {
             grailsApplication.config.icescrum.appDefinitions = [:]

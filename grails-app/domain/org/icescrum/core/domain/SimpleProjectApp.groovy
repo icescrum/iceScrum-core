@@ -26,6 +26,8 @@ package org.icescrum.core.domain
 
 class SimpleProjectApp implements Serializable {
 
+    def appDefinitionService // injected service
+
     boolean enabled = false
     String appDefinitionId
 
@@ -35,6 +37,10 @@ class SimpleProjectApp implements Serializable {
         cache true
         table 'is_simple_project_app'
     }
+
+    static transients = [
+            'availableForServer', 'enabledForServer'
+    ]
 
     static countEnabledByParentProjectOwner(String user, params) {
         executeQuery("""SELECT DISTINCT COUNT(spa.id)
@@ -48,6 +54,14 @@ class SimpleProjectApp implements Serializable {
                         AND ai.owner.sid = :sid
                         AND acl.id = ai.owner
                         AND spa.parentProject.id = ai.objectId""", [sid: user], params ?: [:])
+    }
+
+    boolean getAvailableForServer() {
+        return appDefinitionService.getAppDefinition(appDefinitionId)?.availableForServer ?: false
+    }
+
+    boolean getEnabledForServer() {
+        return appDefinitionService.getAppDefinition(appDefinitionId)?.enabledForServer ?: false
     }
 
     def xml(builder) {
