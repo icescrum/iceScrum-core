@@ -94,21 +94,5 @@ class WindowService {
             }
         }
     }
-
-    def unMarshall(def windowXml, def options) {
-        Window.withTransaction(readOnly: !options.save) { transaction ->
-            def window = new Window(
-                    settingsData: windowXml.settingsData.text() ?: null,
-                    windowDefinitionId: windowXml.windowDefinitionId.text())
-            // Reference on other object
-            if (options.user) {
-                window.user = options.user
-            }
-            if (options.save) {
-                window.save()
-            }
-            return (Window) importDomainsPlugins(windowXml, window, options)
-        }
-    }
 }
 

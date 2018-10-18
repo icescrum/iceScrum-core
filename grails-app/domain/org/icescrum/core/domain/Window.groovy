@@ -62,12 +62,4 @@ class Window implements Serializable {
     public Map getSettings() {
         settingsData ? JSON.parse(settingsData) as Map : [:]
     }
-
-    def xml = { builder ->
-        builder.widget() {
-            builder.widgetDefinitionId(this.windowDefinitionId)
-            builder.settingsData { builder.mkp.yieldUnescaped("<![CDATA[${this.settingsData ?: ''}]]>") }
-            exportDomainsPlugins(builder)
-        }
-    }
 }
