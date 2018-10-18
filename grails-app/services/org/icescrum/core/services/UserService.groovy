@@ -203,6 +203,10 @@ class UserService extends IceScrumEventPublisher {
             securityService.deleteScrumMasterPermissions(user, project.teams[0])
         }
         Window.findAllByUser(user).collect { it }.each { it.delete() } // Collect to avoid ConcurrentModificationException
+        user.preferences.widgets.collect { Widget widget -> widget }.each { Widget widget ->
+            user.preferences.removeFromWidgets(widget)
+            widget.delete()
+        }
         Team.where {
             members { id == user.id }
         }.list().each {
@@ -247,8 +251,6 @@ class UserService extends IceScrumEventPublisher {
             it.owner = substitute
             it.save()
         }
-        Widget.findAllByUserPreferences(user.preferences)*.delete()
-        Window.findByUser(user)*.delete()
         def aclSid = AclSid.findBySidAndPrincipal(user.username, true)
         if (aclSid) {
             AclEntry.findAllBySid(aclSid)*.delete()
