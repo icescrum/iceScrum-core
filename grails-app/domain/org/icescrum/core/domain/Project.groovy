@@ -219,7 +219,7 @@ class Project extends TimeBox implements Serializable, Attachmentable {
                                              grails.plugin.springsecurity.acl.AclClass as ac,
                                              grails.plugin.springsecurity.acl.AclObjectIdentity as ai,
                                              grails.plugin.springsecurity.acl.AclSid as acl
-                                        WHERE ac.className = 'org.icescrum.core.domain.Team'
+                                        WHERE ac.className = 'org.icescrum.core.domain.Project'
                                         AND ai.aclClass = ac.id
                                         AND ai.owner.sid = :sid
                                         AND acl.id = ai.owner
