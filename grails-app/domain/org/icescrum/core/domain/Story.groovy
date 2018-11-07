@@ -86,7 +86,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
         table 'is_story'
         tasks cascade: 'all', batchSize: 25
         dependences cache: true, sort: "state", order: "asc"
-        acceptanceTests sort: 'uid', batchSize: 10, cache: true
+        acceptanceTests sort: 'rank', batchSize: 10, cache: true
         effort precision: 5, scale: 2
         metaDatas cascade: 'delete-orphan', batchSize: 10, cache: true // Doesn't work on BacklogElement
         activities cascade: 'delete-orphan', batchSize: 25, cache: true // Doesn't work on BacklogElement

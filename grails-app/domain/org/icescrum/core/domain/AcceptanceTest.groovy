@@ -34,6 +34,8 @@ class AcceptanceTest implements Serializable {
     Date dateCreated
     Date lastUpdated
 
+    Integer rank = 0
+
     int state = AcceptanceTestState.TOCHECK.id
 
     SortedSet<Activity> activities
@@ -48,6 +50,7 @@ class AcceptanceTest implements Serializable {
 
     static constraints = {
         description(nullable: true, maxSize: 1000)
+        rank(nullable: true)
         name(blank: false)
     }
 
@@ -89,7 +92,8 @@ class AcceptanceTest implements Serializable {
                 """SELECT at
                    FROM org.icescrum.core.domain.AcceptanceTest as at
                    WHERE at.parentStory.backlog.id = :pid
-                   AND at.parentStory.id = :sid """, [sid: storyId, pid: projectId])
+                   AND at.parentStory.id = :sid
+                   ORDER BY at.rank, at.uid""", [sid: storyId, pid: projectId])
     }
 
     static AcceptanceTest withAcceptanceTest(long projectId, long id) {
@@ -172,6 +176,7 @@ class AcceptanceTest implements Serializable {
     def xml(builder) {
         builder.acceptanceTest(uid: this.uid) {
             builder.state(this.state)
+            builder.rank(this.rank)
             builder.creator(uid: this.creator.uid)
             builder.name { builder.mkp.yieldUnescaped("<![CDATA[${this.name}]]>") }
             builder.description { builder.mkp.yieldUnescaped("<![CDATA[${this.description ?: ''}]]>") }

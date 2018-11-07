@@ -41,6 +41,7 @@ class AcceptanceTestService extends IceScrumEventPublisher {
         acceptanceTest.creator = user
         acceptanceTest.uid = AcceptanceTest.findNextUId(parentStory.backlog.id)
         acceptanceTest.parentStory = parentStory
+        acceptanceTest.rank = AcceptanceTest.countByParentStory(parentStory) + 1
         acceptanceTest.save()
         publishSynchronousEvent(IceScrumEventType.CREATE, acceptanceTest)
         parentStory.addToAcceptanceTests(acceptanceTest) // Required otherwise the AT is not seen attached on the story immediately & not taken into account for JSON or delete
@@ -49,7 +50,10 @@ class AcceptanceTestService extends IceScrumEventPublisher {
     }
 
     @PreAuthorize('inProject(#acceptanceTest.parentProject) and !archivedProject(#acceptanceTest.parentProject)')
-    void update(AcceptanceTest acceptanceTest) {
+    void update(AcceptanceTest acceptanceTest, props = [:]) {
+        if (props.rank != null) {
+            updateRank(acceptanceTest, props.rank)
+        }
         def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_UPDATE, acceptanceTest)
         acceptanceTest.save()
         publishSynchronousEvent(IceScrumEventType.UPDATE, acceptanceTest, dirtyProperties)
@@ -60,9 +64,51 @@ class AcceptanceTestService extends IceScrumEventPublisher {
     @PreAuthorize('inProject(#acceptanceTest.parentProject) and !archivedProject(#acceptanceTest.parentProject)')
     void delete(AcceptanceTest acceptanceTest) {
         def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_DELETE, acceptanceTest)
+        resetRank(acceptanceTest)
         acceptanceTest.parentStory.removeFromAcceptanceTests(acceptanceTest)
         acceptanceTest.delete()
         publishSynchronousEvent(IceScrumEventType.DELETE, acceptanceTest, dirtyProperties)
+    }
+
+    private void resetRank(AcceptanceTest acceptanceTest) {
+        def story = acceptanceTest.parentStory
+        cleanRanks(story)
+        story.acceptanceTests.findAll {
+            it.rank > acceptanceTest.rank
+        }.each {
+            it.rank--
+            it.save()
+        }
+    }
+
+    private void updateRank(AcceptanceTest acceptanceTest, int newRank) {
+        def story = acceptanceTest.parentStory
+        cleanRanks(story)
+        Range affectedRange = acceptanceTest.rank..newRank
+        int delta = affectedRange.isReverse() ? 1 : -1
+        story.acceptanceTests.findAll {
+            it != acceptanceTest && it.rank in affectedRange
+        }.each {
+            it.rank += delta
+            it.save()
+        }
+        acceptanceTest.rank = newRank
+    }
+
+    private void cleanRanks(Story story) {
+        story.acceptanceTests.sort { a, b -> a.rank <=> b.rank ?: a.uid <=> b.uid }
+        def error = false
+        for (int i = 0; i < story.acceptanceTests.size() && !error; i++) {
+            error = story.acceptanceTests[i].rank != (i + 1)
+        }
+        if (error) {
+            story.acceptanceTests.eachWithIndex { acceptanceTest, ind ->
+                if (acceptanceTest.rank != ind + 1) {
+                    acceptanceTest.rank = ind + 1
+                    acceptanceTest.save()
+                }
+            }
+        }
     }
 
     def unMarshall(def acceptanceTestXml, def options) {
@@ -74,7 +120,8 @@ class AcceptanceTestService extends IceScrumEventPublisher {
                     name: acceptanceTestXml."${'name'}".text(),
                     description: acceptanceTestXml.description.text() ?: null,
                     state: acceptanceTestXml.state.text().toInteger(),
-                    uid: acceptanceTestXml.@uid.text().toInteger()
+                    uid: acceptanceTestXml.@uid.text().toInteger(),
+                    rank: (acceptanceTestXml.rank.text().isNumber()) ? acceptanceTestXml.rank.text().toInteger() : null,
             )
             // References on other objects
             if (project) {

@@ -61,7 +61,7 @@ class ListenerService {
     void storyUpdate(Story story, Map dirtyProperties) {
         Project project = story.backlog
         if (dirtyProperties) {
-            if (!pushService.isDisabledPushThread() && (dirtyProperties.containsKey('rank') || dirtyProperties.containsKey('state'))) { //isDisabledPushThread() called to avoid useless findAll
+            if (!pushService.isDisabledPushThread() && (dirtyProperties.containsKey('rank') || dirtyProperties.containsKey('state'))) { // isDisabledPushThread() called to avoid useless findAll
                 project.stories.findAll { it.isDirty('rank') && it.id != story.id }.each { // If others stories have been updated, push them
                     def storyData = [class: 'Story', id: it.id, rank: it.rank, messageId: 'story-' + it.id + '-rank'] // Avoid pushing everything, which is very costly
                     if (it.parentSprint) {
@@ -137,7 +137,7 @@ class ListenerService {
 
     @IceScrumListener(domain = 'story', eventType = IceScrumEventType.DELETE)
     void storyDelete(Story story, Map dirtyProperties) {
-        if (!pushService.isDisabledPushThread()) { //isDisabledPushThread() called to avoid useless findAll
+        if (!pushService.isDisabledPushThread()) { // isDisabledPushThread() called to avoid useless findAll
             def project = Project.get(dirtyProperties.backlog.id)
             project.stories.findAll { it.isDirty('rank') && it.id != dirtyProperties.id }.each {
                 pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, [class: 'Story', id: it.id, rank: it.rank, messageId: 'story-' + it.id + '-rank'], project.id)
@@ -177,7 +177,7 @@ class ListenerService {
     @IceScrumListener(domain = 'feature', eventType = IceScrumEventType.UPDATE)
     void featureUpdate(Feature feature, Map dirtyProperties) {
         Project project = feature.backlog
-        if (!pushService.isDisabledPushThread() && dirtyProperties.containsKey('rank')) { //isDisabledPushThread() called to avoid useless findAll
+        if (!pushService.isDisabledPushThread() && dirtyProperties.containsKey('rank')) { // isDisabledPushThread() called to avoid useless findAll
             project.features.findAll { it.isDirty('rank') && it.id != feature.id }.each { // If others features have been updated, push them
                 pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, [class: 'Feature', id: it.id, rank: it.rank, messageId: 'feature-' + it.id + '-rank'], project.id)
             }
@@ -187,9 +187,9 @@ class ListenerService {
 
     @IceScrumListener(domain = 'feature', eventType = IceScrumEventType.DELETE)
     void featureDelete(Feature feature, Map dirtyProperties) {
-        if (!pushService.isDisabledPushThread()) {
+        if (!pushService.isDisabledPushThread()) { // isDisabledPushThread() called to avoid useless findAll
             def project = Project.get(dirtyProperties.backlog.id)
-            project.features.findAll { it.isDirty('rank') && it.id != dirtyProperties.id }.each { //isDisabledPushThread() called to avoid useless findAll
+            project.features.findAll { it.isDirty('rank') && it.id != dirtyProperties.id }.each {
                 pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, [class: 'Feature', id: it.id, rank: it.rank, messageId: 'feature-' + it.id + '-rank'], project.id)
             }
             pushService.broadcastToProjectChannel(IceScrumEventType.DELETE, [class: 'Feature', id: dirtyProperties.id, messageId: 'feature-' + dirtyProperties.id + '-delete'], project.id)
@@ -210,7 +210,7 @@ class ListenerService {
     void taskUpdate(Task task, Map dirtyProperties) {
         def project = task.parentProject
         def newStoryUpdated = false
-        if (!pushService.isDisabledPushThread() && ['rank', 'parentStory', 'type', 'state'].any { dirtyProperties.containsKey(it) }) { //isDisabledPushThread() called to avoid useless findAll
+        if (!pushService.isDisabledPushThread() && ['rank', 'parentStory', 'type', 'state'].any { dirtyProperties.containsKey(it) }) { // isDisabledPushThread() called to avoid useless findAll
             def pushOtherRank = { tasks -> // If others tasks have been updated, push them
                 tasks?.findAll { it.isDirty('rank') && it.id != task.id }?.each {
                     pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, [class: 'Task', id: it.id, rank: it.rank, messageId: 'task-' + it.id + '-rank'], project.id)
@@ -315,8 +315,7 @@ class ListenerService {
         def project = acceptanceTest.parentProject
         activityService.addActivity(acceptanceTest, user ?: acceptanceTest.parentStory.creator, 'acceptanceTestSave', acceptanceTest.name)
         pushService.broadcastToProjectChannel(IceScrumEventType.CREATE, acceptanceTest, project.id)
-        // TODO remove when using a proper AT cache on the client side. Required to update acceptanceTests_count because we can't use client side "sync".
-        pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, acceptanceTest.parentStory, project.id)
+        pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, acceptanceTest.parentStory, project.id) // Push count
     }
 
     @IceScrumListener(domain = 'acceptanceTest', eventType = IceScrumEventType.UPDATE)
@@ -329,6 +328,11 @@ class ListenerService {
             acceptanceTest.parentStory.lastUpdated = new Date()
             pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, acceptanceTest.parentStory, project.id) // push story.testState
         }
+        if (!pushService.isDisabledPushThread() && dirtyProperties.containsKey('rank')) { // isDisabledPushThread() called to avoid useless findAll
+            acceptanceTest.parentStory.acceptanceTests.findAll { it.isDirty('rank') && it.id != acceptanceTest.id }.each {
+                pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, [class: 'AcceptanceTest', id: it.id, rank: it.rank, messageId: 'acceptanceTest-' + it.id + '-rank'], project.id)
+            }
+        }
         pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, acceptanceTest, project.id)
     }
 
@@ -336,9 +340,13 @@ class ListenerService {
     void acceptanceTestDelete(AcceptanceTest acceptanceTest, Map dirtyProperties) {
         def project = dirtyProperties.parentStory.backlog
         activityService.addActivity(dirtyProperties.parentStory, springSecurityService.currentUser, 'acceptanceTestDelete', acceptanceTest.name)
+        if (!pushService.isDisabledPushThread()) { // isDisabledPushThread() called to avoid useless findAll
+            Story.get(dirtyProperties.parentStory.id).acceptanceTests.findAll { it.isDirty('rank') && it.id != dirtyProperties.id }.each {
+                pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, [class: 'AcceptanceTest', id: it.id, rank: it.rank, messageId: 'acceptanceTest-' + it.id + '-rank'], project.id)
+            }
+        }
         pushService.broadcastToProjectChannel(IceScrumEventType.DELETE, [class: 'AcceptanceTest', id: dirtyProperties.id, messageId: 'acceptance-' + dirtyProperties.id + '-delete'], project.id)
-        // TODO remove when using a proper AT cache on the client side. Required to update acceptanceTests_count because we can't use client side "sync".
-        pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, dirtyProperties.parentStory, project.id)
+        pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, dirtyProperties.parentStory, project.id) // Push count
     }
 
     @IceScrumListener(domain = 'project', eventType = IceScrumEventType.UPDATE)
