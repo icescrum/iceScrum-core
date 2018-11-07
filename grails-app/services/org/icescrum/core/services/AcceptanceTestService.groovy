@@ -96,13 +96,13 @@ class AcceptanceTestService extends IceScrumEventPublisher {
     }
 
     private void cleanRanks(Story story) {
-        story.acceptanceTests.sort { a, b -> a.rank <=> b.rank ?: a.uid <=> b.uid }
+        def acceptanceTests = story.acceptanceTests.sort { a, b -> a.rank <=> b.rank ?: a.uid <=> b.uid }
         def error = false
-        for (int i = 0; i < story.acceptanceTests.size() && !error; i++) {
-            error = story.acceptanceTests[i].rank != (i + 1)
+        for (int i = 0; i < acceptanceTests.size() && !error; i++) {
+            error = acceptanceTests[i].rank != (i + 1)
         }
         if (error) {
-            story.acceptanceTests.eachWithIndex { acceptanceTest, ind ->
+            acceptanceTests.eachWithIndex { acceptanceTest, ind ->
                 if (acceptanceTest.rank != ind + 1) {
                     acceptanceTest.rank = ind + 1
                     acceptanceTest.save()
