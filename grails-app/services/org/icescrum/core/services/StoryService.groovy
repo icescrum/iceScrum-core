@@ -406,7 +406,7 @@ class StoryService extends IceScrumEventPublisher {
             throw new BusinessException(code: 'is.story.error.done', args: [((Project) story.backlog).getStoryStateNames()[Story.STATE_DONE]])
         }
         def stories = story.sameBacklogStories
-        if (story.state == Story.STATE_INPROGRESS && newState != Story.STATE_DONE) {
+        if (story.state in [Story.STATE_INPROGRESS, Story.STATE_INREVIEW] && newState != Story.STATE_DONE) {
             def maxRankInProgress = stories.findAll { it.state != Story.STATE_DONE }.size()
             if (rank > maxRankInProgress) {
                 rank = maxRankInProgress

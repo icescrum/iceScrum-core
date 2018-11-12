@@ -114,7 +114,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
             (newDependsOn.backlog?.id == story.backlog?.id && (
                     newDependsOn.state >= story.state ||
                     newDependsOn.state == STATE_ACCEPTED && story.state == STATE_ESTIMATED ||
-                    newDependsOn.state == STATE_INPROGRESS && story.state == STATE_DONE
+                    (newDependsOn.state in [STATE_INPROGRESS, STATE_INREVIEW]) && story.state == STATE_DONE
             )) ?: 'invalid'
         })
         origin(nullable: true)
@@ -204,9 +204,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                             }
                         }
                     }
-                }
-
-                if (story.state in [Story.STATE_ACCEPTED, Story.STATE_ESTIMATED]) {
+                } else if (story.state in [Story.STATE_ACCEPTED, Story.STATE_ESTIMATED]) {
                     and {
                         'in' 'state', [Story.STATE_ACCEPTED, Story.STATE_ESTIMATED]
                         lt 'rank', story.rank
@@ -214,9 +212,9 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                     and {
                         gt 'state', Story.STATE_ESTIMATED
                     }
-                } else if (story.state in [Story.STATE_PLANNED, Story.STATE_INPROGRESS]) {
+                } else if (story.state in [Story.STATE_PLANNED, Story.STATE_INPROGRESS, Story.STATE_INREVIEW]) {
                     and {
-                        'in' 'state', [Story.STATE_PLANNED, Story.STATE_INPROGRESS, Story.STATE_DONE]
+                        'in' 'state', [Story.STATE_PLANNED, Story.STATE_INPROGRESS, Story.STATE_INREVIEW, Story.STATE_DONE]
                         lt 'rank', story.rank
                         parentSprint {
                             eq 'id', story.parentSprint.id

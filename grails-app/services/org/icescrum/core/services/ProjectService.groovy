@@ -454,7 +454,7 @@ class ProjectService extends IceScrumEventPublisher {
             project.releases.each { Release release ->
                 release.sprints.each { Sprint sprint ->
                     // First ranks for planned and in progress stories
-                    stories = sprint.stories.findAll { Story story -> story.state == Story.STATE_PLANNED || story.state == Story.STATE_INPROGRESS }.sort { a, b -> a.rank <=> b.rank }
+                    stories = sprint.stories.findAll { Story story -> story.state in [Story.STATE_PLANNED, Story.STATE_INPROGRESS, Story.STATE_INREVIEW]}.sort { a, b -> a.rank <=> b.rank }
                     stories.eachWithIndex { Story story, index ->
                         story.rank = index + 1
                         if (options.save) {
