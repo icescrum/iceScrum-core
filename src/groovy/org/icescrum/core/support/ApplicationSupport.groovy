@@ -744,7 +744,7 @@ class ApplicationSupport {
     static def extractError(Map attrs) {
         def i18nService = Holders.grailsApplication.mainContext.getBean('i18nService')
         def error = attrs.errors ? attrs.errors.allErrors.collect { [text: i18nService.message(error: it) + ' - ' + it.field] } :
-                    attrs.code ? [text: i18nService.message(code: attrs.code)] :
+                    attrs.code ? [text: i18nService.message(code: attrs.code, args: attrs.args)] :
                     attrs.text ? [text: attrs.text] :
                     attrs.exception?.message ? [text: attrs.exception.message] :
                     [text: 'An unexpected error has occurred']
