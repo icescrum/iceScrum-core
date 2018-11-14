@@ -52,6 +52,12 @@ class Invitation implements Serializable {
         })
     }
 
+    static getNewInvitation(Map properties) {
+        Invitation existingInvitation = findByEmail(properties.email) // serveral may exist but the first one returned by find is ok
+        properties.token = existingInvitation ? existingInvitation.token : UUID.randomUUID().toString().replace("-", "") // reuse the same token to ensure that responding to one invitation responds to all
+        return new Invitation(properties)
+    }
+
     static mapping = {
         cache true
         table 'is_invitation'
@@ -59,9 +65,5 @@ class Invitation implements Serializable {
 
     enum InvitationType {
         TEAM, PROJECT, PORTFOLIO
-    }
-
-    def beforeValidate() {
-        token = email.encodeAsMD5()
     }
 }

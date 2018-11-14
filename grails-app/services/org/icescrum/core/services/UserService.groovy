@@ -339,7 +339,7 @@ class UserService extends IceScrumEventPublisher {
                     currentInvitation.save()
                 }
             } else {
-                def invitation = new Invitation(email: email, futureRole: role, type: type)
+                def invitation = Invitation.getNewInvitation(email: email, futureRole: role, type: type)
                 if (type == InvitationType.PORTFOLIO) {
                     invitation.portfolio = domain
                 } else if (type == InvitationType.TEAM) {
