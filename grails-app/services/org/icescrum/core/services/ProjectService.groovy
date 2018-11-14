@@ -52,11 +52,11 @@ class ProjectService extends IceScrumEventPublisher {
     def actorService
     def grailsApplication
     def clicheService
-    def notificationEmailService
     def pushService
     def windowService
     def widgetService
     def i18nService
+    def userService
 
     @PreAuthorize('isAuthenticated()')
     void save(Project project, productOwners, stakeHolders) {
@@ -166,7 +166,7 @@ class ProjectService extends IceScrumEventPublisher {
                             (Story.STATE_PLANNED)   : xmlRoot."${Cliche.PLANNED_STORIES}".toInteger(),
                             (Story.STATE_INPROGRESS): xmlRoot."${Cliche.INPROGRESS_STORIES}".toInteger(),
                             (Story.STATE_DONE)      : xmlRoot."${Cliche.FINISHED_STORIES}".toInteger(),
-                            label     : index == 0 ? "Start" : Sprint.getNameByReleaseAndClicheSprintId(release, xmlRoot."${Cliche.SPRINT_ID}".toString()) + "${cliche.id ? '' : " (progress)"}"
+                            label                   : index == 0 ? "Start" : Sprint.getNameByReleaseAndClicheSprintId(release, xmlRoot."${Cliche.SPRINT_ID}".toString()) + "${cliche.id ? '' : " (progress)"}"
                     ]
                 }
             }
@@ -454,7 +454,7 @@ class ProjectService extends IceScrumEventPublisher {
             project.releases.each { Release release ->
                 release.sprints.each { Sprint sprint ->
                     // First ranks for planned and in progress stories
-                    stories = sprint.stories.findAll { Story story -> story.state in [Story.STATE_PLANNED, Story.STATE_INPROGRESS, Story.STATE_INREVIEW]}.sort { a, b -> a.rank <=> b.rank }
+                    stories = sprint.stories.findAll { Story story -> story.state in [Story.STATE_PLANNED, Story.STATE_INPROGRESS, Story.STATE_INREVIEW] }.sort { a, b -> a.rank <=> b.rank }
                     stories.eachWithIndex { Story story, index ->
                         story.rank = index + 1
                         if (options.save) {
@@ -758,7 +758,7 @@ class ProjectService extends IceScrumEventPublisher {
         assert !invitedMembers.intersect(invitedScrumMasters)
         newInvitations.addAll(invitedMembers.collect { [role: Authority.MEMBER, email: it] })
         newInvitations.addAll(invitedScrumMasters.collect { [role: Authority.SCRUMMASTER, email: it] })
-        manageInvitations(currentInvitations, newInvitations, type, null, team)
+        userService.manageInvitations(currentInvitations, newInvitations, type, team)
         removeConflictingInvitedPOandSH(team)
     }
 
@@ -773,7 +773,7 @@ class ProjectService extends IceScrumEventPublisher {
         if (invitedStakeHolders && project.preferences.hidden) {
             newInvitations.addAll(invitedStakeHolders.collect { [role: Authority.STAKEHOLDER, email: it] })
         }
-        manageInvitations(currentInvitations, newInvitations, type, project, null)
+        userService.manageInvitations(currentInvitations, newInvitations, type, project)
     }
 
     List<Project> getAllActiveProjectsByUser(User user, String searchTerm = '') {
@@ -801,36 +801,6 @@ class ProjectService extends IceScrumEventPublisher {
                 }
             }
         }
-    }
-
-    private void manageInvitations(List<Invitation> currentInvitations, List newInvitations, Invitation.InvitationType type, Project project, Team team) {
-        newInvitations.each {
-            def email = it.email
-            int role = it.role
-            Invitation currentInvitation = currentInvitations.find { it.email == email }
-            if (currentInvitation) {
-                if (currentInvitation.futureRole != role) {
-                    currentInvitation.futureRole = role
-                    currentInvitation.save()
-                }
-            } else {
-                def invitation = new Invitation(email: email, futureRole: role, type: type)
-                if (type == Invitation.InvitationType.TEAM) {
-                    invitation.team = team
-                } else {
-                    invitation.project = project
-                }
-                invitation.save()
-                try {
-                    notificationEmailService.sendInvitation(invitation, springSecurityService.currentUser)
-                } catch (MailException) {
-                    throw new BusinessException(code: 'is.mail.error')
-                }
-            }
-        }
-        currentInvitations.findAll { currentInvitation ->
-            !newInvitations*.email.contains(currentInvitation.email)
-        }*.delete()
     }
 
     void manageProjectEvents(Project project, Map oldMembers) {

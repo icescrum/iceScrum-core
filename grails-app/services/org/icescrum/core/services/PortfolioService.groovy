@@ -37,8 +37,8 @@ import org.icescrum.core.event.IceScrumEventType
 class PortfolioService extends IceScrumEventPublisher {
 
     def securityService
-    def notificationEmailService
     def springSecurityService
+    def userService
 
     void save(Portfolio portfolio, List<Project> projects, List<User> businessOwners, List<User> portfolioStakeHolders) {
         portfolio.save()
@@ -166,35 +166,7 @@ class PortfolioService extends IceScrumEventPublisher {
         if (invitedStakeHolders) {
             newInvitations.addAll(invitedStakeHolders.collect { [role: Authority.PORTFOLIOSTAKEHOLDER, email: it] })
         }
-        manageInvitations(currentInvitations, newInvitations, type, porfolio)
-    }
-
-    private void manageInvitations(List<Invitation> currentInvitations, List newInvitations, Invitation.InvitationType type, Portfolio portfolio) {
-        newInvitations.each {
-            def email = it.email
-            int role = it.role
-            Invitation currentInvitation = currentInvitations.find { it.email == email }
-            if (currentInvitation) {
-                if (currentInvitation.futureRole != role) {
-                    currentInvitation.futureRole = role
-                    currentInvitation.save()
-                }
-            } else {
-                def invitation = new Invitation(email: email, futureRole: role, type: type)
-                if (type == Invitation.InvitationType.PORTFOLIO) {
-                    invitation.portfolio = portfolio
-                }
-                invitation.save()
-                try {
-                    notificationEmailService.sendInvitation(invitation, springSecurityService.currentUser)
-                } catch (MailException) {
-                    throw new BusinessException(code: 'is.mail.error')
-                }
-            }
-        }
-        currentInvitations.findAll { currentInvitation ->
-            !newInvitations*.email.contains(currentInvitation.email)
-        }*.delete()
+        userService.manageInvitations(currentInvitations, newInvitations, type, porfolio)
     }
 
     private void addBusinessOwner(Portfolio portfolio, User businessOwner) {

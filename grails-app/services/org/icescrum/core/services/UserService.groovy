@@ -328,6 +328,38 @@ class UserService extends IceScrumEventPublisher {
         return files ? files[0] : null
     }
 
+    void manageInvitations(List<Invitation> currentInvitations, List newInvitations, InvitationType type, Object domain) {
+        newInvitations.each {
+            def email = it.email
+            int role = it.role
+            Invitation currentInvitation = currentInvitations.find { it.email == email }
+            if (currentInvitation) {
+                if (currentInvitation.futureRole != role) {
+                    currentInvitation.futureRole = role
+                    currentInvitation.save()
+                }
+            } else {
+                def invitation = new Invitation(email: email, futureRole: role, type: type)
+                if (type == InvitationType.PORTFOLIO) {
+                    invitation.portfolio = domain
+                } else if (type == InvitationType.TEAM) {
+                    invitation.team = domain
+                } else if (type == InvitationType.PROJECT) {
+                    invitation.project = domain
+                }
+                invitation.save()
+                try {
+                    notificationEmailService.sendInvitation(invitation, springSecurityService.currentUser)
+                } catch (MailException) {
+                    throw new BusinessException(code: 'is.mail.error')
+                }
+            }
+        }
+        currentInvitations.findAll { currentInvitation ->
+            !newInvitations*.email.contains(currentInvitation.email)
+        }*.delete()
+    }
+
     User unMarshall(def userXml, def options) {
         User.withTransaction(readOnly: !options.save) { transaction ->
             User user = new User(
