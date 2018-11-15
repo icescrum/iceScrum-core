@@ -77,33 +77,7 @@ class UserService extends IceScrumEventPublisher {
         publishSynchronousEvent(IceScrumEventType.CREATE, user)
         if (token && grailsApplication.config.icescrum.invitation.enable) {
             def invitations = Invitation.findAllByToken(token)
-            invitations.each { invitation ->
-                def userAdmin = ApplicationSupport.getFirstAdministrator()
-                SpringSecurityUtils.doWithAuth(userAdmin ? userAdmin.username : 'admin') {
-                    if (invitation.type == InvitationType.PROJECT) {
-                        Project project = invitation.project
-                        def oldMembers = projectService.getAllMembersProjectByRole(project)
-                        projectService.addRole(project, user, invitation.futureRole)
-                        projectService.manageProjectEvents(project, oldMembers)
-                    } else if (invitation.type == InvitationType.PORTFOLIO) {
-                        Portfolio portfolio = invitation.portfolio
-                        def oldMembers = portfolioService.getAllMembersPortfolioByRole(portfolio)
-                        portfolioService.addRole(portfolio, user, invitation.futureRole)
-                        portfolioService.managePortfolioEvents(portfolio, oldMembers)
-                    } else {
-                        Team team = invitation.team
-                        def oldMembersByProject = [:]
-                        team.projects.each { Project project ->
-                            oldMembersByProject[project.id] = projectService.getAllMembersProjectByRole(project)
-                        }
-                        projectService.addRole(team, user, invitation.futureRole)
-                        oldMembersByProject.each { Long projectId, Map oldMembers ->
-                            projectService.manageProjectEvents(Project.get(projectId), oldMembers)
-                        }
-                    }
-                    invitation.delete()
-                }
-            }
+            acceptInvitations(invitations, user)
         }
         widgetService.initUserWidgets(user)
         update(user, [avatar: 'initials'])
@@ -358,6 +332,48 @@ class UserService extends IceScrumEventPublisher {
         currentInvitations.findAll { currentInvitation ->
             !newInvitations*.email.contains(currentInvitation.email)
         }*.delete()
+    }
+
+    void acceptInvitations(List<Invitation> invitations, User user) {
+        def allowedTeams = [], allowedProjects = [] // Reject invitations where previous membership was in place and accept invitations on new membership
+        invitations.each { invitation ->
+            def userAdmin = ApplicationSupport.getFirstAdministrator()
+            SpringSecurityUtils.doWithAuth(userAdmin ? userAdmin.username : 'admin') {
+                if (invitation.type == InvitationType.PROJECT) {
+                    Project project = invitation.project
+                    def oldMembers = projectService.getAllMembersProjectByRole(project)
+                    if (project in allowedProjects || !(user.id in oldMembers.keySet()*.id)) {
+                        allowedProjects << project
+                        allowedTeams << project.team
+                        projectService.addRole(project, user, invitation.futureRole)
+                        projectService.manageProjectEvents(project, oldMembers)
+                    }
+                } else if (invitation.type == InvitationType.PORTFOLIO) {
+                    Portfolio portfolio = invitation.portfolio
+                    def oldMembers = portfolioService.getAllMembersPortfolioByRole(portfolio)
+                    if (!(user.id in oldMembers.keySet()*.id)) {
+                        portfolioService.addRole(portfolio, user, invitation.futureRole)
+                        portfolioService.managePortfolioEvents(portfolio, oldMembers)
+                    }
+                } else {
+                    Team team = invitation.team
+                    def oldMembersByProject = [:]
+                    team.projects.each { Project project ->
+                        oldMembersByProject[project.id] = projectService.getAllMembersProjectByRole(project)
+                    }
+                    if (team in allowedTeams || !(user.id in oldMembersByProject.values().collect { it.keySet().collect { it.id } }.flatten())) {
+                        allowedTeams << team
+                        projectService.addRole(team, user, invitation.futureRole)
+                        oldMembersByProject.each { Long projectId, Map oldMembers ->
+                            Project project = Project.get(projectId)
+                            allowedProjects << project
+                            projectService.manageProjectEvents(project, oldMembers)
+                        }
+                    }
+                }
+                invitation.delete()
+            }
+        }
     }
 
     User unMarshall(def userXml, def options) {
