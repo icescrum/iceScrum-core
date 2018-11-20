@@ -38,7 +38,12 @@ class MetaDataService extends IceScrumEventPublisher {
         } else {
             meta = new MetaData(parentRef: object.id, parentType: type, metaKey: metaKey, metaValue: metaValue)
         }
-        meta.save()
+        try {
+            meta.save(flush: true)
+        } catch (e) {
+            log.error("- $meta.parentRef \n - $meta.parentType \n - $meta.metaKey \n - $meta.metaValue")
+            throw e
+        }
     }
 
     void addOrUpdateMetadata(def object, String metaKey, def metaValue) {
