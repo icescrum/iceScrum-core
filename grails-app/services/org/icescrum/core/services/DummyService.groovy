@@ -48,7 +48,7 @@ class DummyService {
     def taskService
     def pushService
 
-    void createSampleProject(User user, boolean hidden) {
+    Project createSampleProject(User user, boolean hidden) {
         // Avoid premature notification and thus access to the project, which would fail
         pushService.disablePushForThisThread()
         // Project & team
@@ -56,7 +56,8 @@ class DummyService {
         def largeDummyze = System.getProperty("icescrum.largeDummyze") ? true : false
         def startDate = new Date() - 16
         startDate.clearTime()
-        Project project = new Project(name: projectName, pkey: toPkey(user), startDate: startDate, endDate: startDate + 102)
+        Project project = new Project(name: projectName, startDate: startDate, endDate: startDate + 102)
+        createPkey(project, user)
         project.description = '''*Peetic* is a dating website for your pets! Don't you think that they deserve to find their soul mate?\n\nThis project is yours: browse it and play with it to discover *iceScrum 7*!'''
         project.preferences = new ProjectPreferences(hidden: hidden)
         String teamName = projectName + ' Team'
@@ -247,6 +248,7 @@ class DummyService {
         // Push project creation
         pushService.enablePushForThisThread()
         projectService.manageProjectEvents(project, [:])
+        return project
     }
 
     private void updateContentDoneSprint(Sprint sprint, Set<User> members) {
@@ -376,13 +378,13 @@ class DummyService {
         return words
     }
 
-    private String toPkey(User user) {
-        String pkey = 'PET' + Normalizer.normalize(user.username, Normalizer.Form.NFD).replaceAll("[^\\p{ASCII}]", "").toUpperCase().replaceAll("[^A-Z0-9]+", "")
-        pkey = pkey.take(10)
-        def countTaken = Project.countByPkey(pkey)
+    private void createPkey(Project project, User user) {
+        String pkey = 'PET' + Normalizer.normalize(user.username, Normalizer.Form.NFD).replaceAll("[^\\p{ASCII}]", "").toUpperCase().replaceAll("[^A-Z0-9]+", "").take(10)
+        def countTaken = Project.countByPkeyLike(pkey + '%')
         if (countTaken > 0) {
             pkey = pkey.take(countTaken < 10 ? 9 : 8) + countTaken
+            project.name += countTaken
         }
-        return pkey
+        project.pkey = pkey
     }
 }
