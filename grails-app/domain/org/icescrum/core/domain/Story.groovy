@@ -155,32 +155,6 @@ class Story extends BacklogElement implements Cloneable, Serializable {
 
     static namedQueries = {
 
-        findInStoriesAcceptedEstimated { p, term ->
-            backlog {
-                eq 'id', p
-            }
-            or {
-                def termInteger = term?.replaceAll('%', '')
-                if (termInteger?.isInteger()) {
-                    eq 'uid', termInteger.toInteger()
-                } else {
-                    ilike 'name', term
-                    ilike 'description', term
-                    ilike 'notes', term
-                    ilike 'affectVersion', term
-                    feature {
-                        ilike 'name', term
-                    }
-                }
-            }
-            and {
-                or {
-                    eq 'state', Story.STATE_ACCEPTED
-                    eq 'state', Story.STATE_ESTIMATED
-                }
-            }
-        }
-
         storiesByRelease { r ->
             parentSprint {
                 parentRelease {
@@ -189,10 +163,18 @@ class Story extends BacklogElement implements Cloneable, Serializable {
             }
         }
 
-        findPossiblesDependences { Story story ->
+        findPossiblesDependences { Story story, String term ->
             backlog {
                 eq 'id', story.backlog.id
             }
+            if (term) {
+                if (term.isInteger()) {
+                    eq 'uid', term.toInteger()
+                } else {
+                    ilike 'name', '%' + term + '%'
+                }
+            }
+
             or {
                 if (story.state == Story.STATE_SUGGESTED) {
                     and {
@@ -227,6 +209,10 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                     }
                 }
             }
+            order('feature', 'desc')
+            order('state', 'asc')
+            order('rank', 'asc')
+            maxResults(9)
         }
 
         findAllByReleaseAndFeature { Release r, Feature f ->
