@@ -379,7 +379,11 @@ class DummyService {
     }
 
     private void createPkey(Project project, User user) {
-        String pkey = 'PET' + Normalizer.normalize(user.username, Normalizer.Form.NFD).replaceAll("[^\\p{ASCII}]", "").toUpperCase().replaceAll("[^A-Z0-9]+", "").take(10)
+        String pkey = 'PET' + Normalizer.normalize(user.username, Normalizer.Form.NFD)
+                .replaceAll("[^\\p{ASCII}]", "")
+                .toUpperCase()
+                .replaceAll("[^A-Z0-9]+", "")
+        pkey = pkey.take(10)
         def countTaken = Project.countByPkeyLike(pkey + '%')
         if (countTaken > 0) {
             pkey = pkey.take(countTaken < 10 ? 9 : 8) + countTaken
