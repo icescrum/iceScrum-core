@@ -216,7 +216,6 @@ class Story extends BacklogElement implements Cloneable, Serializable {
             order('feature', 'desc')
             order('state', 'asc')
             order('rank', 'asc')
-            maxResults(9)
         }
 
         findAllByReleaseAndFeature { Release r, Feature f ->
