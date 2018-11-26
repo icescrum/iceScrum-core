@@ -78,7 +78,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
     ]
 
     static transients = [
-            'deliveredVersion', 'testState', 'testStateEnum', 'activity', 'sameBacklogStories', 'countDoneTasks'
+            'deliveredVersion', 'testState', 'testStateEnum', 'activity', 'sameBacklogStories', 'countDoneTasks', 'project'
     ]
 
     static mapping = {
@@ -133,6 +133,11 @@ class Story extends BacklogElement implements Cloneable, Serializable {
         return tasks.count { it.state == Task.STATE_DONE }
     }
 
+    Map getProject() { // Hack because by default it does not return the hasShort but a timebox instead
+        Project project = (Project) backlog
+        return project ? [class: 'Project', id: project.id, pkey: project.pkey, name: project.name] : [:]
+    }
+
     List<Story> getSameBacklogStories() {
         def stories
         if (state in [STATE_ACCEPTED, STATE_ESTIMATED]) {
@@ -174,7 +179,6 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                     ilike 'name', '%' + term + '%'
                 }
             }
-
             or {
                 if (story.state == Story.STATE_SUGGESTED) {
                     and {
