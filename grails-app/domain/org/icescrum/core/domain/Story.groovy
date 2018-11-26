@@ -111,11 +111,10 @@ class Story extends BacklogElement implements Cloneable, Serializable {
         creator(nullable: true) // in case of a user deletion, the story can remain without owner
         dependsOn(nullable: true, validator: { newDependsOn, story ->
             newDependsOn == null ||
-            (newDependsOn.backlog?.id == story.backlog?.id && (
-                    newDependsOn.state >= story.state ||
-                    newDependsOn.state == STATE_ACCEPTED && story.state == STATE_ESTIMATED ||
-                    (newDependsOn.state in [STATE_INPROGRESS, STATE_INREVIEW]) && story.state == STATE_DONE
-            )) ?: 'invalid'
+            newDependsOn.state >= story.state ||
+            newDependsOn.state == STATE_ACCEPTED && story.state == STATE_ESTIMATED ||
+            (newDependsOn.state in [STATE_INPROGRESS, STATE_INREVIEW]) && story.state == STATE_DONE
+            ?: 'invalid'
         })
         origin(nullable: true)
     }
@@ -572,7 +571,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
             if (this.feature) {
                 builder.feature(uid: this.feature.uid)
             }
-            if (dependsOn) {
+            if (dependsOn && dependsOn.backlog.id == this.backlog.id) {
                 builder.dependsOn(uid: this.dependsOn.uid)
             }
 
