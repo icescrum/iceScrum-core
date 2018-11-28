@@ -48,7 +48,6 @@ class ProjectService extends IceScrumEventPublisher {
     def springSecurityService
     def securityService
     def teamService
-    def taskService
     def actorService
     def grailsApplication
     def clicheService
@@ -424,47 +423,31 @@ class ProjectService extends IceScrumEventPublisher {
             projectXml.actors.actor.each { it ->
                 actorService.unMarshall(it, options)
             }
-            def storyService = (StoryService) grailsApplication.mainContext.getBean('storyService')
-            projectXml.stories.story.each { it ->
-                storyService.unMarshall(it, options)
-            }
             def activityService = (ActivityService) grailsApplication.mainContext.getBean('activityService')
             options.parent = project
             projectXml.activities.activity.each { it ->
                 activityService.unMarshall(it, options)
             }
             options.parent = null
-
-            // Ensure rank for stories in backlog
-            def stories = project.stories.findAll {
-                it.state == Story.STATE_ACCEPTED || it.state == Story.STATE_ESTIMATED
-            }.sort { a, b -> a.rank <=> b.rank }
-            stories.eachWithIndex { it, index ->
-                it.rank = index + 1
-                if (options.save) {
-                    it.save()
-                }
-            }
-
+            // Import releases, sprints and all their content (stories, tasks...)
             def releaseService = (ReleaseService) grailsApplication.mainContext.getBean('releaseService')
             projectXml.releases.release.each { release ->
                 releaseService.unMarshall(release, options)
             }
-            // Ensure rank for stories in each sprint
+            def cleanRank = { Collection<Story> stories, states ->
+                return stories.findAll { it.state in states }.sort { it.rank }.eachWithIndex { Story story, index ->
+                    story.rank = index + 1
+                    if (options.save) {
+                        story.save()
+                    }
+                }
+            }
             project.releases.each { Release release ->
                 release.sprints.each { Sprint sprint ->
-                    // First ranks for planned and in progress stories
-                    stories = sprint.stories.findAll { Story story -> story.state in [Story.STATE_PLANNED, Story.STATE_INPROGRESS, Story.STATE_INREVIEW] }.sort { a, b -> a.rank <=> b.rank }
-                    stories.eachWithIndex { Story story, index ->
-                        story.rank = index + 1
-                        if (options.save) {
-                            story.save()
-                        }
-                    }
+                    def stories = cleanRank(sprint.stories, [Story.STATE_PLANNED, Story.STATE_INPROGRESS, Story.STATE_INREVIEW])
                     // Lask ranks for done stories
                     def maxRank = stories.size()
-                    stories = sprint.stories.findAll { Story story -> story.state == Story.STATE_DONE }.sort { a, b -> a.rank <=> b.rank }
-                    stories.each { Story story ->
+                    sprint.stories.findAll { it.state == Story.STATE_DONE }.sort { it.rank }.each { Story story ->
                         story.rank = ++maxRank
                         if (options.save) {
                             story.save()
@@ -472,22 +455,18 @@ class ProjectService extends IceScrumEventPublisher {
                     }
                 }
             }
-
-            options.delayedTasksToImport?.each { def taskData ->
-                Sprint originalSprint = (Sprint) options.sprintsImported.find { it.idFromXml == taskData.sprintIdFromXml }?.sprint
-                if (originalSprint) {
-                    options.sprint = originalSprint
-                    options.story = taskData.parentStory
-                    taskService.unMarshall(taskData.taskXml, options)
-                    originalSprint.save()
-                }
+            // Import remaining stories (state < planned), after the ones >= planned in order to preserve dependencies
+            def storyService = (StoryService) grailsApplication.mainContext.getBean('storyService')
+            projectXml.stories.story.each { it ->
+                storyService.unMarshall(it, options)
             }
-
+            cleanRank(project.stories, [Story.STATE_ACCEPTED, Story.STATE_ESTIMATED])
+            cleanRank(project.stories, [Story.STATE_SUGGESTED])
+            // Init project
             createDefaultBacklogs(project)
             if (!project.timeBoxNotesTemplates) {
                 createDefaultTimeBoxNotesTemplates(project)
             }
-
             if (options.save) {
                 project.save()
             }
@@ -747,7 +726,7 @@ class ProjectService extends IceScrumEventPublisher {
         securityService.deleteStakeHolderPermissions stakeHolder, project
     }
 
-    // INVITATIONS
+// INVITATIONS
 
     void manageTeamInvitations(Team team, invitedMembers, invitedScrumMasters) {
         invitedMembers = invitedMembers*.toLowerCase()

@@ -346,15 +346,10 @@ class TaskService extends IceScrumEventPublisher {
             def sprintIdFromXml = !taskXml.sprint.@id.isEmpty() ? taskXml.sprint.@id.text().toInteger() : null
             def taskUid = taskXml.@uid.text().toInteger()
             if (sprintIdFromXml) {
-                Sprint originalSprint = (Sprint) options.sprintsImported.find { it.idFromXml == sprintIdFromXml }?.sprint
-                if (originalSprint) {
-                    sprint = originalSprint
-                } else {
-                    if (!options.delayedTasksToImport) {
-                        options.delayedTasksToImport = []
-                    }
-                    options.delayedTasksToImport << [taskXml: taskXml, sprintIdFromXml: sprintIdFromXml, parentStory: story]
-                    return //we will delay the import to a later stage
+                // The sprint task may be different than the one where the story currently is (shifted story)
+                sprint = (Sprint) options.sprintsImported.find { it.idFromXml == sprintIdFromXml }?.sprint
+                if (!sprint) {
+                    throw new BusinessException(code: "The sprint was not found for task $taskUid")
                 }
             }
             def task = new Task(
