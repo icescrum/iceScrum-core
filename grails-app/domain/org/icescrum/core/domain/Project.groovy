@@ -500,12 +500,12 @@ class Project extends TimeBox implements Serializable, Attachmentable {
                 }
             }
             builder.simpleProjectApps() {
-                this.simpleProjectApps.each { _simpleProjectApp ->
+                this.simpleProjectApps.sort { it.appDefinitionId }.each { _simpleProjectApp ->
                     _simpleProjectApp.xml(builder)
                 }
             }
             builder.timeBoxNotesTemplates() {
-                this.timeBoxNotesTemplates.each { _timeBoxNotesTemplate ->
+                this.timeBoxNotesTemplates.sort { it.name }.each { _timeBoxNotesTemplate ->
                     _timeBoxNotesTemplate.xml(builder)
                 }
             }
