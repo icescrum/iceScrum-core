@@ -596,6 +596,7 @@ class SecurityService {
             request.teamMember = teamMember(null, springSecurityService.authentication)
             request.stakeHolder = request.portfolioStakeHolder || stakeHolder(null, springSecurityService.authentication, false)
             request.owner = owner(null, springSecurityService.authentication)
+            request.inPortfolio = request.businessOwner //Alias
             request.inProject = request.scrumMaster || request.productOwner || request.teamMember
             request.inTeam = request.scrumMaster || request.teamMember
             request.admin = admin()
