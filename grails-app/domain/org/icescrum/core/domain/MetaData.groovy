@@ -46,6 +46,7 @@ class MetaData implements Serializable, Comparable {
         parentRef index: 'metadata_parent_ref_index'
         parentType index: 'metadata_parent_type_index'
         metaKey index: 'metadata_key_index'
+        metaValue type: 'text'
     }
 
     @Override
