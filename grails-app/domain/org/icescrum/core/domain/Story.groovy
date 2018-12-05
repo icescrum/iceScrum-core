@@ -132,7 +132,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
         return tasks.count { it.state == Task.STATE_DONE }
     }
 
-    Map getProject() { // Hack because by default it does not return the hasShort but a timebox instead
+    Map getProject() { // Hack because by default it does not return the asShort but a timebox instead
         Project project = (Project) backlog
         return project ? [class: 'Project', id: project.id, pkey: project.pkey, name: project.name] : [:]
     }

@@ -737,7 +737,7 @@ class StoryService extends IceScrumEventPublisher {
                     doneDate: DateUtils.parseDateFromExport(storyXml.doneDate.text()),
                     origin: storyXml.origin.text() ?: null,
                     effort: storyXml.effort.text().isEmpty() ? null : storyXml.effort.text().toBigDecimal(),
-                    rank: storyXml.rank.text(),
+                    rank: storyXml.rank.text().toInteger(),
                     state: storyXml.state.text().toInteger(),
                     value: storyXml.value.text().isEmpty() ? 0 : storyXml.value.text().toInteger(),
                     affectVersion: storyXml.affectVersion.text(),

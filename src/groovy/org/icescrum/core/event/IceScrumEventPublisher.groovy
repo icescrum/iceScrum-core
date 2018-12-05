@@ -63,7 +63,6 @@ abstract class IceScrumEventPublisher {
         Holders.grailsApplication.config.icescrum.listenersByDomain.getAt(domain)?.getAt(type)?.each {
             it(type, object, dirtyProperties)
         }
-        //listener on all domains
         Holders.grailsApplication.config.icescrum.listenersByDomain.getAt('*')?.getAt(type)?.each {
             it(type, object, dirtyProperties)
         }
