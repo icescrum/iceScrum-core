@@ -57,7 +57,7 @@ class WindowTagLib {
         if (attrs.footer != false) {
             out << """<div class="modal-footer">"""
             def closeButton = attrs.closeButton ?: message(code: 'is.dialog.close')
-            out << """  <button type="button" class="btn btn-default" ng-click="\$close()">$closeButton</button>"""
+            out << """  <button type="button" class="btn btn-secondary" ng-click="\$close()">$closeButton</button>"""
             if (attrs.button) {
                 attrs.button.each { button ->
                     out << "<button type='${button.type ?: 'button'}' " +
