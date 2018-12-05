@@ -60,6 +60,7 @@ class FeatureService extends IceScrumEventPublisher {
     void delete(Feature feature) {
         def project = feature.backlog
         def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_DELETE, feature)
+        dirtyProperties.project = dirtyProperties.backlog
         feature.stories?.each {
             it.feature = null
             it.save()

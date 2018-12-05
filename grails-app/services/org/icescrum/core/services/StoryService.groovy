@@ -92,6 +92,7 @@ class StoryService extends IceScrumEventPublisher {
         def project = stories[0].backlog
         stories.each { story ->
             def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_DELETE, story)
+            dirtyProperties.project = dirtyProperties.backlog
             // Custom properties
             if (newObject) {
                 dirtyProperties.newObject = newObject
@@ -736,7 +737,7 @@ class StoryService extends IceScrumEventPublisher {
                     doneDate: DateUtils.parseDateFromExport(storyXml.doneDate.text()),
                     origin: storyXml.origin.text() ?: null,
                     effort: storyXml.effort.text().isEmpty() ? null : storyXml.effort.text().toBigDecimal(),
-                    rank: storyXml.rank.text().toInteger(),
+                    rank: storyXml.rank.text(),
                     state: storyXml.state.text().toInteger(),
                     value: storyXml.value.text().isEmpty() ? 0 : storyXml.value.text().toInteger(),
                     affectVersion: storyXml.affectVersion.text(),

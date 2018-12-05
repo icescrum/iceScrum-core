@@ -42,7 +42,7 @@ class Feature extends BacklogElement implements Serializable {
     int type = Feature.TYPE_FUNCTIONAL
     int rank
 
-    static transients = ['countDoneStories', 'state', 'effort', 'inProgressDate', 'doneDate']
+    static transients = ['countDoneStories', 'state', 'effort', 'inProgressDate', 'doneDate', 'project']
 
     static belongsTo = [
             parentRelease: Release
@@ -171,6 +171,11 @@ class Feature extends BacklogElement implements Serializable {
     def getActivity() {
         def activities = stories*.activities.flatten().findAll { Activity a -> a.important && a.code != Activity.CODE_SAVE }
         return activities.sort { Activity a, Activity b -> b.dateCreated <=> a.dateCreated }
+    }
+
+    Map getProject() { // Hack because by default it does not return the hasShort but a timebox instead
+        Project project = (Project) backlog
+        return project ? [class: 'Project', id: project.id, pkey: project.pkey, name: project.name] : [:]
     }
 
     static search(project, options) {
