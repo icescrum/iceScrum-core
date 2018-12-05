@@ -17,13 +17,13 @@
   - along with iceScrum.  If not, see <http://www.gnu.org/licenses/>.
   --}%
 %{-- widget --}%
-<div class="panel panel-light" ${widgetDefinition.ngController ? 'ng-controller="' + widgetDefinition.ngController + '"' : ''}>
-    <div class="panel-heading clearfix" as-sortable-item-handle>
-        <h3 class="panel-title">
+<div class="card" ${widgetDefinition.ngController ? 'ng-controller="' + widgetDefinition.ngController + '"' : ''}>
+    <div class="card-header clearfix" as-sortable-item-handle>
+        <h3 class="card-title">
             <i class="fa fa-${widgetDefinition.icon} pull-left"></i>&nbsp;<g:message code="${widgetDefinition.title}"/>
             <div class="btn-settings btn-group visible-on-hover">
                 <g:if test="${widget && widgetDefinition.settings}">
-                    <button class="btn btn-default btn-sm"
+                    <button class="btn btn-secondary btn-sm"
                             ng-if="authorizedWidget('update', widget)"
                             ng-click="toggleSettings(widget)"
                             defer-tooltip="${message(code: 'todo.is.ui.setting')}">
@@ -31,7 +31,7 @@
                     </button>
                 </g:if>
                 <g:if test="${widget && widgetDefinition.allowRemove}">
-                    <button class="btn btn-default btn-sm"
+                    <button class="btn btn-secondary btn-sm"
                             ng-if="authorizedWidget('delete', widget)"
                             ng-click="delete(widget)"
                             defer-tooltip="${message(code: 'is.ui.widget.remove')}">
@@ -41,7 +41,7 @@
             </div>
         </h3>
     </div>
-    <div class="panel-body"
+    <div class="card-body"
         ${widgetDefinition.settings ? 'ng-switch="showSettings"' : ''}
          ng-class="showSettings ? 'widget-settings' : 'widget-content'">
         ${widgetDefinition.settings ? '<div ng-switch-default>' : ''}
@@ -50,14 +50,13 @@
         <g:if test="${widgetDefinition.settings}">
             <form ng-switch-when="true"
                   ng-if="authorizedWidget('update', widget)"
-                  ng-submit="update(widget)"
-                  class="form-horizontal">
+                  ng-submit="update(widget)">
                 <g:render template="/widgets/${widgetDefinition.id}/settings" plugin="${widgetDefinition.pluginName}"/>
             </form>
         </g:if>
     </div>
     <g:if test="${widgetDefinition.footer}">
-        <div class="panel-footer">
+        <div class="card-footer">
             <g:render template="/${widgetDefinition.id}/widget/footer" plugin="${widgetDefinition.pluginName}"/>
         </div>
     </g:if>
