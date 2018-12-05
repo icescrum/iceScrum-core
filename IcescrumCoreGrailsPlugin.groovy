@@ -496,7 +496,7 @@ ERROR: iceScrum v7 has detected that you attempt to run it on an existing R6 ins
             if (listener) {
                 def domains = listener.domain() ? [listener.domain()] : listener.domains()
                 domains.each { domain ->
-                    def publisherService = ctx.getBean(domain + 'Service')
+                    def publisherService = domain != '*' ? ctx.getBean(domain + 'Service') : ctx.getBean('projectService')
                     if (publisherService && publisherService instanceof IceScrumEventPublisher) {
                         def serviceName = serviceGrailsClass.propertyName
                         if (listener.eventType() == IceScrumEventType.UGLY_HACK_BECAUSE_ANNOTATION_CANT_BE_NULL) {
