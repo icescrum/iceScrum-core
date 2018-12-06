@@ -34,6 +34,7 @@ class Backlog {
     String notes
     String filter
     String chartType
+    String chartUnit
 
     User owner
     boolean shared
@@ -56,6 +57,7 @@ class Backlog {
         notes(maxSize: 5000, nullable: true)
         owner(nullable: true)
         chartType(nullable: true) // Must be nullable at creation for postgres because it doesn't set default value. The not nullable constraint is added in migration.
+        chartUnit(nullable: true)
     }
 
     static namedQueries = {
@@ -99,6 +101,7 @@ class Backlog {
             builder.shared(this.shared)
             builder.filter(this.filter)
             builder.chartType(this.chartType)
+            builder.chartUnit(this.chartUnit)
             builder.notes { builder.mkp.yieldUnescaped("<![CDATA[${this.notes ?: ''}]]>") }
             if (this.owner) {
                 builder.owner(uid: this.owner.uid)
