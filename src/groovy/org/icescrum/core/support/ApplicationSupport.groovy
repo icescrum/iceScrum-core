@@ -802,6 +802,39 @@ class ApplicationSupport {
         }
         return path
     }
+
+    static checkVersion() {
+        def config = Holders.grailsApplication.config.icescrum.check
+        def serverID = Holders.grailsApplication.config.icescrum.appID
+        def referer = Holders.grailsApplication.config.icescrum.serverURL
+        def environment = Holders.grailsApplication.config.icescrum.environment
+        def headers = ['User-Agent': 'iceScrum-Agent/1.0', 'Referer': referer, 'Content-Type': 'application/json', 'Accept': 'application/json']
+        def params = ['http.connection.timeout': config.timeout, 'http.socket.timeout': config.timeout]
+        def url = config.url + "/" + config.path
+        def data = [
+                server_id  : serverID,
+                environment: environment,
+                version    : Metadata.current['app.version'].split("\\s+")[0],
+                pro        : (Metadata.current['app.version']).contains('Pro'),
+        ] as JSON
+        def resp = postJSON(url, null, null, data, headers, params)
+        if (resp.status == 200) {
+            if (!resp.data.up_to_date) {
+                addWarning('version',
+                        'cloud-download',
+                        [code: 'is.warning.version', args: [resp.data.version]],
+                        [code: 'is.warning.version.message', args: [resp.data.message, resp.data.url]])
+                if (log.debugEnabled) {
+                    log.debug('Automatic check for update - A new version is available : ' + resp.data.version)
+                }
+            } else {
+                if (log.debugEnabled) {
+                    log.debug('Automatic check for update - iceScrum is up to date')
+                }
+            }
+            Holders.grailsApplication.config.icescrum.check.response = resp.data.collectEntries { key, val -> [(key): val] } // create a copy
+        }
+    }
 }
 
 abstract class IsTimerTask extends TimerTask {
@@ -829,36 +862,8 @@ class CheckerTimerTask extends IsTimerTask {
             return
         }
         def configInterval = minutesToMilliseconds(config.interval)
-        def serverID = Holders.grailsApplication.config.icescrum.appID
-        def referer = Holders.grailsApplication.config.icescrum.serverURL
-        def environment = Holders.grailsApplication.config.icescrum.environment
         try {
-            def headers = ['User-Agent': 'iceScrum-Agent/1.0', 'Referer': referer, 'Content-Type': 'application/json', 'Accept': 'application/json']
-            def params = ['http.connection.timeout': config.timeout, 'http.socket.timeout': config.timeout]
-            def url = config.url + "/" + config.path
-            def data = [
-                    server_id  : serverID,
-                    environment: environment,
-                    version    : Metadata.current['app.version'].split("\\s+")[0],
-                    pro        : (Metadata.current['app.version']).contains('Pro'),
-            ] as JSON
-            def resp = ApplicationSupport.postJSON(url, null, null, data, headers, params)
-            if (resp.status == 200) {
-                if (!resp.data.up_to_date) {
-                    ApplicationSupport.addWarning('version',
-                            'cloud-download',
-                            [code: 'is.warning.version', args: [resp.data.version]],
-                            [code: 'is.warning.version.message', args: [resp.data.message, resp.data.url]])
-                    if (log.debugEnabled) {
-                        log.debug('Automatic check for update - A new version is available : ' + resp.data.version)
-                    }
-                } else {
-                    if (log.debugEnabled) {
-                        log.debug('Automatic check for update - iceScrum is up to date')
-                    }
-                }
-                Holders.grailsApplication.config.icescrum.check.response = resp.data.collectEntries { key, val -> [(key): val] } // create a copy
-            }
+            ApplicationSupport.checkVersion()
             if (interval != configInterval) {
                 // Back to normal delay
                 this.cancel()
