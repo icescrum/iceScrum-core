@@ -17,6 +17,7 @@
 - Authors:
 -
 - Vincent Barrier (vbarrier@kagilum.com)
+- Nicolas Noullet (nnoullet@kagilum.com)
 --}%
 <%@ page contentType="text/html" %>
 Bonjour,<br/>
@@ -33,6 +34,7 @@ User      : ${user}<br/>
 ------------------------------------------------------------------------------<br/>
 
 URI : ${uri}<br/>
+METHOD : ${method}
 Params :<br/>
 ${uriParams}<br/>
 
