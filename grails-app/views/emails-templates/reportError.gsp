@@ -34,7 +34,7 @@ User      : ${user}<br/>
 ------------------------------------------------------------------------------<br/>
 
 URI : ${uri}<br/>
-METHOD : ${method}
+METHOD : ${method}<br/>
 Params :<br/>
 ${uriParams}<br/>
 
