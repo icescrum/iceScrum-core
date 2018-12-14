@@ -112,6 +112,7 @@ class SprintService extends IceScrumEventPublisher {
             delete(nextSprints.first()) // cascades the delete recursively
         }
         def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_DELETE, sprint)
+        dirtyProperties.parentProject = release.parentProject
         sprint.tasks.findAll { it.parentStory == null }.each {
             taskService.delete(it, springSecurityService.currentUser)
         }
