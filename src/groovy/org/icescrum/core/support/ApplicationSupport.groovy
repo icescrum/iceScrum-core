@@ -31,6 +31,7 @@ import grails.util.GrailsNameUtils
 import grails.util.Holders
 import grails.util.Metadata
 import groovy.sql.Sql
+import org.apache.commons.lang.WordUtils
 import org.apache.commons.logging.LogFactory
 import org.apache.http.HttpHost
 import org.apache.http.HttpResponse
@@ -53,11 +54,7 @@ import org.codehaus.groovy.grails.web.util.WebUtils
 import org.grails.comments.Comment
 import org.grails.comments.CommentLink
 import org.icescrum.core.app.AppDefinition
-import org.icescrum.core.domain.Project
-import org.icescrum.core.domain.SimpleProjectApp
-import org.icescrum.core.domain.Sprint
-import org.icescrum.core.domain.Team
-import org.icescrum.core.domain.User
+import org.icescrum.core.domain.*
 import org.icescrum.core.domain.preferences.UserPreferences
 import org.icescrum.core.domain.security.Authority
 import org.icescrum.core.domain.security.UserAuthority
@@ -446,6 +443,14 @@ class ApplicationSupport {
     static String getConfigFilePath() {
         def configLocations = Holders.grailsApplication.config.grails.config.locations.collect { it.contains('file:') ? it.split('file:')[1] : it }
         return configLocations ? configLocations.first() : System.getProperty("user.home") + File.separator + ".icescrum" + File.separator + "config.groovy"
+    }
+
+    static String getCamelCaseShortName(Class<?> targetClass) {
+        return getCamelCaseShortName(targetClass.name)
+    }
+
+    static String getCamelCaseShortName(String className) {
+        return WordUtils.uncapitalize(GrailsNameUtils.getShortName(className))
     }
 
     static createTempDir(String name) {

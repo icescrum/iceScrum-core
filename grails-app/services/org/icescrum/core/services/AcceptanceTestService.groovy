@@ -63,9 +63,11 @@ class AcceptanceTestService extends IceScrumEventPublisher {
 
     @PreAuthorize('inProject(#acceptanceTest.parentProject) and !archivedProject(#acceptanceTest.parentProject)')
     void delete(AcceptanceTest acceptanceTest) {
+        def story = acceptanceTest.parentStory
         def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_DELETE, acceptanceTest)
+        dirtyProperties.parentProject = story.project
         resetRank(acceptanceTest)
-        acceptanceTest.parentStory.removeFromAcceptanceTests(acceptanceTest)
+        story.removeFromAcceptanceTests(acceptanceTest)
         acceptanceTest.delete()
         publishSynchronousEvent(IceScrumEventType.DELETE, acceptanceTest, dirtyProperties)
     }
