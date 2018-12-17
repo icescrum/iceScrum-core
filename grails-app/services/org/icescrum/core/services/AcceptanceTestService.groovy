@@ -72,6 +72,13 @@ class AcceptanceTestService extends IceScrumEventPublisher {
         publishSynchronousEvent(IceScrumEventType.DELETE, acceptanceTest, dirtyProperties)
     }
 
+    @PreAuthorize('inProject(#acceptanceTest.parentProject) and !archivedProject(#acceptanceTest.parentProject)')
+    def copy(AcceptanceTest acceptanceTest, User creator) {
+        def clonedAcceptanceTest = new AcceptanceTest(name: acceptanceTest.name, description: acceptanceTest.description)
+        save(clonedAcceptanceTest, acceptanceTest.parentStory, creator)
+        return clonedAcceptanceTest
+    }
+
     private void resetRank(AcceptanceTest acceptanceTest) {
         def story = acceptanceTest.parentStory
         cleanRanks(story)
