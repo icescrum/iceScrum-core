@@ -18,6 +18,7 @@
  * Authors:
  *
  * Vincent Barrier (vbarrier@kagilum.com)
+ * Nicolas Noullet (nnoullet@kagilum.com)
  */
 
 package org.icescrum.core.support
@@ -30,6 +31,7 @@ import grails.util.GrailsNameUtils
 import grails.util.Holders
 import grails.util.Metadata
 import groovy.sql.Sql
+import org.apache.commons.lang.WordUtils
 import org.apache.commons.logging.LogFactory
 import org.apache.http.HttpHost
 import org.apache.http.HttpResponse
@@ -52,11 +54,7 @@ import org.codehaus.groovy.grails.web.util.WebUtils
 import org.grails.comments.Comment
 import org.grails.comments.CommentLink
 import org.icescrum.core.app.AppDefinition
-import org.icescrum.core.domain.Project
-import org.icescrum.core.domain.SimpleProjectApp
-import org.icescrum.core.domain.Sprint
-import org.icescrum.core.domain.Team
-import org.icescrum.core.domain.User
+import org.icescrum.core.domain.*
 import org.icescrum.core.domain.preferences.UserPreferences
 import org.icescrum.core.domain.security.Authority
 import org.icescrum.core.domain.security.UserAuthority
@@ -85,13 +83,13 @@ import java.util.zip.ZipOutputStream
 class ApplicationSupport {
 
     public static final CONFIG_ENV_NAME = 'icescrum_config_location'
-    private static def mySQLUTF8mb4 = null // Only one check per app start
+    private static mySQLUTF8mb4 = null // Only one check per app start
     private static final log = LogFactory.getLog(this)
     protected static final FilterChain DUMMY_CHAIN = [
             doFilter: { req, res -> throw new UnsupportedOperationException() }
     ] as FilterChain
 
-    public static String serverURL() {
+    static String serverURL() {
         // Assets pipeline replaces the default grails link generator by its own LinkGenerator
         // If there is no grails.serverURL, it uses a custom way to generate URLs through AssetProcessorService.makeServerURL that calls HttpServletRequests.getBaseUrlWithScheme
         // This methods uses HTTP headers to retrieve port and proto, as opposed to GrailsWebRequest.getBaseUrl that relies only on request URL
@@ -122,12 +120,12 @@ class ApplicationSupport {
         return serverUrl
     }
 
-    public static String getDatabaseName() {
+    static String getDatabaseName() {
         def url = Holders.grailsApplication.config.dataSource.url
         return url.split('/').toList().last().tokenize('?')[0]
     }
 
-    public static boolean isMySQLUTF8mb4() {
+    static boolean isMySQLUTF8mb4() {
         if (mySQLUTF8mb4 == null) {
             def dataSource = Holders.grailsApplication.config.dataSource
             if (dataSource.driverClassName == 'com.mysql.jdbc.Driver') {
@@ -153,28 +151,28 @@ class ApplicationSupport {
         return mySQLUTF8mb4
     }
 
-    public static boolean isUTF8Database() {
+    static boolean isUTF8Database() {
         def driverClassName = Holders.grailsApplication.config.dataSource.driverClassName
         def disabled = driverClassName == 'com.mysql.jdbc.Driver' && !isMySQLUTF8mb4() || driverClassName == 'com.microsoft.sqlserver.jdbc.SQLServerDriver'
         return !disabled
     }
 
-    public static User getFirstAdministrator() {
+    static User getFirstAdministrator() {
         return UserAuthority.findByAuthority(Authority.findByAuthority(Authority.ROLE_ADMIN)).user
     }
 
-    public static List<User> getAllAdministrators() {
+    static List<User> getAllAdministrators() {
         return UserAuthority.findAllByAuthority(Authority.findByAuthority(Authority.ROLE_ADMIN)).collect { it.user }
     }
 
-    public static def controllerExist(def controllerName, def actionName = '') {
+    static controllerExist(controllerName, actionName = '') {
         def controllerClass = Holders.grailsApplication.controllerClasses.find {
             it.logicalPropertyName == controllerName
         }
         return actionName ? controllerClass?.metaClass?.respondsTo(actionName) : controllerClass
     }
 
-    public static boolean isAllowed(def viewDefinition, def params) {
+    static boolean isAllowed(viewDefinition, params) {
         def grailsApplication = Holders.grailsApplication
         WebScrumExpressionHandler webExpressionHandler = (WebScrumExpressionHandler) grailsApplication.mainContext.getBean(WebScrumExpressionHandler.class)
         if (!viewDefinition || viewDefinition.workspace != getCurrentWorkspace(params)?.name) {
@@ -198,7 +196,7 @@ class ApplicationSupport {
         return false
     }
 
-    public static Map menuPositionFromUserPreferences(def windowDefinition) {
+    static Map menuPositionFromUserPreferences(windowDefinition) {
         UserPreferences userPreferences = null
         if (GrailsUser.isAssignableFrom(SCH.context.authentication?.principal?.getClass())) {
             userPreferences = User.get(SCH.context.authentication.principal?.id)?.preferences
@@ -218,22 +216,17 @@ class ApplicationSupport {
         return menuEntry
     }
 
-    public static String getNormalisedVersion() {
-        def version = Metadata.current['app.version']
-        return version.substring(0, version.indexOf(" ") > 0 ? version.indexOf(" ") : version.length()).toLowerCase()
-    }
-
-    static public checkInitialConfig = { def config ->
+    static public checkInitialConfig = { config ->
         try {
             ApplicationSupport.forName("javax.servlet.http.Part") // Check if Tomcat version is compatible
-        } catch (ClassNotFoundException e) {
+        } catch (ClassNotFoundException) {
             addWarning('http-error', 'warning', [code: 'is.warning.httpPart.title'], [code: 'is.warning.httpPart.message'])
-            config.icescrum.push.enable = false;
+            config.icescrum.push.enable = false
         }
         checkCommonErrors(config)
     }
 
-    static public checkCommonErrors(def config) {
+    static checkCommonErrors(config) {
         if (config.dataSource.driverClassName == "org.h2.Driver" && Environment.current != Environment.DEVELOPMENT) {
             addWarning('database', 'warning', [code: 'is.warning.database.title'], [code: 'is.warning.database.message'])
         } else {
@@ -241,7 +234,7 @@ class ApplicationSupport {
         }
     }
 
-    static public generateFolders = { def config ->
+    static public generateFolders = { config ->
         def dirPath = config.icescrum.baseDir.toString() + File.separator + "images" + File.separator + "users" + File.separator
         def dir = new File(dirPath)
         if (!dir.exists()) {
@@ -264,7 +257,7 @@ class ApplicationSupport {
         config.icescrum.projects.teams.dir = dirPath
     }
 
-    static public initEnvironment = { def config ->
+    static public initEnvironment = { config ->
         config.icescrum.environment = (System.getProperty('icescrum.environment') ?: 'production')
         if (config.icescrum.environment == 'production' && new File(File.separator + 'dev' + File.separator + 'turnkey').exists()) {
             config.icescrum.environment = 'turnkey'
@@ -294,8 +287,8 @@ class ApplicationSupport {
     }
 
     // See http://jira.codehaus.org/browse/GRAILS-6515
-    static public booleanValue(def value) {
-        if (value.class == java.lang.Boolean) {
+    static booleanValue(value) {
+        if (value.class == Boolean) {
             // because 'true.toBoolean() == false' !!!
             return value
         } else if (value.class == ConfigObject) {
@@ -307,7 +300,7 @@ class ApplicationSupport {
         }
     }
 
-    static public checkForUpdateAndReportUsage = { def config ->
+    static public checkForUpdateAndReportUsage = { config ->
         def timer = new Timer()
         def oneHour = CheckerTimerTask.minutesToMilliseconds(60)
         // CheckForUpdate
@@ -360,7 +353,7 @@ class ApplicationSupport {
         }
     }
 
-    static public saveFileUUID(String dirPath, String uuid) {
+    static saveFileUUID(String dirPath, String uuid) {
         def filePath = dirPath + File.separator + "appID.txt"
         def fileID = new File(filePath)
         try {
@@ -377,12 +370,7 @@ class ApplicationSupport {
         }
     }
 
-    static public findIceScrumVersionFromXml(def object) {
-        def root = object.parent().parent().parent().parent().parent().parent().parent().parent().parent()
-        return root.find { it.name == 'export' }?.@version?.text()
-    }
-
-    static public zipExportFile(OutputStream zipStream, List<File> files, File xml, String subdir) throws IOException {
+    static zipExportFile(OutputStream zipStream, List<File> files, File xml, String subdir) throws IOException {
         ZipOutputStream zout = new ZipOutputStream(zipStream)
         try {
             if (xml) {
@@ -414,7 +402,7 @@ class ApplicationSupport {
         }
     }
 
-    static public unzip(File zip, File destination) {
+    static unzip(File zip, File destination) {
         def result = new ZipInputStream(new FileInputStream(zip))
 
         if (log.debugEnabled) {
@@ -422,7 +410,7 @@ class ApplicationSupport {
         }
 
         if (!destination.exists()) {
-            destination.mkdir();
+            destination.mkdir()
         }
         result.withStream {
             def entry
@@ -434,10 +422,10 @@ class ApplicationSupport {
                     new File(destination.absolutePath + File.separator + entry.name).parentFile?.mkdirs()
                     def output = new FileOutputStream(destination.absolutePath + File.separator + entry.name)
                     output.withStream {
-                        int len = 0;
+                        int len = 0
                         byte[] buffer = new byte[4096]
                         while ((len = result.read(buffer)) > 0) {
-                            output.write(buffer, 0, len);
+                            output.write(buffer, 0, len)
                         }
                     }
                 } else {
@@ -447,17 +435,25 @@ class ApplicationSupport {
         }
     }
 
-    static public boolean isWritablePath(String dirPath) {
+    static boolean isWritablePath(String dirPath) {
         def dir = new File(dirPath.toString())
         return dir.canRead() && dir.canWrite()
     }
 
-    static public String getConfigFilePath() {
+    static String getConfigFilePath() {
         def configLocations = Holders.grailsApplication.config.grails.config.locations.collect { it.contains('file:') ? it.split('file:')[1] : it }
         return configLocations ? configLocations.first() : System.getProperty("user.home") + File.separator + ".icescrum" + File.separator + "config.groovy"
     }
 
-    static public createTempDir(String name) {
+    static String getCamelCaseShortName(Class<?> targetClass) {
+        return getCamelCaseShortName(targetClass.name)
+    }
+
+    static String getCamelCaseShortName(String className) {
+        return WordUtils.uncapitalize(GrailsNameUtils.getShortName(className))
+    }
+
+    static createTempDir(String name) {
         File dir = File.createTempFile(name, '.dir')
         dir.delete()  // delete the file that was created
         dir.mkdir()   // create a directory in its place.
@@ -467,7 +463,7 @@ class ApplicationSupport {
         return dir
     }
 
-    public static Map getCurrentWorkspace(def params, def id = null) {
+    static Map getCurrentWorkspace(params, id = null) {
         def workspaceEntry = Holders.grailsApplication.config.icescrum.workspaces.find { id ? it.key == id : params."$it.key" }
         if (workspaceEntry) {
             def workspace = workspaceEntry.value
@@ -483,12 +479,12 @@ class ApplicationSupport {
         }
     }
 
-    public static Map getJSON(String url, String authenticationBearer, headers = [:], params = [:]) {
+    static Map getJSON(String url, String authenticationBearer, headers = [:], params = [:]) {
         headers.Authorization = "Bearer $authenticationBearer"
-        return getJSON(url, null, null, headers, params);
+        return getJSON(url, null, null, headers, params)
     }
 
-    public static Map getJSON(String url, String username, String password, headers = [:], params = [:]) {
+    static Map getJSON(String url, String username, String password, headers = [:], params = [:]) {
         DefaultHttpClient httpClient = new DefaultHttpClient()
         Map resp = [:]
         try {
@@ -536,12 +532,12 @@ class ApplicationSupport {
         return resp
     }
 
-    public static Map postJSON(String url, String authenticationBearer, JSON json, headers = [:], params = [:]) {
+    static Map postJSON(String url, String authenticationBearer, JSON json, headers = [:], params = [:]) {
         headers.Authorization = "Bearer $authenticationBearer"
-        return postJSON(url, null, null, json, headers, params);
+        return postJSON(url, null, null, json, headers, params)
     }
 
-    public static Map postJSON(String url, String username, String password, JSON json, headers = [:], params = [:]) {
+    static Map postJSON(String url, String username, String password, JSON json, headers = [:], params = [:]) {
         DefaultHttpClient httpClient = new DefaultHttpClient()
         Map resp = [:]
         try {
@@ -571,7 +567,7 @@ class ApplicationSupport {
             params.each { k, v ->
                 httpPost.params.setParameter(k, v)
             }
-            httpPost.setEntity(new StringEntity(json.toString()));
+            httpPost.setEntity(new StringEntity(json.toString()))
             // Execute request
             HttpResponse response = localcontext ? httpClient.execute(targetHost, httpPost, localcontext) : httpClient.execute(targetHost, httpPost)
             // Gather results
@@ -590,10 +586,10 @@ class ApplicationSupport {
         return resp
     }
 
-    public static void exportProjectZIP(Project project, def outputStream) {
+    static void exportProjectZIP(Project project, outputStream) {
         def attachmentableService = Holders.applicationContext.getBean("attachmentableService")
         def projectName = "${project.name.replaceAll("[^a-zA-Z\\s]", "").replaceAll(" ", "")}-${new Date().format('yyyy-MM-dd')}"
-        def tempdir = System.getProperty("java.io.tmpdir");
+        def tempdir = System.getProperty("java.io.tmpdir")
         tempdir = (tempdir.endsWith("/") || tempdir.endsWith("\\")) ? tempdir : tempdir + System.getProperty("file.separator")
         def xml = new File(tempdir + projectName + '.xml')
         try {
@@ -622,7 +618,7 @@ class ApplicationSupport {
         }
     }
 
-    public static List getSprintXDomain(Sprint sprint, List values) {
+    static List getSprintXDomain(Sprint sprint, List values) {
         def xDomain = []
         if (values) {
             xDomain = [values.label.min()]
@@ -635,7 +631,7 @@ class ApplicationSupport {
         return xDomain
     }
 
-    public static List getChartTickValues(List xDomain) {
+    static List getChartTickValues(List xDomain) {
         def tickValues = []
         if (xDomain) {
             def firstDay = new Date(xDomain[0]).clearTime()
@@ -651,19 +647,19 @@ class ApplicationSupport {
     }
 
     static ConfigObject mergeConfig(final ConfigObject currentConfig, final ConfigObject secondary) {
-        ConfigObject config = new ConfigObject();
+        ConfigObject config = new ConfigObject()
         if (secondary == null) {
             if (currentConfig != null) {
-                config.putAll(currentConfig);
+                config.putAll(currentConfig)
             }
         } else {
             if (currentConfig == null) {
-                config.putAll(secondary);
+                config.putAll(secondary)
             } else {
-                config.putAll(secondary.merge(currentConfig));
+                config.putAll(secondary.merge(currentConfig))
             }
         }
-        return config;
+        return config
     }
 
     static void addWarning(String id, String icon, Map title, Map message, boolean hideable = false) {
@@ -683,17 +679,17 @@ class ApplicationSupport {
         }
     }
 
-    static def toggleSilentWarning(String id) {
+    static toggleSilentWarning(String id) {
         def warning = Holders.grailsApplication.config.icescrum.warnings.find { it.id == id && it.hideable }
         warning?.silent = !warning.silent
         return warning
     }
 
-    static def removeWarning(String id) {
+    static removeWarning(String id) {
         Holders.grailsApplication.config.icescrum.warnings = Holders.grailsApplication.config.icescrum.warnings.findAll { it.id != id }
     }
 
-    static def getLastWarning() {
+    static getLastWarning() {
 
         def i18nService = Holders.grailsApplication.mainContext.getBean('i18nService')
         def lastWarning = Holders.grailsApplication.config.icescrum.warnings?.reverse()?.find { it ->
@@ -702,7 +698,7 @@ class ApplicationSupport {
         return lastWarning ? [id: lastWarning.id, icon: lastWarning.icon, title: i18nService.message(lastWarning.title), message: i18nService.message(lastWarning.message), hideable: lastWarning.hideable, silent: lastWarning.silent] : null
     }
 
-    static void importComment(def object, User poster, String body, Date dateCreated) {
+    static void importComment(object, User poster, String body, Date dateCreated) {
         def posterClass = poster.class.name
         def i = posterClass.indexOf('_$$_javassist')
         if (i > -1) {
@@ -715,7 +711,7 @@ class ApplicationSupport {
         c.dateCreated = dateCreated
     }
 
-    static void importAttachment(def attachmentable, def user, def importPath, def attachmentXml) {
+    static void importAttachment(attachmentable, user, importPath, attachmentXml) {
         def originalName = attachmentXml.inputName.text()
         Attachment attachment
         if (attachmentXml.url.text()) {
@@ -741,7 +737,7 @@ class ApplicationSupport {
         }
     }
 
-    static def extractError(Map attrs) {
+    static extractError(Map attrs) {
         def i18nService = Holders.grailsApplication.mainContext.getBean('i18nService')
         def error = attrs.errors ? attrs.errors.allErrors.collect { [text: i18nService.message(error: it) + ' - ' + it.field] } :
                     attrs.code ? [text: i18nService.message(code: attrs.code, args: attrs.args)] :
@@ -754,7 +750,6 @@ class ApplicationSupport {
     static boolean generateInitialsAvatar(String firstName, String lastName, OutputStream outputStream) {
         def initials = "${firstName?.charAt(0)?.toUpperCase()}${lastName?.charAt(0)?.toUpperCase()}"
         BufferedImage img = new BufferedImage(120, 120, BufferedImage.TYPE_INT_RGB)
-
         Graphics2D graphics = img.createGraphics()
         graphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR)
         graphics.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY)
@@ -764,8 +759,7 @@ class ApplicationSupport {
         graphics.fillRect(0, 0, img.getWidth(), img.getHeight())
         graphics.setPaint(Color.white)
         graphics.setFont(new Font("SansSerif", Font.BOLD, (img.width / 1.7).toInteger()))
-
-        def fm = graphics.getFontMetrics();
+        def fm = graphics.getFontMetrics()
         def stringBounds = fm.getStringBounds(initials, graphics)
         int x = (img.width - stringBounds.width) / 2
         int y = (img.height - stringBounds.height) / 2 + fm.ascent
@@ -778,10 +772,9 @@ class ApplicationSupport {
     private static colorFromName(String name) {
         def i, lon = name.size(), charIndex = 0, colorIndex
         def colors = ["#bdc3c7", "#6f7b87", "#2c3e50", "#2f3193", "#662d91", "#922790", "#ec2176", "#ed1c24", "#f36622", "#f8941e", "#fab70f", "#fdde00", "#d1d219", "#8ec73f", "#00a650", "#00aa9c", "#00adef", "#0081cd", "#005bab"]
-        for (i = 0; i < lon; i++) charIndex = Character.codePointAt(name, i);
-        colorIndex = charIndex % colors.size();
-        def _bgcolor = colors[colorIndex];
-
+        for (i = 0; i < lon; i++) charIndex = Character.codePointAt(name, i)
+        colorIndex = charIndex % colors.size()
+        def _bgcolor = colors[colorIndex]
         return new Color(
                 Integer.valueOf(_bgcolor.substring(1, 3), 16),
                 Integer.valueOf(_bgcolor.substring(3, 5), 16),
@@ -798,7 +791,7 @@ class ApplicationSupport {
 
     static removeTrailingSlash(path) {
         if (path && path instanceof String && path.endsWith('/')) {
-            path  = path[0..-2]
+            path = path[0..-2]
         }
         return path
     }
@@ -843,7 +836,7 @@ abstract class IsTimerTask extends TimerTask {
     protected Timer timer
     protected int interval
 
-    public static minutesToMilliseconds(int minutes) {
+    static minutesToMilliseconds(int minutes) {
         return minutes * 60000
     }
 }

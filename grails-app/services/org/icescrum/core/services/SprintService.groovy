@@ -48,7 +48,7 @@ class SprintService extends IceScrumEventPublisher {
         }
         sprint.orderNumber = (release.sprints?.size() ?: 0) + 1
         release.addToSprints(sprint)
-        sprint.save()
+        sprint.save(flush: true)
         publishSynchronousEvent(IceScrumEventType.CREATE, sprint)
     }
 
