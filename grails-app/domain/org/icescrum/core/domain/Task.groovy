@@ -235,8 +235,9 @@ class Task extends BacklogElement implements Serializable {
         return true
     }
 
-    Sprint getSprint() {
-        return this.getBacklog()?.id ? (Sprint) this.getBacklog() : null
+    Map getSprint() {
+        def sprint = (Sprint) this.getBacklog()
+        return sprint ? [id: sprint.id, state: sprint.state, index: sprint.index, parentRelease: [id: sprint.parentRelease.id, name: sprint.parentRelease.name]] : [:]
     }
 
     def getActivity() {
@@ -361,8 +362,8 @@ class Task extends BacklogElement implements Serializable {
 
             builder.creator(uid: this.creator.uid)
 
-            if (this.sprint) {
-                builder.sprint(id: this.sprint.id)
+            if (this.backlog) {
+                builder.sprint(id: this.backlog.id)
             }
 
             if (this.responsible) {

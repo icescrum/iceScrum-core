@@ -75,7 +75,7 @@ class NotificationEmailService {
 
     @IceScrumListener(domain = 'task', eventType = IceScrumEventType.CREATE)
     void taskCreate(Task task, Map dirtyProperties) {
-        if (task.type == Task.TYPE_URGENT && task.sprint.state == Sprint.STATE_INPROGRESS) {
+        if (task.type == Task.TYPE_URGENT && ((Sprint) task.backlog).state == Sprint.STATE_INPROGRESS) {
             try {
                 sendAlertNewUrgentTask(task, (User) springSecurityService.currentUser)
             } catch (Exception e) {
