@@ -114,7 +114,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
             newDependsOn.state >= story.state ||
             newDependsOn.state == STATE_ACCEPTED && story.state == STATE_ESTIMATED ||
             (newDependsOn.state in [STATE_INPROGRESS, STATE_INREVIEW]) && story.state == STATE_DONE
-            ?: 'invalid'
+                    ?: 'invalid'
         })
         origin(nullable: true)
     }
@@ -381,6 +381,13 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                             ilike 'name', '%' + options.story.term + '%'
                             ilike 'description', '%' + options.story.term + '%'
                             ilike 'notes', '%' + options.story.term + '%'
+                        }
+                    }
+                }
+                if (options.story.origin) {
+                    or {
+                        getList(options.story.origin).each { origin ->
+                            ilike 'origin', '%' + origin + '%'
                         }
                     }
                 }
