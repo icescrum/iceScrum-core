@@ -29,12 +29,6 @@ class ScrumTagLib {
     static namespace = 'is'
     static returnObjectForTags = ['storyDescription']
 
-    def generateStoryTemplate = { attrs ->
-        def i18n = { g.message(code: "is.story.template." + it) }
-        def newLine = attrs.newLine ?: "\n"
-        out << ['as', 'ican', 'to'].collect { i18n(it) + " " }.join(newLine)
-    }
-
     def storyDescription = { attrs ->
         def storyDescription = ""
         if (attrs.story?.description) {
