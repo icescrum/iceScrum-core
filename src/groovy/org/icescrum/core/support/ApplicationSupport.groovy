@@ -855,7 +855,7 @@ class ApplicationSupport {
                 lastUpdated: comment.lastUpdated,
                 commentable: [
                         id  : commentLink.commentRef,
-                        type: commentLink.class
+                        type: commentLink.type
                 ]
         ]
     }
