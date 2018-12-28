@@ -61,6 +61,7 @@ import org.icescrum.core.domain.security.UserAuthority
 import org.icescrum.core.security.WebScrumExpressionHandler
 import org.icescrum.core.services.ProjectService
 import org.icescrum.core.utils.DateUtils
+import org.icescrum.core.utils.ServicesUtils
 import org.icescrum.plugins.attachmentable.domain.Attachment
 import org.springframework.expression.Expression
 import org.springframework.security.access.expression.ExpressionUtils
@@ -827,6 +828,36 @@ class ApplicationSupport {
             }
             Holders.grailsApplication.config.icescrum.check.response = resp.data.collectEntries { key, val -> [(key): val] } // create a copy
         }
+    }
+
+    static getRenderableComment(Comment comment, def commentable = null) {
+        def commentLinkClass = GrailsNameUtils.getShortName(comment.class)
+        def i = commentLinkClass.indexOf('_$$_javassist')
+        if (i > -1) {
+            commentLinkClass = commentLinkClass[0..i - 1]
+        }
+
+        def commentLink = commentable ? [commentRef: commentable.id, type: commentLinkClass.toLowerCase()] : CommentLink.findByComment(comment)
+
+        def commentClass = GrailsNameUtils.getShortName(comment.class)
+        i = commentClass.indexOf('_$$_javassist')
+        if (i > -1) {
+            commentClass = commentClass[0..i - 1]
+        }
+
+        [
+                class      : commentClass,
+                id         : comment.id,
+                body       : comment.body,
+                body_html  : ServicesUtils.textileToHtml(comment.body),
+                poster     : comment.poster,
+                dateCreated: comment.dateCreated,
+                lastUpdated: comment.lastUpdated,
+                commentable: [
+                        id  : commentLink.commentRef,
+                        type: commentLink.class
+                ]
+        ]
     }
 }
 
