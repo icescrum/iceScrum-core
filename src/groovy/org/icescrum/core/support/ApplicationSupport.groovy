@@ -831,7 +831,7 @@ class ApplicationSupport {
     }
 
     static getRenderableComment(Comment comment, def commentable = null) {
-        def commentLinkClass = GrailsNameUtils.getShortName(comment.class)
+        def commentLinkClass = GrailsNameUtils.getShortName(commentable.class)
         def i = commentLinkClass.indexOf('_$$_javassist')
         if (i > -1) {
             commentLinkClass = commentLinkClass[0..i - 1]
