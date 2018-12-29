@@ -296,7 +296,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                         WHERE story.backlog.id = :projectId 
                             AND commentLink.commentRef = story.id 
                             AND commentLink.type = 'story' 
-                            ORDER BY commentLink.comment.dateCreated DESC LIMIT 0,5""",
+                            ORDER BY commentLink.comment.dateCreated DESC""",
                 [projectId: projectId], [max: 10, offset: 0, cache: true, readOnly: true]
         )
     }

@@ -201,7 +201,7 @@ class Task extends BacklogElement implements Serializable {
                         WHERE task.parentProject.id = :projectId 
                             AND commentLink.commentRef = task.id 
                             AND commentLink.type = 'task' 
-                            ORDER BY commentLink.comment.dateCreated DESC LIMIT 0,5""",
+                            ORDER BY commentLink.comment.dateCreated DESC""",
                 [projectId: projectId], [max: 10, offset: 0, cache: true, readOnly: true]
         )
     }
