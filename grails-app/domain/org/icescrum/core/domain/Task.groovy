@@ -26,6 +26,7 @@
 package org.icescrum.core.domain
 
 import grails.util.GrailsNameUtils
+import org.grails.comments.Comment
 import org.hibernate.ObjectNotFoundException
 
 class Task extends BacklogElement implements Serializable {
@@ -191,6 +192,18 @@ class Task extends BacklogElement implements Serializable {
             throw new ObjectNotFoundException(id, 'Task')
         }
         return task
+    }
+
+    static List<Comment> recentCommentsInProject(long projectId) {
+        return executeQuery(""" 
+                SELECT commentLink.comment 
+                    FROM Task task, CommentLink as commentLink 
+                        WHERE task.parentProject.id = :projectId 
+                            AND commentLink.commentRef = task.id 
+                            AND commentLink.type = 'task' 
+                            ORDER BY commentLink.comment.dateCreated DESC LIMIT 0,5""",
+                [projectId: projectId], [max: 10, offset: 0, cache: true, readOnly: true]
+        )
     }
 
     static List<Task> withTasks(def params, def id = 'id') {
