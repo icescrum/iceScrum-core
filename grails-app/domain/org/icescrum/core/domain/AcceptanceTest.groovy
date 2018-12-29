@@ -149,7 +149,7 @@ class AcceptanceTest implements Serializable {
     }
 
     def getParentProject() {
-        return this.parentStory.backlog
+        return this.parentStory.project
     }
 
     enum AcceptanceTestState {
