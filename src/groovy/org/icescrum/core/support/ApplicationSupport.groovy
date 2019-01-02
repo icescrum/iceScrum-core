@@ -700,16 +700,16 @@ class ApplicationSupport {
     }
 
     static void importComment(object, User poster, String body, Date dateCreated) {
-        def posterClass = poster.class.name
-        def i = posterClass.indexOf('_$$_javassist')
-        if (i > -1) {
-            posterClass = posterClass[0..i - 1]
-        }
-        def c = new Comment(body: body, posterId: poster.id, posterClass: posterClass)
-        c.save()
-        def link = new CommentLink(comment: c, commentRef: object.id, type: GrailsNameUtils.getPropertyName(object.class))
+        def comment = new Comment(body: body, posterId: poster.id, posterClass: getUnproxiedClassName(poster.class.name))
+        comment.save()
+        def link = new CommentLink(comment: comment, commentRef: object.id, type: GrailsNameUtils.getPropertyName(object.class))
         link.save()
-        c.dateCreated = dateCreated
+        comment.dateCreated = dateCreated
+    }
+
+    static String getUnproxiedClassName(String className) {
+        def i = className.indexOf('_$$_javassist')
+        return i > -1 ? className[0..i - 1] : className
     }
 
     static void importAttachment(attachmentable, user, importPath, attachmentXml) {
@@ -830,20 +830,10 @@ class ApplicationSupport {
         }
     }
 
-    static Map getRenderableComment(Comment comment, commentable = null) {
-        def commentLinkClass = commentable ? GrailsNameUtils.getShortName(commentable?.class) : null
-        def i = commentLinkClass?.indexOf('_$$_javassist')
-        if (i > -1) {
-            commentLinkClass = commentLinkClass[0..i - 1]
-        }
-        def commentLink = commentable ? [commentRef: commentable.id, type: commentLinkClass.toLowerCase()] : CommentLink.findByComment(comment)
-        def commentClass = GrailsNameUtils.getShortName(comment.class)
-        i = commentClass.indexOf('_$$_javassist')
-        if (i > -1) {
-            commentClass = commentClass[0..i - 1]
-        }
+    static Map getRenderableComment(Comment comment, Object commentable = null) {
+        def commentLink = commentable ? [commentRef: commentable.id, type: getUnproxiedClassName(GrailsNameUtils.getPropertyName(commentable.class))] : CommentLink.findByComment(comment)
         return [
-                class      : commentClass,
+                class      : 'Comment',
                 id         : comment.id,
                 body       : comment.body,
                 body_html  : ServicesUtils.textileToHtml(comment.body),
