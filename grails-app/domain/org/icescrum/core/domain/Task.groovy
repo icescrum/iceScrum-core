@@ -197,12 +197,11 @@ class Task extends BacklogElement implements Serializable {
     static List<Comment> recentCommentsInProject(long projectId) {
         return executeQuery(""" 
                 SELECT commentLink.comment 
-                    FROM Task task, CommentLink as commentLink 
-                        WHERE task.parentProject.id = :projectId 
-                            AND commentLink.commentRef = task.id 
-                            AND commentLink.type = 'task' 
-                            ORDER BY commentLink.comment.dateCreated DESC""",
-                [projectId: projectId], [max: 10, offset: 0, cache: true, readOnly: true]
+                FROM Task task, CommentLink as commentLink 
+                WHERE task.parentProject.id = :projectId 
+                AND commentLink.commentRef = task.id 
+                AND commentLink.type = 'task' 
+                ORDER BY commentLink.comment.dateCreated DESC""", [projectId: projectId], [max: 10, offset: 0, cache: true, readOnly: true]
         )
     }
 

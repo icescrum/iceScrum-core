@@ -90,7 +90,9 @@ public class MethodScrumExpressionRoot extends SecurityExpressionRoot {
         return securityService.inProject(p, super.authentication);
     }
 
-    public boolean inProject(Map p) { return securityService.inProject(p != null ? p.get("id") : null, super.authentication); }
+    public boolean inProject(Map p) {
+        return securityService.inProject(p != null ? p.get("id") : null, super.authentication);
+    }
 
     public boolean inProject(long p) {
         return securityService.inProject(p, super.authentication);
@@ -104,7 +106,9 @@ public class MethodScrumExpressionRoot extends SecurityExpressionRoot {
         return securityService.inTeam(t, super.authentication);
     }
 
-    public boolean productOwner(Map p) { return securityService.productOwner(p != null ? p.get("id") : null, super.authentication); }
+    public boolean productOwner(Map p) {
+        return securityService.productOwner(p != null ? p.get("id") : null, super.authentication);
+    }
 
     public boolean productOwner(long p) {
         return securityService.productOwner(p, super.authentication);
@@ -131,7 +135,9 @@ public class MethodScrumExpressionRoot extends SecurityExpressionRoot {
         return securityService.stakeHolder(p, super.authentication, false);
     }
 
-    public boolean stakeHolder(Map p) { return securityService.stakeHolder(p != null ? p.get("id") : null, super.authentication, false); }
+    public boolean stakeHolder(Map p) {
+        return securityService.stakeHolder(p != null ? p.get("id") : null, super.authentication, false);
+    }
 
     public boolean stakeHolder(Project p) {
         return securityService.stakeHolder(p, super.authentication, false);
@@ -141,9 +147,13 @@ public class MethodScrumExpressionRoot extends SecurityExpressionRoot {
         return securityService.stakeHolder(p, super.authentication, onlyPrivate);
     }
 
-    public boolean stakeHolder(long p, boolean onlyPrivate) { return securityService.stakeHolder(p, super.authentication, onlyPrivate); }
+    public boolean stakeHolder(long p, boolean onlyPrivate) {
+        return securityService.stakeHolder(p, super.authentication, onlyPrivate);
+    }
 
-    public boolean stakeHolder(Map p, boolean onlyPrivate) { return securityService.stakeHolder(p != null ? p.get("id") : null, super.authentication, onlyPrivate); }
+    public boolean stakeHolder(Map p, boolean onlyPrivate) {
+        return securityService.stakeHolder(p != null ? p.get("id") : null, super.authentication, onlyPrivate);
+    }
 
     public boolean businessOwner(Portfolio portfolio) {
         return securityService.businessOwner(portfolio, super.authentication);
@@ -157,9 +167,15 @@ public class MethodScrumExpressionRoot extends SecurityExpressionRoot {
         return securityService.owner(o, super.authentication);
     }
 
-    public boolean archivedProject(long p) { return securityService.archivedProject(p); }
+    public boolean archivedProject(long p) {
+        return securityService.archivedProject(p);
+    }
 
-    public boolean archivedProject(Map p) { return securityService.archivedProject(p != null ? p.get("id") : null); }
+    public boolean archivedProject(Map p) {
+        return securityService.archivedProject(p != null ? p.get("id") : null);
+    }
 
-    public boolean archivedProject(Project p) { return securityService.archivedProject(p); }
+    public boolean archivedProject(Project p) {
+        return securityService.archivedProject(p);
+    }
 }
