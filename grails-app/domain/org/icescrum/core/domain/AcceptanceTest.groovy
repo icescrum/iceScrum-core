@@ -80,37 +80,36 @@ class AcceptanceTest implements Serializable {
         results ? results.first() : null
     }
 
-    static List<AcceptanceTest> getAllInProject(projectId, term = '', states = [1, 5, 10]) {
+    static List<AcceptanceTest> getAllInProject(projectId, term = '', states = []) {
         executeQuery(
                 """SELECT at
                    FROM org.icescrum.core.domain.AcceptanceTest as at
                    WHERE at.parentStory.backlog.id = :pid 
                    AND (at.name LIKE :term OR at.description LIKE :term)
-                   AND at.state in (:states)""",
-                [pid: projectId, term: '%' + term + '%', states: states ?: [1, 5, 10]]
+                   ${states ? "AND at.state in (${states.join(',')})" : ''}""", [pid: projectId, term: '%' + term + '%']
         )
     }
 
-    static List<AcceptanceTest> getAllInStory(projectId, storyId, term = '', states = [1, 5, 10]) {
+    static List<AcceptanceTest> getAllInStory(projectId, storyId, term = '', states = []) {
         executeQuery(
                 """SELECT at
                    FROM org.icescrum.core.domain.AcceptanceTest as at
                    WHERE at.parentStory.backlog.id = :pid
-                   AND (at.name LIKE :term OR at.description LIKE :term) 
-                   AND at.parentStory.id = :sid 
-                   AND at.state in (:states)
-                   ORDER BY at.rank, at.uid""", [sid: storyId, pid: projectId, term: '%' + term + '%', states: states ?: [1, 5, 10]])
+                   AND (at.name LIKE :term OR at.description LIKE :term)
+                   AND at.parentStory.id = :sid
+                   ${states ? "AND at.state in (${states.join(',')})" : ''}
+                   ORDER BY at.rank, at.uid""", [sid: storyId, pid: projectId, term: '%' + term + '%'])
     }
 
-    static List<AcceptanceTest> getAllInSprint(projectId, sprintId, term = '', states = [1, 5, 10]) {
+    static List<AcceptanceTest> getAllInSprint(projectId, sprintId, term = '', states = []) {
         executeQuery(
                 """SELECT at
                    FROM org.icescrum.core.domain.AcceptanceTest as at
                    WHERE at.parentStory.backlog.id = :pid
-                   AND (at.name LIKE :term OR at.description LIKE :term) 
+                   AND (at.name LIKE :term OR at.description LIKE :term)
                    AND at.parentStory.parentSprint.id = :sid
-                   AND at.state in (:states)
-                   ORDER BY at.rank, at.uid""", [sid: sprintId, pid: projectId, term: '%' + term + '%', states: states ?: [1, 5, 10]])
+                   ${states ? "AND at.state in (${states.join(',')})" : ''}
+                   ORDER BY at.rank, at.uid""", [sid: sprintId, pid: projectId, term: '%' + term + '%'])
     }
 
     static AcceptanceTest withAcceptanceTest(long projectId, long id) {
