@@ -830,22 +830,19 @@ class ApplicationSupport {
         }
     }
 
-    static getRenderableComment(Comment comment, def commentable = null) {
+    static Map getRenderableComment(Comment comment, commentable = null) {
         def commentLinkClass = commentable ? GrailsNameUtils.getShortName(commentable?.class) : null
         def i = commentLinkClass?.indexOf('_$$_javassist')
         if (i > -1) {
             commentLinkClass = commentLinkClass[0..i - 1]
         }
-
         def commentLink = commentable ? [commentRef: commentable.id, type: commentLinkClass.toLowerCase()] : CommentLink.findByComment(comment)
-
         def commentClass = GrailsNameUtils.getShortName(comment.class)
         i = commentClass.indexOf('_$$_javassist')
         if (i > -1) {
             commentClass = commentClass[0..i - 1]
         }
-
-        [
+        return [
                 class      : commentClass,
                 id         : comment.id,
                 body       : comment.body,
