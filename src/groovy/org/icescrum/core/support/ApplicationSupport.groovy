@@ -841,8 +841,8 @@ class ApplicationSupport {
                 dateCreated: comment.dateCreated,
                 lastUpdated: comment.lastUpdated,
                 commentable: [
-                        id  : commentLink.commentRef,
-                        type: commentLink.type
+                        class: commentLink.type.capitalize(),
+                        id   : commentLink.commentRef
                 ]
         ]
     }
