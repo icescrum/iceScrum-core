@@ -86,7 +86,8 @@ class AcceptanceTest implements Serializable {
                    FROM org.icescrum.core.domain.AcceptanceTest as at
                    WHERE at.parentStory.backlog.id = :pid 
                    AND (at.name LIKE :term OR at.description LIKE :term)
-                   ${states ? "AND at.state in (${states.join(',')})" : ''}""", [pid: projectId, term: '%' + term + '%']
+                   ${states ? "AND at.state in (${states.join(',')})" : ''}
+                   ORDER BY at.parentStory.state""", [pid: projectId, term: '%' + term + '%']
         )
     }
 
@@ -109,7 +110,7 @@ class AcceptanceTest implements Serializable {
                    AND (at.name LIKE :term OR at.description LIKE :term)
                    AND at.parentStory.parentSprint.id = :sid
                    ${states ? "AND at.state in (${states.join(',')})" : ''}
-                   ORDER BY at.rank, at.uid""", [sid: sprintId, pid: projectId, term: '%' + term + '%'])
+                   ORDER BY at.parentStory.rank, at.rank, at.uid""", [sid: sprintId, pid: projectId, term: '%' + term + '%'])
     }
 
     static AcceptanceTest withAcceptanceTest(long projectId, long id) {
