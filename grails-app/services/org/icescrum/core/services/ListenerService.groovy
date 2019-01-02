@@ -312,7 +312,7 @@ class ListenerService {
     @IceScrumListener(domain = 'acceptanceTest', eventType = IceScrumEventType.CREATE)
     void acceptanceTestCreate(AcceptanceTest acceptanceTest, Map dirtyProperties) {
         def user = (User) springSecurityService.currentUser
-        def project = acceptanceTest.parentProject
+        def project = acceptanceTest.parentStory.backlog
         activityService.addActivity(acceptanceTest, user ?: acceptanceTest.parentStory.creator, 'acceptanceTestSave', acceptanceTest.name)
         pushService.broadcastToProjectChannel(IceScrumEventType.CREATE, acceptanceTest, project.id)
         pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, acceptanceTest.parentStory, project.id) // Push count
@@ -321,7 +321,7 @@ class ListenerService {
     @IceScrumListener(domain = 'acceptanceTest', eventType = IceScrumEventType.UPDATE)
     void acceptanceTestUpdate(AcceptanceTest acceptanceTest, Map dirtyProperties) {
         def user = (User) springSecurityService.currentUser
-        def project = acceptanceTest.parentProject
+        def project = acceptanceTest.parentStory.backlog
         def activityType = 'acceptanceTest' + (dirtyProperties.containsKey('state') ? acceptanceTest.stateEnum.name().toLowerCase().capitalize() : 'Update')
         activityService.addActivity(acceptanceTest, user, activityType, acceptanceTest.name)
         if (dirtyProperties.containsKey('state')) {
