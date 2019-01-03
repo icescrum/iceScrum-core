@@ -32,6 +32,7 @@ import org.springframework.security.access.expression.SecurityExpressionRoot;
 import org.springframework.security.core.Authentication;
 
 import java.io.Serializable;
+import java.util.Map;
 
 // Used in services through @PreAuthorize annotations
 // Don't provide methods without params since there is no request to look into
@@ -60,6 +61,7 @@ public class MethodScrumExpressionRoot extends SecurityExpressionRoot {
     public boolean hasPermission(Object target, Object permission) {
         return permissionEvaluator.hasPermission(authentication, target, permission);
     }
+
     public boolean hasPermission(Object targetId, String targetType, Object permission) {
         return permissionEvaluator.hasPermission(authentication, (Serializable) targetId, targetType, permission);
     }
@@ -67,6 +69,7 @@ public class MethodScrumExpressionRoot extends SecurityExpressionRoot {
     public void setFilterObject(Object filterObject) {
         this.filterObject = filterObject;
     }
+
     public Object getFilterObject() {
         return filterObject;
     }
@@ -74,6 +77,7 @@ public class MethodScrumExpressionRoot extends SecurityExpressionRoot {
     public void setReturnObject(Object returnObject) {
         this.returnObject = returnObject;
     }
+
     public Object getReturnObject() {
         return returnObject;
     }
@@ -85,6 +89,11 @@ public class MethodScrumExpressionRoot extends SecurityExpressionRoot {
     public boolean inProject(Project p) {
         return securityService.inProject(p, super.authentication);
     }
+
+    public boolean inProject(Map p) {
+        return securityService.inProject(p != null ? p.get("id") : null, super.authentication);
+    }
+
     public boolean inProject(long p) {
         return securityService.inProject(p, super.authentication);
     }
@@ -92,13 +101,19 @@ public class MethodScrumExpressionRoot extends SecurityExpressionRoot {
     public boolean inTeam(Team t) {
         return securityService.inTeam(t, super.authentication);
     }
+
     public boolean inTeam(long t) {
         return securityService.inTeam(t, super.authentication);
+    }
+
+    public boolean productOwner(Map p) {
+        return securityService.productOwner(p != null ? p.get("id") : null, super.authentication);
     }
 
     public boolean productOwner(long p) {
         return securityService.productOwner(p, super.authentication);
     }
+
     public boolean productOwner(Project p) {
         return securityService.productOwner(p, super.authentication);
     }
@@ -106,9 +121,11 @@ public class MethodScrumExpressionRoot extends SecurityExpressionRoot {
     public boolean scrumMaster(long t) {
         return securityService.scrumMaster(t, super.authentication);
     }
+
     public boolean scrumMaster(Team t) {
         return securityService.scrumMaster(t, super.authentication);
     }
+
     public boolean scrumMaster(Project p) {
         Team team = p.getTeam();
         return team != null && securityService.scrumMaster(team, super.authentication);
@@ -117,16 +134,31 @@ public class MethodScrumExpressionRoot extends SecurityExpressionRoot {
     public boolean stakeHolder(long p) {
         return securityService.stakeHolder(p, super.authentication, false);
     }
+
+    public boolean stakeHolder(Map p) {
+        return securityService.stakeHolder(p != null ? p.get("id") : null, super.authentication, false);
+    }
+
     public boolean stakeHolder(Project p) {
         return securityService.stakeHolder(p, super.authentication, false);
     }
+
     public boolean stakeHolder(Project p, boolean onlyPrivate) {
         return securityService.stakeHolder(p, super.authentication, onlyPrivate);
+    }
+
+    public boolean stakeHolder(long p, boolean onlyPrivate) {
+        return securityService.stakeHolder(p, super.authentication, onlyPrivate);
+    }
+
+    public boolean stakeHolder(Map p, boolean onlyPrivate) {
+        return securityService.stakeHolder(p != null ? p.get("id") : null, super.authentication, onlyPrivate);
     }
 
     public boolean businessOwner(Portfolio portfolio) {
         return securityService.businessOwner(portfolio, super.authentication);
     }
+
     public boolean portfolioStakeHolder(Portfolio portfolio) {
         return securityService.portfolioStakeHolder(portfolio, super.authentication);
     }
@@ -135,10 +167,15 @@ public class MethodScrumExpressionRoot extends SecurityExpressionRoot {
         return securityService.owner(o, super.authentication);
     }
 
-    public boolean archivedProject(Project p) {
+    public boolean archivedProject(long p) {
         return securityService.archivedProject(p);
     }
-    public boolean archivedProject(long p) {
+
+    public boolean archivedProject(Map p) {
+        return securityService.archivedProject(p != null ? p.get("id") : null);
+    }
+
+    public boolean archivedProject(Project p) {
         return securityService.archivedProject(p);
     }
 }

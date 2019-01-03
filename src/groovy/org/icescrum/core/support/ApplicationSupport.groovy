@@ -61,6 +61,7 @@ import org.icescrum.core.domain.security.UserAuthority
 import org.icescrum.core.security.WebScrumExpressionHandler
 import org.icescrum.core.services.ProjectService
 import org.icescrum.core.utils.DateUtils
+import org.icescrum.core.utils.ServicesUtils
 import org.icescrum.plugins.attachmentable.domain.Attachment
 import org.springframework.expression.Expression
 import org.springframework.security.access.expression.ExpressionUtils
@@ -699,16 +700,16 @@ class ApplicationSupport {
     }
 
     static void importComment(object, User poster, String body, Date dateCreated) {
-        def posterClass = poster.class.name
-        def i = posterClass.indexOf('_$$_javassist')
-        if (i > -1) {
-            posterClass = posterClass[0..i - 1]
-        }
-        def c = new Comment(body: body, posterId: poster.id, posterClass: posterClass)
-        c.save()
-        def link = new CommentLink(comment: c, commentRef: object.id, type: GrailsNameUtils.getPropertyName(object.class))
+        def comment = new Comment(body: body, posterId: poster.id, posterClass: getUnproxiedClassName(poster.class.name))
+        comment.save()
+        def link = new CommentLink(comment: comment, commentRef: object.id, type: GrailsNameUtils.getPropertyName(object.class))
         link.save()
-        c.dateCreated = dateCreated
+        comment.dateCreated = dateCreated
+    }
+
+    static String getUnproxiedClassName(String className) {
+        def i = className.indexOf('_$$_javassist')
+        return i > -1 ? className[0..i - 1] : className
     }
 
     static void importAttachment(attachmentable, user, importPath, attachmentXml) {
@@ -827,6 +828,23 @@ class ApplicationSupport {
             }
             Holders.grailsApplication.config.icescrum.check.response = resp.data.collectEntries { key, val -> [(key): val] } // create a copy
         }
+    }
+
+    static Map getRenderableComment(Comment comment, Object commentable = null) {
+        def commentLink = commentable ? [commentRef: commentable.id, type: getUnproxiedClassName(GrailsNameUtils.getPropertyName(commentable.class))] : CommentLink.findByComment(comment)
+        return [
+                class      : 'Comment',
+                id         : comment.id,
+                body       : comment.body,
+                body_html  : ServicesUtils.textileToHtml(comment.body),
+                poster     : comment.poster,
+                dateCreated: comment.dateCreated,
+                lastUpdated: comment.lastUpdated,
+                commentable: [
+                        class: commentLink.type.capitalize(),
+                        id   : commentLink.commentRef
+                ]
+        ]
     }
 }
 

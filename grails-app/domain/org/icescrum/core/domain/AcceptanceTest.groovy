@@ -80,20 +80,37 @@ class AcceptanceTest implements Serializable {
         results ? results.first() : null
     }
 
-    static List<AcceptanceTest> getAllInProject(projectId) {
+    static List<AcceptanceTest> getAllInProject(projectId, term = '', states = []) {
         executeQuery(
                 """SELECT at
                    FROM org.icescrum.core.domain.AcceptanceTest as at
-                   WHERE at.parentStory.backlog.id = :pid """, [pid: projectId])
+                   WHERE at.parentStory.backlog.id = :pid 
+                   AND (at.name LIKE :term OR at.description LIKE :term)
+                   ${states ? "AND at.state in (${states.join(',')})" : ''}
+                   ORDER BY at.parentStory.state""", [pid: projectId, term: '%' + term + '%']
+        )
     }
 
-    static List<AcceptanceTest> getAllInStory(projectId, storyId) {
+    static List<AcceptanceTest> getAllInStory(projectId, storyId, term = '', states = []) {
         executeQuery(
                 """SELECT at
                    FROM org.icescrum.core.domain.AcceptanceTest as at
                    WHERE at.parentStory.backlog.id = :pid
+                   AND (at.name LIKE :term OR at.description LIKE :term)
                    AND at.parentStory.id = :sid
-                   ORDER BY at.rank, at.uid""", [sid: storyId, pid: projectId])
+                   ${states ? "AND at.state in (${states.join(',')})" : ''}
+                   ORDER BY at.rank, at.uid""", [sid: storyId, pid: projectId, term: '%' + term + '%'])
+    }
+
+    static List<AcceptanceTest> getAllInSprint(projectId, sprintId, term = '', states = []) {
+        executeQuery(
+                """SELECT at
+                   FROM org.icescrum.core.domain.AcceptanceTest as at
+                   WHERE at.parentStory.backlog.id = :pid
+                   AND (at.name LIKE :term OR at.description LIKE :term)
+                   AND at.parentStory.parentSprint.id = :sid
+                   ${states ? "AND at.state in (${states.join(',')})" : ''}
+                   ORDER BY at.parentStory.rank, at.rank, at.uid""", [sid: sprintId, pid: projectId, term: '%' + term + '%'])
     }
 
     static AcceptanceTest withAcceptanceTest(long projectId, long id) {
@@ -132,7 +149,7 @@ class AcceptanceTest implements Serializable {
     }
 
     def getParentProject() {
-        return this.parentStory.backlog
+        return this.parentStory.project
     }
 
     enum AcceptanceTestState {
