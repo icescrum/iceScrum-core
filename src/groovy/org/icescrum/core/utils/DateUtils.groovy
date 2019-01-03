@@ -42,11 +42,11 @@ class DateUtils {
     static parseDateISO8601(String date) {
         try {
             return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXX").parse(date) // hhmm - default format sent by our client
-        } catch(ParseException e1) {
+        } catch (ParseException e1) {
             // Manage other formats that can be sent by external applications
             try {
                 return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse(date) // hh:mm
-            } catch(ParseException e2) {
+            } catch (ParseException e2) {
                 return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX").parse(date) // hh
             }
         }
