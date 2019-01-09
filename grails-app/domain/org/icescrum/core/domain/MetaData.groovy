@@ -62,7 +62,7 @@ class MetaData implements Serializable, Comparable {
             builder.dateCreated(this.dateCreated)
             builder.lastUpdated(this.lastUpdated)
             builder.metaKey(this.metaKey)
-            builder.metaKey { builder.mkp.yieldUnescaped("<![CDATA[${this.metaValue}]]>") }
+            builder.metaValue { builder.mkp.yieldUnescaped("<![CDATA[${this.metaValue}]]>") }
             builder.parentRef(this.parentRef)
             builder.parentType(this.parentType)
             exportDomainsPlugins(builder)
