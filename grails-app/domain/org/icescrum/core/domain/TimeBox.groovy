@@ -52,20 +52,20 @@ class TimeBox implements Comparable<TimeBox>, Serializable {
     ]
 
     static constraints = {
-        startDate(validator: { val, obj ->
-            if (val == obj.endDate) {
+        startDate(validator: { newStartDate, obj ->
+            if (newStartDate == obj.endDate) {
                 return ['equals.endDate']
             }
-            if (val.after(obj.endDate)) {
+            if (newStartDate.after(obj.endDate)) {
                 return ['after.endDate']
             }
             return true
         })
-        endDate(validator: { val, obj ->
-            if (val == obj.startDate) {
+        endDate(validator: { newEndDate, obj ->
+            if (newEndDate == obj.startDate) {
                 return ['equals.startDate']
             }
-            if (val.before(obj.startDate)) {
+            if (newEndDate.before(obj.startDate)) {
                 return ['before.startDate']
             }
             return true
