@@ -52,24 +52,6 @@ class TimeBox implements Comparable<TimeBox>, Serializable {
     ]
 
     static constraints = {
-        startDate(validator: { newStartDate, obj ->
-            if (newStartDate == obj.endDate) {
-                return ['equals.endDate']
-            }
-            if (newStartDate.after(obj.endDate)) {
-                return ['after.endDate']
-            }
-            return true
-        })
-        endDate(validator: { newEndDate, obj ->
-            if (newEndDate == obj.startDate) {
-                return ['equals.startDate']
-            }
-            if (newEndDate.before(obj.startDate)) {
-                return ['before.startDate']
-            }
-            return true
-        })
         goal(nullable: true)
         description(nullable: true)
     }
@@ -105,5 +87,23 @@ class TimeBox implements Comparable<TimeBox>, Serializable {
 
     int compareTo(TimeBox o) {
         return orderNumber <=> o?.orderNumber ?: id <=> o?.id
+    }
+
+    static List<String> validateStartDate(Date newStartDate, Date endDate) {
+        if (newStartDate == endDate) {
+            return ['equals.endDate']
+        } else if (newStartDate.after(endDate)) {
+            return ['after.endDate']
+        }
+        return []
+    }
+
+    static List<String> validateEndDate(Date startDate, Date newEndDate) {
+        if (newEndDate == startDate) {
+            return ['equals.startDate']
+        } else if (newEndDate.before(startDate)) {
+            return ['before.startDate']
+        }
+        return []
     }
 }

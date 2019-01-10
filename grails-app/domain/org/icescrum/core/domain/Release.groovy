@@ -71,12 +71,23 @@ class Release extends TimeBox implements Cloneable, Attachmentable {
         doneDate nullable: true
         name(blank: false, unique: 'parentProject', shared: 'keyMaxSize')
         startDate(validator: { newStartDate, release ->
+            def errors = validateStartDate(newStartDate, release.endDate)
+            if (errors) {
+                return errors
+            }
             if (newStartDate.before(release.parentProject.startDate)) {
                 return ['before.projectStartDate']
             }
-            def r = release.parentProject.releases?.find { it.orderNumber == release.orderNumber - 1 }
-            if (r && newStartDate.before(r.endDate)) {
+            def previousRelease = release.parentProject.releases?.find { it.orderNumber == release.orderNumber - 1 }
+            if (previousRelease && newStartDate.before(previousRelease.endDate)) {
                 return ['before.previous']
+            }
+            return true
+        })
+        endDate(validator: { newEndDate, release ->
+            def errors = validateEndDate(release.startDate, newEndDate)
+            if (errors) {
+                return errors
             }
             return true
         })
