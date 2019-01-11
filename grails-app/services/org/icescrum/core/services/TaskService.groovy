@@ -49,6 +49,7 @@ class TaskService extends IceScrumEventPublisher {
 
     @PreAuthorize('(inProject(#task.backlog?.parentProject) or inProject(#task.parentStory?.backlog)) and (!archivedProject(#task.backlog?.parentProject) or !archivedProject(#task.parentStory?.backlog))')
     void save(Task task, User user) {
+        ApplicationSupport.validateHexdecimalColor(task.color)
         if (task.parentStory?.parentSprint && !task.backlog) {
             task.backlog = task.parentStory.parentSprint
         }
@@ -80,6 +81,7 @@ class TaskService extends IceScrumEventPublisher {
 
     @PreAuthorize('inProject(#task.parentProject) and !archivedProject(#task.parentProject)')
     void update(Task task, User user, boolean force = false, props = [:]) {
+        ApplicationSupport.validateHexdecimalColor(task.color)
         if (props.state != null) {
             state(task, props.state, user)
         }

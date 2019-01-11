@@ -58,6 +58,7 @@ import org.icescrum.core.domain.*
 import org.icescrum.core.domain.preferences.UserPreferences
 import org.icescrum.core.domain.security.Authority
 import org.icescrum.core.domain.security.UserAuthority
+import org.icescrum.core.error.BusinessException
 import org.icescrum.core.security.WebScrumExpressionHandler
 import org.icescrum.core.services.ProjectService
 import org.icescrum.core.utils.DateUtils
@@ -845,6 +846,13 @@ class ApplicationSupport {
                         id   : commentLink.commentRef
                 ]
         ]
+    }
+
+    static void validateHexdecimalColor(color) {
+        // Do it here rather than in domain because we don't want to break projects with existing malformed color
+        if (color && !(color.toLowerCase() ==~ /^#[0-9a-f]{6}$/)) {
+            throw new BusinessException(code: 'is.ui.color.error')
+        }
     }
 }
 
