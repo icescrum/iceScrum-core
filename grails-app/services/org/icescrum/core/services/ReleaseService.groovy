@@ -234,15 +234,15 @@ class ReleaseService extends IceScrumEventPublisher {
     @PreAuthorize('stakeHolder(#release.parentProject) or inProject(#release.parentProject)')
     def releaseVelocityCapacityValues(Release release) {
         def values = []
-        def capacity = 0, label = ""
+        def capacity = 0
+        def label = ""
         Cliche.findAllByParentTimeBox(release, [sort: "datePrise", order: "asc"])?.each { cliche ->
             def xmlRoot = new XmlSlurper().parseText(cliche.data)
             if (xmlRoot) {
                 if (cliche.type == Cliche.TYPE_ACTIVATION) {
                     capacity = xmlRoot."${Cliche.SPRINT_CAPACITY}".toBigDecimal()
                     label = Sprint.getNameByReleaseAndClicheSprintId(release, xmlRoot."${Cliche.SPRINT_ID}".toString())
-                }
-                if (cliche.type == Cliche.TYPE_CLOSE) {
+                } else if (cliche.type == Cliche.TYPE_CLOSE) {
                     values << [
                             capacity: capacity,
                             velocity: xmlRoot."${Cliche.SPRINT_VELOCITY}".toBigDecimal(),
