@@ -43,6 +43,7 @@ class FeatureService extends IceScrumEventPublisher {
 
     @PreAuthorize('productOwner(#project) and !archivedProject(#project)')
     void save(Feature feature, Project project) {
+        ApplicationSupport.validateHexdecimalColor(feature.color)
         feature.name = feature.name?.trim()
         feature.rank = Feature.countByBacklog(project) + 1
         if (feature.value == null) {
@@ -78,6 +79,7 @@ class FeatureService extends IceScrumEventPublisher {
 
     @PreAuthorize('productOwner(#feature.backlog) and !archivedProject(#feature.backlog)')
     void update(Feature feature) {
+        ApplicationSupport.validateHexdecimalColor(feature.color)
         feature.name = feature.name.trim()
         if (feature.isDirty('rank')) {
             Project project = (Project) feature.backlog
