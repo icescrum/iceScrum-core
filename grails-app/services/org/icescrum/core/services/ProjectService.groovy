@@ -222,18 +222,9 @@ class ProjectService extends IceScrumEventPublisher {
     @PreAuthorize('stakeHolder(#project) or inProject(#project)')
     def projectVelocityValues(Project project) {
         def values = []
+        def releaseService = (ReleaseService) grailsApplication.mainContext.getBean('releaseService')
         project.releases?.sort { a, b -> a.orderNumber <=> b.orderNumber }?.each { release ->
-            Cliche.findAllByParentTimeBoxAndType(release, Cliche.TYPE_CLOSE, [sort: "datePrise", order: "asc"])?.each { cliche ->
-                def xmlRoot = new XmlSlurper().parseText(cliche.data)
-                if (xmlRoot) {
-                    values << [
-                            userstories     : xmlRoot."${Cliche.FUNCTIONAL_STORY_VELOCITY}".toBigDecimal(),
-                            defectstories   : xmlRoot."${Cliche.DEFECT_STORY_VELOCITY}".toBigDecimal(),
-                            technicalstories: xmlRoot."${Cliche.TECHNICAL_STORY_VELOCITY}".toBigDecimal(),
-                            label           : Sprint.getNameByReleaseAndClicheSprintId(release, xmlRoot."${Cliche.SPRINT_ID}".toString())
-                    ]
-                }
-            }
+            values.addAll(releaseService.releaseVelocityValues(release))
         }
         return values
     }
@@ -241,24 +232,9 @@ class ProjectService extends IceScrumEventPublisher {
     @PreAuthorize('stakeHolder(#project) or inProject(#project)')
     def projectVelocityCapacityValues(Project project) {
         def values = []
-        def capacity = 0, label = ""
+        def releaseService = (ReleaseService) grailsApplication.mainContext.getBean('releaseService')
         project.releases?.sort { a, b -> a.orderNumber <=> b.orderNumber }?.each { release ->
-            Cliche.findAllByParentTimeBox(release, [sort: "datePrise", order: "asc"])?.each { cliche ->
-                def xmlRoot = new XmlSlurper().parseText(cliche.data)
-                if (xmlRoot) {
-                    if (cliche.type == Cliche.TYPE_ACTIVATION) {
-                        capacity = xmlRoot."${Cliche.SPRINT_CAPACITY}".toBigDecimal()
-                        label = Sprint.getNameByReleaseAndClicheSprintId(release, xmlRoot."${Cliche.SPRINT_ID}".toString())
-                    }
-                    if (cliche.type == Cliche.TYPE_CLOSE) {
-                        values << [
-                                capacity: capacity,
-                                velocity: xmlRoot."${Cliche.SPRINT_VELOCITY}".toBigDecimal(),
-                                label   : label
-                        ]
-                    }
-                }
-            }
+            values.addAll(releaseService.releaseVelocityCapacityValues(release))
         }
         return values
     }

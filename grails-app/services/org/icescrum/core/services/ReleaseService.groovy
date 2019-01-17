@@ -214,6 +214,46 @@ class ReleaseService extends IceScrumEventPublisher {
         return values
     }
 
+    @PreAuthorize('stakeHolder(#release.parentProject) or inProject(#release.parentProject)')
+    def releaseVelocityValues(Release release) {
+        def values = []
+        Cliche.findAllByParentTimeBoxAndType(release, Cliche.TYPE_CLOSE, [sort: "datePrise", order: "asc"])?.each { cliche ->
+            def xmlRoot = new XmlSlurper().parseText(cliche.data)
+            if (xmlRoot) {
+                values << [
+                        userstories     : xmlRoot."${Cliche.FUNCTIONAL_STORY_VELOCITY}".toBigDecimal(),
+                        defectstories   : xmlRoot."${Cliche.DEFECT_STORY_VELOCITY}".toBigDecimal(),
+                        technicalstories: xmlRoot."${Cliche.TECHNICAL_STORY_VELOCITY}".toBigDecimal(),
+                        label           : Sprint.getNameByReleaseAndClicheSprintId(release, xmlRoot."${Cliche.SPRINT_ID}".toString())
+                ]
+            }
+        }
+        return values
+    }
+
+    @PreAuthorize('stakeHolder(#release.parentProject) or inProject(#release.parentProject)')
+    def releaseVelocityCapacityValues(Release release) {
+        def values = []
+        def capacity = 0
+        def label = ""
+        Cliche.findAllByParentTimeBox(release, [sort: "datePrise", order: "asc"])?.each { cliche ->
+            def xmlRoot = new XmlSlurper().parseText(cliche.data)
+            if (xmlRoot) {
+                if (cliche.type == Cliche.TYPE_ACTIVATION) {
+                    capacity = xmlRoot."${Cliche.SPRINT_CAPACITY}".toBigDecimal()
+                    label = Sprint.getNameByReleaseAndClicheSprintId(release, xmlRoot."${Cliche.SPRINT_ID}".toString())
+                } else if (cliche.type == Cliche.TYPE_CLOSE) {
+                    values << [
+                            capacity: capacity,
+                            velocity: xmlRoot."${Cliche.SPRINT_VELOCITY}".toBigDecimal(),
+                            label   : label
+                    ]
+                }
+            }
+        }
+        return values
+    }
+
     def unMarshall(def releaseXml, def options) {
         Project project = options.project
         Release.withTransaction(readOnly: !options.save) { transaction ->
