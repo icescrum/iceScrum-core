@@ -48,6 +48,9 @@ class SprintService extends IceScrumEventPublisher {
         }
         sprint.orderNumber = (release.sprints?.size() ?: 0) + 1
         release.addToSprints(sprint)
+        if (sprint.endDate <= sprint.startDate) {
+            throw new BusinessException(code: 'is.ui.timebox.error.dates')
+        }
         sprint.save(flush: true)
         publishSynchronousEvent(IceScrumEventType.CREATE, sprint)
     }
@@ -90,6 +93,9 @@ class SprintService extends IceScrumEventPublisher {
             }
             sprint.startDate = startDate
             sprint.endDate = endDate
+        }
+        if (sprint.endDate <= sprint.startDate) {
+            throw new BusinessException(code: 'is.ui.timebox.error.dates')
         }
         def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_UPDATE, sprint)
         if (updateRelease) {
