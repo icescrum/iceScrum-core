@@ -121,7 +121,7 @@ class TaskService extends IceScrumEventPublisher {
                 } else if (task.estimation == 0f && !sprint) {
                     task.estimation = null;
                 } else if (task.estimation == 0f && sprint.state == Sprint.STATE_INPROGRESS) {
-                    if (project.preferences.assignOnBeginTask && !task.responsible) {
+                    if (!task.responsible) {
                         task.responsible = user
                     }
                     task.state = Task.STATE_DONE
@@ -289,7 +289,7 @@ class TaskService extends IceScrumEventPublisher {
             if (task.state == Task.STATE_DONE && newState != task.state && sprint && task.parentStory && task.parentStory.parentSprint != sprint) { // Task on Shifted story
                 throw new BusinessException(code: 'is.sprint.error.state.not.inProgress')
             }
-            if (task.responsible == null && project.preferences.assignOnBeginTask && newState >= Task.STATE_BUSY && task.state != newState) {
+            if (task.responsible == null && newState >= Task.STATE_BUSY && task.state != newState && (project.preferences.assignOnBeginTask || newState == Task.STATE_DONE)) {
                 task.responsible = user
             }
             if ((task.responsible && user.id.equals(task.responsible.id))

@@ -225,8 +225,7 @@ class SprintService extends IceScrumEventPublisher {
             }
         } else {
             sprint.tasks.findAll { it.type == Task.TYPE_URGENT && it.state != Task.STATE_DONE }?.each { Task task ->
-                task.state = Task.STATE_DONE
-                taskService.update(task, springSecurityService.currentUser)
+                taskService.update(task, springSecurityService.currentUser, false, [state: Task.STATE_DONE])
             }
             storyService.unPlanAll([sprint])
         }
