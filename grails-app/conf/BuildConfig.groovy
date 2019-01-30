@@ -51,7 +51,7 @@ grails.project.dependency.resolution = {
         }
         compile 'org.eclipse.mylyn.docs:org.eclipse.mylyn.wikitext.core:2.8.0-SNAPSHOT' // Cannot use 2.9 or above because it is compiled with Java 8 so it won't work with Java 7
         compile 'org.eclipse.mylyn.docs:org.eclipse.mylyn.wikitext.textile.core:2.8.0-SNAPSHOT'
-        compile 'com.google.guava:guava:15.0' // For wikitext (was previously brought by asset-pipeline but they left the dependency: https://github.com/bertramdev/asset-pipeline/pull/117)
+        compile 'com.google.guava:guava:19.0' // For wikitext (was previously brought by asset-pipeline but they left the dependency: https://github.com/bertramdev/asset-pipeline/pull/117)
         compile 'org.liquibase:liquibase-core:2.0.5'
         compile "org.apache.poi:poi:3.17" // 4.0 works only with Java 8
         compile "org.apache.poi:poi-ooxml:3.17"
