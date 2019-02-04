@@ -103,6 +103,9 @@ class ListenerService {
                                  messageId : 'story-' + story.id + '-tasks']
                 pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, tasksData, story.backlog.id)
             }
+            if (dirtyProperties.containsKey('effort') && story.parentSprint && story.parentSprint.state == Sprint.STATE_WAIT) {
+                pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, story.parentSprint, project.id)
+            }
             def user = (User) springSecurityService.currentUser
             if (dirtyProperties.containsKey('state')) {
                 activityService.addActivity(story, user, 'updateState', story.name, 'state', dirtyProperties.state?.toString(), story.state?.toString())
