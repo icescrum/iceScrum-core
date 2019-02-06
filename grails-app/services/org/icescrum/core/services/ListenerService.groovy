@@ -411,8 +411,13 @@ class ListenerService {
 
     // SHARED LISTENERS
     @IceScrumListener(domains = ['story', 'feature', 'task', 'sprint', 'release', 'project'], eventType = IceScrumEventType.BEFORE_DELETE)
-    void backlogElementBeforeDelete(object, Map dirtyProperties) {
-        object.removeAllAttachments()
+    void attachmentableBeforeDelete(attachmentable, Map dirtyProperties) {
+        attachmentable.removeAllAttachments()
+    }
+
+    @IceScrumListener(domains = ['story', 'feature', 'task'], eventType = IceScrumEventType.BEFORE_DELETE)
+    void backlogElementBeforeDelete(backlogElement, Map dirtyProperties) {
+        backlogElement.tags = []
     }
 
     @IceScrumListener(domains = ['story', 'feature', 'task', 'sprint', 'release', 'acceptanceTest', 'project'], eventType = IceScrumEventType.BEFORE_UPDATE)
