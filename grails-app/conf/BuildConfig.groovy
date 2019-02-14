@@ -62,7 +62,7 @@ grails.project.dependency.resolution = {
         compile ':spring-security-core:2.0.0'
         compile ':spring-security-acl:2.0.1'
         compile ':hd-image-utils:1.1'
-        compile 'org.icescrum:taggable:1.1.6'
+        compile 'org.icescrum:taggable:1.1.7'
         compile ':jdbc-pool:7.0.47'
         compile 'org.icescrum:mail:1.0.9' // Forked because of https://github.com/gpc/grails-mail/issues/32 which prevents config change
         compile(':jasper:1.11.0') {
