@@ -25,12 +25,7 @@ package org.icescrum.core.app
 
 class AppSettingsDefinition {
 
-    String icon
     String template
-
-    void icon(String icon) {
-        this.icon = icon
-    }
 
     void template(String template) {
         this.template = template
