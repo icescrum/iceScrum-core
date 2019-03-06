@@ -36,7 +36,6 @@ class WindowDefinition {
     boolean alwaysInitSettings = false
 
     String id
-    String icon = ''
     String help = ''
     String pluginName = null
     String templatePath = null
@@ -66,10 +65,6 @@ class WindowDefinition {
         menuClosure.resolveStrategy = Closure.DELEGATE_FIRST
         menuClosure()
         this.menu = menu
-    }
-
-    void icon(String icon) {
-        this.icon = icon
     }
 
     void workspace(String workspace) {
