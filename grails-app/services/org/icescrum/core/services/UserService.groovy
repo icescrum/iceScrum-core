@@ -396,6 +396,7 @@ class UserService extends IceScrumEventPublisher {
                     language: preferencesXml.language.text(),
                     activity: preferencesXml.activity.text(),
                     filterTask: preferencesXml.filterTask.text(),
+                    enableDarkMode: preferencesXml.enableDarkMode.text().toBoolean(),
                     user: user,
                     menuHidden: preferencesXml.menuHidden && preferencesXml.menuHidden[0] ? preferencesXml.menuHidden[0].attributes() : [:]
             )

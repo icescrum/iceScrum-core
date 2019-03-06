@@ -38,6 +38,8 @@ class UserPreferences implements Serializable {
     String emailsSettingsData //[onStory:['pkey','pkey2'...],onUrgentTask:['pkey','pkey2'...],autoFollow['pkey','pkey2'...]]
     String filterTask = "allTasks"
 
+    Boolean enableDarkMode = false
+
     Boolean displayReleaseNotes = false
     boolean displayWhatsNew = false
     boolean displayWelcomeTour = true
@@ -55,6 +57,7 @@ class UserPreferences implements Serializable {
         lastProjectOpened nullable: true
         emailsSettingsData nullable: true
         displayReleaseNotes nullable: true
+        enableDarkMode nullable: true
     }
 
 
@@ -105,6 +108,7 @@ class UserPreferences implements Serializable {
             builder.activity(this.activity)
             builder.filterTask(this.filterTask)
             builder.menuHidden(this.menuHidden)
+            builder.enableDarkMode(this.enableDarkMode)
             builder.displayReleaseNotes(this.displayReleaseNotes)
             builder.displayWhatsNew(this.displayWhatsNew)
             builder.lastProjectOpened(this.lastProjectOpened)
