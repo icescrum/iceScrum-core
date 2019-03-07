@@ -473,7 +473,6 @@ class ApplicationSupport {
             def object = params.long("${workspaceName}") ? workspace.objectClass.get(params.long("${workspaceName}")) : null
             return object ? [name        : workspaceName,
                              object      : object,
-                             icon        : workspace.icon,
                              config      : workspace.config(object),
                              params      : workspace.params(object),
                              enabled     : workspace.enabled(Holders.grailsApplication),
