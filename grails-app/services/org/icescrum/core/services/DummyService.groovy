@@ -80,9 +80,9 @@ class DummyService {
         def features = []
         [
                 [name: 'Administration', value: 2, description: 'Administrate and moderate content created by the users'],
-                [name: 'Pet profile', value: 4, description: 'Manage the profile of a pet', color: '#d91a2f'],
-                [name: 'Advertising', value: 3, description: 'Advertise projects related to the profile of pets', color: '#ba48c7'],
-                [name: 'Search', value: 4, description: 'Search other pets to find the best match', color: '#a0dffa']
+                [name: 'Pet profile', value: 4, description: 'Manage the profile of a pet', color: '#d0021b'],
+                [name: 'Advertising', value: 3, description: 'Advertise projects related to the profile of pets', color: '#bd10e0'],
+                [name: 'Search', value: 4, description: 'Search other pets to find the best match', color: '#50e3c2']
         ].each { featureProperties ->
             Feature feature = new Feature(featureProperties)
             featureService.save(feature, project)

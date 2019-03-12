@@ -36,7 +36,7 @@ class Feature extends BacklogElement implements Serializable {
     static final int STATE_BUSY = 1
     static final int STATE_DONE = 2
 
-    String color = "#2d8ccc" // Blue by default
+    String color = "#0067e8"
 
     Integer value = null
     int type = Feature.TYPE_FUNCTIONAL
