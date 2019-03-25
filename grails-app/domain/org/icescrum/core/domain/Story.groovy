@@ -211,6 +211,19 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                             lt 'startDate', story.parentSprint.startDate
                         }
                     }
+                } else if (story.state == Story.STATE_DONE) {
+                    and {
+                        eq 'state', Story.STATE_DONE
+                        lt 'rank', story.rank
+                        parentSprint {
+                            eq 'id', story.parentSprint.id
+                        }
+                    }
+                    and {
+                        parentSprint {
+                            lt 'startDate', story.parentSprint.startDate
+                        }
+                    }
                 }
             }
             order('feature', 'desc')
