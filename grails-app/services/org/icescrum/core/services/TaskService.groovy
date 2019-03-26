@@ -132,19 +132,17 @@ class TaskService extends IceScrumEventPublisher {
                     task.initial = null
                 }
             }
-        } else {
-            throw new BusinessException(code: 'is.task.error.done')
-        }
-        if (task.isDirty('state') || task.isDirty('parentStory') || task.isDirty('type')) {
-            if (props.rank == null) {
-                def container = task.parentStory ?: sprint
-                def sameStateAndTypeTasks = container.tasks.findAll { it.state == task.state && it.type == task.type && it.id != task.id }
-                props.rank = sameStateAndTypeTasks ? sameStateAndTypeTasks.size() + 1 : 1
+            if (task.isDirty('state') || task.isDirty('parentStory') || task.isDirty('type')) {
+                if (props.rank == null) {
+                    def container = task.parentStory ?: sprint
+                    def sameStateAndTypeTasks = container.tasks.findAll { it.state == task.state && it.type == task.type && it.id != task.id }
+                    props.rank = sameStateAndTypeTasks ? sameStateAndTypeTasks.size() + 1 : 1
+                }
+                resetRank(task)
+                setRank(task, props.rank)
+            } else if (props.rank != null) {
+                updateRank(task, props.rank)
             }
-            resetRank(task)
-            setRank(task, props.rank)
-        } else if (props.rank != null) {
-            updateRank(task, props.rank)
         }
         def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_UPDATE, task)
         task.save()
