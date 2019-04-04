@@ -32,7 +32,6 @@ class WindowDefinition {
     boolean flex = true
     boolean details = false
     boolean printable = true
-    boolean fullScreen = true
     boolean alwaysInitSettings = false
 
     String id
@@ -105,10 +104,6 @@ class WindowDefinition {
 
     void before(Closure before) {
         this.before = before
-    }
-
-    void fullScreen(boolean fullScreen) {
-        this.fullScreen = fullScreen
     }
 
     void printable(boolean printable) {
