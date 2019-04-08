@@ -86,7 +86,6 @@ class WidgetService {
     }
 
     void initUserWidgets(User user) {
-        save(uiDefinitionService.getWidgetDefinitionById('quickProjects'), WidgetParentType.USER, user.preferences)
         save(uiDefinitionService.getWidgetDefinitionById('tasks'), WidgetParentType.USER, user.preferences)
         save(uiDefinitionService.getWidgetDefinitionById('feed'), WidgetParentType.USER, user.preferences)
         Widget notesWidget = save(uiDefinitionService.getWidgetDefinitionById('notes'), WidgetParentType.USER, user.preferences)
