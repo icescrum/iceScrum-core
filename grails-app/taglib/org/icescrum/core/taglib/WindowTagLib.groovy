@@ -50,9 +50,6 @@ class WindowTagLib {
                     </div>
                     <div class="modal-body">
                         ${body()}"""
-        if (attrs.form) {
-            out << '<div class="alert alert-danger"></div>'
-        }
         out << "</div>"
         if (attrs.footer != false) {
             out << """<div class="modal-footer">"""
