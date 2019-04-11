@@ -18,29 +18,27 @@
   --}%
 %{-- widget --}%
 <div class="card hover-container" ${widgetDefinition.ngController ? 'ng-controller="' + widgetDefinition.ngController + '"' : ''}>
-    <div class="card-header" as-sortable-item-handle>
-        <h3 class="card-title">
-            <g:message code="${widgetDefinition.title}"/>
-            <div class="btn-settings btn-group hover-visible">
-                <g:if test="${widget && widgetDefinition.settings}">
-                    <button class="btn btn-secondary btn-sm"
-                            ng-if="authorizedWidget('update', widget)"
-                            ng-click="toggleSettings(widget)"
-                            defer-tooltip="${message(code: 'todo.is.ui.setting')}">
-                        <i class="fa" ng-class="{ 'fa-cog':!showSettings, 'fa-save':showSettings }"></i>
-                    </button>
-                </g:if>
-                <g:if test="${widget && widgetDefinition.allowRemove}">
-                    <button class="btn btn-secondary btn-sm"
-                            ng-if="authorizedWidget('delete', widget)"
-                            ng-click="delete(widget)"
-                            defer-tooltip="${message(code: 'is.ui.widget.remove')}">
-                        <i class="fa fa-times"></i>
-                    </button>
-                </g:if>
-            </div>
-        </h3>
-    </div>
+    <h3 class="card-header d-flex justify-content-between" as-sortable-item-handle>
+        <span>${message(code: widgetDefinition.title)}</span>
+        <span class="hover-visible">
+            <g:if test="${widget && widgetDefinition.settings}">
+                <button class="btn btn-secondary btn-sm"
+                        ng-if="authorizedWidget('update', widget)"
+                        ng-click="toggleSettings(widget)"
+                        defer-tooltip="${message(code: 'todo.is.ui.setting')}">
+                    <i class="fa" ng-class="{ 'fa-cog':!showSettings, 'fa-save':showSettings }"></i>
+                </button>
+            </g:if>
+            <g:if test="${widget && widgetDefinition.allowRemove}">
+                <button class="btn btn-secondary btn-sm"
+                        ng-if="authorizedWidget('delete', widget)"
+                        ng-click="delete(widget)"
+                        defer-tooltip="${message(code: 'is.ui.widget.remove')}">
+                    <i class="fa fa-times"></i>
+                </button>
+            </g:if>
+        </span>
+    </h3>
     <div class="card-body"
         ${widgetDefinition.settings ? 'ng-switch="showSettings"' : ''}
          ng-class="showSettings ? 'widget-settings' : 'widget-content'">
