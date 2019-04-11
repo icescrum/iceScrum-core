@@ -41,7 +41,6 @@ class WidgetDefinition {
     String id
     String name
     String help = ''
-    String icon = ''
     String title = ''
     String workspace = null
     String description = ''
@@ -66,10 +65,6 @@ class WidgetDefinition {
         this.description = "is.ui.widget.${id}.description"
 
         this.title = this.name
-    }
-
-    void icon(String icon) {
-        this.icon = icon
     }
 
     void title(String title) {

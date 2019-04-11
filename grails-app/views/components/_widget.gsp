@@ -20,7 +20,7 @@
 <div class="card" ${widgetDefinition.ngController ? 'ng-controller="' + widgetDefinition.ngController + '"' : ''}>
     <div class="card-header clearfix" as-sortable-item-handle>
         <h3 class="card-title">
-            <i class="fa fa-${widgetDefinition.icon} float-left"></i>&nbsp;<g:message code="${widgetDefinition.title}"/>
+            <g:message code="${widgetDefinition.title}"/>
             <div class="btn-settings btn-group visible-on-hover">
                 <g:if test="${widget && widgetDefinition.settings}">
                     <button class="btn btn-secondary btn-sm"
