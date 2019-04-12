@@ -37,8 +37,8 @@ grails.project.dependency.resolution = {
         mavenRepo "http://repo.spring.io/milestone"
         mavenRepo "http://repo.spring.io/libs-release" // for http-builder 0.7.2
         mavenRepo "https://oss.sonatype.org/content/repositories/snapshots/"
-        mavenRepo "http://repo.icescrum.org/artifactory/plugins-release/"
-        mavenRepo "http://repo.icescrum.org/artifactory/plugins-snapshot/"
+        mavenRepo "https://repo.icescrum.org/artifactory/plugins-release/"
+        mavenRepo "https://repo.icescrum.org/artifactory/plugins-snapshot/"
         mavenRepo "http://jaspersoft.artifactoryonline.com/jaspersoft/third-party-ce-artifacts/" // Because Jasper depends on olap4j which is not available anymore the repositories
         mavenRepo "https://repo.eclipse.org/content/repositories/mylyn/" // For wikitext
     }
