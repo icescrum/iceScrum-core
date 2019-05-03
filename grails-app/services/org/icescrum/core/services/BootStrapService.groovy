@@ -25,7 +25,6 @@
 package org.icescrum.core.services
 
 import grails.util.Environment
-import org.icescrum.core.domain.security.Client
 import org.icescrum.core.support.ApplicationSupport
 
 class BootStrapService {

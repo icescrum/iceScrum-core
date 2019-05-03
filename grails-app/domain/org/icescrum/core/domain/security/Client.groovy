@@ -15,12 +15,12 @@ class Client {
     Map<String, Object> additionalInformation
 
     static hasMany = [
-            authorities: String,
+            authorities         : String,
             authorizedGrantTypes: String,
-            resourceIds: String,
-            scopes: String,
-            autoApproveScopes: String,
-            redirectUris: String
+            resourceIds         : String,
+            scopes              : String,
+            autoApproveScopes   : String,
+            redirectUris        : String
     ]
 
     static transients = ['springSecurityService']
@@ -49,7 +49,7 @@ class Client {
     }
 
     def beforeUpdate() {
-        if(isDirty('clientSecret')) {
+        if (isDirty('clientSecret')) {
             encodeClientSecret()
         }
     }
