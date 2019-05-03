@@ -52,14 +52,6 @@ class BootStrapService {
 
         if (!dev) {
             ApplicationSupport.checkForUpdateAndReportUsage(config)
-        } else {
-            new Client(
-                    clientId: 'microsoft-teams',
-                    authorizedGrantTypes: ['authorization_code', 'refresh_token', 'implicit'],
-                    authorities: ['ROLE_CLIENT'],
-                    scopes: ['read'],
-                    redirectUris: ["https://icescrum.ngrok.io/icescrum" + "/microsoft/auth-end"]
-            ).save(flush: true)
         }
 
 
