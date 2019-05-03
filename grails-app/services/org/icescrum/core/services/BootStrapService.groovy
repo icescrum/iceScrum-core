@@ -25,6 +25,7 @@
 package org.icescrum.core.services
 
 import grails.util.Environment
+import org.icescrum.core.domain.security.Client
 import org.icescrum.core.support.ApplicationSupport
 
 class BootStrapService {
@@ -47,11 +48,20 @@ class BootStrapService {
         ApplicationSupport.checkInitialConfig(config)
         ApplicationSupport.generateFolders(config)
 
+        config.icescrum.serverURL = ApplicationSupport.removeTrailingSlash(config.icescrum.serverURL)
+
         if (!dev) {
             ApplicationSupport.checkForUpdateAndReportUsage(config)
+        } else {
+            new Client(
+                    clientId: 'microsoft-teams',
+                    authorizedGrantTypes: ['authorization_code', 'refresh_token', 'implicit'],
+                    authorities: ['ROLE_CLIENT'],
+                    scopes: ['read'],
+                    redirectUris: ["https://icescrum.ngrok.io/icescrum" + "/microsoft/auth-end"]
+            ).save(flush: true)
         }
 
-        config.icescrum.serverURL = ApplicationSupport.removeTrailingSlash(config.icescrum.serverURL)
 
         config.grails.attachmentable.baseDir = config.icescrum.baseDir.toString()
         config.grails.mail.default.from = config.icescrum.alerts.default.from
