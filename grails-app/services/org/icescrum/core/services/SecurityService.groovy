@@ -37,6 +37,7 @@ import org.springframework.security.acls.domain.PrincipalSid
 import org.springframework.security.acls.model.*
 import org.springframework.security.core.Authentication
 import org.springframework.security.core.context.SecurityContextHolder as SCH
+import org.springframework.security.oauth2.provider.expression.OAuth2ExpressionUtils
 import org.springframework.util.Assert
 import org.springframework.web.context.request.RequestContextHolder as RCH
 
@@ -134,6 +135,9 @@ class SecurityService {
 
     @SuppressWarnings("GroovyMissingReturnStatement")
     boolean inProject(project, auth) {
+        if (OAuth2ExpressionUtils.isOAuth(auth)) {
+            return false
+        }
         if (!springSecurityService.isLoggedIn()) {
             return false
         }
@@ -201,6 +205,9 @@ class SecurityService {
     }
 
     boolean inTeam(team, auth) {
+        if (OAuth2ExpressionUtils.isOAuth(auth)) {
+            return false
+        }
         if (!springSecurityService.isLoggedIn()) {
             return false
         }
@@ -212,6 +219,9 @@ class SecurityService {
     }
 
     boolean scrumMaster(team, auth) {
+        if (OAuth2ExpressionUtils.isOAuth(auth)) {
+            return false
+        }
         if (!springSecurityService.isLoggedIn()) {
             return false
         }
@@ -239,6 +249,9 @@ class SecurityService {
     }
 
     boolean isScrumMaster(team, auth, t = null) {
+        if (OAuth2ExpressionUtils.isOAuth(auth)) {
+            return false
+        }
         if (team) {
             if (SpringSecurityUtils.ifAnyGranted(Authority.ROLE_ADMIN)) {
                 return true
@@ -259,6 +272,9 @@ class SecurityService {
     }
 
     boolean stakeHolder(project, auth, onlyPrivate, controllerName = null) {
+        if (OAuth2ExpressionUtils.isOAuth(auth)) {
+            return false
+        }
         if (!springSecurityService.isLoggedIn() && onlyPrivate) {
             return false
         }
@@ -303,6 +319,9 @@ class SecurityService {
     }
 
     boolean productOwner(project, auth) {
+        if (OAuth2ExpressionUtils.isOAuth(auth)) {
+            return false
+        }
         if (!springSecurityService.isLoggedIn()) {
             return false
         }
@@ -344,6 +363,9 @@ class SecurityService {
     }
 
     boolean isProductOwner(project, auth, p = null) {
+        if (OAuth2ExpressionUtils.isOAuth(auth)) {
+            return false
+        }
         if (project) {
             if (SpringSecurityUtils.ifAnyGranted(Authority.ROLE_ADMIN)) {
                 return true
@@ -364,6 +386,9 @@ class SecurityService {
     }
 
     boolean teamMember(team, auth) {
+        if (OAuth2ExpressionUtils.isOAuth(auth)) {
+            return false
+        }
         if (!springSecurityService.isLoggedIn()) {
             return false
         }
@@ -418,6 +443,9 @@ class SecurityService {
     }
 
     boolean businessOwner(portfolio, auth) {
+        if (OAuth2ExpressionUtils.isOAuth(auth)) {
+            return false
+        }
         if (!springSecurityService.isLoggedIn()) {
             return false
         }
@@ -444,6 +472,9 @@ class SecurityService {
     }
 
     boolean portfolioStakeHolder(portfolio, auth) {
+        if (OAuth2ExpressionUtils.isOAuth(auth)) {
+            return false
+        }
         if (!springSecurityService.isLoggedIn()) {
             return false
         }
@@ -515,6 +546,9 @@ class SecurityService {
     }
 
     public boolean owner(domain, Authentication auth) {
+        if (OAuth2ExpressionUtils.isOAuth(auth)) {
+            return false
+        }
         if (!springSecurityService.isLoggedIn()) {
             return false
         }
@@ -552,6 +586,9 @@ class SecurityService {
     }
 
     boolean isOwner(domain, auth, domainClass, d = null) {
+        if (OAuth2ExpressionUtils.isOAuth(auth)) {
+            return false
+        }
         if (domain && domainClass) {
             def computeResult = {
                 if (!d) {

@@ -30,6 +30,7 @@ import org.icescrum.core.services.SecurityService;
 import org.springframework.security.access.PermissionEvaluator;
 import org.springframework.security.access.expression.SecurityExpressionRoot;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.provider.expression.OAuth2ExpressionUtils;
 
 import java.io.Serializable;
 import java.util.Map;
@@ -85,6 +86,12 @@ public class MethodScrumExpressionRoot extends SecurityExpressionRoot {
     public void setPermissionEvaluator(PermissionEvaluator permissionEvaluator) {
         this.permissionEvaluator = permissionEvaluator;
     }
+
+    public boolean permitAllWeb() { return !OAuth2ExpressionUtils.isOAuth(super.authentication); }
+
+    public boolean isAuthenticatedWeb() { return super.authentication.isAuthenticated() && OAuth2ExpressionUtils.isOAuth(super.authentication); }
+
+    public boolean Oauth2HasAnyScope(String... scopes) { return super.authentication.isAuthenticated() && OAuth2ExpressionUtils.hasAnyScope(super.authentication, scopes); }
 
     public boolean inProject(Project p) {
         return securityService.inProject(p, super.authentication);

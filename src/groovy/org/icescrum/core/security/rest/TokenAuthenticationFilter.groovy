@@ -67,19 +67,20 @@ class TokenAuthenticationFilter extends GenericFilterBean {
                 chain.doFilter(request, response)
             }
             catch (AuthenticationException e) {
-                SecurityContextHolder.clearContext();
+                SecurityContextHolder.clearContext()
                 if (this.logger.isDebugEnabled()) {
                     this.logger.debug("Authentication request for failed: " + e)
                     this.logger.debug "No authorized " + TokenExtractor.TOKEN_HEADER + ' ' + token + " in request sendError ${HttpServletResponse.SC_FORBIDDEN}"
                 }
                 ((HttpServletResponse) response).setStatus(HttpServletResponse.SC_FORBIDDEN)
+                return
             }
         } else {
-            ((HttpServletResponse) response).sendError(HttpServletResponse.SC_UNAUTHORIZED)
             if (this.logger.isDebugEnabled()) {
-                this.logger.debug "No " + TokenExtractor.TOKEN_HEADER + " in request sendError ${HttpServletResponse.SC_UNAUTHORIZED}"
+                this.logger.debug "No " + TokenExtractor.TOKEN_HEADER + " in request"
                 this.logger.debug "End TokenAuthenticationFilter ****"
             }
         }
+        chain.doFilter(request, response)
     }
 }

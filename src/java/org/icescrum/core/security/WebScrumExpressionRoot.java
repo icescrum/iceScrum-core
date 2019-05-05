@@ -28,6 +28,7 @@ import org.icescrum.core.domain.Project;
 import org.icescrum.core.domain.Team;
 import org.icescrum.core.services.SecurityService;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.provider.expression.OAuth2ExpressionUtils;
 import org.springframework.security.web.FilterInvocation;
 import org.springframework.security.web.access.expression.WebSecurityExpressionRoot;
 
@@ -44,6 +45,10 @@ public class WebScrumExpressionRoot extends WebSecurityExpressionRoot {
     public WebScrumExpressionRoot(Authentication a, FilterInvocation fi) {
         super(a, fi);
     }
+
+    public boolean permitAllWeb() { return !OAuth2ExpressionUtils.isOAuth(super.authentication); }
+    public boolean isAuthenticatedWeb() { return super.authentication.isAuthenticated() && !OAuth2ExpressionUtils.isOAuth(super.authentication); }
+    public boolean hasAnyScopeOauth2(String... scopes) { return OAuth2ExpressionUtils.hasAnyScope(super.authentication, scopes); }
 
     public boolean inProject(Project p) {
         return securityService.inProject(p, super.authentication);
