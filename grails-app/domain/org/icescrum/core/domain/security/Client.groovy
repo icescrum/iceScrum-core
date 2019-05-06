@@ -1,12 +1,14 @@
 package org.icescrum.core.domain.security
 
-class Client {
+import grails.util.Holders
+
+class Client implements Serializable {
+
+    static final long serialVersionUID = 183639045272971606L
 
     private static final String NO_CLIENT_SECRET = ''
 
-    transient springSecurityService
-
-    String clientId
+    String clientId = UUID.randomUUID().toString()
     String clientSecret
 
     Integer accessTokenValiditySeconds
@@ -22,8 +24,6 @@ class Client {
             autoApproveScopes   : String,
             redirectUris        : String
     ]
-
-    static transients = ['springSecurityService']
 
     static constraints = {
         clientId blank: false, unique: true
@@ -56,6 +56,7 @@ class Client {
 
     protected void encodeClientSecret() {
         clientSecret = clientSecret ?: NO_CLIENT_SECRET
+        def springSecurityService = Holders.grailsApplication.mainContext.springSecurityService
         clientSecret = springSecurityService?.passwordEncoder ? springSecurityService.encodePassword(clientSecret) : clientSecret
     }
 }

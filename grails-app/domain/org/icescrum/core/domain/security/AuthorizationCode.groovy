@@ -1,6 +1,8 @@
 package org.icescrum.core.domain.security
 
-class AuthorizationCode {
+class AuthorizationCode implements Serializable {
+
+    static final long serialVersionUID = 813639405272971606L
 
     byte[] authentication
     String code

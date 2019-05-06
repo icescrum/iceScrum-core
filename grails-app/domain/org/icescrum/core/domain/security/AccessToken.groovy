@@ -1,6 +1,8 @@
 package org.icescrum.core.domain.security
 
-class AccessToken {
+class AccessToken implements Serializable {
+
+    static final long serialVersionUID = 813639045272971606L
 
     String authenticationKey
     byte[] authentication
