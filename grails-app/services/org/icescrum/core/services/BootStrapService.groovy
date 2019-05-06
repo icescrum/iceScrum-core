@@ -25,6 +25,7 @@
 package org.icescrum.core.services
 
 import grails.util.Environment
+import org.icescrum.core.domain.security.Client
 import org.icescrum.core.support.ApplicationSupport
 
 class BootStrapService {
@@ -51,7 +52,22 @@ class BootStrapService {
 
         if (!dev) {
             ApplicationSupport.checkForUpdateAndReportUsage(config)
+        } else {
+            def client = new Client(
+                    authorizedGrantTypes: ['authorization_code', 'refresh_token', 'implicit'],
+                    authorities: ['ROLE_CLIENT'],
+                    scopes: ['user'/*all*/, 'user:read', 'user:write', 'project:read', 'project:write'],
+                    redirectUris: ["https://oauthdebugger.com/debug"],
+                    additionalInformation: ["clientName": "Toto App", "clientOwner": "iceScrum team", "clientOwnerUrl": "https://www.icescrum.Com"],
+            ).save(flush: true)
+            println "Client ID oauth: "
+            println client.clientId
+            println client.clientSecret
         }
+
+        /*available scopes:
+                user, 'user:read', 'user:write', 'user:history'
+         */
 
 
         config.grails.attachmentable.baseDir = config.icescrum.baseDir.toString()
