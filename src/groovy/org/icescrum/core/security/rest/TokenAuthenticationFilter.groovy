@@ -65,6 +65,7 @@ class TokenAuthenticationFilter extends GenericFilterBean {
                     this.logger.debug("End TokenAuthenticationFilter ****")
                 }
                 chain.doFilter(request, response)
+                return
             }
             catch (AuthenticationException e) {
                 SecurityContextHolder.clearContext()
