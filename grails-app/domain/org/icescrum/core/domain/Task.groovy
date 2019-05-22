@@ -39,7 +39,7 @@ class Task extends BacklogElement implements Serializable {
     static final int TYPE_RECURRENT = 10
     static final int TYPE_URGENT = 11
 
-    String color = "#ffe803"
+    String color = "#ffcc01"
 
     Integer type
 
