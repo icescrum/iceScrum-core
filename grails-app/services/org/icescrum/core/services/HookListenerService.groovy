@@ -41,7 +41,7 @@ class HookListenerService {
         def events = []
         if (type in [IceScrumEventType.CREATE, IceScrumEventType.UPDATE, IceScrumEventType.DELETE]) {
             events << getEventName(hookableObject, type)
-            if (type == IceScrumEventType.UPDATE && hookableObject.hasProperty("state") && dirtyProperties.state != hookableObject.state) {
+            if (type == IceScrumEventType.UPDATE && hookableObject.hasProperty("state") && dirtyProperties.state != null && dirtyProperties.state != hookableObject.state) {
                 events << getEventName(hookableObject, "state")
             }
             if (type == IceScrumEventType.UPDATE && dirtyProperties.addedComment) {
