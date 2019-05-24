@@ -61,13 +61,18 @@ class HookService extends IceScrumEventPublisher {
             def hook = new Hook(
                     url: hookXml.text(),
                     workspaceId: hookXml.workspaceType.text() ? hookXml.workspaceType.text().toLong() : null,
-                    workspaceType: hookXml.workspaceType.text() ?: null,
+                    secret: hookXml.secret.text() ?: null,
+                    source: hookXml.source.text() ?: null,
                     events: hookXml.enabled.text().split(','),
                     enabled: hookXml.enabled.text().toBoolean(),
-                    countErrors: hookXml.countErrors.text().toInteger(),
                     lastError: hookXml.lastError.text() ?: null,
+                    ignoreSsl: hookXml.ignoreSsl.text().toBoolean(),
+                    countErrors: hookXml.countErrors.text().toInteger(),
+                    workspaceType: hookXml.workspaceType.text() ?: null,
                     lastUpdated: DateUtils.parseDateFromExport(hookXml.lastUpdated.text()),
-                    dateCreated: DateUtils.parseDateFromExport(hookXml.dateCreated.text()))
+                    dateCreated: DateUtils.parseDateFromExport(hookXml.dateCreated.text()),
+                    eventMessageRendererClass: hookXml.eventMessageRendererClass.text() ?: null
+            )
             if (options.save) {
                 hook.save()
             }

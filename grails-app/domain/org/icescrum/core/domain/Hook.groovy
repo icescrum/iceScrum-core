@@ -21,17 +21,22 @@
 
 package org.icescrum.core.domain
 
+import org.hibernate.ObjectNotFoundException
+
 class Hook implements Cloneable, Serializable {
 
     static final long serialVersionUID = -6800258407987149001L
 
     String url
+    String secret
+    String source
     Long workspaceId
-    String workspaceType
     Set<String> events
+    String workspaceType
     String eventMessageRendererClass
 
     boolean enabled = true
+    boolean ignoreSsl = false
 
     int countErrors = 0
     String lastError
@@ -48,10 +53,12 @@ class Hook implements Cloneable, Serializable {
         workspaceType(nullable: true, validator: { workspaceType, hook ->
             (workspaceType == null && hook.workspaceId != null) || (workspaceType != null && hook.workspaceId == null) ? 'invalid' : true
         }, shared: 'keyMaxSize')
+        url(maxSize: 1000)
+        source(nullable: true)
+        secret(nullable: true)
         events(nullable: false)
         lastError(nullable: true)
         eventMessageRendererClass(nullable: true)
-        url(maxSize: 1000)
     }
 
     static mapping = {
@@ -62,6 +69,29 @@ class Hook implements Cloneable, Serializable {
         url length: 1000, type: 'text'
         lastError type: 'text'
     }
+
+    static namedQueries = {
+        getInWorkspace { p, id ->
+            eq 'workspaceType', workspaceType
+            eq 'workspaceId', workspaceId
+            eq 'id', id
+            uniqueResult = true
+        }
+        findAllInWorkspace { p ->
+            eq 'workspaceType', workspaceType
+            eq 'workspaceId', workspaceId
+            cache true
+        }
+    }
+
+    static Hook withHook(String workspaceType, long workspaceId, long id) {
+        Hook hook = (Hook) getInWorkspace(workspaceType, workspaceId, id).list()
+        if (!hook) {
+            throw new ObjectNotFoundException(id, 'Hook')
+        }
+        return hook
+    }
+
 
     static List<Hook> queryFindAllByWorkspaceTypeAndWorkspaceIdAndEventsFromList(String workspaceType, long workspaceId, events) {
         executeQuery("""
@@ -85,15 +115,19 @@ class Hook implements Cloneable, Serializable {
 
     def xml(builder) {
         builder.hook() {
-            builder.url { builder.mkp.yieldUnescaped("<![CDATA[${this.url}]]>") }
-            builder.workspaceId(this.workspaceId)
-            builder.workspaceType { builder.mkp.yieldUnescaped("<![CDATA[${this.workspaceType}]]>") }
-            builder.events { builder.mkp.yieldUnescaped("<![CDATA[${this.events?.join(',')}]]>") }
             builder.enabled(this.enabled)
-            builder.countErrors(this.countErrors)
-            builder.lastError { builder.mkp.yieldUnescaped("<![CDATA[${this.lastError}]]>") }
+            builder.ignoreSsl(this.ignoreSsl)
             builder.lastUpdated(this.lastUpdated)
             builder.dateCreated(this.dateCreated)
+            builder.countErrors(this.countErrors)
+            builder.workspaceId(this.workspaceId)
+            builder.url { builder.mkp.yieldUnescaped("<![CDATA[${this.url}]]>") }
+            builder.secret { builder.mkp.yieldUnescaped("<![CDATA[${this.secret}]]>") }
+            builder.source { builder.mkp.yieldUnescaped("<![CDATA[${this.source}]]>") }
+            builder.lastError { builder.mkp.yieldUnescaped("<![CDATA[${this.lastError}]]>") }
+            builder.events { builder.mkp.yieldUnescaped("<![CDATA[${this.events?.join(',')}]]>") }
+            builder.workspaceType { builder.mkp.yieldUnescaped("<![CDATA[${this.workspaceType}]]>") }
+            builder.eventMessageRendererClass { builder.mkp.yieldUnescaped("<![CDATA[${this.eventMessageRendererClass}]]>") }
             exportDomainsPlugins(builder)
         }
     }

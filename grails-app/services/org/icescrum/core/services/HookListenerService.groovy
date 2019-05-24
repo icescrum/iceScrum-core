@@ -82,13 +82,16 @@ class HookListenerService {
                     def comment = dirtyProperties."addedComment" ?: (dirtyProperties."updatedComment" ?: dirtyProperties."removedComment")
                     objectToRender = ApplicationSupport.getRenderableComment(comment, hookableObject)
                 } else {
-                    objectToRender = IceScrumEventType.DELETE ? dirtyProperties : hookableObject
+                    objectToRender = IceScrumEventType.DELETE == type ? dirtyProperties : hookableObject
                 }
                 eventMessageRendererClass = "${eventMessageRendererClass ?: 'org.icescrum.core.hook.DefaultEventMessageRenderer'}"
                 def payload = Class.forName(eventMessageRendererClass).newInstance().render(objectToRender)
                 hooks.each { hook ->
                     Hook.async.task {
                         def http = new HTTPBuilder(hook.url)
+                        if (hook.ignoreSsl) {
+                            http.ignoreSSLIssues()
+                        }
                         http.getClient().getParams().setParameter("http.connection.timeout", grailsApplication.config.icescrum.hooks.httpTimeout)
                         http.getClient().getParams().setParameter("http.socket.timeout", grailsApplication.config.icescrum.hooks.socketTimeout)
                         http.request(Method.POST, ContentType.JSON) {

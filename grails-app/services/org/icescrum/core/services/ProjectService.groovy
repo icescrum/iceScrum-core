@@ -280,6 +280,7 @@ class ProjectService extends IceScrumEventPublisher {
             projectXml.teams.team.each { team ->
                 teamService.unMarshall(team, options)
             }
+
             if (!project.teams) {
                 throw new BusinessException(text: 'Error, the project has no team')
             }
@@ -384,6 +385,11 @@ class ProjectService extends IceScrumEventPublisher {
             }
 
             // Child objects
+            def hookService = (HookService) grailsApplication.mainContext.getBean('hookService')
+            projectXml.hooks.hook.each { it ->
+                hookService.unMarshall(it, options)
+            }
+
             def appService = (AppService) grailsApplication.mainContext.getBean('appService')
             projectXml.simpleProjectApps.simpleProjectApp.each {
                 appService.unMarshall(it, options)

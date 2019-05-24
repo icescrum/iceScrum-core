@@ -509,6 +509,11 @@ class Project extends TimeBox implements Serializable, Attachmentable {
                     _timeBoxNotesTemplate.xml(builder)
                 }
             }
+            builder.hooks() {
+                Hook.findAllByWorkspaceIdAndWorkspaceType(it.id, 'project').each { _hook ->
+                    _hook.xml(builder)
+                }
+            }
             exportDomainsPlugins(builder)
         }
     }

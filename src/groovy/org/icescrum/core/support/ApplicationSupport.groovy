@@ -105,7 +105,7 @@ class ApplicationSupport {
             serverUrl = scheme + '://' + req.serverName
             int port = req.getHeader('x-forwarded-port') ? Integer.parseInt(req.getHeader('x-forwarded-port')) : req.serverPort
             int defaultPort = scheme == 'https' ? 443 : 80
-            if (port >= 0 && port != defaultPort) {
+            if (port >= 0 && port != defaultPort && req.serverName.startsWith("localhost")) {
                 serverUrl += (':' + port)
             }
             serverUrl += req.contextPath
