@@ -69,6 +69,8 @@ import org.springframework.security.access.expression.ExpressionUtils
 import org.springframework.security.core.context.SecurityContextHolder as SCH
 import org.springframework.security.web.FilterInvocation
 
+import javax.crypto.Mac
+import javax.crypto.spec.SecretKeySpec
 import javax.imageio.ImageIO
 import javax.servlet.FilterChain
 import javax.servlet.http.HttpServletRequest
@@ -78,6 +80,7 @@ import java.awt.Graphics2D
 import java.awt.RenderingHints
 import java.awt.image.BufferedImage
 import java.security.MessageDigest
+import java.security.SignatureException
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
@@ -852,6 +855,20 @@ class ApplicationSupport {
         if (color && !(color.toLowerCase() ==~ /^#[0-9a-f]{6}$/)) {
             throw new BusinessException(code: 'is.ui.color.error')
         }
+    }
+
+    static String hmac(String text, String secret) {
+        String result
+        try {
+            SecretKeySpec signingKey = new SecretKeySpec(secret.getBytes(), "HmacSHA1")
+            Mac mac = Mac.getInstance("HmacSHA1")
+            mac.init(signingKey)
+            byte[] rawHmac = mac.doFinal(text.getBytes())
+            result = rawHmac.encodeHex()
+        } catch (Exception e) {
+            throw new SignatureException("Failed to generate HMAC : " + e.getMessage())
+        }
+        return result
     }
 }
 

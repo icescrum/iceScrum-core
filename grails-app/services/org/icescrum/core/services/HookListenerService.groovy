@@ -95,6 +95,14 @@ class HookListenerService {
                         http.getClient().getParams().setParameter("http.connection.timeout", grailsApplication.config.icescrum.hooks.httpTimeout)
                         http.getClient().getParams().setParameter("http.socket.timeout", grailsApplication.config.icescrum.hooks.socketTimeout)
                         http.request(Method.POST, ContentType.JSON) {
+                            headers.'X-IceScrum-Event' = events.join(' ')
+                            if (hook.secret) {
+                                def signature = ApplicationSupport.hmac(payload, hook.secret)
+                                if (log.debugEnabled) {
+                                    log.debug("hook (id:$hook.id) - secret set with ${signature}")
+                                }
+                                headers.'X-IceScrum-Signature' = signature
+                            }
                             if (log.debugEnabled) {
                                 log.debug("hook (id:$hook.id) - request sent ${hook.url} for $events")
                             }
