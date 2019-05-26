@@ -43,6 +43,10 @@ class HookService extends IceScrumEventPublisher {
 
     def update(Hook hook) {
         manageAndCleanEvents(hook)
+        if(hook.enabled && hook.isDirty("enabled")){
+            hook.lastError = ""
+            hook.countErrors = 0
+        }
         hook.save(flush: true)
     }
 
@@ -71,6 +75,7 @@ class HookService extends IceScrumEventPublisher {
                     workspaceType: hookXml.workspaceType.text() ?: null,
                     lastUpdated: DateUtils.parseDateFromExport(hookXml.lastUpdated.text()),
                     dateCreated: DateUtils.parseDateFromExport(hookXml.dateCreated.text()),
+                    dateLastRequest: DateUtils.parseDateFromExport(hookXml.dateLastRequest.text()),
                     eventMessageRendererClass: hookXml.eventMessageRendererClass.text() ?: null
             )
             if (options.save) {

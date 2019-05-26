@@ -43,6 +43,7 @@ class Hook implements Cloneable, Serializable {
 
     Date dateCreated
     Date lastUpdated
+    Date dateLastRequest
 
     static hasMany = [events: String]
 
@@ -58,6 +59,7 @@ class Hook implements Cloneable, Serializable {
         secret(nullable: true)
         events(nullable: false)
         lastError(nullable: true)
+        dateLastRequest(nullable: true)
         eventMessageRendererClass(nullable: true)
     }
 
@@ -117,6 +119,7 @@ class Hook implements Cloneable, Serializable {
         builder.hook() {
             builder.enabled(this.enabled)
             builder.ignoreSsl(this.ignoreSsl)
+            builder.dateCreated(this.dateCreated)
             builder.lastUpdated(this.lastUpdated)
             builder.dateCreated(this.dateCreated)
             builder.countErrors(this.countErrors)

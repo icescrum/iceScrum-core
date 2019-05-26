@@ -132,6 +132,7 @@ class HookListenerService {
                                     if (log.debugEnabled) {
                                         log.debug("hook (id:$hook.id) - request success")
                                     }
+                                    hookToUpdate.dateLastRequest = new Date()
                                     if (hookToUpdate.countErrors) {
                                         hookToUpdate.countErrors = 0
                                         hookToUpdate.lastError = null
