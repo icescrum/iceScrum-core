@@ -164,9 +164,12 @@ class PushService {
         return GrailsNameUtils.getShortName(domain.class).toLowerCase()
     }
 
+    public static generatedMessageId(object, eventType) {
+        return object instanceof Map && object.messageId ? object.messageId : getNamespaceFromDomain(object) + '-' + eventType + '-' + object.id
+    }
+
     public static def buildMessage(String namespace, String eventType, object) {
-        def messageId = object instanceof Map ? object.messageId : namespace + '-' + eventType + '-' + object.id
-        def message = [messageId: messageId, namespace: namespace, eventType: eventType, object: object]
+        def message = [messageId: generatedMessageId(object, eventType), namespace: namespace, eventType: eventType, object: object]
         message.content = (message as JSON).toString() // toString() required to serialize eagerly (otherwise error because no session in atmosphere thread)
         return message
     }

@@ -93,7 +93,7 @@ class Hook implements Cloneable, Serializable {
     }
 
 
-    static List<Hook> queryFindAllByWorkspaceTypeAndWorkspaceIdAndEventsFromList(String workspaceType, long workspaceId, events) {
+    static List<Hook> queryFindAllByWorkspaceTypeAndWorkspaceIdAndEventsFromList(String workspaceType, long workspaceId, def events) {
         executeQuery("""
                 SELECT distinct h
                 FROM Hook h inner join h.events events
@@ -103,7 +103,7 @@ class Hook implements Cloneable, Serializable {
                 AND events in (:events)""", [enabled: true, workspaceId: workspaceId, workspaceType: workspaceType, events: events])
     }
 
-    static List<Hook> queryFindAllByWorkspaceTypeNullAndWorkspaceIdNullAndEventsFromList(events) {
+    static List<Hook> queryFindAllByWorkspaceTypeNullAndWorkspaceIdNullAndEventsFromList(def events) {
         executeQuery("""
                 SELECT distinct h
                 FROM Hook h inner join h.events events

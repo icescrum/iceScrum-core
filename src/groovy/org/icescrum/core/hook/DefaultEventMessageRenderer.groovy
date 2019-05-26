@@ -22,10 +22,18 @@
 package org.icescrum.core.hook
 
 import grails.converters.JSON
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 class DefaultEventMessageRenderer implements EventMessageRenderer {
-    @Override
-    String render(def object) {
-        return (object as JSON).toString()
+
+    private Logger logger = LoggerFactory.getLogger("org.icescrum.core.hook.DefaultEventMessageRenderer")
+
+    String render(def object, def events) {
+        def cachedObject = getCachedJSONObjectInThreadCache(object, events)
+        if (cachedObject && logger.isDebugEnabled()) {
+            logger.debug('found json object in Thread cache use it')
+        }
+        return cachedObject ?: (object as JSON).toString()
     }
 }

@@ -19,8 +19,25 @@
  *
  */
 
-package org.icescrum.core.hook;
+package org.icescrum.core.hook
 
-interface EventMessageRenderer {
-    String render(def object)
+import grails.util.Holders
+import org.icescrum.core.services.PushService;
+
+trait EventMessageRenderer {
+    abstract String render(def object, def events)
+
+    //use the JSON generate from push service if found to speed up things
+    static String getCachedJSONObjectInThreadCache(object, events) {
+        if (!Holders.grailsApplication.isDomainClass(object.getClass())) {
+            return null
+        }
+        def event = events.size() > 1 ? events[0] : events[0]
+        String eventPush = (event.split(/\./)[1]).toUpperCase()
+        def threadId = Thread.currentThread().getId()
+        def messageId = PushService.generatedMessageId(object, eventPush)
+        return Holders.grailsApplication.mainContext.pushService.bufferedThreads?.get(threadId)*.value*.find {
+            messageId == it.messageId
+        }?.content ?: null
+    }
 }
