@@ -231,7 +231,7 @@ class ListenerService {
                 newStoryUpdated = true;
             }
         }
-        if (dirtyProperties.containsKey('estimation') || (dirtyProperties.containsKey('state') && Task.STATE_DONE in [dirtyProperties.state, task.state] && task.parentStory && !newStoryUpdated)) {
+        if ((dirtyProperties.containsKey('estimation') && task.parentStory) || (dirtyProperties.containsKey('state') && Task.STATE_DONE in [dirtyProperties.state, task.state] && task.parentStory && !newStoryUpdated)) {
             task.parentStory.lastUpdated = new Date()
             pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, task.parentStory, project.id)
         }
