@@ -282,6 +282,7 @@ class NotificationEmailService {
         assert options.emails || options.to || options.cc
         assert options.view
         assert options.subject
+        options.envelopeFrom = grailsApplication.config.icescrum.mail?.envelopeFrom ?: options.from
 
         if (((ThreadPoolExecutor) mailService.mailExecutorService)?.isTerminated()) {
             mailService.afterPropertiesSet()
@@ -298,6 +299,9 @@ class NotificationEmailService {
                     }
                     if (options.replyTo) {
                         replyTo options.replyTo
+                    }
+                    if (options.envelopeFrom) {
+                        envelopeFrom options.envelopeFrom
                     }
                     to toEmail
                     subject options.subject
@@ -328,6 +332,9 @@ class NotificationEmailService {
                 }
                 if (options.replyTo) {
                     replyTo options.replyTo
+                }
+                if (options.envelopeFrom) {
+                    envelopeFrom options.envelopeFrom
                 }
                 subject options.subject
                 body(

@@ -79,7 +79,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
     ]
 
     static transients = [
-            'deliveredVersion', 'testState', 'testStateEnum', 'activity', 'sameBacklogStories', 'countDoneTasks', 'project'
+            'deliveredVersion', 'testState', 'testStateEnum', 'activity', 'sameBacklogStories', 'countDoneTasks', 'project', 'totalRemainingTime'
     ]
 
     static mapping = {
@@ -131,6 +131,10 @@ class Story extends BacklogElement implements Cloneable, Serializable {
 
     def getCountDoneTasks() {
         return tasks.count { it.state == Task.STATE_DONE }
+    }
+
+    def getTotalRemainingTime() {
+        return tasks.sum { it.estimation?:0 }
     }
 
     Map getProject() { // Hack because by default it does not return the asShort but a timebox instead
