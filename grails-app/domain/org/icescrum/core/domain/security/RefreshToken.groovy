@@ -14,5 +14,6 @@ class RefreshToken {
 
     static mapping = {
         version false
+        table 'is_oauth_r_token'
     }
 }

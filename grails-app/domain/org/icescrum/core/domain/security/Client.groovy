@@ -25,6 +25,11 @@ class Client implements Serializable {
             redirectUris        : String
     ]
 
+    static mapping = {
+        version false
+        table 'is_oauth_client'
+    }
+
     static constraints = {
         clientId blank: false, unique: true
         clientSecret nullable: true

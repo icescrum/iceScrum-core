@@ -35,5 +35,6 @@ class AccessToken implements Serializable {
     static mapping = {
         version false
         scope lazy: false
+        table 'is_oauth_a_token'
     }
 }
