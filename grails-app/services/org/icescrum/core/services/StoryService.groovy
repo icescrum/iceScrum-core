@@ -90,7 +90,7 @@ class StoryService extends IceScrumEventPublisher {
     @PreAuthorize('isAuthenticated() and !archivedProject(#stories[0].backlog)')
     void delete(Collection<Story> stories, newObject = null, reason = null) {
         def project = stories[0].backlog
-        stories.each { story ->
+        stories.sort { -it.rank }.each { story ->
             def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_DELETE, story)
             dirtyProperties.project = dirtyProperties.backlog
             // Custom properties
@@ -179,7 +179,7 @@ class StoryService extends IceScrumEventPublisher {
 
     @PreAuthorize('(productOwner(#sprint.parentProject) or scrumMaster(#sprint.parentProject)) and !archivedProject(#sprint.parentProject)')
     public void planMultiple(Sprint sprint, def stories) {
-        stories.each {
+        stories.sort { it.rank }.each {
             plan(sprint, it)
         }
     }
@@ -468,7 +468,7 @@ class StoryService extends IceScrumEventPublisher {
     def turnIntoFeature(List<Story> stories) {
         def features = []
         Project project = (Project) stories[0].backlog
-        stories.each { story ->
+        stories.sort { it.rank }.each { story ->
             if (story.state > Story.STATE_SUGGESTED) {
                 throw new BusinessException(code: 'is.story.error.not.state.suggested', args: [project.getStoryStateNames()[Story.STATE_SUGGESTED]])
             }
@@ -509,7 +509,7 @@ class StoryService extends IceScrumEventPublisher {
     def turnIntoUrgentTask(List<Story> stories) {
         def tasks = []
         Project project = (Project) stories[0].backlog
-        stories.each { story ->
+        stories.sort { it.rank }.each { story ->
             if (story.state > Story.STATE_SUGGESTED) {
                 throw new BusinessException(code: 'is.story.error.not.state.suggested', args: [project.getStoryStateNames()[Story.STATE_SUGGESTED]])
             }
@@ -565,7 +565,7 @@ class StoryService extends IceScrumEventPublisher {
     @PreAuthorize('(productOwner(#stories[0].backlog) or scrumMaster(#stories[0].backlog)) and !archivedProject(#stories[0].backlog)')
     void done(List<Story> stories) {
         def storyStateNames = ((Project) stories[0].backlog).getStoryStateNames()
-        stories.each { story ->
+        stories.sort { it.rank }.each { story ->
             if (story.parentSprint?.state != Sprint.STATE_INPROGRESS) {
                 throw new BusinessException(code: 'is.story.error.markAsDone.not.inProgress', args: [storyStateNames[Story.STATE_DONE]])
             }
@@ -606,7 +606,7 @@ class StoryService extends IceScrumEventPublisher {
     @PreAuthorize('(productOwner(#stories[0].backlog) or scrumMaster(#stories[0].backlog)) and !archivedProject(#stories[0].backlog)')
     void unDone(List<Story> stories) {
         def storyStateNames = ((Project) stories[0].backlog).getStoryStateNames()
-        stories.each { story ->
+        stories.sort { it.rank }.each { story ->
             if (story.state != Story.STATE_DONE) {
                 throw new BusinessException(code: 'is.story.error.workflow', args: [storyStateNames[Story.STATE_INPROGRESS], storyStateNames[story.state]])
             }
@@ -631,7 +631,7 @@ class StoryService extends IceScrumEventPublisher {
     def copy(List<Story> stories, Project project) {
         def copiedStories = []
         def sameProject = stories.first().backlog.id == project.id
-        stories.each { story ->
+        stories.sort { it.rank }.each { story ->
             def copiedStory = new Story(
                     name: story.name,
                     description: story.description,
