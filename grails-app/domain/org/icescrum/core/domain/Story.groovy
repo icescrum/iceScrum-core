@@ -133,8 +133,8 @@ class Story extends BacklogElement implements Cloneable, Serializable {
         return tasks.count { it.state == Task.STATE_DONE }
     }
 
-    def getTotalRemainingTime() {
-        return tasks.sum { it.estimation ?: 0 }
+    BigDecimal getTotalRemainingTime() {
+        (BigDecimal) tasks?.sum { Task task -> task.estimation ? task.estimation.toBigDecimal() : 0.0 } ?: 0.0
     }
 
     Map getProject() { // Hack because by default it does not return the asShort but a timebox instead
