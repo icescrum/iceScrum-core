@@ -15,6 +15,5 @@ class AuthorizationCode implements Serializable {
     static mapping = {
         version false
         table 'is_oauth_auth_code'
-
     }
 }
