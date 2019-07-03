@@ -18,7 +18,7 @@
   --}%
 %{-- view --}%
 <div id="view-${windowDefinition.id}"
-     class="view ${windowDefinition.flex ? 'flex' : ''} ${classes}" ${windowDefinition.details ? 'ng-class="[displayDetailsView(), {\'detached\':application.detachedDetailsView}, {\'minimized\':application.minimizedDetailsView}, {\'focused\':application.focusedDetailsView}]"' : ''}>
+     class="view ${windowDefinition.flex ? 'flex' : ''} ${classes}" ${windowDefinition.details ? 'ng-class="[displayDetailsView(), {\'focused\':application.focusedDetailsView}]"' : ''}>
     <div class="content">
         ${content}
     </div>
