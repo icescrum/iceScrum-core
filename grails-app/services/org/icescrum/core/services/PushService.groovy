@@ -103,20 +103,19 @@ class PushService {
         def threadId = Thread.currentThread().getId()
         def messages = bufferedThreads.get(threadId)."$channel"
         if (!messages) {
-            bufferedThreads.get(threadId)."$channel" = []
+            bufferedThreads.get(threadId)."$channel" = [] as LinkedHashSet
             messages = bufferedThreads.get(threadId)."$channel"
         }
-        def index = -1
         def existingMessage = messages.find {
-            index += 1
             it.messageId == message.messageId
         }
         if (!existingMessage) {
             messages << message
-        } else {
-            messages.set(index, message)
+        } else { //replace with new message but keep order of change in the request
+            messages.remove(existingMessage)
+            messages.add(message)
             if (log.debugEnabled) {
-                log.debug('replace with latest content message (' + message.messageId + ') on channel ' + channel)
+                log.debug('replace with latest content message (' + message.messageId + ') on channel ' + channel + ' ' + message.content)
             }
         }
     }
