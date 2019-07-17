@@ -39,6 +39,7 @@ import org.apache.http.HttpStatus
 import org.apache.http.auth.AuthScope
 import org.apache.http.auth.UsernamePasswordCredentials
 import org.apache.http.client.AuthCache
+import org.apache.http.client.HttpClient
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.client.methods.HttpPost
 import org.apache.http.client.protocol.ClientContext
@@ -46,6 +47,7 @@ import org.apache.http.entity.StringEntity
 import org.apache.http.impl.auth.BasicScheme
 import org.apache.http.impl.client.BasicAuthCache
 import org.apache.http.impl.client.DefaultHttpClient
+import org.apache.http.impl.client.SystemDefaultHttpClient
 import org.apache.http.protocol.BasicHttpContext
 import org.apache.http.util.EntityUtils
 import org.codehaus.groovy.grails.web.servlet.GrailsApplicationAttributes
@@ -483,13 +485,17 @@ class ApplicationSupport {
         }
     }
 
+    static HttpClient getHttpClient(){
+        return new SystemDefaultHttpClient()
+    }
+
     static Map getJSON(String url, String authenticationBearer, headers = [:], params = [:]) {
         headers.Authorization = "Bearer $authenticationBearer"
         return getJSON(url, null, null, headers, params)
     }
 
     static Map getJSON(String url, String username, String password, headers = [:], params = [:]) {
-        DefaultHttpClient httpClient = new DefaultHttpClient()
+        DefaultHttpClient httpClient = getHttpClient()
         Map resp = [:]
         try {
             // Build host
@@ -542,7 +548,7 @@ class ApplicationSupport {
     }
 
     static Map postJSON(String url, String username, String password, JSON json, headers = [:], params = [:]) {
-        DefaultHttpClient httpClient = new DefaultHttpClient()
+        DefaultHttpClient httpClient = getHttpClient()
         Map resp = [:]
         try {
             // Build host
