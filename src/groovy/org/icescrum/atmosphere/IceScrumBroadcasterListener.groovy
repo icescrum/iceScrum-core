@@ -38,8 +38,8 @@ class IceScrumBroadcasterListener extends BroadcasterListenerAdapter {
         if (broadcaster.getID() == GLOBAL_CONTEXT) {
             updateUsersAndConnections(resources)
         } else {
-            if(broadcaster.getID().contains('project')){
-                updateUsersOnProject(broadcaster, resources)
+            if (broadcaster.getID() != GLOBAL_CONTEXT) {
+                updateUsersInWorkspace(broadcaster, resources)
             }
         }
     }
@@ -50,8 +50,8 @@ class IceScrumBroadcasterListener extends BroadcasterListenerAdapter {
         if (broadcaster.getID() == GLOBAL_CONTEXT) {
             updateUsersAndConnections(resources)
         } else {
-            if(broadcaster.getID().contains('project')){
-                updateUsersOnProject(broadcaster, resources)
+            if (broadcaster.getID() != GLOBAL_CONTEXT) {
+                updateUsersInWorkspace(broadcaster, resources)
             }
         }
     }
@@ -77,15 +77,17 @@ class IceScrumBroadcasterListener extends BroadcasterListenerAdapter {
         }
     }
 
-    private synchronized void updateUsersOnProject(Broadcaster broadcaster, List<AtmosphereResource> resources) {
+    private synchronized void updateUsersInWorkspace(Broadcaster broadcaster, List<AtmosphereResource> resources) {
         def users = resources.collect {
             def user = it.request.getAttribute(IceScrumAtmosphereEventListener.USER_CONTEXT)
-            user ? [username: user.username, id:user.id, transport: it.transport().toString()] : [username: 'anonymous', transport: it.transport().toString()]
+            user ? [username: user.username, id: user.id, transport: it.transport().toString()] : [username: 'anonymous', transport: it.transport().toString()]
         }.unique {
             a, b -> a.username != 'anonymous' ? a.username <=> b.username : 1 //to keep multiple anonymous
         }
-        def projectId = broadcaster.getID() - "/stream/app/project-"
-        def message = PushService.buildMessage("project", "onlineMembers", [messageId: "online-users-project-${projectId}", project: [id: projectId.toLong(), onlineMembers: users]]).content
+        def workspace = broadcaster.getID() - "/stream/app/"
+        workspace = workspace.split('-')
+        workspace = [id: workspace[1].toLong(), type: workspace[0]]
+        def message = PushService.buildMessage(workspace.type, "onlineMembers", [messageId: "online-users-${workspace.type}-${workspace.id}", "${workspace.type}": [id: workspace.id, onlineMembers: users]]).content
         broadcaster.broadcast(message)
     }
 
