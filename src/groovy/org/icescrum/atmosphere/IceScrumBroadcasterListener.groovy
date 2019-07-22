@@ -38,7 +38,7 @@ class IceScrumBroadcasterListener extends BroadcasterListenerAdapter {
         if (broadcaster.getID() == GLOBAL_CONTEXT) {
             updateUsersAndConnections(resources)
         } else {
-            if (grailsApplication.config.icescrum.beta.enable) {
+            if(broadcaster.getID().contains('project')){
                 updateUsersOnProject(broadcaster, resources)
             }
         }
@@ -50,7 +50,7 @@ class IceScrumBroadcasterListener extends BroadcasterListenerAdapter {
         if (broadcaster.getID() == GLOBAL_CONTEXT) {
             updateUsersAndConnections(resources)
         } else {
-            if (grailsApplication.config.icescrum.beta.enable) {
+            if(broadcaster.getID().contains('project')){
                 updateUsersOnProject(broadcaster, resources)
             }
         }
@@ -79,16 +79,18 @@ class IceScrumBroadcasterListener extends BroadcasterListenerAdapter {
 
     private synchronized void updateUsersOnProject(Broadcaster broadcaster, List<AtmosphereResource> resources) {
         def users = resources.collect {
-            it.request.getAttribute(IceScrumAtmosphereEventListener.USER_CONTEXT) ? [username: it.request.getAttribute(IceScrumAtmosphereEventListener.USER_CONTEXT).username, transport: it.transport().toString()] : [username: 'anonymous', transport: it.transport().toString()]
+            def user = it.request.getAttribute(IceScrumAtmosphereEventListener.USER_CONTEXT)
+            user ? [username: user.username, id:user.id, transport: it.transport().toString()] : [username: 'anonymous', transport: it.transport().toString()]
         }.unique {
             a, b -> a.username != 'anonymous' ? a.username <=> b.username : 1 //to keep multiple anonymous
         }
-        def message = PushService.buildMessage("projectUsers", "update", [messageId: "online-users-${broadcaster.getID()}", users: users]).content
-        broadcaster.broadcast(message, resources.findAll { !it.resumeOnBroadcast() }.toSet())
+        def projectId = broadcaster.getID() - "/stream/app/project-"
+        def message = PushService.buildMessage("project", "onlineMembers", [messageId: "online-users-project-${projectId}", project: [id: projectId.toLong(), onlineMembers: users]]).content
+        broadcaster.broadcast(message)
     }
 
     private static String getAddressIp(def request) {
-        String ip = null;
+        String ip
         if (request.getHeader("X-Forwarded-For") != null) {
             String xForwardedFor = request.getHeader("X-Forwarded-For");
             if (xForwardedFor.indexOf(",") != -1) {
