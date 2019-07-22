@@ -485,7 +485,7 @@ class ApplicationSupport {
         }
     }
 
-    static HttpClient getHttpClient(){
+    static HttpClient getHttpClient() {
         return new SystemDefaultHttpClient()
     }
 
