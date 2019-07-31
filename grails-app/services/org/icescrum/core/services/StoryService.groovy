@@ -497,6 +497,14 @@ class StoryService extends IceScrumEventPublisher {
             story.attachments.each { attachment ->
                 feature.addAttachment(story.creator, attachmentableService.getFile(attachment), attachment.filename)
             }
+            story.comments.each { Comment comment ->
+                def commentLink = CommentLink.findByComment(comment)
+                if (commentLink) {
+                    commentLink.commentRef = feature.id
+                    commentLink.type = GrailsNameUtils.getPropertyName(feature.class)
+                    commentLink.save()
+                }
+            }
             feature.tags = story.tags
             delete([story], feature)
             features << feature
