@@ -25,7 +25,6 @@
 
 package org.icescrum.core.domain
 
-import grails.util.GrailsNameUtils
 import org.grails.comments.Comment
 import org.hibernate.ObjectNotFoundException
 
@@ -172,18 +171,6 @@ class Task extends BacklogElement implements Serializable {
                 """SELECT MAX(t.uid)
                    FROM org.icescrum.core.domain.Task as t
                    WHERE t.parentProject.id = :pid""", [pid: pid])[0] ?: 0) + 1
-    }
-
-    static findLastUpdatedComment(def element) {
-        executeQuery("SELECT c.lastUpdated " +
-                     "FROM org.grails.comments.Comment as c, org.grails.comments.CommentLink as cl, ${element.class.name} as b " +
-                     "WHERE c = cl.comment " +
-                     "AND cl.commentRef = b " +
-                     "AND cl.type = :type " +
-                     "AND b.id = :id " +
-                     "ORDER BY c.lastUpdated DESC",
-                [id: element.id, type: GrailsNameUtils.getPropertyName(element.class)],
-                [max: 1])[0]
     }
 
     static Task withTask(long projectId, long id) {

@@ -25,6 +25,7 @@
 
 package org.icescrum.core.domain
 
+import org.grails.comments.Comment
 import org.hibernate.ObjectNotFoundException
 
 class Feature extends BacklogElement implements Serializable {
@@ -78,6 +79,17 @@ class Feature extends BacklogElement implements Serializable {
             }
             uniqueResult = true
         }
+    }
+
+    static List<Comment> recentCommentsInProject(long projectId) {
+        return executeQuery(""" 
+                SELECT commentLink.comment 
+                FROM Feature feature, CommentLink as commentLink 
+                WHERE feature.parentProject.id = :projectId 
+                AND commentLink.commentRef = feature.id 
+                AND commentLink.type = 'feature'
+                ORDER BY commentLink.comment.dateCreated DESC""", [projectId: projectId], [max: 10, offset: 0, cache: true, readOnly: true]
+        )
     }
 
     static Feature withFeature(long projectId, long id) {
@@ -229,6 +241,16 @@ class Feature extends BacklogElement implements Serializable {
             builder.stories() {
                 this.stories.sort { it.uid }.each { _story ->
                     story(uid: _story.uid)
+                }
+            }
+            builder.comments() {
+                this.comments.each { _comment ->
+                    builder.comment() {
+                        builder.dateCreated(_comment.dateCreated)
+                        builder.posterId(_comment.posterId)
+                        builder.posterClass(_comment.posterClass)
+                        builder.body { builder.mkp.yieldUnescaped("<![CDATA[${_comment.body}]]>") }
+                    }
                 }
             }
             builder.activities() {
