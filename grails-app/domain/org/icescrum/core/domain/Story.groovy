@@ -25,7 +25,6 @@
 
 package org.icescrum.core.domain
 
-import grails.util.GrailsNameUtils
 import org.grails.comments.Comment
 import org.hibernate.ObjectNotFoundException
 import org.icescrum.core.domain.AcceptanceTest.AcceptanceTestState
@@ -292,18 +291,6 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                    FROM org.icescrum.core.domain.Story as s, org.icescrum.core.domain.Project as p
                    WHERE s.backlog = p
                    AND p.id = :pid """, [pid: pid], [readOnly: true])[0] ?: 0) + 1
-    }
-
-    static findLastUpdatedComment(def element) {
-        executeQuery("SELECT c.lastUpdated " +
-                     "FROM org.grails.comments.Comment as c, org.grails.comments.CommentLink as cl, ${element.class.name} as b " +
-                     "WHERE c = cl.comment " +
-                     "AND cl.commentRef = b " +
-                     "AND cl.type = :type " +
-                     "AND b.id = :id " +
-                     "ORDER BY c.lastUpdated DESC",
-                [id: element.id, type: GrailsNameUtils.getPropertyName(element.class)],
-                [max: 1, readOnly: true])[0]
     }
 
     static List<Comment> recentCommentsInProject(long projectId) {

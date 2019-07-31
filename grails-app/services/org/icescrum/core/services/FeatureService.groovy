@@ -154,6 +154,12 @@ class FeatureService extends IceScrumEventPublisher {
             // References on other objects
             if (project) {
                 project.addToFeatures(feature)
+                featureXml.comments.comment.each { _commentXml ->
+                    def uid = options.userUIDByImportedID?."${_commentXml.posterId.text().toInteger()}" ?: null
+                    User user = project.getUserByUidOrOwner(uid)
+                    ApplicationSupport.importComment(feature, user, _commentXml.body.text(), DateUtils.parseDateFromExport(_commentXml.dateCreated.text()))
+                }
+                feature.comments_count = featureXml.comments.comment.size() ?: 0
             }
             // Save before some hibernate stuff
             if (options.save) {
