@@ -46,6 +46,7 @@ class TaskService extends IceScrumEventPublisher {
     def activityService
     def grailsApplication
     def attachmentableService
+    def commentService
 
     @PreAuthorize('(inProject(#task.backlog?.parentProject) or inProject(#task.parentStory?.backlog)) and (!archivedProject(#task.backlog?.parentProject) or !archivedProject(#task.parentStory?.backlog))')
     void save(Task task, User user) {
@@ -402,7 +403,7 @@ class TaskService extends IceScrumEventPublisher {
                     taskXml.comments.comment.each { _commentXml ->
                         def uid = options.userUIDByImportedID?."${_commentXml.posterId.text().toInteger()}" ?: null
                         User user = project.getUserByUidOrOwner(uid)
-                        ApplicationSupport.importComment(task, user, _commentXml.body.text(), DateUtils.parseDateFromExport(_commentXml.dateCreated.text()))
+                        commentService.importComment(task, user, _commentXml.body.text(), DateUtils.parseDateFromExport(_commentXml.dateCreated.text()))
                     }
                     task.comments_count = taskXml.comments.comment.size() ?: 0
                     taskXml.attachments.attachment.each { _attachmentXml ->

@@ -40,6 +40,7 @@ class FeatureService extends IceScrumEventPublisher {
     def grailsApplication
     def activityService
     def securityService
+    def commentService
 
     @PreAuthorize('productOwner(#project) and !archivedProject(#project)')
     void save(Feature feature, Project project) {
@@ -157,7 +158,7 @@ class FeatureService extends IceScrumEventPublisher {
                 featureXml.comments.comment.each { _commentXml ->
                     def uid = options.userUIDByImportedID?."${_commentXml.posterId.text().toInteger()}" ?: null
                     User user = project.getUserByUidOrOwner(uid)
-                    ApplicationSupport.importComment(feature, user, _commentXml.body.text(), DateUtils.parseDateFromExport(_commentXml.dateCreated.text()))
+                    commentService.importComment(feature, user, _commentXml.body.text(), DateUtils.parseDateFromExport(_commentXml.dateCreated.text()))
                 }
                 feature.comments_count = featureXml.comments.comment.size() ?: 0
             }

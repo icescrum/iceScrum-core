@@ -23,6 +23,7 @@
  */
 package org.icescrum.core.services
 
+import org.grails.comments.Comment
 import org.icescrum.core.domain.*
 import org.icescrum.core.event.IceScrumEventType
 import org.icescrum.core.event.IceScrumListener
@@ -39,6 +40,7 @@ class ListenerService {
     def storyService
     def acceptanceTestService
     def taskService
+    def commentService
     def grailsApplication
 
     @IceScrumListener(domain = 'story', eventType = IceScrumEventType.CREATE)
@@ -350,6 +352,27 @@ class ListenerService {
         }
         pushService.broadcastToProjectChannel(IceScrumEventType.DELETE, [class: 'AcceptanceTest', id: dirtyProperties.id, messageId: 'acceptance-' + dirtyProperties.id + '-delete'], project.id)
         pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, dirtyProperties.parentStory, project.id) // Push count
+    }
+
+    @IceScrumListener(domain = 'comment', eventType = IceScrumEventType.CREATE)
+    void commentCreate(Comment comment, Map dirtyProperties) {
+        def project = commentService.getProject(comment)
+        def commentData = commentService.getRenderableComment(comment)
+        commentData.messageId = 'comment-CREATE-' + comment.id
+        pushService.broadcastToProjectChannel(IceScrumEventType.CREATE, commentData, project.id)
+    }
+
+    @IceScrumListener(domain = 'comment', eventType = IceScrumEventType.UPDATE)
+    void commentUpdate(Comment comment, Map dirtyProperties) {
+        def project = commentService.getProject(comment)
+        def commentData = commentService.getRenderableComment(comment)
+        commentData.messageId = 'comment-UPDATE-' + comment.id
+        pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, commentData, project.id)
+    }
+
+    @IceScrumListener(domain = 'comment', eventType = IceScrumEventType.DELETE)
+    void commentDelete(Comment comment, Map dirtyProperties) {
+        pushService.broadcastToProjectChannel(IceScrumEventType.DELETE, [class: 'Comment', id: dirtyProperties.id, messageId: 'comment-' + dirtyProperties.id + '-delete'], dirtyProperties.project.id)
     }
 
     @IceScrumListener(domain = 'project', eventType = IceScrumEventType.UPDATE)
