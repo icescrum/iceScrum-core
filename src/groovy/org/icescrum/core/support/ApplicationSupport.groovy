@@ -53,8 +53,6 @@ import org.apache.http.util.EntityUtils
 import org.codehaus.groovy.grails.web.servlet.GrailsApplicationAttributes
 import org.codehaus.groovy.grails.web.servlet.mvc.GrailsWebRequest
 import org.codehaus.groovy.grails.web.util.WebUtils
-import org.grails.comments.Comment
-import org.grails.comments.CommentLink
 import org.icescrum.core.app.AppDefinition
 import org.icescrum.core.domain.*
 import org.icescrum.core.domain.preferences.UserPreferences
@@ -64,7 +62,6 @@ import org.icescrum.core.error.BusinessException
 import org.icescrum.core.security.WebScrumExpressionHandler
 import org.icescrum.core.services.ProjectService
 import org.icescrum.core.utils.DateUtils
-import org.icescrum.core.utils.ServicesUtils
 import org.icescrum.plugins.attachmentable.domain.Attachment
 import org.springframework.expression.Expression
 import org.springframework.security.access.expression.ExpressionUtils
@@ -483,7 +480,7 @@ class ApplicationSupport {
         }
     }
 
-    static HttpClient getHttpClient(){
+    static HttpClient getHttpClient() {
         return new SystemDefaultHttpClient()
     }
 
@@ -706,14 +703,6 @@ class ApplicationSupport {
         return lastWarning ? [id: lastWarning.id, icon: lastWarning.icon, title: i18nService.message(lastWarning.title), message: i18nService.message(lastWarning.message), hideable: lastWarning.hideable, silent: lastWarning.silent] : null
     }
 
-    static void importComment(object, User poster, String body, Date dateCreated) {
-        def comment = new Comment(body: body, posterId: poster.id, posterClass: getUnproxiedClassName(poster.class.name))
-        comment.save()
-        def link = new CommentLink(comment: comment, commentRef: object.id, type: GrailsNameUtils.getPropertyName(object.class))
-        link.save()
-        comment.dateCreated = dateCreated
-    }
-
     static String getUnproxiedClassName(String className) {
         def i = className.indexOf('_$$_javassist')
         return i > -1 ? className[0..i - 1] : className
@@ -835,23 +824,6 @@ class ApplicationSupport {
             }
             Holders.grailsApplication.config.icescrum.check.response = resp.data.collectEntries { key, val -> [(key): val] } // create a copy
         }
-    }
-
-    static Map getRenderableComment(Comment comment, Object commentable = null) {
-        def commentLink = commentable ? [commentRef: commentable.id, type: getUnproxiedClassName(GrailsNameUtils.getPropertyName(commentable.class))] : CommentLink.findByComment(comment)
-        return [
-                class      : 'Comment',
-                id         : comment.id,
-                body       : comment.body,
-                body_html  : ServicesUtils.textileToHtml(comment.body),
-                poster     : comment.poster,
-                dateCreated: comment.dateCreated,
-                lastUpdated: comment.lastUpdated,
-                commentable: [
-                        class: commentLink.type.capitalize(),
-                        id   : commentLink.commentRef
-                ]
-        ]
     }
 
     static void validateHexdecimalColor(color) {

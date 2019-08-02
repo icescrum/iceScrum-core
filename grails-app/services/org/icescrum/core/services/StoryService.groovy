@@ -57,6 +57,7 @@ class StoryService extends IceScrumEventPublisher {
     def activityService
     def pushService
     def i18nService
+    def commentService
 
     @PreAuthorize('isAuthenticated() and !archivedProject(#project)')
     void save(Story story, Project project, User user) {
@@ -817,7 +818,7 @@ class StoryService extends IceScrumEventPublisher {
                     storyXml.comments.comment.each { _commentXml ->
                         def uid = options.userUIDByImportedID?."${_commentXml.posterId.text().toInteger()}" ?: null
                         User user = project.getUserByUidOrOwner(uid)
-                        ApplicationSupport.importComment(story, user, _commentXml.body.text(), DateUtils.parseDateFromExport(_commentXml.dateCreated.text()))
+                        commentService.importComment(story, user, _commentXml.body.text(), DateUtils.parseDateFromExport(_commentXml.dateCreated.text()))
                     }
                     story.comments_count = storyXml.comments.comment.size() ?: 0
                     storyXml.attachments.attachment.each { _attachmentXml ->
