@@ -33,6 +33,7 @@ class HookListenerService {
 
     def grailsApplication
     def hookService
+    def commentService
 
     @IceScrumListener(domains = ['*'])
     void hook(IceScrumEventType type, Object hookableObject, Map dirtyProperties) {
@@ -78,7 +79,7 @@ class HookListenerService {
                 //very special case for comment
                 if (events[0].endsWith("Comment")) {
                     def comment = dirtyProperties."addedComment" ?: (dirtyProperties."updatedComment" ?: dirtyProperties."removedComment")
-                    objectToRender = ApplicationSupport.getRenderableComment(comment, hookableObject)
+                    objectToRender = commentService.getRenderableComment(comment, hookableObject)
                 } else {
                     //remove all hibernate collection stuff to prevent exception
                     objectToRender = IceScrumEventType.DELETE == type ? dirtyProperties.findAll { prop -> return !(prop.value instanceof Collection) } : hookableObject
