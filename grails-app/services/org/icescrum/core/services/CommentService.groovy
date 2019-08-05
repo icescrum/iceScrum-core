@@ -28,11 +28,7 @@ import grails.util.GrailsNameUtils
 import org.grails.comments.Comment
 import org.grails.comments.CommentLink
 import org.hibernate.ObjectNotFoundException
-import org.icescrum.core.domain.Feature
-import org.icescrum.core.domain.Project
-import org.icescrum.core.domain.Story
-import org.icescrum.core.domain.Task
-import org.icescrum.core.domain.User
+import org.icescrum.core.domain.*
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
 import org.icescrum.core.support.ApplicationSupport
@@ -60,17 +56,19 @@ class CommentService extends IceScrumEventPublisher {
         return comment
     }
 
-    void update(Comment comment, Object commentable, props) {
+    void update(Comment comment, props) {
         def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_UPDATE, comment)
         comment.body = props.body
         comment.save(flush: true)
+        def commentable = getCommentable(comment)
         publishCommentableEvent(comment, commentable, 'updatedComment')
         publishSynchronousEvent(IceScrumEventType.UPDATE, comment, dirtyProperties)
     }
 
-    void delete(Comment comment, Object commentable) {
+    void delete(Comment comment) {
         def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_DELETE, comment)
         dirtyProperties.project = getProject(comment)
+        def commentable = getCommentable(comment)
         commentable.removeComment(comment)
         if (commentable.hasProperty('comments_count')) {
             commentable.comments_count = commentable.getTotalComments()
@@ -110,7 +108,7 @@ class CommentService extends IceScrumEventPublisher {
             throw new ObjectNotFoundException(id, 'Comment')
         }
         CommentLink commentLink = CommentLink.findByComment(comment)
-        withCommentable(projectId, commentLink.commentRef, commentLink.type) // Trigger an error if not in project
+        withCommentable(projectId, commentLink.commentRef, commentLink.type) // Important security check that the commentable exists and in the right project
         return comment
     }
 
@@ -134,6 +132,19 @@ class CommentService extends IceScrumEventPublisher {
             return Task.get(commentLink.commentRef).parentProject
         } else if (commentLink.type == 'feature') {
             return (Project) Feature.get(commentLink.commentRef).backlog
+        } else {
+            return null
+        }
+    }
+
+    private Object getCommentable(Comment comment) {
+        CommentLink commentLink = CommentLink.findByComment(comment)
+        if (commentLink.type == 'story') {
+            return Story.get(commentLink.commentRef)
+        } else if (commentLink.type == 'task') {
+            return Task.get(commentLink.commentRef)
+        } else if (commentLink.type == 'feature') {
+            return Feature.get(commentLink.commentRef)
         } else {
             return null
         }
