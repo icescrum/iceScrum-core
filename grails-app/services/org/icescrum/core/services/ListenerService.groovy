@@ -441,6 +441,7 @@ class ListenerService {
     @IceScrumListener(domains = ['story', 'feature', 'task'], eventType = IceScrumEventType.BEFORE_DELETE)
     void backlogElementBeforeDelete(backlogElement, Map dirtyProperties) {
         backlogElement.tags = []
+        backlogElement.deleteComments()
     }
 
     @IceScrumListener(domains = ['story', 'feature', 'task', 'sprint', 'release', 'acceptanceTest', 'project'], eventType = IceScrumEventType.BEFORE_UPDATE)
