@@ -23,6 +23,7 @@
  */
 package org.icescrum.core.services
 
+import org.codehaus.groovy.grails.orm.hibernate.cfg.GrailsHibernateUtil
 import org.grails.comments.Comment
 import org.icescrum.core.domain.*
 import org.icescrum.core.event.IceScrumEventType
@@ -440,6 +441,7 @@ class ListenerService {
 
     @IceScrumListener(domains = ['story', 'feature', 'task'], eventType = IceScrumEventType.BEFORE_DELETE)
     void backlogElementBeforeDelete(backlogElement, Map dirtyProperties) {
+        backlogElement = GrailsHibernateUtil.unwrapIfProxy(backlogElement) // Prevent issues with comment deletion
         backlogElement.tags = []
         backlogElement.deleteComments()
     }
