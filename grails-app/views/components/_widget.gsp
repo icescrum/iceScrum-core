@@ -22,7 +22,7 @@
         <span>${message(code: widgetDefinition.title)}</span>
         <span class="hover-display">
             <g:if test="${widget && widgetDefinition.settings}">
-                <button class="btn btn-secondary btn-sm"
+                <button class="btn btn-link btn-sm"
                         ng-if="authorizedWidget('update', widget)"
                         ng-click="toggleSettings(widget)"
                         defer-tooltip="${message(code: 'todo.is.ui.setting')}">
@@ -30,7 +30,7 @@
                 </button>
             </g:if>
             <g:if test="${widget && widgetDefinition.allowRemove}">
-                <button class="btn btn-secondary btn-sm"
+                <button class="btn btn-link btn-sm"
                         ng-if="authorizedWidget('delete', widget)"
                         ng-click="delete(widget)"
                         defer-tooltip="${message(code: 'is.ui.widget.remove')}">
@@ -39,9 +39,7 @@
             </g:if>
         </span>
     </h3>
-    <div class="card-body"
-        ${widgetDefinition.settings ? 'ng-switch="showSettings"' : ''}
-         ng-class="showSettings ? 'widget-settings' : 'widget-content'">
+    <div class="card-body" ${widgetDefinition.settings ? 'ng-switch="showSettings"' : ''}>
         ${widgetDefinition.settings ? '<div ng-switch-default>' : ''}
         ${content}
         ${widgetDefinition.settings ? '</div>' : ''}
