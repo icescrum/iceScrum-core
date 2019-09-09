@@ -172,7 +172,7 @@ class ClicheService {
         }
         def clicheData = {
             cliche {
-                "${Cliche.TOTAL_STORIES}"(storiesDoneCount + storiesInProgressCount)
+                "${Cliche.TOTAL_STORIES}"(sprint.stories.size())
                 "${Cliche.STORIES_INPROGRESS}"(storiesInProgressCount) // TODO NOT USED
                 "${Cliche.STORIES_DONE}"(storiesDoneCount)
                 "${Cliche.STORIES_TOTAL_POINTS}"(totalPointsStories)
