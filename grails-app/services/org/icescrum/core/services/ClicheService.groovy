@@ -156,6 +156,7 @@ class ClicheService {
         }
         int storiesDoneCount = 0
         int storiesInProgressCount = 0
+        int storiesInReviewCount = 0
         def totalPointsStories = 0
         def pointsDoneStories = 0
         sprint.stories.each { story ->
@@ -167,6 +168,9 @@ class ClicheService {
                 case Story.STATE_INPROGRESS:
                     storiesInProgressCount++
                     break
+                case Story.STATE_INREVIEW:
+                    storiesInReviewCount++
+                    break
             }
             totalPointsStories += story.effort
         }
@@ -174,6 +178,7 @@ class ClicheService {
             cliche {
                 "${Cliche.TOTAL_STORIES}"(sprint.stories.size())
                 "${Cliche.STORIES_INPROGRESS}"(storiesInProgressCount) // TODO NOT USED
+                "${Cliche.STORIES_INREVIEW}"(storiesInReviewCount) // TODO NOT USED
                 "${Cliche.STORIES_DONE}"(storiesDoneCount)
                 "${Cliche.STORIES_TOTAL_POINTS}"(totalPointsStories)
                 "${Cliche.STORIES_POINTS_DONE}"(pointsDoneStories)
