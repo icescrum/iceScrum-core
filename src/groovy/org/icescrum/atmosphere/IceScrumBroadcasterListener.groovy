@@ -94,14 +94,14 @@ class IceScrumBroadcasterListener extends BroadcasterListenerAdapter {
     private static String getAddressIp(def request) {
         String ip
         if (request.getHeader("X-Forwarded-For") != null) {
-            String xForwardedFor = request.getHeader("X-Forwarded-For");
+            String xForwardedFor = request.getHeader("X-Forwarded-For")
             if (xForwardedFor.indexOf(",") != -1) {
-                ip = xForwardedFor.substring(xForwardedFor.lastIndexOf(",") + 2);
+                ip = xForwardedFor.substring(xForwardedFor.lastIndexOf(",") + 2)
             } else {
-                ip = xForwardedFor;
+                ip = xForwardedFor
             }
         } else {
-            ip = request.getRemoteAddr();
+            ip = request.getRemoteAddr()
         }
         return ip
     }

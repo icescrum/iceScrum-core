@@ -21,12 +21,10 @@
 
 package org.icescrum.core.services
 
-import org.icescrum.core.domain.Hook
 import grails.transaction.Transactional
-import grails.util.GrailsNameUtils
 import groovyx.net.http.HTTPBuilder
 import groovyx.net.http.Method
-import org.icescrum.core.domain.Project
+import org.icescrum.core.domain.Hook
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.utils.DateUtils
 
@@ -43,7 +41,7 @@ class HookService extends IceScrumEventPublisher {
 
     def update(Hook hook) {
         manageAndCleanEvents(hook)
-        if(hook.enabled && hook.isDirty("enabled")){
+        if (hook.enabled && hook.isDirty("enabled")) {
             hook.lastError = ""
             hook.countErrors = 0
         }

@@ -280,7 +280,6 @@ class ProjectService extends IceScrumEventPublisher {
             projectXml.teams.team.each { team ->
                 teamService.unMarshall(team, options)
             }
-
             if (!project.teams) {
                 throw new BusinessException(text: 'Error, the project has no team')
             }

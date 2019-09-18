@@ -22,7 +22,7 @@
 package org.icescrum.core.hook
 
 import grails.util.Holders
-import org.icescrum.core.services.PushService;
+import org.icescrum.core.services.PushService
 
 trait EventMessageRenderer {
     abstract String render(def object, def events)
