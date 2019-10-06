@@ -531,8 +531,12 @@ class ApplicationSupport {
                 log.debug('Error ' + resp.status + ' get ' + uri.toString() + ' ' + responseText)
             }
         } catch (Exception e) {
-            log.error(e.message)
-            e.printStackTrace()
+            if(log.debugEnabled){
+                e.printStackTrace()
+            }
+            if(log.errorEnabled) {
+                log.error(e.message)
+            }
         } finally {
             httpClient.connectionManager.shutdown()
         }
