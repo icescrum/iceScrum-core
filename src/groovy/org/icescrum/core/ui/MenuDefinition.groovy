@@ -30,19 +30,10 @@ class MenuDefinition {
     private final log = LoggerFactory.getLogger(this.class.name)
 
     def title // Can be Closure or String
-    boolean defaultVisibility
     int defaultPosition
 
     void title(title) {
         this.title = title
-    }
-
-    void defaultVisibility(boolean defaultVisibility) {
-        this.defaultVisibility = defaultVisibility
-    }
-
-    void defaultPosition(int defaultPosition) {
-        this.defaultPosition = defaultPosition
     }
 
     def methodMissing(String name, args) {
