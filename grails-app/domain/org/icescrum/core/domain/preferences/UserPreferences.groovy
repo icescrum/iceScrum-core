@@ -48,7 +48,6 @@ class UserPreferences implements Serializable {
     Date lastReadActivities = new Date()
 
     Map menu = ["project": "1", "backlog": "2", "planning": "3", "taskBoard": "4", "feature": "5"]
-    Map menuHidden = [:]
 
     static transients = ["emailsSettings"]
 
@@ -107,7 +106,6 @@ class UserPreferences implements Serializable {
             builder.language(this.language)
             builder.activity(this.activity)
             builder.filterTask(this.filterTask)
-            builder.menuHidden(this.menuHidden)
             builder.enableDarkMode(this.enableDarkMode)
             builder.displayReleaseNotes(this.displayReleaseNotes)
             builder.displayWhatsNew(this.displayWhatsNew)

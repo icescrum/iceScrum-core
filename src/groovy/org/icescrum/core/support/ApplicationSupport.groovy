@@ -24,7 +24,6 @@
 package org.icescrum.core.support
 
 import grails.converters.JSON
-import grails.plugin.springsecurity.userdetails.GrailsUser
 import grails.plugin.springsecurity.web.SecurityRequestHolder as SRH
 import grails.util.Environment
 import grails.util.GrailsNameUtils
@@ -55,7 +54,6 @@ import org.codehaus.groovy.grails.web.servlet.mvc.GrailsWebRequest
 import org.codehaus.groovy.grails.web.util.WebUtils
 import org.icescrum.core.app.AppDefinition
 import org.icescrum.core.domain.*
-import org.icescrum.core.domain.preferences.UserPreferences
 import org.icescrum.core.domain.security.Authority
 import org.icescrum.core.domain.security.UserAuthority
 import org.icescrum.core.error.BusinessException
@@ -198,26 +196,6 @@ class ApplicationSupport {
             return secured
         }
         return false
-    }
-
-    static Map menuPositionFromUserPreferences(windowDefinition) {
-        UserPreferences userPreferences = null
-        if (GrailsUser.isAssignableFrom(SCH.context.authentication?.principal?.getClass())) {
-            userPreferences = User.get(SCH.context.authentication.principal?.id)?.preferences
-        }
-        def visiblePosition = userPreferences?.menu?.getAt(windowDefinition.id)
-        def hiddenPosition = userPreferences?.menuHidden?.getAt(windowDefinition.id)
-        def menuEntry = [:]
-        if (visiblePosition) {
-            menuEntry.pos = visiblePosition
-            menuEntry.visible = true
-        } else if (hiddenPosition) {
-            menuEntry.pos = hiddenPosition
-            menuEntry.visible = false
-        } else {
-            menuEntry = null
-        }
-        return menuEntry
     }
 
     static public checkInitialConfig = { config ->
@@ -531,10 +509,10 @@ class ApplicationSupport {
                 log.debug('Error ' + resp.status + ' get ' + uri.toString() + ' ' + responseText)
             }
         } catch (Exception e) {
-            if(log.debugEnabled){
+            if (log.debugEnabled) {
                 e.printStackTrace()
             }
-            if(log.errorEnabled) {
+            if (log.errorEnabled) {
                 log.error(e.message)
             }
         } finally {

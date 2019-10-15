@@ -26,24 +26,14 @@ package org.icescrum.core.services
 import grails.plugin.springsecurity.SpringSecurityUtils
 import grails.plugin.springsecurity.acl.AclEntry
 import grails.plugin.springsecurity.acl.AclSid
+import grails.plugin.springsecurity.userdetails.GrailsUser
 import grails.transaction.Transactional
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.FilenameUtils
 import org.apache.commons.io.filefilter.WildcardFileFilter
 import org.grails.comments.Comment
-import org.icescrum.core.domain.AcceptanceTest
-import org.icescrum.core.domain.Activity
-import org.icescrum.core.domain.Backlog
-import org.icescrum.core.domain.Invitation
+import org.icescrum.core.domain.*
 import org.icescrum.core.domain.Invitation.InvitationType
-import org.icescrum.core.domain.Portfolio
-import org.icescrum.core.domain.Project
-import org.icescrum.core.domain.Story
-import org.icescrum.core.domain.Task
-import org.icescrum.core.domain.Team
-import org.icescrum.core.domain.User
-import org.icescrum.core.domain.Widget
-import org.icescrum.core.domain.Window
 import org.icescrum.core.domain.preferences.UserPreferences
 import org.icescrum.core.error.BusinessException
 import org.icescrum.core.event.IceScrumEventPublisher
@@ -51,6 +41,7 @@ import org.icescrum.core.event.IceScrumEventType
 import org.icescrum.core.support.ApplicationSupport
 import org.icescrum.plugins.attachmentable.domain.Attachment
 import org.springframework.security.acls.domain.BasePermission
+import org.springframework.security.core.context.SecurityContextHolder
 
 @Transactional
 class UserService extends IceScrumEventPublisher {
@@ -249,52 +240,33 @@ class UserService extends IceScrumEventPublisher {
         notificationEmailService.sendNewPassword(user, password)
     }
 
+    Integer getPositionFromUserPreferences(windowDefinition) {
+        UserPreferences userPreferences
+        if (GrailsUser.isAssignableFrom(SecurityContextHolder.context.authentication?.principal?.getClass())) {
+            userPreferences = User.get(SecurityContextHolder.context.authentication.principal?.id)?.preferences
+        }
+        return userPreferences?.menu?.getAt(windowDefinition.id)?.toInteger()
+    }
 
-    void menu(User user, String id, String position, boolean hidden) {
-        def currentMenu
-        if (hidden) {
-            currentMenu = user.preferences.menuHidden
-            if (!currentMenu.containsKey(id)) {
-                currentMenu.put(id, (currentMenu.size() + 1).toString())
-                if (user.preferences.menu.containsKey(id)) {
-                    this.menu(user, id, user.preferences.menu.size().toString(), false)
-                    user.preferences.menu.remove(id)
-                }
-            }
-        } else {
-            currentMenu = user.preferences.menu
-            if (!currentMenu.containsKey(id)) {
-                currentMenu.put(id, (currentMenu.size() + 1).toString())
-                if (user.preferences.menuHidden.containsKey(id)) {
-                    this.menu(user, id, user.preferences.menuHidden.size().toString(), true)
-                    user.preferences.menuHidden.remove(id)
-                }
-            }
+    void updateMenuPosition(User user, String menuId, Integer newPosition) {
+        if (!user.preferences.menu.containsKey(menuId)) {
+            user.preferences.menu.put(menuId, (user.preferences.menu.size() + 1).toString())
         }
-        def from = currentMenu.get(id)?.toInteger()
-        from = from ?: 1
-        def to = position.toInteger()
-        if (from != to) {
-            if (from > to) {
-                currentMenu.entrySet().each { it ->
-                    if (it.value.toInteger() >= to && it.value.toInteger() <= from && it.key != id) {
-                        it.value = (it.value.toInteger() + 1).toString()
-                    } else if (it.key == id) {
-                        it.value = position
-                    }
-                }
-            } else {
-                currentMenu.entrySet().each { it ->
-                    if (it.value.toInteger() <= to && it.value.toInteger() >= from && it.key != id) {
-                        it.value = (it.value.toInteger() - 1).toString()
-                    } else if (it.key == id) {
-                        it.value = position
+        def currentPosition = user.preferences.menu.get(menuId).toInteger()
+        if (currentPosition != newPosition) {
+            user.preferences.menu.entrySet().each { menuEntry ->
+                if (menuEntry.key == menuId) {
+                    menuEntry.value = newPosition.toString()
+                } else {
+                    Range affectedRange = currentPosition..newPosition
+                    int delta = affectedRange.isReverse() ? 1 : -1
+                    Integer menuPosition = menuEntry.value.toInteger()
+                    if (menuPosition in affectedRange) {
+                        menuEntry.value = (menuPosition + delta).toString()
                     }
                 }
             }
         }
-        user.lastUpdated = new Date()
-        user.save()
     }
 
     File getAvatarFile(User user) {
@@ -397,8 +369,7 @@ class UserService extends IceScrumEventPublisher {
                     activity: preferencesXml.activity.text(),
                     filterTask: preferencesXml.filterTask.text(),
                     enableDarkMode: preferencesXml.enableDarkMode.text().toBoolean(),
-                    user: user,
-                    menuHidden: preferencesXml.menuHidden && preferencesXml.menuHidden[0] ? preferencesXml.menuHidden[0].attributes() : [:]
+                    user: user
             )
             if (preferencesXml.menu && preferencesXml.menu[0]) {
                 user.preferences.menu = preferencesXml.menu[0].attributes()
