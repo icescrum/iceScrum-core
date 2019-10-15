@@ -36,6 +36,10 @@ class MenuDefinition {
         this.title = title
     }
 
+    void defaultPosition(int defaultPosition) {
+        this.defaultPosition = defaultPosition
+    }
+
     def methodMissing(String name, args) {
         log.warn("The field $name is unrecognized for menu bar UI definition")
     }
