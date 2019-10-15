@@ -58,15 +58,15 @@ class HookListenerService {
             } else if (workspaceType) {
                 Long workspaceId = findWorkspaceId(type == IceScrumEventType.DELETE ? dirtyProperties : hookableObject, workspaceType)
                 if (workspaceId) {
-                    if (log.debugEnabled) {
-                        log.debug("hook event fired on $workspaceType $workspaceId: $events")
-                    }
+//                    if (log.debugEnabled) {
+//                        log.debug("hook event fired on $workspaceType $workspaceId: $events")
+//                    }
                     allHooks = Hook.queryFindAllByWorkspaceTypeAndWorkspaceIdAndEventsFromList(workspaceType, workspaceId, events)
                 }
             } else if (grailsApplication.config.icescrum.hooks.enable) {
-                if (log.debugEnabled) {
-                    log.debug("hook event fired out of workspace: $events")
-                }
+//                if (log.debugEnabled) {
+//                    log.debug("hook event fired out of workspace: $events")
+//                }
                 allHooks = Hook.queryFindAllByWorkspaceTypeNullAndWorkspaceIdNullAndEventsFromList(events)
             }
         }
