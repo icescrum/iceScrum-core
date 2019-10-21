@@ -174,7 +174,7 @@ class PushService {
     }
 
     public static generatedMessageId(object, eventType) {
-        return object instanceof Map && object.messageId ? object.messageId : (object.class ? getNamespaceFromDomain(object.class) : UUID.randomUUID()) + '-' + eventType + '-' + object.id
+        return object instanceof Map && object.messageId ? object.messageId : (object.class ? getNamespaceFromDomain(object) : UUID.randomUUID()) + '-' + eventType + '-' + object.id
     }
 
     public static def buildMessage(String namespace, String eventType, object) {
