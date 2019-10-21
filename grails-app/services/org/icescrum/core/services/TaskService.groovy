@@ -370,7 +370,8 @@ class TaskService extends IceScrumEventPublisher {
                     state: taskXml.state.text().toInteger(),
                     blocked: taskXml.blocked.text().toBoolean(),
                     uid: taskUid,
-                    color: taskXml.color.text())
+                    color: taskXml.color.text() != '#f9f157' ? taskXml.color.text() : '#ffcc01') //convert old yellow v7.39- in new yellow v7.40+
+
             if (project) {
                 task.creator = creator
                 project.addToTasks(task)
