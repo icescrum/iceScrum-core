@@ -159,14 +159,14 @@ class PushService {
         return bufferedThreads.containsKey(Thread.currentThread().getId())
     }
 
-    def getOnlineUsers(def channel){
+    def getOnlineUsers(def channel) {
         Broadcaster broadcaster = atmosphereMeteor.broadcasterFactory?.lookup(IceScrumBroadcaster.class, channel)
         return broadcaster?.resources?.collect {
             def user = it.request.getAttribute(IceScrumAtmosphereEventListener.USER_CONTEXT)
-            user ? [username: user.username, id:user.id, transport: it.transport().toString()] : [username: 'anonymous', transport: it.transport().toString()]
+            user ? [username: user.username, id: user.id, transport: it.transport().toString()] : [username: 'anonymous', transport: it.transport().toString()]
         }?.unique {
             a, b -> a.username != 'anonymous' ? a.username <=> b.username : 1 //to keep multiple anonymous
-        }?:null
+        } ?: null
     }
 
     private static getNamespaceFromDomain(domain) {
@@ -174,7 +174,7 @@ class PushService {
     }
 
     public static generatedMessageId(object, eventType) {
-        return object instanceof Map && object.messageId ? object.messageId : getNamespaceFromDomain(object) + '-' + eventType + '-' + object.id
+        return object instanceof Map && object.messageId ? object.messageId : (object.class ? getNamespaceFromDomain(object.class) : UUID.randomUUID()) + '-' + eventType + '-' + object.id
     }
 
     public static def buildMessage(String namespace, String eventType, object) {
