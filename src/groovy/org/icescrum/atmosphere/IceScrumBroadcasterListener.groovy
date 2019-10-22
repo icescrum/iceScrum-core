@@ -38,9 +38,9 @@ class IceScrumBroadcasterListener extends BroadcasterListenerAdapter {
         if (broadcaster.getID() == GLOBAL_CONTEXT) {
             updateUsersAndConnections(resources)
         } else {
-            if (broadcaster.getID() != GLOBAL_CONTEXT) {
+/*            if (broadcaster.getID() != GLOBAL_CONTEXT) {
                 updateUsersInWorkspace(broadcaster, resources)
-            }
+            }*/
         }
     }
 
@@ -50,9 +50,9 @@ class IceScrumBroadcasterListener extends BroadcasterListenerAdapter {
         if (broadcaster.getID() == GLOBAL_CONTEXT) {
             updateUsersAndConnections(resources)
         } else {
-            if (broadcaster.getID() != GLOBAL_CONTEXT) {
+/*            if (broadcaster.getID() != GLOBAL_CONTEXT) {
                 updateUsersInWorkspace(broadcaster, resources)
-            }
+            }*/
         }
     }
 
