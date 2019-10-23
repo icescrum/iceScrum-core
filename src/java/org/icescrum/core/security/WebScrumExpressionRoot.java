@@ -47,8 +47,10 @@ public class WebScrumExpressionRoot extends WebSecurityExpressionRoot {
     }
 
     public boolean permitAllWeb() { return !OAuth2ExpressionUtils.isOAuth(super.authentication); }
-    public boolean isAuthenticatedWeb() { return super.authentication.isAuthenticated() && !OAuth2ExpressionUtils.isOAuth(super.authentication); }
-    public boolean hasAnyScopeOauth2(String... scopes) { return OAuth2ExpressionUtils.hasAnyScope(super.authentication, scopes); }
+    public boolean isAuthenticatedWeb() { return isAuthenticated() && !OAuth2ExpressionUtils.isOAuth(super.authentication); }
+    public boolean hasAnyScopeOauth2(String... scopes) {
+        return OAuth2ExpressionUtils.hasAnyScope(super.authentication, scopes);
+    }
 
     public boolean inProject(Project p) {
         return securityService.inProject(p, super.authentication);

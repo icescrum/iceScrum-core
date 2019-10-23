@@ -89,9 +89,9 @@ public class MethodScrumExpressionRoot extends SecurityExpressionRoot {
 
     public boolean permitAllWeb() { return !OAuth2ExpressionUtils.isOAuth(super.authentication); }
 
-    public boolean isAuthenticatedWeb() { return super.authentication.isAuthenticated() && OAuth2ExpressionUtils.isOAuth(super.authentication); }
+    public boolean isAuthenticatedWeb() { return isAuthenticated() && !OAuth2ExpressionUtils.isOAuth(super.authentication); }
 
-    public boolean Oauth2HasAnyScope(String... scopes) { return super.authentication.isAuthenticated() && OAuth2ExpressionUtils.hasAnyScope(super.authentication, scopes); }
+    public boolean Oauth2HasAnyScope(String... scopes) { return OAuth2ExpressionUtils.hasAnyScope(super.authentication, scopes); }
 
     public boolean inProject(Project p) {
         return securityService.inProject(p, super.authentication);
