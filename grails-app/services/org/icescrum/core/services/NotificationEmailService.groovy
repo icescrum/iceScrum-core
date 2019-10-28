@@ -352,7 +352,7 @@ class NotificationEmailService {
 
     private static Map receiversByLocale(candidates, Long senderId, Map options = null) {
         candidates?.findAll { User candidate ->
-            candidate.enabled && (candidate.id != senderId) && (!options || (options.pkey in candidate.preferences.emailsSettings[options.type]))
+            candidate.enabled && !candidate.preferences.needsEmailValidation && (candidate.id != senderId) && (!options || (options.pkey in candidate.preferences.emailsSettings[options.type]))
         }?.collect { User receiver ->
             [email: receiver.email, locale: receiver.locale]
         }?.unique()?.groupBy { receiver ->

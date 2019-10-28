@@ -40,6 +40,7 @@ class UserPreferences implements Serializable {
 
     String colorScheme
 
+    Boolean needsEmailValidation = false
     Boolean displayReleaseNotes = false
     boolean displayWhatsNew = false
     boolean displayWelcomeTour = true
@@ -55,6 +56,7 @@ class UserPreferences implements Serializable {
         activity nullable: true
         lastProjectOpened nullable: true
         emailsSettingsData nullable: true
+        needsEmailValidation nullable: true
         displayReleaseNotes nullable: true
         colorScheme nullable: true
     }
@@ -107,6 +109,7 @@ class UserPreferences implements Serializable {
             builder.activity(this.activity)
             builder.filterTask(this.filterTask)
             builder.colorScheme(this.colorScheme)
+            builder.needsEmailValidation(this.needsEmailValidation)
             builder.displayReleaseNotes(this.displayReleaseNotes)
             builder.displayWhatsNew(this.displayWhatsNew)
             builder.lastProjectOpened(this.lastProjectOpened)
