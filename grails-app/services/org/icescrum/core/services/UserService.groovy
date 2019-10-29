@@ -295,7 +295,11 @@ class UserService extends IceScrumEventPublisher {
                 }
                 invitation.save()
                 try {
-                    notificationEmailService.sendInvitation(invitation, springSecurityService.currentUser)
+                    if (((User) springSecurityService.currentUser).preferences.needsEmailValidation) {
+                        throw new BusinessException(code: 'is.mail.error.needsEmailValidation')
+                    } else {
+                        notificationEmailService.sendInvitation(invitation, springSecurityService.currentUser)
+                    }
                 } catch (MailException) {
                     throw new BusinessException(code: 'is.mail.error')
                 }
