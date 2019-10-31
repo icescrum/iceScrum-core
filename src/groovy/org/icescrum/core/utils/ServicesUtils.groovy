@@ -56,8 +56,8 @@ class ServicesUtils {
     public static String textileToHtml(String text) {
         String html = text ? new MarkupParser(markupLanguage: new TextileLanguage()).parseToHtml(text) : ''
         if (html) {
-            html = html.replaceAll('\\[ *\\]', '<i class="fa fa-square-o" html-textile-checkbox></i>');
-            html = html.replaceAll('\\[ *[xX] *\\]', '<i class="fa fa-check-square-o" html-textile-checkbox></i>');
+            html = html.replaceAll('\\[ *\\]', '<i class="fa fa-square-o" markitup-checkbox="options" tabindex="0"></i>');
+            html = html.replaceAll('\\[ *[xX] *\\]', '<i class="fa fa-check-square-o" markitup-checkbox="options" tabindex="0"></i>');
         }
         return html ? html.substring((html.indexOf("<body>") + "<body>".size()), html.indexOf("</body>")) : html
     }
