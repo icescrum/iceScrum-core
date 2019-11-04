@@ -34,6 +34,7 @@ import org.icescrum.core.domain.Invitation.InvitationType
 import org.icescrum.core.domain.preferences.ProjectPreferences
 import org.icescrum.core.domain.security.Authority
 import org.icescrum.core.services.SecurityService
+import org.icescrum.core.utils.ServicesUtils
 import org.icescrum.plugins.attachmentable.interfaces.Attachmentable
 import org.springframework.security.acls.domain.BasePermission
 import org.springframework.security.acls.model.Acl
@@ -384,15 +385,19 @@ class Project extends TimeBox implements Serializable, Attachmentable {
             eq('parentProject', this)
             ne('state', Release.STATE_DONE)
             projections {
-                property("id", "id")
-                property("name", "name")
-                property("state", "state")
-                property("firstSprintIndex", "firstSprintIndex")
+                property('id', 'id')
+                property('name', 'name')
+                property('state', 'state')
+                property('firstSprintIndex', 'firstSprintIndex')
+                property('startDate', 'startDate')
+                property('endDate', 'endDate')
+                property('vision', 'vision')
             }
             order("state", "desc")
             maxResults(1)
         }
         if (release?.id) {
+            release.vision_html = ServicesUtils.textileToHtml(release.vision)
             def sprintAndCount = Sprint.executeQuery("""
                 SELECT s.id, s.goal, s.state, s.orderNumber, s.velocity, s.capacity, s.endDate, s.startDate
                 FROM Sprint s
@@ -400,7 +405,14 @@ class Project extends TimeBox implements Serializable, Attachmentable {
                 AND s.state in (:states)
                 ORDER BY s.state DESC """, [parentReleaseId: release.id, states: [Sprint.STATE_INPROGRESS, Sprint.STATE_WAIT]], [max: 1])[0]
             if (sprintAndCount) {
-                def sprint = [id: sprintAndCount[0], goal: sprintAndCount[1], state: sprintAndCount[2], orderNumber: sprintAndCount[3], velocity: sprintAndCount[4], capacity: sprintAndCount[5], endDate: sprintAndCount[6], startDate: sprintAndCount[7]]
+                def sprint = [id: sprintAndCount[0],
+                              goal: sprintAndCount[1],
+                              state: sprintAndCount[2],
+                              orderNumber: sprintAndCount[3],
+                              velocity: sprintAndCount[4],
+                              capacity: sprintAndCount[5],
+                              endDate: sprintAndCount[6],
+                              startDate: sprintAndCount[7]]
                 sprint.index = sprint.orderNumber + release.remove('firstSprintIndex') - 1
                 release.currentOrNextSprint = sprint
             }
