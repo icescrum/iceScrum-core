@@ -251,7 +251,7 @@ class NotificationEmailService {
     }
 
     void sendInvitation(Invitation invitation, User inviter) {
-        def link = grailsApplication.config.icescrum.serverURL + '/#/user/register/' + invitation.token
+        def link = grailsApplication.config.icescrum.serverURL + '/user/register/' + invitation.token
         def invitedIn
         switch (invitation.type) {
             case Invitation.InvitationType.PORTFOLIO:
