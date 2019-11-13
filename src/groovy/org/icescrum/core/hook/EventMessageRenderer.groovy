@@ -36,8 +36,9 @@ trait EventMessageRenderer {
         String eventPush = (event.split(/\./)[1]).toUpperCase()
         def threadId = Thread.currentThread().getId()
         def messageId = PushService.generatedMessageId(object, eventPush)
-        return Holders.grailsApplication.mainContext.pushService.bufferedThreads?.get(threadId)*.value*.find {
+        def content = Holders.grailsApplication.mainContext.pushService.bufferedThreads?.get(threadId)*.value*.find {
             messageId == it.messageId
-        }?.content ?: null
+        }?.content
+        return content?.size() ? new String(content[0].decodeBase64()) : null
     }
 }

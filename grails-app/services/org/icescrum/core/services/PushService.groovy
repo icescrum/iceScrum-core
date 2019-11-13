@@ -149,7 +149,7 @@ class PushService {
                     if (log.debugEnabled) {
                         log.debug("broadcast " + messages.size() + " buffered messages on channel $channel")
                     }
-                    broadcaster.broadcast(messages.collect({ it.content }).join(BUFFER_MESSAGE_DELIMITER))
+                    broadcaster.broadcast(messages.collect({ it as JSON }).join(BUFFER_MESSAGE_DELIMITER))
                 }
             }
         }
@@ -178,8 +178,11 @@ class PushService {
     }
 
     public static def buildMessage(String namespace, String eventType, object) {
-        def message = [messageId: generatedMessageId(object, eventType), namespace: namespace, eventType: eventType, object: object]
-        message.content = (message as JSON).toString() // toString() required to serialize eagerly (otherwise error because no session in atmosphere thread)
+        def message = [
+                messageId: generatedMessageId(object, eventType),
+                namespace: namespace,
+                content  : (object as JSON).toString().encodeAsBase64(),
+                eventType: eventType]
         return message
     }
 }
