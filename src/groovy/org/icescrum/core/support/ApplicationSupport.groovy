@@ -52,6 +52,7 @@ import org.apache.http.util.EntityUtils
 import org.codehaus.groovy.grails.web.servlet.GrailsApplicationAttributes
 import org.codehaus.groovy.grails.web.servlet.mvc.GrailsWebRequest
 import org.codehaus.groovy.grails.web.util.WebUtils
+import org.icescrum.atmosphere.IceScrumAtmosphereEventListener
 import org.icescrum.core.app.AppDefinition
 import org.icescrum.core.domain.*
 import org.icescrum.core.domain.security.Authority
@@ -829,6 +830,44 @@ class ApplicationSupport {
             throw new SignatureException("Failed to generate HMAC : " + e.getMessage())
         }
         return result
+    }
+
+    static List<Map> getUsersFromAtmosphereResources(def resources, def includeIp = false){
+        def users = resources.collect {
+            def user
+            try { // catch exception from atmosphere
+                def userData = it.request.getAttribute(IceScrumAtmosphereEventListener.USER_CONTEXT)
+                user = [username: userData ? userData.username : 'anonymous',
+                        id: userData ? userData.id : null,
+                        transport: it.transport().toString()]
+                if(includeIp){
+                    user.ip = getAddressIp(it.request)
+                }
+            } catch (IllegalStateException e) {
+                user = null
+            }
+            return user
+        }
+        users.removeAll([null]) // case we catched an exception from atmosphere
+        users = users?.unique {
+            a, b -> a.username != 'anonymous' ? a.username <=> b.username : 1 //to keep multiple anonymous
+        } ?: null
+        return users
+    }
+
+    private static String getAddressIp(def request) {
+        String ip
+        if (request.getHeader("X-Forwarded-For") != null) {
+            String xForwardedFor = request.getHeader("X-Forwarded-For")
+            if (xForwardedFor.indexOf(",") != -1) {
+                ip = xForwardedFor.substring(xForwardedFor.lastIndexOf(",") + 2)
+            } else {
+                ip = xForwardedFor
+            }
+        } else {
+            ip = request.getRemoteAddr()
+        }
+        return ip
     }
 }
 

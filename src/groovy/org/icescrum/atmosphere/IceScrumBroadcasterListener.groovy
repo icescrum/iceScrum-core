@@ -26,6 +26,7 @@ import org.atmosphere.cpr.AtmosphereResource
 import org.atmosphere.cpr.Broadcaster
 import org.atmosphere.cpr.BroadcasterListenerAdapter
 import org.icescrum.core.services.PushService
+import org.icescrum.core.support.ApplicationSupport
 
 class IceScrumBroadcasterListener extends BroadcasterListenerAdapter {
 
@@ -38,9 +39,9 @@ class IceScrumBroadcasterListener extends BroadcasterListenerAdapter {
         if (broadcaster.getID() == GLOBAL_CONTEXT) {
             updateUsersAndConnections(resources)
         } else {
-/*            if (broadcaster.getID() != GLOBAL_CONTEXT) {
+            if (broadcaster.getID() != GLOBAL_CONTEXT) {
                 updateUsersInWorkspace(broadcaster, resources)
-            }*/
+            }
         }
     }
 
@@ -50,21 +51,15 @@ class IceScrumBroadcasterListener extends BroadcasterListenerAdapter {
         if (broadcaster.getID() == GLOBAL_CONTEXT) {
             updateUsersAndConnections(resources)
         } else {
-/*            if (broadcaster.getID() != GLOBAL_CONTEXT) {
+            if (broadcaster.getID() != GLOBAL_CONTEXT) {
                 updateUsersInWorkspace(broadcaster, resources)
-            }*/
+            }
         }
     }
 
     private synchronized void updateUsersAndConnections(List<AtmosphereResource> resources) {
         def config = grailsApplication.config.icescrum.atmosphere
-        def users = resources.collect { AtmosphereResource it ->
-            [username : it.request.getAttribute(IceScrumAtmosphereEventListener.USER_CONTEXT)?.username ?: 'anonymous',
-             transport: it.transport().toString(),
-             ip       : getAddressIp(it.request)]
-        }.unique {
-            a, b -> a.username != 'anonymous' ? a.username <=> b.username : 1 //to keep multiple anonymous
-        }
+        def users = ApplicationSupport.getUsersFromAtmosphereResources(resources, true)
         config.liveUsers = users
         if (users.size() > config.maxUsers.size()) {
             config.maxUsers = users
@@ -78,31 +73,11 @@ class IceScrumBroadcasterListener extends BroadcasterListenerAdapter {
     }
 
     private synchronized void updateUsersInWorkspace(Broadcaster broadcaster, List<AtmosphereResource> resources) {
-        def users = resources.collect {
-            def user = it.request.getAttribute(IceScrumAtmosphereEventListener.USER_CONTEXT)
-            user ? [username: user.username, id: user.id, transport: it.transport().toString()] : [username: 'anonymous', transport: it.transport().toString()]
-        }.unique {
-            a, b -> a.username != 'anonymous' ? a.username <=> b.username : 1 //to keep multiple anonymous
-        }
+        def users = ApplicationSupport.getUsersFromAtmosphereResources(resources)
         def workspace = broadcaster.getID() - "/stream/app/"
         workspace = workspace.split('-')
         workspace = [id: workspace[1].toLong(), type: workspace[0]]
         def message = PushService.buildMessage(workspace.type, "onlineMembers", [messageId: "online-users-${workspace.type}-${workspace.id}", "${workspace.type}": [id: workspace.id, onlineMembers: users]]).content
         broadcaster.broadcast(message)
-    }
-
-    private static String getAddressIp(def request) {
-        String ip
-        if (request.getHeader("X-Forwarded-For") != null) {
-            String xForwardedFor = request.getHeader("X-Forwarded-For")
-            if (xForwardedFor.indexOf(",") != -1) {
-                ip = xForwardedFor.substring(xForwardedFor.lastIndexOf(",") + 2)
-            } else {
-                ip = xForwardedFor
-            }
-        } else {
-            ip = request.getRemoteAddr()
-        }
-        return ip
     }
 }

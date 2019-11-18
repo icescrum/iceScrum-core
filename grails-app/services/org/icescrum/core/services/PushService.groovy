@@ -32,6 +32,7 @@ import org.icescrum.atmosphere.IceScrumAtmosphereEventListener
 import org.icescrum.atmosphere.IceScrumBroadcaster
 import org.icescrum.core.domain.User
 import org.icescrum.core.event.IceScrumEventType
+import org.icescrum.core.support.ApplicationSupport
 
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
@@ -161,18 +162,7 @@ class PushService {
 
     def getOnlineUsers(def channel) {
         Broadcaster broadcaster = atmosphereMeteor.broadcasterFactory?.lookup(IceScrumBroadcaster.class, channel)
-        def users = broadcaster?.resources?.collect {
-            def user = null
-            try { // catch exception from atmosphere
-                def userData = it.request.getAttribute(IceScrumAtmosphereEventListener.USER_CONTEXT)
-                user = userData ? [username: userData.username, id: userData.id, transport: it.transport().toString()] : [username: 'anonymous', transport: it.transport().toString()]
-            } catch (IllegalStateException e) {}
-            return user
-        }
-        users.removeAll([null]) // case we catched an exception from atmosphere
-        return users?.unique {
-            a, b -> a.username != 'anonymous' ? a.username <=> b.username : 1 //to keep multiple anonymous
-        } ?: null
+        return broadcaster ? ApplicationSupport.getUsersFromAtmosphereResources(broadcaster.resources) : null
     }
 
     private static getNamespaceFromDomain(domain) {
