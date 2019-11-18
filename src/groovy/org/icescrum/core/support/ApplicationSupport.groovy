@@ -851,7 +851,7 @@ class ApplicationSupport {
         users.removeAll([null]) // case we catched an exception from atmosphere
         users = users?.unique {
             a, b -> a.username != 'anonymous' ? a.username <=> b.username : 1 //to keep multiple anonymous
-        } ?: null
+        } ?: []
         return users
     }
 

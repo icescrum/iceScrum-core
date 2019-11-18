@@ -63,7 +63,7 @@ class PushService {
                     if (log.debugEnabled) {
                         log.debug("Broadcast to everybody on channel $channel - $namespace - $eventType")
                     }
-                    broadcaster.broadcast(buildMessage(namespace, eventType, object).content)
+                    broadcaster.broadcast(buildMessage(namespace, eventType, object) as JSON)
                 }
             } else {
                 if (log.debugEnabled) {
@@ -86,7 +86,7 @@ class PushService {
                     if (log.debugEnabled) {
                         log.debug('Broadcast to ' + resources*.uuid().join(', ') + ' on channel ' + channel)
                     }
-                    broadcaster.broadcast(buildMessage(namespace, eventType, object).content, resources)
+                    broadcaster.broadcast(buildMessage(namespace, eventType, object) as JSON, resources)
                 }
             } catch (Exception e) {
                 // Request object no longer valid.  This object has been cancelled, see https://github.com/Atmosphere/atmosphere/issues/1052

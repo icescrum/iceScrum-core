@@ -21,6 +21,7 @@
  */
 package org.icescrum.atmosphere
 
+import grails.converters.JSON
 import grails.util.Holders
 import org.atmosphere.cpr.AtmosphereResource
 import org.atmosphere.cpr.Broadcaster
@@ -77,7 +78,7 @@ class IceScrumBroadcasterListener extends BroadcasterListenerAdapter {
         def workspace = broadcaster.getID() - "/stream/app/"
         workspace = workspace.split('-')
         workspace = [id: workspace[1].toLong(), type: workspace[0]]
-        def message = PushService.buildMessage(workspace.type, "onlineMembers", [messageId: "online-users-${workspace.type}-${workspace.id}", "${workspace.type}": [id: workspace.id, onlineMembers: users]]).content
-        broadcaster.broadcast(message)
+        def message = PushService.buildMessage(workspace.type, "onlineMembers", ["messageId": "online-users-${workspace.type}-${workspace.id}", "${workspace.type}": ["id": workspace.id, "onlineMembers": users]])
+        broadcaster.broadcast(message as JSON)
     }
 }
