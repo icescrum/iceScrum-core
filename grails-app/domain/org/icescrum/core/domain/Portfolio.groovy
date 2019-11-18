@@ -55,7 +55,7 @@ class Portfolio {
         name(blank: false, maxSize: 200)
         fkey(blank: false, maxSize: 10, matches: /^[A-Z0-9]*[A-Z][A-Z0-9]*$/, unique: true)
         description(maxSize: 5000, nullable: true)
-        projects(maxSize: 10)
+        projects(maxSize: 20)
     }
 
     static transients = ['businessOwners', 'stakeHolders', 'invitedBusinessOwners', 'invitedStakeHolders']
