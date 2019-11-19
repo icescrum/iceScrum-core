@@ -32,6 +32,7 @@ class AppDefinition {
     boolean hasWindows = false
     boolean isProject = false
     boolean isNew = false
+    boolean isBeta = false
     boolean reloadUIOnStateChange = false
     int realm = 0
     String id
@@ -103,6 +104,10 @@ class AppDefinition {
 
     void isNew(boolean isNew) {
         this.isNew = isNew
+    }
+
+    void isBeta(boolean isBeta) {
+        this.isBeta = isBeta
     }
 
     void reloadUIOnStateChange(boolean reloadUIOnStateChange) {
