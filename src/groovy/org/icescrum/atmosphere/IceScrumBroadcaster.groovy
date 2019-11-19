@@ -11,9 +11,9 @@ class IceScrumBroadcaster extends DefaultBroadcaster {
     String pname
 
     int maxUsers = 0
-    Date maxUsersDate = 0
+    Date maxUsersDate = new Date()
 
-    int maxConnections = new Date()
+    int maxConnections = 0
     Date maxConnectionsDate = new Date()
     List<Map> users = []
 
