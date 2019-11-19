@@ -833,7 +833,7 @@ class ApplicationSupport {
     }
 
     static List<Map> getUsersFromAtmosphereResources(def resources, def includeIp = false){
-        def users = resources.collect {
+        /*def users = resources.collect {
             def user
             try { // catch exception from atmosphere
                 def userData = it.request.getAttribute(IceScrumAtmosphereEventListener.USER_CONTEXT)
@@ -851,8 +851,8 @@ class ApplicationSupport {
         users.removeAll([null]) // case we catched an exception from atmosphere
         users = users?.unique {
             a, b -> a.username != 'anonymous' ? a.username <=> b.username : 1 //to keep multiple anonymous
-        } ?: []
-        return users
+        } ?: []*/
+        return []
     }
 
     private static String getAddressIp(def request) {
