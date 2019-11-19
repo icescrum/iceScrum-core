@@ -160,11 +160,6 @@ class PushService {
         return bufferedThreads.containsKey(Thread.currentThread().getId())
     }
 
-    def getOnlineUsers(def channel) {
-        Broadcaster broadcaster = atmosphereMeteor.broadcasterFactory?.lookup(IceScrumBroadcaster.class, channel)
-        return broadcaster ? ApplicationSupport.getUsersFromAtmosphereResources(broadcaster.resources) : null
-    }
-
     private static getNamespaceFromDomain(domain) {
         return GrailsNameUtils.getShortName(domain.class).toLowerCase()
     }

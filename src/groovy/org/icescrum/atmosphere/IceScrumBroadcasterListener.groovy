@@ -32,53 +32,62 @@ import org.icescrum.core.support.ApplicationSupport
 class IceScrumBroadcasterListener extends BroadcasterListenerAdapter {
 
     public static final GLOBAL_CONTEXT = '/stream/app/*'
-    def grailsApplication = Holders.applicationContext.getBean("grailsApplication")
 
     @Override
-    void onAddAtmosphereResource(Broadcaster broadcaster, AtmosphereResource atmosphereResource) {
-        def resources = broadcaster.atmosphereResources.findAll { !it.isCancelled() }
-        if (broadcaster.getID() == GLOBAL_CONTEXT) {
-            updateUsersAndConnections(resources)
-        } else {
-            if (broadcaster.getID() != GLOBAL_CONTEXT) {
-                updateUsersInWorkspace(broadcaster, resources)
-            }
+    void onAddAtmosphereResource(Broadcaster _broadcaster, AtmosphereResource atmosphereResource) {
+        IceScrumBroadcaster broadcaster = (IceScrumBroadcaster) _broadcaster
+        def user = getUserFromAtmosphereResource(atmosphereResource, broadcaster.getID() == GLOBAL_CONTEXT)
+        if (broadcaster.addUser(user) && broadcaster.getID() != GLOBAL_CONTEXT) {
+            updateUsersInWorkspace(broadcaster)
         }
     }
 
     @Override
-    void onRemoveAtmosphereResource(Broadcaster broadcaster, AtmosphereResource atmosphereResource) {
-        def resources = broadcaster.atmosphereResources.findAll { !it.isCancelled() }
-        if (broadcaster.getID() == GLOBAL_CONTEXT) {
-            updateUsersAndConnections(resources)
-        } else {
-            if (broadcaster.getID() != GLOBAL_CONTEXT) {
-                updateUsersInWorkspace(broadcaster, resources)
-            }
+    void onRemoveAtmosphereResource(Broadcaster _broadcaster, AtmosphereResource atmosphereResource) {
+        IceScrumBroadcaster broadcaster = (IceScrumBroadcaster) _broadcaster
+        def user = getUserFromAtmosphereResource(atmosphereResource, broadcaster.getID() == GLOBAL_CONTEXT)
+        if (broadcaster.removeUser(user) && broadcaster.getID() != GLOBAL_CONTEXT) {
+            updateUsersInWorkspace(broadcaster)
         }
     }
 
-    private synchronized void updateUsersAndConnections(List<AtmosphereResource> resources) {
-        def config = grailsApplication.config.icescrum.atmosphere
-        def users = ApplicationSupport.getUsersFromAtmosphereResources(resources, true)
-        config.liveUsers = users
-        if (users.size() > config.maxUsers.size()) {
-            config.maxUsers = users
-            config.maxUsersDate = new Date()
-        }
-        config.liveConnections = resources.size() ?: 0
-        if (config.liveConnections > config.maxConnections) {
-            config.maxConnections = config.liveConnections
-            config.maxConnectionsDate = new Date()
-        }
-    }
-
-    private synchronized void updateUsersInWorkspace(Broadcaster broadcaster, List<AtmosphereResource> resources) {
-        def users = ApplicationSupport.getUsersFromAtmosphereResources(resources)
+    private synchronized void updateUsersInWorkspace(Broadcaster _broadcaster) {
+        IceScrumBroadcaster broadcaster = (IceScrumBroadcaster) _broadcaster
         def workspace = broadcaster.getID() - "/stream/app/"
         workspace = workspace.split('-')
         workspace = [id: workspace[1].toLong(), type: workspace[0]]
-        def message = PushService.buildMessage(workspace.type, "onlineMembers", ["messageId": "online-users-${workspace.type}-${workspace.id}", "${workspace.type}": ["id": workspace.id, "onlineMembers": users]])
+        def message = PushService.buildMessage(workspace.type, "onlineMembers", ["messageId": "online-users-${workspace.type}-${workspace.id}", "${workspace.type}": ["id": workspace.id, "onlineMembers": broadcaster.users]])
         broadcaster.broadcast(message as JSON)
+    }
+
+    private static Map getUserFromAtmosphereResource(def resource, def includeIp = false) {
+        def user
+        try { // catch exception from atmosphere
+            def userData = resource.getRequest(false).getAttribute(IceScrumAtmosphereEventListener.USER_CONTEXT)
+            user = [username : userData ? userData.username : 'anonymous',
+                    id       : userData ? userData.id : null,
+                    transport: resource.transport().toString()]
+            if (includeIp) {
+                user.ip = getAddressIp(resource.request)
+            }
+        } catch (IllegalStateException e) {
+
+        }
+        return user
+    }
+
+    private static String getAddressIp(def request) {
+        String ip
+        if (request.getHeader("X-Forwarded-For") != null) {
+            String xForwardedFor = request.getHeader("X-Forwarded-For")
+            if (xForwardedFor.indexOf(",") != -1) {
+                ip = xForwardedFor.substring(xForwardedFor.lastIndexOf(",") + 2)
+            } else {
+                ip = xForwardedFor
+            }
+        } else {
+            ip = request.getRemoteAddr()
+        }
+        return ip
     }
 }
