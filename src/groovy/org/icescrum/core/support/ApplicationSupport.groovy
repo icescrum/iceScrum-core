@@ -154,6 +154,24 @@ class ApplicationSupport {
         return mySQLUTF8mb4
     }
 
+    static boolean betaFeatureEnabled(name) {
+        Holders.grailsApplication.config.icescrum.beta?."${name}"?.enable ?: false
+    }
+
+    static boolean addToBetaFeatures(name, enabledByDefault = false) {
+        if (!Holders.grailsApplication.config.publicSettings.beta) {
+            Holders.grailsApplication.config.publicSettings.beta = []
+        }
+        Holders.grailsApplication.config.publicSettings.beta << [key: "icescrum.beta.${name}.enable", type: 'checkbox']
+        if (!(Holders.grailsApplication.config.icescrum.beta."${name}".enable instanceof Boolean)) {
+            Holders.grailsApplication.config.icescrum.beta."${name}".enable = enabledByDefault
+        }
+    }
+
+    static boolean listBetaFeatures(enabled) {
+        return Holders.grailsApplication.config.icescrum.beta.collect{ enabled ? it.enable : true }
+    }
+
     static boolean isUTF8Database() {
         def driverClassName = Holders.grailsApplication.config.dataSource.driverClassName
         def disabled = driverClassName == 'com.mysql.jdbc.Driver' && !isMySQLUTF8mb4() || driverClassName == 'com.microsoft.sqlserver.jdbc.SQLServerDriver'

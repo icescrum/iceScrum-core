@@ -35,20 +35,26 @@ class IceScrumBroadcasterListener extends BroadcasterListenerAdapter {
 
     @Override
     void onAddAtmosphereResource(Broadcaster _broadcaster, AtmosphereResource atmosphereResource) {
-        IceScrumBroadcaster broadcaster = (IceScrumBroadcaster) _broadcaster
-        /*def user = getUserFromAtmosphereResource(atmosphereResource, broadcaster.getID() == GLOBAL_CONTEXT)
-        if (broadcaster.addUser(user) && broadcaster.getID() != GLOBAL_CONTEXT) {
-            updateUsersInWorkspace(broadcaster)
-        }*/
+        if (ApplicationSupport.betaFeatureEnabled('onlineUsers')) {
+            IceScrumBroadcaster broadcaster = (IceScrumBroadcaster) _broadcaster
+            def user = getUserFromAtmosphereResource(atmosphereResource, broadcaster.getID() == GLOBAL_CONTEXT)
+            if (broadcaster.addUser(user) && broadcaster.getID() != GLOBAL_CONTEXT) {
+                updateUsersInWorkspace(broadcaster)
+            }
+        }
     }
 
     @Override
     void onRemoveAtmosphereResource(Broadcaster _broadcaster, AtmosphereResource atmosphereResource) {
-        IceScrumBroadcaster broadcaster = (IceScrumBroadcaster) _broadcaster
-        /*def user = getUserFromAtmosphereResource(atmosphereResource, broadcaster.getID() == GLOBAL_CONTEXT)
-        if (broadcaster.removeUser(user) && broadcaster.getID() != GLOBAL_CONTEXT) {
-            updateUsersInWorkspace(broadcaster)
-        }*/
+        if (ApplicationSupport.betaFeatureEnabled('onlineUsers')) {
+            IceScrumBroadcaster broadcaster = (IceScrumBroadcaster) _broadcaster
+            if (!atmosphereResource.isResumed() && Holders.grailsApplication.config.icescrum.enableBetaOnline) {
+                def user = getUserFromAtmosphereResource(atmosphereResource, broadcaster.getID() == GLOBAL_CONTEXT)
+                if (broadcaster.removeUser(user) && broadcaster.getID() != GLOBAL_CONTEXT) {
+                    updateUsersInWorkspace(broadcaster)
+                }
+            }
+        }
     }
 
     private synchronized void updateUsersInWorkspace(Broadcaster _broadcaster) {
