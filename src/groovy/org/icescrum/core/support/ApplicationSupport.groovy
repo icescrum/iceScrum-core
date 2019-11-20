@@ -162,7 +162,7 @@ class ApplicationSupport {
         if (!Holders.grailsApplication.config.publicSettings.beta) {
             Holders.grailsApplication.config.publicSettings.beta = []
         }
-        Holders.grailsApplication.config.publicSettings.beta << [key: "icescrum.beta.${name}.enable", type: 'checkbox']
+        Holders.grailsApplication.config.publicSettings.beta << [key: "icescrum.beta.${name}.enable".toString(), type: 'checkbox']
         if (!(Holders.grailsApplication.config.icescrum.beta."${name}".enable instanceof Boolean)) {
             Holders.grailsApplication.config.icescrum.beta."${name}".enable = enabledByDefault
         }

@@ -35,7 +35,7 @@ class IceScrumBroadcasterListener extends BroadcasterListenerAdapter {
 
     @Override
     void onAddAtmosphereResource(Broadcaster _broadcaster, AtmosphereResource atmosphereResource) {
-        if (ApplicationSupport.betaFeatureEnabled('onlineUsers')) {
+        if (ApplicationSupport.betaFeatureEnabled('usersOnline')) {
             IceScrumBroadcaster broadcaster = (IceScrumBroadcaster) _broadcaster
             def user = getUserFromAtmosphereResource(atmosphereResource, broadcaster.getID() == GLOBAL_CONTEXT)
             if (broadcaster.addUser(user) && broadcaster.getID() != GLOBAL_CONTEXT) {
@@ -46,7 +46,7 @@ class IceScrumBroadcasterListener extends BroadcasterListenerAdapter {
 
     @Override
     void onRemoveAtmosphereResource(Broadcaster _broadcaster, AtmosphereResource atmosphereResource) {
-        if (ApplicationSupport.betaFeatureEnabled('onlineUsers')) {
+        if (ApplicationSupport.betaFeatureEnabled('usersOnline')) {
             IceScrumBroadcaster broadcaster = (IceScrumBroadcaster) _broadcaster
             if (!atmosphereResource.isResumed() && Holders.grailsApplication.config.icescrum.enableBetaOnline) {
                 def user = getUserFromAtmosphereResource(atmosphereResource, broadcaster.getID() == GLOBAL_CONTEXT)
