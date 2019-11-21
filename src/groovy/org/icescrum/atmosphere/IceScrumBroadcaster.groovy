@@ -43,7 +43,7 @@ class IceScrumBroadcaster extends DefaultBroadcaster {
     }
 
     int getLiveUsers() {
-        return users.size()?:0
+        return users.size() ?: 0
     }
 
     int getLiveConnections() {

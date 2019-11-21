@@ -32,7 +32,6 @@ import org.icescrum.atmosphere.IceScrumAtmosphereEventListener
 import org.icescrum.atmosphere.IceScrumBroadcaster
 import org.icescrum.core.domain.User
 import org.icescrum.core.event.IceScrumEventType
-import org.icescrum.core.support.ApplicationSupport
 
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList

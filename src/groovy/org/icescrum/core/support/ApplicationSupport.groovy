@@ -52,7 +52,6 @@ import org.apache.http.util.EntityUtils
 import org.codehaus.groovy.grails.web.servlet.GrailsApplicationAttributes
 import org.codehaus.groovy.grails.web.servlet.mvc.GrailsWebRequest
 import org.codehaus.groovy.grails.web.util.WebUtils
-import org.icescrum.atmosphere.IceScrumAtmosphereEventListener
 import org.icescrum.core.app.AppDefinition
 import org.icescrum.core.domain.*
 import org.icescrum.core.domain.security.Authority
@@ -171,7 +170,7 @@ class ApplicationSupport {
     }
 
     static boolean listBetaFeatures(enabled) {
-        return Holders.grailsApplication.config.icescrum.beta.collect{ enabled ? it.enable : true }
+        return Holders.grailsApplication.config.icescrum.beta.collect { enabled ? it.enable : true }
     }
 
     static boolean isUTF8Database() {
