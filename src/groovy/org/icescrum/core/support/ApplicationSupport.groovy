@@ -160,7 +160,9 @@ class ApplicationSupport {
 
     static boolean addToBetaFeatures(name, enabledByDefault = false) {
         if (!Holders.grailsApplication.config.publicSettings.beta) {
-            Holders.grailsApplication.config.publicSettings.beta = []
+            Holders.grailsApplication.config.publicSettings.beta = [
+                    [key: 'icescrum.beta.enable', type: 'checkbox', jsIf: 'false' /* fake hidden */],
+            ]
         }
         Holders.grailsApplication.config.publicSettings.beta << [key: "icescrum.beta.${name}.enable".toString(), type: 'checkbox']
         if (!(Holders.grailsApplication.config.icescrum.beta."${name}".enable instanceof Boolean)) {
