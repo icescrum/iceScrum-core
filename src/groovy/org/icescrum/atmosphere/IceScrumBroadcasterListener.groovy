@@ -48,7 +48,7 @@ class IceScrumBroadcasterListener extends BroadcasterListenerAdapter {
     void onRemoveAtmosphereResource(Broadcaster _broadcaster, AtmosphereResource atmosphereResource) {
         if (ApplicationSupport.betaFeatureEnabled('usersOnline')) {
             IceScrumBroadcaster broadcaster = (IceScrumBroadcaster) _broadcaster
-            if (!atmosphereResource.isResumed() && Holders.grailsApplication.config.icescrum.enableBetaOnline) {
+            if (!atmosphereResource.isResumed()) {
                 def user = getUserFromAtmosphereResource(atmosphereResource, broadcaster.getID() == GLOBAL_CONTEXT)
                 if (broadcaster.removeUser(user) && broadcaster.getID() != GLOBAL_CONTEXT) {
                     updateUsersInWorkspace(broadcaster)
@@ -72,6 +72,7 @@ class IceScrumBroadcasterListener extends BroadcasterListenerAdapter {
             def userData = resource.getRequest(false).getAttribute(IceScrumAtmosphereEventListener.USER_CONTEXT)
             user = [username : userData ? userData.username : 'anonymous',
                     id       : userData ? userData.id : null,
+                    uuid     : resource.uuid(),
                     transport: resource.transport().toString()]
             if (includeIp) {
                 user.ip = getAddressIp(resource.request)

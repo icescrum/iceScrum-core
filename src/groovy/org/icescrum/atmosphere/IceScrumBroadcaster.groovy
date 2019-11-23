@@ -51,7 +51,7 @@ class IceScrumBroadcaster extends DefaultBroadcaster {
     }
 
     boolean addUser(def user) {
-        if (user.username == 'anonymous' || !users.find { it.username == user.username }) {
+        if (!users.find { it.username == user.username }) {
             users.add(user)
             if (liveUsers > maxUsers) {
                 maxUsers = liveUsers
@@ -67,10 +67,10 @@ class IceScrumBroadcaster extends DefaultBroadcaster {
         }
     }
 
-    boolean removeUser(def user) {
-        def userToRemove = (user.id ? (users.find { it.id == user.id } ?: null) : (users.find { it.ip ? (it.ip == user.ip && it.username == 'anonymous') : (it.username == 'anonymous') } ?: null))
-        if (userToRemove) {
-            return users.remove(userToRemove)
+    boolean removeUser(def _user) {
+        def user = users.find{ it.uuid == _user.uuid }
+        if (user) {
+            return users.remove(user)
         } else {
             return false
         }
