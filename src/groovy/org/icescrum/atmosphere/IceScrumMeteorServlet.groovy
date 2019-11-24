@@ -21,7 +21,6 @@ class IceScrumMeteorServlet extends MeteorServlet {
         ReflectorServletProcessor rsp = new ReflectorServletProcessor()
         rsp.setServletClassName(handlerClass)
         framework().addAtmosphereHandler(mapping, rsp)
-        framework().broadcasterFactory.addBroadcasterListener(new IceScrumBroadcasterListener())
         logger.info "Added AtmosphereHandler: $handlerClass mapped to $mapping"
     }
 }

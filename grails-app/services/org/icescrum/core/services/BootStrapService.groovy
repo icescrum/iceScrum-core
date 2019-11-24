@@ -47,7 +47,9 @@ class BootStrapService {
         ApplicationSupport.checkInitialConfig(config)
         ApplicationSupport.generateFolders(config)
 
-        ApplicationSupport.addToBetaFeatures("usersOnline", false)
+        config.icescrum.beta.features.each { feature ->
+            ApplicationSupport.addToBetaFeatures(feature, false)
+        }
 
         config.icescrum.serverURL = ApplicationSupport.removeTrailingSlash(config.icescrum.serverURL)
 

@@ -4,18 +4,22 @@ import org.atmosphere.cpr.AtmosphereConfig
 import org.atmosphere.cpr.Broadcaster
 import org.atmosphere.cpr.DefaultBroadcaster
 import org.icescrum.core.domain.Project
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 class IceScrumBroadcaster extends DefaultBroadcaster {
+
+    private static final Logger logger = LoggerFactory.getLogger(IceScrumBroadcaster.class);
 
     String pkey
     String pname
 
     int maxUsers = 0
     Date maxUsersDate = new Date()
+    List<AtmosphereUser> users = []
 
     int maxConnections = 0
     Date maxConnectionsDate = new Date()
-    List<Map> users = []
 
     public IceScrumBroadcaster() {}
 
@@ -50,29 +54,83 @@ class IceScrumBroadcaster extends DefaultBroadcaster {
         return resources.size() ?: 0
     }
 
-    boolean addUser(def user) {
-        if (!users.find { it.username == user.username }) {
-            users.add(user)
-            if (liveUsers > maxUsers) {
-                maxUsers = liveUsers
-                maxUsersDate = new Date()
+    boolean addUser(AtmosphereUser user) {
+        def added = false
+        AtmosphereUser existingUser = users.find { it.username == user.username } ?: null
+        if (!user.connections.isEmpty()) {
+            AtmosphereUserConnection connection = user.connections.first()
+            def existingConnection = existingUser?.connections?.find { it.uuid == connection.uuid }
+            if (existingUser) {
+                if (logger.debugEnabled) {
+                    logger.debug("[${name}][${user.username}] existing user")
+                }
+                if (existingConnection) {
+                    existingConnection.resource = connection.resource
+                } else {
+                    existingUser.connections << connection
+                    added = true
+                }
+            } else if (!existingUser) {
+                users << user
+                if (logger.debugEnabled) {
+                    logger.debug("[${name}][${user.username}] adding user")
+                }
+                existingUser = user
+                added = true
             }
-            if (liveConnections > maxConnections) {
-                maxConnections = liveConnections
-                maxConnectionsDate = new Date()
+            if (added) {
+                if (logger.debugEnabled) {
+                    logger.debug("[${name}][${existingUser.username}] adding uuid ${connection.uuid} with transport ${connection.transport}")
+                    logger.debug("[${name}][${existingUser.username}] ${existingUser.connections.size()} connections opened")
+                }
+                if (liveUsers > maxUsers) {
+                    maxUsers = liveUsers
+                    maxUsersDate = new Date()
+                }
+                if (liveConnections > maxConnections) {
+                    maxConnections = liveConnections
+                    maxConnectionsDate = new Date()
+                }
+            } else {
+                if (logger.debugEnabled) {
+                    logger.debug("[${name}][${existingUser.username}] exiting uuid ${connection.uuid} with transport ${connection.transport}")
+                    logger.debug("[${name}][${existingUser.username}] ${existingUser.connections.size()} connections opened")
+                }
             }
-            return true
-        } else {
-            return false
+            if (logger.debugEnabled) {
+                logger.debug("[${name}] users connected: ${liveUsers} - connections: ${liveConnections}")
+            }
         }
+        existingUser?.cleanUpConnections()
+        return added
     }
 
-    boolean removeUser(def _user) {
-        def user = users.find{ it.uuid == _user.uuid }
-        if (user) {
-            return users.remove(user)
-        } else {
-            return false
+    boolean removeUser(AtmosphereUser user) {
+        def removed = false
+        AtmosphereUser existingUser = users.find { it.username == user.username } ?: null
+        if (!user.connections.isEmpty() && existingUser) {
+            AtmosphereUserConnection connection = user.connections.first()
+            def existingConnection = existingUser.connections?.find { it.uuid == connection.uuid } ?: null
+            if (existingConnection) {
+                if (logger.debugEnabled) {
+                    logger.debug("[${name}][${existingUser.username}] removing connection ${existingConnection.uuid} with transport ${existingConnection.transport}")
+                }
+                removed = existingUser.connections.remove(existingConnection)
+                if (logger.debugEnabled) {
+                    logger.debug("[${name}][${existingUser.username}] ${existingUser.connections.size()} connections opened")
+                    if (!existingUser.connections) {
+                        logger.debug("[${name}][${existingUser.username}] removing user")
+                        users.remove(existingUser)
+                    }
+                    logger.debug("[${name}] users connected: ${liveUsers} - connections: ${liveConnections}")
+                }
+            } else {
+                if (logger.debugEnabled) {
+                    logger.debug("[${name}] users connected: ${liveUsers} - connections: ${liveConnections}")
+                }
+            }
         }
+        existingUser?.cleanUpConnections()
+        return removed
     }
 }

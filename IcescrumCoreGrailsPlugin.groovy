@@ -39,6 +39,7 @@ import org.codehaus.groovy.grails.orm.support.GroovyAwareNamedTransactionAttribu
 import org.codehaus.groovy.grails.plugins.jasper.JasperExportFormat
 import org.codehaus.groovy.grails.plugins.jasper.JasperReportDef
 import org.codehaus.groovy.grails.plugins.jasper.JasperService
+import org.icescrum.atmosphere.AtmosphereUser
 import org.icescrum.core.app.AppDefinitionArtefactHandler
 import org.icescrum.core.cache.IsControllerWebKeyGenerator
 import org.icescrum.core.cors.CorsFilter
@@ -206,6 +207,20 @@ ERROR: iceScrum v7 has detected that you attempt to run it on an existing R6 ins
     def doWithApplicationContext = { applicationContext ->
         Map properties = application.config?.icescrum?.marshaller
         JSON.registerObjectMarshaller(new JSONIceScrumDomainClassMarshaller(application, properties), 1)
+        JSON.registerObjectMarshaller(AtmosphereUser) {
+            def returnArray = [:]
+            returnArray['id'] = it.id
+            returnArray['username'] = it.username
+            returnArray['connections'] = it.connections?.collect {
+                [
+                        'window'   : it.window,
+                        'ipAddress': it.ipAddress,
+                        'uuid'     : it.uuid,
+                        'transport': it.transport
+                ]
+            } ?: []
+            return returnArray
+        }
         applicationContext.bootStrapService.start()
     }
 

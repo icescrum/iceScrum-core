@@ -21,11 +21,15 @@
  */
 package org.icescrum.atmosphere
 
+import grails.converters.JSON
 import grails.util.Holders
 import org.apache.commons.logging.LogFactory
+import org.atmosphere.cpr.AtmosphereResource
 import org.atmosphere.cpr.AtmosphereResourceEvent
 import org.atmosphere.cpr.AtmosphereResourceEventListener
 import org.atmosphere.cpr.Broadcaster
+import org.icescrum.core.services.PushService
+import org.icescrum.core.support.ApplicationSupport
 import org.springframework.security.core.context.SecurityContext
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository
 
@@ -33,6 +37,8 @@ class IceScrumAtmosphereEventListener implements AtmosphereResourceEventListener
 
     private static final log = LogFactory.getLog(this)
     public static final USER_CONTEXT = 'user_context'
+    public static final GLOBAL_CONTEXT = '/stream/app/*'
+    public static final GLOBAL_CONTEXT_NO_STAR = '/stream/app/'
 
     def atmosphereMeteor = Holders.applicationContext.getBean("atmosphereMeteor")
 
@@ -42,43 +48,52 @@ class IceScrumAtmosphereEventListener implements AtmosphereResourceEventListener
     @Override
     void onSuspend(AtmosphereResourceEvent event) {
         def request = event.resource.request
-        def user = getUserFromAtmosphereResource(event.resource)
+        AtmosphereUser user = createAtmosphereUser(event.resource)
         request.setAttribute(USER_CONTEXT, user)
         String[] decodedPath = request.pathInfo ? request.pathInfo.split("/") : []
-        def broadcasters = ["default channel"]
         if (atmosphereMeteor.broadcasterFactory && decodedPath.length > 0) {
             def channel = "/stream/app/" + decodedPath[decodedPath.length - 1]
-            Broadcaster broadcaster = atmosphereMeteor.broadcasterFactory.lookup(channel, true)
+            IceScrumBroadcaster broadcaster = atmosphereMeteor.broadcasterFactory.lookup(channel, true)
             broadcaster.addAtmosphereResource(event.resource)
-            broadcasters << channel
         }
-        if (log.isDebugEnabled()) {
-            log.debug("add user ${user.username} with UUID ${event.resource.uuid()} to broadcasters: " + broadcasters.join(', '))
-        }
-    }
-
-    @Override
-    void onResume(AtmosphereResourceEvent event) {
-        if (log.isDebugEnabled()) {
-            def user = event.resource.request.getAttribute(USER_CONTEXT) ?: null
-            log.debug("Resume connection for user ${user?.username} with UUID ${event.resource.uuid()}")
+        if(ApplicationSupport.betaFeatureEnabled("usersOnline")){
+            event.resource.broadcasters().each {
+                if (it instanceof IceScrumBroadcaster && it.addUser(user) && it.getID() != GLOBAL_CONTEXT) {
+                    updateUsersInWorkspace(it, event.resource)
+                }
+            }
         }
     }
 
     @Override
     void onDisconnect(AtmosphereResourceEvent event) {
         if (event.resource) {
+            AtmosphereUser user = (AtmosphereUser) event.resource.request.getAttribute(USER_CONTEXT) ?: null
             if (log.isDebugEnabled()) {
-                def user = event.resource.request.getAttribute(USER_CONTEXT) ?: null
-                log.debug("user ${user?.username} disconnected with UUID ${event.resource.uuid()}")
+                log.debug("user ${user?.username} with UUID ${event.resource.uuid()} disconnected")
             }
+            if(ApplicationSupport.betaFeatureEnabled("usersOnline")) {
+                event.resource.broadcasters().each {
+                    if (it instanceof IceScrumBroadcaster && it.removeUser(user) && it.getID() != GLOBAL_CONTEXT) {
+                        updateUsersInWorkspace(it, event.resource)
+                    }
+                }
+            }
+        }
+    }
+
+    @Override
+    void onResume(AtmosphereResourceEvent event) {
+        if (log.isDebugEnabled()) {
+            AtmosphereUser user = (AtmosphereUser) event.resource.request.getAttribute(USER_CONTEXT) ?: null
+            log.debug("Resume connection for user ${user?.username} with UUID ${event.resource.uuid()}")
         }
     }
 
     @Override
     void onBroadcast(AtmosphereResourceEvent event) {
         if (log.isDebugEnabled()) {
-            def user = event.resource.request.getAttribute(USER_CONTEXT) ?: null
+            AtmosphereUser user = (AtmosphereUser) event.resource.request.getAttribute(USER_CONTEXT) ?: null
             log.debug("broadcast to user ${user?.username} with UUID ${event.resource.uuid()}")
         }
     }
@@ -86,7 +101,7 @@ class IceScrumAtmosphereEventListener implements AtmosphereResourceEventListener
     @Override
     void onThrowable(AtmosphereResourceEvent event) {
         if (log.isDebugEnabled()) {
-            def user = event.resource.request.getAttribute(USER_CONTEXT) ?: null
+            AtmosphereUser user = (AtmosphereUser) event.resource.request.getAttribute(USER_CONTEXT) ?: null
             log.debug("Throwable connection for user ${user?.username} with UUID ${event.resource.uuid()}")
         }
     }
@@ -94,7 +109,7 @@ class IceScrumAtmosphereEventListener implements AtmosphereResourceEventListener
     @Override
     void onHeartbeat(AtmosphereResourceEvent event) {
         if (log.isDebugEnabled()) {
-            def user = event.resource.request.getAttribute(USER_CONTEXT) ?: null
+            AtmosphereUser user = (AtmosphereUser) event.resource.request.getAttribute(USER_CONTEXT) ?: null
             log.debug("Heartbeat connection for user ${user?.username} with UUID ${event.resource.uuid()}")
         }
     }
@@ -102,22 +117,32 @@ class IceScrumAtmosphereEventListener implements AtmosphereResourceEventListener
     @Override
     void onClose(AtmosphereResourceEvent event) {
         if (log.isDebugEnabled()) {
-            def user = event.resource.request.getAttribute(USER_CONTEXT) ?: null
+            AtmosphereUser user = (AtmosphereUser) event.resource.request.getAttribute(USER_CONTEXT) ?: null
             log.debug("Close connection for user ${user?.username} with UUID ${event.resource.uuid()}")
         }
     }
 
-    private static def getUserFromAtmosphereResource(def resource) {
+    private static def createAtmosphereUser(def resource) {
         def request = resource.request
-        def user = [uuid: resource.uuid(), window: request.getParameterValues("window") ? request.getParameterValues("window")[0] : null]
+        AtmosphereUser user = new AtmosphereUser()
         // Cannot use springSecurityService directly here because there is no hibernate session to look into
         def context = (SecurityContext) request.session?.getAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY);
-        if (context?.authentication?.isAuthenticated()) {
-            def principal = context.authentication.principal
-            user.putAll([id: principal.id, username: principal.username])
-        } else {
-            user.putAll([id: null, username: 'anonymous'])
-        }
+        user.id = context?.authentication?.isAuthenticated() ? context.authentication.principal.id : null
+        user.username = context?.authentication?.isAuthenticated() ? context.authentication.principal.username : 'anonymous'
+        user.connections.add(new AtmosphereUserConnection(
+                resource: resource,
+                window: request.getParameterValues("window") ? request.getParameterValues("window")[0] : null)
+        )
         return user
+    }
+
+    private synchronized void updateUsersInWorkspace(Broadcaster _broadcaster, AtmosphereResource resource) {
+        IceScrumBroadcaster broadcaster = (IceScrumBroadcaster) _broadcaster
+        def workspace = broadcaster.getID() - GLOBAL_CONTEXT_NO_STAR
+        workspace = workspace.split('-')
+        workspace = [id: workspace[1].toLong(), type: workspace[0]]
+        def message = PushService.buildMessage(workspace.type, "onlineMembers", ["messageId": "online-users-${workspace.type}-${workspace.id}", "${workspace.type}": ["id": workspace.id, "onlineMembers": broadcaster.users]])
+        Set<AtmosphereResource> resources = broadcaster.atmosphereResources - resource
+        broadcaster.broadcast(message as JSON, resources)
     }
 }
