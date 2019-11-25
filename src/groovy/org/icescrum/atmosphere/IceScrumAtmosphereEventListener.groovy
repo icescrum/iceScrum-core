@@ -102,7 +102,7 @@ class IceScrumAtmosphereEventListener implements AtmosphereResourceEventListener
     void onThrowable(AtmosphereResourceEvent event) {
         if (log.isDebugEnabled()) {
             AtmosphereUser user = (AtmosphereUser) event.resource.request.getAttribute(USER_CONTEXT) ?: null
-            log.debug("Throwable connection for user ${user?.username} with UUID ${event.resource.uuid()}")
+            log.debug("Throwable connection for user ${user?.username} with UUID ${event.resource.uuid()} ${event.resource.transport().toString()}")
         }
     }
 
