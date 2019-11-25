@@ -112,25 +112,25 @@ class IceScrumBroadcaster extends DefaultBroadcaster {
             AtmosphereUserConnection connection = user.connections.first()
             def existingConnection = existingUser.connections?.find { it.uuid == connection.uuid } ?: null
             if (existingConnection) {
-                if (logger.debugEnabled) {
-                    logger.debug("[${name}][${existingUser.username}] removing connection ${existingConnection.uuid} with transport ${existingConnection.transport}")
-                }
                 removed = existingUser.connections.remove(existingConnection)
                 if (logger.debugEnabled) {
+                    logger.debug("[${name}][${existingUser.username}] removing connection ${existingConnection.uuid} with transport ${existingConnection.transport}")
                     logger.debug("[${name}][${existingUser.username}] ${existingUser.connections.size()} connections opened")
-                    if (!existingUser.connections) {
-                        logger.debug("[${name}][${existingUser.username}] removing user")
-                        users.remove(existingUser)
-                    }
-                    logger.debug("[${name}] users connected: ${liveUsers} - connections: ${liveConnections}")
-                }
-            } else {
-                if (logger.debugEnabled) {
-                    logger.debug("[${name}] users connected: ${liveUsers} - connections: ${liveConnections}")
                 }
             }
         }
-        existingUser?.cleanUpConnections()
+        if (existingUser) {
+            existingUser.cleanUpConnections()
+            if (!existingUser.connections) {
+                if (logger.debugEnabled) {
+                    logger.debug("[${name}][${existingUser.username}] removing user")
+                }
+                users.remove(existingUser)
+            }
+        }
+        if (logger.debugEnabled) {
+            logger.debug("[${name}] users connected: ${liveUsers} - connections: ${liveConnections}")
+        }
         return removed
     }
 }

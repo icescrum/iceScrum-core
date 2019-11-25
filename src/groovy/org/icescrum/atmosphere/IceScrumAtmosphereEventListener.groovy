@@ -126,7 +126,7 @@ class IceScrumAtmosphereEventListener implements AtmosphereResourceEventListener
         def request = resource.request
         AtmosphereUser user = new AtmosphereUser()
         // Cannot use springSecurityService directly here because there is no hibernate session to look into
-        def context = (SecurityContext) request.session?.getAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY);
+        def context = (SecurityContext) request.session?.getAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY)
         user.id = context?.authentication?.isAuthenticated() ? context.authentication.principal.id : null
         user.username = context?.authentication?.isAuthenticated() ? context.authentication.principal.username : 'anonymous'
         user.connections.add(new AtmosphereUserConnection(
