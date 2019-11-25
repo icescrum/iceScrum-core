@@ -126,6 +126,7 @@ class IceScrumBroadcaster extends DefaultBroadcaster {
                     logger.debug("[${name}][${existingUser.username}] removing user")
                 }
                 users.remove(existingUser)
+                removed = true
             }
         }
         if (logger.debugEnabled) {
