@@ -1,7 +1,7 @@
 package org.icescrum.atmosphere
 
 class AtmosphereUser {
-    long id
+    Long id
     String username
     List<AtmosphereUserConnection> connections = new ArrayList<AtmosphereUserConnection>()
 
