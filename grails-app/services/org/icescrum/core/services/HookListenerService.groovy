@@ -21,10 +21,10 @@
 
 package org.icescrum.core.services
 
-import org.icescrum.core.domain.Hook
 import groovyx.net.http.ContentType
 import groovyx.net.http.HTTPBuilder
 import groovyx.net.http.Method
+import org.icescrum.core.domain.Hook
 import org.icescrum.core.event.IceScrumEventType
 import org.icescrum.core.event.IceScrumListener
 import org.icescrum.core.support.ApplicationSupport
@@ -42,7 +42,7 @@ class HookListenerService {
         if (type in [IceScrumEventType.CREATE, IceScrumEventType.UPDATE, IceScrumEventType.DELETE]) {
             events << getEventName(hookableObject, type)
             if (type == IceScrumEventType.UPDATE && hookableObject.hasProperty("state") && dirtyProperties.state != null && dirtyProperties.state != hookableObject.state) {
-                events << getEventName(hookableObject, "state")  //the only case where there is 2 events possible for an action
+                events << getEventName(hookableObject, "state")  // The only case where there is 2 events possible for an action
             } else if (type == IceScrumEventType.UPDATE && dirtyProperties.addedComment) {
                 events = [getEventName(hookableObject, "addedComment")]
             } else if (type == IceScrumEventType.UPDATE && dirtyProperties.updatedComment) {
@@ -58,15 +58,9 @@ class HookListenerService {
             } else if (workspaceType) {
                 Long workspaceId = findWorkspaceId(type == IceScrumEventType.DELETE ? dirtyProperties : hookableObject, workspaceType)
                 if (workspaceId) {
-//                    if (log.debugEnabled) {
-//                        log.debug("hook event fired on $workspaceType $workspaceId: $events")
-//                    }
                     allHooks = Hook.queryFindAllByWorkspaceTypeAndWorkspaceIdAndEventsFromList(workspaceType, workspaceId, events)
                 }
             } else if (grailsApplication.config.icescrum.hooks.enable) {
-//                if (log.debugEnabled) {
-//                    log.debug("hook event fired out of workspace: $events")
-//                }
                 allHooks = Hook.queryFindAllByWorkspaceTypeNullAndWorkspaceIdNullAndEventsFromList(events)
             }
         }
@@ -76,15 +70,15 @@ class HookListenerService {
             }
             allHooks.groupBy { it.eventMessageRendererClass }.each { eventMessageRendererClass, hooks ->
                 def objectToRender
-                //very special case for comment
+                // Very special case for comment
                 if (events[0].endsWith("Comment")) {
                     def comment = dirtyProperties."addedComment" ?: (dirtyProperties."updatedComment" ?: dirtyProperties."removedComment")
                     objectToRender = commentService.getRenderableComment(comment, hookableObject)
                 } else {
-                    //remove all hibernate collection stuff to prevent exception
+                    // Remove all hibernate collection stuff to prevent exception
                     objectToRender = IceScrumEventType.DELETE == type ? dirtyProperties.findAll { prop -> return !(prop.value instanceof Collection) } : hookableObject
                 }
-                //find the renderer
+                // Find the renderer
                 def payload = Class.forName("${eventMessageRendererClass ?: 'org.icescrum.core.hook.DefaultEventMessageRenderer'}").newInstance().render(objectToRender, events)
                 hooks.each { hook ->
                     Hook.async.task {
@@ -95,7 +89,7 @@ class HookListenerService {
                         http.getClient().getParams().setParameter("http.connection.timeout", grailsApplication.config.icescrum.hooks.httpTimeout)
                         http.getClient().getParams().setParameter("http.socket.timeout", grailsApplication.config.icescrum.hooks.socketTimeout)
                         http.request(Method.POST, ContentType.JSON) {
-                            def eventToDisplay = events.size() > 1 ? hook.events.contains(events[1]) ? events[1] : events[0] : events //if we have update and state send the correct one
+                            def eventToDisplay = events.size() > 1 ? hook.events.contains(events[1]) ? events[1] : events[0] : events // If we have update and state send the correct one
                             headers.'x-icescrum-event' = eventToDisplay
                             if (hook.secret) {
                                 def signature = ApplicationSupport.hmac(payload, hook.secret)
@@ -111,7 +105,7 @@ class HookListenerService {
                             response.failure = { resp ->
                                 withTransaction {
                                     def hookToUpdate = Hook.get(hook.id)
-                                    if (resp.status == 410) { //case zapier or other restWebhook https://zapier.com/developer/documentation/v2/rest-hooks/#step-2-sending-hooks-a-call-from-your-app-to-zapier
+                                    if (resp.status == 410) { // Case zapier or other restWebhook https://zapier.com/developer/documentation/v2/rest-hooks/#step-2-sending-hooks-a-call-from-your-app-to-zapier
                                         if (log.debugEnabled) {
                                             log.debug("hook (id:$hook.id) - doesn't exist, delete it")
                                         }
