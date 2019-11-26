@@ -16,7 +16,7 @@ class IceScrumBroadcaster extends DefaultBroadcaster {
 
     int maxUsers = 0
     Date maxUsersDate = new Date()
-    List<AtmosphereUser> users = []
+    List<AtmosphereUser> users = Collections.synchronizedList(new ArrayList<AtmosphereUser>())
 
     int maxConnections = 0
     Date maxConnectionsDate = new Date()
