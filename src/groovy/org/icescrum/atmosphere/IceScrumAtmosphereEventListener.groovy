@@ -59,7 +59,7 @@ class IceScrumAtmosphereEventListener implements AtmosphereResourceEventListener
         if(ApplicationSupport.betaFeatureEnabled("usersOnline")){
             event.resource.broadcasters().each {
                 if (it instanceof IceScrumBroadcaster && it.addUser(user) && it.getID() != GLOBAL_CONTEXT) {
-                    updateUsersInWorkspace(it, event.resource)
+                    updateUsersInWorkspace(it, null)
                 }
             }
         }
@@ -142,7 +142,7 @@ class IceScrumAtmosphereEventListener implements AtmosphereResourceEventListener
         workspace = workspace.split('-')
         workspace = [id: workspace[1].toLong(), type: workspace[0]]
         def message = PushService.buildMessage(workspace.type, "onlineMembers", ["messageId": "online-users-${workspace.type}-${workspace.id}", "${workspace.type}": ["id": workspace.id, "onlineMembers": broadcaster.users]])
-        Set<AtmosphereResource> resources = broadcaster.atmosphereResources - resource
+        Set<AtmosphereResource> resources = resource ? broadcaster.atmosphereResources - resource : broadcaster.atmosphereResources
         broadcaster.broadcast(message as JSON, resources)
     }
 }

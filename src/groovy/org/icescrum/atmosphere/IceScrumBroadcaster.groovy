@@ -54,7 +54,7 @@ class IceScrumBroadcaster extends DefaultBroadcaster {
         return resources.size() ?: 0
     }
 
-    boolean addUser(AtmosphereUser user) {
+    synchronized boolean addUser(AtmosphereUser user) {
         def added = false
         AtmosphereUser existingUser = users.find { it.username == user.username } ?: null
         if (!user.connections.isEmpty() && user.connections.first()) {
@@ -105,7 +105,7 @@ class IceScrumBroadcaster extends DefaultBroadcaster {
         return added
     }
 
-    boolean removeUser(AtmosphereUser user) {
+    synchronized boolean removeUser(AtmosphereUser user) {
         def removed = false
         AtmosphereUser existingUser = users.find { it.username == user.username } ?: null
         if (!user.connections.isEmpty() && user.connections.first() && existingUser) {
