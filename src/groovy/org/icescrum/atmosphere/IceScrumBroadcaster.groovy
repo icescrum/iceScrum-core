@@ -57,7 +57,7 @@ class IceScrumBroadcaster extends DefaultBroadcaster {
     boolean addUser(AtmosphereUser user) {
         def added = false
         AtmosphereUser existingUser = users.find { it.username == user.username } ?: null
-        if (!user.connections.isEmpty()) {
+        if (!user.connections.isEmpty() && user.connections.first()) {
             AtmosphereUserConnection connection = user.connections.first()
             def existingConnection = existingUser?.connections?.find { it.uuid == connection.uuid }
             if (existingUser) {
@@ -70,7 +70,7 @@ class IceScrumBroadcaster extends DefaultBroadcaster {
                     existingUser.connections << connection
                     added = true
                 }
-            } else if (!existingUser) {
+            } else {
                 users << user
                 if (logger.debugEnabled) {
                     logger.debug("[${name}][${user.username}] adding user")
@@ -108,7 +108,7 @@ class IceScrumBroadcaster extends DefaultBroadcaster {
     boolean removeUser(AtmosphereUser user) {
         def removed = false
         AtmosphereUser existingUser = users.find { it.username == user.username } ?: null
-        if (!user.connections.isEmpty() && existingUser) {
+        if (!user.connections.isEmpty() && user.connections.first() && existingUser) {
             AtmosphereUserConnection connection = user.connections.first()
             def existingConnection = existingUser.connections?.find { it.uuid == connection.uuid } ?: null
             if (existingConnection) {
