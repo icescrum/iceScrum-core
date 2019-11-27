@@ -4,22 +4,22 @@ import org.atmosphere.cpr.AtmosphereResource
 
 class AtmosphereUserConnection {
 
+    String uuid
     String window
     String ipAddress
-    AtmosphereResource resource
+    String transport
 
-    String getUuid(){
-        return resource.uuid()
+    AtmosphereUserConnection(AtmosphereResource resource) {
+        uuid = resource.uuid()
+        transport = resource.transport().toString()
+        ipAddress = getIpAdress(resource)
+        window = resource.request?.getParameterValues("window") ? resource.request.getParameterValues("window")[0] : null
     }
 
-    String getTransport(){
-        return resource.transport().toString()
-    }
-
-    private String getIpAdress() {
+    private static String getIpAdress(AtmosphereResource resource) {
         def request = resource.request
         String ip
-        if (request.getHeader("X-Forwarded-For") != null) {
+        if (request?.getHeader("X-Forwarded-For") != null) {
             String xForwardedFor = request.getHeader("X-Forwarded-For")
             if (xForwardedFor.indexOf(",") != -1) {
                 ip = xForwardedFor.substring(xForwardedFor.lastIndexOf(",") + 2)

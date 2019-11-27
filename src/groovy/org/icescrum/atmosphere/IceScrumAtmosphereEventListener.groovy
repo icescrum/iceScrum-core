@@ -56,10 +56,10 @@ class IceScrumAtmosphereEventListener implements AtmosphereResourceEventListener
             IceScrumBroadcaster broadcaster = atmosphereMeteor.broadcasterFactory.lookup(channel, true)
             broadcaster.addAtmosphereResource(event.resource)
         }
-        if(ApplicationSupport.betaFeatureEnabled("usersOnline")){
+        if (ApplicationSupport.betaFeatureEnabled("usersOnline")) {
             event.resource.broadcasters().each {
                 if (it instanceof IceScrumBroadcaster && it.addUser(user) && it.getID() != GLOBAL_CONTEXT) {
-                    updateUsersInWorkspace(it, null)
+                    updateUsersInWorkspace(it, event.resource)
                 }
             }
         }
@@ -72,7 +72,7 @@ class IceScrumAtmosphereEventListener implements AtmosphereResourceEventListener
             if (log.isDebugEnabled()) {
                 log.debug("user ${user?.username} with UUID ${event.resource.uuid()} disconnected")
             }
-            if(ApplicationSupport.betaFeatureEnabled("usersOnline")) {
+            if (ApplicationSupport.betaFeatureEnabled("usersOnline")) {
                 event.resource.broadcasters().each {
                     if (it instanceof IceScrumBroadcaster && it.removeUser(user) && it.getID() != GLOBAL_CONTEXT) {
                         updateUsersInWorkspace(it, event.resource)
@@ -129,14 +129,11 @@ class IceScrumAtmosphereEventListener implements AtmosphereResourceEventListener
         def context = (SecurityContext) request.session?.getAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY)
         user.id = context?.authentication?.isAuthenticated() ? context.authentication.principal.id : null
         user.username = context?.authentication?.isAuthenticated() ? context.authentication.principal.username : 'anonymous'
-        user.connections.add(new AtmosphereUserConnection(
-                resource: resource,
-                window: request.getParameterValues("window") ? request.getParameterValues("window")[0] : null)
-        )
+        user.connection = new AtmosphereUserConnection(resource)
         return user
     }
 
-    private synchronized void updateUsersInWorkspace(Broadcaster _broadcaster, AtmosphereResource resource) {
+    private void updateUsersInWorkspace(Broadcaster _broadcaster, AtmosphereResource resource) {
         IceScrumBroadcaster broadcaster = (IceScrumBroadcaster) _broadcaster
         def workspace = broadcaster.getID() - GLOBAL_CONTEXT_NO_STAR
         workspace = workspace.split('-')

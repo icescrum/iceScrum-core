@@ -7,6 +7,8 @@ import org.icescrum.core.domain.Project
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
+import java.util.concurrent.ConcurrentLinkedQueue
+
 class IceScrumBroadcaster extends DefaultBroadcaster {
 
     private static final Logger logger = LoggerFactory.getLogger(IceScrumBroadcaster.class);
@@ -16,7 +18,8 @@ class IceScrumBroadcaster extends DefaultBroadcaster {
 
     int maxUsers = 0
     Date maxUsersDate = new Date()
-    List<AtmosphereUser> users = Collections.synchronizedList(new ArrayList<AtmosphereUser>())
+    final ConcurrentLinkedQueue<AtmosphereUser> users = new ConcurrentLinkedQueue<AtmosphereUser>()
+
 
     int maxConnections = 0
     Date maxConnectionsDate = new Date()
@@ -47,14 +50,14 @@ class IceScrumBroadcaster extends DefaultBroadcaster {
     }
 
     int getLiveUsers() {
-        return users.size() ?: 0
+        return users.size()
     }
 
     int getLiveConnections() {
-        return resources.size() ?: 0
+        return resources.size()
     }
 
-    synchronized boolean addUser(AtmosphereUser user) {
+    boolean addUser(AtmosphereUser user) {
         def added = false
         AtmosphereUser existingUser = users.find { it.username == user.username } ?: null
         if (!user.connections.isEmpty() && user.connections.first()) {
@@ -64,11 +67,12 @@ class IceScrumBroadcaster extends DefaultBroadcaster {
                 if (logger.debugEnabled) {
                     logger.debug("[${name}][${user.username}] existing user")
                 }
-                if (existingConnection) {
-                    existingConnection.resource = connection.resource
-                } else {
+                if (!existingConnection) {
                     existingUser.connections << connection
                     added = true
+                    if (logger.debugEnabled) {
+                        logger.debug("[${name}][${user.username}] new connection")
+                    }
                 }
             } else {
                 users << user
@@ -93,19 +97,18 @@ class IceScrumBroadcaster extends DefaultBroadcaster {
                 }
             } else {
                 if (logger.debugEnabled) {
-                    logger.debug("[${name}][${existingUser.username}] exiting uuid ${connection.uuid} with transport ${connection.transport}")
+                    logger.debug("[${name}][${existingUser.username}] existing uuid ${connection.uuid} with transport ${connection.transport}")
                     logger.debug("[${name}][${existingUser.username}] ${existingUser.connections.size()} connections opened")
                 }
             }
-            if (logger.debugEnabled) {
-                logger.debug("[${name}] users connected: ${liveUsers} - connections: ${liveConnections}")
-            }
         }
-        existingUser?.cleanUpConnections()
+        if (logger.debugEnabled) {
+            logger.debug("[${name}] users connected: ${liveUsers} - connections: ${liveConnections}")
+        }
         return added
     }
 
-    synchronized boolean removeUser(AtmosphereUser user) {
+    boolean removeUser(AtmosphereUser user) {
         def removed = false
         AtmosphereUser existingUser = users.find { it.username == user.username } ?: null
         if (!user.connections.isEmpty() && user.connections.first() && existingUser) {
@@ -120,7 +123,6 @@ class IceScrumBroadcaster extends DefaultBroadcaster {
             }
         }
         if (existingUser) {
-            existingUser.cleanUpConnections()
             if (!existingUser.connections) {
                 if (logger.debugEnabled) {
                     logger.debug("[${name}][${existingUser.username}] removing user")
