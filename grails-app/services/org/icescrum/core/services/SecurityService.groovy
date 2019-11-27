@@ -32,6 +32,7 @@ import org.icescrum.core.domain.Project
 import org.icescrum.core.domain.Team
 import org.icescrum.core.domain.User
 import org.icescrum.core.domain.security.Authority
+import org.springframework.http.HttpMethod
 import org.springframework.security.acls.domain.BasePermission
 import org.springframework.security.acls.domain.PrincipalSid
 import org.springframework.security.acls.model.*
@@ -135,9 +136,6 @@ class SecurityService {
 
     @SuppressWarnings("GroovyMissingReturnStatement")
     boolean inProject(project, auth) {
-        if (OAuth2ExpressionUtils.isOAuth(auth)) {
-            return false
-        }
         if (!springSecurityService.isLoggedIn()) {
             return false
         }
@@ -172,7 +170,12 @@ class SecurityService {
                 authorized = computeResult()
             }
         }
-        return authorized
+        if (authorized && OAuth2ExpressionUtils.isOAuth(auth)) {
+            def request = RCH.requestAttributes.currentRequest
+            return authorized && ((request.method == HttpMethod.GET && OAuth2ExpressionUtils.hasAnyScope(auth, ["project:read"] as String[])) || OAuth2ExpressionUtils.hasAnyScope(auth, ["project"] as String[]))
+        } else {
+            return authorized
+        }
     }
 
     boolean archivedProject(project) {
@@ -205,13 +208,10 @@ class SecurityService {
     }
 
     boolean inTeam(team, auth) {
-        if (OAuth2ExpressionUtils.isOAuth(auth)) {
-            return false
-        }
         if (!springSecurityService.isLoggedIn()) {
             return false
         }
-        teamMember(team, auth) || scrumMaster(team, auth)
+        return (teamMember(team, auth) || scrumMaster(team, auth))
     }
 
     Team openProjectTeam(Long projectId, Long principalId) {
@@ -219,9 +219,6 @@ class SecurityService {
     }
 
     boolean scrumMaster(team, auth) {
-        if (OAuth2ExpressionUtils.isOAuth(auth)) {
-            return false
-        }
         if (!springSecurityService.isLoggedIn()) {
             return false
         }
@@ -245,13 +242,17 @@ class SecurityService {
             t = GrailsHibernateUtil.unwrapIfProxy(team)
             team = t.id
         }
-        return isScrumMaster(team, auth, t) || isOwner(team, auth, grailsApplication.getDomainClass(Team.class.name).newInstance(), t)
+        def authorized = isScrumMaster(team, auth, t) || isOwner(team, auth, grailsApplication.getDomainClass(Team.class.name).newInstance(), t)
+        if (authorized && OAuth2ExpressionUtils.isOAuth(auth)) {
+            def request = RCH.requestAttributes.currentRequest
+            def projectWorkspace = getProjectIdFromRequest(request) ?: false
+            return authorized && ((request.method == HttpMethod.GET && OAuth2ExpressionUtils.hasAnyScope(auth, [projectWorkspace ? "project:read" : "team:read"] as String[])) || OAuth2ExpressionUtils.hasAnyScope(auth, [projectWorkspace ? "project" : "team"] as String[]))
+        } else {
+            return authorized
+        }
     }
 
     boolean isScrumMaster(team, auth, t = null) {
-        if (OAuth2ExpressionUtils.isOAuth(auth)) {
-            return false
-        }
         if (team) {
             if (SpringSecurityUtils.ifAnyGranted(Authority.ROLE_ADMIN)) {
                 return true
@@ -319,9 +320,6 @@ class SecurityService {
     }
 
     boolean productOwner(project, auth) {
-        if (OAuth2ExpressionUtils.isOAuth(auth)) {
-            return false
-        }
         if (!springSecurityService.isLoggedIn()) {
             return false
         }
@@ -337,21 +335,22 @@ class SecurityService {
             p = GrailsHibernateUtil.unwrapIfProxy(project)
             project = project.id
         }
-        def isPo = isProductOwner(project, auth, p)
-        if (isPo) {
-            return true
-        } else if (project) {
+        def authorized = isProductOwner(project, auth, p)
+        if (!authorized && project) {
             if (!p) {
                 p = Project.get(project)
             }
-            if (!p) {
-                return false
+            if (p) {
+                Team t = GrailsHibernateUtil.unwrapIfProxy(p.team)
+                long team = t.id
+                authorized = isOwner(team, auth, grailsApplication.getDomainClass(Team.class.name).newInstance(), t) || (p.portfolio && businessOwner(p.portfolio, auth))
             }
-            Team t = GrailsHibernateUtil.unwrapIfProxy(p.team)
-            long team = t.id
-            return isOwner(team, auth, grailsApplication.getDomainClass(Team.class.name).newInstance(), t) || (p.portfolio && businessOwner(p.portfolio, auth))
+        }
+        if (authorized && OAuth2ExpressionUtils.isOAuth(auth)) {
+            def request = RCH.requestAttributes.currentRequest
+            return authorized && ((request.method == HttpMethod.GET && OAuth2ExpressionUtils.hasAnyScope(auth, ["project:read"] as String[])) || OAuth2ExpressionUtils.hasAnyScope(auth, ["project"] as String[]))
         } else {
-            return false
+            return authorized
         }
     }
 
@@ -363,9 +362,6 @@ class SecurityService {
     }
 
     boolean isProductOwner(project, auth, p = null) {
-        if (OAuth2ExpressionUtils.isOAuth(auth)) {
-            return false
-        }
         if (project) {
             if (SpringSecurityUtils.ifAnyGranted(Authority.ROLE_ADMIN)) {
                 return true
@@ -386,9 +382,6 @@ class SecurityService {
     }
 
     boolean teamMember(team, auth) {
-        if (OAuth2ExpressionUtils.isOAuth(auth)) {
-            return false
-        }
         if (!springSecurityService.isLoggedIn()) {
             return false
         }
@@ -424,7 +417,14 @@ class SecurityService {
                 }
                 return aclUtilService.hasPermission(auth, GrailsHibernateUtil.unwrapIfProxy(t), SecurityService.teamMemberPermissions)
             }
-            return computeResult()
+            def authorized = computeResult()
+            if (authorized && OAuth2ExpressionUtils.isOAuth(auth)) {
+                def request = RCH.requestAttributes.currentRequest
+                def projectWorkspace = getProjectIdFromRequest(request) ?: false
+                return authorized && ((request.method == HttpMethod.GET && OAuth2ExpressionUtils.hasAnyScope(auth, [projectWorkspace ? "project:read" : "team:read"] as String[])) || OAuth2ExpressionUtils.hasAnyScope(auth, [projectWorkspace ? "project" : "team"] as String[]))
+            } else {
+                return authorized
+            }
         } else {
             return false
         }
@@ -443,9 +443,6 @@ class SecurityService {
     }
 
     boolean businessOwner(portfolio, auth) {
-        if (OAuth2ExpressionUtils.isOAuth(auth)) {
-            return false
-        }
         if (!springSecurityService.isLoggedIn()) {
             return false
         }
@@ -464,8 +461,13 @@ class SecurityService {
             _portfolio = Portfolio.get(portfolio)
         }
         if (_portfolio && auth) {
-            return SpringSecurityUtils.ifAnyGranted(Authority.ROLE_ADMIN) ||
-                   aclUtilService.hasPermission(auth, GrailsHibernateUtil.unwrapIfProxy(_portfolio), SecurityService.businessOwnerPermissions)
+            def authorized = SpringSecurityUtils.ifAnyGranted(Authority.ROLE_ADMIN) || aclUtilService.hasPermission(auth, GrailsHibernateUtil.unwrapIfProxy(_portfolio), SecurityService.businessOwnerPermissions)
+            if (authorized && OAuth2ExpressionUtils.isOAuth(auth)) {
+                def request = RCH.requestAttributes.currentRequest
+                return authorized && ((request.method == HttpMethod.GET && OAuth2ExpressionUtils.hasAnyScope(auth, ["portfolio:read"] as String[])) || OAuth2ExpressionUtils.hasAnyScope(auth, ["portfolio"] as String[]))
+            } else {
+                return authorized
+            }
         } else {
             return false
         }
@@ -546,9 +548,6 @@ class SecurityService {
     }
 
     public boolean owner(domain, Authentication auth) {
-        if (OAuth2ExpressionUtils.isOAuth(auth)) {
-            return false
-        }
         if (!springSecurityService.isLoggedIn()) {
             return false
         }
@@ -582,13 +581,17 @@ class SecurityService {
             }
             domain = d.id
         }
-        return isOwner(domain, auth, domainClass, d)
+        def authorized = isOwner(domain, auth, domainClass, d)
+        if (authorized && OAuth2ExpressionUtils.isOAuth(auth)) {
+            def request = RCH.requestAttributes.currentRequest
+            def projectWorkspace = getProjectIdFromRequest(request) ?: false
+            return authorized && ((request.method == HttpMethod.GET && OAuth2ExpressionUtils.hasAnyScope(auth, [projectWorkspace ? "project:read" : "team:read"] as String[])) || OAuth2ExpressionUtils.hasAnyScope(auth, [projectWorkspace ? "project" : "team"] as String[]))
+        } else {
+            return authorized
+        }
     }
 
     boolean isOwner(domain, auth, domainClass, d = null) {
-        if (OAuth2ExpressionUtils.isOAuth(auth)) {
-            return false
-        }
         if (domain && domainClass) {
             def computeResult = {
                 if (!d) {
