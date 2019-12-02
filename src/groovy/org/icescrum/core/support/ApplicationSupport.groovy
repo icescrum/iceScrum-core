@@ -169,10 +169,6 @@ class ApplicationSupport {
         }
     }
 
-    static boolean listBetaFeatures(enabled) {
-        return Holders.grailsApplication.config.icescrum.beta.collect { enabled ? it.enable : true }
-    }
-
     static boolean isUTF8Database() {
         def driverClassName = Holders.grailsApplication.config.dataSource.driverClassName
         def disabled = driverClassName == 'com.mysql.jdbc.Driver' && !isMySQLUTF8mb4() || driverClassName == 'com.microsoft.sqlserver.jdbc.SQLServerDriver'

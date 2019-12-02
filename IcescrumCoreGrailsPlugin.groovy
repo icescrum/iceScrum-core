@@ -208,10 +208,10 @@ ERROR: iceScrum v7 has detected that you attempt to run it on an existing R6 ins
         Map properties = application.config?.icescrum?.marshaller
         JSON.registerObjectMarshaller(new JSONIceScrumDomainClassMarshaller(application, properties), 1)
         JSON.registerObjectMarshaller(AtmosphereUser) {
-            def returnArray = [:]
-            returnArray['id'] = it.id
-            returnArray['username'] = it.username
-            returnArray['connections'] = it.connections?.collect {
+            def marshalledUser = [:]
+            marshalledUser['id'] = it.id
+            marshalledUser['username'] = it.username
+            marshalledUser['connections'] = it.connections?.collect {
                 [
                         'window'   : it.window,
                         'ipAddress': it.ipAddress,
@@ -219,7 +219,7 @@ ERROR: iceScrum v7 has detected that you attempt to run it on an existing R6 ins
                         'transport': it.transport
                 ]
             } ?: []
-            return returnArray
+            return marshalledUser
         }
         applicationContext.bootStrapService.start()
     }
