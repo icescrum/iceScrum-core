@@ -24,6 +24,7 @@
 package org.icescrum.core.services
 
 import grails.transaction.Transactional
+import org.icescrum.core.domain.Hook
 import org.icescrum.core.domain.Invitation
 import org.icescrum.core.domain.Portfolio
 import org.icescrum.core.domain.Project
@@ -102,6 +103,9 @@ class PortfolioService extends IceScrumEventPublisher {
 
     void delete(Portfolio portfolio) {
         def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_DELETE, portfolio)
+        Hook.findAllByWorkspaceIdAndWorkspaceType(portfolio.id, 'portfolio').each {
+            it.delete(flush: true)
+        }
         portfolio.projects.collect().each { project -> // Use collect first to avoid mutating portfolio.projects
             portfolio.removeFromProjects(project)
         }
