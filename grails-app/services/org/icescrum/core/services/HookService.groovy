@@ -61,16 +61,16 @@ class HookService extends IceScrumEventPublisher {
     def unMarshall(hookXml, options) { // TODO add global export & workspace exports
         Hook.withTransaction(readOnly: !options.save) { transaction ->
             def hook = new Hook(
-                    url: hookXml.text(),
-                    workspaceId: hookXml.workspaceType.text() ? hookXml.workspaceType.text().toLong() : null,
+                    url: hookXml.url.text(),
                     secret: hookXml.secret.text() ?: null,
                     source: hookXml.source.text() ?: null,
-                    events: hookXml.enabled.text().split(','),
+                    events: hookXml.events.text().split(','),
                     enabled: hookXml.enabled.text().toBoolean(),
                     lastError: hookXml.lastError.text() ?: null,
                     ignoreSsl: hookXml.ignoreSsl.text().toBoolean(),
                     countErrors: hookXml.countErrors.text().toInteger(),
                     workspaceType: hookXml.workspaceType.text() ?: null,
+                    workspaceId: hookXml.workspaceId.text() ? hookXml.workspaceId.text().toLong() : null,
                     lastUpdated: DateUtils.parseDateFromExport(hookXml.lastUpdated.text()),
                     dateCreated: DateUtils.parseDateFromExport(hookXml.dateCreated.text()),
                     dateLastRequest: DateUtils.parseDateFromExport(hookXml.dateLastRequest.text()),

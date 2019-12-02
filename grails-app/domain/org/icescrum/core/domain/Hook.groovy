@@ -125,12 +125,12 @@ class Hook implements Cloneable, Serializable {
             builder.countErrors(this.countErrors)
             builder.workspaceId(this.workspaceId)
             builder.url { builder.mkp.yieldUnescaped("<![CDATA[${this.url}]]>") }
-            builder.secret { builder.mkp.yieldUnescaped("<![CDATA[${this.secret}]]>") }
-            builder.source { builder.mkp.yieldUnescaped("<![CDATA[${this.source}]]>") }
-            builder.lastError { builder.mkp.yieldUnescaped("<![CDATA[${this.lastError}]]>") }
-            builder.events { builder.mkp.yieldUnescaped("<![CDATA[${this.events?.join(',')}]]>") }
-            builder.workspaceType { builder.mkp.yieldUnescaped("<![CDATA[${this.workspaceType}]]>") }
-            builder.eventMessageRendererClass { builder.mkp.yieldUnescaped("<![CDATA[${this.eventMessageRendererClass}]]>") }
+            builder.secret { builder.mkp.yieldUnescaped("<![CDATA[${this.secret ?: ''}]]>") }
+            builder.source { builder.mkp.yieldUnescaped("<![CDATA[${this.source ?: ''}]]>") }
+            builder.lastError { builder.mkp.yieldUnescaped("<![CDATA[${this.lastError ?: ''}]]>") }
+            builder.events { builder.mkp.yieldUnescaped("<![CDATA[${this.events?.join(',') ?: ''}]]>") }
+            builder.workspaceType { builder.mkp.yieldUnescaped("<![CDATA[${this.workspaceType ?: ''}]]>") }
+            builder.eventMessageRendererClass { builder.mkp.yieldUnescaped("<![CDATA[${this.eventMessageRendererClass ?: ''}]]>") }
             exportDomainsPlugins(builder)
         }
     }
