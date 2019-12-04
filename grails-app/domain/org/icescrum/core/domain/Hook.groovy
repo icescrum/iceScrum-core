@@ -97,7 +97,7 @@ class Hook implements Cloneable, Serializable {
 
     static List<Hook> queryFindAllByWorkspaceTypeAndWorkspaceIdAndEventsFromList(String workspaceType, long workspaceId, def events) {
         executeQuery("""
-                SELECT distinct h
+                SELECT h
                 FROM Hook h inner join h.events events
                 WHERE h.enabled = :enabled 
                 AND h.workspaceId = :workspaceId
@@ -107,7 +107,7 @@ class Hook implements Cloneable, Serializable {
 
     static List<Hook> queryFindAllByWorkspaceTypeNullAndWorkspaceIdNullAndEventsFromList(def events) {
         executeQuery("""
-                SELECT distinct h
+                SELECT h
                 FROM Hook h inner join h.events events
                 WHERE h.enabled = :enabled
                 AND h.workspaceId is NULL
