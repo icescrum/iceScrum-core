@@ -61,7 +61,6 @@ class UserPreferences implements Serializable {
         colorScheme nullable: true
     }
 
-
     static belongsTo = [
             user: User
     ]

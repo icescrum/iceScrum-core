@@ -36,5 +36,8 @@ class AccessToken implements Serializable {
         version false
         scope lazy: false
         table 'is_oauth_a_token'
+        if (System.properties['icescrum.oracle']) {
+            additionalInformation joinTable: [name: 'is_oauth_a_token_information']
+        }
     }
 }

@@ -28,6 +28,11 @@ class Client implements Serializable {
     static mapping = {
         version false
         table 'is_oauth_client'
+        if (System.properties['icescrum.oracle']) {
+            additionalInformation joinTable: [name: 'is_oauth_client_information']
+            authorizedGrantTypes joinTable: [name: 'is_oauth_client_grant_types', column: 'grant_types_java_lang_string']
+            autoApproveScopes joinTable: [name: 'is_oauth_client_auto_approve', column: 'auto_approve_java_lang_string']
+        }
     }
 
     static constraints = {
