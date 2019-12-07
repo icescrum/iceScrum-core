@@ -1,6 +1,7 @@
 package org.icescrum.core.app
 
 import grails.util.Holders
+import org.icescrum.core.support.ApplicationSupport
 import org.slf4j.LoggerFactory
 
 class AppDefinitionsBuilder {
@@ -20,6 +21,9 @@ class AppDefinitionsBuilder {
             def validationResult = appDefinition.validate()
             if (!validationResult.valid) {
                 log.error(validationResult.errorMessage)
+            }
+            if (appDefinition.isBeta) {
+                ApplicationSupport.addToBetaFeatures(appDefinition.id, false)
             }
             return validationResult.valid;
         }
