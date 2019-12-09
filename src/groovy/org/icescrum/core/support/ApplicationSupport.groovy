@@ -163,7 +163,7 @@ class ApplicationSupport {
                     [key: 'icescrum.beta.enable', type: 'checkbox', jsIf: 'false' /* fake hidden */],
             ]
         }
-        if (!Holders.grailsApplication.config.publicSettings.beta.find{ it.key == "icescrum.beta.${name}.enable".toString() }) {
+        if (!Holders.grailsApplication.config.publicSettings.beta.find { it.key == "icescrum.beta.${name}.enable".toString() }) {
             Holders.grailsApplication.config.publicSettings.beta << [key: "icescrum.beta.${name}.enable".toString(), type: 'checkbox']
         }
         if (!(Holders.grailsApplication.config.icescrum.beta."${name}"?.enable instanceof Boolean)) {
