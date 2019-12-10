@@ -49,13 +49,13 @@
             <form ng-switch-when="true"
                   ng-if="authorizedWidget('update', widget)"
                   ng-submit="update(widget)">
-                <g:render template="/widgets/${widgetDefinition.id}/settings" plugin="${widgetDefinition.pluginName}"/>
+                <g:render template="/widgets/${widgetDefinition.templateFolder}/settings" plugin="${widgetDefinition.pluginName}"/>
             </form>
         </g:if>
     </div>
     <g:if test="${widgetDefinition.footer}">
         <div class="card-footer">
-            <g:render template="/${widgetDefinition.id}/widget/footer" plugin="${widgetDefinition.pluginName}"/>
+            <g:render template="/${widgetDefinition.templateFolder}/widget/footer" plugin="${widgetDefinition.pluginName}"/>
         </div>
     </g:if>
 </div>

@@ -62,7 +62,8 @@ class Project extends TimeBox implements Serializable, Attachmentable {
             backlogs             : Backlog,
             tasks                : Task,
             simpleProjectApps    : SimpleProjectApp,
-            timeBoxNotesTemplates: TimeBoxNotesTemplate
+            timeBoxNotesTemplates: TimeBoxNotesTemplate,
+            widgets              : Widget
     ]
 
     static mappedBy = [
@@ -405,14 +406,14 @@ class Project extends TimeBox implements Serializable, Attachmentable {
                 AND s.state in (:states)
                 ORDER BY s.state DESC """, [parentReleaseId: release.id, states: [Sprint.STATE_INPROGRESS, Sprint.STATE_WAIT]], [max: 1])[0]
             if (sprintAndCount) {
-                def sprint = [id: sprintAndCount[0],
-                              goal: sprintAndCount[1],
-                              state: sprintAndCount[2],
+                def sprint = [id         : sprintAndCount[0],
+                              goal       : sprintAndCount[1],
+                              state      : sprintAndCount[2],
                               orderNumber: sprintAndCount[3],
-                              velocity: sprintAndCount[4],
-                              capacity: sprintAndCount[5],
-                              endDate: sprintAndCount[6],
-                              startDate: sprintAndCount[7]]
+                              velocity   : sprintAndCount[4],
+                              capacity   : sprintAndCount[5],
+                              endDate    : sprintAndCount[6],
+                              startDate  : sprintAndCount[7]]
                 sprint.index = sprint.orderNumber + release.remove('firstSprintIndex') - 1
                 release.currentOrNextSprint = sprint
             }

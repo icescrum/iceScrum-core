@@ -42,7 +42,7 @@ class Widget implements Serializable {
     String type
     Long typeId
 
-    static belongsTo = [userPreferences: UserPreferences, portfolio: Portfolio]
+    static belongsTo = [userPreferences: UserPreferences, portfolio: Portfolio, project: Project]
 
     static constraints = {
         settingsData(nullable: true)
@@ -51,9 +51,11 @@ class Widget implements Serializable {
         widgetDefinitionId(shared: 'keyMaxSize')
         userPreferences(nullable: true)
         portfolio(nullable: true)
+        project(nullable: true)
         parentType(nullable: true, validator: { newParentType, widget ->
-            newParentType == WidgetParentType.USER && widget.userPreferences != null && widget.portfolio == null ||
-            newParentType == WidgetParentType.PORTFOLIO && widget.userPreferences == null && widget.portfolio != null ?: 'invalid'
+            newParentType == WidgetParentType.USER && widget.userPreferences != null && widget.portfolio == null && widget.project == null ||
+            newParentType == WidgetParentType.PROJECT && widget.userPreferences == null && widget.portfolio == null && widget.project != null ||
+            newParentType == WidgetParentType.PORTFOLIO && widget.userPreferences == null && widget.portfolio != null && widget.project == null ?: 'invalid'
         })
     }
 
@@ -86,7 +88,7 @@ class Widget implements Serializable {
     }
 
     private String getParentPropertyName() {
-        def propertyNames = [(WidgetParentType.USER): 'userPreferences', (WidgetParentType.PORTFOLIO): 'portfolio']
+        def propertyNames = [(WidgetParentType.USER): 'userPreferences', (WidgetParentType.PORTFOLIO): 'portfolio', (WidgetParentType.PROJECT): 'project']
         return propertyNames[parentType]
     }
 
@@ -107,7 +109,7 @@ class Widget implements Serializable {
     }
 
     enum WidgetParentType {
-        USER, PORTFOLIO
+        USER, PORTFOLIO, PROJECT
     }
 
     // BE CAREFUL: Only export user widgets
