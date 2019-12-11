@@ -607,7 +607,8 @@ class StoryService extends IceScrumEventPublisher {
 
     @PreAuthorize('(productOwner(#stories[0].backlog) or scrumMaster(#stories[0].backlog)) and !archivedProject(#stories[0].backlog)')
     void done(List<Story> stories) {
-        def storyStateNames = ((Project) stories[0].backlog).getStoryStateNames()
+        Project project = (Project) stories[0].backlog
+        def storyStateNames = project.getStoryStateNames()
         stories.sort { it.rank }.each { story ->
             if (story.parentSprint?.state != Sprint.STATE_INPROGRESS) {
                 throw new BusinessException(code: 'is.story.error.markAsDone.not.inProgress', args: [storyStateNames[Story.STATE_DONE]])
@@ -629,6 +630,10 @@ class StoryService extends IceScrumEventPublisher {
                 taskService.update(t, user, false, [state: Task.STATE_DONE])
             }
             pushService.enablePushForThisThread()
+            Feature feature = story.feature
+            if (feature && project.preferences.autoDoneFeature && !feature.stories.any { Story s -> s.state != Story.STATE_DONE } && feature.state != Feature.STATE_DONE) {
+                featureService.update(feature, [state: Feature.STATE_DONE])
+            }
             story.acceptanceTests.each { AcceptanceTest acceptanceTest ->
                 if (acceptanceTest.stateEnum != AcceptanceTestState.SUCCESS) {
                     acceptanceTest.stateEnum = AcceptanceTestState.SUCCESS

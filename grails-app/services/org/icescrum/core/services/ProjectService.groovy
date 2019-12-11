@@ -258,6 +258,7 @@ class ProjectService extends IceScrumEventPublisher {
                     assignOnCreateTask: projectXml.preferences.assignOnCreateTask.text().toBoolean(),
                     autoCreateTaskOnEmptyStory: projectXml.preferences.autoCreateTaskOnEmptyStory.text().toBoolean(),
                     autoDoneStory: projectXml.preferences.autoDoneStory.text().toBoolean(),
+                    autoDoneFeature: projectXml.preferences.autoDoneFeature.text() ? projectXml.preferences.autoDoneFeature.text().toBoolean() : false,
                     noEstimation: projectXml.preferences.noEstimation.text().toBoolean(),
                     limitUrgentTasks: projectXml.preferences.limitUrgentTasks.text().toInteger(),
                     estimatedSprintsDuration: projectXml.preferences.estimatedSprintsDuration.text().toInteger(),

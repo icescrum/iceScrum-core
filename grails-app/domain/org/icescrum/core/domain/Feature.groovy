@@ -40,10 +40,11 @@ class Feature extends BacklogElement implements Serializable {
     String color = "#0067e8"
 
     Integer value = null
+    Date doneDate
     int type = Feature.TYPE_FUNCTIONAL
     int rank
 
-    static transients = ['countDoneStories', 'state', 'effort', 'inProgressDate', 'doneDate', 'project']
+    static transients = ['countDoneStories', 'state', 'effort', 'inProgressDate', 'project']
 
     static belongsTo = [
             parentRelease: Release
@@ -66,6 +67,7 @@ class Feature extends BacklogElement implements Serializable {
         name(unique: 'backlog')
         parentRelease(nullable: true)
         value(nullable: true)
+        doneDate(nullable: true)
     }
 
     static namedQueries = {
@@ -158,13 +160,12 @@ class Feature extends BacklogElement implements Serializable {
     }
 
     def getState() {
-        if (!stories || stories.find { it.state > Story.STATE_PLANNED } == null) {
-            return STATE_WAIT
-        }
-        if (stories.collect { it.state }.count(Story.STATE_DONE) == stories.size()) {
+        if (doneDate) {
             return STATE_DONE
-        } else {
+        } else if (stories && stories.find { it.state > Story.STATE_PLANNED }) {
             return STATE_BUSY
+        } else {
+            return STATE_WAIT
         }
     }
 
@@ -174,10 +175,6 @@ class Feature extends BacklogElement implements Serializable {
 
     Date getInProgressDate() {
         return state > STATE_WAIT ? stories.collect { it.inProgressDate }.findAll { it != null }.sort().last() : null
-    }
-
-    Date getDoneDate() {
-        return state == STATE_DONE ? stories.collect { it.doneDate }.findAll { it != null }.sort().first() : null
     }
 
     def getActivity() {
@@ -234,6 +231,7 @@ class Feature extends BacklogElement implements Serializable {
             builder.color(this.color)
             builder.value(this.value ?: '')
             builder.todoDate(this.todoDate)
+            builder.doneDate(this.doneDate)
             builder.tags { builder.mkp.yieldUnescaped("<![CDATA[${this.tags}]]>") }
             builder.name { builder.mkp.yieldUnescaped("<![CDATA[${this.name}]]>") }
             builder.notes { builder.mkp.yieldUnescaped("<![CDATA[${this.notes ?: ''}]]>") }

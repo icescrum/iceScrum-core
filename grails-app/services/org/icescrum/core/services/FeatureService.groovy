@@ -79,9 +79,12 @@ class FeatureService extends IceScrumEventPublisher {
     }
 
     @PreAuthorize('productOwner(#feature.backlog) and !archivedProject(#feature.backlog)')
-    void update(Feature feature) {
+    void update(Feature feature, Map props = [:]) {
         ApplicationSupport.validateHexdecimalColor(feature.color)
         feature.name = feature.name.trim()
+        if (props.state != null && feature.state != props.state) {
+            state(feature, props.state)
+        }
         if (feature.isDirty('rank')) {
             Project project = (Project) feature.backlog
             if (project.portfolio && !securityService.businessOwner(project.portfolio, springSecurityService.authentication)) {
@@ -95,6 +98,18 @@ class FeatureService extends IceScrumEventPublisher {
         }
         feature.save()
         publishSynchronousEvent(IceScrumEventType.UPDATE, feature, dirtyProperties)
+    }
+
+    private void state(Feature feature, Integer newState) {
+        if (feature.state == Feature.STATE_BUSY && newState == Feature.STATE_DONE) {
+            if (feature.stories.find { it.state < Story.STATE_DONE }) {
+                throw new BusinessException(code: 'is.feature.error.done.stories')
+            } else {
+                feature.doneDate = new Date()
+            }
+        } else if (feature.state == Feature.STATE_DONE && newState == Feature.STATE_BUSY) {
+            feature.doneDate = null
+        }
     }
 
     private double calculateCompletion(stories) {
@@ -147,6 +162,7 @@ class FeatureService extends IceScrumEventPublisher {
                     notes: featureXml.notes.text(),
                     color: featureXml.color.text(),
                     todoDate: DateUtils.parseDateFromExport(featureXml.todoDate.text()),
+                    doneDate: featureXml.doneDate.text() ? DateUtils.parseDateFromExport(featureXml.doneDate.text()) : null,
                     value: featureXml.value.text().isEmpty() ? 0 : featureXml.value.text().toInteger(),
                     type: featureXml.type.text().toInteger(),
                     rank: featureXml.rank.text().toInteger(),

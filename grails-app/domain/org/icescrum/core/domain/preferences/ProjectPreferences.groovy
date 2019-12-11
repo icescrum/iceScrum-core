@@ -40,6 +40,7 @@ class ProjectPreferences implements Serializable {
 
     //Sprint preferences
     boolean autoDoneStory = false
+    boolean autoDoneFeature = false
     boolean displayRecurrentTasks = true
     boolean displayUrgentTasks = true
     boolean assignOnCreateTask = false
@@ -76,6 +77,7 @@ class ProjectPreferences implements Serializable {
             builder.hideWeekend(this.hideWeekend)
             builder.noEstimation(this.noEstimation)
             builder.autoDoneStory(this.autoDoneStory)
+            builder.autoDoneFeature(this.autoDoneFeature)
             builder.sprintReviewHour(this.sprintReviewHour)
             builder.dailyMeetingHour(this.dailyMeetingHour)
             builder.limitUrgentTasks(this.limitUrgentTasks)
