@@ -120,10 +120,10 @@ class WidgetDefinition {
         this.allowDuplicate = allowDuplicate
     }
 
-    void setupI18n(){
-        this.name = "is.ui.widget.${i18n?:id}.name"
-        this.help = "is.ui.widget.${i18n?:id}.help"
-        this.description = "is.ui.widget.${i18n?:id}.description"
+    void setupI18n() {
+        this.name = "is.ui.widget.${i18n ?: id}.name"
+        this.help = "is.ui.widget.${i18n ?: id}.help"
+        this.description = "is.ui.widget.${i18n ?: id}.description"
         this.title = this.name
     }
 
