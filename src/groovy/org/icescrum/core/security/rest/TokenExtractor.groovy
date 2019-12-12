@@ -21,6 +21,8 @@
  */
 package org.icescrum.core.security.rest
 
+import grails.util.Holders
+
 import javax.servlet.http.HttpServletRequest
 
 class TokenExtractor {
@@ -29,7 +31,18 @@ class TokenExtractor {
 
     static String getToken(HttpServletRequest request) {
         String token = request.getHeader(TOKEN_HEADER)
-        token = token ?: request.getParameter(TOKEN_PARAMETER) ?: null
+        token = token ?: request.getParameter(TOKEN_PARAMETER) ?: lookForAppsSpecificTokens(request)
         return token
+    }
+
+    static private String lookForAppsSpecificTokens(HttpServletRequest request) {
+        String token
+        Holders.grailsApplication.config.icescrum.security.authorizedTokenHeaders.find { String it ->
+             token = request.getHeader(it)
+            if (token) {
+                return true
+            }
+        }
+        return token ?: null
     }
 }
