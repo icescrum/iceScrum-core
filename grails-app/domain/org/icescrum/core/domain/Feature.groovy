@@ -44,7 +44,7 @@ class Feature extends BacklogElement implements Serializable {
     int type = Feature.TYPE_FUNCTIONAL
     int rank
 
-    static transients = ['countDoneStories', 'state', 'effort', 'inProgressDate', 'project']
+    static transients = ['countDoneStories', 'state', 'effort', 'inProgressDate', 'project', 'actualReleases']
 
     static belongsTo = [
             parentRelease: Release
@@ -180,6 +180,23 @@ class Feature extends BacklogElement implements Serializable {
     def getActivity() {
         def activities = stories*.activities.flatten().findAll { Activity a -> a.important && a.code != Activity.CODE_SAVE }
         return activities.sort { Activity a, Activity b -> b.dateCreated <=> a.dateCreated }
+    }
+
+    List<Map> getActualReleases() {
+        executeQuery(""" 
+                SELECT release.id, release.name, release.state, release.orderNumber
+                FROM Release release
+                WHERE release.id IN (
+                    SELECT DISTINCT release2.id
+                    FROM Release release2, Story story, Sprint sprint
+                    WHERE story.feature.id = :featureId
+                    AND story.parentSprint.id = sprint.id
+                    AND sprint.parentRelease.id = release2.id
+                )
+                ORDER BY release.orderNumber""", [featureId: id], [cache: true, readOnly: true]
+        ).collect { columns ->
+            [id: columns[0], name: columns[1], state: columns[2], orderNumber: columns[3]]
+        }
     }
 
     Map getProject() { // Hack because by default it does not return the asShort but a timebox instead
