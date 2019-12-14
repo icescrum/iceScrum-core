@@ -28,7 +28,7 @@ class AccessToken implements Serializable {
         scope nullable: false
         refreshToken nullable: true
         authenticationKey nullable: false, blank: false, unique: true
-        authentication nullable: false, minSize: 1, maxSize: 1024 * 4
+        authentication nullable: false, minSize: 1
         additionalInformation nullable: true
     }
 
