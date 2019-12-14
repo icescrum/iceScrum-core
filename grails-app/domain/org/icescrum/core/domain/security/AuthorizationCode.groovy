@@ -9,7 +9,7 @@ class AuthorizationCode implements Serializable {
 
     static constraints = {
         code nullable: false, blank: false, unique: true
-        authentication nullable: false, minSize: 1, maxSize: 1024 * 8
+        authentication nullable: false, minSize: 1
     }
 
     static mapping = {
