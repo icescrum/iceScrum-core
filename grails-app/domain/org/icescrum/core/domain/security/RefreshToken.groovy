@@ -9,7 +9,7 @@ class RefreshToken {
     static constraints = {
         value nullable: false, blank: false, unique: true
         expiration nullable: true
-        authentication nullable: false, minSize: 1
+        authentication nullable: false, minSize: 1, maxSize: 1024 * 12
     }
 
     static mapping = {
