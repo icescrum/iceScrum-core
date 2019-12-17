@@ -80,6 +80,15 @@ class AcceptanceTest implements Serializable {
         results ? results.first() : null
     }
 
+    static AcceptanceTest getInProjectWithUid(projectId, uid) {
+        def results = executeQuery(
+                """SELECT at
+                   FROM org.icescrum.core.domain.AcceptanceTest as at
+                   WHERE at.uid = :uid
+                   AND at.parentStory.backlog.id = :pid """, [uid: uid, pid: projectId])
+        results ? results.first() : null
+    }
+
     static List<AcceptanceTest> getAllInProject(projectId, term = '', states = []) {
         executeQuery(
                 """SELECT at
@@ -117,6 +126,14 @@ class AcceptanceTest implements Serializable {
         AcceptanceTest acceptanceTest = getInProject(projectId, id)
         if (!acceptanceTest) {
             throw new ObjectNotFoundException(id, 'AcceptanceTest')
+        }
+        return acceptanceTest
+    }
+
+    static AcceptanceTest findByProjectIdAndUid(long projectId, int uid) {
+        AcceptanceTest acceptanceTest = getInProjectWithUid(projectId, uid)
+        if (!acceptanceTest) {
+            throw new ObjectNotFoundException(uid, 'AcceptanceTest')
         }
         return acceptanceTest
     }
