@@ -25,6 +25,7 @@
 
 package org.icescrum.core.domain
 
+import grails.util.Holders
 import org.grails.comments.Comment
 import org.hibernate.ObjectNotFoundException
 import org.icescrum.core.domain.AcceptanceTest.AcceptanceTestState
@@ -147,6 +148,10 @@ class Story extends BacklogElement implements Cloneable, Serializable {
     Map getProject() { // Hack because by default it does not return the asShort but a timebox instead
         Project project = (Project) backlog
         return project ? [class: 'Project', id: project.id, pkey: project.pkey, name: project.name] : [:]
+    }
+
+    String getPermalink(){
+        return Holders.grailsApplication.config.icescrum.serverURL + '/p/' + backlog.pkey + '-' + this.uid
     }
 
     List<Story> getSameBacklogStories() {

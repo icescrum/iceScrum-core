@@ -93,7 +93,6 @@ class NotificationEmailService {
         Project project = (Project) story.backlog
         def subjectArgs = [project.name, story.name]
         def baseUrl = grailsApplication.config.icescrum.serverURL + '/p/' + project.pkey
-        def permalink = baseUrl + '-' + story.uid
         def projectLink = baseUrl + '#project'
         def eventLabel = EVENT_LABELS[type]
         def description = type == IceScrumEventType.DELETE ? story.description ?: "" : null
@@ -106,7 +105,7 @@ class NotificationEmailService {
                     emails : group*.email.toArray(),
                     subject: grailsApplication.config.icescrum.alerts.subject_prefix + getMessage('is.template.email.story.' + eventLabel.toLowerCase() + '.subject', (Locale) locale, subjectArgs),
                     view   : '/emails-templates/story' + eventLabel,
-                    model  : [locale: locale, storyName: story.name, permalink: permalink, linkName: project.name, link: projectLink, description: description],
+                    model  : [locale: locale, storyName: story.name, permalink: story.permalink, linkName: project.name, link: projectLink, description: description],
                     async  : true
             ])
         }
@@ -119,7 +118,6 @@ class NotificationEmailService {
         Project project = task.parentProject
         def subjectArgs = [project.name, task.name]
         def baseUrl = grailsApplication.config.icescrum.serverURL + '/p/' + project.pkey
-        def permalink = baseUrl + '-T' + task.uid
         def projectLink = baseUrl + '#project'
         def listTo = receiversByLocale(project.allUsers, user?.id, [type: 'onUrgentTask', pkey: project.pkey])
         listTo?.each { locale, group ->
@@ -130,7 +128,7 @@ class NotificationEmailService {
                     emails : group*.email.toArray(),
                     subject: grailsApplication.config.icescrum.alerts.subject_prefix + getMessage('is.template.email.task.created.subject', (Locale) locale, subjectArgs),
                     view   : '/emails-templates/taskCreated',
-                    model  : [locale: locale, taskName: task.name, permalink: permalink, linkName: project.name, link: projectLink, description: task.description],
+                    model  : [locale: locale, taskName: task.name, permalink: task.permalink, linkName: project.name, link: projectLink, description: task.description],
                     async  : true
             ])
         }
@@ -143,7 +141,6 @@ class NotificationEmailService {
         Project project = story.backlog
         def subjectArgs = [project.name, story.name]
         def baseUrl = grailsApplication.config.icescrum.serverURL + '/p/' + project.pkey
-        def permalink = baseUrl + '-' + story.uid
         def projectLink = baseUrl + '#project'
         def eventLabel = EVENT_LABELS[type]
         def listTo = receiversByLocale(story.followers, user?.id)
@@ -155,7 +152,7 @@ class NotificationEmailService {
                     emails : group*.email.toArray(),
                     subject: grailsApplication.config.icescrum.alerts.subject_prefix + getMessage('is.template.email.story.changedState.subject', (Locale) locale, subjectArgs),
                     view   : '/emails-templates/storyChangedState',
-                    model  : [state: getMessage(project.getStoryStateNames()[story.state], (Locale) locale), locale: locale, storyName: story.name, permalink: permalink, linkName: project.name, link: projectLink],
+                    model  : [state: getMessage(project.getStoryStateNames()[story.state], (Locale) locale), locale: locale, storyName: story.name, permalink: story.permalink, linkName: project.name, link: projectLink],
                     async  : true
             ])
         }
@@ -169,7 +166,6 @@ class NotificationEmailService {
         def project = story.backlog
         def subjectArgs = [project.name, story.name]
         def baseUrl = grailsApplication.config.icescrum.serverURL + '/p/' + project.pkey
-        def permalink = baseUrl + '-' + story.uid
         def projectLink = baseUrl + '#project'
         String text = ServicesUtils.textileToHtml(comment.body)
         def listTo = receiversByLocale(story.followers, user?.id)
@@ -181,7 +177,7 @@ class NotificationEmailService {
                     emails : group*.email.toArray(),
                     subject: grailsApplication.config.icescrum.alerts.subject_prefix + getMessage('is.template.email.story.commented.subject', (Locale) locale, subjectArgs),
                     view   : '/emails-templates/storyCommented',
-                    model  : [by: comment.poster.firstName + " " + comment.poster.lastName, comment: text, locale: locale, storyName: story.name, permalink: permalink, linkName: project.name, link: projectLink],
+                    model  : [by: comment.poster.firstName + " " + comment.poster.lastName, comment: text, locale: locale, storyName: story.name, permalink: story.permalink, linkName: project.name, link: projectLink],
                     async  : true
             ])
         }
@@ -195,7 +191,6 @@ class NotificationEmailService {
         def project = story.backlog
         def subjectArgs = [project.name, story.name]
         def baseUrl = grailsApplication.config.icescrum.serverURL + '/p/' + project.pkey
-        def permalink = baseUrl + '-' + story.uid
         def projectLink = baseUrl + '#project'
         def listTo = receiversByLocale(story.followers, user?.id)
         listTo?.each { locale, group ->
@@ -206,7 +201,7 @@ class NotificationEmailService {
                     emails : group*.email.toArray(),
                     subject: grailsApplication.config.icescrum.alerts.subject_prefix + getMessage('is.template.email.story.commentEdited.subject', (Locale) locale, subjectArgs),
                     view   : '/emails-templates/storyCommentEdited',
-                    model  : [by: user.firstName + " " + user.lastName, locale: locale, storyName: story.name, permalink: permalink, linkName: project.name, link: projectLink],
+                    model  : [by: user.firstName + " " + user.lastName, locale: locale, storyName: story.name, permalink: story.permalink, linkName: project.name, link: projectLink],
                     async  : true
             ])
         }

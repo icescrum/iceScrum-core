@@ -25,6 +25,7 @@
 
 package org.icescrum.core.domain
 
+import grails.util.Holders
 import org.grails.comments.Comment
 import org.hibernate.ObjectNotFoundException
 
@@ -241,6 +242,10 @@ class Task extends BacklogElement implements Serializable {
 
     def getActivity() {
         return activities.sort { a, b -> b.dateCreated <=> a.dateCreated }
+    }
+
+    String getPermalink(){
+        return Holders.grailsApplication.config.icescrum.serverURL + '/p/' + this.parentProject.pkey + '-T' + this.uid
     }
 
     static search(project, options, rowCount = false) {
