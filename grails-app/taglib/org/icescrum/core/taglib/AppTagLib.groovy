@@ -13,4 +13,11 @@ class AppTagLib {
             out << body()
         }
     }
+
+    def ifAppIsAvailableForProject = { attrs, body ->
+        assert attrs.app
+        if (appService.isAvailableAppForProject(attrs.app)) {
+            out << body()
+        }
+    }
 }

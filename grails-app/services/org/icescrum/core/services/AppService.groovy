@@ -64,6 +64,12 @@ class AppService extends IceScrumEventPublisher {
         }
     }
 
+    boolean isAvailableAppForProject(String appDefinitionId) {
+        return appDefinitionService.getAppDefinitions().find {
+            return appDefinitionId == it.id && it.isProject && (grailsApplication.config.icescrum.beta.enable && grailsApplication.config.icescrum.beta[it.id]?.enable ? true : !it.isBeta)
+        } ? true : false
+    }
+
     private void updateSimpleProjectAppEnabledForProject(Project project, AppDefinition appDefinition, enabledForProject) {
         SimpleProjectApp app = SimpleProjectApp.findByAppDefinitionIdAndParentProject(appDefinition.id, project)
         if (!app) {
