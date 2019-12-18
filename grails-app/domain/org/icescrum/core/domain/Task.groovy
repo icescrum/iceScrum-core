@@ -244,7 +244,7 @@ class Task extends BacklogElement implements Serializable {
         return activities.sort { a, b -> b.dateCreated <=> a.dateCreated }
     }
 
-    String getPermalink(){
+    String getPermalink() {
         return Holders.grailsApplication.config.icescrum.serverURL + '/p/' + this.parentProject.pkey + '-T' + this.uid
     }
 
