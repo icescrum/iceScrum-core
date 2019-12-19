@@ -38,6 +38,7 @@ class Portfolio {
     String description
     Date dateCreated
     Date lastUpdated
+    PortfolioFramework framework = PortfolioFramework.DEFAULT
 
     static hasMany = [
             projects: Project,
@@ -56,6 +57,7 @@ class Portfolio {
         fkey(blank: false, maxSize: 10, matches: /^[A-Z0-9]*[A-Z][A-Z0-9]*$/, unique: true)
         description(maxSize: 5000, nullable: true)
         projects(maxSize: 20)
+        framework(nullable: true) // Required for migration but should not be null
     }
 
     static transients = ['businessOwners', 'stakeHolders', 'invitedBusinessOwners', 'invitedStakeHolders']
@@ -131,5 +133,10 @@ class Portfolio {
             throw new ObjectNotFoundException(id, 'Portfolio')
         }
         return portfolio
+    }
+
+    enum PortfolioFramework {
+        DEFAULT,
+        SAFE
     }
 }
