@@ -121,7 +121,10 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
 
     private void marshallProperty(property, beanWrapper, writer, json, domainClass, config, requestConfig) {
         Object propertyValue = beanWrapper.getPropertyValue(property.name)
-        if (!property.isAssociation()) {
+        if (property.type.isEnum()) {
+            writer.key(property.name)
+            json.convertAnother(propertyValue.toString())
+        } else if (!property.isAssociation()) {
             writer.key(property.name)
             json.convertAnother(propertyValue)
         } else if (propertyValue == null) {
