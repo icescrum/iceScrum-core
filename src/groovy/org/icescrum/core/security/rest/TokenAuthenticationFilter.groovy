@@ -78,7 +78,7 @@ class TokenAuthenticationFilter extends GenericFilterBean {
             }
         } else {
             if (this.logger.isDebugEnabled()) {
-                this.logger.debug "No " + TokenExtractor.TOKEN_HEADER + "or from icescrum.security.authorizedTokenHeaders in request"
+                this.logger.debug "No " + TokenExtractor.TOKEN_HEADER + " or from icescrum.security.authorizedTokenHeaders in request"
                 this.logger.debug "End TokenAuthenticationFilter ****"
             }
         }
