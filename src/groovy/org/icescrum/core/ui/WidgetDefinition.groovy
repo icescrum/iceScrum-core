@@ -124,7 +124,7 @@ class WidgetDefinition {
         this.name = "is.ui.widget.${i18n ?: id}.name"
         this.help = "is.ui.widget.${i18n ?: id}.help"
         this.description = "is.ui.widget.${i18n ?: id}.description"
-        this.title = this.name
+        this.title = this.title ?: this.name
     }
 
     def methodMissing(String name, args) {
