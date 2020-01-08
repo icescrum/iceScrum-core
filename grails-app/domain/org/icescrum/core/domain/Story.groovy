@@ -320,7 +320,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
     }
 
     static List<Map> storyDates(long projectId, boolean recentOnly = false) {
-        def params = [projectId: projectId]
+        def params = [projectId: projectId, storyStateDone: STATE_DONE]
         if (recentOnly) {
             params.storyMinDoneDate = new Date() - 90 // Three last months only to see progress
         }
@@ -328,21 +328,21 @@ class Story extends BacklogElement implements Cloneable, Serializable {
             return timestamp ? new Date(timestamp.time) : null
         }
         return executeQuery(""" 
-                SELECT state, story.frozenDate, story.suggestedDate, story.acceptedDate, story.estimatedDate, story.plannedDate, story.inProgressDate, story.inReviewDate, story.doneDate
+                SELECT story.frozenDate, story.suggestedDate, story.acceptedDate, story.estimatedDate, story.plannedDate, story.inProgressDate, story.inReviewDate, story.doneDate
                 FROM Story story
                 WHERE story.backlog.id = :projectId
+                AND story.state = :storyStateDone
                 ${recentOnly ? 'AND story.doneDate > :storyMinDoneDate' : ''}""", params, [cache: true, readOnly: true]
         ).collect { storyArray ->
             return [
-                    state             : storyArray[0],
-                    (STATE_FROZEN)    : timestampToDate(storyArray[1]),
-                    (STATE_SUGGESTED) : timestampToDate(storyArray[2]),
-                    (STATE_ACCEPTED)  : timestampToDate(storyArray[3]),
-                    (STATE_ESTIMATED) : timestampToDate(storyArray[4]),
-                    (STATE_PLANNED)   : timestampToDate(storyArray[5]),
-                    (STATE_INPROGRESS): timestampToDate(storyArray[6]),
-                    (STATE_INREVIEW)  : timestampToDate(storyArray[7]),
-                    (STATE_DONE)      : timestampToDate(storyArray[8])
+                    (STATE_FROZEN)    : timestampToDate(storyArray[0]),
+                    (STATE_SUGGESTED) : timestampToDate(storyArray[1]),
+                    (STATE_ACCEPTED)  : timestampToDate(storyArray[2]),
+                    (STATE_ESTIMATED) : timestampToDate(storyArray[3]),
+                    (STATE_PLANNED)   : timestampToDate(storyArray[4]),
+                    (STATE_INPROGRESS): timestampToDate(storyArray[5]),
+                    (STATE_INREVIEW)  : timestampToDate(storyArray[6]),
+                    (STATE_DONE)      : timestampToDate(storyArray[7])
             ]
         }
     }
