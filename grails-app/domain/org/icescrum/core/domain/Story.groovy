@@ -30,6 +30,8 @@ import org.grails.comments.Comment
 import org.hibernate.ObjectNotFoundException
 import org.icescrum.core.domain.AcceptanceTest.AcceptanceTestState
 
+import java.sql.Timestamp
+
 class Story extends BacklogElement implements Cloneable, Serializable {
 
     static final long serialVersionUID = -6800252507987149001L
@@ -315,6 +317,34 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                 AND commentLink.type = 'story' 
                 ORDER BY commentLink.comment.dateCreated DESC""", [projectId: projectId], [max: 10, offset: 0, cache: true, readOnly: true]
         )
+    }
+
+    static List<Map> storyDates(long projectId, boolean recentOnly = false) {
+        def params = [projectId: projectId]
+        if (recentOnly) {
+            params.storyMinDoneDate = new Date() - 90 // Three last months only to see progress
+        }
+        def timestampToDate = { Timestamp timestamp ->
+            return timestamp ? new Date(timestamp.time) : null
+        }
+        return executeQuery(""" 
+                SELECT state, story.frozenDate, story.suggestedDate, story.acceptedDate, story.estimatedDate, story.plannedDate, story.inProgressDate, story.inReviewDate, story.doneDate
+                FROM Story story
+                WHERE story.backlog.id = :projectId
+                ${recentOnly ? 'AND story.doneDate > :storyMinDoneDate' : ''}""", params, [cache: true, readOnly: true]
+        ).collect { storyArray ->
+            return [
+                    state             : storyArray[0],
+                    (STATE_FROZEN)    : timestampToDate(storyArray[1]),
+                    (STATE_SUGGESTED) : timestampToDate(storyArray[2]),
+                    (STATE_ACCEPTED)  : timestampToDate(storyArray[3]),
+                    (STATE_ESTIMATED) : timestampToDate(storyArray[4]),
+                    (STATE_PLANNED)   : timestampToDate(storyArray[5]),
+                    (STATE_INPROGRESS): timestampToDate(storyArray[6]),
+                    (STATE_INREVIEW)  : timestampToDate(storyArray[7]),
+                    (STATE_DONE)      : timestampToDate(storyArray[8])
+            ]
+        }
     }
 
     int compareTo(Story o) {
