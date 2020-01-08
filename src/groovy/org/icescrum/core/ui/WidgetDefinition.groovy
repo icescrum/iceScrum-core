@@ -58,10 +58,9 @@ class WidgetDefinition {
     Map options = [:]
     Map defaultSettings = [:]
 
-    WidgetDefinition(String id, String pluginName, boolean disabled) {
+    WidgetDefinition(String id, boolean disabled) {
         this.id = id
         this.disabled = disabled
-        this.pluginName = pluginName
     }
 
     void i18n(int i18n) {
@@ -106,6 +105,10 @@ class WidgetDefinition {
 
     void ngController(String ngController) {
         this.ngController = ngController
+    }
+
+    void pluginName(String pluginName) {
+        this.pluginName = pluginName
     }
 
     void templatePath(String templatePath) {

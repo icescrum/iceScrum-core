@@ -46,12 +46,15 @@ class WidgetDefinitionsBuilder {
     def invokeMethod(String name, args) {
         if (args.size() == 1 && args[0] instanceof Closure) {
             def definitionClosure = args[0]
-            WidgetDefinition widgetDefinition = new WidgetDefinition(name, pluginName, disabled)
+            WidgetDefinition widgetDefinition = new WidgetDefinition(name, disabled)
             definitionClosure.delegate = widgetDefinition
             definitionClosure.resolveStrategy = Closure.DELEGATE_FIRST
             definitionClosure()
             if (widgetsDefinitionsById[name]) {
                 log.warn("UI widget definition for $name will be overriden")
+            }
+            if (widgetDefinition.pluginName == null) {
+                widgetDefinition.pluginName = pluginName
             }
             widgetDefinition.setupI18n()
             widgetDefinition.templateFolder = widgetDefinition.templateFolder ?: widgetDefinition.id
