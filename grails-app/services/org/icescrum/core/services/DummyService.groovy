@@ -256,6 +256,8 @@ class DummyService {
             story.state = Story.STATE_DONE
             def user = ((int) story.id) % 2 == 0 ? members.first() : members.last()
             addStoryActivity(story, user, 'updateState', sprint.endDate, 'state', Story.STATE_INPROGRESS)
+            story.inProgressDate = sprint.startDate
+            story.inReviewDate = sprint.startDate + (((int) story.id) % 2 == 0 ? 7 : 11)
             story.doneDate = sprint.endDate
             story.save()
         }
