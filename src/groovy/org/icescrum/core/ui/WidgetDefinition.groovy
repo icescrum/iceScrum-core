@@ -63,7 +63,7 @@ class WidgetDefinition {
         this.disabled = disabled
     }
 
-    void i18n(int i18n) {
+    void i18n(String i18n) {
         this.i18n = i18n
     }
 
