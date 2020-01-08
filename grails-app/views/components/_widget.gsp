@@ -53,9 +53,4 @@
             </form>
         </g:if>
     </div>
-    <g:if test="${widgetDefinition.footer}">
-        <div class="card-footer">
-            <g:render template="/${widgetDefinition.templateFolder}/widget/footer" plugin="${widgetDefinition.pluginName}"/>
-        </div>
-    </g:if>
 </div>

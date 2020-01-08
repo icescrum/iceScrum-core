@@ -30,8 +30,8 @@ class WidgetDefinition {
     private final log = LoggerFactory.getLogger(this.class.name)
 
     boolean disabled
-    boolean footer = false
     boolean settings = false
+    boolean hideSettings = false
     boolean allowRemove = true
     boolean allowDuplicate = true
 
@@ -121,6 +121,10 @@ class WidgetDefinition {
 
     void allowDuplicate(boolean allowDuplicate) {
         this.allowDuplicate = allowDuplicate
+    }
+
+    void hideSettings(boolean hideSettings) {
+        this.hideSettings = hideSettings
     }
 
     void setupI18n() {

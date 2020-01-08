@@ -59,8 +59,7 @@ class WidgetDefinitionsBuilder {
             widgetDefinition.setupI18n()
             widgetDefinition.templateFolder = widgetDefinition.templateFolder ?: widgetDefinition.id
             widgetDefinition.templatePath = "/widgets/${widgetDefinition.templateFolder}/widget"
-            widgetDefinition.footer = groovyPageLocator.findTemplateByPath("/widgets/${widgetDefinition.templateFolder}/footer") ? true : false
-            widgetDefinition.settings = groovyPageLocator.findTemplateByPath("/widgets/${widgetDefinition.templateFolder}/settings") ? true : false
+            widgetDefinition.settings = widgetDefinition.hideSettings ? false : (groovyPageLocator.findTemplateByPath("/widgets/${widgetDefinition.templateFolder}/settings") ? true : false)
             widgetsDefinitionsById[name] = widgetDefinition
             if (log.debugEnabled) {
                 log.debug("Added new UI widget definition for $name and status is : ${disabled ? 'disabled' : 'enabled'}")
