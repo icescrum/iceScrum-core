@@ -26,6 +26,7 @@
 package org.icescrum.core.domain
 
 import grails.util.Holders
+import groovy.time.TimeCategory
 import org.grails.comments.Comment
 import org.hibernate.ObjectNotFoundException
 import org.icescrum.core.domain.AcceptanceTest.AcceptanceTestState
@@ -344,6 +345,33 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                     (STATE_INREVIEW)  : timestampToDate(storyArray[6]),
                     (STATE_DONE)      : timestampToDate(storyArray[7])
             ]
+        }
+    }
+
+    static Integer meanCycleTime(long projectId, boolean recentOnly = false) {
+        def params = [projectId: projectId, storyStateDone: STATE_DONE]
+        if (recentOnly) {
+            params.storyMinDoneDate = new Date() - 90 // Three last months only to see progress
+        }
+        def timestampToDate = { Timestamp timestamp ->
+            return timestamp ? new Date(timestamp.time) : null
+        }
+        def dates = executeQuery(""" 
+                SELECT story.doneDate, min(task.inProgressDate)
+                FROM Story story
+                INNER JOIN story.tasks task
+                WHERE story.backlog.id = :projectId
+                AND story.state = :storyStateDone
+                ${recentOnly ? 'AND story.doneDate > :storyMinDoneDate' : ''}
+                GROUP BY story.id""", params, [cache: true, readOnly: true]
+        )
+        if (dates) {
+            BigDecimal mean = dates.collect { storyDate ->
+                new BigDecimal(TimeCategory.minus(timestampToDate(storyDate[0]), timestampToDate(storyDate[1])).days)
+            }.sum() / dates.size()
+            return Math.round(mean)
+        } else {
+            return null
         }
     }
 

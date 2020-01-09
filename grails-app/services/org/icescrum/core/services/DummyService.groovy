@@ -262,35 +262,35 @@ class DummyService {
             story.save()
         }
         sprint.tasks.each { Task task ->
-            doneTask(task)
+            doneTask(task, sprint.startDate + 4, sprint.endDate - 3)
         }
     }
 
-    private void inProgressTask(Task task) {
+    private void inProgressTask(Task task, Date inProgressDate) {
         task.state = Task.STATE_BUSY
-        task.inProgressDate = new Date()
+        task.inProgressDate = inProgressDate
         task.save()
-        addTaskActivity(task, task.responsible, 'taskInprogress')
+        addTaskActivity(task, task.responsible, 'taskInprogress', task.inProgressDate)
     }
 
-    private void doneTask(Task task) {
+    private void doneTask(Task task, Date inProgressDate, Date doneDate) {
         task.state = Task.STATE_DONE
         if (!task.inProgressDate) {
-            task.inProgressDate = new Date()
+            task.inProgressDate = inProgressDate
         }
-        task.doneDate = new Date()
+        task.doneDate = doneDate
         task.estimation = 0
         task.save()
-        addTaskActivity(task, task.responsible, 'taskInprogress')
-        addTaskActivity(task, task.responsible, 'taskFinish')
+        addTaskActivity(task, task.responsible, 'taskInprogress', task.inProgressDate)
+        addTaskActivity(task, task.responsible, 'taskFinish', task.doneDate)
     }
 
     private void updateContentInProgressSprint(Sprint sprint) {
         sprint.tasks.eachWithIndex { task, index ->
             if (index % 5 == 0) {
-                doneTask(task)
+                doneTask(task, sprint.startDate, sprint.startDate + 4)
             } else if (index % 2 == 0) {
-                inProgressTask(task)
+                inProgressTask(task, new Date())
             }
         }
         def lastStory = sprint.stories.sort { it.rank }.last()
@@ -299,7 +299,9 @@ class DummyService {
         lastStory.doneDate = new Date()
         lastStory.save()
         lastStory.tasks.each { Task task ->
-            doneTask(task)
+            if (!task.state == Task.STATE_DONE) {
+                doneTask(task, lastStory.doneDate - 1, lastStory.doneDate)
+            }
         }
         lastStory.parentSprint.velocity += lastStory.effort
         def rankTasks = { k, tasks ->
@@ -353,8 +355,8 @@ class DummyService {
         story.addToActivities(activity)
     }
 
-    private addTaskActivity(Task task, User poster, String code) {
-        def activity = new Activity(poster: poster, parentRef: task.id, parentType: 'task', code: code, label: task.name)
+    private addTaskActivity(Task task, User poster, String code, dateCreated) {
+        def activity = new Activity(poster: poster, parentRef: task.id, parentType: 'task', code: code, label: task.name, dateCreated: dateCreated)
         activity.save()
         task.addToActivities(activity)
     }
