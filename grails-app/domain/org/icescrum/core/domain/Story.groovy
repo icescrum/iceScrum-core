@@ -320,59 +320,71 @@ class Story extends BacklogElement implements Cloneable, Serializable {
         )
     }
 
-    static List<Map> storyDates(long projectId, boolean recentOnly = false) {
-        def params = [projectId: projectId, storyStateDone: STATE_DONE]
-        if (recentOnly) {
-            params.storyMinDoneDate = new Date() - 90 // Three last months only to see progress
-        }
-        def timestampToDate = { Timestamp timestamp ->
-            return timestamp ? new Date(timestamp.time) : null
-        }
-        return executeQuery(""" 
+    static List<Map> storyDates(long projectId) {
+        def lastDoneDate = getLastDoneDate(projectId)
+        if (lastDoneDate) {
+            def timestampToDate = { Timestamp timestamp ->
+                return timestamp ? new Date(timestamp.time) : null
+            }
+            def storyMinDoneDate = timestampToDate(lastDoneDate) - 90 // Data for 3 months before the most recent done date
+            return executeQuery(""" 
                 SELECT story.frozenDate, story.suggestedDate, story.acceptedDate, story.estimatedDate, story.plannedDate, story.inProgressDate, story.inReviewDate, story.doneDate
                 FROM Story story
                 WHERE story.backlog.id = :projectId
                 AND story.state = :storyStateDone
-                ${recentOnly ? 'AND story.doneDate > :storyMinDoneDate' : ''}""", params, [cache: true, readOnly: true]
-        ).collect { storyArray ->
-            return [
-                    (STATE_FROZEN)    : timestampToDate(storyArray[0]),
-                    (STATE_SUGGESTED) : timestampToDate(storyArray[1]),
-                    (STATE_ACCEPTED)  : timestampToDate(storyArray[2]),
-                    (STATE_ESTIMATED) : timestampToDate(storyArray[3]),
-                    (STATE_PLANNED)   : timestampToDate(storyArray[4]),
-                    (STATE_INPROGRESS): timestampToDate(storyArray[5]),
-                    (STATE_INREVIEW)  : timestampToDate(storyArray[6]),
-                    (STATE_DONE)      : timestampToDate(storyArray[7])
-            ]
+                AND story.doneDate > :storyMinDoneDate""", [projectId: projectId, storyStateDone: STATE_DONE, storyMinDoneDate: storyMinDoneDate], [cache: true, readOnly: true]
+            ).collect { storyArray ->
+                return [
+                        (STATE_FROZEN)    : timestampToDate(storyArray[0]),
+                        (STATE_SUGGESTED) : timestampToDate(storyArray[1]),
+                        (STATE_ACCEPTED)  : timestampToDate(storyArray[2]),
+                        (STATE_ESTIMATED) : timestampToDate(storyArray[3]),
+                        (STATE_PLANNED)   : timestampToDate(storyArray[4]),
+                        (STATE_INPROGRESS): timestampToDate(storyArray[5]),
+                        (STATE_INREVIEW)  : timestampToDate(storyArray[6]),
+                        (STATE_DONE)      : timestampToDate(storyArray[7])
+                ]
+            }
+        } else {
+            return []
         }
     }
 
-    static Integer meanCycleTime(long projectId, boolean recentOnly = false) {
-        def params = [projectId: projectId, storyStateDone: STATE_DONE]
-        if (recentOnly) {
-            params.storyMinDoneDate = new Date() - 90 // Three last months only to see progress
-        }
-        def timestampToDate = { Timestamp timestamp ->
-            return timestamp ? new Date(timestamp.time) : null
-        }
-        def dates = executeQuery(""" 
+    static Integer meanCycleTime(long projectId) {
+        def lastDoneDate = getLastDoneDate(projectId)
+        if (lastDoneDate) {
+            def timestampToDate = { Timestamp timestamp ->
+                return timestamp ? new Date(timestamp.time) : null
+            }
+            def storyMinDoneDate = timestampToDate(lastDoneDate) - 90 // Data for 3 months before the most recent done date
+            def dates = executeQuery(""" 
                 SELECT story.doneDate, min(task.inProgressDate)
                 FROM Story story
                 INNER JOIN story.tasks task
                 WHERE story.backlog.id = :projectId
                 AND story.state = :storyStateDone
-                ${recentOnly ? 'AND story.doneDate > :storyMinDoneDate' : ''}
-                GROUP BY story.id""", params, [cache: true, readOnly: true]
-        )
-        if (dates) {
-            BigDecimal mean = dates.collect { storyDate ->
-                new BigDecimal(TimeCategory.minus(timestampToDate(storyDate[0]), timestampToDate(storyDate[1])).days)
-            }.sum() / dates.size()
-            return Math.round(mean)
+                AND story.doneDate > :storyMinDoneDate
+                GROUP BY story.id""", [projectId: projectId, storyStateDone: STATE_DONE, storyMinDoneDate: storyMinDoneDate], [cache: true, readOnly: true]
+            )
+            if (dates) {
+                BigDecimal mean = dates.collect { storyDate ->
+                    new BigDecimal(TimeCategory.minus(timestampToDate(storyDate[0]), timestampToDate(storyDate[1])).days)
+                }.sum() / dates.size()
+                return Math.round(mean)
+            } else {
+                return null
+            }
         } else {
             return null
         }
+    }
+
+    static Timestamp getLastDoneDate(long projectId) { // Cannot be done in subqueries, date arithmetics are not supported in HQL
+        return executeQuery(""" 
+            SELECT MAX(story.doneDate)
+            FROM Story story
+            WHERE story.backlog.id = :projectId""", [projectId: projectId], [cache: true, readOnly: true]
+        )[0]
     }
 
     int compareTo(Story o) {

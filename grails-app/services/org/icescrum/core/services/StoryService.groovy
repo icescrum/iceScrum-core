@@ -770,7 +770,7 @@ class StoryService extends IceScrumEventPublisher {
     }
 
     Map<Integer, Integer> meanTimePerState(Project project, Integer startState, Integer endState) {
-        def storyDates = Story.storyDates(project.id, true)
+        def storyDates = Story.storyDates(project.id)
         if (storyDates) {
             return (startState..(endState - 1)).collectEntries { state ->
                 List<BigDecimal> durations = storyDates.collect { storyDate ->
