@@ -108,6 +108,7 @@ class Project extends TimeBox implements Serializable, Attachmentable {
         name(index: 'p_name_index')
         attachments_count(nullable: true) // Must be nullable at creation for postgres because it doesn't set default value. The not nullable constraint is added in migration.
         preferences lazy: true
+        widgets(sort: 'position')
     }
 
     static constraints = {
