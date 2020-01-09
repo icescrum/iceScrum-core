@@ -794,6 +794,18 @@ class StoryService extends IceScrumEventPublisher {
         }
     }
 
+    Integer meanCycleTime(Project project) {
+        def storyDates = Story.storyDates(project.id, true)
+        if (storyDates) {
+            BigDecimal mean = storyDates.collect { storyDate ->
+                new BigDecimal(TimeCategory.minus(storyDate[Story.STATE_DONE], storyDate[Story.STATE_INPROGRESS]).days)
+            }.sum() / storyDates.size()
+            return Math.round(mean)
+        } else {
+            return null
+        }
+    }
+
     def unMarshall(def storyXml, def options) {
         Project project = options.project
         Sprint sprint = options.sprint
