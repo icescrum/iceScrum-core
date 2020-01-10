@@ -24,6 +24,7 @@
 package org.icescrum.core.services
 
 import grails.transaction.Transactional
+import org.icescrum.core.domain.Project
 import org.icescrum.core.domain.User
 import org.icescrum.core.domain.Widget
 import org.icescrum.core.domain.Widget.WidgetParentType
@@ -149,11 +150,11 @@ class WidgetService {
         }
     }
 
-    // BE CAREFUL: Only import user widgets
+    // BE CAREFUL: Only import user/project widgets
     def unMarshall(def widgetXml, def options) {
         Widget.withTransaction(readOnly: !options.save) { transaction ->
             def widget = new Widget(
-                    parentType: WidgetParentType.USER,
+                    parentType: options.userPreferences ? WidgetParentType.USER : WidgetParentType.PROJECT,
                     position: widgetXml.position.toInteger(),
                     settingsData: widgetXml.settingsData.text() ?: null,
                     widgetDefinitionId: widgetXml.widgetDefinitionId.text()
@@ -163,6 +164,10 @@ class WidgetService {
                 UserPreferences userPreferences = options.userPreferences
                 userPreferences.addToWidgets(widget)
                 widget.userPreferences = options.userPreferences
+            } else if (options.project) {
+                Project project = options.project
+                project.addToWidgets(widget)
+                widget.project = options.project
             }
             if (options.save) {
                 widget.save()

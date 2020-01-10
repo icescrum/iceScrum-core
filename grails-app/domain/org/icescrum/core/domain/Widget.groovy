@@ -112,7 +112,7 @@ class Widget implements Serializable {
         USER, PORTFOLIO, PROJECT
     }
 
-    // BE CAREFUL: Only export user widgets
+    // BE CAREFUL: Only export user/project widgets
     def xml = { builder ->
         builder.widget() {
             builder.position(this.position)
