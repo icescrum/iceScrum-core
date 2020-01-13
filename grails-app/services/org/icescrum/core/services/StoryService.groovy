@@ -29,7 +29,6 @@ package org.icescrum.core.services
 import grails.transaction.Transactional
 import grails.util.GrailsNameUtils
 import grails.validation.ValidationException
-import groovy.time.TimeCategory
 import org.apache.commons.io.FileUtils
 import org.grails.comments.Comment
 import org.grails.comments.CommentLink
@@ -767,31 +766,6 @@ class StoryService extends IceScrumEventPublisher {
             copiedStories << copiedStory.refresh()
         }
         return copiedStories
-    }
-
-    Map<Integer, Integer> meanTimePerState(Project project, Integer startState, Integer endState) {
-        def storyDates = Story.storyDates(project.id)
-        if (storyDates) {
-            return (startState..(endState - 1)).collectEntries { state ->
-                List<BigDecimal> durations = storyDates.collect { storyDate ->
-                    def startDate = storyDate[state]
-                    if (startDate) {
-                        def endDate
-                        ((state + 1)..endState).each { nextState ->
-                            if (!endDate) {
-                                endDate = storyDate[nextState]
-                            }
-                        }
-                        return endDate ? new BigDecimal(TimeCategory.minus(endDate, startDate).days) : 0.0
-                    } else {
-                        return 0.0
-                    }
-                }
-                return [(state): Math.round(durations.sum() / storyDates.size())]
-            }
-        } else {
-            return null
-        }
     }
 
     def unMarshall(def storyXml, def options) {
