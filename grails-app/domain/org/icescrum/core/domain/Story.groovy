@@ -352,19 +352,13 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                 AND release.state = :releaseStateInProgress""", [projectId: projectId, releaseStateInProgress: Release.STATE_INPROGRESS], [cache: true, readOnly: true]
         )[0]
         if (releaseInProgressDate) {
-            releaseInProgressDate = new Date(releaseInProgressDate.time)
             def today = new Date()
-            Integer nbWeeks = (today - releaseInProgressDate).intdiv(7)
-            def storyMinDoneDate
-            if (nbWeeks < 1) {
-                nbWeeks = 1
-                storyMinDoneDate = releaseInProgressDate
-            } else {
-                if (nbWeeks > 4) {
-                    nbWeeks = 4
-                }
-                storyMinDoneDate = today - nbWeeks * 7
+            def nbTotalDays = today - new Date(releaseInProgressDate.time)
+            def nbMaxDays = 4 * 7 // Max 4 weeks (must be a just number of weeks)
+            if (nbTotalDays > nbMaxDays) {
+                nbTotalDays = nbMaxDays
             }
+            def storyMinDoneDate = today - nbTotalDays
             def nbDoneStories = executeQuery(""" 
                 SELECT count(*)
                 FROM Story story
@@ -372,7 +366,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                 AND story.state = :storyStateDone
                 AND story.doneDate > :storyMinDoneDate""", [projectId: projectId, storyStateDone: STATE_DONE, storyMinDoneDate: storyMinDoneDate], [cache: true, readOnly: true]
             )[0]
-            return nbDoneStories ? Math.round(new BigDecimal(nbDoneStories) / nbWeeks) : null
+            return nbDoneStories ? Math.round(new BigDecimal(nbDoneStories) * 7 / nbTotalDays) : null
         } else {
             return null
         }
