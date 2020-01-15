@@ -344,6 +344,40 @@ class Story extends BacklogElement implements Cloneable, Serializable {
         }
     }
 
+    static Integer throughput(long projectId) {
+        def releaseInProgressDate = executeQuery(""" 
+                SELECT release.inProgressDate
+                FROM Release release
+                WHERE release.parentProject.id = :projectId
+                AND release.state = :releaseStateInProgress""", [projectId: projectId, releaseStateInProgress: Release.STATE_INPROGRESS], [cache: true, readOnly: true]
+        )[0]
+        if (releaseInProgressDate) {
+            releaseInProgressDate = new Date(releaseInProgressDate.time)
+            def today = new Date()
+            Integer nbWeeks = (today - releaseInProgressDate).intdiv(7)
+            def storyMinDoneDate
+            if (nbWeeks < 1) {
+                nbWeeks = 1
+                storyMinDoneDate = releaseInProgressDate
+            } else {
+                if (nbWeeks > 4) {
+                    nbWeeks = 4
+                }
+                storyMinDoneDate = today - nbWeeks * 7
+            }
+            def nbDoneStories = executeQuery(""" 
+                SELECT count(*)
+                FROM Story story
+                WHERE story.backlog.id = :projectId
+                AND story.state = :storyStateDone
+                AND story.doneDate > :storyMinDoneDate""", [projectId: projectId, storyStateDone: STATE_DONE, storyMinDoneDate: storyMinDoneDate], [cache: true, readOnly: true]
+            )[0]
+            return nbDoneStories ? Math.round(new BigDecimal(nbDoneStories) / nbWeeks) : null
+        } else {
+            return null
+        }
+    }
+
     static Integer meanCycleTime(long projectId, Date storyMinDoneDate) {
         def timestampToDate = { Timestamp timestamp ->
             return timestamp ? new Date(timestamp.time) : null
