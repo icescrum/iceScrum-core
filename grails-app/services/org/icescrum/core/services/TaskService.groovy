@@ -159,6 +159,9 @@ class TaskService extends IceScrumEventPublisher {
         task.estimation = 0
         task.blocked = false
         task.doneDate = new Date()
+        if (!task.inProgressDate) {
+            task.inProgressDate = task.doneDate
+        }
         def story = task.type ? null : Story.get(task.parentStory?.id)
         if (story && task.parentProject.preferences.autoDoneStory && !story.tasks.any { it.state != Task.STATE_DONE } && story.state != Story.STATE_DONE) {
             ApplicationContext ctx = (ApplicationContext) grailsApplication.mainContext
