@@ -52,18 +52,21 @@ class AuthorityService {
         if (Authority.count() == 0) {
             new Authority(authority: Authority.ROLE_ADMIN).save()
             new Authority(authority: Authority.ROLE_PERMISSION).save()
-            if (grailsApplication.config.icescrum.createDefaultAdmin) {
-                def admin = new User(username: 'admin',
-                        email: 'admin@icescrum.com',
-                        enabled: true,
-                        firstName: "--",
-                        lastName: "Admin",
-                        password: springSecurityService.encodePassword('adminadmin!'),
-                        preferences: new UserPreferences(language: "en")
-                ).save(flush: true)
-                widgetService.initUserWidgets(admin)
-                makeAdmin(admin)
-            }
+        }
+    }
+
+    void initDefaultAdmin() {
+        if (grailsApplication.config.icescrum.createDefaultAdmin) {
+            def admin = new User(username: 'admin',
+                    email: 'admin@icescrum.com',
+                    enabled: true,
+                    firstName: "--",
+                    lastName: "Admin",
+                    password: springSecurityService.encodePassword('adminadmin!'),
+                    preferences: new UserPreferences(language: "en")
+            ).save(flush: true)
+            widgetService.initUserWidgets(admin)
+            makeAdmin(admin)
         }
     }
 }
