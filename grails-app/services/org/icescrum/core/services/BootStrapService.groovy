@@ -40,7 +40,7 @@ class BootStrapService {
         config.icescrum.log.dir = System.getProperty('save.icescrum.log.dir')
 
         if (!config.icescrum.createDefaultAdmin) {
-            config.icescrum.createDefaultAdmin = !dev
+            config.icescrum.createDefaultAdmin = dev
         }
         authorityService.initSecurity()
 
