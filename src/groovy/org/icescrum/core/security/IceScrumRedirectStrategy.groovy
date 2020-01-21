@@ -15,32 +15,34 @@ import javax.servlet.http.HttpServletResponse
  */
 class IceScrumRedirectStrategy implements RedirectStrategy {
 
-    protected final Logger log = LoggerFactory.getLogger(getClass());
+    protected final Logger log = LoggerFactory.getLogger(getClass())
 
-    protected PortResolver portResolver;
-    protected boolean useHeaderCheckChannelSecurity;
+    protected PortResolver portResolver
+    protected boolean useHeaderCheckChannelSecurity
 
     public void sendRedirect(HttpServletRequest request, HttpServletResponse response, String url) throws IOException {
-        String redirectUrl = calculateRedirectUrl(request, url);
-        redirectUrl = response.encodeRedirectURL(redirectUrl);
+        String redirectUrl = calculateRedirectUrl(request, url)
+        redirectUrl = response.encodeRedirectURL(redirectUrl)
         redirectUrl = redirectUrl.startsWith(ApplicationSupport.serverURL()) ? redirectUrl : ApplicationSupport.serverURL()
-        log.debug("Redirecting to '{}'", redirectUrl);
-        response.sendRedirect(redirectUrl);
+        if (log.debugEnabled) {
+            log.debug("Redirecting to '{}'", redirectUrl)
+        }
+        response.sendRedirect(redirectUrl)
     }
 
     protected String calculateRedirectUrl(HttpServletRequest request, String url) {
         if (UrlUtils.isAbsoluteUrl(url)) {
-            return url;
+            return url
         }
 
-        url = request.getContextPath() + url;
+        url = request.getContextPath() + url
 
         if (!useHeaderCheckChannelSecurity) {
-            return url;
+            return url
         }
 
         return UrlUtils.buildFullRequestUrl(request.getScheme(), request.getServerName(),
-                portResolver.getServerPort(request), url, null);
+                portResolver.getServerPort(request), url, null)
     }
 
     /**
@@ -48,7 +50,7 @@ class IceScrumRedirectStrategy implements RedirectStrategy {
      * @param use
      */
     public void setUseHeaderCheckChannelSecurity(boolean use) {
-        useHeaderCheckChannelSecurity = use;
+        useHeaderCheckChannelSecurity = use
     }
 
     /**
@@ -56,6 +58,6 @@ class IceScrumRedirectStrategy implements RedirectStrategy {
      * @param portResolver the port resolver
      */
     public void setPortResolver(PortResolver portResolver) {
-        this.portResolver = portResolver;
+        this.portResolver = portResolver
     }
 }
