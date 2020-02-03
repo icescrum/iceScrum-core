@@ -24,6 +24,7 @@
 package org.icescrum.core.domain
 
 import org.icescrum.core.domain.security.Authority
+import org.icescrum.core.support.ApplicationSupport
 
 class Invitation implements Serializable {
 
@@ -36,7 +37,7 @@ class Invitation implements Serializable {
     static belongsTo = [team: Team, project: Project, portfolio: Portfolio]
 
     static constraints = {
-        email(blank: false, email: true)
+        email(blank: false, validator: { newEmail, invitation -> ApplicationSupport.isValidEmailAddress(newEmail) ?: 'invalid' })
         team(nullable: true)
         project(nullable: true)
         portfolio(nullable: true)

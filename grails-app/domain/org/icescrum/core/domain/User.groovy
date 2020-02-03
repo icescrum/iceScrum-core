@@ -30,6 +30,7 @@ import org.icescrum.core.domain.preferences.UserPreferences
 import org.icescrum.core.domain.security.Authority
 import org.icescrum.core.domain.security.UserAuthority
 import org.icescrum.core.domain.security.UserToken
+import org.icescrum.core.support.ApplicationSupport
 import org.icescrum.plugins.attachmentable.interfaces.Attachmentable
 import org.springframework.security.core.context.SecurityContextHolder as SCH
 
@@ -76,7 +77,7 @@ class User implements Serializable, Attachmentable {
     }
 
     static constraints = {
-        email(blank: false, unique: true, validator: { newEmail, user -> (newEmail && newEmail.split('@').size() > 1 && newEmail.split('@')[1]) ?: 'invalid' }, shared: 'keyMaxSize')
+        email(blank: false, unique: true, validator: { newEmail, user -> ApplicationSupport.isValidEmailAddress(newEmail) ?: 'invalid' }, shared: 'keyMaxSize')
         username(blank: false, unique: true, shared: 'keyMaxSize')
         password(blank: false)
         lastName(blank: false)

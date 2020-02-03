@@ -370,6 +370,10 @@ class ApplicationSupport {
         }
     }
 
+    static boolean isValidEmailAddress(String emailCandidate) {
+        return emailCandidate && emailCandidate.split('@').size() > 1 && emailCandidate.split('@')[1]
+    }
+
     static zipExportFile(OutputStream zipStream, List<File> files, File xml, String subdir) throws IOException {
         ZipOutputStream zout = new ZipOutputStream(zipStream)
         try {
