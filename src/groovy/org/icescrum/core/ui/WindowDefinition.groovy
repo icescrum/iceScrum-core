@@ -22,6 +22,7 @@
  */
 package org.icescrum.core.ui
 
+import org.icescrum.core.domain.WorkspaceType
 import org.slf4j.LoggerFactory
 
 class WindowDefinition {
@@ -38,7 +39,7 @@ class WindowDefinition {
     String help = ''
     String pluginName = null
     String templatePath = null
-    String workspace = "project"
+    String workspace = WorkspaceType.PROJECT
     String secured = 'permitAll()'
 
     def options = [:]

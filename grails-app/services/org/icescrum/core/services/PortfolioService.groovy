@@ -29,6 +29,7 @@ import org.icescrum.core.domain.Invitation
 import org.icescrum.core.domain.Portfolio
 import org.icescrum.core.domain.Project
 import org.icescrum.core.domain.User
+import org.icescrum.core.domain.WorkspaceType
 import org.icescrum.core.domain.security.Authority
 import org.icescrum.core.error.BusinessException
 import org.icescrum.core.event.IceScrumEventPublisher
@@ -103,7 +104,7 @@ class PortfolioService extends IceScrumEventPublisher {
 
     void delete(Portfolio portfolio) {
         def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_DELETE, portfolio)
-        Hook.findAllByWorkspaceIdAndWorkspaceType(portfolio.id, 'portfolio').each {
+        Hook.findAllByWorkspaceIdAndWorkspaceType(portfolio.id, WorkspaceType.PORTFOLIO).each {
             it.delete(flush: true)
         }
         portfolio.projects.collect().each { project -> // Use collect first to avoid mutating portfolio.projects

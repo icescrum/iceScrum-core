@@ -524,7 +524,7 @@ class Project extends TimeBox implements Serializable, Attachmentable {
                 }
             }
             builder.hooks() {
-                Hook.findAllByWorkspaceIdAndWorkspaceType(this.id, 'project').each { _hook ->
+                Hook.findAllByWorkspaceIdAndWorkspaceType(this.id, WorkspaceType.PROJECT).each { _hook ->
                     _hook.xml(builder)
                 }
             }

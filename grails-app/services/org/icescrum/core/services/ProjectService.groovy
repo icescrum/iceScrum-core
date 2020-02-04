@@ -573,7 +573,7 @@ class ProjectService extends IceScrumEventPublisher {
         project.allUsers.each { it.preferences.removeEmailsSettings(project.pkey) } // must be before unsecure to have POs
         widgetService.delete('project', project.id)
         windowService.delete('project', project.id)
-        Hook.findAllByWorkspaceIdAndWorkspaceType(project.id, 'project').each {
+        Hook.findAllByWorkspaceIdAndWorkspaceType(project.id, WorkspaceType.PROJECT).each {
             it.delete(flush: true)
         }
         project.invitedStakeHolders*.delete()
