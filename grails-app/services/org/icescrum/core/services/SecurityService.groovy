@@ -27,10 +27,7 @@ import grails.plugin.springsecurity.acl.AclClass
 import grails.plugin.springsecurity.acl.AclObjectIdentity
 import grails.plugin.springsecurity.acl.AclSid
 import org.codehaus.groovy.grails.orm.hibernate.cfg.GrailsHibernateUtil
-import org.icescrum.core.domain.Portfolio
-import org.icescrum.core.domain.Project
-import org.icescrum.core.domain.Team
-import org.icescrum.core.domain.User
+import org.icescrum.core.domain.*
 import org.icescrum.core.domain.security.Authority
 import org.springframework.http.HttpMethod
 import org.springframework.security.acls.domain.BasePermission
@@ -414,12 +411,7 @@ class SecurityService {
 
     Long getProjectIdFromRequest(request) {
         if (!request['project_id']) {
-            def projectId = request.getParameter('project')
-            if (!projectId) {
-                def mappingInfo = grailsUrlMappingsHolder.match(request.forwardURI.replaceFirst(request.contextPath, ''))
-                projectId = mappingInfo?.parameters?.getAt('project')
-            }
-            request['project_id'] = projectId?.decodeProjectKey()?.toLong()
+            request['project_id'] = getWorkspaceIdFromRequest(request, 'project')?.decodeProjectKey()?.toLong()
         }
         return request['project_id']
     }
@@ -481,11 +473,7 @@ class SecurityService {
 
     Long getPortfolioIdFromRequest(request) {
         if (!request['portfolio_id']) {
-            def portfolioId = request.getParameter('portfolio')
-            if (!portfolioId) {
-                def mappingInfo = grailsUrlMappingsHolder.match(request.forwardURI.replaceFirst(request.contextPath, ''))
-                portfolioId = mappingInfo?.parameters?.getAt('portfolio')
-            }
+            def portfolioId = getWorkspaceIdFromRequest(request, 'portfolio')
             if (!portfolioId) {
                 Long projectId = getProjectIdFromRequest(request)
                 if (projectId) {
@@ -635,15 +623,28 @@ class SecurityService {
         }
     }
 
+    // Decode string keys into long and set generic workspace stuff
+    // Examples:
+    //    If params.workspace == 'TOTO' and params.workspaceType == 'project' then set params.workspace = 3 and params.project = 3
+    //    If params.project   == 'TOTO'                                       then set params.workspace = 3 and params.project = 3 and params.workspaceType = 'project'
     boolean decodeKeys(params) {
+        if (params.workspaceType && params.workspace && !params[params.workspaceType]) {
+            params[params.workspaceType] = params.workspace
+        }
         if (params.project) {
             params.project = params.project.decodeProjectKey()
-            if (!params.project) {
+            if (params.project) {
+                params.workspace = params.project
+                params.workspaceType = WorkspaceType.PROJECT
+            } else {
                 return false
             }
         } else if (params.portfolio) {
             params.portfolio = params.portfolio.decodePortfolioKey()
-            if (!params.portfolio) {
+            if (params.portfolio) {
+                params.portfolio = params.project
+                params.workspaceType = WorkspaceType.PORTFOLIO
+            } else {
                 return false
             }
         }
@@ -659,5 +660,22 @@ class SecurityService {
             workspace = workspace(request)
         }
         return (request.method == HttpMethod.GET && OAuth2ExpressionUtils.hasAnyScope(auth, [workspace + ':read'] as String[])) || OAuth2ExpressionUtils.hasAnyScope(auth, [workspace] as String[])
+    }
+
+    private def getWorkspaceIdFromRequest(request, workspaceType) {
+        def extractParam = { paramKey ->
+            // Required because security checks can be done before filter execution and param decoding
+            def paramValue = request.getParameter(paramKey) // Query parameter
+            if (!paramValue) {
+                paramValue = grailsUrlMappingsHolder.match(request.forwardURI.replaceFirst(request.contextPath, ''))?.parameters?.getAt(paramKey) // URL mapping parameter
+            }
+            return paramValue
+        }
+        // Try specific workspace param (e.g. params.project) and fallback to generic params
+        def workspaceId = extractParam(workspaceType)
+        if (!workspaceId && extractParam('workspaceType') == workspaceType) {
+            workspaceId = extractParam('workspace')
+        }
+        return workspaceId
     }
 }
