@@ -24,9 +24,6 @@ class IceScrumRedirectStrategy implements RedirectStrategy {
         String redirectUrl = calculateRedirectUrl(request, url)
         redirectUrl = response.encodeRedirectURL(redirectUrl)
         redirectUrl = redirectUrl.startsWith(ApplicationSupport.serverURL()) ? redirectUrl : ApplicationSupport.serverURL()
-        if (log.debugEnabled) {
-            log.debug("Redirecting to '{}'", redirectUrl)
-        }
         response.sendRedirect(redirectUrl)
     }
 
