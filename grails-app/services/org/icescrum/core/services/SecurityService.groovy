@@ -634,16 +634,20 @@ class SecurityService {
         if (params.project) {
             params.project = params.project.decodeProjectKey()
             if (params.project) {
-                params.workspace = params.project
-                params.workspaceType = WorkspaceType.PROJECT
+                if (params.project instanceof Long) {
+                    params.workspace = params.project
+                    params.workspaceType = WorkspaceType.PROJECT
+                }
             } else {
                 return false
             }
         } else if (params.portfolio) {
             params.portfolio = params.portfolio.decodePortfolioKey()
             if (params.portfolio) {
-                params.portfolio = params.project
-                params.workspaceType = WorkspaceType.PORTFOLIO
+                if (params.portfolio instanceof Long) {
+                    params.workspace = params.portfolio
+                    params.workspaceType = WorkspaceType.PORTFOLIO
+                }
             } else {
                 return false
             }
