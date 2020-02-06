@@ -31,6 +31,7 @@ import org.atmosphere.cpr.Broadcaster
 import org.icescrum.atmosphere.IceScrumAtmosphereEventListener
 import org.icescrum.atmosphere.IceScrumBroadcaster
 import org.icescrum.core.domain.User
+import org.icescrum.core.domain.WorkspaceType
 import org.icescrum.core.event.IceScrumEventType
 
 import java.util.concurrent.ConcurrentHashMap
@@ -45,13 +46,28 @@ class PushService {
 
     private static final String BUFFER_MESSAGE_DELIMITER = "#-|-#"
 
+    void broadcastToWorkspaceChannel(String namespace, String eventType, object, long workspaceId, String workspaceType) {
+        broadcastToChannel(namespace, eventType, object, "/stream/app/$workspaceType-$workspaceId")
+    }
+
+    void broadcastToWorkspaceChannel(IceScrumEventType eventType, object, long workspaceId, String workspaceType) {
+        broadcastToWorkspaceChannel(getNamespaceFromDomain(object), eventType.name(), object, workspaceId, workspaceType)
+    }
+
     void broadcastToProjectChannel(IceScrumEventType eventType, object, long projectId) {
-        broadcastToProjectChannel(getNamespaceFromDomain(object), eventType.name(), object, projectId)
+        broadcastToWorkspaceChannel(eventType, object, projectId, WorkspaceType.PROJECT)
     }
 
     void broadcastToProjectChannel(String namespace, String eventType, object, long projectId) {
-        def channel = '/stream/app/project-' + projectId
-        broadcastToChannel(namespace, eventType, object, channel)
+        broadcastToWorkspaceChannel(namespace, eventType, object, projectId, WorkspaceType.PROJECT)
+    }
+
+    void broadcastToPortfolioChannel(IceScrumEventType eventType, object, long portfolioId) {
+        broadcastToWorkspaceChannel(eventType, object, portfolioId, WorkspaceType.PORTFOLIO)
+    }
+
+    void broadcastToPortfolioChannel(String namespace, String eventType, object, long portfolioId) {
+        broadcastToWorkspaceChannel(namespace, eventType, object, portfolioId, WorkspaceType.PORTFOLIO)
     }
 
     void broadcastToChannel(String namespace, String eventType, object, String channel = '/stream/app/*') {
