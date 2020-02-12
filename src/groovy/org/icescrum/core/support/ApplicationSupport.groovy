@@ -275,6 +275,11 @@ class ApplicationSupport {
         map
     }
 
+    static String getAttachmentPath(String workspaceType, Long workspaceId, String itemDirectory, Long itemId) {
+        List<String> parts = [(workspaceType == WorkspaceType.PORTFOLIO ? 'portfolio-' : '') + workspaceId, 'attachments', itemDirectory, itemId]
+        return File.separator + parts.join(File.separator) + File.separator
+    }
+
     static public mapToString = { Map map, String separatorK = "=", String separatorV = "," ->
         String st = ""
         map?.eachWithIndex { it, i ->
