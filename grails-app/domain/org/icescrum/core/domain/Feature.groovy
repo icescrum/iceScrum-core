@@ -33,7 +33,7 @@ class Feature extends BacklogElement implements Serializable {
     static final long serialVersionUID = 7072515028109185168L
 
     static final int TYPE_FUNCTIONAL = 0
-    static final int TYPE_ARCHITECTURAL = 1
+    static final int TYPE_ENABLER = 1
     static final int STATE_WAIT = 0
     static final int STATE_BUSY = 1
     static final int STATE_DONE = 2
