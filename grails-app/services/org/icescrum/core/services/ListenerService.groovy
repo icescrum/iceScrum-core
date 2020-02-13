@@ -54,10 +54,10 @@ class ListenerService {
                 relationalProperty.lastUpdated = new Date()
                 relationalProperty.save(flush: true)
                 relationalProperty.refresh()
-                pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, relationalProperty, story.backlog.id)
+                pushService.broadcastToProjectRelatedChannels(IceScrumEventType.UPDATE, relationalProperty, story.backlog.id)
             }
         }
-        pushService.broadcastToProjectChannel(IceScrumEventType.CREATE, story, story.backlog.id)
+        pushService.broadcastToProjectRelatedChannels(IceScrumEventType.CREATE, story, story.backlog.id)
     }
 
     @IceScrumListener(domain = 'story', eventType = IceScrumEventType.UPDATE)
@@ -70,7 +70,7 @@ class ListenerService {
                     if (it.parentSprint) {
                         storyData.parentSprint = getSprintAsShort(it.parentSprint)
                     }
-                    pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, storyData, project.id)
+                    pushService.broadcastToProjectRelatedChannels(IceScrumEventType.UPDATE, storyData, project.id)
                 }
             }
             def newUpdatedProperties = [:]
@@ -82,32 +82,32 @@ class ListenerService {
                         oldProperty.lastUpdated = new Date()
                         oldProperty.save(flush: true)
                         oldProperty.refresh()
-                        pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, oldProperty, project.id)
+                        pushService.broadcastToProjectRelatedChannels(IceScrumEventType.UPDATE, oldProperty, project.id)
                     }
                     if (newProperty != null) {
                         newProperty.lastUpdated = new Date()
                         newProperty.save(flush: true)
                         newProperty.refresh()
-                        pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, newProperty, project.id)
+                        pushService.broadcastToProjectRelatedChannels(IceScrumEventType.UPDATE, newProperty, project.id)
                         newUpdatedProperties[property] = true
                     }
                 }
             }
             if (dirtyProperties.containsKey('state') && story.state >= Story.STATE_ESTIMATED && dirtyProperties.state >= Story.STATE_ESTIMATED && story.feature && !newUpdatedProperties['feature']) {
                 story.feature.lastUpdated = new Date()
-                pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, story.feature, project.id)
+                pushService.broadcastToProjectRelatedChannels(IceScrumEventType.UPDATE, story.feature, project.id)
             }
             if (dirtyProperties.containsKey('state') && Story.STATE_DONE in [dirtyProperties.state, story.state] && story.parentSprint && !newUpdatedProperties['parentSprint']) {
                 story.parentSprint.lastUpdated = new Date()
-                pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, story.parentSprint, project.id)
+                pushService.broadcastToProjectRelatedChannels(IceScrumEventType.UPDATE, story.parentSprint, project.id)
                 def tasksData = [class     : 'Task',
                                  ids       : story.tasks*.id,
                                  properties: [class: 'Task', state: Task.STATE_DONE, doneDate: new Date(), estimation: 0],
                                  messageId : 'story-' + story.id + '-tasks']
-                pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, tasksData, story.backlog.id)
+                pushService.broadcastToProjectRelatedChannels(IceScrumEventType.UPDATE, tasksData, story.backlog.id)
             }
             if (dirtyProperties.containsKey('effort') && story.parentSprint && story.parentSprint.state == Sprint.STATE_WAIT) {
-                pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, story.parentSprint, project.id)
+                pushService.broadcastToProjectRelatedChannels(IceScrumEventType.UPDATE, story.parentSprint, project.id)
             }
             def user = (User) springSecurityService.currentUser
             if (dirtyProperties.containsKey('state')) {
@@ -135,10 +135,10 @@ class ListenerService {
                                  ids       : story.tasks.findAll { it.state != Task.STATE_DONE }*.id,
                                  properties: [class: 'Task', state: Task.STATE_WAIT, backlog: story.parentSprint ? getSprintAsShort(story.parentSprint) : null, inProgressDate: null],
                                  messageId : 'story-' + story.id + '-tasks']
-                pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, tasksData, story.backlog.id)
+                pushService.broadcastToProjectRelatedChannels(IceScrumEventType.UPDATE, tasksData, story.backlog.id)
             }
         }
-        pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, story, project.id)
+        pushService.broadcastToProjectRelatedChannels(IceScrumEventType.UPDATE, story, project.id)
     }
 
     @IceScrumListener(domain = 'story', eventType = IceScrumEventType.DELETE)
@@ -146,38 +146,38 @@ class ListenerService {
         if (!pushService.isDisabledPushThread()) { // isDisabledPushThread() called to avoid useless findAll
             def project = Project.get(dirtyProperties.backlog.id)
             project.stories.findAll { it.isDirty('rank') && it.id != dirtyProperties.id }.each {
-                pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, [class: 'Story', id: it.id, rank: it.rank, messageId: 'story-' + it.id + '-rank'], project.id)
+                pushService.broadcastToProjectRelatedChannels(IceScrumEventType.UPDATE, [class: 'Story', id: it.id, rank: it.rank, messageId: 'story-' + it.id + '-rank'], project.id)
             }
             if (dirtyProperties.feature) {
                 def feature = dirtyProperties.feature
                 feature.lastUpdated = new Date()
                 feature.save(flush: true)
                 feature.refresh()
-                pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, feature, project.id)
+                pushService.broadcastToProjectRelatedChannels(IceScrumEventType.UPDATE, feature, project.id)
             }
-            pushService.broadcastToProjectChannel(IceScrumEventType.DELETE, [class: 'Story', id: dirtyProperties.id, state: dirtyProperties.state, messageId: 'story-' + dirtyProperties.id + '-delete'], project.id)
+            pushService.broadcastToProjectRelatedChannels(IceScrumEventType.DELETE, [class: 'Story', id: dirtyProperties.id, state: dirtyProperties.state, messageId: 'story-' + dirtyProperties.id + '-delete'], project.id)
 
         }
     }
 
     @IceScrumListener(domain = 'actor', eventType = IceScrumEventType.CREATE)
     void actorCreate(Actor actor, Map dirtyProperties) {
-        pushService.broadcastToProjectChannel(IceScrumEventType.CREATE, actor, actor.parentProject.id)
+        pushService.broadcastToProjectRelatedChannels(IceScrumEventType.CREATE, actor, actor.parentProject.id)
     }
 
     @IceScrumListener(domain = 'actor', eventType = IceScrumEventType.UPDATE)
     void actorUpdate(Actor actor, Map dirtyProperties) {
-        pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, actor, actor.parentProject.id)
+        pushService.broadcastToProjectRelatedChannels(IceScrumEventType.UPDATE, actor, actor.parentProject.id)
     }
 
     @IceScrumListener(domain = 'actor', eventType = IceScrumEventType.DELETE)
     void actorDelete(Actor actor, Map dirtyProperties) {
-        pushService.broadcastToProjectChannel(IceScrumEventType.DELETE, [class: 'Actor', id: dirtyProperties.id, messageId: 'actor-' + dirtyProperties.id + '-delete'], dirtyProperties.parentProject.id)
+        pushService.broadcastToProjectRelatedChannels(IceScrumEventType.DELETE, [class: 'Actor', id: dirtyProperties.id, messageId: 'actor-' + dirtyProperties.id + '-delete'], dirtyProperties.parentProject.id)
     }
 
     @IceScrumListener(domain = 'feature', eventType = IceScrumEventType.CREATE)
     void featureCreate(Feature feature, Map dirtyProperties) {
-        pushService.broadcastToProjectChannel(IceScrumEventType.CREATE, feature, feature.backlog.id)
+        pushService.broadcastToProjectRelatedChannels(IceScrumEventType.CREATE, feature, feature.backlog.id)
     }
 
     @IceScrumListener(domain = 'feature', eventType = IceScrumEventType.UPDATE)
@@ -185,10 +185,10 @@ class ListenerService {
         Project project = feature.backlog
         if (!pushService.isDisabledPushThread() && dirtyProperties.containsKey('rank')) { // isDisabledPushThread() called to avoid useless findAll
             project.features.findAll { it.isDirty('rank') && it.id != feature.id }.each { // If others features have been updated, push them
-                pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, [class: 'Feature', id: it.id, rank: it.rank, messageId: 'feature-' + it.id + '-rank'], project.id)
+                pushService.broadcastToProjectRelatedChannels(IceScrumEventType.UPDATE, [class: 'Feature', id: it.id, rank: it.rank, messageId: 'feature-' + it.id + '-rank'], project.id)
             }
         }
-        pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, feature, project.id)
+        pushService.broadcastToProjectRelatedChannels(IceScrumEventType.UPDATE, feature, project.id)
     }
 
     @IceScrumListener(domain = 'feature', eventType = IceScrumEventType.DELETE)
@@ -196,9 +196,9 @@ class ListenerService {
         if (!pushService.isDisabledPushThread()) { // isDisabledPushThread() called to avoid useless findAll
             def project = Project.get(dirtyProperties.backlog.id)
             project.features.findAll { it.isDirty('rank') && it.id != dirtyProperties.id }.each {
-                pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, [class: 'Feature', id: it.id, rank: it.rank, messageId: 'feature-' + it.id + '-rank'], project.id)
+                pushService.broadcastToProjectRelatedChannels(IceScrumEventType.UPDATE, [class: 'Feature', id: it.id, rank: it.rank, messageId: 'feature-' + it.id + '-rank'], project.id)
             }
-            pushService.broadcastToProjectChannel(IceScrumEventType.DELETE, [class: 'Feature', id: dirtyProperties.id, messageId: 'feature-' + dirtyProperties.id + '-delete'], project.id)
+            pushService.broadcastToProjectRelatedChannels(IceScrumEventType.DELETE, [class: 'Feature', id: dirtyProperties.id, messageId: 'feature-' + dirtyProperties.id + '-delete'], project.id)
         }
     }
 
@@ -209,7 +209,7 @@ class ListenerService {
         if (task.parentStory) {
             pushStory(task.parentStory)
         }
-        pushService.broadcastToProjectChannel(IceScrumEventType.CREATE, task, task.parentProject.id)
+        pushService.broadcastToProjectRelatedChannels(IceScrumEventType.CREATE, task, task.parentProject.id)
     }
 
     @IceScrumListener(domain = 'task', eventType = IceScrumEventType.UPDATE)
@@ -219,7 +219,7 @@ class ListenerService {
         if (!pushService.isDisabledPushThread() && ['rank', 'parentStory', 'type', 'state'].any { dirtyProperties.containsKey(it) }) { // isDisabledPushThread() called to avoid useless findAll
             def pushOtherRank = { tasks -> // If others tasks have been updated, push them
                 tasks?.findAll { it.isDirty('rank') && it.id != task.id }?.each {
-                    pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, [class: 'Task', id: it.id, rank: it.rank, messageId: 'task-' + it.id + '-rank'], project.id)
+                    pushService.broadcastToProjectRelatedChannels(IceScrumEventType.UPDATE, [class: 'Task', id: it.id, rank: it.rank, messageId: 'task-' + it.id + '-rank'], project.id)
                 }
             }
             pushOtherRank(((Sprint) task.backlog)?.tasks)
@@ -236,9 +236,9 @@ class ListenerService {
         }
         if ((dirtyProperties.containsKey('estimation') && task.parentStory) || (dirtyProperties.containsKey('state') && Task.STATE_DONE in [dirtyProperties.state, task.state] && task.parentStory && !newStoryUpdated)) {
             task.parentStory.lastUpdated = new Date()
-            pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, task.parentStory, project.id)
+            pushService.broadcastToProjectRelatedChannels(IceScrumEventType.UPDATE, task.parentStory, project.id)
         }
-        pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, task, project.id)
+        pushService.broadcastToProjectRelatedChannels(IceScrumEventType.UPDATE, task, project.id)
     }
 
     @IceScrumListener(domain = 'task', eventType = IceScrumEventType.DELETE)
@@ -246,20 +246,20 @@ class ListenerService {
         if (!pushService.isDisabledPushThread()) {
             def container = dirtyProperties.parentStory ?: dirtyProperties.backlog
             container.tasks.findAll { it.isDirty('rank') && it.id != dirtyProperties.id }.each {
-                pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, [class: 'Task', id: it.id, rank: it.rank, messageId: 'task-' + it.id + '-rank'], it.parentProject.id)
+                pushService.broadcastToProjectRelatedChannels(IceScrumEventType.UPDATE, [class: 'Task', id: it.id, rank: it.rank, messageId: 'task-' + it.id + '-rank'], it.parentProject.id)
             }
             if (dirtyProperties.parentStory) {
                 pushStory(dirtyProperties.parentStory)
             }
-            pushService.broadcastToProjectChannel(IceScrumEventType.DELETE, [class: 'Task', id: dirtyProperties.id, messageId: 'task-' + dirtyProperties.id + '-delete'], dirtyProperties.parentProject.id)
+            pushService.broadcastToProjectRelatedChannels(IceScrumEventType.DELETE, [class: 'Task', id: dirtyProperties.id, messageId: 'task-' + dirtyProperties.id + '-delete'], dirtyProperties.parentProject.id)
         }
     }
 
     @IceScrumListener(domain = 'sprint', eventType = IceScrumEventType.CREATE)
     void sprintCreate(Sprint sprint, Map dirtyProperties) {
         def project = sprint.parentProject
-        pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, sprint.parentRelease, project.id) // Push parentRelease.closeable
-        pushService.broadcastToProjectChannel(IceScrumEventType.CREATE, sprint, project.id)
+        pushService.broadcastToProjectRelatedChannels(IceScrumEventType.UPDATE, sprint.parentRelease, project.id) // Push parentRelease.closeable
+        pushService.broadcastToProjectRelatedChannels(IceScrumEventType.CREATE, sprint, project.id)
     }
 
     @IceScrumListener(domain = 'sprint', eventType = IceScrumEventType.UPDATE)
@@ -268,24 +268,24 @@ class ListenerService {
         if (!pushService.isDisabledPushThread() && dirtyProperties.containsKey('state') && sprint.state == Sprint.STATE_DONE) {
             def nextSprintSameRelease = Sprint.findByParentReleaseAndOrderNumber(sprint.parentRelease, sprint.orderNumber + 1)
             if (nextSprintSameRelease) {
-                pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, nextSprintSameRelease, project.id) // Push nextSprint.activable
+                pushService.broadcastToProjectRelatedChannels(IceScrumEventType.UPDATE, nextSprintSameRelease, project.id) // Push nextSprint.activable
             } else {
-                pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, sprint.parentRelease, project.id) // Push parentRelease.closeable
+                pushService.broadcastToProjectRelatedChannels(IceScrumEventType.UPDATE, sprint.parentRelease, project.id) // Push parentRelease.closeable
             }
         }
-        pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, sprint, project.id)
+        pushService.broadcastToProjectRelatedChannels(IceScrumEventType.UPDATE, sprint, project.id)
     }
 
     @IceScrumListener(domain = 'sprint', eventType = IceScrumEventType.DELETE)
     void sprintDelete(Sprint sprint, Map dirtyProperties) {
         def project = dirtyProperties.parentRelease.parentProject
-        pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, dirtyProperties.parentRelease, project.id) // Push parentRelease.closeable
-        pushService.broadcastToProjectChannel(IceScrumEventType.DELETE, [class: 'Sprint', id: dirtyProperties.id, messageId: 'sprint-' + dirtyProperties.id + '-delete'], project.id)
+        pushService.broadcastToProjectRelatedChannels(IceScrumEventType.UPDATE, dirtyProperties.parentRelease, project.id) // Push parentRelease.closeable
+        pushService.broadcastToProjectRelatedChannels(IceScrumEventType.DELETE, [class: 'Sprint', id: dirtyProperties.id, messageId: 'sprint-' + dirtyProperties.id + '-delete'], project.id)
     }
 
     @IceScrumListener(domain = 'release', eventType = IceScrumEventType.CREATE)
     void releaseCreate(Release release, Map dirtyProperties) {
-        pushService.broadcastToProjectChannel(IceScrumEventType.CREATE, release, release.parentProject.id)
+        pushService.broadcastToProjectRelatedChannels(IceScrumEventType.CREATE, release, release.parentProject.id)
     }
 
     @IceScrumListener(domain = 'release', eventType = IceScrumEventType.UPDATE)
@@ -293,17 +293,17 @@ class ListenerService {
         def project = release.parentProject
         if (dirtyProperties.containsKey('state')) {
             if (release.state == Release.STATE_DONE && release.nextRelease) {
-                pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, release.nextRelease, project.id) // Push nextRelease.activable
+                pushService.broadcastToProjectRelatedChannels(IceScrumEventType.UPDATE, release.nextRelease, project.id) // Push nextRelease.activable
             } else if (release.state == Release.STATE_INPROGRESS && release.sprints) {
-                pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, release.sprints.first(), project.id) // Push firstSprint.activable
+                pushService.broadcastToProjectRelatedChannels(IceScrumEventType.UPDATE, release.sprints.first(), project.id) // Push firstSprint.activable
             }
         }
-        pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, release, project.id)
+        pushService.broadcastToProjectRelatedChannels(IceScrumEventType.UPDATE, release, project.id)
     }
 
     @IceScrumListener(domain = 'release', eventType = IceScrumEventType.DELETE)
     void releaseDelete(Release release, Map dirtyProperties) {
-        pushService.broadcastToProjectChannel(IceScrumEventType.DELETE, [class: 'Release', id: dirtyProperties.id, messageId: 'release-' + dirtyProperties.id + '-delete'], dirtyProperties.parentProject.id)
+        pushService.broadcastToProjectRelatedChannels(IceScrumEventType.DELETE, [class: 'Release', id: dirtyProperties.id, messageId: 'release-' + dirtyProperties.id + '-delete'], dirtyProperties.parentProject.id)
     }
 
     @IceScrumListener(domain = 'activity', eventType = IceScrumEventType.CREATE)
@@ -320,8 +320,8 @@ class ListenerService {
         def user = (User) springSecurityService.currentUser
         def project = acceptanceTest.parentStory.backlog
         activityService.addActivity(acceptanceTest, user ?: acceptanceTest.parentStory.creator, 'acceptanceTestSave', acceptanceTest.name)
-        pushService.broadcastToProjectChannel(IceScrumEventType.CREATE, acceptanceTest, project.id)
-        pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, acceptanceTest.parentStory, project.id) // Push count
+        pushService.broadcastToProjectRelatedChannels(IceScrumEventType.CREATE, acceptanceTest, project.id)
+        pushService.broadcastToProjectRelatedChannels(IceScrumEventType.UPDATE, acceptanceTest.parentStory, project.id) // Push count
     }
 
     @IceScrumListener(domain = 'acceptanceTest', eventType = IceScrumEventType.UPDATE)
@@ -332,14 +332,14 @@ class ListenerService {
         activityService.addActivity(acceptanceTest, user, activityType, acceptanceTest.name)
         if (dirtyProperties.containsKey('state')) {
             acceptanceTest.parentStory.lastUpdated = new Date()
-            pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, acceptanceTest.parentStory, project.id) // push story.testState
+            pushService.broadcastToProjectRelatedChannels(IceScrumEventType.UPDATE, acceptanceTest.parentStory, project.id) // push story.testState
         }
         if (!pushService.isDisabledPushThread() && dirtyProperties.containsKey('rank')) { // isDisabledPushThread() called to avoid useless findAll
             acceptanceTest.parentStory.acceptanceTests.findAll { it.isDirty('rank') && it.id != acceptanceTest.id }.each {
-                pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, [class: 'AcceptanceTest', id: it.id, rank: it.rank, messageId: 'acceptanceTest-' + it.id + '-rank'], project.id)
+                pushService.broadcastToProjectRelatedChannels(IceScrumEventType.UPDATE, [class: 'AcceptanceTest', id: it.id, rank: it.rank, messageId: 'acceptanceTest-' + it.id + '-rank'], project.id)
             }
         }
-        pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, acceptanceTest, project.id)
+        pushService.broadcastToProjectRelatedChannels(IceScrumEventType.UPDATE, acceptanceTest, project.id)
     }
 
     @IceScrumListener(domain = 'acceptanceTest', eventType = IceScrumEventType.DELETE)
@@ -348,11 +348,11 @@ class ListenerService {
         activityService.addActivity(dirtyProperties.parentStory, springSecurityService.currentUser, 'acceptanceTestDelete', acceptanceTest.name)
         if (!pushService.isDisabledPushThread()) { // isDisabledPushThread() called to avoid useless findAll
             Story.get(dirtyProperties.parentStory.id).acceptanceTests.findAll { it.isDirty('rank') && it.id != dirtyProperties.id }.each {
-                pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, [class: 'AcceptanceTest', id: it.id, rank: it.rank, messageId: 'acceptanceTest-' + it.id + '-rank'], project.id)
+                pushService.broadcastToProjectRelatedChannels(IceScrumEventType.UPDATE, [class: 'AcceptanceTest', id: it.id, rank: it.rank, messageId: 'acceptanceTest-' + it.id + '-rank'], project.id)
             }
         }
-        pushService.broadcastToProjectChannel(IceScrumEventType.DELETE, [class: 'AcceptanceTest', id: dirtyProperties.id, messageId: 'acceptance-' + dirtyProperties.id + '-delete'], project.id)
-        pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, dirtyProperties.parentStory, project.id) // Push count
+        pushService.broadcastToProjectRelatedChannels(IceScrumEventType.DELETE, [class: 'AcceptanceTest', id: dirtyProperties.id, messageId: 'acceptance-' + dirtyProperties.id + '-delete'], project.id)
+        pushService.broadcastToProjectRelatedChannels(IceScrumEventType.UPDATE, dirtyProperties.parentStory, project.id) // Push count
     }
 
     @IceScrumListener(domain = 'comment', eventType = IceScrumEventType.CREATE)
@@ -360,7 +360,7 @@ class ListenerService {
         def project = commentService.getProject(comment)
         def commentData = commentService.getRenderableComment(comment)
         commentData.messageId = 'comment-CREATE-' + comment.id
-        pushService.broadcastToProjectChannel(IceScrumEventType.CREATE, commentData, project.id)
+        pushService.broadcastToProjectRelatedChannels(IceScrumEventType.CREATE, commentData, project.id)
     }
 
     @IceScrumListener(domain = 'comment', eventType = IceScrumEventType.UPDATE)
@@ -368,12 +368,12 @@ class ListenerService {
         def project = commentService.getProject(comment)
         def commentData = commentService.getRenderableComment(comment)
         commentData.messageId = 'comment-UPDATE-' + comment.id
-        pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, commentData, project.id)
+        pushService.broadcastToProjectRelatedChannels(IceScrumEventType.UPDATE, commentData, project.id)
     }
 
     @IceScrumListener(domain = 'comment', eventType = IceScrumEventType.DELETE)
     void commentDelete(Comment comment, Map dirtyProperties) {
-        pushService.broadcastToProjectChannel(IceScrumEventType.DELETE, [class: 'Comment', id: dirtyProperties.id, messageId: 'comment-' + dirtyProperties.id + '-delete'], dirtyProperties.project.id)
+        pushService.broadcastToProjectRelatedChannels(IceScrumEventType.DELETE, [class: 'Comment', id: dirtyProperties.id, messageId: 'comment-' + dirtyProperties.id + '-delete'], dirtyProperties.project.id)
     }
 
     @IceScrumListener(domain = 'project', eventType = IceScrumEventType.UPDATE)
@@ -399,7 +399,7 @@ class ListenerService {
                 }
             }
         } else {
-            pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, project, project.id)
+            pushService.broadcastToProjectRelatedChannels(IceScrumEventType.UPDATE, project, project.id)
         }
     }
 
@@ -430,7 +430,7 @@ class ListenerService {
 
     @IceScrumListener(domain = 'project', eventType = IceScrumEventType.DELETE)
     void projectDelete(Project project, Map dirtyProperties) {
-        pushService.broadcastToProjectChannel(IceScrumEventType.DELETE, [class: 'Project', id: dirtyProperties.id, messageId: 'project-' + dirtyProperties.id + '-delete'], dirtyProperties.id)
+        pushService.broadcastToProjectRelatedChannels(IceScrumEventType.DELETE, [class: 'Project', id: dirtyProperties.id, messageId: 'project-' + dirtyProperties.id + '-delete'], dirtyProperties.id)
     }
 
     // SHARED LISTENERS
@@ -463,6 +463,6 @@ class ListenerService {
         story.lastUpdated = new Date()
         story.save(flush: true)
         story.refresh()
-        pushService.broadcastToProjectChannel(IceScrumEventType.UPDATE, story, story.backlog.id)
+        pushService.broadcastToProjectRelatedChannels(IceScrumEventType.UPDATE, story, story.backlog.id)
     }
 }

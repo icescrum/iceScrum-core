@@ -30,6 +30,7 @@ import org.atmosphere.cpr.AtmosphereResource
 import org.atmosphere.cpr.Broadcaster
 import org.icescrum.atmosphere.IceScrumAtmosphereEventListener
 import org.icescrum.atmosphere.IceScrumBroadcaster
+import org.icescrum.core.domain.Project
 import org.icescrum.core.domain.User
 import org.icescrum.core.domain.WorkspaceType
 import org.icescrum.core.event.IceScrumEventType
@@ -54,12 +55,20 @@ class PushService {
         broadcastToWorkspaceChannel(getNamespaceFromDomain(object), eventType.name(), object, workspaceId, workspaceType)
     }
 
-    void broadcastToProjectChannel(IceScrumEventType eventType, object, long projectId) {
+    void broadcastToProjectRelatedChannels(IceScrumEventType eventType, object, long projectId) {
         broadcastToWorkspaceChannel(eventType, object, projectId, WorkspaceType.PROJECT)
+        Long portfolioId = Project.getPortfolioId(projectId)
+        if (portfolioId) {
+            broadcastToWorkspaceChannel(eventType, object, portfolioId, WorkspaceType.PORTFOLIO)
+        }
     }
 
-    void broadcastToProjectChannel(String namespace, String eventType, object, long projectId) {
+    void broadcastToProjectRelatedChannels(String namespace, String eventType, object, long projectId) {
         broadcastToWorkspaceChannel(namespace, eventType, object, projectId, WorkspaceType.PROJECT)
+        Long portfolioId = Project.getPortfolioId(projectId)
+        if (portfolioId) {
+            broadcastToWorkspaceChannel(namespace, eventType, object, portfolioId, WorkspaceType.PORTFOLIO)
+        }
     }
 
     void broadcastToPortfolioChannel(IceScrumEventType eventType, object, long portfolioId) {

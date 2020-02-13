@@ -41,7 +41,7 @@ class IceScrumMeteorHandler extends HttpServlet {
                 if (to && to.users) {
                     pushService.broadcastToUsers(message.namespace, message.eventType, message.object, to.users)
                 } else if (to && to.project) {
-                    pushService.broadcastToProjectChannel(message.namespace, message.eventType, message.object, to.project)
+                    pushService.broadcastToProjectRelatedChannels(message.namespace, message.eventType, message.object, to.project)
                 } else {
                     pushService.broadcastToChannel(message.namespace, message.eventType, message.object)
                 }

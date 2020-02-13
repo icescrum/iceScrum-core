@@ -287,6 +287,12 @@ class Project extends TimeBox implements Serializable, Attachmentable {
                         )""", [uid: userid], params ?: [:])
     }
 
+    static Long getPortfolioId(long projectId) {
+        return executeQuery("""SELECT project.portfolio.id
+                               FROM Project project
+                               WHERE project.id = :projectId""", [projectId: projectId], [cache: true])[0]
+    }
+
     static Project withProject(long id) {
         Project project = get(id)
         if (!project) {
