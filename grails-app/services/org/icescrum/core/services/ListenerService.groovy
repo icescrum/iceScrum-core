@@ -377,23 +377,33 @@ class ListenerService {
 
     @IceScrumListener(domain = 'comment', eventType = IceScrumEventType.CREATE)
     void commentCreate(Comment comment, Map dirtyProperties) {
-        def project = commentService.getProject(comment)
-        def commentData = commentService.getRenderableComment(comment)
-        commentData.messageId = 'comment-CREATE-' + comment.id
-        pushService.broadcastToProjectRelatedChannels(IceScrumEventType.CREATE, commentData, project.id)
+        def workspace = commentService.getWorkspace(comment)
+        if (workspace) {
+            def workspaceType = workspace instanceof Portfolio ? WorkspaceType.PORTFOLIO : WorkspaceType.PROJECT
+            def commentData = commentService.getRenderableComment(comment)
+            commentData.messageId = 'comment-CREATE-' + comment.id
+            pushService.broadcastToWorkspaceChannel(IceScrumEventType.CREATE, commentData, workspace.id, workspaceType)
+        }
     }
 
     @IceScrumListener(domain = 'comment', eventType = IceScrumEventType.UPDATE)
     void commentUpdate(Comment comment, Map dirtyProperties) {
-        def project = commentService.getProject(comment)
-        def commentData = commentService.getRenderableComment(comment)
-        commentData.messageId = 'comment-UPDATE-' + comment.id
-        pushService.broadcastToProjectRelatedChannels(IceScrumEventType.UPDATE, commentData, project.id)
+        def workspace = commentService.getWorkspace(comment)
+        if (workspace) {
+            def workspaceType = workspace instanceof Portfolio ? WorkspaceType.PORTFOLIO : WorkspaceType.PROJECT
+            def commentData = commentService.getRenderableComment(comment)
+            commentData.messageId = 'comment-UPDATE-' + comment.id
+            pushService.broadcastToWorkspaceChannel(IceScrumEventType.UPDATE, commentData, workspace.id, workspaceType)
+        }
     }
 
     @IceScrumListener(domain = 'comment', eventType = IceScrumEventType.DELETE)
     void commentDelete(Comment comment, Map dirtyProperties) {
-        pushService.broadcastToProjectRelatedChannels(IceScrumEventType.DELETE, [class: 'Comment', id: dirtyProperties.id, messageId: 'comment-' + dirtyProperties.id + '-delete'], dirtyProperties.project.id)
+        def workspace = dirtyProperties.workspace
+        if (workspace) {
+            def workspaceType = workspace instanceof Portfolio ? WorkspaceType.PORTFOLIO : WorkspaceType.PROJECT
+            pushService.broadcastToWorkspaceChannel(IceScrumEventType.DELETE, [class: 'Comment', id: dirtyProperties.id, messageId: 'comment-' + dirtyProperties.id + '-delete'], workspace.id, workspaceType)
+        }
     }
 
     @IceScrumListener(domain = 'project', eventType = IceScrumEventType.UPDATE)

@@ -857,6 +857,35 @@ class ApplicationSupport {
         }
         return result
     }
+
+    static getAttachmentableObject(def params) {
+        def attachmentable
+        long workspace = params.long('workspace')
+        long attachmentableId = params.long('attachmentable')
+        switch (params.type) {
+            case 'story':
+                attachmentable = Story.getInProject(workspace, attachmentableId).list()
+                break
+            case 'task':
+                attachmentable = Task.getInProject(workspace, attachmentableId)
+                break
+            case 'feature':
+                attachmentable = Feature.withFeature(workspace, attachmentableId, params.workspaceType)
+                break
+            case 'release':
+                attachmentable = Release.getInProject(workspace, attachmentableId).list()
+                break
+            case 'sprint':
+                attachmentable = Sprint.getInProject(workspace, attachmentableId).list()
+                break
+            case 'project':
+                attachmentable = Project.get(attachmentableId)
+                break
+            default:
+                attachmentable = null
+        }
+        attachmentable
+    }
 }
 
 abstract class IsTimerTask extends TimerTask {

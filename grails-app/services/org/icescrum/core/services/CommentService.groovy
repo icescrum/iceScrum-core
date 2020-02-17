@@ -28,7 +28,11 @@ import grails.util.GrailsNameUtils
 import org.grails.comments.Comment
 import org.grails.comments.CommentLink
 import org.hibernate.ObjectNotFoundException
-import org.icescrum.core.domain.*
+import org.icescrum.core.domain.Feature
+import org.icescrum.core.domain.Project
+import org.icescrum.core.domain.Story
+import org.icescrum.core.domain.Task
+import org.icescrum.core.domain.User
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
 import org.icescrum.core.support.ApplicationSupport
@@ -67,7 +71,10 @@ class CommentService extends IceScrumEventPublisher {
 
     void delete(Comment comment) {
         def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_DELETE, comment)
-        dirtyProperties.project = getProject(comment)
+        dirtyProperties.workspace = getWorkspace(comment)
+        if (dirtyProperties.workspace instanceof Project) {
+            dirtyProperties.project = dirtyProperties.workspace
+        }
         def commentable = getCommentable(comment)
         commentable.removeComment(comment)
         if (commentable.hasProperty('comments_count')) {
@@ -102,36 +109,37 @@ class CommentService extends IceScrumEventPublisher {
         ]
     }
 
-    Comment withComment(long projectId, long id) {
+    Comment withComment(long workspaceId, String workspaceType, long id) {
         Comment comment = Comment.get(id)
         if (!comment) {
             throw new ObjectNotFoundException(id, 'Comment')
         }
         CommentLink commentLink = CommentLink.findByComment(comment)
-        withCommentable(projectId, commentLink.commentRef, commentLink.type) // Important security check that the commentable exists and in the right project
+        withCommentable(workspaceId, workspaceType, commentLink.commentRef, commentLink.type) // Important security check that the commentable exists and in the right project
         return comment
     }
 
-    Object withCommentable(long projectId, long commentableId, String type) {
+    Object withCommentable(long workspaceId, String workspaceType, long commentableId, String type) {
         if (type == 'story') {
-            return Story.withStory(projectId, commentableId)
+            return Story.withStory(workspaceId, commentableId)
         } else if (type == 'task') {
-            return Task.withTask(projectId, commentableId)
+            return Task.withTask(workspaceId, commentableId)
         } else if (type == 'feature') {
-            return Feature.withFeature(projectId, commentableId)
+            return Feature.withFeature(workspaceId, commentableId, workspaceType)
         } else {
             throw new ObjectNotFoundException(commentableId, type)
         }
     }
 
-    Project getProject(Comment comment) {
+    def getWorkspace(Comment comment) {
         CommentLink commentLink = CommentLink.findByComment(comment)
         if (commentLink.type == 'story') {
-            return (Project) Story.get(commentLink.commentRef).backlog
+            return Story.get(commentLink.commentRef).backlog
         } else if (commentLink.type == 'task') {
             return Task.get(commentLink.commentRef).parentProject
         } else if (commentLink.type == 'feature') {
-            return (Project) Feature.get(commentLink.commentRef).backlog
+            Feature feature = Feature.get(commentLink.commentRef)
+            return feature.backlog ?: feature.portfolio
         } else {
             return null
         }

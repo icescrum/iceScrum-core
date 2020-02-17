@@ -100,10 +100,21 @@ class Feature extends BacklogElement implements Serializable {
         return executeQuery(""" 
                 SELECT commentLink.comment 
                 FROM Feature feature, CommentLink as commentLink 
-                WHERE feature.parentProject.id = :projectId 
+                WHERE feature.backlog.id = :projectId 
                 AND commentLink.commentRef = feature.id 
                 AND commentLink.type = 'feature'
                 ORDER BY commentLink.comment.dateCreated DESC""", [projectId: projectId], [max: 10, offset: 0, cache: true, readOnly: true]
+        )
+    }
+
+    static List<Comment> recentCommentsInPortfolio(long portfolioId) {
+        return executeQuery(""" 
+                SELECT commentLink.comment 
+                FROM Feature feature, CommentLink as commentLink 
+                WHERE feature.portfolio.id = :portfolioId 
+                AND commentLink.commentRef = feature.id 
+                AND commentLink.type = 'feature'
+                ORDER BY commentLink.comment.dateCreated DESC""", [portfolioId: portfolioId], [max: 10, offset: 0, cache: true, readOnly: true]
         )
     }
 
