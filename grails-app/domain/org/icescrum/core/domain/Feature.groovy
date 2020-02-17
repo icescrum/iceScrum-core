@@ -34,6 +34,7 @@ class Feature extends BacklogElement implements Serializable {
 
     static final int TYPE_FUNCTIONAL = 0
     static final int TYPE_ENABLER = 1
+    static final int STATE_DRAFT = -1
     static final int STATE_WAIT = 0
     static final int STATE_BUSY = 1
     static final int STATE_DONE = 2
@@ -48,6 +49,7 @@ class Feature extends BacklogElement implements Serializable {
     static transients = ['countDoneStories', 'state', 'effort', 'inProgressDate', 'project', 'actualReleases']
 
     static belongsTo = [
+            portfolio    : Portfolio,
             parentRelease: Release
     ]
 
@@ -66,15 +68,25 @@ class Feature extends BacklogElement implements Serializable {
 
     static constraints = {
         name(unique: 'backlog')
+        backlog nullable: true, validator: { newBacklog, feature -> (!newBacklog && feature.portfolio || newBacklog && !feature.portfolio) ?: 'invalid' }
+        portfolio nullable: true
         parentRelease(nullable: true)
         value(nullable: true)
         doneDate(nullable: true)
     }
 
     static namedQueries = {
-
         getInProject { p, id ->
             backlog {
+                eq 'id', p
+            }
+            and {
+                eq 'id', id
+            }
+            uniqueResult = true
+        }
+        getInPortfolio { p, id ->
+            portfolio {
                 eq 'id', p
             }
             and {
@@ -95,17 +107,24 @@ class Feature extends BacklogElement implements Serializable {
         )
     }
 
-    static Feature withFeature(long projectId, long id) {
-        Feature feature = (Feature) getInProject(projectId, id).list()
+    static Feature withFeature(long workspaceId, long id, String workspaceType = WorkspaceType.PROJECT) {
+        Feature feature
+        if (workspaceType == WorkspaceType.PROJECT) {
+            feature = (Feature) getInProject(workspaceId, id).list()
+        } else if (workspaceType == WorkspaceType.PORTFOLIO) {
+            feature = (Feature) getInPortfolio(workspaceId, id).list()
+        }
         if (!feature) {
             throw new ObjectNotFoundException(id, 'Feature')
         }
         return feature
     }
 
-    static List<Feature> withFeatures(def params, def id = 'id') {
+    static List<Feature> withFeatures(def params, def id = 'id', String workspaceType = WorkspaceType.PROJECT) {
         def ids = params[id]?.contains(',') ? params[id].split(',')*.toLong() : params.list(id)
-        List<Feature> features = ids ? getAll(ids).findAll { it && it.backlog.id == params.project.toLong() } : null
+        List<Feature> features = ids ? getAll(ids).findAll { Feature feature ->
+            feature && (workspaceType == WorkspaceType.PROJECT && feature.backlog.id == params.project.toLong() || workspaceType == WorkspaceType.PORTFOLIO && feature.portfolio.id == params.portfolio.toLong())
+        } : null
         if (!features) {
             throw new ObjectNotFoundException(ids, 'Feature')
         }
@@ -148,12 +167,20 @@ class Feature extends BacklogElement implements Serializable {
         return true
     }
 
-    static int findNextUId(Long pid) {
-        (executeQuery(
-                """SELECT MAX(f.uid)
-                   FROM org.icescrum.core.domain.Feature as f, org.icescrum.core.domain.Project as p
-                   WHERE f.backlog = p
-                   AND p.id = :pid """, [pid: pid])[0] ?: 0) + 1
+    static Integer findNextUId(Long workspaceId, String workspaceType) {
+        if (workspaceType == WorkspaceType.PROJECT) {
+            return (executeQuery("""
+                   SELECT MAX(feature.uid)
+                   FROM Feature feature, Project project
+                   WHERE feature.backlog = project
+                   AND project.id = :projectId """, [projectId: workspaceId])[0] ?: 0) + 1
+        } else if (workspaceType == WorkspaceType.PORTFOLIO) {
+            return (executeQuery("""
+                   SELECT MAX(feature.uid)
+                   FROM Feature feature, Portfolio portfolio
+                   WHERE feature.portfolio = portfolio
+                   AND portfolio.id = :portfolioId """, [portfolioId: workspaceId])[0] ?: 0) + 1
+        }
     }
 
     def getCountDoneStories() {
@@ -165,6 +192,8 @@ class Feature extends BacklogElement implements Serializable {
             return STATE_DONE
         } else if (stories && stories.find { it.state > Story.STATE_PLANNED }) {
             return STATE_BUSY
+        } else if (portfolio) {
+            return STATE_DRAFT
         } else {
             return STATE_WAIT
         }
@@ -206,7 +235,7 @@ class Feature extends BacklogElement implements Serializable {
     }
 
     String getPermalink() {
-        return Holders.grailsApplication.config.icescrum.serverURL + '/p/' + backlog.pkey + '-F' + this.uid
+        return backlog ? Holders.grailsApplication.config.icescrum.serverURL + '/p/' + backlog.pkey + '-F' + this.uid : ''
     }
 
     static search(project, options) {

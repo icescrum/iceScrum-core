@@ -177,28 +177,48 @@ class ListenerService {
 
     @IceScrumListener(domain = 'feature', eventType = IceScrumEventType.CREATE)
     void featureCreate(Feature feature, Map dirtyProperties) {
-        pushService.broadcastToProjectRelatedChannels(IceScrumEventType.CREATE, feature, feature.backlog.id)
+        if (feature.backlog) {
+            pushService.broadcastToProjectRelatedChannels(IceScrumEventType.CREATE, feature, feature.backlog.id)
+        } else if (feature.portfolio) {
+            pushService.broadcastToPortfolioChannel(IceScrumEventType.CREATE, feature, feature.portfolio.id)
+        }
     }
 
     @IceScrumListener(domain = 'feature', eventType = IceScrumEventType.UPDATE)
     void featureUpdate(Feature feature, Map dirtyProperties) {
-        Project project = feature.backlog
+        def workspace
+        def workspaceType
+        if (feature.backlog) {
+            workspace = feature.backlog
+            workspaceType = WorkspaceType.PROJECT
+        } else if (feature.portfolio) {
+            workspace = feature.portfolio
+            workspaceType = WorkspaceType.PORTFOLIO
+        }
         if (!pushService.isDisabledPushThread() && dirtyProperties.containsKey('rank')) { // isDisabledPushThread() called to avoid useless findAll
-            project.features.findAll { it.isDirty('rank') && it.id != feature.id }.each { // If others features have been updated, push them
-                pushService.broadcastToProjectRelatedChannels(IceScrumEventType.UPDATE, [class: 'Feature', id: it.id, rank: it.rank, messageId: 'feature-' + it.id + '-rank'], project.id)
+            workspace.features.findAll { it.isDirty('rank') && it.id != feature.id }.each { // If others features have been updated, push them
+                pushService.broadcastToWorkspaceChannel(IceScrumEventType.UPDATE, [class: 'Feature', id: it.id, rank: it.rank, messageId: 'feature-' + it.id + '-rank'], workspace.id, workspaceType)
             }
         }
-        pushService.broadcastToProjectRelatedChannels(IceScrumEventType.UPDATE, feature, project.id)
+        pushService.broadcastToWorkspaceChannel(IceScrumEventType.UPDATE, feature, workspace.id, workspaceType)
     }
 
     @IceScrumListener(domain = 'feature', eventType = IceScrumEventType.DELETE)
     void featureDelete(Feature feature, Map dirtyProperties) {
         if (!pushService.isDisabledPushThread()) { // isDisabledPushThread() called to avoid useless findAll
-            def project = Project.get(dirtyProperties.backlog.id)
-            project.features.findAll { it.isDirty('rank') && it.id != dirtyProperties.id }.each {
-                pushService.broadcastToProjectRelatedChannels(IceScrumEventType.UPDATE, [class: 'Feature', id: it.id, rank: it.rank, messageId: 'feature-' + it.id + '-rank'], project.id)
+            def workspace
+            def workspaceType
+            if (dirtyProperties.backlog) {
+                workspace = Project.get(dirtyProperties.backlog.id)
+                workspaceType = WorkspaceType.PROJECT
+            } else if (dirtyProperties.portfolio) {
+                workspace = Portfolio.get(dirtyProperties.portfolio.id)
+                workspaceType = WorkspaceType.PORTFOLIO
             }
-            pushService.broadcastToProjectRelatedChannels(IceScrumEventType.DELETE, [class: 'Feature', id: dirtyProperties.id, messageId: 'feature-' + dirtyProperties.id + '-delete'], project.id)
+            workspace.features.findAll { it.isDirty('rank') && it.id != dirtyProperties.id }.each {
+                pushService.broadcastToWorkspaceChannel(IceScrumEventType.UPDATE, [class: 'Feature', id: it.id, rank: it.rank, messageId: 'feature-' + it.id + '-rank'], workspace.id, workspaceType)
+            }
+            pushService.broadcastToWorkspaceChannel(IceScrumEventType.DELETE, [class: 'Feature', id: dirtyProperties.id, messageId: 'feature-' + dirtyProperties.id + '-delete'], workspace.id, workspaceType)
         }
     }
 
@@ -431,6 +451,13 @@ class ListenerService {
     @IceScrumListener(domain = 'project', eventType = IceScrumEventType.DELETE)
     void projectDelete(Project project, Map dirtyProperties) {
         pushService.broadcastToProjectRelatedChannels(IceScrumEventType.DELETE, [class: 'Project', id: dirtyProperties.id, messageId: 'project-' + dirtyProperties.id + '-delete'], dirtyProperties.id)
+    }
+
+    @IceScrumListener(domain = 'portfolio', eventType = IceScrumEventType.BEFORE_DELETE)
+    void portfolioBeforeDelete(Portfolio portfolio, Map dirtyProperties) {
+        portfolio.features.each { Feature feature ->
+            featureService.publishSynchronousEvent(IceScrumEventType.BEFORE_DELETE, feature, [:])
+        }
     }
 
     // SHARED LISTENERS

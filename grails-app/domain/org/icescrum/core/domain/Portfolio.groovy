@@ -42,6 +42,7 @@ class Portfolio {
 
     static hasMany = [
             projects: Project,
+            features: Feature,
             widgets : Widget
     ]
 
@@ -50,6 +51,7 @@ class Portfolio {
         table 'is_portfolio'
         description(length: 5000)
         widgets(sort: 'position')
+        features cascade: 'all-delete-orphan', sort: 'rank', batchSize: 25, cache: true
     }
 
     static constraints = {

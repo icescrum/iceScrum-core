@@ -31,7 +31,6 @@ import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
 import org.icescrum.core.support.ApplicationSupport
 import org.icescrum.core.utils.DateUtils
-import org.springframework.security.access.prepost.PreAuthorize
 
 @Transactional
 class FeatureService extends IceScrumEventPublisher {
@@ -42,55 +41,64 @@ class FeatureService extends IceScrumEventPublisher {
     def securityService
     def commentService
 
-    @PreAuthorize('productOwner(#project) and !archivedProject(#project)')
-    void save(Feature feature, Project project) {
+    void save(Feature feature, workspace, String workspaceType = WorkspaceType.PROJECT) {
         ApplicationSupport.validateHexdecimalColor(feature.color)
         feature.name = feature.name?.trim()
-        feature.rank = Feature.countByBacklog(project) + 1
         if (feature.value == null) {
             feature.value = 0 // TODO check if relevant (previously, it wasn't possible to create a feature with no value)
         }
-        feature.uid = Feature.findNextUId(project.id)
-        feature.backlog = project
-        project.addToFeatures(feature)
+        feature.uid = Feature.findNextUId(workspace.id, workspaceType)
+        if (workspaceType == WorkspaceType.PROJECT) {
+            feature.rank = Feature.countByBacklog(workspace) + 1
+            feature.backlog = workspace
+        } else {
+            feature.rank = Feature.countByPortfolio(workspace) + 1
+            feature.portfolio = workspace
+        }
+        workspace.addToFeatures(feature)
         feature.save(flush: true)
         feature.refresh() // required to initialize collections to empty list
         publishSynchronousEvent(IceScrumEventType.CREATE, feature)
     }
 
-    @PreAuthorize('productOwner(#feature.backlog) and !archivedProject(#feature.backlog)')
-    void delete(Feature feature) {
-        def project = feature.backlog
+    void delete(Feature feature, String workspaceType = WorkspaceType.PROJECT) {
         def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_DELETE, feature)
-        dirtyProperties.project = dirtyProperties.backlog
+        def workspace
+        if (workspaceType == WorkspaceType.PROJECT) {
+            workspace = feature.backlog
+            dirtyProperties.project = dirtyProperties.backlog
+        } else if (workspaceType == WorkspaceType.PORTFOLIO) {
+            workspace = feature.portfolio
+        }
         feature.stories?.each {
             it.feature = null
             it.save()
         }
-        project.removeFromFeatures(feature)
-        project.features.each {
+        workspace.removeFromFeatures(feature)
+        workspace.features.each {
             if (it.rank > feature.rank) {
                 it.rank--
                 it.save()
             }
         }
-        project.save()
+        workspace.save(flush: true)
         publishSynchronousEvent(IceScrumEventType.DELETE, feature, dirtyProperties)
     }
 
-    @PreAuthorize('productOwner(#feature.backlog) and !archivedProject(#feature.backlog)')
-    void update(Feature feature, Map props = [:]) {
+    void update(Feature feature, Map props = [:], String workspaceType = WorkspaceType.PROJECT) {
         ApplicationSupport.validateHexdecimalColor(feature.color)
         feature.name = feature.name.trim()
-        if (props.state != null && feature.state != props.state) {
+        if (workspaceType == WorkspaceType.PROJECT && props.state != null && feature.state != props.state) {
             state(feature, props.state)
         }
         if (feature.isDirty('rank')) {
-            Project project = (Project) feature.backlog
-            if (project.portfolio && !securityService.businessOwner(project.portfolio, springSecurityService.authentication)) {
-                throw new BusinessException(code: 'is.feature.error.not.business.owner')
+            if (workspaceType == WorkspaceType.PROJECT) {
+                Project project = (Project) feature.backlog
+                if (project.portfolio && !securityService.businessOwner(project.portfolio, springSecurityService.authentication)) {
+                    throw new BusinessException(code: 'is.feature.error.not.business.owner')
+                }
             }
-            rank(feature)
+            rank(feature, workspaceType)
         }
         def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_UPDATE, feature)
         if (feature.isDirty('color')) {
@@ -118,10 +126,11 @@ class FeatureService extends IceScrumEventPublisher {
         return itemsDone / items
     }
 
-    private void rank(Feature feature) {
+    private void rank(Feature feature, String workspaceType) {
         Range affectedRange = feature.getPersistentValue('rank')..feature.rank
         int delta = affectedRange.isReverse() ? 1 : -1
-        feature.backlog.features.findAll {
+        def backlog = workspaceType == WorkspaceType.PROJECT ? feature.backlog : feature.portfolio
+        backlog.features.findAll {
             it != feature && it.rank in affectedRange
         }.each {
             it.rank += delta
