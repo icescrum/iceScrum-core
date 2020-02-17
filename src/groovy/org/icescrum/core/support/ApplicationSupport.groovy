@@ -87,7 +87,7 @@ class ApplicationSupport {
     public static final CONFIG_ENV_NAME = 'icescrum_config_location'
     private static mySQLUTF8mb4 = null // Only one check per app start
     private static final log = LogFactory.getLog(this)
-    protected static final FilterChain DUMMY_CHAIN = [
+    public static final FilterChain DUMMY_CHAIN = [
             doFilter: { req, res -> throw new UnsupportedOperationException() }
     ] as FilterChain
 
