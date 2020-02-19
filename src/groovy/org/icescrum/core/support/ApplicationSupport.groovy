@@ -804,6 +804,10 @@ class ApplicationSupport {
         return path
     }
 
+    static String getReleaseNotesLink() {
+        return 'https://www.icescrum.com/blog/icescrum-v' + Metadata.current['app.version'].replaceAll('Pro', '').replaceAll('\\.', '-')
+    }
+
     static checkVersion() {
         def config = Holders.grailsApplication.config.icescrum.check
         def serverID = Holders.grailsApplication.config.icescrum.appID
