@@ -75,11 +75,16 @@ class UserService extends IceScrumEventPublisher {
     }
 
     void update(User user, Map props = [:]) {
+
         if (props.pwd) {
             user.password = springSecurityService.encodePassword(props.pwd)
         }
         if (props.emailsSettings) {
             user.preferences.emailsSettings = props.emailsSettings
+        }
+        if(props.iceScrumRating){
+            user.preferences.iceScrumRating = props.iceScrumRating
+            user.preferences.lastIceScrumRating = new Date()
         }
         try {
             if (props.avatar) {

@@ -37,8 +37,9 @@ class UserPreferences implements Serializable {
     String lastProjectOpened
     String emailsSettingsData //[onStory:['pkey','pkey2'...],onUrgentTask:['pkey','pkey2'...],autoFollow['pkey','pkey2'...]]
     String filterTask = "allTasks"
-
     String colorScheme
+
+    Integer iceScrumRating = null
 
     Boolean needsEmailValidation = false
     Boolean displayReleaseNotes = false
@@ -46,6 +47,7 @@ class UserPreferences implements Serializable {
     boolean displayWelcomeTour = true
     boolean displayFullProjectTour = true
 
+    Date lastIceScrumRating
     Date lastReadActivities = new Date()
 
     Map menu = ["project": "1", "backlog": "2", "planning": "3", "taskBoard": "4", "feature": "5"]
@@ -59,6 +61,8 @@ class UserPreferences implements Serializable {
         needsEmailValidation nullable: true
         displayReleaseNotes nullable: true
         colorScheme nullable: true
+        lastIceScrumRating nullable: true
+        iceScrumRating nullable: true
     }
 
     static belongsTo = [
