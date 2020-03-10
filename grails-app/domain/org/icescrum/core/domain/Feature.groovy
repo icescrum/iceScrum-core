@@ -38,8 +38,9 @@ class Feature extends BacklogElement implements Serializable {
     static final int STATE_WAIT = 0
     static final int STATE_BUSY = 1
     static final int STATE_DONE = 2
+    static final String defaultColor = "#0067e8"
 
-    String color = "#0067e8"
+    String color = defaultColor
 
     Integer value = null
     Date doneDate
