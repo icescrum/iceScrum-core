@@ -27,7 +27,7 @@ import org.hibernate.ObjectNotFoundException
 
 class Meeting implements Serializable {
 
-    String subject
+    String topic
     String videoLink
     String phone
     String pinCode
@@ -50,7 +50,7 @@ class Meeting implements Serializable {
     Date lastUpdated
 
     static constraints = {
-        subject blank: false
+        topic blank: false
         videoLink nullable: true
         phone nullable: true
         pinCode nullable: true
@@ -80,7 +80,7 @@ class Meeting implements Serializable {
     int hashCode() {
         final int prime = 32
         int result = 1
-        result = prime * result + ((!subject) ? 0 : subject.hashCode())
+        result = prime * result + ((!topic) ? 0 : topic.hashCode())
         result = prime * result + ((!phone) ? 0 : phone.hashCode())
         result = prime * result + ((!videoLink) ? 0 : videoLink.hashCode())
         return result
