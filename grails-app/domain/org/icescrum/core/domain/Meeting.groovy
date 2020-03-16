@@ -55,7 +55,9 @@ class Meeting implements Serializable {
         phone nullable: true
         pinCode nullable: true
         providerEventId nullable: true
-        project nullable: true
+        project(nullable: true, validator: { newProject, meeting ->
+            (meeting.portfolio && !newProject) || (!meeting.portfolio && newProject) ?: 'invalid'
+        })
         portfolio nullable: true
         endDate nullable: true
         contextId nullable: true
@@ -64,6 +66,9 @@ class Meeting implements Serializable {
 
     static mapping = {
         cache true
+        table 'is_meeting'
+        contextId column: 'subject_id' // TMP pending renaming
+        contextType column: 'subject_type' // TMP pending renaming
     }
 
     static List<Meeting> withMeetings(def params, def id = 'id', String workspaceType = WorkspaceType.PROJECT) {
