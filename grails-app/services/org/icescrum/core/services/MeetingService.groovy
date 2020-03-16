@@ -23,26 +23,13 @@
  */
 package org.icescrum.core.services
 
-import org.grails.comments.Comment
-import org.grails.comments.CommentLink
-import org.icescrum.core.domain.Activity
-import org.icescrum.core.domain.Feature
+
 import org.icescrum.core.domain.Meeting
-import org.icescrum.core.domain.Project
-import org.icescrum.core.domain.Sprint
-import org.icescrum.core.domain.Story
-import org.icescrum.core.domain.Task
 import org.icescrum.core.domain.User
-import org.icescrum.core.error.BusinessException
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
-import org.springframework.security.access.AccessDeniedException
-import org.springframework.security.access.prepost.PreAuthorize
 
 class MeetingService extends IceScrumEventPublisher {
-
-    def grailsApplication
-    def activityService
 
     void save(Meeting meeting, def workspace, User owner) {
         meeting.owner = owner
@@ -53,7 +40,7 @@ class MeetingService extends IceScrumEventPublisher {
         publishSynchronousEvent(IceScrumEventType.CREATE, meeting)
     }
 
-    void update(Meeting meeting, Map props = [:]) {
+    void update(Meeting meeting) {
         def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_UPDATE, meeting)
         meeting.save(flush: true)
         publishSynchronousEvent(IceScrumEventType.UPDATE, meeting, dirtyProperties)
@@ -64,7 +51,7 @@ class MeetingService extends IceScrumEventPublisher {
         meetings.each { meeting ->
             def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_DELETE, meeting)
             meeting.delete()
-            workspace.removeFromMeetings(story)
+            workspace.removeFromMeetings(meeting)
             workspace.save(flush: true)
             publishSynchronousEvent(IceScrumEventType.DELETE, meeting, dirtyProperties)
         }
