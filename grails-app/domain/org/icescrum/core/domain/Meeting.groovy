@@ -37,8 +37,8 @@ class Meeting implements Serializable {
     Date startDate
     Date endDate
 
-    Long contextId
-    String contextType
+    Long subjectId
+    String subjectType
 
     static belongsTo = [
             owner    : User,
@@ -60,15 +60,13 @@ class Meeting implements Serializable {
         })
         portfolio nullable: true
         endDate nullable: true
-        contextId nullable: true
-        contextType nullable: true
+        subjectId nullable: true
+        subjectType nullable: true
     }
 
     static mapping = {
         cache true
         table 'is_meeting'
-        contextId column: 'subject_id' // TMP pending renaming
-        contextType column: 'subject_type' // TMP pending renaming
     }
 
     static List<Meeting> withMeetings(def params, def id = 'id', String workspaceType = WorkspaceType.PROJECT) {
