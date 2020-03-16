@@ -63,7 +63,8 @@ class Project extends TimeBox implements Serializable, Attachmentable {
             tasks                : Task,
             simpleProjectApps    : SimpleProjectApp,
             timeBoxNotesTemplates: TimeBoxNotesTemplate,
-            widgets              : Widget
+            widgets              : Widget,
+            meetings             : Meeting
     ]
 
     static mappedBy = [
@@ -109,6 +110,7 @@ class Project extends TimeBox implements Serializable, Attachmentable {
         attachments_count(nullable: true) // Must be nullable at creation for postgres because it doesn't set default value. The not nullable constraint is added in migration.
         preferences lazy: true
         widgets(sort: 'position')
+        meetings(sort: 'startDate')
     }
 
     static constraints = {

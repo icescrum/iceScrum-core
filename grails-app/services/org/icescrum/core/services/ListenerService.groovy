@@ -42,6 +42,7 @@ class ListenerService {
     def acceptanceTestService
     def taskService
     def commentService
+    def meetingService
     def grailsApplication
 
     @IceScrumListener(domain = 'story', eventType = IceScrumEventType.CREATE)
@@ -467,6 +468,24 @@ class ListenerService {
     void portfolioBeforeDelete(Portfolio portfolio, Map dirtyProperties) {
         portfolio.features.each { Feature feature ->
             featureService.publishSynchronousEvent(IceScrumEventType.BEFORE_DELETE, feature, [:])
+        }
+    }
+
+    @IceScrumListener(domain = 'meeting', eventType = IceScrumEventType.CREATE)
+    void meetingCreated(Meeting meeting, Map dirtyProperties) {
+        def workspace = meetingService.getWorkspace(meeting)
+        if (workspace) {
+            def workspaceType = workspace instanceof Portfolio ? WorkspaceType.PORTFOLIO : WorkspaceType.PROJECT
+            pushService.broadcastToWorkspaceChannel(IceScrumEventType.CREATE, meeting, workspace.id, workspaceType)
+        }
+    }
+
+    @IceScrumListener(domain = 'meeting', eventType = IceScrumEventType.UPDATE)
+    void meetingUpdated(Meeting meeting, Map dirtyProperties) {
+        def workspace = meetingService.getWorkspace(meeting)
+        if (workspace) {
+            def workspaceType = workspace instanceof Portfolio ? WorkspaceType.PORTFOLIO : WorkspaceType.PROJECT
+            pushService.broadcastToWorkspaceChannel(IceScrumEventType.UPDATE, meeting, workspace.id, workspaceType)
         }
     }
 
