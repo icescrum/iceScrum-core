@@ -44,7 +44,7 @@ class Portfolio {
             projects: Project,
             features: Feature,
             widgets : Widget,
-            meetings: Meeting,
+            meetings: Meeting
     ]
 
     static mapping = {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Kagilum SAS.
+ * Copyright (c) 2020 Kagilum SAS.
  *
  * This file is part of iceScrum.
  *
@@ -55,12 +55,9 @@ class Meeting implements Serializable {
         phone nullable: true
         pinCode nullable: true
         providerEventId nullable: true
-
         project nullable: true
         portfolio nullable: true
-
         endDate nullable: true
-
         contextId nullable: true
         contextType nullable: true
     }
