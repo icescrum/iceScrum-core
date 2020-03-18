@@ -69,15 +69,23 @@ class Meeting implements Serializable {
         table 'is_meeting'
     }
 
-    static List<Meeting> withMeetings(def params, def id = 'id', String workspaceType = WorkspaceType.PROJECT) {
-        def ids = params[id]?.contains(',') ? params[id].split(',')*.toLong() : params.list(id)
-        List<Meeting> meetings = ids ? getAll(ids).findAll { Meeting meeting ->
-            meeting && (meeting."$workspaceType".id == params."$workspaceType".toLong())
-        } : null
-        if (!meetings) {
-            throw new ObjectNotFoundException(ids, 'Meeting')
+    static Meeting withMeeting(long workspaceId, long id, String workspaceType = WorkspaceType.PROJECT) {
+        Meeting meeting
+        if (workspaceType == WorkspaceType.PROJECT) {
+            def project = Project.load(workspaceId)
+            if (project) {
+                meeting = (Meeting) findByProjectAndId(project, id)
+            }
+        } else if (workspaceType == WorkspaceType.PORTFOLIO) {
+            def portfolio = Portfolio.load(workspaceId)
+            if (portfolio) {
+                meeting = (Meeting) findByPortfolioAndId(portfolio, id)
+            }
         }
-        return meetings
+        if (!meeting) {
+            throw new ObjectNotFoundException(id, 'Meeting')
+        }
+        return meeting
     }
 
     int hashCode() {
