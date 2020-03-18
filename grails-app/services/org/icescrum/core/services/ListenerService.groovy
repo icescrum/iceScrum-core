@@ -472,7 +472,7 @@ class ListenerService {
     }
 
     @IceScrumListener(domain = 'meeting', eventType = IceScrumEventType.CREATE)
-    void meetingCreated(Meeting meeting, Map dirtyProperties) {
+    void meetingCreate(Meeting meeting, Map dirtyProperties) {
         def workspace = meetingService.getWorkspace(meeting)
         if (workspace) {
             def workspaceType = workspace instanceof Portfolio ? WorkspaceType.PORTFOLIO : WorkspaceType.PROJECT
@@ -481,11 +481,20 @@ class ListenerService {
     }
 
     @IceScrumListener(domain = 'meeting', eventType = IceScrumEventType.UPDATE)
-    void meetingUpdated(Meeting meeting, Map dirtyProperties) {
+    void meetingUpdate(Meeting meeting, Map dirtyProperties) {
         def workspace = meetingService.getWorkspace(meeting)
         if (workspace) {
             def workspaceType = workspace instanceof Portfolio ? WorkspaceType.PORTFOLIO : WorkspaceType.PROJECT
             pushService.broadcastToWorkspaceChannel(IceScrumEventType.UPDATE, meeting, workspace.id, workspaceType)
+        }
+    }
+
+    @IceScrumListener(domain = 'meeting', eventType = IceScrumEventType.DELETE)
+    void meetingDelete(Meeting meeting, Map dirtyProperties) {
+        def workspace = dirtyProperties.workspace
+        if (workspace) {
+            def workspaceType = workspace instanceof Portfolio ? WorkspaceType.PORTFOLIO : WorkspaceType.PROJECT
+            pushService.broadcastToWorkspaceChannel(IceScrumEventType.DELETE, [class: 'Meeting', id: dirtyProperties.id, messageId: 'meeting-' + dirtyProperties.id + '-delete'], workspace.id, workspaceType)
         }
     }
 

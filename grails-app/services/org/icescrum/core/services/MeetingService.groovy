@@ -49,6 +49,7 @@ class MeetingService extends IceScrumEventPublisher {
     void delete(Meeting meeting) {
         def workspace = getWorkspace(meeting)
         def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_DELETE, meeting)
+        dirtyProperties.workspace = workspace
         meeting.delete()
         workspace.removeFromMeetings(meeting)
         workspace.save(flush: true)
