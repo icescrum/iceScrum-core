@@ -20,8 +20,8 @@
 <div class="card hover-container" ${widgetDefinition.ngController ? 'ng-controller="' + widgetDefinition.ngController + '"' : ''}>
     <h3 class="card-header d-flex justify-content-between" as-sortable-item-handle>
         <span>${message(code: widgetDefinition.title)}</span>
-        <div class="d-flex">
-            <span class="hover-display">
+        <span class="hover-display">
+            <span class="d-flex">
                 <g:if test="${widget && widgetDefinition.settings}">
                     <button class="btn btn-link btn-sm"
                             ng-if="authorizedWidget('update', widget)"
@@ -39,7 +39,7 @@
                     </button>
                 </g:if>
             </span>
-        </div>
+        </span>
     </h3>
     <div class="card-body" ${widgetDefinition.settings ? 'ng-switch="showSettings"' : ''}>
         ${widgetDefinition.settings ? '<div ng-switch-default>' : ''}
