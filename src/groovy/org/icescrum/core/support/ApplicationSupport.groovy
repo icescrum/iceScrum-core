@@ -30,6 +30,9 @@ import grails.util.GrailsNameUtils
 import grails.util.Holders
 import grails.util.Metadata
 import groovy.sql.Sql
+import groovyx.net.http.ContentType
+import groovyx.net.http.HTTPBuilder
+import groovyx.net.http.Method
 import org.apache.commons.lang.WordUtils
 import org.apache.commons.logging.LogFactory
 import org.apache.http.HttpHost
@@ -889,6 +892,67 @@ class ApplicationSupport {
                 attachmentable = null
         }
         attachmentable
+    }
+
+    static getMetaFromPage(String url, def extraAttributes = [], boolean ignoreSsl = false) {
+        def data = [:]
+        def http = new HTTPBuilder(url)
+        if (ignoreSsl) {
+            http.ignoreSSLIssues()
+        }
+        http.getClient().getParams().setParameter("http.connection.timeout", 5000)
+        http.getClient().getParams().setParameter("http.socket.timeout", 5000)
+        try {
+            http.request(Method.GET, ContentType.HTML) {
+                headers.'User-Agent' = "Mozilla/5.0 Firefox/3.0.4"
+                response.success = { resp, html ->
+                    def metaData = html.HEAD.META
+                    def metas = [:]
+                    metaData.depthFirst().each { tag ->
+                        tag.each {
+                            def meta = it.attributes()
+                            metas[meta.property ?: meta.name] = meta.content
+                        }
+                    }
+                    if (metas['og:title']) {
+                        data.title = metas['og:title']
+                    } else if (metas.title) {
+                        data.title = metas.title
+                    } else {
+                        data.title = html.HEAD.TITLE ? html.HEAD.TITLE.text() : 'Document'
+                    }
+                    if (metas['og:url']) {
+                        data.url = metas['og:url']
+                    }
+                    if (metas['og:type']) {
+                        data.type = metas['og:type']
+                    }
+                    if (metas['og:image']) {
+                        data.image = metas['og:image']
+                    }
+                    if (metas['og:description']) {
+                        data.description = metas['og:description']
+                    } else if (metas.description) {
+                        data.description = metas.description
+                    }
+                    if (metas['og:site_name']) {
+                        data.site_name = metas['og:site_name']
+                    }
+                    extraAttributes.each { extraAttribute ->
+                        if (metas[extraAttribute]) {
+                            data[extraAttribute] = metas[extraAttribute]
+                        }
+                    }
+
+                }
+            }
+        } catch (Exception e) {
+            if (log.debugEnabled) {
+                log.debug(e.message)
+                e.printStackTrace()
+            }
+        }
+        return data
     }
 }
 
