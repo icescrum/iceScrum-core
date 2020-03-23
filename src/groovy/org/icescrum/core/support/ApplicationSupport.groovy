@@ -943,7 +943,6 @@ class ApplicationSupport {
                             data[extraAttribute] = metas[extraAttribute]
                         }
                     }
-
                 }
             }
         } catch (Exception e) {
