@@ -29,7 +29,7 @@ class DefaultEventMessageRenderer implements EventMessageRenderer {
 
     private Logger logger = LoggerFactory.getLogger("org.icescrum.core.hook.DefaultEventMessageRenderer")
 
-    String render(def object, def events) {
+    String render(def object, def events, def dirtyProperties) {
         def cachedObject = getCachedJSONObjectInThreadCache(object, events)
         if (cachedObject && logger.isDebugEnabled()) {
             logger.debug('found json object in Thread cache use it')

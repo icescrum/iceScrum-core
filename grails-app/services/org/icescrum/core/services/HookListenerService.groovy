@@ -79,7 +79,7 @@ class HookListenerService {
                     objectToRender = IceScrumEventType.DELETE == type ? dirtyProperties.findAll { prop -> return !(prop.value instanceof Collection) } : hookableObject
                 }
                 // Find the renderer
-                def payload = Class.forName("${eventMessageRendererClass ?: 'org.icescrum.core.hook.DefaultEventMessageRenderer'}").newInstance().render(objectToRender, events)
+                def payload = Class.forName("${eventMessageRendererClass ?: 'org.icescrum.core.hook.DefaultEventMessageRenderer'}").newInstance().render(objectToRender, events, dirtyProperties)
                 hooks.each { hook ->
                     Hook.async.task {
                         def http = new HTTPBuilder(hook.url)

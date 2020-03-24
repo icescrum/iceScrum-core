@@ -25,7 +25,7 @@ import grails.util.Holders
 import org.icescrum.core.services.PushService
 
 trait EventMessageRenderer {
-    abstract String render(def object, def events)
+    abstract String render(def object, def events, def dirtyProperties)
 
     //use the JSON generate from push service if found to speed up things
     static String getCachedJSONObjectInThreadCache(object, events) {
