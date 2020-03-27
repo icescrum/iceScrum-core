@@ -28,6 +28,7 @@ import org.grails.comments.Comment
 import org.icescrum.core.domain.*
 import org.icescrum.core.event.IceScrumEventType
 import org.icescrum.core.event.IceScrumListener
+import org.icescrum.plugins.attachmentable.domain.Attachment
 
 class ListenerService {
 
@@ -44,6 +45,7 @@ class ListenerService {
     def commentService
     def meetingService
     def grailsApplication
+    def attachmentService
 
     @IceScrumListener(domain = 'story', eventType = IceScrumEventType.CREATE)
     void storyCreate(Story story, Map dirtyProperties) {
@@ -404,6 +406,37 @@ class ListenerService {
         if (workspace) {
             def workspaceType = workspace instanceof Portfolio ? WorkspaceType.PORTFOLIO : WorkspaceType.PROJECT
             pushService.broadcastToWorkspaceChannel(IceScrumEventType.DELETE, [class: 'Comment', id: dirtyProperties.id, messageId: 'comment-' + dirtyProperties.id + '-delete'], workspace.id, workspaceType)
+        }
+    }
+
+    @IceScrumListener(domain = 'attachment', eventType = IceScrumEventType.CREATE)
+    void attachmentCreate(Attachment attachment, Map dirtyProperties) {
+        def workspace = attachmentService.getWorkspace(attachment)
+        if (workspace) {
+            def workspaceType = workspace instanceof Portfolio ? WorkspaceType.PORTFOLIO : WorkspaceType.PROJECT
+            def attachmentData = attachmentService.getRenderableAttachment(attachment)
+            attachmentData.messageId = 'attachment-CREATE-' + attachment.id
+            pushService.broadcastToWorkspaceChannel(IceScrumEventType.CREATE, attachmentData, workspace.id, workspaceType)
+        }
+    }
+
+    @IceScrumListener(domain = 'attachment', eventType = IceScrumEventType.UPDATE)
+    void attachmentUpdate(Attachment attachment, Map dirtyProperties) {
+        def workspace = attachmentService.getWorkspace(attachment)
+        if (workspace) {
+            def workspaceType = workspace instanceof Portfolio ? WorkspaceType.PORTFOLIO : WorkspaceType.PROJECT
+            def attachmentData = attachmentService.getRenderableAttachment(attachment)
+            attachmentData.messageId = 'attachment-UPDATE-' + attachment.id
+            pushService.broadcastToWorkspaceChannel(IceScrumEventType.UPDATE, attachmentData, workspace.id, workspaceType)
+        }
+    }
+
+    @IceScrumListener(domain = 'attachment', eventType = IceScrumEventType.DELETE)
+    void attachmentDelete(Attachment attachment, Map dirtyProperties) {
+        def workspace = dirtyProperties.workspace
+        if (workspace) {
+            def workspaceType = workspace instanceof Portfolio ? WorkspaceType.PORTFOLIO : WorkspaceType.PROJECT
+            pushService.broadcastToWorkspaceChannel(IceScrumEventType.DELETE, [class: 'Attachment', id: dirtyProperties.id, attachmentable: dirtyProperties.attachmentable, messageId: 'attachment-' + dirtyProperties.id + '-delete'], workspace.id, workspaceType)
         }
     }
 
