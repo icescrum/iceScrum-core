@@ -42,7 +42,9 @@ import org.apache.http.auth.AuthScope
 import org.apache.http.auth.UsernamePasswordCredentials
 import org.apache.http.client.AuthCache
 import org.apache.http.client.HttpClient
+import org.apache.http.client.methods.HttpDelete
 import org.apache.http.client.methods.HttpGet
+import org.apache.http.client.methods.HttpPatch
 import org.apache.http.client.methods.HttpPost
 import org.apache.http.client.protocol.ClientContext
 import org.apache.http.entity.StringEntity
@@ -595,6 +597,109 @@ class ApplicationSupport {
             resp.data = JSON.parse(responseText)
             if (resp.status != HttpStatus.SC_OK && log.debugEnabled) {
                 log.debug('Error ' + resp.status + ' post ' + uri.toString() + ' ' + json.toString(true) + ' ' + responseText)
+            }
+        } catch (Exception e) {
+            log.error(e.message)
+            e.printStackTrace()
+        } finally {
+            httpClient.connectionManager.shutdown()
+        }
+        return resp
+    }
+
+    static Map patchJSON(String url, String authenticationBearer, JSON json, headers = [:], params = [:]) {
+        headers.Authorization = "Bearer $authenticationBearer"
+        return patchJSON(url, null, null, json, headers, params)
+    }
+
+    static Map patchJSON(String url, String username, String password, JSON json, headers = [:], params = [:]) {
+        DefaultHttpClient httpClient = getHttpClient()
+        Map resp = [:]
+        try {
+            // Build host
+            URI uri = new URI(url)
+            String host = uri.host
+            Integer port = uri.port
+            String scheme = uri.scheme
+            if (port == -1 && scheme == 'https') {
+                port = 443
+            }
+            HttpHost targetHost = new HttpHost(host, port, scheme)
+            // Configure basic auth
+            BasicHttpContext localcontext = null
+            if (!headers.Authorization && username && password) {
+                httpClient.credentialsProvider.setCredentials(new AuthScope(targetHost.hostName, targetHost.port), new UsernamePasswordCredentials(username, password))
+                AuthCache authCache = new BasicAuthCache()
+                authCache.put(targetHost, new BasicScheme())
+                localcontext = new BasicHttpContext()
+                localcontext.setAttribute(ClientContext.AUTH_CACHE, authCache)
+            }
+            // Build request
+            HttpPatch httpPatch = new HttpPatch(uri.path)
+            headers.each { k, v ->
+                httpPatch.setHeader(k, v)
+            }
+            params.each { k, v ->
+                httpPatch.params.setParameter(k, v)
+            }
+            httpPatch.setEntity(new StringEntity(json.toString()))
+            // Execute request
+            HttpResponse response = localcontext ? httpClient.execute(targetHost, httpPatch, localcontext) : httpClient.execute(targetHost, httpPatch)
+            // Gather results
+            resp.status = response.statusLine.statusCode
+            if (resp.status != HttpStatus.SC_NO_CONTENT && log.debugEnabled) {
+                log.debug('Error ' + resp.status + ' patch ' + uri.toString())
+            }
+        } catch (Exception e) {
+            log.error(e.message)
+            e.printStackTrace()
+        } finally {
+            httpClient.connectionManager.shutdown()
+        }
+        return resp
+    }
+
+    static Map delete(String url, String authenticationBearer, headers = [:], params = [:]) {
+        headers.Authorization = "Bearer $authenticationBearer"
+        return delete(url, null, null, headers, params)
+    }
+
+    static Map delete(String url, String username, String password, headers = [:], params = [:]) {
+        DefaultHttpClient httpClient = getHttpClient()
+        Map resp = [:]
+        try {
+            // Build host
+            URI uri = new URI(url)
+            String host = uri.host
+            Integer port = uri.port
+            String scheme = uri.scheme
+            if (port == -1 && scheme == 'https') {
+                port = 443
+            }
+            HttpHost targetHost = new HttpHost(host, port, scheme)
+            // Configure basic auth
+            BasicHttpContext localcontext = null
+            if (!headers.Authorization && username && password) {
+                httpClient.credentialsProvider.setCredentials(new AuthScope(targetHost.hostName, targetHost.port), new UsernamePasswordCredentials(username, password))
+                AuthCache authCache = new BasicAuthCache()
+                authCache.put(targetHost, new BasicScheme())
+                localcontext = new BasicHttpContext()
+                localcontext.setAttribute(ClientContext.AUTH_CACHE, authCache)
+            }
+            // Build request
+            HttpDelete httpDelete = new HttpDelete(uri.path)
+            headers.each { k, v ->
+                httpDelete.setHeader(k, v)
+            }
+            params.each { k, v ->
+                httpDelete.params.setParameter(k, v)
+            }
+            // Execute request
+            HttpResponse response = localcontext ? httpClient.execute(targetHost, httpDelete, localcontext) : httpClient.execute(targetHost, httpDelete)
+            // Gather results
+            resp.status = response.statusLine.statusCode
+            if (resp.status != HttpStatus.SC_NO_CONTENT && log.debugEnabled) {
+                log.debug('Error ' + resp.status + ' delete ' + uri.toString())
             }
         } catch (Exception e) {
             log.error(e.message)
