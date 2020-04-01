@@ -58,7 +58,7 @@ import org.icescrum.core.ui.UiDefinitionArtefactHandler
 import org.icescrum.core.utils.JSONIceScrumDomainClassMarshaller
 import org.icescrum.core.utils.RollbackAlwaysTransactionAttribute
 import org.icescrum.plugins.attachmentable.domain.Attachment
-import org.icescrum.plugins.attachmentable.services.AttachmentableProxyService
+import org.icescrum.plugins.attachmentable.services.AttachmentableService
 import org.springframework.beans.factory.config.BeanDefinition
 import org.springframework.security.web.access.AccessDeniedHandlerImpl
 import org.springframework.security.web.access.ExceptionTranslationFilter
@@ -180,7 +180,7 @@ ERROR: iceScrum v7 has detected that you attempt to run it on an existing R6 ins
         // Manually match the UIController classes
         SpringSecurityService springSecurityService = ctx.getBean('springSecurityService')
         HdImageService hdImageService = ctx.getBean('hdImageService')
-        AttachmentableProxyService attachmentableProxyService = ctx.getBean('attachmentableProxyService')
+        AttachmentableService attachmentableService = ctx.getBean('attachmentableService')
         JasperService jasperService = ctx.getBean('jasperService')
         UiDefinitionService uiDefinitionService = ctx.getBean('uiDefinitionService')
         AppDefinitionService appDefinitionService = ctx.getBean('appDefinitionService')
@@ -190,7 +190,7 @@ ERROR: iceScrum v7 has detected that you attempt to run it on an existing R6 ins
             addCleanBeforeBindData(it)
             addJasperMethod(it, springSecurityService, jasperService)
             if (it.logicalPropertyName in controllersWithDownloadAndPreview) {
-                addDownloadAndPreviewMethods(it, attachmentableProxyService, hdImageService)
+                addDownloadAndPreviewMethods(it, attachmentableService, hdImageService)
             }
         }
         application.serviceClasses.each {
@@ -247,10 +247,10 @@ ERROR: iceScrum v7 has detected that you attempt to run it on an existing R6 ins
         } else if (application.isArtefactOfType(ControllerArtefactHandler.TYPE, event.source)) {
             def controller = application.getControllerClass(event.source?.name)
             HdImageService hdImageService = event.ctx.getBean('hdImageService')
-            AttachmentableProxyService attachmentableProxyService = event.ctx.getBean('attachmentableProxyService')
+            AttachmentableService attachmentableService = event.ctx.getBean('attachmentableService')
             if (uiDefinitionService.hasWindowDefinition(controller.logicalPropertyName)) {
                 if (controller.logicalPropertyName in controllersWithDownloadAndPreview) {
-                    addDownloadAndPreviewMethods(controller, attachmentableProxyService, hdImageService)
+                    addDownloadAndPreviewMethods(controller, attachmentableService, hdImageService)
                 }
             }
             if (application.isControllerClass(event.source)) {
@@ -272,7 +272,7 @@ ERROR: iceScrum v7 has detected that you attempt to run it on an existing R6 ins
         ((AppDefinitionService) event.application.mainContext.appDefinitionService).reloadAppDefinitions()
     }
 
-    private addDownloadAndPreviewMethods(clazz, attachmentableProxyService, hdImageService) {
+    private addDownloadAndPreviewMethods(clazz, attachmentableService, hdImageService) {
         def mc = clazz.metaClass
         def dynamicActions = [
                 download: { ->
@@ -282,7 +282,7 @@ ERROR: iceScrum v7 has detected that you attempt to run it on an existing R6 ins
                             redirect(url: "${attachment.url}")
                             return
                         } else {
-                            File file = attachmentableProxyService.getFile(attachment)
+                            File file = attachmentableService.getFile(attachment)
 
                             if (file.exists()) {
                                 if (!attachment.previewable) {
@@ -301,7 +301,7 @@ ERROR: iceScrum v7 has detected that you attempt to run it on an existing R6 ins
                 },
                 preview : {
                     Attachment attachment = Attachment.get(params.id as Long)
-                    File file = attachmentableProxyService.getFile(attachment)
+                    File file = attachmentableService.getFile(attachment)
                     def thumbnail = new File(file.parentFile.absolutePath + File.separator + attachment.id + '-thumbnail.' + (attachment.ext?.toLowerCase() != 'gif' ? attachment.ext : 'jpg'))
                     if (!thumbnail.exists()) {
                         thumbnail.setBytes(hdImageService.scale(file.absolutePath, 40, 40))
