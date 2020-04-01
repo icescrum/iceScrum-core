@@ -24,10 +24,8 @@
 
 package org.icescrum.core.services
 
-import grails.converters.JSON
+
 import grails.util.GrailsNameUtils
-import org.grails.attachments.Attachment
-import org.grails.attachments.AttachmentLink
 import org.hibernate.ObjectNotFoundException
 import org.icescrum.core.domain.Feature
 import org.icescrum.core.domain.Portfolio
@@ -41,7 +39,6 @@ import org.icescrum.core.error.BusinessException
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
 import org.icescrum.core.support.ApplicationSupport
-import org.icescrum.core.utils.ServicesUtils
 import org.icescrum.plugins.attachmentable.domain.Attachment
 import org.icescrum.plugins.attachmentable.domain.AttachmentLink
 
