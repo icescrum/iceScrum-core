@@ -201,13 +201,11 @@ class Story extends BacklogElement implements Cloneable, Serializable {
             or {
                 if (story.state == Story.STATE_SUGGESTED) {
                     and {
-                        ge 'state', Story.STATE_SUGGESTED
-                        ne 'id', story.id
-                        if (story.dependences) {
-                            not {
-                                'in' 'id', story.dependences.collect { it.id }
-                            }
-                        }
+                        eq 'state', Story.STATE_SUGGESTED
+                        lt 'rank', story.rank
+                    }
+                    and {
+                        gt 'state', Story.STATE_SUGGESTED
                     }
                 } else if (story.state in [Story.STATE_ACCEPTED, Story.STATE_ESTIMATED]) {
                     and {
