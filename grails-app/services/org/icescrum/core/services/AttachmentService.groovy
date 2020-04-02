@@ -110,9 +110,9 @@ class AttachmentService extends IceScrumEventPublisher {
         } else if (type == 'feature') {
             return Feature.withFeature(workspaceId, attachmentableId, workspaceType)
         } else if (type == 'release') {
-            return Release.getInProject(workspace, attachmentableId).list()
+            return Release.getInProject(workspaceId, attachmentableId).list()
         } else if (type == 'sprint') {
-            return Sprint.getInProject(workspace, attachmentableId).list()
+            return Sprint.getInProject(workspaceId, attachmentableId).list()
         } else if (type == 'project') {
             return Project.get(attachmentableId)
         } else if (type == 'portfolio') {
