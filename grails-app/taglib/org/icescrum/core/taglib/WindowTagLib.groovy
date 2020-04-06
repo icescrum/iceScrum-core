@@ -44,11 +44,12 @@ class WindowTagLib {
         if (attrs.form) {
             out << "<form role='form' $validation $name ng-submit='${attrs.form}' ${attrs.autoFillFix ? 'form-autofill-fix' : ''} novalidate>"
         }
-        if (attrs.header != false)
-        out << """  <div class="modal-header">
+        if (attrs.header != false) {
+            out << """  <div class="modal-header">
                         <h4 class="modal-title" id="modal${attrs.name ?: ''}">${attrs.icon ? '<i class="' + attrs.icon + '"></i> ' : ''}${attrs.title}</h4>
                         <button type="button" class="close" ng-click="\$dismiss()" tabindex="-1" aria-hidden="true"></button>
                     </div>"""
+        }
         out << """  <div class="modal-body">
                         ${body()}"""
         out << "</div>"
@@ -60,6 +61,7 @@ class WindowTagLib {
                 attrs.button.each { button ->
                     out << "<button type='${button.type ?: 'button'}' " +
                     "ng-click='${button.action ?: 'button'}' " +
+                    "${button.ngIf ? (' ng-if=\'' + button.ngIf + '\' ') : ''}" +
                     "class='btn btn-${button.color ?: 'primary'} ${button.class ?: ''}'>${button.text}</button>"
                 }
             }
