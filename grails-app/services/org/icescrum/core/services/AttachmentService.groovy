@@ -131,9 +131,9 @@ class AttachmentService extends IceScrumEventPublisher {
         } else if (attachmentLink.type == 'feature') {
             Feature feature = Feature.get(attachmentLink.attachmentRef)
             return feature.backlog ?: feature.portfolio
-        } else if (attachmentLink.type == 'release') {
-            return Sprint.get(attachmentLink.attachmentRef).parentProject
         } else if (attachmentLink.type == 'sprint') {
+            return Sprint.get(attachmentLink.attachmentRef).parentProject
+        } else if (attachmentLink.type == 'release') {
             return Release.get(attachmentLink.attachmentRef).parentProject
         } else if (attachmentLink.type == 'project') {
             return Project.get(attachmentLink.attachmentRef)
