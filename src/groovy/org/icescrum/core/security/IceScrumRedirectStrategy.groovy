@@ -23,7 +23,7 @@ class IceScrumRedirectStrategy implements RedirectStrategy {
     public void sendRedirect(HttpServletRequest request, HttpServletResponse response, String url) throws IOException {
         String redirectUrl = calculateRedirectUrl(request, url)
         redirectUrl = response.encodeRedirectURL(redirectUrl)
-        redirectUrl = redirectUrl.startsWith(ApplicationSupport.serverURL()) ? redirectUrl : ApplicationSupport.serverURL()
+        redirectUrl = redirectUrl.startsWith(ApplicationSupport.serverURL()) || !UrlUtils.isAbsoluteUrl(redirectUrl) ? redirectUrl : ApplicationSupport.serverURL()
         response.sendRedirect(redirectUrl)
     }
 
