@@ -1,6 +1,8 @@
 package org.icescrum.core.utils
 
+
 import org.eclipse.mylyn.wikitext.core.parser.MarkupParser
+import org.eclipse.mylyn.wikitext.core.parser.builder.HtmlDocumentBuilder
 import org.eclipse.mylyn.wikitext.textile.core.TextileLanguage
 
 /*
@@ -53,12 +55,23 @@ class ServicesUtils {
         return out.toString()
     }
 
-    public static String textileToHtml(String text) {
-        String html = text ? new MarkupParser(markupLanguage: new TextileLanguage()).parseToHtml(text) : ''
-        if (html) {
-            html = html.replaceAll('\\[ *\\]', '<i class="fa fa-square-o" markitup-checkbox="options" tabindex="0"></i>');
-            html = html.replaceAll('\\[ *[xX] *\\]', '<i class="fa fa-check-square-o" markitup-checkbox="options" tabindex="0"></i>');
+    static String textileToHtml(String text) {
+        if (text) {
+            def out = new StringWriter()
+            def htmlDocumentBuilder = new HtmlDocumentBuilder(out)
+            htmlDocumentBuilder.defaultAbsoluteLinkTarget = '_blank'
+            htmlDocumentBuilder.emitAsDocument = false
+            def markupParser = new MarkupParser(markupLanguage: new TextileLanguage())
+            markupParser.setBuilder(htmlDocumentBuilder)
+            markupParser.parse(text)
+            String html = out.toString()
+            if (html) {
+                html = html.replaceAll('\\[ *\\]', '<i class="fa fa-square-o" markitup-checkbox="options" tabindex="0"></i>');
+                html = html.replaceAll('\\[ *[xX] *\\]', '<i class="fa fa-check-square-o" markitup-checkbox="options" tabindex="0"></i>');
+            }
+            return html
+        } else {
+            return ''
         }
-        return html ? html.substring((html.indexOf("<body>") + "<body>".size()), html.indexOf("</body>")) : html
     }
 }
