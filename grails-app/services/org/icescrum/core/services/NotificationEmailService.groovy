@@ -55,7 +55,7 @@ class NotificationEmailService {
                         sendAlertCommentAdded(story, dirtyProperties.addedComment)
                     } else if (dirtyProperties.containsKey('updatedComment')) {
                         sendAlertCommentUpdated(story)
-                    } else {
+                    } else if (dirtyProperties.size() && (dirtyProperties.size() > 1 || !dirtyProperties.containsKey('rank'))) {
                         sendAlertCUD(story, user, type)
                     }
                     break
