@@ -67,7 +67,7 @@ class AttachmentService extends IceScrumEventPublisher {
         def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_UPDATE, attachment)
         if (props.name && attachment.name != props.name) {
             attachment.name = props.name
-            attachment.inputName = attachment.filename
+            attachment.inputName = attachment.name
         }
         attachment.save(flush: true)
         def attachmentable = getAttachmentable(attachment)
