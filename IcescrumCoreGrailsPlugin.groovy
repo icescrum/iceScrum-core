@@ -46,6 +46,7 @@ import org.icescrum.core.cors.CorsFilter
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
 import org.icescrum.core.event.IceScrumListener
+import org.icescrum.core.security.IceScrumSimpleUrlLogoutSuccessHandler
 import org.icescrum.core.security.ScrumUserDetailsService
 import org.icescrum.core.security.rest.TokenAuthenticationFilter
 import org.icescrum.core.security.rest.TokenAuthenticationProvider
@@ -172,6 +173,14 @@ ERROR: iceScrum v7 has detected that you attempt to run it on an existing R6 ins
         SpringSecurityUtils.registerProvider 'tokenAuthenticationProvider'
         SpringSecurityUtils.registerFilter 'tokenAuthenticationFilter', SecurityFilterPosition.BASIC_AUTH_FILTER.order - 1
         SpringSecurityUtils.registerFilter 'restExceptionTranslationFilter', SecurityFilterPosition.EXCEPTION_TRANSLATION_FILTER.order + 1
+
+        logoutSuccessHandler(IceScrumSimpleUrlLogoutSuccessHandler) {
+            redirectStrategy = ref('redirectStrategy')
+            defaultTargetUrl = SpringSecurityUtils.securityConfig.logout.afterLogoutUrl // '/'
+            alwaysUseDefaultTargetUrl = SpringSecurityUtils.securityConfig.logout.alwaysUseDefaultTargetUrl // false
+            targetUrlParameter = SpringSecurityUtils.securityConfig.logout.targetUrlParameter // null
+            useReferer = SpringSecurityUtils.securityConfig.logout.redirectToReferer // false
+        }
 
         webCacheKeyGenerator(IsControllerWebKeyGenerator)
     }
