@@ -19,11 +19,15 @@ class IceScrumRedirectStrategy implements RedirectStrategy {
 
     protected PortResolver portResolver
     protected boolean useHeaderCheckChannelSecurity
+    protected String redirectToParameter = "redirectTo"
 
     public void sendRedirect(HttpServletRequest request, HttpServletResponse response, String url) throws IOException {
         String redirectUrl = calculateRedirectUrl(request, url)
         redirectUrl = response.encodeRedirectURL(redirectUrl)
         redirectUrl = redirectUrl.startsWith(ApplicationSupport.serverURL()) || !UrlUtils.isAbsoluteUrl(redirectUrl) ? redirectUrl : ApplicationSupport.serverURL()
+        if (!redirectUrl.contains(redirectToParameter) && redirectUrl.contains('_HASH_')) {
+            redirectUrl = redirectUrl.replace('_HASH_', '#')
+        }
         response.sendRedirect(redirectUrl)
     }
 
@@ -56,5 +60,13 @@ class IceScrumRedirectStrategy implements RedirectStrategy {
      */
     public void setPortResolver(PortResolver portResolver) {
         this.portResolver = portResolver
+    }
+
+    /**
+     * Dependency injection for the redirectToParameter.
+     * @param redirectToParameter the redirectToParameter
+     */
+    public void setRedirectToParameter(String redirectToParameter) {
+        this.redirectToParameter = redirectToParameter
     }
 }
