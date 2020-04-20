@@ -100,6 +100,9 @@ class ReleaseService extends IceScrumEventPublisher {
         }
         if (startDate != DateUtils.getMidnightDate(release.startDate)) {
             release.startDate = startDate
+            if (release.orderNumber == 1 && release.parentProject.startDate > startDate) {
+                release.parentProject.startDate = startDate
+            }
         }
         if (endDate != DateUtils.getMidnightDate(release.endDate)) {
             release.endDate = endDate
