@@ -294,6 +294,14 @@ class ListenerService {
                 pushService.broadcastToProjectRelatedChannels(IceScrumEventType.UPDATE, nextSprintSameRelease, project.id) // Push nextSprint.activable
             } else {
                 pushService.broadcastToProjectRelatedChannels(IceScrumEventType.UPDATE, sprint.parentRelease, project.id) // Push parentRelease.closeable
+                def nextRelease = sprint.parentRelease.nextRelease
+                if (nextRelease) {
+                    pushService.broadcastToProjectRelatedChannels(IceScrumEventType.UPDATE, nextRelease, project.id) // Push nextRelease.activable
+                }
+                def nextSprint = sprint.nextSprint
+                if (nextSprint) {
+                    pushService.broadcastToProjectRelatedChannels(IceScrumEventType.UPDATE, nextSprint, project.id) // Push nextSprint.activable
+                }
             }
         }
         pushService.broadcastToProjectRelatedChannels(IceScrumEventType.UPDATE, sprint, project.id)
@@ -314,13 +322,6 @@ class ListenerService {
     @IceScrumListener(domain = 'release', eventType = IceScrumEventType.UPDATE)
     void releaseUpdate(Release release, Map dirtyProperties) {
         def project = release.parentProject
-        if (dirtyProperties.containsKey('state')) {
-            if (release.state == Release.STATE_DONE && release.nextRelease) {
-                pushService.broadcastToProjectRelatedChannels(IceScrumEventType.UPDATE, release.nextRelease, project.id) // Push nextRelease.activable
-            } else if (release.state == Release.STATE_INPROGRESS && release.sprints) {
-                pushService.broadcastToProjectRelatedChannels(IceScrumEventType.UPDATE, release.sprints.first(), project.id) // Push firstSprint.activable
-            }
-        }
         pushService.broadcastToProjectRelatedChannels(IceScrumEventType.UPDATE, release, project.id)
     }
 
