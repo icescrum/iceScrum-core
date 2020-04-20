@@ -59,13 +59,7 @@ class ReleaseService extends IceScrumEventPublisher {
     }
 
     @PreAuthorize('(productOwner(#release.parentProject) or scrumMaster(#release.parentProject)) and !archivedProject(#release.parentProject)')
-    void update(Release release, Date startDate = null, Date endDate = null, boolean checkIntegrity = true) {
-        if (checkIntegrity && release.state == Release.STATE_DONE) {
-            def illegalDirtyProperties = release.dirtyPropertyNames - ['name', 'vision']
-            if (illegalDirtyProperties) {
-                throw new BusinessException(code: 'is.release.error.update.state.done')
-            }
-        }
+    void update(Release release, Date startDate = null, Date endDate = null) {
         startDate = DateUtils.getMidnightDate(startDate ?: release.startDate)
         endDate = DateUtils.getMidnightDate(endDate ?: release.endDate)
         def nextRelease = release.nextRelease
@@ -149,7 +143,7 @@ class ReleaseService extends IceScrumEventPublisher {
         release.doneDate = new Date()
         release.state = Release.STATE_DONE
         def lastSprintEndDate = release.sprints ? release.sprints.asList().last().endDate : new Date()
-        update(release, null, lastSprintEndDate, false)
+        update(release, null, lastSprintEndDate)
     }
 
     @PreAuthorize('(productOwner(#release.parentProject) or scrumMaster(#release.parentProject)) and !archivedProject(#release.parentProject)')
