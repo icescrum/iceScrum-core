@@ -310,7 +310,9 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
     }
 
     def getActivable() {
-        return state == STATE_WAIT && parentRelease.state == Release.STATE_INPROGRESS && (orderNumber == 1 || previousSprint && previousSprint.state == STATE_DONE)
+        return state == STATE_WAIT &&
+               (parentRelease.state == Release.STATE_INPROGRESS || parentRelease.activable) &&
+               (orderNumber == 1 || previousSprint && previousSprint.state == STATE_DONE)
     }
 
     def getReactivable() {

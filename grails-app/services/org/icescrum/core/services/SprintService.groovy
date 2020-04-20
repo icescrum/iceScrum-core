@@ -40,6 +40,7 @@ class SprintService extends IceScrumEventPublisher {
     def taskService
     def storyService
     def springSecurityService
+    def grailsApplication
 
     @PreAuthorize('(productOwner(#release.parentProject) or scrumMaster(#release.parentProject)) and !archivedProject(#release.parentProject)')
     void save(Sprint sprint, Release release) {
@@ -155,15 +156,12 @@ class SprintService extends IceScrumEventPublisher {
 
     @PreAuthorize('(productOwner(#sprint.parentRelease.parentProject) or scrumMaster(#sprint.parentRelease.parentProject)) and !archivedProject(#sprint.parentRelease.parentProject)')
     void activate(Sprint sprint) {
-        if (sprint.parentRelease.state != Release.STATE_INPROGRESS) {
-            throw new BusinessException(code: 'is.sprint.error.activate.release.not.inprogress')
+        if (!sprint.activable) {
+            throw new BusinessException(code: 'is.sprint.error.activate')
         }
-        sprint.parentRelease.sprints.each {
-            if (it.state == Sprint.STATE_INPROGRESS) {
-                throw new BusinessException(code: 'is.sprint.error.activate.other.inprogress')
-            } else if (it.orderNumber < sprint.orderNumber && it.state < Sprint.STATE_DONE) {
-                throw new BusinessException(code: 'is.sprint.error.activate.previous.not.closed')
-            }
+        if (sprint.parentRelease.state == Release.STATE_WAIT) {
+            ReleaseService releaseService = (ReleaseService) grailsApplication.mainContext.getBean('releaseService')
+            releaseService.activate(sprint.parentRelease)
         }
         def autoCreateTaskOnEmptyStory = sprint.parentRelease.parentProject.preferences.autoCreateTaskOnEmptyStory
         sprint.stories?.sort { it.rank }?.each { Story story ->
