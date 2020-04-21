@@ -299,7 +299,7 @@ class DummyService {
         lastStory.doneDate = new Date()
         lastStory.save()
         lastStory.tasks.each { Task task ->
-            if (!task.state == Task.STATE_DONE) {
+            if (task.state != Task.STATE_DONE) {
                 doneTask(task, lastStory.doneDate - 1, lastStory.doneDate)
             }
         }
