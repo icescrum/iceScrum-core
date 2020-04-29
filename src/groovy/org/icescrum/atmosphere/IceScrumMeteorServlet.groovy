@@ -1,5 +1,6 @@
 package org.icescrum.atmosphere
 
+import com.newrelic.api.agent.Trace
 import org.atmosphere.cpr.MeteorServlet
 import org.atmosphere.handler.ReflectorServletProcessor
 import org.grails.plugins.atmosphere_meteor.AtmosphereConfigurationHolder
@@ -10,6 +11,7 @@ import javax.servlet.ServletException
 class IceScrumMeteorServlet extends MeteorServlet {
 
     @Override
+    @Trace(async=true)
     public void init(ServletConfig sc) throws ServletException {
         super.init(sc)
 
