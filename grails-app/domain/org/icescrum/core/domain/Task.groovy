@@ -69,7 +69,7 @@ class Task extends BacklogElement implements Serializable {
     static mapping = {
         cache true
         table 'is_task'
-        participants cache: true, lazy: false
+        participants cache: true
         metaDatas cascade: 'delete-orphan', batchSize: 10, cache: true // Doesn't work on BacklogElement
         activities cascade: 'delete-orphan', batchSize: 25, cache: true // Doesn't work on BacklogElement
     }
