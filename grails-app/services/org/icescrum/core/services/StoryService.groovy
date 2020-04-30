@@ -178,14 +178,14 @@ class StoryService extends IceScrumEventPublisher {
     }
 
     @PreAuthorize('(productOwner(#sprint.parentProject) or scrumMaster(#sprint.parentProject)) and !archivedProject(#sprint.parentProject)')
-    public void planMultiple(Sprint sprint, def stories) {
+    void planMultiple(Sprint sprint, def stories) {
         stories.sort { it.rank }.each {
             plan(sprint, it)
         }
     }
 
     @PreAuthorize('(productOwner(#sprint.parentProject) or scrumMaster(#sprint.parentProject)) and !archivedProject(#sprint.parentProject)')
-    public void plan(Sprint sprint, Story story, Long newRank = null) {
+    void plan(Sprint sprint, Story story, Long newRank = null) {
         if (story.dependsOn && (story.dependsOn.state < Story.STATE_PLANNED || story.dependsOn.parentSprint.startDate > sprint.startDate)) {
             throw new BusinessException(code: 'is.story.error.dependsOn', args: [story.name, story.dependsOn.name])
         }
@@ -246,7 +246,7 @@ class StoryService extends IceScrumEventPublisher {
     }
 
     @PreAuthorize('(productOwner(#story.backlog) or scrumMaster(#story.backlog)) and !archivedProject(#story.backlog)')
-    public void unPlan(Story story, Boolean fullUnPlan = true) {
+    void unPlan(Story story, Boolean fullUnPlan = true) {
         def sprint = story.parentSprint
         if (!sprint) {
             throw new BusinessException(code: 'is.story.error.not.planned')
@@ -285,7 +285,6 @@ class StoryService extends IceScrumEventPublisher {
         pushService.enablePushForThisThread()
     }
 
-    // TODO check rights
     def unPlanAll(Collection<Sprint> sprintList, Integer sprintState = null) {
         sprintList.sort { sprint1, sprint2 -> sprint2.orderNumber <=> sprint1.orderNumber }
         def storiesUnPlanned = []
@@ -307,7 +306,6 @@ class StoryService extends IceScrumEventPublisher {
         return storiesUnPlanned
     }
 
-    // TODO check rights
     def autoPlan(List<Sprint> sprints, Double plannedVelocity) {
         def nbPoints = 0
         int nbSprint = 0
@@ -368,7 +366,6 @@ class StoryService extends IceScrumEventPublisher {
         cleanRanks(stories)
     }
 
-    // TODO check rights
     private void cleanRanks(stories) {
         stories.sort { it.rank }
         int i = 0
@@ -397,7 +394,6 @@ class StoryService extends IceScrumEventPublisher {
         }
     }
 
-    // TODO check rights
     private void updateRank(Story story, Long rank, Integer newState = null) {
         rank = adjustRankAccordingToDependences(story, rank)
         if ((story.dependsOn || story.dependences) && story.rank == rank) {
@@ -423,7 +419,6 @@ class StoryService extends IceScrumEventPublisher {
         cleanRanks(stories)
     }
 
-    // TODO check rights
     void shiftRankInList(List<Story> stories, Story story, Integer newIndex) {
         def oldRank = story.rank
         def oldIndex = stories.indexOf(story)
