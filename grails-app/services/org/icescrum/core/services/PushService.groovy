@@ -195,7 +195,7 @@ class PushService {
     public static def buildMessage(String namespace, String eventType, object) {
         def startTime
         if (log.debugEnabled) {
-            def startTime = new Date().getTime()
+            startTime = new Date().getTime()
         }
         def message = [
                 messageId: generatedMessageId(object, eventType),
