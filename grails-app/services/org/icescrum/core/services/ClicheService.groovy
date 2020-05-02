@@ -139,6 +139,7 @@ class ClicheService {
     }
 
     void createOrUpdateDailyTasksCliche(Sprint sprint) {
+        return
         if (sprint.state == Sprint.STATE_WAIT || sprint.state == Sprint.STATE_DONE) {
             return
         }
