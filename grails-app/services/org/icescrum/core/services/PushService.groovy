@@ -193,11 +193,19 @@ class PushService {
     }
 
     public static def buildMessage(String namespace, String eventType, object) {
+        def startTime
+        if (log.debugEnabled) {
+            def startTime = new Date().getTime()
+        }
         def message = [
                 messageId: generatedMessageId(object, eventType),
                 namespace: namespace,
                 content  : (object as JSON).toString().encodeAsBase64(),
                 eventType: eventType]
+        if (log.debugEnabled) {
+            def endTime = new Date().getTime()
+            log.debug("buildMessage - messageId " + message.messageId + " generated in " + ((endTime - startTime) / 1000) + "sec")
+        }
         return message
     }
 }
