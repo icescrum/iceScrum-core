@@ -82,19 +82,28 @@ class PushService {
 
     void broadcastToChannel(String namespace, String eventType, object, String channel = '/stream/app/*') {
         if (!isDisabledPushThread()) {
+            def startTime
+            if (log.debugEnabled) {
+                startTime = new Date().getTime()
+            }
+            def message = buildMessage(namespace, eventType, object)
             if (!isBufferedThread()) {
                 Broadcaster broadcaster = atmosphereMeteor.broadcasterFactory?.lookup(IceScrumBroadcaster.class, channel)
                 if (broadcaster) {
                     if (log.debugEnabled) {
                         log.debug("Broadcast to everybody on channel $channel - $namespace - $eventType")
                     }
-                    broadcaster.broadcast(buildMessage(namespace, eventType, object) as JSON)
+                    broadcaster.broadcast(message as JSON)
                 }
             } else {
                 if (log.debugEnabled) {
                     log.debug("Buffered broadcast for channel $channel - $namespace - $eventType")
                 }
-                bufferMessage(channel, buildMessage(namespace, eventType, object))
+                bufferMessage(channel, message)
+            }
+            if (log.debugEnabled) {
+                def endTime = new Date().getTime()
+                log.debug("broadcastToChannel took " + ((endTime - startTime) / 1000) + "sec for messageId ${message.messageId}")
             }
         }
     }
@@ -194,20 +203,11 @@ class PushService {
     }
 
     public static def buildMessage(String namespace, String eventType, object) {
-        def startTime
-        def log = LogFactory.getLog(this)
-        if (log.debugEnabled) {
-            startTime = new Date().getTime()
-        }
         def message = [
                 messageId: generatedMessageId(object, eventType),
                 namespace: namespace,
                 content  : (object as JSON).toString().encodeAsBase64(),
                 eventType: eventType]
-        if (log.debugEnabled) {
-            def endTime = new Date().getTime()
-            log.debug("buildMessage - messageId " + message.messageId + " generated in " + ((endTime - startTime) / 1000) + "sec")
-        }
         return message
     }
 }
