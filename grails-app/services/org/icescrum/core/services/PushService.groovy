@@ -26,6 +26,7 @@ package org.icescrum.core.services
 import grails.converters.JSON
 import grails.transaction.Transactional
 import grails.util.GrailsNameUtils
+import org.apache.juli.logging.LogFactory
 import org.atmosphere.cpr.AtmosphereResource
 import org.atmosphere.cpr.Broadcaster
 import org.icescrum.atmosphere.IceScrumAtmosphereEventListener
@@ -194,6 +195,7 @@ class PushService {
 
     public static def buildMessage(String namespace, String eventType, object) {
         def startTime
+        def log = LogFactory.getLog(this)
         if (log.debugEnabled) {
             startTime = new Date().getTime()
         }
