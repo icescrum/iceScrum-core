@@ -182,11 +182,14 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
     }
 
     private static void propertyTextile(def writer, def value, def it) {
+        ApplicationSupport.startProfiling("propertyTextile-${it}", "propertyTextile")
         def val = value.properties."$it"
         writer.key(it + '_html').value(ServicesUtils.textileToHtml(val))
+        ApplicationSupport.endProfiling("propertyTextile-${it}")
     }
 
     private void propertyInclude(def json, def writer, def value, def config, def it) {
+        ApplicationSupport.startProfiling("propertyInclude-${it}", "propertyInclude")
         def granted = config.security?."$it" != null ? config.security?."$it" : true
         User user = (User) grailsApplication.mainContext.springSecurityService.currentUser
         granted = granted instanceof Closure ? granted(value, grailsApplication, user) : granted
@@ -197,9 +200,11 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
                 json.convertAnother(val);
             }
         }
+        ApplicationSupport.endProfiling("propertyInclude-${it}")
     }
 
     private void propertyWithIds(def writer, def properties, def value, def config, def it) {
+        ApplicationSupport.startProfiling("propertyWithIds-${it}", "propertyWithIds")
         if (!properties.collect { it.name }.contains(it)) {
             def granted = config.security?."$it" != null ? config.security?."$it" : true
             User user = (User) grailsApplication.mainContext.springSecurityService.currentUser
@@ -218,6 +223,7 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
                 }
             }
         }
+        ApplicationSupport.endProfiling("propertyWithIds-${it}")
     }
 
     @Override
