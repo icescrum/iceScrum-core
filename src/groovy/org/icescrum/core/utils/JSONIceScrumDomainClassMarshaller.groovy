@@ -32,6 +32,7 @@ import org.codehaus.groovy.grails.web.converters.exceptions.ConverterException
 import org.codehaus.groovy.grails.web.converters.marshaller.json.DomainClassMarshaller
 import org.codehaus.groovy.grails.web.json.JSONWriter
 import org.icescrum.core.domain.User
+import org.icescrum.core.support.ApplicationSupport
 import org.springframework.beans.BeanWrapper
 import org.springframework.beans.BeanWrapperImpl
 import org.springframework.web.context.request.RequestContextHolder
@@ -64,9 +65,13 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
         def config = propertiesMap."$configName"
         def requestConfig = getRequestConfig(configName)
 
+        def idValue = extractValue(value, domainClass.identifier)
+        def classValue = GrailsNameUtils.getShortName(domainClass.clazz.name)
+        ApplicationSupport.startProfiling("marshalObject-${classValue}-${idValue}", "marshalObject-$classValue")
+
         writer.object()
-        writer.key('class').value(GrailsNameUtils.getShortName(domainClass.clazz.name))
-        json.property('id', extractValue(value, domainClass.identifier))
+        writer.key('class').value(classValue)
+        json.property('id', idValue)
 
         List<GrailsDomainClassProperty> properties = domainClass.persistentProperties.toList()
         if (requestConfig?.excludeAll) {
@@ -117,6 +122,7 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
         }
 
         writer.endObject()
+        ApplicationSupport.endProfiling("marshalObject-${classValue}-${idValue}")
     }
 
     private void marshallProperty(property, beanWrapper, writer, json, domainClass, config, requestConfig) {

@@ -35,6 +35,7 @@ import org.icescrum.core.domain.Project
 import org.icescrum.core.domain.User
 import org.icescrum.core.domain.WorkspaceType
 import org.icescrum.core.event.IceScrumEventType
+import org.icescrum.core.support.ApplicationSupport
 
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
@@ -82,10 +83,7 @@ class PushService {
 
     void broadcastToChannel(String namespace, String eventType, object, String channel = '/stream/app/*') {
         if (!isDisabledPushThread()) {
-            def startTime
-            if (log.debugEnabled) {
-                startTime = new Date().getTime()
-            }
+            ApplicationSupport.startProfiling("broadcastToChannel-${message.messageId}", "broadcastToChannel")
             def message = buildMessage(namespace, eventType, object)
             if (!isBufferedThread()) {
                 Broadcaster broadcaster = atmosphereMeteor.broadcasterFactory?.lookup(IceScrumBroadcaster.class, channel)
@@ -101,10 +99,7 @@ class PushService {
                 }
                 bufferMessage(channel, message)
             }
-            if (log.debugEnabled) {
-                def endTime = new Date().getTime()
-                log.debug("broadcastToChannel took " + ((endTime - startTime) / 1000) + "sec for messageId ${message.messageId}")
-            }
+            ApplicationSupport.endProfiling("broadcastToChannel-${message.messageId}")
         }
     }
 

@@ -83,6 +83,7 @@ import java.awt.RenderingHints
 import java.awt.image.BufferedImage
 import java.security.MessageDigest
 import java.security.SignatureException
+import java.util.concurrent.ConcurrentHashMap
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
@@ -95,6 +96,7 @@ class ApplicationSupport {
     public static final FilterChain DUMMY_CHAIN = [
             doFilter: { req, res -> throw new UnsupportedOperationException() }
     ] as FilterChain
+    private static profilingData = new ConcurrentHashMap<Long, ConcurrentHashMap<String, Object>>()
 
     static String serverURL() {
         // Assets pipeline replaces the default grails link generator by its own LinkGenerator
@@ -125,6 +127,62 @@ class ApplicationSupport {
             }
         }
         return serverUrl
+    }
+
+    static void enableProfiling(ajax) {
+        def id = Thread.currentThread().getId()
+        log.info("[Profiler][$id] enabled profiling for ${ajax ? 'ajax' : ''} request")
+        profilingData.putIfAbsent(id, new ConcurrentHashMap<String, Object>())
+    }
+
+    static void startProfiling(name, group) {
+        def id = Thread.currentThread().getId()
+        def data = profilingData.get(id)
+        if (data != null) {
+            if (data."$name" && !data."$name".end) {
+                log.info("[Profiler][$id][$name] Error profiling already started, reset, may not be accurate")
+            }
+            data."$name" = [start: null, end: null, group: group ?: "default"]
+            data."$name".start = new Date().getTime()
+        }
+    }
+
+    static void endProfiling(name) {
+        def id = Thread.currentThread().getId()
+        def data = profilingData.get(id)
+        if (data != null) {
+            if (data."$name") {
+                data."$name".end = new Date().getTime()
+                def spent = data."$name".end - data."$name".start
+                data."$name".spent = spent
+                log.info("[Profiler][$id][$name] Time spent: ${spent}ms")
+            } else {
+                log.info("[Profiler][$id][$name] Error profiling not started")
+            }
+        }
+    }
+
+    static void reportProfiling() {
+        def id = Thread.currentThread().getId()
+        def data = profilingData.remove(id)
+        if (data != null) {
+            log.info("***")
+            log.info("[Profiler][$id] Start report")
+            data.each { k, v ->
+                log.info("[Profiler][$id][$k] Time spent: ${v.spent}ms")
+            }
+            log.info("* by group *")
+            data.groupBy { it.value.group }?.each { k, v ->
+                def sum = v*.value*.spent.sum()
+                log.info("[Profiler][$id] Time spent for ${k}: ${sum}ms")
+            }
+            log.info("[Profiler] End report")
+            log.info("***")
+        }
+    }
+
+    static void clearProfiling() {
+        profilingData.clear()
     }
 
     static String getDatabaseName() {
