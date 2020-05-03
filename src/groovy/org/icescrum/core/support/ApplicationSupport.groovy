@@ -138,38 +138,40 @@ class ApplicationSupport {
     static void startProfiling(name, group) {
         def id = Thread.currentThread().getId()
         def data = profilingDatas.get(id)
-        def profilingId = "$group-$name"
-        def profilingData = data."$profilingId"
         if (data != null) {
+            def profilingId = "$group-$name"
+            def profilingData = data."$profilingId"
             if (profilingData && !profilingData.end) {
                 log.info("[Profiler][$id][$profilingId] Error profiling already started, reset, may not be accurate")
+            } else {
+                profilingData = [:]
             }
-        } else {
-            profilingData = [:]
+            profilingData.group = group
+            profilingData.start = new Date().getTime()
+            profilingData.end = null
         }
-        profilingData.group = group
-        profilingData.start = new Date().getTime()
-        profilingData.end = null
     }
 
     static void endProfiling(name, group) {
         def id = Thread.currentThread().getId()
         def data = profilingDatas.get(id)
-        def profilingId = "$group-$name"
-        def profilingData = data?."$profilingId"
-        if (profilingData) {
-            profilingData.end = new Date().getTime()
-            def spent = profilingData.end - profilingData.start
-            if (profilingData.spent) {
-                profilingData.spent += spent
-                profilingData.cycles += 1
+        if (data != null) {
+            def profilingId = "$group-$name"
+            def profilingData = data?."$profilingId"
+            if (profilingData) {
+                profilingData.end = new Date().getTime()
+                def spent = profilingData.end - profilingData.start
+                if (profilingData.spent) {
+                    profilingData.spent += spent
+                    profilingData.cycles += 1
+                } else {
+                    profilingData.spent = spent
+                    profilingData.cycles = 1
+                }
+                log.info("[Profiler][$id][$profilingId] Time spent: ${spent}ms")
             } else {
-                profilingData.spent = spent
-                profilingData.cycles = 1
+                log.info("[Profiler][$id][$profilingId] Error profiling not started")
             }
-            log.info("[Profiler][$id][$profilingId] Time spent: ${spent}ms")
-        } else {
-            log.info("[Profiler][$id][$profilingId] Error profiling not started")
         }
     }
 
