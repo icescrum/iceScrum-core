@@ -96,7 +96,7 @@ class ApplicationSupport {
     public static final FilterChain DUMMY_CHAIN = [
             doFilter: { req, res -> throw new UnsupportedOperationException() }
     ] as FilterChain
-    private static profilingData = new ConcurrentHashMap<Long, ConcurrentHashMap<String, Object>>()
+    private static profilingDatas = new ConcurrentHashMap<Long, ConcurrentHashMap<String, Object>>()
 
     static String serverURL() {
         // Assets pipeline replaces the default grails link generator by its own LinkGenerator
@@ -132,39 +132,50 @@ class ApplicationSupport {
     static void enableProfiling(ajax) {
         def id = Thread.currentThread().getId()
         log.info("[Profiler][$id] enabled profiling for ${ajax ? 'ajax' : ''} request")
-        profilingData.putIfAbsent(id, new ConcurrentHashMap<String, Object>())
+        profilingDatas.putIfAbsent(id, new ConcurrentHashMap<String, Object>())
     }
 
     static void startProfiling(name, group) {
         def id = Thread.currentThread().getId()
-        def data = profilingData.get(id)
+        def data = profilingDatas.get(id)
+        def profilingId = "$group-$name"
+        def profilingData = data."$profilingId"
         if (data != null) {
-            if (data."$name" && !data."$name".end) {
-                log.info("[Profiler][$id][$name] Error profiling already started, reset, may not be accurate")
+            if (profilingData && !profilingData.end) {
+                log.info("[Profiler][$id][$profilingId] Error profiling already started, reset, may not be accurate")
             }
-            data."$name" = [start: null, end: null, group: group ?: "default"]
-            data."$name".start = new Date().getTime()
+        } else {
+            profilingData = [:]
         }
+        profilingData.group = group
+        profilingData.start = new Date().getTime()
+        profilingData.end = null
     }
 
-    static void endProfiling(name) {
+    static void endProfiling(name, group) {
         def id = Thread.currentThread().getId()
-        def data = profilingData.get(id)
-        if (data != null) {
-            if (data."$name") {
-                data."$name".end = new Date().getTime()
-                def spent = data."$name".end - data."$name".start
-                data."$name".spent = spent
-                log.info("[Profiler][$id][$name] Time spent: ${spent}ms")
+        def data = profilingDatas.get(id)
+        def profilingId = "$group-$name"
+        def profilingData = data?."$profilingId"
+        if (profilingData) {
+            profilingData.end = new Date().getTime()
+            def spent = profilingData.end - profilingData.start
+            if (profilingData.spent) {
+                profilingData.spent += spent
+                profilingData.cycles += 1
             } else {
-                log.info("[Profiler][$id][$name] Error profiling not started")
+                profilingData.spent = spent
+                profilingData.cycles = 1
             }
+            log.info("[Profiler][$id][$profilingId] Time spent: ${spent}ms")
+        } else {
+            log.info("[Profiler][$id][$profilingId] Error profiling not started")
         }
     }
 
     static void reportProfiling() {
         def id = Thread.currentThread().getId()
-        def data = profilingData.remove(id)
+        def data = profilingDatas.remove(id)
         if (data != null) {
             log.info("***")
             log.info("[Profiler][$id] Start report")
@@ -174,7 +185,8 @@ class ApplicationSupport {
             log.info("* by group *")
             data.groupBy { it.value.group }?.each { k, v ->
                 def sum = v*.value*.spent.sum()
-                log.info("[Profiler][$id] Time spent for ${k}: ${sum}ms")
+                def cycles = v*.value*.cycles.sum()
+                log.info("[Profiler][$id] Time spent for ${k}: ${sum}ms ($cycles cycles)")
             }
             log.info("[Profiler] End report")
             log.info("***")
@@ -182,7 +194,7 @@ class ApplicationSupport {
     }
 
     static void clearProfiling() {
-        profilingData.clear()
+        profilingDatas.clear()
     }
 
     static String getDatabaseName() {

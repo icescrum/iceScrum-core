@@ -99,7 +99,7 @@ class PushService {
                 }
                 bufferMessage(channel, message)
             }
-            ApplicationSupport.endProfiling("broadcastToChannel-${message.messageId}")
+            ApplicationSupport.endProfiling("broadcastToChannel-${message.messageId}", "broadcastToChannel")
         }
     }
 
