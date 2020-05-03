@@ -126,6 +126,7 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
     }
 
     private void marshallProperty(property, beanWrapper, writer, json, domainClass, config, requestConfig) {
+        ApplicationSupport.startProfiling("marshallProperty-${domainClass}-${property.name}", "marshallProperty-${domainClass}")
         Object propertyValue = beanWrapper.getPropertyValue(property.name)
         if (property.type.isEnum()) {
             writer.key(property.name)
@@ -177,6 +178,7 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
                 }
             }
         }
+        ApplicationSupport.endProfiling("marshallProperty-${domainClass}-${property.name}")
     }
 
     private static void propertyTextile(def writer, def value, def it) {
