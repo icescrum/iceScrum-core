@@ -143,7 +143,7 @@ class ApplicationSupport {
             def profilingData = data."$profilingId"
             if (profilingData && !profilingData.end) {
                 log.info("[Profiler][$id][$profilingId] Error profiling already started, reset, may not be accurate")
-            } else {
+            } else { //need to create the map and set it to profilingDataS
                 profilingData = [:]
                 data."$profilingId" = profilingData
             }
