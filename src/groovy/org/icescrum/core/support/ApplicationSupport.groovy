@@ -144,7 +144,7 @@ class ApplicationSupport {
             if (profilingData && !profilingData.end) {
                 log.info("[Profiler][$id][$profilingId] Error profiling already started, reset, may not be accurate")
             } else { //need to create the map and set it to profilingDataS
-                profilingData = [:]
+                profilingData = [spent: profilingData?.spent ?: 0, cycles: profilingData?.cycles ?: 0]
                 data."$profilingId" = profilingData
             }
             profilingData.group = group
@@ -162,13 +162,8 @@ class ApplicationSupport {
             if (profilingData) {
                 profilingData.end = new Date().getTime()
                 def spent = profilingData.end - profilingData.start
-                if (profilingData.spent) {
-                    profilingData.spent += spent
-                    profilingData.cycles += 1
-                } else {
-                    profilingData.spent = spent
-                    profilingData.cycles = 1
-                }
+                profilingData.spent += spent
+                profilingData.cycles += 1
                 log.info("[Profiler][$id][$profilingId] Time spent: ${spent}ms")
             } else {
                 log.info("[Profiler][$id][$profilingId] Error profiling not started")
