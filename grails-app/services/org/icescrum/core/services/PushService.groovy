@@ -83,8 +83,8 @@ class PushService {
 
     void broadcastToChannel(String namespace, String eventType, object, String channel = '/stream/app/*') {
         if (!isDisabledPushThread()) {
-            ApplicationSupport.startProfiling("broadcastToChannel-${message.messageId}", "broadcastToChannel")
             def message = buildMessage(namespace, eventType, object)
+            ApplicationSupport.startProfiling("broadcastToChannel-${message.messageId}", "broadcastToChannel")
             if (!isBufferedThread()) {
                 Broadcaster broadcaster = atmosphereMeteor.broadcasterFactory?.lookup(IceScrumBroadcaster.class, channel)
                 if (broadcaster) {
