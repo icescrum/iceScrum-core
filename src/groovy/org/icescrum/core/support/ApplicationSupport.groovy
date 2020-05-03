@@ -145,6 +145,7 @@ class ApplicationSupport {
                 log.info("[Profiler][$id][$profilingId] Error profiling already started, reset, may not be accurate")
             } else {
                 profilingData = [:]
+                data."$profilingId" = profilingData
             }
             profilingData.group = group
             profilingData.start = new Date().getTime()
