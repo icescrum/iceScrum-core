@@ -32,7 +32,7 @@ import org.codehaus.groovy.grails.web.converters.exceptions.ConverterException
 import org.codehaus.groovy.grails.web.converters.marshaller.json.DomainClassMarshaller
 import org.codehaus.groovy.grails.web.json.JSONWriter
 import org.icescrum.core.domain.User
-import org.icescrum.core.support.ApplicationSupport
+import org.icescrum.core.support.ProfilingSupport
 import org.springframework.beans.BeanWrapper
 import org.springframework.beans.BeanWrapperImpl
 import org.springframework.web.context.request.RequestContextHolder
@@ -67,7 +67,7 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
 
         def idValue = extractValue(value, domainClass.identifier)
         def classValue = GrailsNameUtils.getShortName(domainClass.clazz.name)
-        ApplicationSupport.startProfiling("${classValue}-${idValue}", "marshalObject-$classValue")
+        ProfilingSupport.startProfiling("$idValue", "$classValue-marshallObject")
 
         writer.object()
         writer.key('class').value(classValue)
@@ -122,11 +122,11 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
         }
 
         writer.endObject()
-        ApplicationSupport.endProfiling("${classValue}-${idValue}", "marshalObject-$classValue")
+        ProfilingSupport.endProfiling("$idValue", "$classValue-marshallObject")
     }
 
     private void marshallProperty(property, beanWrapper, writer, json, domainClass, config, requestConfig) {
-        ApplicationSupport.startProfiling("${domainClass}-${property.name}", "marshallProperty-${domainClass}")
+        ProfilingSupport.startProfiling(property.name, "${GrailsNameUtils.getShortName(domainClass.clazz.name)}-marshallProperty")
         Object propertyValue = beanWrapper.getPropertyValue(property.name)
         if (property.type.isEnum()) {
             writer.key(property.name)
@@ -178,18 +178,18 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
                 }
             }
         }
-        ApplicationSupport.endProfiling("${domainClass}-${property.name}", "marshallProperty-${domainClass}")
+        ProfilingSupport.endProfiling(property.name, "${GrailsNameUtils.getShortName(domainClass.clazz.name)}-marshallProperty")
     }
 
     private static void propertyTextile(def writer, def value, def it) {
-        ApplicationSupport.startProfiling(it, "propertyTextile")
+        ProfilingSupport.startProfiling(it, 'propertyTextile')
         def val = value.properties."$it"
         writer.key(it + '_html').value(ServicesUtils.textileToHtml(val))
-        ApplicationSupport.endProfiling(it, "propertyTextile")
+        ProfilingSupport.endProfiling(it, 'propertyTextile')
     }
 
     private void propertyInclude(def json, def writer, def value, def config, def it) {
-        ApplicationSupport.startProfiling(it, "propertyInclude")
+        ProfilingSupport.startProfiling(it, 'propertyInclude')
         def granted = config.security?."$it" != null ? config.security?."$it" : true
         User user = (User) grailsApplication.mainContext.springSecurityService.currentUser
         granted = granted instanceof Closure ? granted(value, grailsApplication, user) : granted
@@ -200,11 +200,11 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
                 json.convertAnother(val);
             }
         }
-        ApplicationSupport.endProfiling(it, "propertyInclude")
+        ProfilingSupport.endProfiling(it, 'propertyInclude')
     }
 
     private void propertyWithIds(def writer, def properties, def value, def config, def it) {
-        ApplicationSupport.startProfiling(it, "propertyWithIds")
+        ProfilingSupport.startProfiling(it, 'propertyWithIds')
         if (!properties.collect { it.name }.contains(it)) {
             def granted = config.security?."$it" != null ? config.security?."$it" : true
             User user = (User) grailsApplication.mainContext.springSecurityService.currentUser
@@ -223,7 +223,7 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
                 }
             }
         }
-        ApplicationSupport.endProfiling(it, "propertyWithIds")
+        ProfilingSupport.endProfiling(it, 'propertyWithIds')
     }
 
     @Override

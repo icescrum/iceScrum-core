@@ -26,7 +26,6 @@ package org.icescrum.core.services
 import grails.converters.JSON
 import grails.transaction.Transactional
 import grails.util.GrailsNameUtils
-import org.apache.juli.logging.LogFactory
 import org.atmosphere.cpr.AtmosphereResource
 import org.atmosphere.cpr.Broadcaster
 import org.icescrum.atmosphere.IceScrumAtmosphereEventListener
@@ -35,7 +34,7 @@ import org.icescrum.core.domain.Project
 import org.icescrum.core.domain.User
 import org.icescrum.core.domain.WorkspaceType
 import org.icescrum.core.event.IceScrumEventType
-import org.icescrum.core.support.ApplicationSupport
+import org.icescrum.core.support.ProfilingSupport
 
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
@@ -84,7 +83,7 @@ class PushService {
     void broadcastToChannel(String namespace, String eventType, object, String channel = '/stream/app/*') {
         if (!isDisabledPushThread()) {
             def message = buildMessage(namespace, eventType, object)
-            ApplicationSupport.startProfiling("broadcastToChannel-${message.messageId}", "broadcastToChannel")
+            ProfilingSupport.startProfiling("broadcastToChannel-$message.messageId", "broadcastToChannel")
             if (!isBufferedThread()) {
                 Broadcaster broadcaster = atmosphereMeteor.broadcasterFactory?.lookup(IceScrumBroadcaster.class, channel)
                 if (broadcaster) {
@@ -99,7 +98,7 @@ class PushService {
                 }
                 bufferMessage(channel, message)
             }
-            ApplicationSupport.endProfiling("broadcastToChannel-${message.messageId}", "broadcastToChannel")
+            ProfilingSupport.endProfiling("broadcastToChannel-$message.messageId", "broadcastToChannel")
         }
     }
 
