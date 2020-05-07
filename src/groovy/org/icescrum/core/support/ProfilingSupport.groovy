@@ -86,7 +86,7 @@ class ProfilingSupport {
             log.info('***')
             log.info("[Profiler-$threadId] Start report")
             threadData.sort { it.value.spent }.each { profilingId, profilingData ->
-                if (profilingData.spent) {
+                if (profilingData.spent > 5) {
                     log.info("[Profiler-$threadId] [$profilingId]\t ${profilingData.spent}ms")
                 }
             }
@@ -94,7 +94,7 @@ class ProfilingSupport {
             threadData.groupBy { it.value.group }?.collect { group, entries ->
                 [group: group, sum: entries*.value*.spent.sum(), cycles: entries*.value*.cycles.sum()]
             }?.sort { it.sum }?.each {
-                if (it.sum) {
+                if (it.sum > 5) {
                     log.info("[Profiler-$threadId] [$it.group]\t $it.cycles times = ${it.sum}ms")
                 }
             }
