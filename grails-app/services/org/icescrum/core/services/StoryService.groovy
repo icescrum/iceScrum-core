@@ -38,6 +38,7 @@ import org.icescrum.core.error.BusinessException
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
 import org.icescrum.core.support.ApplicationSupport
+import org.icescrum.core.support.ProfilingSupport
 import org.icescrum.core.utils.DateUtils
 import org.icescrum.plugins.attachmentable.domain.Attachment
 import org.springframework.security.access.AccessDeniedException
@@ -602,9 +603,13 @@ class StoryService extends IceScrumEventPublisher {
 
     @PreAuthorize('(productOwner(#stories[0].backlog) or scrumMaster(#stories[0].backlog)) and !archivedProject(#stories[0].backlog)')
     void done(List<Story> stories) {
+        ProfilingSupport.startProfiling("${stories[0].id}", "serviceDone")
+        ProfilingSupport.startProfiling("${stories[0].id}", "serviceDone-0")
         Project project = (Project) stories[0].backlog
         def storyStateNames = project.getStoryStateNames()
+        ProfilingSupport.endProfiling("${stories[0].id}", "serviceDone-0")
         stories.sort { it.rank }.each { story ->
+            ProfilingSupport.startProfiling("$story.id", "serviceDone-1")
             if (story.parentSprint?.state != Sprint.STATE_INPROGRESS) {
                 throw new BusinessException(code: 'is.story.error.markAsDone.not.inProgress', args: [storyStateNames[Story.STATE_DONE]])
             }
@@ -618,7 +623,11 @@ class StoryService extends IceScrumEventPublisher {
             story.parentSprint.velocity += story.effort
             def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_UPDATE, story)
             story.save()
+            ProfilingSupport.endProfiling("$story.id", "serviceDone-1")
+            ProfilingSupport.startProfiling("$story.id", "serviceDone-2")
             publishSynchronousEvent(IceScrumEventType.UPDATE, story, dirtyProperties)
+            ProfilingSupport.endProfiling("$story.id", "serviceDone-2")
+            ProfilingSupport.startProfiling("$story.id", "serviceDone-3")
             User user = (User) springSecurityService.currentUser
             pushService.disablePushForThisThread()
             story.tasks?.findAll { it.state != Task.STATE_DONE }?.each { t ->
@@ -635,10 +644,14 @@ class StoryService extends IceScrumEventPublisher {
                     acceptanceTestService.update(acceptanceTest)
                 }
             }
+            ProfilingSupport.endProfiling("$story.id", "serviceDone-3")
         }
         if (stories) {
+            ProfilingSupport.startProfiling("${stories[0].id}", "serviceDone-4")
             clicheService.createOrUpdateDailyTasksCliche(stories[0]?.parentSprint)
+            ProfilingSupport.endProfiling("${stories[0].id}", "serviceDone-4")
         }
+        ProfilingSupport.endProfiling("${stories[0].id}", "serviceDone")
     }
 
     @PreAuthorize('productOwner(#story.backlog) and !archivedProject(#story.backlog)')
@@ -648,8 +661,12 @@ class StoryService extends IceScrumEventPublisher {
 
     @PreAuthorize('(productOwner(#stories[0].backlog) or scrumMaster(#stories[0].backlog)) and !archivedProject(#stories[0].backlog)')
     void unDone(List<Story> stories) {
+        ProfilingSupport.startProfiling("${stories[0].id}", "serviceUnDone")
+        ProfilingSupport.startProfiling("${stories[0].id}", "serviceUnDone-0")
         def storyStateNames = ((Project) stories[0].backlog).getStoryStateNames()
+        ProfilingSupport.endProfiling("${stories[0].id}", "serviceUnDone-0")
         stories.sort { it.rank }.each { story ->
+            ProfilingSupport.startProfiling("$story.id", "serviceUnDone-1")
             if (story.state != Story.STATE_DONE) {
                 throw new BusinessException(code: 'is.story.error.workflow', args: [storyStateNames[Story.STATE_INPROGRESS], storyStateNames[story.state]])
             }
@@ -657,17 +674,25 @@ class StoryService extends IceScrumEventPublisher {
                 throw new BusinessException(code: 'is.sprint.error.declareAsUnDone.state.not.inProgress')
             }
             updateRank(story, Story.countByParentSprintAndState(story.parentSprint, Story.STATE_INPROGRESS) + 1, Story.STATE_INPROGRESS) // Move story to last rank of in progress stories in sprint
+            ProfilingSupport.endProfiling("$story.id", "serviceUnDone-1")
+            ProfilingSupport.startProfiling("$story.id", "serviceUnDone-2")
             story.state = Story.STATE_INPROGRESS
             story.inProgressDate = new Date()
             story.doneDate = null
             story.parentSprint.velocity -= story.effort
             def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_UPDATE, story)
             story.save()
+            ProfilingSupport.endProfiling("$story.id", "serviceUnDone-2")
+            ProfilingSupport.startProfiling("$story.id", "serviceUnDone-3")
             publishSynchronousEvent(IceScrumEventType.UPDATE, story, dirtyProperties)
+            ProfilingSupport.endProfiling("$story.id", "serviceUnDone-3")
         }
         if (stories) {
+            ProfilingSupport.startProfiling("${stories[0].id}", "serviceUnDone-4")
             clicheService.createOrUpdateDailyTasksCliche(stories[0]?.parentSprint)
+            ProfilingSupport.endProfiling("${stories[0].id}", "serviceUnDone-4")
         }
+        ProfilingSupport.endProfiling("${stories[0].id}", "serviceUnDone")
     }
 
     @PreAuthorize('inProject(#stories[0].backlog) and !archivedProject(#stories[0].backlog) and inProject(#project) and !archivedProject(#project)')

@@ -28,6 +28,7 @@ import org.grails.comments.Comment
 import org.icescrum.core.domain.*
 import org.icescrum.core.event.IceScrumEventType
 import org.icescrum.core.event.IceScrumListener
+import org.icescrum.core.support.ProfilingSupport
 import org.icescrum.plugins.attachmentable.domain.Attachment
 
 class ListenerService {
@@ -65,6 +66,7 @@ class ListenerService {
 
     @IceScrumListener(domain = 'story', eventType = IceScrumEventType.UPDATE)
     void storyUpdate(Story story, Map dirtyProperties) {
+        ProfilingSupport.startProfiling("$story.id", 'listenerStoryUpdate')
         Project project = story.backlog
         if (dirtyProperties) {
             if (!pushService.isDisabledPushThread() && (dirtyProperties.containsKey('rank') || dirtyProperties.containsKey('state'))) { // isDisabledPushThread() called to avoid useless findAll
@@ -102,12 +104,14 @@ class ListenerService {
             }
             if (dirtyProperties.containsKey('state') && Story.STATE_DONE in [dirtyProperties.state, story.state] && story.parentSprint && !newUpdatedProperties['parentSprint']) {
                 story.parentSprint.lastUpdated = new Date()
-                pushService.broadcastToProjectRelatedChannels(IceScrumEventType.UPDATE, story.parentSprint, project.id)
-                def tasksData = [class     : 'Task',
-                                 ids       : story.tasks*.id,
-                                 properties: [class: 'Task', state: Task.STATE_DONE, doneDate: new Date(), estimation: 0],
-                                 messageId : 'story-' + story.id + '-tasks']
-                pushService.broadcastToProjectRelatedChannels(IceScrumEventType.UPDATE, tasksData, story.backlog.id)
+//                pushService.broadcastToProjectRelatedChannels(IceScrumEventType.UPDATE, story.parentSprint, project.id)
+                if (story.tasks) {
+                    def tasksData = [class     : 'Task',
+                                     ids       : story.tasks*.id,
+                                     properties: [class: 'Task', state: Task.STATE_DONE, doneDate: new Date(), estimation: 0],
+                                     messageId : 'story-' + story.id + '-tasks']
+                    pushService.broadcastToProjectRelatedChannels(IceScrumEventType.UPDATE, tasksData, story.backlog.id)
+                }
             }
             if (dirtyProperties.containsKey('effort') && story.parentSprint && story.parentSprint.state == Sprint.STATE_WAIT) {
                 pushService.broadcastToProjectRelatedChannels(IceScrumEventType.UPDATE, story.parentSprint, project.id)
@@ -141,6 +145,7 @@ class ListenerService {
                 pushService.broadcastToProjectRelatedChannels(IceScrumEventType.UPDATE, tasksData, story.backlog.id)
             }
         }
+        ProfilingSupport.endProfiling("$story.id", 'listenerStoryUpdate')
         pushService.broadcastToProjectRelatedChannels(IceScrumEventType.UPDATE, story, project.id)
     }
 

@@ -126,7 +126,7 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
     }
 
     private void marshallProperty(property, beanWrapper, writer, json, domainClass, config, requestConfig) {
-        ProfilingSupport.startProfiling(property.name, "${GrailsNameUtils.getShortName(domainClass.clazz.name)}-marshallProperty")
+//        ProfilingSupport.startProfiling(property.name, "${GrailsNameUtils.getShortName(domainClass.clazz.name)}-marshallProperty")
         Object propertyValue = beanWrapper.getPropertyValue(property.name)
         if (property.type.isEnum()) {
             writer.key(property.name)
@@ -178,18 +178,18 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
                 }
             }
         }
-        ProfilingSupport.endProfiling(property.name, "${GrailsNameUtils.getShortName(domainClass.clazz.name)}-marshallProperty")
+//        ProfilingSupport.endProfiling(property.name, "${GrailsNameUtils.getShortName(domainClass.clazz.name)}-marshallProperty")
     }
 
     private static void propertyTextile(def writer, def value, def it) {
-        ProfilingSupport.startProfiling(it, 'propertyTextile')
+//        ProfilingSupport.startProfiling(it, 'propertyTextile')
         def val = value.properties."$it"
         writer.key(it + '_html').value(ServicesUtils.textileToHtml(val))
-        ProfilingSupport.endProfiling(it, 'propertyTextile')
+//        ProfilingSupport.endProfiling(it, 'propertyTextile')
     }
 
     private void propertyInclude(def json, def writer, def value, def config, def it) {
-        ProfilingSupport.startProfiling(it, 'propertyInclude')
+//        ProfilingSupport.startProfiling(it, 'propertyInclude')
         def granted = config.security?."$it" != null ? config.security?."$it" : true
         User user = (User) grailsApplication.mainContext.springSecurityService.currentUser
         granted = granted instanceof Closure ? granted(value, grailsApplication, user) : granted
@@ -200,11 +200,11 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
                 json.convertAnother(val);
             }
         }
-        ProfilingSupport.endProfiling(it, 'propertyInclude')
+//        ProfilingSupport.endProfiling(it, 'propertyInclude')
     }
 
     private void propertyWithIds(def writer, def properties, def value, def config, def it) {
-        ProfilingSupport.startProfiling(it, 'propertyWithIds')
+//        ProfilingSupport.startProfiling(it, 'propertyWithIds')
         if (!properties.collect { it.name }.contains(it)) {
             def granted = config.security?."$it" != null ? config.security?."$it" : true
             User user = (User) grailsApplication.mainContext.springSecurityService.currentUser
@@ -223,7 +223,7 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
                 }
             }
         }
-        ProfilingSupport.endProfiling(it, 'propertyWithIds')
+//        ProfilingSupport.endProfiling(it, 'propertyWithIds')
     }
 
     @Override
