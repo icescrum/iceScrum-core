@@ -69,8 +69,8 @@ class ProfilingSupport {
                 def spent = profilingData.end - profilingData.start
                 profilingData.spent += spent
                 profilingData.cycles++
-                if (spent) {
-//                    log.info("[Profiler-$threadId] [$profilingId]\t ${spent}ms")
+                if (spent > 5) {
+                    log.info("[Profiler-$threadId] [$profilingId]\t ${spent}ms")
                 }
             } else {
                 log.info("[Profiler-$threadId] [$profilingId]\t Error profiling not started")

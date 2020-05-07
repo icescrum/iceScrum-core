@@ -146,7 +146,9 @@ class ListenerService {
             }
         }
         ProfilingSupport.endProfiling("$story.id", 'listenerStoryUpdate')
+        ProfilingSupport.startProfiling("$story.id", 'listenerStoryPush')
         pushService.broadcastToProjectRelatedChannels(IceScrumEventType.UPDATE, story, project.id)
+        ProfilingSupport.endProfiling("$story.id", 'listenerStoryPush')
     }
 
     @IceScrumListener(domain = 'story', eventType = IceScrumEventType.DELETE)
