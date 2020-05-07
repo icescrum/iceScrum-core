@@ -83,7 +83,7 @@ class PushService {
     void broadcastToChannel(String namespace, String eventType, object, String channel = '/stream/app/*') {
         if (!isDisabledPushThread()) {
             def message = buildMessage(namespace, eventType, object)
-            ProfilingSupport.startProfiling("broadcastToChannel-$message.messageId", "broadcastToChannel")
+            ProfilingSupport.startProfiling("$message.messageId", "broadcastToChannel")
             if (!isBufferedThread()) {
                 Broadcaster broadcaster = atmosphereMeteor.broadcasterFactory?.lookup(IceScrumBroadcaster.class, channel)
                 if (broadcaster) {
@@ -98,7 +98,7 @@ class PushService {
                 }
                 bufferMessage(channel, message)
             }
-            ProfilingSupport.endProfiling("broadcastToChannel-$message.messageId", "broadcastToChannel")
+            ProfilingSupport.endProfiling("$message.messageId", "broadcastToChannel")
         }
     }
 
