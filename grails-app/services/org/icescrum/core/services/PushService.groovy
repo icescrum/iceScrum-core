@@ -197,13 +197,11 @@ class PushService {
     }
 
     public static def buildMessage(String namespace, String eventType, object) {
-        ProfilingSupport.startProfiling("$namespace-$eventType", "buildMessage")
         def message = [
                 messageId: generatedMessageId(object, eventType),
                 namespace: namespace,
                 content  : (object as JSON).toString().encodeAsBase64(),
                 eventType: eventType]
-        ProfilingSupport.endProfiling("$namespace-$eventType", "buildMessage")
         return message
     }
 }

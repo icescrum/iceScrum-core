@@ -46,9 +46,7 @@ class ActivityService extends IceScrumEventPublisher {
                 code: code, label: label, field: field, beforeValue: beforeValue, afterValue: afterValue, afterLabel: afterLabel
         )
         activity.save()
-        ProfilingSupport.startProfiling("$item.id", "addActivity")
         item.addToActivities(activity)
-        ProfilingSupport.endProfiling("$item.id", "addActivity")
         publishSynchronousEvent(IceScrumEventType.CREATE, activity)
         return activity
     }
