@@ -28,7 +28,6 @@ import grails.util.Holders
 import org.codehaus.groovy.grails.commons.DefaultGrailsDomainClass
 import org.codehaus.groovy.grails.commons.GrailsApplication
 import org.hibernate.proxy.HibernateProxyHelper
-import org.icescrum.core.support.ProfilingSupport
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -61,18 +60,12 @@ abstract class IceScrumEventPublisher {
     Map publishSynchronousEvent(IceScrumEventType type, object, Map dirtyProperties = extractDirtyProperties(type, object)) {
         logEvent(type, object, dirtyProperties)
         def domain = GrailsNameUtils.getPropertyNameRepresentation(HibernateProxyHelper.getClassWithoutInitializingProxy(object))
-        ProfilingSupport.startProfiling("$domain", "publishEvent$type")
-        Holders.grailsApplication.config.icescrum.listenersByDomain.getAt(domain)?.getAt(type)?.eachWithIndex { it, index ->
-            ProfilingSupport.startProfiling("$domain-$index", "publishEvent$type-item")
+        Holders.grailsApplication.config.icescrum.listenersByDomain.getAt(domain)?.getAt(type)?.each {
             it(type, object, dirtyProperties)
-            ProfilingSupport.endProfiling("$domain-$index", "publishEvent$type-item")
         }
-        Holders.grailsApplication.config.icescrum.listenersByDomain.getAt('*')?.getAt(type)?.eachWithIndex { it, index ->
-            ProfilingSupport.startProfiling("$domain-$index", "publishEvent$type-*")
+        Holders.grailsApplication.config.icescrum.listenersByDomain.getAt('*')?.getAt(type)?.each {
             it(type, object, dirtyProperties)
-            ProfilingSupport.endProfiling("$domain-$index", "publishEvent$type-*")
         }
-        ProfilingSupport.endProfiling("$domain", "publishEvent$type")
         return dirtyProperties
     }
 

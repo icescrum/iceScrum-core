@@ -110,8 +110,8 @@ class ProfilingSupport {
         List<Long> spent = []
         Long start
 
-        def getTotalSpent() {
-            return spent.sum()
+        Long getTotalSpent() {
+            return spent ? spent.sum() : 0
         }
     }
 }
