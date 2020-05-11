@@ -38,6 +38,8 @@ class SimpleProjectApp implements Serializable {
     static mapping = {
         cache true
         table 'is_simple_project_app'
+        appDefinitionId index: 'is_app_index'
+        parentProject index: 'is_app_index'
     }
 
     static transients = [

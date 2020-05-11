@@ -57,13 +57,15 @@ class AppService extends IceScrumEventPublisher {
     }
 
     boolean isEnabledAppForProject(Project project, String appDefinitionId) {
-        ProfilingSupport.startProfiling(appDefinitionId, 'isEnabledForProject')
+        ProfilingSupport.startProfiling(appDefinitionId, 'isEnabledForProject1')
         def simpleProjectApp = SimpleProjectApp.findByAppDefinitionIdAndParentProject(appDefinitionId, project)
-        def result = false;
+        def result = false
+        ProfilingSupport.endProfiling(appDefinitionId, 'isEnabledForProject1')
+        ProfilingSupport.startProfiling(appDefinitionId, 'isEnabledForProject2')
         if (simpleProjectApp) {
             result = simpleProjectApp.availableForServer && simpleProjectApp.enabledForServer && simpleProjectApp.enabled
         }
-        ProfilingSupport.endProfiling(appDefinitionId, 'isEnabledForProject')
+        ProfilingSupport.endProfiling(appDefinitionId, 'isEnabledForProject2')
         return result
     }
 
