@@ -31,12 +31,13 @@ import java.util.concurrent.ConcurrentHashMap
 class ProfilingSupport {
 
     private static final log = LogFactory.getLog(this)
-    private static profilingDataByThread = new ConcurrentHashMap<Long, HashMap<String, Map>>()
+    private static profilingDataByThread = new ConcurrentHashMap<Long, HashMap<String, ProfilingData>>()
 
     static void enableProfiling(ajax, controllerName, actionName) {
         def threadId = Thread.currentThread().getId()
+        log.info('***')
         log.info("[Profiler-$threadId] Enable profiling for ${ajax ? 'ajax' : ''} request $controllerName/$actionName")
-        profilingDataByThread.putIfAbsent(threadId, new HashMap<String, Map>())
+        profilingDataByThread.putIfAbsent(threadId, new HashMap<String, ProfilingData>())
         startProfiling('total', 'total')
     }
 
@@ -46,15 +47,13 @@ class ProfilingSupport {
         if (threadData != null) {
             def profilingId = group + '-' + name
             def profilingData = threadData[profilingId]
-            if (profilingData && !profilingData.end) {
-                log.info("[Profiler-$threadId] [$profilingId]\t Error profiling already started, reset, may not be accurate")
-            } else {
-                profilingData = [spent: profilingData?.spent ?: 0, cycles: profilingData?.cycles ?: 0]
+            if (!profilingData) {
+                profilingData = new ProfilingData(group: group)
                 threadData[profilingId] = profilingData
+            } else if (profilingData.start) {
+                log.info("[Profiler-$threadId] [$profilingId]\t Error profiling already in progress on this ID, the values will not be accurate")
             }
-            profilingData.group = group
             profilingData.start = new Date().getTime()
-            profilingData.end = null
         }
     }
 
@@ -64,16 +63,11 @@ class ProfilingSupport {
         if (threadData != null) {
             def profilingId = group + '-' + name
             def profilingData = threadData[profilingId]
-            if (profilingData) {
-                profilingData.end = new Date().getTime()
-                def spent = profilingData.end - profilingData.start
-                profilingData.spent += spent
-                profilingData.cycles++
-                if (spent > 0) {
-                    log.info("[Profiler-$threadId] [$profilingId]\t ${spent}ms")
-                }
+            if (profilingData && profilingData.start) {
+                profilingData.spent << (new Date().getTime()) - profilingData.start
+                profilingData.start = null
             } else {
-                log.info("[Profiler-$threadId] [$profilingId]\t Error profiling not started")
+                log.info("[Profiler-$threadId] [$profilingId]\t Error profiling not started on this ID")
             }
         }
     }
@@ -83,27 +77,41 @@ class ProfilingSupport {
         def threadId = Thread.currentThread().getId()
         def threadData = profilingDataByThread.remove(threadId)
         if (threadData != null) {
-            log.info('***')
-            log.info("[Profiler-$threadId] Start report")
-            threadData.sort { it.value.spent }.each { profilingId, profilingData ->
-                if (profilingData.spent > 5) {
-                    log.info("[Profiler-$threadId] [$profilingId]\t ${profilingData.spent}ms")
+            log.info("* details ")
+            threadData.sort { it.value.totalSpent }.each { profilingId, profilingData ->
+                def totalSpent = profilingData.totalSpent
+                if (totalSpent > 5) {
+                    log.info("[Profiler-$threadId] [$profilingId]\t ${totalSpent}ms")
+                    if (profilingData.spent.size() > 1) {
+                        profilingData.spent.each {
+                            log.info("[Profiler-$threadId] [$profilingId]\t --${it}ms")
+                        }
+                    }
                 }
             }
             log.info('* by group *')
             threadData.groupBy { it.value.group }?.collect { group, entries ->
-                [group: group, sum: entries*.value*.spent.sum(), cycles: entries*.value*.cycles.sum()]
-            }?.sort { it.sum }?.each {
-                if (it.sum > 5) {
-                    log.info("[Profiler-$threadId] [$it.group]\t $it.cycles times = ${it.sum}ms")
+                [group: group, totalSpentByGroup: entries*.value.sum { it.totalSpent }, cycles: entries*.value.sum { it.spent.size() }]
+            }?.sort { it.totalSpentByGroup }?.each {
+                if (it.totalSpentByGroup > 5) {
+                    log.info("[Profiler-$threadId] [$it.group]\t ${it.cycles > 1 ? "(x$it.cycles)" : ''} ${it.totalSpentByGroup}ms")
                 }
             }
-            log.info('[Profiler] End report')
             log.info('***')
         }
     }
 
     static void clearProfiling() {
         profilingDataByThread.clear()
+    }
+
+    private static class ProfilingData {
+        String group
+        List<Long> spent = []
+        Long start
+
+        def getTotalSpent() {
+            return spent.sum()
+        }
     }
 }
