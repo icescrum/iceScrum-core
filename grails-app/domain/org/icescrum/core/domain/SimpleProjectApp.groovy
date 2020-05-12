@@ -27,6 +27,7 @@ package org.icescrum.core.domain
 
 import grails.util.Holders
 import org.icescrum.core.services.AppDefinitionService
+import org.icescrum.core.support.ProfilingSupport
 
 class SimpleProjectApp implements Serializable {
 
@@ -58,6 +59,26 @@ class SimpleProjectApp implements Serializable {
                         AND ai.owner.sid = :sid
                         AND acl.id = ai.owner
                         AND spa.parentProject.id = ai.objectId""", [sid: user], params ?: [:])
+    }
+
+    static listByParentProjectAndAppDefinition(String appDefinitionId, Project project) {
+        if (project) {
+            ProfilingSupport.startProfiling(appDefinitionId, 'isEnabledForProject')
+            Holders.grailsApplication.mainContext.getBean('sessionFactory').currentSession.createSQLQuery("""
+                        SELECT spa.id
+                        FROM is_simple_project_app spa
+                        WHERE app_definition_id = 'tototata'
+                        AND parent_project_id = 1
+            """).list()
+//            executeQuery("""SELECT spa.id
+//                        FROM org.icescrum.core.domain.SimpleProjectApp spa
+//                        WHERE spa.appDefinitionId = :appDefinitionId
+//                        AND spa.parentProject.id = :projectId""", [projectId: project.id, appDefinitionId: appDefinitionId])
+            ProfilingSupport.endProfiling(appDefinitionId, 'isEnabledForProject')
+            return []
+        } else {
+            return []
+        }
     }
 
     boolean getAvailableForServer() {
