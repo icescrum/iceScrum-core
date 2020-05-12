@@ -78,15 +78,21 @@ class DummyService {
         sprintService.generateSprints(release1)
         // Features
         def features = []
-        [
+        def featureProperties = [
                 [name: 'Administration', value: 2, description: 'Administrate and moderate content created by the users'],
                 [name: 'Pet profile', value: 4, description: 'Manage the profile of a pet', color: '#d0021b'],
                 [name: 'Advertising', value: 3, description: 'Advertise projects related to the profile of pets', color: '#bd10e0'],
                 [name: 'Search', value: 4, description: 'Search other pets to find the best match', color: '#50e3c2']
-        ].each { featureProperties ->
-            Feature feature = new Feature(featureProperties)
-            featureService.save(feature, project)
-            features << feature
+        ]
+        (largeDummyze ? 20 : 1).times { time ->
+            featureProperties.each {
+                Feature feature = new Feature(it)
+                if (time != 0) {
+                    feature.name = time + ' - ' + feature.name
+                }
+                featureService.save(feature, project)
+                features << feature
+            }
         }
         def featureAdmin = features[0]
         def featurePetProfile = features[1]
@@ -106,15 +112,14 @@ class DummyService {
                 [name: 'Batch delete pet profiles', description: '', feature: featureAdmin, value: 1, type: Story.TYPE_USER_STORY, state: Story.STATE_SUGGESTED],
                 [name: 'Search by behavior', description: '', feature: featureSearch, type: Story.TYPE_USER_STORY, state: Story.STATE_SUGGESTED]
         ]
-        def backlogStoryProperties = []
-        100.times {
-            backlogStoryProperties << [name: 'Add videos to my pet profile', description: "As a $petOwnerTag\nI can add videos to my pet profile \nIn order show how it is gorgeous to the other pet owners and make them choose it", feature: featurePetProfile, value: 3, type: Story.TYPE_USER_STORY, effort: 3, state: Story.STATE_ESTIMATED]
-            backlogStoryProperties << [name: 'Resizing the pet profile breaks the styling', description: 'In IE and Firefox, resizing the window under 400px width causes an overlap of fields', feature: featurePetProfile, value: 3, type: Story.TYPE_DEFECT, affectedVersion: '0.1', effort: 5, state: Story.STATE_ESTIMATED]
-            backlogStoryProperties << [name: 'Delete profiles', description: "As an $administratorTag\nI can delete profile\nIn order to remove unwanted content", feature: featureAdmin, value: 2, type: Story.TYPE_USER_STORY, effort: 1, state: Story.STATE_ESTIMATED]
-            backlogStoryProperties << [name: 'Geographical search', description: '', feature: featureSearch, value: 2, type: Story.TYPE_USER_STORY, state: Story.STATE_ACCEPTED]
-            backlogStoryProperties << [name: 'Metrics & reports', description: '', feature: featureAdmin, value: 3, type: Story.TYPE_USER_STORY, state: Story.STATE_ACCEPTED]
-            backlogStoryProperties << [name: 'Search by physical characteristics', description: '', feature: featureSearch, type: Story.TYPE_USER_STORY, state: Story.STATE_ACCEPTED]
-        }
+        def backlogStoryProperties = [
+                [name: 'Add videos to my pet profile', description: "As a $petOwnerTag\nI can add videos to my pet profile \nIn order show how it is gorgeous to the other pet owners and make them choose it", feature: featurePetProfile, value: 3, type: Story.TYPE_USER_STORY, effort: 3, state: Story.STATE_ESTIMATED],
+                [name: 'Resizing the pet profile breaks the styling', description: 'In IE and Firefox, resizing the window under 400px width causes an overlap of fields', feature: featurePetProfile, value: 3, type: Story.TYPE_DEFECT, affectedVersion: '0.1', effort: 5, state: Story.STATE_ESTIMATED],
+                [name: 'Delete profiles', description: "As an $administratorTag\nI can delete profile\nIn order to remove unwanted content", feature: featureAdmin, value: 2, type: Story.TYPE_USER_STORY, effort: 1, state: Story.STATE_ESTIMATED],
+                [name: 'Geographical search', description: '', feature: featureSearch, value: 2, type: Story.TYPE_USER_STORY, state: Story.STATE_ACCEPTED],
+                [name: 'Metrics & reports', description: '', feature: featureAdmin, value: 3, type: Story.TYPE_USER_STORY, state: Story.STATE_ACCEPTED],
+                [name: 'Search by physical characteristics', description: '', feature: featureSearch, type: Story.TYPE_USER_STORY, state: Story.STATE_ACCEPTED]
+        ]
         def storyPropertiesBySprint = [
                 0: [
                         [name: 'Setup CI & SCM', description: 'Create projects on SCM and build it automatically after each commit', value: 5, type: Story.TYPE_TECHNICAL_STORY, effort: 5, state: Story.STATE_ESTIMATED],
@@ -156,14 +161,13 @@ class DummyService {
         storyPropertiesBySprint.each { sprintIndex, storyProperties ->
             storiesBySprint[sprintIndex] = storyProperties.collect { createStory(it) }
         }
-        if (largeDummyze) {
-            backlogStoryProperties.eachWithIndex { it, index ->
-                it.name = "$index - $it.name"
-                createStory(it)
-            }
-        } else {
-            backlogStoryProperties[0..5].each {
-                createStory(it)
+        (largeDummyze ? 100 : 1).times { time ->
+            backlogStoryProperties.each {
+                def properties = it.clone()
+                if (time != 0) {
+                    properties.name = time + ' - ' + properties.name
+                }
+                createStory(properties)
             }
         }
         sandboxStoryProperties.each { createStory(it) } // Create sandbox stories after backlog ones to preserve "chronological" order
