@@ -29,7 +29,6 @@ import org.icescrum.core.domain.Project
 import org.icescrum.core.domain.SimpleProjectApp
 import org.icescrum.core.error.BusinessException
 import org.icescrum.core.event.IceScrumEventPublisher
-import org.icescrum.core.support.ProfilingSupport
 import org.springframework.security.access.prepost.PreAuthorize
 
 @Transactional
@@ -57,16 +56,12 @@ class AppService extends IceScrumEventPublisher {
     }
 
     boolean isEnabledAppForProject(Project project, String appDefinitionId) {
-        ProfilingSupport.startProfiling(appDefinitionId, 'isEnabledForProject1')
-        def simpleProjectApp = SimpleProjectApp.findByAppDefinitionIdAndParentProject(appDefinitionId, project)
-        def result = false
-        ProfilingSupport.endProfiling(appDefinitionId, 'isEnabledForProject1')
-        ProfilingSupport.startProfiling(appDefinitionId, 'isEnabledForProject2')
+        def simpleProjectApp = SimpleProjectApp.listByParentProjectAndAppDefinition(appDefinitionId, project)
         if (simpleProjectApp) {
-            result = simpleProjectApp.availableForServer && simpleProjectApp.enabledForServer && simpleProjectApp.enabled
+            return simpleProjectApp.availableForServer && simpleProjectApp.enabledForServer && simpleProjectApp.enabled
+        } else {
+            return false
         }
-        ProfilingSupport.endProfiling(appDefinitionId, 'isEnabledForProject2')
-        return result
     }
 
     boolean isAvailableAppForProject(String appDefinitionId) {
