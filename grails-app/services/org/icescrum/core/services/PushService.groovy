@@ -144,7 +144,7 @@ class PushService {
             messages.remove(existingMessage)
             messages.add(message)
             if (log.debugEnabled) {
-                log.debug('replace with latest content message (' + message.messageId + ') on channel ' + channel + ' ' + message.content)
+                log.debug('replace with latest content message (' + message.messageId + ') on channel ' + channel)
             }
         }
     }
