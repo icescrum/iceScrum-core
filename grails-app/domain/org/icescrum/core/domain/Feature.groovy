@@ -216,7 +216,7 @@ class Feature extends BacklogElement implements Serializable {
     }
 
     Date getInProgressDate() {
-        return state > STATE_WAIT ? stories.collect { it.inProgressDate }.findAll { it != null }.sort().last() : null
+        return state > STATE_WAIT ? (stories.collect { it.inProgressDate }.findAll { it != null }?.sort()?.last() ?: null) : null
     }
 
     def getActivity() {
