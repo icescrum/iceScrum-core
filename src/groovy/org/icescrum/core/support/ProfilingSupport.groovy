@@ -23,7 +23,7 @@
 
 package org.icescrum.core.support
 
-
+import grails.util.Holders
 import org.apache.commons.logging.LogFactory
 
 import java.util.concurrent.ConcurrentHashMap
@@ -34,6 +34,9 @@ class ProfilingSupport {
     private static profilingDataByThread = new ConcurrentHashMap<Long, HashMap<String, ProfilingData>>()
 
     static void enableProfiling(ajax, controllerName, actionName) {
+        if (!Holders.grailsApplication.config.icescrum.profiling.enable) {
+            return
+        }
         def threadId = Thread.currentThread().getId()
         log.info('***')
         log.info("[Profiler-$threadId] Enable profiling for ${ajax ? 'ajax' : ''} request $controllerName/$actionName")
@@ -42,6 +45,9 @@ class ProfilingSupport {
     }
 
     static void startProfiling(String name, String group) {
+        if (!Holders.grailsApplication.config.icescrum.profiling.enable) {
+            return
+        }
         def threadId = Thread.currentThread().getId()
         def threadData = profilingDataByThread.get(threadId)
         if (threadData != null) {
@@ -58,6 +64,9 @@ class ProfilingSupport {
     }
 
     static void endProfiling(String name, String group) {
+        if (!Holders.grailsApplication.config.icescrum.profiling.enable) {
+            return
+        }
         def threadId = Thread.currentThread().getId()
         def threadData = profilingDataByThread.get(threadId)
         if (threadData != null) {
@@ -73,6 +82,9 @@ class ProfilingSupport {
     }
 
     static void reportProfiling() {
+        if (!Holders.grailsApplication.config.icescrum.profiling.enable) {
+            return
+        }
         endProfiling('total', 'total')
         def threadId = Thread.currentThread().getId()
         def threadData = profilingDataByThread.remove(threadId)
