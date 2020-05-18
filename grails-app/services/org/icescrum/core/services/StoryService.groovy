@@ -626,7 +626,7 @@ class StoryService extends IceScrumEventPublisher {
             }
             pushService.enablePushForThisThread()
             Feature feature = story.feature
-            if (feature && project.preferences.autoDoneFeature && !feature.stories.any { Story s -> s.state != Story.STATE_DONE } && feature.state != Feature.STATE_DONE) {
+            if (feature && feature.state != Feature.STATE_DONE && project.preferences.autoDoneFeature && Story.countByFeatureAndStateNotEqual(feature, Story.STATE_DONE) == 0) {
                 featureService.update(feature, [state: Feature.STATE_DONE])
             }
             story.acceptanceTests.each { AcceptanceTest acceptanceTest ->
