@@ -70,13 +70,13 @@ class ListenerService {
         if (dirtyProperties) {
             ProfilingSupport.startProfiling("$story.id", 'listenerStoryUpdate1')
             if (!pushService.isDisabledPushThread() && (dirtyProperties.containsKey('rank') || dirtyProperties.containsKey('state'))) { // isDisabledPushThread() called to avoid useless findAll
-                /*project.stories.findAll { it.isDirty('rank') && it.id != story.id }.each { // If others stories have been updated, push them
+                project.stories.findAll { it.isDirty('rank') && it.id != story.id }.each { // If others stories have been updated, push them
                     def storyData = [class: 'Story', id: it.id, rank: it.rank, messageId: 'story-' + it.id + '-rank'] // Avoid pushing everything, which is very costly
                     if (it.parentSprint) {
                         storyData.parentSprint = getSprintAsShort(it.parentSprint)
                     }
                     pushService.broadcastToProjectRelatedChannels(IceScrumEventType.UPDATE, storyData, project.id)
-                }*/
+                }
             }
             ProfilingSupport.endProfiling("$story.id", 'listenerStoryUpdate1')
             ProfilingSupport.startProfiling("$story.id", 'listenerStoryUpdate2')
