@@ -30,7 +30,6 @@ import org.icescrum.core.domain.Project
 import org.icescrum.core.domain.User
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
-import org.icescrum.core.support.ProfilingSupport
 import org.icescrum.core.utils.DateUtils
 
 class ActivityService extends IceScrumEventPublisher {

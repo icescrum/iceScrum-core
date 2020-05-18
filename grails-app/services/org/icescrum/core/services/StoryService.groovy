@@ -38,7 +38,6 @@ import org.icescrum.core.error.BusinessException
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
 import org.icescrum.core.support.ApplicationSupport
-import org.icescrum.core.support.ProfilingSupport
 import org.icescrum.core.utils.DateUtils
 import org.icescrum.plugins.attachmentable.domain.Attachment
 import org.springframework.security.access.AccessDeniedException
@@ -603,7 +602,6 @@ class StoryService extends IceScrumEventPublisher {
 
     @PreAuthorize('(productOwner(#stories[0].backlog) or scrumMaster(#stories[0].backlog)) and !archivedProject(#stories[0].backlog)')
     void done(List<Story> stories) {
-        ProfilingSupport.startProfiling("${stories[0].id}", "serviceDone")
         Project project = (Project) stories[0].backlog
         def storyStateNames = project.getStoryStateNames()
         stories.sort { it.rank }.each { story ->
@@ -639,11 +637,8 @@ class StoryService extends IceScrumEventPublisher {
             }
         }
         if (stories) {
-            ProfilingSupport.startProfiling("${stories[0].id}", "serviceDone-cliche")
             clicheService.createOrUpdateDailyTasksCliche(stories[0]?.parentSprint)
-            ProfilingSupport.endProfiling("${stories[0].id}", "serviceDone-cliche")
         }
-        ProfilingSupport.endProfiling("${stories[0].id}", "serviceDone")
     }
 
     @PreAuthorize('productOwner(#story.backlog) and !archivedProject(#story.backlog)')
@@ -653,7 +648,6 @@ class StoryService extends IceScrumEventPublisher {
 
     @PreAuthorize('(productOwner(#stories[0].backlog) or scrumMaster(#stories[0].backlog)) and !archivedProject(#stories[0].backlog)')
     void unDone(List<Story> stories) {
-        ProfilingSupport.startProfiling("${stories[0].id}", "serviceUnDone")
         def storyStateNames = ((Project) stories[0].backlog).getStoryStateNames()
         stories.sort { it.rank }.each { story ->
             if (story.state != Story.STATE_DONE) {
@@ -672,11 +666,8 @@ class StoryService extends IceScrumEventPublisher {
             publishSynchronousEvent(IceScrumEventType.UPDATE, story, dirtyProperties)
         }
         if (stories) {
-            ProfilingSupport.startProfiling("${stories[0].id}", "serviceUnDone-cliche")
             clicheService.createOrUpdateDailyTasksCliche(stories[0]?.parentSprint)
-            ProfilingSupport.endProfiling("${stories[0].id}", "serviceUnDone-cliche")
         }
-        ProfilingSupport.endProfiling("${stories[0].id}", "serviceUnDone")
     }
 
     @PreAuthorize('inProject(#stories[0].backlog) and !archivedProject(#stories[0].backlog) and inProject(#project) and !archivedProject(#project)')
