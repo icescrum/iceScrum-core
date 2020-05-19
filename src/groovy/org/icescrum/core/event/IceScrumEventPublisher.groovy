@@ -52,7 +52,7 @@ abstract class IceScrumEventPublisher {
 
     static void registerListener(String domain, Closure listener) {
         IceScrumEventType.values().each { IceScrumEventType type ->
-            if (type != IceScrumEventType.UGLY_HACK_BECAUSE_ANNOTATION_CANT_BE_NULL) {
+            if (type != IceScrumEventType.UGLY_HACK_BECAUSE_ANNOTATION_CANT_BE_NULL && type != IceScrumEventType.PARTIAL_UPDATE) {
                 registerListener(domain, type, listener)
             }
         }
