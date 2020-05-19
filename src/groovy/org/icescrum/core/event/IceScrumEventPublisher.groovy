@@ -63,14 +63,10 @@ abstract class IceScrumEventPublisher {
         def domain = GrailsNameUtils.getPropertyNameRepresentation(HibernateProxyHelper.getClassWithoutInitializingProxy(object))
         ProfilingSupport.startProfiling("$domain", "publishEvent$type")
         Holders.grailsApplication.config.icescrum.listenersByDomain.getAt(domain)?.getAt(type)?.eachWithIndex { it, index ->
-            ProfilingSupport.startProfiling("$domain-$index", "publishEvent$type-item")
             it(type, object, dirtyProperties)
-            ProfilingSupport.endProfiling("$domain-$index", "publishEvent$type-item")
         }
         Holders.grailsApplication.config.icescrum.listenersByDomain.getAt('*')?.getAt(type)?.eachWithIndex { it, index ->
-            ProfilingSupport.startProfiling("$domain-$index", "publishEvent$type-*")
             it(type, object, dirtyProperties)
-            ProfilingSupport.endProfiling("$domain-$index", "publishEvent$type-*")
         }
         ProfilingSupport.endProfiling("$domain", "publishEvent$type")
         return dirtyProperties

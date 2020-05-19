@@ -34,6 +34,7 @@ import org.icescrum.core.domain.Project
 import org.icescrum.core.domain.User
 import org.icescrum.core.domain.WorkspaceType
 import org.icescrum.core.event.IceScrumEventType
+import org.icescrum.core.support.ProfilingSupport
 
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
@@ -57,7 +58,7 @@ class PushService {
 
     void broadcastToProjectRelatedChannels(IceScrumEventType eventType, object, long projectId) {
         broadcastToWorkspaceChannel(eventType, object, projectId, WorkspaceType.PROJECT)
-        Long portfolioId = Project.getPortfolioId(projectId)
+        Long portfolioId = Project.get(projectId)?.portfolio?.id
         if (portfolioId) {
             broadcastToWorkspaceChannel(eventType, object, portfolioId, WorkspaceType.PORTFOLIO)
         }
@@ -65,7 +66,7 @@ class PushService {
 
     void broadcastToProjectRelatedChannels(String namespace, String eventType, object, long projectId) {
         broadcastToWorkspaceChannel(namespace, eventType, object, projectId, WorkspaceType.PROJECT)
-        Long portfolioId = Project.getPortfolioId(projectId)
+        Long portfolioId = Project.get(projectId)?.portfolio?.id
         if (portfolioId) {
             broadcastToWorkspaceChannel(namespace, eventType, object, portfolioId, WorkspaceType.PORTFOLIO)
         }
