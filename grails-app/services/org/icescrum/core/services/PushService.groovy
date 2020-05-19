@@ -91,9 +91,9 @@ class PushService {
                     broadcaster.broadcast(message as JSON)
                 }
             } else {
-                if (log.debugEnabled) {
-                    log.debug("Buffered broadcast for channel $channel - $namespace - $eventType")
-                }
+//                if (log.debugEnabled) {
+//                    log.debug("Buffered broadcast for channel $channel - $namespace - $eventType")
+//                }
                 bufferMessage(channel, message)
             }
         }
