@@ -428,31 +428,19 @@ class StoryService extends IceScrumEventPublisher {
         cleanRanks(stories)
     }
 
-    void shiftRankInList(List<Story> stories, Story story, Integer newIndex) {
-        def oldRank = story.rank
+    void shiftRankInList(Story story, List<Story> stories, Integer newIndex) {
+        stories = stories.sort { it.rank }
+        List<Integer> ranks = stories*.rank
         def oldIndex = stories.indexOf(story)
         stories.remove(oldIndex)
         stories.add(newIndex, story)
-        if (oldIndex > newIndex) {
-            for (int i = newIndex; i <= oldIndex; i++) {
-                def _story = stories.get(i)
-                def newRank = (i == oldIndex) ? oldRank : stories.get(i + 1).rank
-                if (newRank == adjustRankAccordingToDependences(_story, newRank)) {
-                    updateStoryRank(_story, newRank)
-                } else {
-                    throw new BusinessException(code: 'is.story.error.shift.rank.has.dependences', args: [_story.name])
-                }
+        (oldIndex..newIndex).each { index ->
+            def newRank = ranks[index]
+            def _story = stories[index]
+            if (newRank != adjustRankAccordingToDependences(_story, newRank)) {
+                throw new BusinessException(code: 'is.story.error.shift.rank.has.dependences', args: [_story.name])
             }
-        } else {
-            for (int i = newIndex; i >= oldIndex; i--) {
-                def _story = stories.get(i)
-                def newRank = (i == oldIndex) ? oldRank : stories.get(i - 1).rank
-                if (newRank == adjustRankAccordingToDependences(_story, newRank)) {
-                    updateStoryRank(_story, newRank)
-                } else {
-                    throw new BusinessException(code: 'is.story.error.shift.rank.has.dependences', args: [_story.name])
-                }
-            }
+            updateStoryRank(_story, newRank) // NO REAL UPDATE EVENT FOR THE CURRENT STORY...
         }
     }
 
