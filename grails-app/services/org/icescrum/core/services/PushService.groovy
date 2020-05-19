@@ -34,7 +34,6 @@ import org.icescrum.core.domain.Project
 import org.icescrum.core.domain.User
 import org.icescrum.core.domain.WorkspaceType
 import org.icescrum.core.event.IceScrumEventType
-import org.icescrum.core.support.ProfilingSupport
 
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
