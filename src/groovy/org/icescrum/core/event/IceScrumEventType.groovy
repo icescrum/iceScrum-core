@@ -28,6 +28,7 @@ enum IceScrumEventType {
     BEFORE_CREATE,
     CREATE,
     BEFORE_UPDATE,
+    PARTIAL_UPDATE,
     UPDATE,
     BEFORE_DELETE,
     DELETE

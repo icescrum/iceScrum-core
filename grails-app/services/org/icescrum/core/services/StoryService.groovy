@@ -354,13 +354,20 @@ class StoryService extends IceScrumEventPublisher {
         return plannedStories
     }
 
-    // TODO check rights
+    private void updateStoryRank(Story story, Integer newRank) {
+        def dirtyProperties = [rank: story.rank]
+        story.rank = newRank
+        story.save()
+        publishSynchronousEvent(IceScrumEventType.PARTIAL_UPDATE, story, dirtyProperties)
+    }
+
     void setRank(Story story, Long rank) {
         rank = adjustRankAccordingToDependences(story, rank)
         def stories = story.sameBacklogStories
-        stories.findAll { it.rank >= rank }.each {
-            it.rank++
-            it.save()
+        stories.each { _story ->
+            if (_story.rank >= rank) {
+                updateStoryRank(_story, _story.rank + 1)
+            }
         }
         story.rank = rank
         cleanRanks(stories)
@@ -375,22 +382,23 @@ class StoryService extends IceScrumEventPublisher {
             i++
         }
         if (error) {
-            stories.eachWithIndex { story, ind ->
-                if (story.rank != ind + 1) {
+            stories.eachWithIndex { _story, index ->
+                def expectedRank = index + 1
+                if (_story.rank != expectedRank) {
                     if (log.debugEnabled) {
-                        log.debug("story ${story.uid} as rank ${story.rank} but should have ${ind + 1} fixing!!")
+                        log.debug("story ${_story.uid} as rank ${_story.rank} but should have ${expectedRank} fixing!!")
                     }
-                    story.rank = ind + 1
-                    story.save()
+                    updateStoryRank(_story, expectedRank)
                 }
             }
         }
     }
 
     void resetRank(Story story) {
-        story.sameBacklogStories.findAll { it.rank > story.rank }.each {
-            it.rank--
-            it.save()
+        story.sameBacklogStories.each { _story ->
+            if (_story.rank > story.rank) {
+                updateStoryRank(_story, _story.rank - 1)
+            }
         }
     }
 
@@ -411,9 +419,10 @@ class StoryService extends IceScrumEventPublisher {
         }
         Range affectedRange = story.rank..rank
         int delta = affectedRange.isReverse() ? 1 : -1
-        stories.findAll { it != story && it.rank in affectedRange }.each {
-            it.rank += delta
-            it.save()
+        stories.each { _story ->
+            if (_story.id != story.id && _story.rank in affectedRange) {
+                updateStoryRank(_story, _story.rank + delta)
+            }
         }
         story.rank = rank
         cleanRanks(stories)
@@ -429,10 +438,7 @@ class StoryService extends IceScrumEventPublisher {
                 def _story = stories.get(i)
                 def newRank = (i == oldIndex) ? oldRank : stories.get(i + 1).rank
                 if (newRank == adjustRankAccordingToDependences(_story, newRank)) {
-                    _story.rank = newRank
-                    def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_UPDATE, _story)
-                    _story.save()
-                    publishSynchronousEvent(IceScrumEventType.UPDATE, _story, dirtyProperties)
+                    updateStoryRank(_story, newRank)
                 } else {
                     throw new BusinessException(code: 'is.story.error.shift.rank.has.dependences', args: [_story.name])
                 }
@@ -442,10 +448,7 @@ class StoryService extends IceScrumEventPublisher {
                 def _story = stories.get(i)
                 def newRank = (i == oldIndex) ? oldRank : stories.get(i - 1).rank
                 if (newRank == adjustRankAccordingToDependences(_story, newRank)) {
-                    _story.rank = newRank
-                    def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_UPDATE, _story)
-                    _story.save()
-                    publishSynchronousEvent(IceScrumEventType.UPDATE, _story, dirtyProperties)
+                    updateStoryRank(_story, newRank)
                 } else {
                     throw new BusinessException(code: 'is.story.error.shift.rank.has.dependences', args: [_story.name])
                 }

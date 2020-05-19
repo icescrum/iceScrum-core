@@ -67,15 +67,6 @@ class ListenerService {
     void storyUpdate(Story story, Map dirtyProperties) {
         Project project = story.backlog
         if (dirtyProperties) {
-            if (!pushService.isDisabledPushThread() && (dirtyProperties.containsKey('rank') || dirtyProperties.containsKey('state'))) { // isDisabledPushThread() called to avoid useless findAll
-                project.stories.findAll { it.isDirty('rank') && it.id != story.id }.each { // If others stories have been updated, push them
-                    def storyData = [class: 'Story', id: it.id, rank: it.rank, messageId: 'story-' + it.id + '-rank'] // Avoid pushing everything, which is very costly
-                    if (it.parentSprint) {
-                        storyData.parentSprint = getSprintAsShort(it.parentSprint)
-                    }
-                    pushService.broadcastToProjectRelatedChannels(IceScrumEventType.UPDATE, storyData, project.id)
-                }
-            }
             def newUpdatedProperties = [:]
             ['feature', 'dependsOn', 'parentSprint'].each { property ->
                 if (dirtyProperties.containsKey(property)) {
@@ -144,13 +135,22 @@ class ListenerService {
         pushService.broadcastToProjectRelatedChannels(IceScrumEventType.UPDATE, story, project.id)
     }
 
+    @IceScrumListener(domain = 'story', eventType = IceScrumEventType.PARTIAL_UPDATE)
+    void storyPartialUpdate(Story story, Map dirtyProperties) {
+        if (dirtyProperties.containsKey('rank')) {
+            Project project = story.backlog
+            def storyData = [class: 'Story', id: story.id, rank: story.rank, messageId: 'story-' + story.id + '-rank']
+            if (story.parentSprint) {
+                storyData.parentSprint = getSprintAsShort(story.parentSprint)
+            }
+            pushService.broadcastToProjectRelatedChannels(IceScrumEventType.UPDATE, storyData, project.id)
+        }
+    }
+
     @IceScrumListener(domain = 'story', eventType = IceScrumEventType.DELETE)
     void storyDelete(Story story, Map dirtyProperties) {
         if (!pushService.isDisabledPushThread()) { // isDisabledPushThread() called to avoid useless findAll
             def project = Project.get(dirtyProperties.backlog.id)
-            project.stories.findAll { it.isDirty('rank') && it.id != dirtyProperties.id }.each {
-                pushService.broadcastToProjectRelatedChannels(IceScrumEventType.UPDATE, [class: 'Story', id: it.id, rank: it.rank, messageId: 'story-' + it.id + '-rank'], project.id)
-            }
             if (dirtyProperties.feature) {
                 def feature = dirtyProperties.feature
                 feature.lastUpdated = new Date()
@@ -159,7 +159,6 @@ class ListenerService {
                 pushService.broadcastToProjectRelatedChannels(IceScrumEventType.UPDATE, feature, project.id)
             }
             pushService.broadcastToProjectRelatedChannels(IceScrumEventType.DELETE, [class: 'Story', id: dirtyProperties.id, state: dirtyProperties.state, messageId: 'story-' + dirtyProperties.id + '-delete'], project.id)
-
         }
     }
 
