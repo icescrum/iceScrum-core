@@ -614,7 +614,6 @@ class StoryService extends IceScrumEventPublisher {
             if (story.state < Story.STATE_INPROGRESS || story.state >= Story.STATE_DONE) {
                 throw new BusinessException(code: 'is.story.error.workflow', args: [storyStateNames[Story.STATE_DONE], storyStateNames[story.state]])
             }
-            // Move story to last rank in sprint
             updateRank(story, Story.countByParentSprint(story.parentSprint), Story.STATE_DONE)
             story.state = Story.STATE_DONE
             story.doneDate = new Date()
@@ -624,8 +623,8 @@ class StoryService extends IceScrumEventPublisher {
             publishSynchronousEvent(IceScrumEventType.UPDATE, story, dirtyProperties)
             User user = (User) springSecurityService.currentUser
             pushService.disablePushForThisThread()
-            story.tasks?.findAll { it.state != Task.STATE_DONE }?.each { t ->
-                taskService.update(t, user, false, [state: Task.STATE_DONE])
+            story.tasks?.findAll { it.state != Task.STATE_DONE }?.each { Task task ->
+                taskService.update(task, user, false, [state: Task.STATE_DONE])
             }
             pushService.enablePushForThisThread()
             Feature feature = story.feature
