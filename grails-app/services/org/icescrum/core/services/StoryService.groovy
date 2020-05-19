@@ -354,51 +354,48 @@ class StoryService extends IceScrumEventPublisher {
         return plannedStories
     }
 
-    private void updateStoryRank(Story story, Integer newRank) {
-        def dirtyProperties = [rank: story.rank]
-        story.rank = newRank
-        story.save()
-        publishSynchronousEvent(IceScrumEventType.PARTIAL_UPDATE, story, dirtyProperties)
+    private void updateStoryRanks(List<Story> stories, Closure getRank) {
+        if (stories) {
+            stories.each { Story story ->
+                def dirtyProperties = [rank: story.rank]
+                story.rank = getRank(story)
+                publishSynchronousEvent(IceScrumEventType.PARTIAL_UPDATE, story, dirtyProperties)
+            }
+            stories*.save()
+        }
     }
 
     void setRank(Story story, Long rank) {
         rank = adjustRankAccordingToDependences(story, rank)
         def stories = story.sameBacklogStories
-        stories.each { _story ->
-            if (_story.rank >= rank) {
-                updateStoryRank(_story, _story.rank + 1)
-            }
+        updateStoryRanks(stories.findAll { it.rank >= rank }) { Story _story ->
+            _story.rank + 1
         }
         story.rank = rank
         cleanRanks(stories)
     }
 
     private void cleanRanks(stories) {
-        stories.sort { it.rank }
-        int i = 0
-        def error = false
-        while (i < stories.size() && !error) {
-            error = stories[i].rank != (i + 1)
-            i++
-        }
-        if (error) {
-            stories.eachWithIndex { _story, index ->
-                def expectedRank = index + 1
-                if (_story.rank != expectedRank) {
-                    if (log.debugEnabled) {
-                        log.debug("story ${_story.uid} as rank ${_story.rank} but should have ${expectedRank} fixing!!")
-                    }
-                    updateStoryRank(_story, expectedRank)
+        def updatedStories = []
+        def updatedStoriesRanks = [:]
+        stories.sort { it.rank }.eachWithIndex { story, index ->
+            def expectedRank = index + 1
+            if (story.rank != expectedRank) {
+                if (log.debugEnabled) {
+                    log.debug("story ${story.uid} as rank ${story.rank} but should have ${expectedRank} fixing!!")
                 }
+                updatedStories << story
+                updatedStoriesRanks[story.id] = expectedRank
             }
+        }
+        updateStoryRanks(updatedStories) { Story story ->
+            updatedStoriesRanks[story.id]
         }
     }
 
     void resetRank(Story story) {
-        story.sameBacklogStories.each { _story ->
-            if (_story.rank > story.rank) {
-                updateStoryRank(_story, _story.rank - 1)
-            }
+        updateStoryRanks(story.sameBacklogStories.findAll { it.rank > story.rank }) { Story _story ->
+            _story.rank - 1
         }
     }
 
@@ -419,10 +416,8 @@ class StoryService extends IceScrumEventPublisher {
         }
         Range affectedRange = story.rank..rank
         int delta = affectedRange.isReverse() ? 1 : -1
-        stories.each { _story ->
-            if (_story.id != story.id && _story.rank in affectedRange) {
-                updateStoryRank(_story, _story.rank + delta)
-            }
+        updateStoryRanks(stories.findAll { it.id != story.id && it.rank in affectedRange }) { Story _story ->
+            _story.rank + delta
         }
         story.rank = rank
         cleanRanks(stories)
@@ -434,13 +429,19 @@ class StoryService extends IceScrumEventPublisher {
         def oldIndex = stories.indexOf(story)
         stories.remove(oldIndex)
         stories.add(newIndex, story)
+        def updatedStories = []
+        def updatedStoriesRanks = [:]
         (oldIndex..newIndex).each { index ->
             def newRank = ranks[index]
             def _story = stories[index]
             if (newRank != adjustRankAccordingToDependences(_story, newRank)) {
                 throw new BusinessException(code: 'is.story.error.shift.rank.has.dependences', args: [_story.name])
             }
-            updateStoryRank(_story, newRank) // NO REAL UPDATE EVENT FOR THE CURRENT STORY...
+            updatedStories << _story
+            updatedStoriesRanks[_story.id] = newRank
+        }
+        updateStoryRanks(updatedStories) { Story _story ->
+            updatedStoriesRanks[story.id]
         }
     }
 
