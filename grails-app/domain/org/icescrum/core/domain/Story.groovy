@@ -162,17 +162,18 @@ class Story extends BacklogElement implements Cloneable, Serializable {
 
     List<Story> getSameBacklogStories() {
         def stories
-        ProfilingSupport.startProfiling("${id}", 'samebacklog1')
         if (state in [STATE_ACCEPTED, STATE_ESTIMATED]) {
-            stories = backlog.stories.findAll {
-                it.state in [STATE_ACCEPTED, STATE_ESTIMATED]
-            }
+            ProfilingSupport.startProfiling("${id}", 'samebacklogA')
+            stories = Story.findAllByBacklogAndStateInList(backlog, [STATE_ACCEPTED, STATE_ESTIMATED])
+            ProfilingSupport.endProfiling("${id}", 'samebacklogA')
         } else if (state > STATE_ESTIMATED) {
-            stories = parentSprint?.stories
+            ProfilingSupport.startProfiling("${id}", 'samebacklogB')
+            stories = Story.findAllByParentSprint(parentSprint)
+            ProfilingSupport.endProfiling("${id}", 'samebacklogB')
         } else {
-            stories = backlog.stories.findAll {
-                it.state == state
-            }
+            ProfilingSupport.startProfiling("${id}", 'samebacklogC')
+            stories = Story.findAllByBacklogAndState(backlog, state)
+            ProfilingSupport.endProfiling("${id}", 'samebacklogC')
         }
         ProfilingSupport.endProfiling("${id}", 'samebacklog1')
         ProfilingSupport.startProfiling("${id}", 'samebacklog2')
