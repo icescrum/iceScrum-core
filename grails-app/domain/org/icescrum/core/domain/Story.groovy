@@ -30,6 +30,7 @@ import groovy.time.TimeCategory
 import org.grails.comments.Comment
 import org.hibernate.ObjectNotFoundException
 import org.icescrum.core.domain.AcceptanceTest.AcceptanceTestState
+import org.icescrum.core.support.ProfilingSupport
 
 import java.sql.Timestamp
 
@@ -161,6 +162,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
 
     List<Story> getSameBacklogStories() {
         def stories
+        ProfilingSupport.startProfiling("${id}", 'samebacklog1')
         if (state in [STATE_ACCEPTED, STATE_ESTIMATED]) {
             stories = backlog.stories.findAll {
                 it.state in [STATE_ACCEPTED, STATE_ESTIMATED]
@@ -172,7 +174,11 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                 it.state == state
             }
         }
-        return stories ? stories.asList().collect { get(it.id) }.sort { it.rank } : [] // Force get real entity because otherwise list membership test fails
+        ProfilingSupport.endProfiling("${id}", 'samebacklog1')
+        ProfilingSupport.startProfiling("${id}", 'samebacklog2')
+        def results = stories.asList().collect { get(it.id) }.sort { it.rank }
+        ProfilingSupport.endProfiling("${id}", 'samebacklog2')
+        return stories ? results : [] // Force get real entity because otherwise list membership test fails
     }
 
     int getTestState() {
