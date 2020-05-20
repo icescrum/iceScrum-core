@@ -38,6 +38,7 @@ import org.icescrum.core.error.BusinessException
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
 import org.icescrum.core.support.ApplicationSupport
+import org.icescrum.core.support.ProfilingSupport
 import org.icescrum.core.utils.DateUtils
 import org.icescrum.plugins.attachmentable.domain.Attachment
 import org.springframework.security.access.AccessDeniedException
@@ -186,6 +187,7 @@ class StoryService extends IceScrumEventPublisher {
 
     @PreAuthorize('(productOwner(#sprint.parentProject) or scrumMaster(#sprint.parentProject)) and !archivedProject(#sprint.parentProject)')
     void plan(Sprint sprint, Story story, Long newRank = null) {
+        ProfilingSupport.startProfiling("$story.id", 'listenerStoryPlan1')
         if (story.dependsOn && (story.dependsOn.state < Story.STATE_PLANNED || story.dependsOn.parentSprint.startDate > sprint.startDate)) {
             throw new BusinessException(code: 'is.story.error.dependsOn', args: [story.name, story.dependsOn.name])
         }
@@ -207,16 +209,25 @@ class StoryService extends IceScrumEventPublisher {
         if (story.state == Story.STATE_DONE) {
             throw new BusinessException(code: 'is.sprint.error.associate.story.done', args: [sprint.parentProject.getStoryStateNames()[Story.STATE_DONE]])
         }
+        ProfilingSupport.endProfiling("$story.id", 'listenerStoryPlan1')
         if (story.parentSprint != null) {
+            ProfilingSupport.startProfiling("$story.id", 'listenerStoryPlan2.1')
             unPlan(story, false)
+            ProfilingSupport.endProfiling("$story.id", 'listenerStoryPlan2.1')
         } else {
+            ProfilingSupport.startProfiling("$story.id", 'listenerStoryPlan2.2')
             resetRank(story)
+            ProfilingSupport.endProfiling("$story.id", 'listenerStoryPlan2.2')
         }
+        ProfilingSupport.endProfiling("$story.id", 'listenerStoryPlan2')
+        ProfilingSupport.startProfiling("$story.id", 'listenerStoryPlan3')
         User user = (User) springSecurityService.currentUser
         sprint.addToStories(story)
         if (sprint.state == Sprint.STATE_WAIT) {
             sprint.capacity = sprint.totalEffort
         }
+        ProfilingSupport.endProfiling("$story.id", 'listenerStoryPlan3')
+        ProfilingSupport.startProfiling("$story.id", 'listenerStoryPlan4')
         story.parentSprint = sprint
         if (sprint.state == Sprint.STATE_INPROGRESS) {
             story.state = Story.STATE_INPROGRESS
@@ -233,20 +244,28 @@ class StoryService extends IceScrumEventPublisher {
             story.state = Story.STATE_PLANNED
             story.plannedDate = new Date()
         }
+        ProfilingSupport.endProfiling("$story.id", 'listenerStoryPlan4')
+        ProfilingSupport.startProfiling("$story.id", 'listenerStoryPlan5')
         def maxRank = (sprint.stories?.findAll { it.state != Story.STATE_DONE }?.size() ?: 1)
         def rank = (newRank && newRank <= maxRank) ? newRank : maxRank
         setRank(story, rank)
+        ProfilingSupport.endProfiling("$story.id", 'listenerStoryPlan5')
+        ProfilingSupport.startProfiling("$story.id", 'listenerStoryPlan6')
         update(story)
+        ProfilingSupport.endProfiling("$story.id", 'listenerStoryPlan6')
+        ProfilingSupport.startProfiling("$story.id", 'listenerStoryPlan7')
         pushService.disablePushForThisThread()
         story.tasks.findAll { it.state == Task.STATE_WAIT }.each { Task task ->
             task.backlog = sprint
             taskService.update(task, user)
         }
+        ProfilingSupport.endProfiling("$story.id", 'listenerStoryPlan7')
         pushService.enablePushForThisThread()
     }
 
     @PreAuthorize('(productOwner(#story.backlog) or scrumMaster(#story.backlog)) and !archivedProject(#story.backlog)')
     void unPlan(Story story, Boolean fullUnPlan = true) {
+        ProfilingSupport.startProfiling("$story.id", 'listenerStoryUnplan1')
         def sprint = story.parentSprint
         if (!sprint) {
             throw new BusinessException(code: 'is.story.error.not.planned')
@@ -257,6 +276,8 @@ class StoryService extends IceScrumEventPublisher {
         if (fullUnPlan && story.dependences?.find { it.state > Story.STATE_ESTIMATED }) {
             throw new BusinessException(code: 'is.story.error.dependences', args: [story.name, story.dependences.find { it.state > Story.STATE_ESTIMATED }.name])
         }
+        ProfilingSupport.endProfiling("$story.id", 'listenerStoryUnplan1')
+        ProfilingSupport.startProfiling("$story.id", 'listenerStoryUnplan2')
         resetRank(story)
         sprint.removeFromStories(story)
         if (sprint.state == Sprint.STATE_WAIT) {
@@ -265,11 +286,17 @@ class StoryService extends IceScrumEventPublisher {
         story.parentSprint = null
         story.inProgressDate = null
         story.plannedDate = null
+        ProfilingSupport.endProfiling("$story.id", 'listenerStoryUnplan2')
         if (fullUnPlan) {
             story.state = Story.STATE_ESTIMATED
+            ProfilingSupport.startProfiling("$story.id", 'listenerStoryUnplan3.1')
             setRank(story, 1)
+            ProfilingSupport.endProfiling("$story.id", 'listenerStoryUnplan3.1')
+            ProfilingSupport.startProfiling("$story.id", 'listenerStoryUnplan3.2')
             update(story)
+            ProfilingSupport.endProfiling("$story.id", 'listenerStoryUnplan3.2')
         }
+        ProfilingSupport.startProfiling("$story.id", 'listenerStoryUnplan4')
         pushService.disablePushForThisThread()
         story.tasks.each { Task task ->
             if (task.state != Task.STATE_DONE) {
@@ -283,6 +310,7 @@ class StoryService extends IceScrumEventPublisher {
             }
         }
         pushService.enablePushForThisThread()
+        ProfilingSupport.endProfiling("$story.id", 'listenerStoryUnplan4')
     }
 
     def unPlanAll(Collection<Sprint> sprintList, Integer sprintState = null) {
