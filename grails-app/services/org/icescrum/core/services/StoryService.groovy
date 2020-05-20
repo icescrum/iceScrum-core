@@ -935,8 +935,10 @@ class StoryService extends IceScrumEventPublisher {
     }
 
     private static Long adjustRankAccordingToDependences(story, Long rank) {
-        ProfilingSupport.startProfiling("$story.id", 'adjustRank')
+        ProfilingSupport.startProfiling("$story.id", 'adjustRankSameBacklog')
         def sameBacklogStories = story.sameBacklogStories
+        ProfilingSupport.endProfiling("$story.id", 'adjustRankSameBacklog')
+        ProfilingSupport.startProfiling("$story.id", 'adjustRank')
         if (story.dependsOn && (story.dependsOn in sameBacklogStories) && rank <= story.dependsOn.rank) {
             rank = story.dependsOn.rank + 1
         }
