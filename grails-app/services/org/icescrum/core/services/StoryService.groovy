@@ -211,13 +211,13 @@ class StoryService extends IceScrumEventPublisher {
         }
         ProfilingSupport.endProfiling("$story.id", 'listenerStoryPlan1')
         if (story.parentSprint != null) {
-            ProfilingSupport.startProfiling("$story.id", 'listenerStoryPlan2.1')
+            ProfilingSupport.startProfiling("$story.id", 'listenerStoryPlanUnplan')
             unPlan(story, false)
-            ProfilingSupport.endProfiling("$story.id", 'listenerStoryPlan2.1')
+            ProfilingSupport.endProfiling("$story.id", 'listenerStoryPlanUnplan')
         } else {
-            ProfilingSupport.startProfiling("$story.id", 'listenerStoryPlan2.2')
+            ProfilingSupport.startProfiling("$story.id", 'listenerStoryPlanResetRank')
             resetRank(story)
-            ProfilingSupport.endProfiling("$story.id", 'listenerStoryPlan2.2')
+            ProfilingSupport.endProfiling("$story.id", 'listenerStoryPlanResetRank')
         }
         ProfilingSupport.endProfiling("$story.id", 'listenerStoryPlan2')
         ProfilingSupport.startProfiling("$story.id", 'listenerStoryPlan3')
@@ -245,14 +245,14 @@ class StoryService extends IceScrumEventPublisher {
             story.plannedDate = new Date()
         }
         ProfilingSupport.endProfiling("$story.id", 'listenerStoryPlan4')
-        ProfilingSupport.startProfiling("$story.id", 'listenerStoryPlan5')
+        ProfilingSupport.startProfiling("$story.id", 'listenerStoryPlanSetRank')
         def maxRank = (sprint.stories?.findAll { it.state != Story.STATE_DONE }?.size() ?: 1)
         def rank = (newRank && newRank <= maxRank) ? newRank : maxRank
         setRank(story, rank)
-        ProfilingSupport.endProfiling("$story.id", 'listenerStoryPlan5')
-        ProfilingSupport.startProfiling("$story.id", 'listenerStoryPlan6')
+        ProfilingSupport.endProfiling("$story.id", 'listenerStoryPlanSetRank')
+        ProfilingSupport.startProfiling("$story.id", 'listenerStoryPlanUpdate')
         update(story)
-        ProfilingSupport.endProfiling("$story.id", 'listenerStoryPlan6')
+        ProfilingSupport.endProfiling("$story.id", 'listenerStoryPlanUpdate')
         ProfilingSupport.startProfiling("$story.id", 'listenerStoryPlan7')
         pushService.disablePushForThisThread()
         story.tasks.findAll { it.state == Task.STATE_WAIT }.each { Task task ->
@@ -289,12 +289,12 @@ class StoryService extends IceScrumEventPublisher {
         ProfilingSupport.endProfiling("$story.id", 'listenerStoryUnplan2')
         if (fullUnPlan) {
             story.state = Story.STATE_ESTIMATED
-            ProfilingSupport.startProfiling("$story.id", 'listenerStoryUnplan3.1')
+            ProfilingSupport.startProfiling("$story.id", 'listenerStoryUnplanSetRank')
             setRank(story, 1)
-            ProfilingSupport.endProfiling("$story.id", 'listenerStoryUnplan3.1')
-            ProfilingSupport.startProfiling("$story.id", 'listenerStoryUnplan3.2')
+            ProfilingSupport.endProfiling("$story.id", 'listenerStoryUnplanSetRank')
+            ProfilingSupport.startProfiling("$story.id", 'listenerStoryUnplanUpdate')
             update(story)
-            ProfilingSupport.endProfiling("$story.id", 'listenerStoryUnplan3.2')
+            ProfilingSupport.endProfiling("$story.id", 'listenerStoryUnplanUpdate')
         }
         ProfilingSupport.startProfiling("$story.id", 'listenerStoryUnplan4')
         pushService.disablePushForThisThread()
@@ -383,15 +383,21 @@ class StoryService extends IceScrumEventPublisher {
     }
 
     private void updateStoryRank(Story story, Integer newRank) {
+        ProfilingSupport.startProfiling("$story.id", 'update other')
         def dirtyProperties = [rank: story.rank]
         story.rank = newRank
         story.save()
+        ProfilingSupport.endProfiling("$story.id", 'update other')
         publishSynchronousEvent(IceScrumEventType.PARTIAL_UPDATE, story, dirtyProperties)
     }
 
     void setRank(Story story, Long rank) {
+        ProfilingSupport.startProfiling("$story.id", 'adjust')
         rank = adjustRankAccordingToDependences(story, rank)
+        ProfilingSupport.endProfiling("$story.id", 'adjust')
+        ProfilingSupport.startProfiling("$story.id", 'same backlog stories')
         def stories = story.sameBacklogStories
+        ProfilingSupport.endProfiling("$story.id", 'same backlog stories')
         stories.each { _story ->
             if (_story.rank >= rank) {
                 updateStoryRank(_story, _story.rank + 1)
@@ -423,7 +429,10 @@ class StoryService extends IceScrumEventPublisher {
     }
 
     void resetRank(Story story) {
-        story.sameBacklogStories.each { _story ->
+        ProfilingSupport.startProfiling("$story.id", 'same backlog stories2')
+        def sameBacklogStories = story.sameBacklogStories
+        ProfilingSupport.endProfiling("$story.id", 'same backlog stories2')
+        sameBacklogStories.each { _story ->
             if (_story.rank > story.rank) {
                 updateStoryRank(_story, _story.rank - 1)
             }
