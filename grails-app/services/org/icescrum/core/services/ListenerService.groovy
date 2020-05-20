@@ -161,9 +161,9 @@ class ListenerService {
         if (dirtyProperties.containsKey('rank')) {
             Project project = story.backlog
             def storyData = [class: 'Story', id: story.id, rank: story.rank, messageId: 'story-' + story.id + '-rank']
-//            if (story.parentSprint) {
-//                storyData.parentSprint = getSprintAsShort(story.parentSprint)
-//            }
+            if (story.parentSprint) {
+                storyData.parentSprint = getSprintAsShort(story.parentSprint)
+            }
             pushService.broadcastToProjectRelatedChannels(IceScrumEventType.UPDATE, storyData, project.id)
         }
     }
