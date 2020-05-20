@@ -219,7 +219,6 @@ class StoryService extends IceScrumEventPublisher {
             resetRank(story)
             ProfilingSupport.endProfiling("$story.id", 'storyServicePlanResetRank')
         }
-        ProfilingSupport.endProfiling("$story.id", 'storyServicePlan2')
         ProfilingSupport.startProfiling("$story.id", 'storyServicePlan3')
         User user = (User) springSecurityService.currentUser
         sprint.addToStories(story)
@@ -383,21 +382,15 @@ class StoryService extends IceScrumEventPublisher {
     }
 
     private void updateStoryRank(Story story, Integer newRank) {
-        ProfilingSupport.startProfiling("$story.id", 'update other')
         def dirtyProperties = [rank: story.rank]
         story.rank = newRank
         story.save()
-        ProfilingSupport.endProfiling("$story.id", 'update other')
         publishSynchronousEvent(IceScrumEventType.PARTIAL_UPDATE, story, dirtyProperties)
     }
 
     void setRank(Story story, Long rank) {
-        ProfilingSupport.startProfiling("$story.id", 'adjust')
         rank = adjustRankAccordingToDependences(story, rank)
-        ProfilingSupport.endProfiling("$story.id", 'adjust')
-        ProfilingSupport.startProfiling("$story.id", 'same backlog stories')
         def stories = story.sameBacklogStories
-        ProfilingSupport.endProfiling("$story.id", 'same backlog stories')
         stories.each { _story ->
             if (_story.rank >= rank) {
                 updateStoryRank(_story, _story.rank + 1)
@@ -429,9 +422,7 @@ class StoryService extends IceScrumEventPublisher {
     }
 
     void resetRank(Story story) {
-        ProfilingSupport.startProfiling("$story.id", 'same backlog stories2')
         def sameBacklogStories = story.sameBacklogStories
-        ProfilingSupport.endProfiling("$story.id", 'same backlog stories2')
         sameBacklogStories.each { _story ->
             if (_story.rank > story.rank) {
                 updateStoryRank(_story, _story.rank - 1)
@@ -938,7 +929,6 @@ class StoryService extends IceScrumEventPublisher {
         ProfilingSupport.startProfiling("$story.id", 'adjustRankSameBacklog')
         def sameBacklogStories = story.sameBacklogStories
         ProfilingSupport.endProfiling("$story.id", 'adjustRankSameBacklog')
-        ProfilingSupport.startProfiling("$story.id", 'adjustRank')
         if (story.dependsOn && (story.dependsOn in sameBacklogStories) && rank <= story.dependsOn.rank) {
             rank = story.dependsOn.rank + 1
         }
@@ -948,7 +938,6 @@ class StoryService extends IceScrumEventPublisher {
                 rank = highestPriorityRank - 1
             }
         }
-        ProfilingSupport.endProfiling("$story.id", 'adjustRank')
         return rank > 0 ? rank : 1
     }
 }
