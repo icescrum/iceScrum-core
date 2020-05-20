@@ -28,7 +28,6 @@ import org.grails.comments.Comment
 import org.icescrum.core.domain.*
 import org.icescrum.core.event.IceScrumEventType
 import org.icescrum.core.event.IceScrumListener
-import org.icescrum.core.support.ProfilingSupport
 import org.icescrum.plugins.attachmentable.domain.Attachment
 
 class ListenerService {
@@ -68,7 +67,6 @@ class ListenerService {
     void storyUpdate(Story story, Map dirtyProperties) {
         Project project = story.backlog
         if (dirtyProperties) {
-            ProfilingSupport.startProfiling("$story.id", 'listenerStoryUpdate2')
             def newUpdatedProperties = [:]
             ['feature', 'dependsOn', 'parentSprint'].each { property ->
                 if (dirtyProperties.containsKey(property)) {
@@ -89,14 +87,10 @@ class ListenerService {
                     }
                 }
             }
-            ProfilingSupport.endProfiling("$story.id", 'listenerStoryUpdate2')
-            ProfilingSupport.startProfiling("$story.id", 'listenerStoryUpdate3')
             if (dirtyProperties.containsKey('state') && story.state >= Story.STATE_ESTIMATED && dirtyProperties.state >= Story.STATE_ESTIMATED && story.feature && !newUpdatedProperties['feature']) {
                 story.feature.lastUpdated = new Date()
                 pushService.broadcastToProjectRelatedChannels(IceScrumEventType.UPDATE, story.feature, project.id)
             }
-            ProfilingSupport.endProfiling("$story.id", 'listenerStoryUpdate3')
-            ProfilingSupport.startProfiling("$story.id", 'listenerStoryUpdate4')
             if (dirtyProperties.containsKey('state') && Story.STATE_DONE in [dirtyProperties.state, story.state] && story.parentSprint && !newUpdatedProperties['parentSprint']) {
                 story.parentSprint.lastUpdated = new Date()
                 pushService.broadcastToProjectRelatedChannels(IceScrumEventType.UPDATE, story.parentSprint, project.id) // To push velocity & remaining time
@@ -108,41 +102,29 @@ class ListenerService {
                     pushService.broadcastToProjectRelatedChannels(IceScrumEventType.UPDATE, tasksData, story.backlog.id)
                 }
             }
-            ProfilingSupport.endProfiling("$story.id", 'listenerStoryUpdate4')
-            ProfilingSupport.startProfiling("$story.id", 'listenerStoryUpdate5')
             if (dirtyProperties.containsKey('effort') && story.parentSprint && story.parentSprint.state == Sprint.STATE_WAIT) {
                 pushService.broadcastToProjectRelatedChannels(IceScrumEventType.UPDATE, story.parentSprint, project.id)
             }
-            ProfilingSupport.endProfiling("$story.id", 'listenerStoryUpdate5')
-            ProfilingSupport.startProfiling("$story.id", 'listenerStoryUpdate6')
             def user = (User) springSecurityService.currentUser
             if (dirtyProperties.containsKey('state')) {
                 activityService.addActivity(story, user, 'updateState', story.name, 'state', dirtyProperties.state?.toString(), story.state?.toString())
             }
-            ProfilingSupport.endProfiling("$story.id", 'listenerStoryUpdate6')
-            ProfilingSupport.startProfiling("$story.id", 'listenerStoryUpdate7')
             ['name', 'type', 'value', 'effort'].each { property ->
                 if (dirtyProperties.containsKey(property)) {
                     activityService.addActivity(story, user, Activity.CODE_UPDATE, story.name, property, dirtyProperties[property]?.toString(), story."$property"?.toString())
                 }
             }
-            ProfilingSupport.endProfiling("$story.id", 'listenerStoryUpdate7')
-            ProfilingSupport.startProfiling("$story.id", 'listenerStoryUpdate8')
             ['feature', 'dependsOn'].each { property ->
                 if (dirtyProperties.containsKey(property)) {
                     def newValue = story."$property"
                     activityService.addActivity(story, user, Activity.CODE_UPDATE, story.name, property, dirtyProperties[property]?.uid?.toString(), newValue?.uid?.toString(), newValue?.name)
                 }
             }
-            ProfilingSupport.endProfiling("$story.id", 'listenerStoryUpdate8')
-            ProfilingSupport.startProfiling("$story.id", 'listenerStoryUpdate9')
             ['notes', 'description'].each { property ->
                 if (dirtyProperties.containsKey(property)) {
                     activityService.addActivity(story, user, Activity.CODE_UPDATE, story.name, property)
                 }
             }
-            ProfilingSupport.endProfiling("$story.id", 'listenerStoryUpdate9')
-            ProfilingSupport.startProfiling("$story.id", 'listenerStoryUpdate10')
             if (dirtyProperties.containsKey('parentSprint')) {
                 activityService.addActivity(story, user, Activity.CODE_UPDATE, story.name, 'parentSprint', dirtyProperties.parentSprint?.id?.toString(), story.parentSprint?.id?.toString(), story.parentSprint?.fullName)
                 def tasksData = [class     : 'Task',
@@ -151,11 +133,8 @@ class ListenerService {
                                  messageId : 'story-' + story.id + '-tasks']
                 pushService.broadcastToProjectRelatedChannels(IceScrumEventType.UPDATE, tasksData, story.backlog.id)
             }
-            ProfilingSupport.endProfiling("$story.id", 'listenerStoryUpdate10')
         }
-        ProfilingSupport.startProfiling("$story.id", 'listenerStoryPush')
         pushService.broadcastToProjectRelatedChannels(IceScrumEventType.UPDATE, story, project.id)
-        ProfilingSupport.endProfiling("$story.id", 'listenerStoryPush')
     }
 
     @IceScrumListener(domain = 'story', eventType = IceScrumEventType.PARTIAL_UPDATE)

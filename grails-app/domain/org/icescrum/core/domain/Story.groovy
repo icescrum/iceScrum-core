@@ -30,7 +30,6 @@ import groovy.time.TimeCategory
 import org.grails.comments.Comment
 import org.hibernate.ObjectNotFoundException
 import org.icescrum.core.domain.AcceptanceTest.AcceptanceTestState
-import org.icescrum.core.support.ProfilingSupport
 
 import java.sql.Timestamp
 
@@ -163,23 +162,13 @@ class Story extends BacklogElement implements Cloneable, Serializable {
     List<Story> getSameBacklogStories() {
         def stories
         if (state in [STATE_ACCEPTED, STATE_ESTIMATED]) {
-            ProfilingSupport.startProfiling("${id}", 'samebacklogA')
             stories = Story.findAllByBacklogAndStateInList(backlog, [STATE_ACCEPTED, STATE_ESTIMATED])
-            ProfilingSupport.endProfiling("${id}", 'samebacklogA')
         } else if (state > STATE_ESTIMATED) {
-            ProfilingSupport.startProfiling("${id}", 'samebacklogB')
             stories = Story.findAllByParentSprint(parentSprint)
-            ProfilingSupport.endProfiling("${id}", 'samebacklogB')
         } else {
-            ProfilingSupport.startProfiling("${id}", 'samebacklogC')
             stories = Story.findAllByBacklogAndState(backlog, state)
-            ProfilingSupport.endProfiling("${id}", 'samebacklogC')
         }
-        ProfilingSupport.endProfiling("${id}", 'samebacklog1')
-        ProfilingSupport.startProfiling("${id}", 'samebacklog2')
-        def results = stories.asList().collect { get(it.id) }.sort { it.rank }
-        ProfilingSupport.endProfiling("${id}", 'samebacklog2')
-        return stories ? results : [] // Force get real entity because otherwise list membership test fails
+        return stories ? stories.asList().collect { get(it.id) }.sort { it.rank } : [] // Force get real entity because otherwise list membership test fails
     }
 
     int getTestState() {
