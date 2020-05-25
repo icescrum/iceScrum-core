@@ -78,7 +78,8 @@ class StoryService extends IceScrumEventPublisher {
         }.each {
             story.addToFollowers(user)
         }
-        def rank = story.sameBacklogStories ? story.sameBacklogStories.max { it.rank }.rank + 1 : 1
+        def sameBacklogStories = story.sameBacklogStories
+        def rank = sameBacklogStories ? sameBacklogStories.max { it.rank }.rank + 1 : 1
         setRank(story, rank)
         publishSynchronousEvent(IceScrumEventType.BEFORE_CREATE, story)
         story.save(flush: true)
