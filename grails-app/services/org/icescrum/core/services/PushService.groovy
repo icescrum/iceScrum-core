@@ -47,36 +47,45 @@ class PushService {
 
     private static final String BUFFER_MESSAGE_DELIMITER = "#-|-#"
 
-    void broadcastToWorkspaceChannel(String namespace, String eventType, object, long workspaceId, String workspaceType) {
+    private void internalBroadcastToWorkspaceChannel(String namespace, String eventType, object, long workspaceId, String workspaceType) {
         broadcastToChannel(namespace, eventType, object, "/stream/app/$workspaceType-$workspaceId")
     }
 
-    void broadcastToWorkspaceChannel(IceScrumEventType eventType, object, long workspaceId, String workspaceType) {
-        broadcastToWorkspaceChannel(getNamespaceFromDomain(object), eventType.name(), object, workspaceId, workspaceType)
+    private void internalBroadcastToWorkspaceChannel(IceScrumEventType eventType, object, long workspaceId, String workspaceType) {
+        internalBroadcastToWorkspaceChannel(getNamespaceFromDomain(object), eventType.name(), object, workspaceId, workspaceType)
     }
 
     void broadcastToProjectRelatedChannels(IceScrumEventType eventType, object, long projectId) {
-        broadcastToWorkspaceChannel(eventType, object, projectId, WorkspaceType.PROJECT)
+        internalBroadcastToWorkspaceChannel(eventType, object, projectId, WorkspaceType.PROJECT)
         Long portfolioId = Project.get(projectId)?.portfolio?.id
         if (portfolioId) {
-            broadcastToWorkspaceChannel(eventType, object, portfolioId, WorkspaceType.PORTFOLIO)
+            internalBroadcastToWorkspaceChannel(eventType, object, portfolioId, WorkspaceType.PORTFOLIO)
         }
     }
 
     void broadcastToProjectRelatedChannels(String namespace, String eventType, object, long projectId) {
-        broadcastToWorkspaceChannel(namespace, eventType, object, projectId, WorkspaceType.PROJECT)
+        internalBroadcastToWorkspaceChannel(namespace, eventType, object, projectId, WorkspaceType.PROJECT)
         Long portfolioId = Project.get(projectId)?.portfolio?.id
         if (portfolioId) {
-            broadcastToWorkspaceChannel(namespace, eventType, object, portfolioId, WorkspaceType.PORTFOLIO)
+            internalBroadcastToWorkspaceChannel(namespace, eventType, object, portfolioId, WorkspaceType.PORTFOLIO)
         }
     }
 
     void broadcastToPortfolioChannel(IceScrumEventType eventType, object, long portfolioId) {
-        broadcastToWorkspaceChannel(eventType, object, portfolioId, WorkspaceType.PORTFOLIO)
+        internalBroadcastToWorkspaceChannel(eventType, object, portfolioId, WorkspaceType.PORTFOLIO)
     }
 
     void broadcastToPortfolioChannel(String namespace, String eventType, object, long portfolioId) {
-        broadcastToWorkspaceChannel(namespace, eventType, object, portfolioId, WorkspaceType.PORTFOLIO)
+        internalBroadcastToWorkspaceChannel(namespace, eventType, object, portfolioId, WorkspaceType.PORTFOLIO)
+    }
+
+    // Utility method to use on objects that work on several workspace types
+    void broadcastToWorkspaceChannel(IceScrumEventType eventType, object, long workspaceId, String workspaceType) {
+        if (workspaceType == 'project') {
+            broadcastToProjectRelatedChannels(eventType, object, workspaceId)
+        } else if (workspaceType == 'portfolio') {
+            broadcastToPortfolioChannel(eventType, object, workspaceId)
+        }
     }
 
     void broadcastToChannel(String namespace, String eventType, object, String channel = '/stream/app/*') {
