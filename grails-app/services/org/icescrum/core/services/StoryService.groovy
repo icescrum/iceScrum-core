@@ -185,25 +185,25 @@ class StoryService extends IceScrumEventPublisher {
     }
 
     @PreAuthorize('(productOwner(#sprint.parentProject) or scrumMaster(#sprint.parentProject)) and !archivedProject(#sprint.parentProject)')
-    void plan(List<Story> stories, Sprint sprint, Long newRank = null) {
+    void plan(List<Story> stories, Sprint newParentSprint, Long newRank = null) {
         if (!stories) {
             return
         }
-        if (sprint.state == Sprint.STATE_DONE) {
+        if (newParentSprint.state == Sprint.STATE_DONE) {
             throw new BusinessException(code: 'is.sprint.error.associate.done')
         }
-        def nbStories = Story.countByParentSprintAndStateLessThan(sprint, Story.STATE_DONE)
+        def nbStories = Story.countByParentSprintAndStateLessThan(newParentSprint, Story.STATE_DONE)
         def maxRank = nbStories ? nbStories + 1 : 1
         if (!newRank || newRank > maxRank) {
             newRank = maxRank
         }
         stories.sort { it.rank }.eachWithIndex { Story story, index ->
-            if (story.dependsOn && (story.dependsOn.state < Story.STATE_PLANNED || story.dependsOn.parentSprint.startDate > sprint.startDate)) {
+            if (story.dependsOn && (story.dependsOn.state < Story.STATE_PLANNED || story.dependsOn.parentSprint.startDate > newParentSprint.startDate)) {
                 throw new BusinessException(code: 'is.story.error.dependsOn', args: [story.name, story.dependsOn.name])
             }
             if (story.dependences) {
                 Story dependence = story.dependences.findAll { it.parentSprint }?.min { it.parentSprint.startDate }
-                if (dependence && sprint.startDate > dependence.parentSprint.startDate) {
+                if (dependence && newParentSprint.startDate > dependence.parentSprint.startDate) {
                     throw new BusinessException(code: 'is.story.error.dependences', args: [story.name, dependence.name])
                 }
             }
@@ -211,10 +211,10 @@ class StoryService extends IceScrumEventPublisher {
                 throw new BusinessException(code: 'is.story.error.plan.type')
             }
             if (story.state < Story.STATE_ESTIMATED) {
-                throw new BusinessException(code: 'is.sprint.error.associate.story.noEstimated', args: [sprint.parentProject.getStoryStateNames()[Story.STATE_ESTIMATED]])
+                throw new BusinessException(code: 'is.sprint.error.associate.story.noEstimated', args: [newParentSprint.parentProject.getStoryStateNames()[Story.STATE_ESTIMATED]])
             }
             if (story.state == Story.STATE_DONE) {
-                throw new BusinessException(code: 'is.sprint.error.associate.story.done', args: [sprint.parentProject.getStoryStateNames()[Story.STATE_DONE]])
+                throw new BusinessException(code: 'is.sprint.error.associate.story.done', args: [newParentSprint.parentProject.getStoryStateNames()[Story.STATE_DONE]])
             }
             if (story.parentSprint != null) {
                 unPlan(story, false)
@@ -222,15 +222,15 @@ class StoryService extends IceScrumEventPublisher {
                 resetRank(story)
             }
             User user = (User) springSecurityService.currentUser
-            sprint.addToStories(story)
-            story.parentSprint = sprint
-            if (sprint.state == Sprint.STATE_INPROGRESS) {
+            newParentSprint.addToStories(story)
+            story.parentSprint = newParentSprint
+            if (newParentSprint.state == Sprint.STATE_INPROGRESS) {
                 story.state = Story.STATE_INPROGRESS
                 story.inProgressDate = new Date()
                 if (!story.plannedDate) {
                     story.plannedDate = story.inProgressDate
                 }
-                if (sprint.parentRelease.parentProject.preferences.autoCreateTaskOnEmptyStory && !story.tasks) {
+                if (newParentSprint.parentRelease.parentProject.preferences.autoCreateTaskOnEmptyStory && !story.tasks) {
                     def emptyTask = new Task(name: story.name, state: Task.STATE_WAIT, description: story.description, parentStory: story)
                     taskService.save(emptyTask, user)
                 }
@@ -242,17 +242,17 @@ class StoryService extends IceScrumEventPublisher {
             update(story)
             pushService.disablePushForThisThread()
             story.tasks.findAll { it.state == Task.STATE_WAIT }.each { Task task ->
-                task.backlog = sprint
+                task.backlog = newParentSprint
                 taskService.update(task, user)
             }
             pushService.enablePushForThisThread()
         }
-        if (sprint.state == Sprint.STATE_WAIT) {
-            sprint.capacity = sprint.totalEffort
+        if (newParentSprint.state == Sprint.STATE_WAIT) {
+            newParentSprint.capacity = newParentSprint.totalEffort
             SprintService sprintService = (SprintService) grailsApplication.mainContext.getBean("sprintService")
-            sprintService.update(sprint, null, null, false, false)
-        } else if (sprint.state == Sprint.STATE_INPROGRESS) {
-            clicheService.createOrUpdateDailyTasksCliche(sprint)
+            sprintService.update(newParentSprint, null, null, false, false)
+        } else if (newParentSprint.state == Sprint.STATE_INPROGRESS) {
+            clicheService.createOrUpdateDailyTasksCliche(newParentSprint)
         }
     }
 
