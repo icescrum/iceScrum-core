@@ -219,7 +219,7 @@ class SprintService extends IceScrumEventPublisher {
             }
             def notDoneStories = sprint.stories.findAll { it.state != Story.STATE_DONE }.sort { -it.rank }
             notDoneStories.each { notDoneStory ->
-                storyService.plan(nextSprint, notDoneStory, 1)
+                storyService.plan(notDoneStory, nextSprint, 1)
             }
         } else {
             sprint.tasks.findAll { it.type == Task.TYPE_URGENT && it.state != Task.STATE_DONE }?.each { Task task ->

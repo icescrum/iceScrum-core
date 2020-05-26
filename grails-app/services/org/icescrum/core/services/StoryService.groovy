@@ -180,12 +180,12 @@ class StoryService extends IceScrumEventPublisher {
     @PreAuthorize('(productOwner(#sprint.parentProject) or scrumMaster(#sprint.parentProject)) and !archivedProject(#sprint.parentProject)')
     void planMultiple(Sprint sprint, def stories) {
         stories.sort { it.rank }.each {
-            plan(sprint, it)
+            plan(it, sprint)
         }
     }
 
     @PreAuthorize('(productOwner(#sprint.parentProject) or scrumMaster(#sprint.parentProject)) and !archivedProject(#sprint.parentProject)')
-    void plan(Sprint sprint, Story story, Long newRank = null) {
+    void plan(Story story, Sprint sprint, Long newRank = null) {
         if (story.dependsOn && (story.dependsOn.state < Story.STATE_PLANNED || story.dependsOn.parentSprint.startDate > sprint.startDate)) {
             throw new BusinessException(code: 'is.story.error.dependsOn', args: [story.name, story.dependsOn.name])
         }
@@ -338,7 +338,7 @@ class StoryService extends IceScrumEventPublisher {
                     if (nbSprint > maxSprint) {
                         break
                     }
-                    this.plan(currentSprint, story)
+                    plan(story, currentSprint)
                     plannedStories << story
                     nbPoints += story.effort
 
@@ -346,7 +346,7 @@ class StoryService extends IceScrumEventPublisher {
                     break
                 }
             } else {
-                this.plan(currentSprint, story)
+                plan(story, currentSprint)
                 plannedStories << story
                 nbPoints += story.effort
             }
