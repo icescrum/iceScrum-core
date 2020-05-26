@@ -148,6 +148,8 @@ class StoryService extends IceScrumEventPublisher {
             }
             if (story.parentSprint && story.parentSprint.state == Sprint.STATE_WAIT) {
                 story.parentSprint.capacity = story.parentSprint.totalEffort
+                SprintService sprintService = (SprintService) grailsApplication.mainContext.getBean("sprintService")
+                sprintService.update(story.parentSprint, null, null, false, false)
             }
         } else if (props.containsKey('effort')) {
             if (story.state == Story.STATE_ESTIMATED) {
