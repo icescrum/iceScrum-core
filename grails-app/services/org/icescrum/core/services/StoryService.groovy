@@ -187,7 +187,15 @@ class StoryService extends IceScrumEventPublisher {
         if (!stories) {
             return
         }
-        stories.sort { it.rank }.each { Story story ->
+        if (sprint.state == Sprint.STATE_DONE) {
+            throw new BusinessException(code: 'is.sprint.error.associate.done')
+        }
+        def nbStories = Story.countByParentSprintAndStateLessThan(sprint, Story.STATE_DONE)
+        def maxRank = nbStories ? nbStories + 1 : 1
+        if (!newRank || newRank > maxRank) {
+            newRank = maxRank
+        }
+        stories.sort { it.rank }.eachWithIndex { Story story, index ->
             if (story.dependsOn && (story.dependsOn.state < Story.STATE_PLANNED || story.dependsOn.parentSprint.startDate > sprint.startDate)) {
                 throw new BusinessException(code: 'is.story.error.dependsOn', args: [story.name, story.dependsOn.name])
             }
@@ -199,9 +207,6 @@ class StoryService extends IceScrumEventPublisher {
             }
             if (![Story.TYPE_USER_STORY, Story.TYPE_DEFECT, Story.TYPE_TECHNICAL_STORY].contains(story.type)) {
                 throw new BusinessException(code: 'is.story.error.plan.type')
-            }
-            if (sprint.state == Sprint.STATE_DONE) {
-                throw new BusinessException(code: 'is.sprint.error.associate.done')
             }
             if (story.state < Story.STATE_ESTIMATED) {
                 throw new BusinessException(code: 'is.sprint.error.associate.story.noEstimated', args: [sprint.parentProject.getStoryStateNames()[Story.STATE_ESTIMATED]])
@@ -216,9 +221,6 @@ class StoryService extends IceScrumEventPublisher {
             }
             User user = (User) springSecurityService.currentUser
             sprint.addToStories(story)
-            if (sprint.state == Sprint.STATE_WAIT) {
-                sprint.capacity = sprint.totalEffort
-            }
             story.parentSprint = sprint
             if (sprint.state == Sprint.STATE_INPROGRESS) {
                 story.state = Story.STATE_INPROGRESS
@@ -230,14 +232,11 @@ class StoryService extends IceScrumEventPublisher {
                     def emptyTask = new Task(name: story.name, state: Task.STATE_WAIT, description: story.description, parentStory: story)
                     taskService.save(emptyTask, user)
                 }
-                clicheService.createOrUpdateDailyTasksCliche(sprint)
             } else {
                 story.state = Story.STATE_PLANNED
                 story.plannedDate = new Date()
             }
-            def maxRank = (sprint.stories?.findAll { it.state != Story.STATE_DONE }?.size() ?: 1)
-            def rank = (newRank && newRank <= maxRank) ? newRank : maxRank
-            setRank(story, rank)
+            setRank(story, newRank + index)
             update(story)
             pushService.disablePushForThisThread()
             story.tasks.findAll { it.state == Task.STATE_WAIT }.each { Task task ->
@@ -245,6 +244,13 @@ class StoryService extends IceScrumEventPublisher {
                 taskService.update(task, user)
             }
             pushService.enablePushForThisThread()
+        }
+        if (sprint.state == Sprint.STATE_WAIT) {
+            sprint.capacity = sprint.totalEffort
+            SprintService sprintService = (SprintService) grailsApplication.mainContext.getBean("sprintService")
+            sprintService.update(sprint, null, null, false, false)
+        } else if (sprint.state == Sprint.STATE_INPROGRESS) {
+            clicheService.createOrUpdateDailyTasksCliche(sprint)
         }
     }
 
@@ -258,10 +264,13 @@ class StoryService extends IceScrumEventPublisher {
         if (!stories) {
             return
         }
+        Sprint parentSprint = stories[0].parentSprint
+        if (!parentSprint) {
+            throw new BusinessException(code: 'is.story.error.not.planned')
+        }
         stories.sort { -it.rank }.each { Story story ->
-            def parentSprint = story.parentSprint
-            if (!parentSprint) {
-                throw new BusinessException(code: 'is.story.error.not.planned')
+            if (parentSprint.id != story.parentSprint.id) {
+                throw new BusinessException(text: 'Error, only stories belonging to the same sprint can be unplanned together')
             }
             if (story.state == Story.STATE_DONE) {
                 throw new BusinessException(code: 'is.story.error.unplan.done')
@@ -271,9 +280,6 @@ class StoryService extends IceScrumEventPublisher {
             }
             resetRank(story)
             parentSprint.removeFromStories(story)
-            if (parentSprint.state == Sprint.STATE_WAIT) {
-                parentSprint.capacity = parentSprint.totalEffort
-            }
             story.parentSprint = null
             story.inProgressDate = null
             story.plannedDate = null
@@ -295,6 +301,11 @@ class StoryService extends IceScrumEventPublisher {
                 }
             }
             pushService.enablePushForThisThread()
+        }
+        if (parentSprint.state == Sprint.STATE_WAIT) {
+            parentSprint.capacity = parentSprint.totalEffort
+            SprintService sprintService = (SprintService) grailsApplication.mainContext.getBean("sprintService")
+            sprintService.update(parentSprint, null, null, false, false)
         }
     }
 
