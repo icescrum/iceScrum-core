@@ -100,9 +100,9 @@ class PushService {
                     broadcaster.broadcast(message as JSON)
                 }
             } else {
-                if (log.debugEnabled) {
-                    log.debug("Buffered broadcast for channel $channel - $namespace - $eventType")
-                }
+//                if (log.debugEnabled) {
+//                    log.debug("Buffered broadcast for channel $channel - $namespace - $eventType")
+//                }
                 bufferMessage(channel, message)
             }
         }
@@ -149,9 +149,9 @@ class PushService {
         } else { //replace with new message but keep order of change in the request
             messages.remove(existingMessage)
             messages.add(message)
-            if (log.debugEnabled) {
-                log.debug('replace with latest content message (' + message.messageId + ') on channel ' + channel)
-            }
+//            if (log.debugEnabled) {
+//                log.debug('replace with latest content message (' + message.messageId + ') on channel ' + channel)
+//            }
         }
     }
 
