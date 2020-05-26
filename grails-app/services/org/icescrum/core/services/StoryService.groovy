@@ -178,132 +178,140 @@ class StoryService extends IceScrumEventPublisher {
     }
 
     @PreAuthorize('(productOwner(#sprint.parentProject) or scrumMaster(#sprint.parentProject)) and !archivedProject(#sprint.parentProject)')
-    void planMultiple(Sprint sprint, def stories) {
-        stories.sort { it.rank }.each {
-            plan(it, sprint)
-        }
+    void plan(Story story, Sprint sprint, Long newRank = null) {
+        plan([story], sprint, newRank)
     }
 
     @PreAuthorize('(productOwner(#sprint.parentProject) or scrumMaster(#sprint.parentProject)) and !archivedProject(#sprint.parentProject)')
-    void plan(Story story, Sprint sprint, Long newRank = null) {
-        if (story.dependsOn && (story.dependsOn.state < Story.STATE_PLANNED || story.dependsOn.parentSprint.startDate > sprint.startDate)) {
-            throw new BusinessException(code: 'is.story.error.dependsOn', args: [story.name, story.dependsOn.name])
+    void plan(List<Story> stories, Sprint sprint, Long newRank = null) {
+        if (!stories) {
+            return
         }
-        if (story.dependences) {
-            Story dependence = story.dependences.findAll { it.parentSprint }?.min { it.parentSprint.startDate }
-            if (dependence && sprint.startDate > dependence.parentSprint.startDate) {
-                throw new BusinessException(code: 'is.story.error.dependences', args: [story.name, dependence.name])
+        stories.sort { it.rank }.each { Story story ->
+            if (story.dependsOn && (story.dependsOn.state < Story.STATE_PLANNED || story.dependsOn.parentSprint.startDate > sprint.startDate)) {
+                throw new BusinessException(code: 'is.story.error.dependsOn', args: [story.name, story.dependsOn.name])
             }
-        }
-        if (![Story.TYPE_USER_STORY, Story.TYPE_DEFECT, Story.TYPE_TECHNICAL_STORY].contains(story.type)) {
-            throw new BusinessException(code: 'is.story.error.plan.type')
-        }
-        if (sprint.state == Sprint.STATE_DONE) {
-            throw new BusinessException(code: 'is.sprint.error.associate.done')
-        }
-        if (story.state < Story.STATE_ESTIMATED) {
-            throw new BusinessException(code: 'is.sprint.error.associate.story.noEstimated', args: [sprint.parentProject.getStoryStateNames()[Story.STATE_ESTIMATED]])
-        }
-        if (story.state == Story.STATE_DONE) {
-            throw new BusinessException(code: 'is.sprint.error.associate.story.done', args: [sprint.parentProject.getStoryStateNames()[Story.STATE_DONE]])
-        }
-        if (story.parentSprint != null) {
-            unPlan(story, false)
-        } else {
-            resetRank(story)
-        }
-        User user = (User) springSecurityService.currentUser
-        sprint.addToStories(story)
-        if (sprint.state == Sprint.STATE_WAIT) {
-            sprint.capacity = sprint.totalEffort
-        }
-        story.parentSprint = sprint
-        if (sprint.state == Sprint.STATE_INPROGRESS) {
-            story.state = Story.STATE_INPROGRESS
-            story.inProgressDate = new Date()
-            if (!story.plannedDate) {
-                story.plannedDate = story.inProgressDate
+            if (story.dependences) {
+                Story dependence = story.dependences.findAll { it.parentSprint }?.min { it.parentSprint.startDate }
+                if (dependence && sprint.startDate > dependence.parentSprint.startDate) {
+                    throw new BusinessException(code: 'is.story.error.dependences', args: [story.name, dependence.name])
+                }
             }
-            if (sprint.parentRelease.parentProject.preferences.autoCreateTaskOnEmptyStory && !story.tasks) {
-                def emptyTask = new Task(name: story.name, state: Task.STATE_WAIT, description: story.description, parentStory: story)
-                taskService.save(emptyTask, user)
+            if (![Story.TYPE_USER_STORY, Story.TYPE_DEFECT, Story.TYPE_TECHNICAL_STORY].contains(story.type)) {
+                throw new BusinessException(code: 'is.story.error.plan.type')
             }
-            clicheService.createOrUpdateDailyTasksCliche(sprint)
-        } else {
-            story.state = Story.STATE_PLANNED
-            story.plannedDate = new Date()
+            if (sprint.state == Sprint.STATE_DONE) {
+                throw new BusinessException(code: 'is.sprint.error.associate.done')
+            }
+            if (story.state < Story.STATE_ESTIMATED) {
+                throw new BusinessException(code: 'is.sprint.error.associate.story.noEstimated', args: [sprint.parentProject.getStoryStateNames()[Story.STATE_ESTIMATED]])
+            }
+            if (story.state == Story.STATE_DONE) {
+                throw new BusinessException(code: 'is.sprint.error.associate.story.done', args: [sprint.parentProject.getStoryStateNames()[Story.STATE_DONE]])
+            }
+            if (story.parentSprint != null) {
+                unPlan(story, false)
+            } else {
+                resetRank(story)
+            }
+            User user = (User) springSecurityService.currentUser
+            sprint.addToStories(story)
+            if (sprint.state == Sprint.STATE_WAIT) {
+                sprint.capacity = sprint.totalEffort
+            }
+            story.parentSprint = sprint
+            if (sprint.state == Sprint.STATE_INPROGRESS) {
+                story.state = Story.STATE_INPROGRESS
+                story.inProgressDate = new Date()
+                if (!story.plannedDate) {
+                    story.plannedDate = story.inProgressDate
+                }
+                if (sprint.parentRelease.parentProject.preferences.autoCreateTaskOnEmptyStory && !story.tasks) {
+                    def emptyTask = new Task(name: story.name, state: Task.STATE_WAIT, description: story.description, parentStory: story)
+                    taskService.save(emptyTask, user)
+                }
+                clicheService.createOrUpdateDailyTasksCliche(sprint)
+            } else {
+                story.state = Story.STATE_PLANNED
+                story.plannedDate = new Date()
+            }
+            def maxRank = (sprint.stories?.findAll { it.state != Story.STATE_DONE }?.size() ?: 1)
+            def rank = (newRank && newRank <= maxRank) ? newRank : maxRank
+            setRank(story, rank)
+            update(story)
+            pushService.disablePushForThisThread()
+            story.tasks.findAll { it.state == Task.STATE_WAIT }.each { Task task ->
+                task.backlog = sprint
+                taskService.update(task, user)
+            }
+            pushService.enablePushForThisThread()
         }
-        def maxRank = (sprint.stories?.findAll { it.state != Story.STATE_DONE }?.size() ?: 1)
-        def rank = (newRank && newRank <= maxRank) ? newRank : maxRank
-        setRank(story, rank)
-        update(story)
-        pushService.disablePushForThisThread()
-        story.tasks.findAll { it.state == Task.STATE_WAIT }.each { Task task ->
-            task.backlog = sprint
-            taskService.update(task, user)
-        }
-        pushService.enablePushForThisThread()
     }
 
     @PreAuthorize('(productOwner(#story.backlog) or scrumMaster(#story.backlog)) and !archivedProject(#story.backlog)')
     void unPlan(Story story, Boolean fullUnPlan = true) {
-        def sprint = story.parentSprint
-        if (!sprint) {
-            throw new BusinessException(code: 'is.story.error.not.planned')
-        }
-        if (story.state == Story.STATE_DONE) {
-            throw new BusinessException(code: 'is.story.error.unplan.done')
-        }
-        if (fullUnPlan && story.dependences?.find { it.state > Story.STATE_ESTIMATED }) {
-            throw new BusinessException(code: 'is.story.error.dependences', args: [story.name, story.dependences.find { it.state > Story.STATE_ESTIMATED }.name])
-        }
-        resetRank(story)
-        sprint.removeFromStories(story)
-        if (sprint.state == Sprint.STATE_WAIT) {
-            sprint.capacity = sprint.totalEffort
-        }
-        story.parentSprint = null
-        story.inProgressDate = null
-        story.plannedDate = null
-        if (fullUnPlan) {
-            story.state = Story.STATE_ESTIMATED
-            setRank(story, 1)
-            update(story)
-        }
-        pushService.disablePushForThisThread()
-        story.tasks.each { Task task ->
-            if (task.state != Task.STATE_DONE) {
-                def props = task.state == Task.STATE_WAIT ? [:] : [state: Task.STATE_WAIT]
-                if (fullUnPlan) {
-                    task.backlog = null
-                }
-                if (props || fullUnPlan) {
-                    taskService.update(task, (User) springSecurityService.currentUser, false, props)
-                }
-            }
-        }
-        pushService.enablePushForThisThread()
+        unPlan([story], fullUnPlan)
     }
 
-    def unPlanAll(Collection<Sprint> sprintList, Integer sprintState = null) {
-        sprintList.sort { sprint1, sprint2 -> sprint2.orderNumber <=> sprint1.orderNumber }
-        def storiesUnPlanned = []
-        sprintList.each { sprint ->
-            if ((!sprintState) || (sprintState && sprint.state == sprintState)) {
+    @PreAuthorize('(productOwner(#stories[0].backlog) or scrumMaster(#stories[0].backlog)) and !archivedProject(#stories[0].backlog)')
+    void unPlan(List<Story> stories, Boolean fullUnPlan = true) {
+        if (!stories) {
+            return
+        }
+        stories.sort { -it.rank }.each { Story story ->
+            def parentSprint = story.parentSprint
+            if (!parentSprint) {
+                throw new BusinessException(code: 'is.story.error.not.planned')
+            }
+            if (story.state == Story.STATE_DONE) {
+                throw new BusinessException(code: 'is.story.error.unplan.done')
+            }
+            if (fullUnPlan && story.dependences?.find { it.state > Story.STATE_ESTIMATED }) {
+                throw new BusinessException(code: 'is.story.error.dependences', args: [story.name, story.dependences.find { it.state > Story.STATE_ESTIMATED }.name])
+            }
+            resetRank(story)
+            parentSprint.removeFromStories(story)
+            if (parentSprint.state == Sprint.STATE_WAIT) {
+                parentSprint.capacity = parentSprint.totalEffort
+            }
+            story.parentSprint = null
+            story.inProgressDate = null
+            story.plannedDate = null
+            if (fullUnPlan) {
+                story.state = Story.STATE_ESTIMATED
+                setRank(story, 1)
+                update(story)
+            }
+            pushService.disablePushForThisThread()
+            story.tasks.each { Task task ->
+                if (task.state != Task.STATE_DONE) {
+                    def props = task.state == Task.STATE_WAIT ? [:] : [state: Task.STATE_WAIT]
+                    if (fullUnPlan) {
+                        task.backlog = null
+                    }
+                    if (props || fullUnPlan) {
+                        taskService.update(task, (User) springSecurityService.currentUser, false, props)
+                    }
+                }
+            }
+            pushService.enablePushForThisThread()
+        }
+    }
+
+    def unPlanAll(Collection<Sprint> sprints, Integer sprintState = null) {
+        def unPlannedStories = []
+        sprints.sort { -it.orderNumber }.each { sprint ->
+            if (!sprintState || sprint.state == sprintState) {
                 def stories = sprint.stories.findAll { story ->
                     story.state != Story.STATE_DONE
-                }.sort { st1, st2 -> st2.rank <=> st1.rank }
-                stories.each {
-                    unPlan(it)
                 }
-                // Recalculate the sprint estimated velocity (capacite)
-                if (sprint.state == Sprint.STATE_WAIT) {
-                    sprint.capacity = (Double) sprint.stories?.sum { it.effort } ?: 0
+                if (stories) {
+                    unPlan(stories)
+                    unPlannedStories.addAll(stories)
                 }
-                storiesUnPlanned.addAll(stories)
             }
         }
-        return storiesUnPlanned
+        return unPlannedStories
     }
 
     def autoPlan(List<Sprint> sprints, Double plannedVelocity) {
