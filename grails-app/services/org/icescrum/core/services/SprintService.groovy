@@ -199,7 +199,6 @@ class SprintService extends IceScrumEventPublisher {
         }
         sprint.state = Sprint.STATE_INPROGRESS
         sprint.doneDate = null
-        sprint.velocity = 0d
         update(sprint)
         clicheService.removeLastSprintCliche(sprint.refresh())
         clicheService.createOrUpdateDailyTasksCliche(sprint)
