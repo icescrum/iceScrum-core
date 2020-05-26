@@ -304,7 +304,7 @@ class StoryService extends IceScrumEventPublisher {
             if (!sprintState || sprint.state == sprintState) {
                 def stories = sprint.stories.findAll { story ->
                     story.state != Story.STATE_DONE
-                }
+                }.asList()
                 if (stories) {
                     unPlan(stories)
                     unPlannedStories.addAll(stories)

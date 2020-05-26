@@ -217,7 +217,7 @@ class SprintService extends IceScrumEventPublisher {
                 task.state = Task.STATE_WAIT
                 taskService.update(task, springSecurityService.currentUser)
             }
-            def notDoneStories = sprint.stories.findAll { it.state != Story.STATE_DONE }
+            def notDoneStories = sprint.stories.findAll { it.state != Story.STATE_DONE }.asList()
             storyService.plan(notDoneStories, nextSprint, 1)
         } else {
             sprint.tasks.findAll { it.type == Task.TYPE_URGENT && it.state != Task.STATE_DONE }?.each { Task task ->
