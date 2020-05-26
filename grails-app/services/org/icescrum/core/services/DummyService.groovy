@@ -161,16 +161,19 @@ class DummyService {
         storyPropertiesBySprint.each { sprintIndex, storyProperties ->
             storiesBySprint[sprintIndex] = storyProperties.collect { createStory(it) }
         }
-        (largeDummyze ? 100 : 1).times { time ->
-            backlogStoryProperties.each {
-                def properties = it.clone()
-                if (time != 0) {
-                    properties.name = time + ' - ' + properties.name
+        def createStories = { Integer times, List<Map> storyProperties ->
+            times.times { time ->
+                storyProperties.each {
+                    def properties = it.clone()
+                    if (time != 0) {
+                        properties.name = time + ' - ' + properties.name
+                    }
+                    createStory(properties)
                 }
-                createStory(properties)
             }
         }
-        sandboxStoryProperties.each { createStory(it) } // Create sandbox stories after backlog ones to preserve "chronological" order
+        createStories(largeDummyze ? 100 : 1, backlogStoryProperties)
+        createStories(largeDummyze ? 100 : 1, sandboxStoryProperties) // Create sandbox stories after backlog ones to preserve "chronological" order
         project.save()
         sessionFactory.currentSession.flush()
         // Plan Stories
