@@ -184,7 +184,7 @@ class StoryService extends IceScrumEventPublisher {
         plan([story], sprint, newRank)
     }
 
-    @PreAuthorize('(productOwner(#sprint.parentProject) or scrumMaster(#sprint.parentProject)) and !archivedProject(#sprint.parentProject)')
+    @PreAuthorize('(productOwner(#newParentSprint.parentProject) or scrumMaster(#newParentSprint.parentProject)) and !archivedProject(#newParentSprint.parentProject)')
     void plan(List<Story> stories, Sprint newParentSprint, Long newRank = null) {
         if (!stories) {
             return
