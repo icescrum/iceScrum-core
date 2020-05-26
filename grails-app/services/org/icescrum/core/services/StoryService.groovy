@@ -118,7 +118,6 @@ class StoryService extends IceScrumEventPublisher {
             }
             resetRank(story)
             story.description = reason ?: null
-
             story.delete()
             if (!newObject) {
                 activityService.addActivity(project, springSecurityService.currentUser, Activity.CODE_DELETE, story.name)
@@ -453,14 +452,16 @@ class StoryService extends IceScrumEventPublisher {
     @PreAuthorize('productOwner(#stories[0].backlog) and !archivedProject(#stories[0].backlog)')
     def acceptToBacklog(List<Story> stories, Long newRank = null) {
         Project project = (Project) stories[0].backlog
-        stories.sort { it.rank }.each { Story story ->
+        if (!newRank) {
+            newRank = Story.countByBacklogAndStateInList(project, [Story.STATE_ACCEPTED, Story.STATE_ESTIMATED]) + 1
+        }
+        stories.sort { it.rank }.eachWithIndex { Story story, index ->
             if (story.state > Story.STATE_SUGGESTED) {
                 throw new BusinessException(code: 'is.story.error.not.state.suggested', args: [project.getStoryStateNames()[Story.STATE_SUGGESTED]])
             }
             if (story.dependsOn?.state == Story.STATE_SUGGESTED) {
                 throw new BusinessException(code: 'is.story.error.dependsOn', args: [story.name, story.dependsOn.name])
             }
-            def rank = newRank ?: ((Story.countByBacklogAndStateInList(project, [Story.STATE_ACCEPTED, Story.STATE_ESTIMATED]) ?: 0) + 1)
             resetRank(story)
             story.state = Story.STATE_ACCEPTED
             story.acceptedDate = new Date()
@@ -469,7 +470,7 @@ class StoryService extends IceScrumEventPublisher {
                 story.effort = 1
                 story.state = Story.STATE_ESTIMATED
             }
-            setRank(story, rank)
+            setRank(story, newRank + index)
             update(story)
         }
     }
@@ -477,7 +478,10 @@ class StoryService extends IceScrumEventPublisher {
     @PreAuthorize('productOwner(#stories[0].backlog) and !archivedProject(#stories[0].backlog)')
     void returnToSandbox(List<Story> stories, Long newRank = null) {
         Project project = (Project) stories[0].backlog
-        stories.sort { -it.rank }.each { Story story ->
+        if (!newRank) {
+            newRank = 1
+        }
+        stories.sort { it.rank }.eachWithIndex { Story story, index ->
             if (!(story.state in [Story.STATE_ESTIMATED, Story.STATE_ACCEPTED])) {
                 def storyStatesByName = project.getStoryStateNames()
                 throw new BusinessException(code: 'is.story.error.not.in.backlog', args: [storyStatesByName[Story.STATE_ACCEPTED], storyStatesByName[Story.STATE_ESTIMATED]])
@@ -490,8 +494,7 @@ class StoryService extends IceScrumEventPublisher {
             story.acceptedDate = null
             story.estimatedDate = null
             story.effort = null
-            def rank = newRank ?: 1
-            setRank(story, rank)
+            setRank(story, newRank + index)
             update(story)
         }
     }
@@ -606,17 +609,19 @@ class StoryService extends IceScrumEventPublisher {
     void done(List<Story> stories) {
         Project project = (Project) stories[0].backlog
         def storyStateNames = project.getStoryStateNames()
-        stories.sort { it.rank }.each { story ->
-            if (story.parentSprint?.state != Sprint.STATE_INPROGRESS) {
+        def parentSprint = stories[0].parentSprint
+        def newRank = Story.countByParentSprint(parentSprint)
+        stories.sort { it.rank }.eachWithIndex { story, index ->
+            if (parentSprint?.state != Sprint.STATE_INPROGRESS) {
                 throw new BusinessException(code: 'is.story.error.markAsDone.not.inProgress', args: [storyStateNames[Story.STATE_DONE]])
             }
             if (story.state < Story.STATE_INPROGRESS || story.state >= Story.STATE_DONE) {
                 throw new BusinessException(code: 'is.story.error.workflow', args: [storyStateNames[Story.STATE_DONE], storyStateNames[story.state]])
             }
-            updateRank(story, Story.countByParentSprint(story.parentSprint), Story.STATE_DONE)
+            updateRank(story, newRank + index, Story.STATE_DONE)
             story.state = Story.STATE_DONE
             story.doneDate = new Date()
-            story.parentSprint.velocity += story.effort
+            parentSprint.velocity += story.effort
             def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_UPDATE, story)
             story.save()
             publishSynchronousEvent(IceScrumEventType.UPDATE, story, dirtyProperties)
@@ -638,31 +643,33 @@ class StoryService extends IceScrumEventPublisher {
             }
         }
         if (stories) {
-            clicheService.createOrUpdateDailyTasksCliche(stories[0]?.parentSprint)
+            clicheService.createOrUpdateDailyTasksCliche(parentSprint)
         }
     }
 
     @PreAuthorize('(productOwner(#stories[0].backlog) or scrumMaster(#stories[0].backlog)) and !archivedProject(#stories[0].backlog)')
     void unDone(List<Story> stories) {
         def storyStateNames = ((Project) stories[0].backlog).getStoryStateNames()
-        stories.sort { it.rank }.each { story ->
+        def parentSprint = stories[0].parentSprint
+        def newRank = Story.countByParentSprintAndState(parentSprint, Story.STATE_INPROGRESS) + 1
+        stories.sort { it.rank }.eachWithIndex { story, index ->
             if (story.state != Story.STATE_DONE) {
                 throw new BusinessException(code: 'is.story.error.workflow', args: [storyStateNames[Story.STATE_INPROGRESS], storyStateNames[story.state]])
             }
-            if (story.parentSprint.state != Sprint.STATE_INPROGRESS) {
+            if (parentSprint.state != Sprint.STATE_INPROGRESS) {
                 throw new BusinessException(code: 'is.sprint.error.declareAsUnDone.state.not.inProgress')
             }
-            updateRank(story, Story.countByParentSprintAndState(story.parentSprint, Story.STATE_INPROGRESS) + 1, Story.STATE_INPROGRESS) // Move story to last rank of in progress stories in sprint
+            updateRank(story, newRank + index, Story.STATE_INPROGRESS) // Move story to last rank of in progress stories in sprint
             story.state = Story.STATE_INPROGRESS
             story.inProgressDate = new Date()
             story.doneDate = null
-            story.parentSprint.velocity -= story.effort
+            parentSprint.velocity -= story.effort
             def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_UPDATE, story)
             story.save()
             publishSynchronousEvent(IceScrumEventType.UPDATE, story, dirtyProperties)
         }
         if (stories) {
-            clicheService.createOrUpdateDailyTasksCliche(stories[0]?.parentSprint)
+            clicheService.createOrUpdateDailyTasksCliche(parentSprint)
         }
     }
 
