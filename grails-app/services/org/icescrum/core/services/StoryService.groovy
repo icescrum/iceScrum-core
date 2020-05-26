@@ -58,6 +58,7 @@ class StoryService extends IceScrumEventPublisher {
     def pushService
     def i18nService
     def commentService
+    def grailsApplication
 
     @PreAuthorize('isAuthenticated() and !archivedProject(#project)')
     void save(Story story, Project project, User user) {
@@ -610,22 +611,21 @@ class StoryService extends IceScrumEventPublisher {
         Project project = (Project) stories[0].backlog
         def storyStateNames = project.getStoryStateNames()
         def parentSprint = stories[0].parentSprint
+        if (parentSprint?.state != Sprint.STATE_INPROGRESS) {
+            throw new BusinessException(code: 'is.story.error.markAsDone.not.inProgress', args: [storyStateNames[Story.STATE_DONE]])
+        }
+        User user = (User) springSecurityService.currentUser
         def newRank = Story.countByParentSprint(parentSprint)
         stories.sort { it.rank }.eachWithIndex { story, index ->
-            if (parentSprint?.state != Sprint.STATE_INPROGRESS) {
-                throw new BusinessException(code: 'is.story.error.markAsDone.not.inProgress', args: [storyStateNames[Story.STATE_DONE]])
-            }
             if (story.state < Story.STATE_INPROGRESS || story.state >= Story.STATE_DONE) {
                 throw new BusinessException(code: 'is.story.error.workflow', args: [storyStateNames[Story.STATE_DONE], storyStateNames[story.state]])
             }
             updateRank(story, newRank + index, Story.STATE_DONE)
             story.state = Story.STATE_DONE
             story.doneDate = new Date()
-            parentSprint.velocity += story.effort
             def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_UPDATE, story)
             story.save()
             publishSynchronousEvent(IceScrumEventType.UPDATE, story, dirtyProperties)
-            User user = (User) springSecurityService.currentUser
             pushService.disablePushForThisThread()
             story.tasks?.findAll { it.state != Task.STATE_DONE }?.each { Task task ->
                 taskService.update(task, user, false, [state: Task.STATE_DONE])
@@ -643,6 +643,9 @@ class StoryService extends IceScrumEventPublisher {
             }
         }
         if (stories) {
+            parentSprint.velocity += stories.sum { it.effort }
+            SprintService sprintService = (SprintService) grailsApplication.mainContext.getBean("sprintService")
+            sprintService.update(parentSprint, null, null, false, false)
             clicheService.createOrUpdateDailyTasksCliche(parentSprint)
         }
     }
@@ -652,23 +655,25 @@ class StoryService extends IceScrumEventPublisher {
         def storyStateNames = ((Project) stories[0].backlog).getStoryStateNames()
         def parentSprint = stories[0].parentSprint
         def newRank = Story.countByParentSprintAndState(parentSprint, Story.STATE_INPROGRESS) + 1
+        if (parentSprint.state != Sprint.STATE_INPROGRESS) {
+            throw new BusinessException(code: 'is.sprint.error.declareAsUnDone.state.not.inProgress')
+        }
         stories.sort { it.rank }.eachWithIndex { story, index ->
             if (story.state != Story.STATE_DONE) {
                 throw new BusinessException(code: 'is.story.error.workflow', args: [storyStateNames[Story.STATE_INPROGRESS], storyStateNames[story.state]])
-            }
-            if (parentSprint.state != Sprint.STATE_INPROGRESS) {
-                throw new BusinessException(code: 'is.sprint.error.declareAsUnDone.state.not.inProgress')
             }
             updateRank(story, newRank + index, Story.STATE_INPROGRESS) // Move story to last rank of in progress stories in sprint
             story.state = Story.STATE_INPROGRESS
             story.inProgressDate = new Date()
             story.doneDate = null
-            parentSprint.velocity -= story.effort
             def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_UPDATE, story)
             story.save()
             publishSynchronousEvent(IceScrumEventType.UPDATE, story, dirtyProperties)
         }
         if (stories) {
+            parentSprint.velocity -= stories.sum { it.effort }
+            SprintService sprintService = (SprintService) grailsApplication.mainContext.getBean("sprintService")
+            sprintService.update(parentSprint, null, null, false, false)
             clicheService.createOrUpdateDailyTasksCliche(parentSprint)
         }
     }

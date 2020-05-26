@@ -91,16 +91,12 @@ class ListenerService {
                 story.feature.lastUpdated = new Date()
                 pushService.broadcastToProjectRelatedChannels(IceScrumEventType.UPDATE, story.feature, project.id)
             }
-            if (dirtyProperties.containsKey('state') && Story.STATE_DONE in [dirtyProperties.state, story.state] && story.parentSprint && !newUpdatedProperties['parentSprint']) {
-                story.parentSprint.lastUpdated = new Date()
-                pushService.broadcastToProjectRelatedChannels(IceScrumEventType.UPDATE, story.parentSprint, project.id) // To push velocity & remaining time
-                if (story.tasks && story.state == Story.STATE_DONE) {
-                    def tasksData = [class     : 'Task',
-                                     ids       : story.tasks*.id,
-                                     properties: [class: 'Task', state: Task.STATE_DONE, doneDate: new Date(), estimation: 0],
-                                     messageId : 'story-' + story.id + '-tasks']
-                    pushService.broadcastToProjectRelatedChannels(IceScrumEventType.UPDATE, tasksData, story.backlog.id)
-                }
+            if (dirtyProperties.containsKey('state') && story.state == Story.STATE_DONE && story.tasks) {
+                def tasksData = [class     : 'Task',
+                                 ids       : story.tasks*.id,
+                                 properties: [class: 'Task', state: Task.STATE_DONE, doneDate: new Date(), estimation: 0],
+                                 messageId : 'story-' + story.id + '-tasks']
+                pushService.broadcastToProjectRelatedChannels(IceScrumEventType.UPDATE, tasksData, story.backlog.id)
             }
             if (dirtyProperties.containsKey('effort') && story.parentSprint && story.parentSprint.state == Sprint.STATE_WAIT) {
                 pushService.broadcastToProjectRelatedChannels(IceScrumEventType.UPDATE, story.parentSprint, project.id)
