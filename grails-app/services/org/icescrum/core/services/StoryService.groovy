@@ -608,6 +608,9 @@ class StoryService extends IceScrumEventPublisher {
 
     @PreAuthorize('(productOwner(#stories[0].backlog) or scrumMaster(#stories[0].backlog)) and !archivedProject(#stories[0].backlog)')
     void done(List<Story> stories) {
+        if (!stories) {
+            return
+        }
         Project project = (Project) stories[0].backlog
         def storyStateNames = project.getStoryStateNames()
         def parentSprint = stories[0].parentSprint
@@ -642,16 +645,17 @@ class StoryService extends IceScrumEventPublisher {
                 }
             }
         }
-        if (stories) {
-            parentSprint.velocity += stories.sum { it.effort }
-            SprintService sprintService = (SprintService) grailsApplication.mainContext.getBean("sprintService")
-            sprintService.update(parentSprint, null, null, false, false)
-            clicheService.createOrUpdateDailyTasksCliche(parentSprint)
-        }
+        parentSprint.velocity += stories.sum { it.effort }
+        SprintService sprintService = (SprintService) grailsApplication.mainContext.getBean("sprintService")
+        sprintService.update(parentSprint, null, null, false, false)
+        clicheService.createOrUpdateDailyTasksCliche(parentSprint)
     }
 
     @PreAuthorize('(productOwner(#stories[0].backlog) or scrumMaster(#stories[0].backlog)) and !archivedProject(#stories[0].backlog)')
     void unDone(List<Story> stories) {
+        if (!stories) {
+            return
+        }
         def storyStateNames = ((Project) stories[0].backlog).getStoryStateNames()
         def parentSprint = stories[0].parentSprint
         def newRank = Story.countByParentSprintAndState(parentSprint, Story.STATE_INPROGRESS) + 1
@@ -670,12 +674,10 @@ class StoryService extends IceScrumEventPublisher {
             story.save()
             publishSynchronousEvent(IceScrumEventType.UPDATE, story, dirtyProperties)
         }
-        if (stories) {
-            parentSprint.velocity -= stories.sum { it.effort }
-            SprintService sprintService = (SprintService) grailsApplication.mainContext.getBean("sprintService")
-            sprintService.update(parentSprint, null, null, false, false)
-            clicheService.createOrUpdateDailyTasksCliche(parentSprint)
-        }
+        parentSprint.velocity -= stories.sum { it.effort }
+        SprintService sprintService = (SprintService) grailsApplication.mainContext.getBean("sprintService")
+        sprintService.update(parentSprint, null, null, false, false)
+        clicheService.createOrUpdateDailyTasksCliche(parentSprint)
     }
 
     @PreAuthorize('inProject(#stories[0].backlog) and !archivedProject(#stories[0].backlog) and inProject(#project) and !archivedProject(#project)')
