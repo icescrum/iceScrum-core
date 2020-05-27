@@ -124,10 +124,10 @@ class Story extends BacklogElement implements Cloneable, Serializable {
         effort(nullable: true, validator: { newEffort, story -> newEffort == null || (newEffort >= 0 && newEffort < 1000) ?: 'invalid' })
         creator(nullable: true) // in case of a user deletion, the story can remain without owner
         dependsOn(nullable: true, validator: { newDependsOn, story ->
-            newDependsOn == null ||
-            newDependsOn.state >= story.state ||
-            newDependsOn.state == STATE_ACCEPTED && story.state == STATE_ESTIMATED ||
-            (newDependsOn.state in [STATE_INPROGRESS, STATE_INREVIEW]) && story.state == STATE_DONE
+            newDependsOn == null ||                                                                                   // I depend on nothing or I depend on
+            newDependsOn.state >= story.state ||                                                                      // - a story with higher or equal state
+            newDependsOn.state == STATE_ACCEPTED && story.state == STATE_ESTIMATED ||                                 // - a story with lower state but I am ESTIMATED and it is ACCEPTED (= in backlog)
+            (newDependsOn.state in [STATE_INPROGRESS, STATE_INREVIEW]) && story.state in [STATE_INREVIEW, STATE_DONE] // - a story with lower state but I am IN REVIEW or DONE and it is IN PROGRESS or IN REVIEW (= in sprint)
                     ?: 'invalid'
         })
         origin(nullable: true)
