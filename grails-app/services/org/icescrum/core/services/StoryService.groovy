@@ -658,12 +658,14 @@ class StoryService extends IceScrumEventPublisher {
             throw new BusinessException(code: 'is.story.error.markAsDone.not.inProgress', args: [storyStateNames[Story.STATE_DONE]])
         }
         User user = (User) springSecurityService.currentUser
-        def newRank = Story.countByParentSprint(parentSprint)
-        stories.sort { it.rank }.eachWithIndex { story, index ->
+        stories = stories.sort { it.rank }
+        stories.each { story ->
+            if (parentSprint.id != story.parentSprint.id) {
+                throw new BusinessException(text: 'Error, only stories from the same origin can be done together')
+            }
             if (story.state < Story.STATE_INPROGRESS || story.state >= Story.STATE_DONE) {
                 throw new BusinessException(code: 'is.story.error.workflow', args: [storyStateNames[Story.STATE_DONE], storyStateNames[story.state]])
             }
-            updateRank(story, newRank + index, Story.STATE_DONE)
             story.state = Story.STATE_DONE
             story.doneDate = new Date()
             def dirtyProperties = publishSynchronousEvent(IceScrumEventType.BEFORE_UPDATE, story)
@@ -685,6 +687,7 @@ class StoryService extends IceScrumEventPublisher {
                 }
             }
         }
+        cleanRanks(parentSprint.stories.findAll { !stories*.id.contains(it.id) }.sort { it.rank } + stories)
         parentSprint.velocity += stories.sum { it.effort }
         SprintService sprintService = (SprintService) grailsApplication.mainContext.getBean("sprintService")
         sprintService.update(parentSprint, null, null, false, false)
@@ -698,15 +701,17 @@ class StoryService extends IceScrumEventPublisher {
         }
         def storyStateNames = ((Project) stories[0].backlog).getStoryStateNames()
         def parentSprint = stories[0].parentSprint
-        def newRank = Story.countByParentSprintAndState(parentSprint, Story.STATE_INPROGRESS) + 1
         if (parentSprint.state != Sprint.STATE_INPROGRESS) {
             throw new BusinessException(code: 'is.sprint.error.declareAsUnDone.state.not.inProgress')
         }
-        stories.sort { it.rank }.eachWithIndex { story, index ->
+        stories = stories.sort { it.rank }
+        stories.each { story ->
+            if (parentSprint.id != story.parentSprint.id) {
+                throw new BusinessException(text: 'Error, only stories from the same origin can be undone together')
+            }
             if (story.state != Story.STATE_DONE) {
                 throw new BusinessException(code: 'is.story.error.workflow', args: [storyStateNames[Story.STATE_INPROGRESS], storyStateNames[story.state]])
             }
-            updateRank(story, newRank + index, Story.STATE_INPROGRESS) // Move story to last rank of in progress stories in sprint
             story.state = Story.STATE_INPROGRESS
             story.inProgressDate = new Date()
             story.doneDate = null
@@ -714,6 +719,9 @@ class StoryService extends IceScrumEventPublisher {
             story.save()
             publishSynchronousEvent(IceScrumEventType.UPDATE, story, dirtyProperties)
         }
+        def newStoryList = parentSprint.stories.findAll { !stories*.id.contains(it.id) }.sort { it.rank }
+        newStoryList.addAll(newStoryList.findAll { it.state != Story.STATE_DONE }.size(), stories)
+        cleanRanks(newStoryList)
         parentSprint.velocity -= stories.sum { it.effort }
         SprintService sprintService = (SprintService) grailsApplication.mainContext.getBean("sprintService")
         sprintService.update(parentSprint, null, null, false, false)
