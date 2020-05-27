@@ -162,11 +162,15 @@ class Story extends BacklogElement implements Cloneable, Serializable {
     List<Story> getSameBacklogStories() {
         def stories
         if (state in [STATE_ACCEPTED, STATE_ESTIMATED]) {
-            stories = Story.findAllByBacklogAndStateInList(backlog, [STATE_ACCEPTED, STATE_ESTIMATED])
+            stories = backlog.stories.findAll {
+                it.state in [STATE_ACCEPTED, STATE_ESTIMATED]
+            }
         } else if (state > STATE_ESTIMATED) {
-            stories = Story.findAllByParentSprint(parentSprint)
+            stories = parentSprint?.stories
         } else {
-            stories = Story.findAllByBacklogAndState(backlog, state)
+            stories = backlog.stories.findAll {
+                it.state == state
+            }
         }
         return stories ? stories.asList().collect { get(it.id) }.sort { it.rank } : [] // Force get real entity because otherwise list membership test fails
     }
