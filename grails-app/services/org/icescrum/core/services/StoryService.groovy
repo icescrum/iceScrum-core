@@ -383,8 +383,8 @@ class StoryService extends IceScrumEventPublisher {
     }
 
     void setRank(Story story, Long rank) {
-        rank = adjustRankAccordingToDependences(story, rank)
         def stories = story.sameBacklogStories
+        rank = adjustRankAccordingToDependences(story, rank, stories)
         stories.each { _story ->
             if (_story.rank >= rank) {
                 updateStoryRank(_story, _story.rank + 1)
@@ -425,14 +425,14 @@ class StoryService extends IceScrumEventPublisher {
     }
 
     private void updateRank(Story story, Long rank, Integer newState = null) {
-        rank = adjustRankAccordingToDependences(story, rank)
+        def stories = story.sameBacklogStories
+        rank = adjustRankAccordingToDependences(story, rank, stories)
         if ((story.dependsOn || story.dependences) && story.rank == rank) {
             return
         }
         if (story.state == Story.STATE_DONE && newState != Story.STATE_INPROGRESS) {
             throw new BusinessException(code: 'is.story.error.done', args: [((Project) story.backlog).getStoryStateNames()[Story.STATE_DONE]])
         }
-        def stories = story.sameBacklogStories
         if (story.state in [Story.STATE_INPROGRESS, Story.STATE_INREVIEW] && newState != Story.STATE_DONE) {
             def maxRankInProgress = stories.findAll { it.state != Story.STATE_DONE }.size()
             if (rank > maxRankInProgress) {
@@ -459,7 +459,7 @@ class StoryService extends IceScrumEventPublisher {
         (oldIndex..newIndex).each { index ->
             def newRank = ranks[index]
             def _story = stories[index]
-            if (newRank != adjustRankAccordingToDependences(_story, newRank)) {
+            if (newRank != adjustRankAccordingToDependences(_story, newRank, _story.sameBacklogStories)) {
                 throw new BusinessException(code: 'is.story.error.shift.rank.has.dependences', args: [_story.name])
             }
             updateStoryRank(_story, newRank) // NO REAL UPDATE EVENT FOR THE CURRENT STORY...
@@ -938,8 +938,7 @@ class StoryService extends IceScrumEventPublisher {
         story.actors = actorSet
     }
 
-    private static Long adjustRankAccordingToDependences(story, Long rank) {
-        def sameBacklogStories = story.sameBacklogStories
+    private static Long adjustRankAccordingToDependences(story, Long rank, List<Story> sameBacklogStories) {
         if (story.dependsOn && (story.dependsOn in sameBacklogStories) && rank <= story.dependsOn.rank) {
             rank = story.dependsOn.rank + 1
         }
