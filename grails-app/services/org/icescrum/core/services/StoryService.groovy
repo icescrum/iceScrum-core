@@ -192,12 +192,14 @@ class StoryService extends IceScrumEventPublisher {
         if (newParentSprint.state == Sprint.STATE_DONE) {
             throw new BusinessException(code: 'is.sprint.error.associate.done')
         }
-        def nbStories = Story.countByParentSprintAndStateLessThan(newParentSprint, Story.STATE_DONE)
-        def maxRank = nbStories ? nbStories + 1 : 1
-        if (!newRank || newRank > maxRank) {
-            newRank = maxRank
-        }
-        stories.sort { it.rank }.eachWithIndex { Story story, index ->
+        Project project = (Project) stories[0].backlog
+        def oldParentSprint = stories[0].parentSprint
+        def newStoryList = newParentSprint.stories.sort { it.rank }
+        stories = stories.sort { it.rank }
+        stories.each { Story story ->
+            if (story.parentSprint?.id != oldParentSprint?.id) {
+                throw new BusinessException(text: 'Error, only stories from the same origin can be planned together')
+            }
             if (story.dependsOn && (story.dependsOn.state < Story.STATE_PLANNED || story.dependsOn.parentSprint.startDate > newParentSprint.startDate)) {
                 throw new BusinessException(code: 'is.story.error.dependsOn', args: [story.name, story.dependsOn.name])
             }
@@ -216,10 +218,8 @@ class StoryService extends IceScrumEventPublisher {
             if (story.state == Story.STATE_DONE) {
                 throw new BusinessException(code: 'is.sprint.error.associate.story.done', args: [newParentSprint.parentProject.getStoryStateNames()[Story.STATE_DONE]])
             }
-            if (story.parentSprint != null) {
+            if (oldParentSprint) {
                 unPlan(story, false)
-            } else {
-                resetRank(story)
             }
             User user = (User) springSecurityService.currentUser
             newParentSprint.addToStories(story)
@@ -238,7 +238,6 @@ class StoryService extends IceScrumEventPublisher {
                 story.state = Story.STATE_PLANNED
                 story.plannedDate = new Date()
             }
-            setRank(story, newRank + index)
             update(story)
             pushService.disablePushForThisThread()
             story.tasks.findAll { it.state == Task.STATE_WAIT }.each { Task task ->
@@ -247,6 +246,18 @@ class StoryService extends IceScrumEventPublisher {
             }
             pushService.enablePushForThisThread()
         }
+        if (oldParentSprint) {
+            cleanRanks(Story.findAllByBacklogAndStateInList(project, [Story.STATE_ACCEPTED, Story.STATE_ESTIMATED]).sort { it.rank })
+        }
+        def maxRank = newStoryList.findAll { it.state < Story.STATE_DONE }.size() + 1
+        if (!newRank || newRank > maxRank) {
+            newRank = maxRank
+        }
+        stories.eachWithIndex { _story, index ->
+            def _newRank = adjustRankAccordingToDependences(_story, newRank + index, newStoryList)
+            newStoryList.add(_newRank.intValue() - 1, _story)
+        }
+        cleanRanks(newStoryList)
         if (newParentSprint.state == Sprint.STATE_WAIT) {
             newParentSprint.capacity = newParentSprint.totalEffort
             SprintService sprintService = (SprintService) grailsApplication.mainContext.getBean("sprintService")
@@ -270,9 +281,11 @@ class StoryService extends IceScrumEventPublisher {
         if (!parentSprint) {
             throw new BusinessException(code: 'is.story.error.not.planned')
         }
+        Project project = (Project) stories[0].backlog
+        def newStoryList = fullUnPlan ? Story.findAllByBacklogAndStateInList(project, [Story.STATE_ACCEPTED, Story.STATE_ESTIMATED]).sort { it.rank } : []
         stories.sort { -it.rank }.each { Story story ->
             if (parentSprint.id != story.parentSprint.id) {
-                throw new BusinessException(text: 'Error, only stories belonging to the same sprint can be unplanned together')
+                throw new BusinessException(text: 'Error, only stories from the same origin can be unplanned together')
             }
             if (story.state == Story.STATE_DONE) {
                 throw new BusinessException(code: 'is.story.error.unplan.done')
@@ -280,14 +293,12 @@ class StoryService extends IceScrumEventPublisher {
             if (fullUnPlan && story.dependences?.find { it.state > Story.STATE_ESTIMATED }) {
                 throw new BusinessException(code: 'is.story.error.dependences', args: [story.name, story.dependences.find { it.state > Story.STATE_ESTIMATED }.name])
             }
-            resetRank(story)
             parentSprint.removeFromStories(story)
             story.parentSprint = null
             story.inProgressDate = null
             story.plannedDate = null
             if (fullUnPlan) {
                 story.state = Story.STATE_ESTIMATED
-                setRank(story, 1)
                 update(story)
             }
             pushService.disablePushForThisThread()
@@ -303,6 +314,14 @@ class StoryService extends IceScrumEventPublisher {
                 }
             }
             pushService.enablePushForThisThread()
+        }
+        cleanRanks(parentSprint.stories.sort { it.rank })
+        if (fullUnPlan) {
+            stories.sort { it.rank }.eachWithIndex { _story, index ->
+                def _newRank = adjustRankAccordingToDependences(_story, 1 + index, newStoryList)
+                newStoryList.add(_newRank.intValue() - 1, _story)
+            }
+            cleanRanks(newStoryList)
         }
         if (parentSprint.state == Sprint.STATE_WAIT) {
             parentSprint.capacity = parentSprint.totalEffort
