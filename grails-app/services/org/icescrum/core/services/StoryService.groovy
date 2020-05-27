@@ -391,26 +391,17 @@ class StoryService extends IceScrumEventPublisher {
             }
         }
         story.rank = rank
-        cleanRanks(stories)
+        cleanRanks(stories, true)
     }
 
-    private void cleanRanks(stories) {
-        stories.sort { it.rank }
-        int i = 0
-        def error = false
-        while (i < stories.size() && !error) {
-            error = stories[i].rank != (i + 1)
-            i++
-        }
-        if (error) {
-            stories.eachWithIndex { _story, index ->
-                def expectedRank = index + 1
-                if (_story.rank != expectedRank) {
-                    if (log.debugEnabled) {
-                        log.debug("story ${_story.uid} as rank ${_story.rank} but should have ${expectedRank} fixing!!")
-                    }
-                    updateStoryRank(_story, expectedRank)
+    private void cleanRanks(stories, boolean warn = false) {
+        stories.sort { it.rank }.eachWithIndex { story, index ->
+            def expectedRank = index + 1
+            if (story.rank != expectedRank) {
+                if (warn && log.debugEnabled) {
+                    log.debug("story ${story.uid} as rank ${story.rank} but should have ${expectedRank} fixing!!")
                 }
+                updateStoryRank(story, expectedRank)
             }
         }
     }
@@ -447,7 +438,7 @@ class StoryService extends IceScrumEventPublisher {
             }
         }
         story.rank = rank
-        cleanRanks(stories)
+        cleanRanks(stories, true)
     }
 
     void shiftRankInList(Story story, List<Story> stories, Integer newIndex) {
