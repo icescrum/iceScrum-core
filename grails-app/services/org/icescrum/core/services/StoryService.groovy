@@ -353,9 +353,7 @@ class StoryService extends IceScrumEventPublisher {
         sprints = sprints.findAll { it.state == Sprint.STATE_WAIT }.sort { it.orderNumber }
         int maxSprint = sprints.size()
         // Get the list of stories that have been estimated
-        Collection<Story> itemsList = project.stories.findAll { story ->
-            story.state == Story.STATE_ESTIMATED && [Story.TYPE_USER_STORY, Story.TYPE_DEFECT, Story.TYPE_TECHNICAL_STORY].contains(story.type)
-        }.sort { it.rank }
+        Collection<Story> itemsList = Story.findAllByBacklogAndStateAndTypeInList(project, Story.STATE_ESTIMATED, [Story.TYPE_USER_STORY, Story.TYPE_DEFECT, Story.TYPE_TECHNICAL_STORY], [sort: 'rank'])
         Sprint currentSprint = null
         def toBePlanned = [:]
         def plannedStories = []
