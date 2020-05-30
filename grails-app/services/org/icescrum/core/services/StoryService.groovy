@@ -357,6 +357,7 @@ class StoryService extends IceScrumEventPublisher {
             story.state == Story.STATE_ESTIMATED && [Story.TYPE_USER_STORY, Story.TYPE_DEFECT, Story.TYPE_TECHNICAL_STORY].contains(story.type)
         }.sort { it.rank }
         Sprint currentSprint = null
+        def toBePlanned = [:]
         def plannedStories = []
         // Associate story in each sprint
         for (Story story : itemsList) {
@@ -378,19 +379,31 @@ class StoryService extends IceScrumEventPublisher {
                     if (nbSprint > maxSprint) {
                         break
                     }
-                    plan(story, currentSprint)
-                    plannedStories << story
+                    //plan(story, currentSprint)
+                    if (!toBePlanned[currentSprint]) {
+                        toBePlanned[currentSprint] = []
+                    }
+                    toBePlanned[currentSprint] << story
                     nbPoints += story.effort
 
                 } else {
                     break
                 }
             } else {
-                plan(story, currentSprint)
-                plannedStories << story
+                //plan(story, currentSprint)
+                if (!toBePlanned[currentSprint]) {
+                    toBePlanned[currentSprint] = []
+                }
+                toBePlanned[currentSprint] << story
                 nbPoints += story.effort
             }
         }
+
+        toBePlanned.each { k, v ->
+            plan(v, k)
+            plannedStories.addAll(v)
+        }
+
         return plannedStories
     }
 
