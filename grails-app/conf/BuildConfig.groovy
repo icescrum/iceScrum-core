@@ -41,7 +41,6 @@ grails.project.dependency.resolution = {
         mavenRepo "https://repo.icescrum.org/artifactory/plugins-snapshot/"
         mavenRepo "http://jaspersoft.artifactoryonline.com/jaspersoft/third-party-ce-artifacts/" // Because Jasper depends on olap4j which is not available anymore the repositories
         mavenRepo "https://repo.eclipse.org/content/repositories/mylyn/" // For wikitext
-        mavenRepo "https://jcenter.bintray.com/"
     }
     dependencies {
         compile('org.atmosphere:atmosphere-runtime:2.5.3') {
@@ -57,10 +56,8 @@ grails.project.dependency.resolution = {
         compile "org.apache.poi:poi:3.17" // 4.0 works only with Java 8
         compile "org.apache.poi:poi-ooxml:3.17"
         compile "org.apache.poi:ooxml-schemas:1.3" // Recommended by http://poi.apache.org/help/faq.html instead of poi-ooxml-schemas
-        compile "com.github.rahulsom:swaggydoc-commons:0.28.0"
     }
     plugins {
-        compile ":swaggydoc:0.28.0"
         compile ':atmosphere-meteor:1.0.5'
         compile ':spring-security-core:2.0.0'
         compile ':spring-security-acl:2.0.1'
