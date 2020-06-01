@@ -978,7 +978,7 @@ class StoryService extends IceScrumEventPublisher {
 
     private static Long adjustRankAccordingToDependences(story, Long rank, List<Story> sameBacklogStories) {
         if (story.dependsOn && (story.dependsOn in sameBacklogStories) && rank <= story.dependsOn.rank) {
-            rank = story.dependsOn.rank + 1
+            rank = (sameBacklogStories.indexOf(story.dependsOn) + 1) + 1
         }
         if (story.dependences) {
             def highestPriorityRank = story.dependences.findAll { it.backlog.id == story.backlog.id }.intersect(sameBacklogStories)*.rank.min()
