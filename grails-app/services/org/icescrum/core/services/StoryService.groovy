@@ -396,12 +396,10 @@ class StoryService extends IceScrumEventPublisher {
                 nbPoints += story.effort
             }
         }
-
         toBePlanned.each { k, v ->
             plan(v, k)
             plannedStories.addAll(v)
         }
-
         return plannedStories
     }
 
