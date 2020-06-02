@@ -377,7 +377,6 @@ class StoryService extends IceScrumEventPublisher {
                     if (nbSprint > maxSprint) {
                         break
                     }
-                    //plan(story, currentSprint)
                     if (!toBePlanned[currentSprint]) {
                         toBePlanned[currentSprint] = []
                     }
@@ -388,7 +387,6 @@ class StoryService extends IceScrumEventPublisher {
                     break
                 }
             } else {
-                //plan(story, currentSprint)
                 if (!toBePlanned[currentSprint]) {
                     toBePlanned[currentSprint] = []
                 }
