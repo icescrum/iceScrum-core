@@ -246,7 +246,7 @@ class StoryService extends IceScrumEventPublisher {
             }
             pushService.enablePushForThisThread()
         }
-        if (oldParentSprint) {
+        if (!oldParentSprint) {
             cleanRanks(Story.findAllByBacklogAndStateInList(project, [Story.STATE_ACCEPTED, Story.STATE_ESTIMATED]).sort { it.rank })
         }
         def maxRank = newStoryList.findAll { it.state < Story.STATE_DONE }.size() + 1
