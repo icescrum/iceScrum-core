@@ -89,7 +89,6 @@ class StoryService extends IceScrumEventPublisher {
         publishSynchronousEvent(IceScrumEventType.CREATE, story)
     }
 
-    // TODO replace stories by a single one and call the service in a loop in story controller
     @PreAuthorize('isAuthenticated() and !archivedProject(#stories[0].backlog)')
     void delete(Collection<Story> stories, newObject = null, reason = null) {
         def project = stories[0].backlog
@@ -420,7 +419,7 @@ class StoryService extends IceScrumEventPublisher {
         cleanWrongRanks(stories)
     }
 
-    private void cleanRanks(stories) {
+    void cleanRanks(stories) {
         stories.eachWithIndex { story, index ->
             def expectedRank = index + 1
             if (story.rank != expectedRank) {
@@ -498,17 +497,22 @@ class StoryService extends IceScrumEventPublisher {
     @PreAuthorize('productOwner(#stories[0].backlog) and !archivedProject(#stories[0].backlog)')
     def acceptToBacklog(List<Story> stories, Long newRank = null) {
         Project project = (Project) stories[0].backlog
+        def newStoryList = Story.findAllByBacklogAndStateInList(project, [Story.STATE_ACCEPTED, Story.STATE_ESTIMATED]).sort { it.rank }
         if (!newRank) {
-            newRank = Story.countByBacklogAndStateInList(project, [Story.STATE_ACCEPTED, Story.STATE_ESTIMATED]) + 1
+            newRank = newStoryList.size() + 1
         }
-        stories.sort { it.rank }.eachWithIndex { Story story, index ->
+        def oldStoryState = stories[0].state
+        stories = stories.sort { it.rank }
+        stories.each { Story story ->
+            if (story.state != oldStoryState) {
+                throw new BusinessException(text: 'Error, only stories from the same origin can be accepted together')
+            }
             if (story.state > Story.STATE_SUGGESTED) {
                 throw new BusinessException(code: 'is.story.error.not.state.suggested', args: [project.getStoryStateNames()[Story.STATE_SUGGESTED]])
             }
             if (story.dependsOn?.state == Story.STATE_SUGGESTED) {
                 throw new BusinessException(code: 'is.story.error.dependsOn', args: [story.name, story.dependsOn.name])
             }
-            resetRank(story)
             story.state = Story.STATE_ACCEPTED
             story.acceptedDate = new Date()
             if (project.preferences.noEstimation) {
@@ -516,33 +520,47 @@ class StoryService extends IceScrumEventPublisher {
                 story.effort = 1
                 story.state = Story.STATE_ESTIMATED
             }
-            setRank(story, newRank + index)
             update(story)
         }
+        if (oldStoryState == Story.STATE_SUGGESTED) {
+            cleanRanks(Story.findAllByBacklogAndState(project, Story.STATE_SUGGESTED).sort { it.rank })
+        }
+        stories.eachWithIndex { _story, index ->
+            def _newRank = adjustRankAccordingToDependences(_story, newRank + index, newStoryList)
+            newStoryList.add(_newRank.intValue() - 1, _story)
+        }
+        cleanRanks(newStoryList)
     }
 
     @PreAuthorize('productOwner(#stories[0].backlog) and !archivedProject(#stories[0].backlog)')
     void returnToSandbox(List<Story> stories, Long newRank = null) {
         Project project = (Project) stories[0].backlog
-        if (!newRank) {
-            newRank = 1
-        }
-        stories.sort { it.rank }.eachWithIndex { Story story, index ->
-            if (!(story.state in [Story.STATE_ESTIMATED, Story.STATE_ACCEPTED])) {
+        def newStoryList = Story.findAllByBacklogAndState(project, Story.STATE_SUGGESTED).sort { it.rank }
+        def oldStoryStates = [Story.STATE_ACCEPTED, Story.STATE_ESTIMATED]
+        stories = stories.sort { it.rank }
+        stories.each { Story story ->
+            if (!(story.state in oldStoryStates)) {
                 def storyStatesByName = project.getStoryStateNames()
                 throw new BusinessException(code: 'is.story.error.not.in.backlog', args: [storyStatesByName[Story.STATE_ACCEPTED], storyStatesByName[Story.STATE_ESTIMATED]])
             }
             if (story.dependences?.find { it.state > Story.STATE_SUGGESTED }) {
                 throw new BusinessException(code: 'is.story.error.dependences', args: [story.name, story.dependences.find { it.state > Story.STATE_SUGGESTED }.name])
             }
-            resetRank(story)
             story.state = Story.STATE_SUGGESTED
             story.acceptedDate = null
             story.estimatedDate = null
             story.effort = null
-            setRank(story, newRank + index)
             update(story)
         }
+        cleanRanks(Story.findAllByBacklogAndStateInList(project, oldStoryStates).sort { it.rank })
+        if (!newRank) {
+            newRank = 1
+        }
+        stories.eachWithIndex { _story, index ->
+            def _newRank = adjustRankAccordingToDependences(_story, newRank + index, newStoryList)
+            newStoryList.add(_newRank.intValue() - 1, _story)
+        }
+        cleanRanks(newStoryList)
     }
 
     @PreAuthorize('productOwner(#stories[0].backlog) and !archivedProject(#stories[0].backlog)')
