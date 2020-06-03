@@ -433,9 +433,7 @@ class StoryService extends IceScrumEventPublisher {
         stories.sort { it.rank }.eachWithIndex { story, index ->
             def expectedRank = index + 1
             if (story.rank != expectedRank) {
-                if (log.debugEnabled) {
-                    log.debug("story ${story.uid} as rank ${story.rank} but should have ${expectedRank} fixing!!")
-                }
+                log.error("story ${story.uid} as rank ${story.rank} but should have ${expectedRank} fixing!!")
                 updateStoryRank(story, expectedRank)
             }
         }
