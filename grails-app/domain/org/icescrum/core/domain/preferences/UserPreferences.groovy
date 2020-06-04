@@ -78,6 +78,7 @@ class UserPreferences implements Serializable {
         emailsSettingsData type: "text"
         table System.properties['icescrum.oracle'] ? 'is_u_pref' : 'is_user_preferences'
         widgets sort: 'position'
+        menu index: 'is_u_pref_menu_index'
     }
 
     public void setEmailsSettings(Map settings) {
