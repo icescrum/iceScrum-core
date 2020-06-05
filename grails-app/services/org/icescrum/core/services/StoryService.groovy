@@ -110,7 +110,7 @@ class StoryService extends IceScrumEventPublisher {
         ProfilingSupport.endProfiling("saveAddTStories", "story")
         ProfilingSupport.startProfiling("saveEventCreate", "story")
         publishSynchronousEvent(IceScrumEventType.CREATE, story)
-        ProfilingSupport.startProfiling("saveEventCreate", "story")
+        ProfilingSupport.endProfiling("saveEventCreate", "story")
     }
 
     @PreAuthorize('isAuthenticated() and !archivedProject(#stories[0].backlog)')
