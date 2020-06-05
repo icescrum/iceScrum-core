@@ -74,7 +74,6 @@ class User implements Serializable, Attachmentable {
         username index: 'username_index'
         teams cache: true
         tokens cascade: 'all-delete-orphan', batchSize: 10
-        preferences fetch: 'join' //temporary to monitor
     }
 
     static constraints = {
