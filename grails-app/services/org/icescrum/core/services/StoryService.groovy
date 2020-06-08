@@ -38,7 +38,6 @@ import org.icescrum.core.error.BusinessException
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
 import org.icescrum.core.support.ApplicationSupport
-import org.icescrum.core.support.ProfilingSupport
 import org.icescrum.core.utils.DateUtils
 import org.icescrum.plugins.attachmentable.domain.Attachment
 import org.springframework.security.access.AccessDeniedException
@@ -63,54 +62,31 @@ class StoryService extends IceScrumEventPublisher {
 
     @PreAuthorize('isAuthenticated() and !archivedProject(#project)')
     void save(Story story, Project project, User user) {
-        ProfilingSupport.startProfiling("save1", "storyService")
         if (!story.effort) {
             story.effort = null
         }
         story.backlog = project
         story.creator = user
         manageActors(story, project)
-        ProfilingSupport.endProfiling("save1", "storyService")
-        ProfilingSupport.startProfiling("save2", "storyService")
         story.uid = Story.findNextUId(project.id)
         if (!story.suggestedDate) {
             story.suggestedDate = new Date()
         }
         story.affectVersion = (story.type == Story.TYPE_DEFECT ? story.affectVersion : null)
-        ProfilingSupport.endProfiling("save2", "storyService")
-        ProfilingSupport.startProfiling("addToFollowers1", "storyService")
         story.addToFollowers(user)
-        ProfilingSupport.endProfiling("addToFollowers1", "storyService")
-        ProfilingSupport.startProfiling("addToFollowers2", "storyService")
-        def users = project.allUsers
-        ProfilingSupport.endProfiling("addToFollowers2", "storyService")
-        ProfilingSupport.startProfiling("addToFollowers3", "storyService")
-        users.findAll {
+        project.allUsers.findAll {
             user.id != it.id && project.pkey in it.preferences.emailsSettings.autoFollow
         }.each {
             story.addToFollowers(user)
         }
-        ProfilingSupport.endProfiling("addToFollowers3", "storyService")
-        ProfilingSupport.startProfiling("sameBacklogStories", "storyService")
         def sameBacklogStories = story.sameBacklogStories
         def rank = sameBacklogStories ? sameBacklogStories.max { it.rank }.rank + 1 : 1
-        ProfilingSupport.endProfiling("sameBacklogStories", "storyService")
-        ProfilingSupport.startProfiling("setRank", "storyService")
         setRank(story, rank)
-        ProfilingSupport.endProfiling("setRank", "storyService")
-        ProfilingSupport.startProfiling("saveEventBeforeCreate", "storyService")
         publishSynchronousEvent(IceScrumEventType.BEFORE_CREATE, story)
-        ProfilingSupport.endProfiling("saveEventBeforeCreate", "storyService")
-        ProfilingSupport.startProfiling("savesave", "storyService")
         story.save(flush: true)
         story.refresh() // required to initialize collections to empty list
-        ProfilingSupport.endProfiling("savesave", "storyService")
-        ProfilingSupport.startProfiling("saveAddTStories", "storyService")
         project.addToStories(story)
-        ProfilingSupport.endProfiling("saveAddTStories", "storyService")
-        ProfilingSupport.startProfiling("saveEventCreate", "storyService")
         publishSynchronousEvent(IceScrumEventType.CREATE, story)
-        ProfilingSupport.endProfiling("saveEventCreate", "storyService")
     }
 
     @PreAuthorize('isAuthenticated() and !archivedProject(#stories[0].backlog)')

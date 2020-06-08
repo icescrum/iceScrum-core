@@ -28,7 +28,6 @@ import org.grails.comments.Comment
 import org.icescrum.core.domain.*
 import org.icescrum.core.event.IceScrumEventType
 import org.icescrum.core.event.IceScrumListener
-import org.icescrum.core.support.ProfilingSupport
 import org.icescrum.plugins.attachmentable.domain.Attachment
 
 class ListenerService {
@@ -50,11 +49,8 @@ class ListenerService {
 
     @IceScrumListener(domain = 'story', eventType = IceScrumEventType.CREATE)
     void storyCreate(Story story, Map dirtyProperties) {
-        ProfilingSupport.startProfiling("addActivity", "ListenerServiceStoryCreate")
         def user = (User) springSecurityService.currentUser
         activityService.addActivity(story, user ?: story.creator, Activity.CODE_SAVE, story.name)
-        ProfilingSupport.endProfiling("addActivity", "ListenerServiceStoryCreate")
-        ProfilingSupport.startProfiling("pushFeatu", "ListenerServiceStoryCreate")
         ['feature'].each { property ->
             def relationalProperty = story."$property"
             if (relationalProperty != null) {
@@ -64,10 +60,7 @@ class ListenerService {
                 pushService.broadcastToProjectRelatedChannels(IceScrumEventType.UPDATE, relationalProperty, story.backlog.id)
             }
         }
-        ProfilingSupport.endProfiling("pushFeatu", "ListenerServiceStoryCreate")
-        ProfilingSupport.startProfiling("push", "ListenerServiceStoryCreate")
         pushService.broadcastToProjectRelatedChannels(IceScrumEventType.CREATE, story, story.backlog.id)
-        ProfilingSupport.endProfiling("push", "ListenerServiceStoryCreate")
     }
 
     @IceScrumListener(domain = 'story', eventType = IceScrumEventType.UPDATE)

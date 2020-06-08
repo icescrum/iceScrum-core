@@ -50,7 +50,6 @@ import org.icescrum.core.security.rest.TokenStorageService
 import org.icescrum.core.services.AppDefinitionService
 import org.icescrum.core.services.UiDefinitionService
 import org.icescrum.core.support.ApplicationSupport
-import org.icescrum.core.support.ProfilingSupport
 import org.icescrum.core.support.ProgressSupport
 import org.icescrum.core.ui.UiDefinitionArtefactHandler
 import org.icescrum.core.utils.JSONIceScrumDomainClassMarshaller
@@ -528,16 +527,12 @@ ERROR: iceScrum v7 has detected that you attempt to run it on an existing R6 ins
                         if (listener.eventType() == IceScrumEventType.UGLY_HACK_BECAUSE_ANNOTATION_CANT_BE_NULL) {
 //                            println 'Add listener on all ' + domain + ' events: ' + serviceGrailsClass.propertyName + '.' + method.name
                             publisherService.registerListener(domain) { eventType, object, dirtyProperties ->
-                                ProfilingSupport.startProfiling("$serviceName.${method.name}", "publishEvent$eventType-$domain")
                                 ctx.getBean(serviceName)."$method.name"(eventType, object, dirtyProperties) // Service bean must be loaded in the callback, not extracted above, because we need the freshest one
-                                ProfilingSupport.endProfiling("$serviceName.${method.name}", "publishEvent$eventType-$domain")
                             }
                         } else {
 //                            println 'Add listener on ' + domain + ' ' + listener.eventType().toString() + ' events: ' + serviceGrailsClass.propertyName + '.' + method.name
                             publisherService.registerListener(domain, listener.eventType()) { eventType, object, dirtyProperties ->
-                                ProfilingSupport.startProfiling("$serviceName.${method.name}", "publishEvent$eventType-$domain")
                                 ctx.getBean(serviceName)."$method.name"(object, dirtyProperties)  // Service bean must be loaded in the callback, not extracted above, because we need the freshest one
-                                ProfilingSupport.endProfiling("$serviceName.${method.name}", "publishEvent$eventType-$domain")
                             }
                         }
                     }
