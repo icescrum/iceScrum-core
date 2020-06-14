@@ -728,9 +728,7 @@ class ApplicationSupport {
             project.sprints*.attachments.findAll { it.size() > 0 }?.each { it?.each { att -> files << attachmentableService.getFile(att) } }
             project.attachments.each { it?.each { att -> files << attachmentableService.getFile(att) } }
             def tasks = []
-            project.stories.findAll { it.state < Story.STATE_PLANNED && it.tasks.size() > 0 }*.tasks*.each {
-                tasks.addAll(it)
-            }
+            project.stories.findAll { it.state < Story.STATE_PLANNED && it.tasks.size() > 0 }*.tasks*.each { tasks.addAll(it) }
             project.releases*.each { it.sprints*.each { s -> tasks.addAll(s.tasks) } }
             tasks*.attachments.findAll { it.size() > 0 }?.each {
                 it?.each { att -> files << attachmentableService.getFile(att) }
