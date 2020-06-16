@@ -53,6 +53,7 @@ class SprintService extends IceScrumEventPublisher {
             throw new BusinessException(code: 'is.ui.timebox.error.dates')
         }
         sprint.save(flush: true)
+        sprint.refresh() // required to initialize collections to empty list
         publishSynchronousEvent(IceScrumEventType.CREATE, sprint)
     }
 
