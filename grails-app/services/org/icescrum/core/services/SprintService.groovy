@@ -57,7 +57,7 @@ class SprintService extends IceScrumEventPublisher {
         publishSynchronousEvent(IceScrumEventType.CREATE, sprint)
     }
 
-    @PreAuthorize('(productOwner(#sprint.parentRelease.parentProject) or scrumMaster(#sprint.parentRelease.parentProject)) and !archivedProject(#sprint.parentRelease.parentProject)')
+    @PreAuthorize('inProject(#sprint.parentRelease.parentProject) and !archivedProject(#sprint.parentRelease.parentProject)') // Relaxed check because can be called by team member from done story from done task
     void update(Sprint sprint, Date startDate = null, Date endDate = null, def checkIntegrity = true, boolean updateRelease = true) {
         if (startDate) {
             startDate = DateUtils.getMidnightDate(startDate)
