@@ -36,7 +36,7 @@ trait ControllerErrorHandler {
         if (attrs.silent) {
             error.silent = true
         }
-        render(status: 400, contentType: 'application/json', text: error as JSON)
+        render(status: attrs.status ?: 400, contentType: 'application/json', text: error as JSON)
     }
 
     def validationException(ValidationException validationException) {
@@ -48,7 +48,7 @@ trait ControllerErrorHandler {
         try {
             identifierString = objectNotFoundException.identifier instanceof String ? objectNotFoundException.identifier : objectNotFoundException.identifier.join(', ')
         } catch (Throwable) {}
-        returnError(text: message(code: 'is.error.object.not.found', args: [objectNotFoundException.entityName, identifierString]))
+        returnError(status: 404, text: message(code: 'is.error.object.not.found', args: [objectNotFoundException.entityName, identifierString]))
     }
 
     def hibernateOptimisticLockingFailureException(HibernateOptimisticLockingFailureException hibernateOptimisticLockingFailureException) {
