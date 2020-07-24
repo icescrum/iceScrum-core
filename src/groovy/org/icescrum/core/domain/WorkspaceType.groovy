@@ -26,4 +26,14 @@ package org.icescrum.core.domain
 class WorkspaceType {
     static final String PROJECT = 'project'
     static final String PORTFOLIO = 'portfolio'
+    static final Map prefix = ["${WorkspaceType.PROJECT}": 'p', "${WorkspaceType.PORTFOLIO}": 'f']
+    static final Map keyProperty = ["${WorkspaceType.PROJECT}": 'pkey', "${WorkspaceType.PORTFOLIO}": 'fkey']
+
+    static String getPrefixUrl(workspaceType) {
+        return this.prefix.get("$workspaceType")
+    }
+
+    static String getKeyProperty(workspaceType) {
+        return this.keyProperty.get("$workspaceType")
+    }
 }

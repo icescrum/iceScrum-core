@@ -23,6 +23,7 @@
 
 package org.icescrum.core.domain
 
+import grails.util.Holders
 import org.hibernate.ObjectNotFoundException
 
 class Meeting implements Serializable {
@@ -46,6 +47,8 @@ class Meeting implements Serializable {
             portfolio: Portfolio
     ]
 
+    static transients = ['subject']
+
     Date dateCreated
     Date lastUpdated
 
@@ -67,6 +70,8 @@ class Meeting implements Serializable {
     static mapping = {
         cache true
         table 'is_meeting'
+        id(index: 'p_id_index')
+        providerEventId(index: 'p_id_index')
     }
 
     static Meeting withMeeting(long workspaceId, long id, String workspaceType = WorkspaceType.PROJECT) {
@@ -86,6 +91,15 @@ class Meeting implements Serializable {
             throw new ObjectNotFoundException(id, 'Meeting')
         }
         return meeting
+    }
+
+    def getSubject() {
+        Class<?> SubjectClass = Holders.grailsApplication.getDomainClass('org.icescrum.core.domain.' + this.subjectType.capitalize()).clazz
+        if (this.subjectType in ['project', 'portfolio']) {
+            return SubjectClass.load(this.subjectId)
+        } else {
+            return SubjectClass."with${this.subjectType.capitalize()}"(this.subjectId, workspace)
+        }
     }
 
     int hashCode() {
