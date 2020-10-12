@@ -26,8 +26,11 @@
 package org.icescrum.core.domain
 
 import grails.util.Holders
+import groovy.time.TimeCategory
 import org.grails.comments.Comment
 import org.hibernate.ObjectNotFoundException
+
+import java.sql.Timestamp
 
 class Feature extends BacklogElement implements Serializable {
     static final long serialVersionUID = 7072515028109185168L
@@ -141,6 +144,80 @@ class Feature extends BacklogElement implements Serializable {
             throw new ObjectNotFoundException(ids, 'Feature')
         }
         return features
+    }
+
+    static Integer throughput(long portfolioId) {
+        def today = new Date()
+        def nbMonths = 3
+        def daysInMonth = 4 * 7
+        def nbTotalDays = nbMonths * daysInMonth // Max 3 months (must be a just number of months)
+        def featureMinDoneDate = today - nbTotalDays
+        def nbDoneFeatures = executeQuery(""" 
+            SELECT count(*)
+            FROM Feature feature, Project project
+            WHERE feature.backlog.id = project.id
+            AND project.portfolio.id = :portfolioId
+            AND feature.doneDate IS NOT NULL 
+            AND feature.doneDate > :featureMinDoneDate""", [portfolioId: portfolioId, featureMinDoneDate: featureMinDoneDate], [cache: true, readOnly: true]
+        )[0]
+        return nbDoneFeatures ? Math.round(new BigDecimal(nbDoneFeatures) * daysInMonth / nbTotalDays) : null
+    }
+
+    static Integer meanCycleTime(long portfolioId, Date featureMinDoneDate) {
+        def timestampToDate = { Timestamp timestamp ->
+            return timestamp ? new Date(timestamp.time) : null
+        }
+        def dates = executeQuery(""" 
+                SELECT feature.doneDate, min(story.inProgressDate)
+                FROM Feature feature, Project project
+                INNER JOIN feature.stories story
+                WHERE feature.backlog.id = project.id
+                AND project.portfolio.id = :portfolioId
+                AND feature.doneDate IS NOT NULL
+                AND feature.doneDate > :featureMinDoneDate
+                GROUP BY feature.id""", [portfolioId: portfolioId, featureMinDoneDate: featureMinDoneDate], [cache: true, readOnly: true]
+        )
+        if (dates) {
+            BigDecimal mean = dates.collect { featureDate ->
+                new BigDecimal(TimeCategory.minus(timestampToDate(featureDate[0]), timestampToDate(featureDate[1])).days)
+            }.sum() / dates.size()
+            return Math.round(mean)
+        } else {
+            return null
+        }
+    }
+
+    static Integer meanLeadTime(long portfolioId, Date featureMinDoneDate) {
+        def timestampToDate = { Timestamp timestamp ->
+            return timestamp ? new Date(timestamp.time) : null
+        }
+        def dates = executeQuery(""" 
+                SELECT feature.doneDate, feature.todoDate
+                FROM Feature feature, Project project
+                WHERE feature.backlog.id = project.id
+                AND project.portfolio.id = :portfolioId
+                AND feature.doneDate IS NOT NULL
+                AND feature.doneDate > :featureMinDoneDate
+                GROUP BY feature.id""", [portfolioId: portfolioId, featureMinDoneDate: featureMinDoneDate], [cache: true, readOnly: true]
+        )
+        if (dates) {
+            BigDecimal mean = dates.collect { featureDate ->
+                new BigDecimal(TimeCategory.minus(timestampToDate(featureDate[0]), timestampToDate(featureDate[1])).days)
+            }.sum() / dates.size()
+            return Math.round(mean)
+        } else {
+            return null
+        }
+    }
+
+    static Date getLastDoneDate(long portfolioId) { // Cannot be done in subqueries, date arithmetics are not supported in HQL
+        def lastDoneDate = executeQuery(""" 
+            SELECT MAX(feature.doneDate)
+            FROM Feature feature, Project project
+            WHERE feature.backlog.id = project.id
+            AND project.portfolio.id = :portfolioId""", [portfolioId: portfolioId], [cache: true, readOnly: true]
+        )[0]
+        return lastDoneDate ? new Date(lastDoneDate.time) : null
     }
 
     int hashCode() {
