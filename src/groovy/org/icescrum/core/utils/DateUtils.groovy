@@ -24,6 +24,7 @@
 
 package org.icescrum.core.utils
 
+import java.sql.Timestamp
 import java.text.ParseException
 import java.text.SimpleDateFormat
 
@@ -62,5 +63,9 @@ class DateUtils {
             String utcDate = date.take(20) + 'UTC' + date.drop(23) // Fix date that has been exported with server not UTC
             return new SimpleDateFormat('EEE MMM d HH:mm:ss zzz yyyy').parse(utcDate)
         }
+    }
+
+    static Date timestampToDate(Timestamp timestamp) {
+        return timestamp ? new Date(timestamp.time) : null
     }
 }

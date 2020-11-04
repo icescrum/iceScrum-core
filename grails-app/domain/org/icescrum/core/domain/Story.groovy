@@ -30,8 +30,7 @@ import groovy.time.TimeCategory
 import org.grails.comments.Comment
 import org.hibernate.ObjectNotFoundException
 import org.icescrum.core.domain.AcceptanceTest.AcceptanceTestState
-
-import java.sql.Timestamp
+import org.icescrum.core.utils.DateUtils
 
 class Story extends BacklogElement implements Cloneable, Serializable {
 
@@ -321,9 +320,6 @@ class Story extends BacklogElement implements Cloneable, Serializable {
     }
 
     static List<Map> storyDates(long projectId, Date storyMinDoneDate) {
-        def timestampToDate = { Timestamp timestamp ->
-            return timestamp ? new Date(timestamp.time) : null
-        }
         return executeQuery(""" 
             SELECT story.frozenDate, story.suggestedDate, story.acceptedDate, story.estimatedDate, story.plannedDate, story.inProgressDate, story.inReviewDate, story.doneDate
             FROM Story story
@@ -332,14 +328,14 @@ class Story extends BacklogElement implements Cloneable, Serializable {
             AND story.doneDate > :storyMinDoneDate""", [projectId: projectId, storyStateDone: STATE_DONE, storyMinDoneDate: storyMinDoneDate], [cache: true, readOnly: true]
         ).collect { storyArray ->
             return [
-                    (STATE_FROZEN)    : timestampToDate(storyArray[0]),
-                    (STATE_SUGGESTED) : timestampToDate(storyArray[1]),
-                    (STATE_ACCEPTED)  : timestampToDate(storyArray[2]),
-                    (STATE_ESTIMATED) : timestampToDate(storyArray[3]),
-                    (STATE_PLANNED)   : timestampToDate(storyArray[4]),
-                    (STATE_INPROGRESS): timestampToDate(storyArray[5]),
-                    (STATE_INREVIEW)  : timestampToDate(storyArray[6]),
-                    (STATE_DONE)      : timestampToDate(storyArray[7])
+                    (STATE_FROZEN)    : DateUtils.timestampToDate(storyArray[0]),
+                    (STATE_SUGGESTED) : DateUtils.timestampToDate(storyArray[1]),
+                    (STATE_ACCEPTED)  : DateUtils.timestampToDate(storyArray[2]),
+                    (STATE_ESTIMATED) : DateUtils.timestampToDate(storyArray[3]),
+                    (STATE_PLANNED)   : DateUtils.timestampToDate(storyArray[4]),
+                    (STATE_INPROGRESS): DateUtils.timestampToDate(storyArray[5]),
+                    (STATE_INREVIEW)  : DateUtils.timestampToDate(storyArray[6]),
+                    (STATE_DONE)      : DateUtils.timestampToDate(storyArray[7])
             ]
         }
     }
@@ -373,9 +369,6 @@ class Story extends BacklogElement implements Cloneable, Serializable {
     }
 
     static Integer meanCycleTime(long projectId, Date storyMinDoneDate) {
-        def timestampToDate = { Timestamp timestamp ->
-            return timestamp ? new Date(timestamp.time) : null
-        }
         def dates = executeQuery(""" 
                 SELECT story.doneDate, min(task.inProgressDate)
                 FROM Story story
@@ -387,7 +380,9 @@ class Story extends BacklogElement implements Cloneable, Serializable {
         )
         if (dates) {
             BigDecimal mean = dates.collect { storyDate ->
-                new BigDecimal(TimeCategory.minus(timestampToDate(storyDate[0]), timestampToDate(storyDate[1])).days)
+                Date doneDate = DateUtils.timestampToDate(storyDate[0])
+                Date inProgressDate = DateUtils.timestampToDate(storyDate[1])
+                new BigDecimal(TimeCategory.minus(doneDate, inProgressDate).days)
             }.sum() / dates.size()
             return Math.round(mean)
         } else {

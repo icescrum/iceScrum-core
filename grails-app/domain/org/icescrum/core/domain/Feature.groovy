@@ -29,8 +29,7 @@ import grails.util.Holders
 import groovy.time.TimeCategory
 import org.grails.comments.Comment
 import org.hibernate.ObjectNotFoundException
-
-import java.sql.Timestamp
+import org.icescrum.core.utils.DateUtils
 
 class Feature extends BacklogElement implements Serializable {
     static final long serialVersionUID = 7072515028109185168L
@@ -147,11 +146,8 @@ class Feature extends BacklogElement implements Serializable {
     }
 
     static Integer throughput(long portfolioId) {
-        def today = new Date()
-        def nbMonths = 3
-        def daysInMonth = 4 * 7
-        def nbTotalDays = nbMonths * daysInMonth // Max 3 months (must be a just number of months)
-        def featureMinDoneDate = today - nbTotalDays
+        Integer nbMonths = 3
+        def featureMinDoneDate = new Date() - nbMonths * 28
         def nbDoneFeatures = executeQuery(""" 
             SELECT count(*)
             FROM Feature feature, Project project
@@ -160,13 +156,10 @@ class Feature extends BacklogElement implements Serializable {
             AND feature.doneDate IS NOT NULL 
             AND feature.doneDate > :featureMinDoneDate""", [portfolioId: portfolioId, featureMinDoneDate: featureMinDoneDate], [cache: true, readOnly: true]
         )[0]
-        return nbDoneFeatures ? Math.round(new BigDecimal(nbDoneFeatures) * daysInMonth / nbTotalDays) : null
+        return nbDoneFeatures ? Math.round(new BigDecimal(nbDoneFeatures) / nbMonths) : null
     }
 
     static Integer meanCycleTime(long portfolioId, Date featureMinDoneDate) {
-        def timestampToDate = { Timestamp timestamp ->
-            return timestamp ? new Date(timestamp.time) : null
-        }
         def dates = executeQuery(""" 
                 SELECT feature.doneDate, min(story.inProgressDate)
                 FROM Feature feature, Project project
@@ -178,8 +171,10 @@ class Feature extends BacklogElement implements Serializable {
                 GROUP BY feature.id""", [portfolioId: portfolioId, featureMinDoneDate: featureMinDoneDate], [cache: true, readOnly: true]
         )
         if (dates) {
-            BigDecimal mean = dates.collect { featureDate ->
-                new BigDecimal(TimeCategory.minus(timestampToDate(featureDate[0]), timestampToDate(featureDate[1])).days)
+            BigDecimal mean = dates.collect { featureDatePair ->
+                Date doneDate = DateUtils.timestampToDate(featureDatePair[0])
+                Date inProgressDate = DateUtils.timestampToDate(featureDatePair[1])
+                return new BigDecimal(TimeCategory.minus(doneDate, inProgressDate).days)
             }.sum() / dates.size()
             return Math.round(mean)
         } else {
@@ -188,9 +183,6 @@ class Feature extends BacklogElement implements Serializable {
     }
 
     static Integer meanLeadTime(long portfolioId, Date featureMinDoneDate) {
-        def timestampToDate = { Timestamp timestamp ->
-            return timestamp ? new Date(timestamp.time) : null
-        }
         def dates = executeQuery(""" 
                 SELECT feature.doneDate, feature.todoDate
                 FROM Feature feature, Project project
@@ -201,8 +193,10 @@ class Feature extends BacklogElement implements Serializable {
                 GROUP BY feature.id""", [portfolioId: portfolioId, featureMinDoneDate: featureMinDoneDate], [cache: true, readOnly: true]
         )
         if (dates) {
-            BigDecimal mean = dates.collect { featureDate ->
-                new BigDecimal(TimeCategory.minus(timestampToDate(featureDate[0]), timestampToDate(featureDate[1])).days)
+            BigDecimal mean = dates.collect { featureDatePair ->
+                Date doneDate = DateUtils.timestampToDate(featureDatePair[0])
+                Date todoDate = DateUtils.timestampToDate(featureDatePair[1])
+                return new BigDecimal(TimeCategory.minus(doneDate, todoDate).days)
             }.sum() / dates.size()
             return Math.round(mean)
         } else {
