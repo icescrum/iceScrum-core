@@ -24,8 +24,8 @@
 
 package org.icescrum.core.services
 
-
 import grails.util.GrailsNameUtils
+import org.apache.commons.io.FileUtils
 import org.hibernate.ObjectNotFoundException
 import org.icescrum.core.domain.Feature
 import org.icescrum.core.domain.Portfolio
@@ -45,6 +45,7 @@ import org.icescrum.plugins.attachmentable.domain.AttachmentLink
 class AttachmentService extends IceScrumEventPublisher {
 
     def grailsApplication
+    def attachmentableService
 
     Attachment save(Object attachmentable, User poster, props) {
         Attachment attachment
@@ -90,6 +91,20 @@ class AttachmentService extends IceScrumEventPublisher {
         attachmentable.removeAttachment(attachment)
         publishAttachmentableEvent(attachment, attachmentable, 'removedAttachment')
         publishSynchronousEvent(IceScrumEventType.DELETE, attachment, dirtyProperties)
+    }
+
+    void copyAttachments(attachmentableSource, attachmentableTarget) {
+        attachmentableSource.attachments?.each { Attachment a ->
+            if (!a.url) {
+                def currentFile = attachmentableService.getFile(a)
+                def newFile = File.createTempFile(a.name, a.ext)
+                FileUtils.copyFile(currentFile, newFile)
+                attachmentableTarget.addAttachment(a.poster, newFile, a.name + (a.ext ? '.' + a.ext : ''))
+            } else {
+                attachmentableTarget.addAttachment(a.poster, [url: a.url, provider: a.provider, length: a.length], a.name + (a.ext ? '.' + a.ext : ''))
+            }
+        }
+        attachmentableTarget.save(flush: true) // For attachments_count to be taken into account
     }
 
     Attachment withAttachment(long workspaceId, String workspaceType, long id) {
@@ -195,5 +210,4 @@ class AttachmentService extends IceScrumEventPublisher {
     private String getAttachmentableType(Object attachmentable) {
         return ApplicationSupport.getUnproxiedClassName(GrailsNameUtils.getPropertyName(attachmentable.class))
     }
-
 }

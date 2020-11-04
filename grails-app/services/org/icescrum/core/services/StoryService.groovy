@@ -29,7 +29,6 @@ package org.icescrum.core.services
 import grails.transaction.Transactional
 import grails.util.GrailsNameUtils
 import grails.validation.ValidationException
-import org.apache.commons.io.FileUtils
 import org.grails.comments.Comment
 import org.grails.comments.CommentLink
 import org.icescrum.core.domain.*
@@ -39,7 +38,6 @@ import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
 import org.icescrum.core.support.ApplicationSupport
 import org.icescrum.core.utils.DateUtils
-import org.icescrum.plugins.attachmentable.domain.Attachment
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.security.access.prepost.PreAuthorize
 
@@ -52,6 +50,7 @@ class StoryService extends IceScrumEventPublisher {
     def clicheService
     def featureService
     def attachmentableService
+    def attachmentService
     def securityService
     def acceptanceTestService
     def activityService
@@ -760,7 +759,6 @@ class StoryService extends IceScrumEventPublisher {
                     name: story.name,
                     description: story.description,
                     notes: story.notes,
-                    dateCreated: new Date(),
                     type: story.type,
                     backlog: project,
                     affectVersion: story.affectVersion,
@@ -812,19 +810,8 @@ class StoryService extends IceScrumEventPublisher {
                 }
             }
             save(copiedStory, project, (User) springSecurityService.currentUser)
-            story.attachments?.each { Attachment a ->
-                if (!a.url) {
-                    def currentFile = attachmentableService.getFile(a)
-                    def newFile = File.createTempFile(a.name, a.ext)
-                    FileUtils.copyFile(currentFile, newFile)
-                    copiedStory.addAttachment(a.poster, newFile, a.name + (a.ext ? '.' + a.ext : ''))
-                } else {
-                    copiedStory.addAttachment(a.poster, [url: a.url, provider: a.provider, length: a.length], a.name + (a.ext ? '.' + a.ext : ''))
-                }
-            }
-            story.comments?.each { Comment c ->
-                copiedStory.addComment(c.poster, c.body)
-            }
+            attachmentService.copyAttachments(story, copiedStory)
+            commentService.copyComments(story, copiedStory)
             copiedStory.tags = story.tags
             story.acceptanceTests?.each { acceptanceTest ->
                 acceptanceTestService.save(new AcceptanceTest(name: acceptanceTest.name, description: acceptanceTest.description), copiedStory, (User) springSecurityService.currentUser)

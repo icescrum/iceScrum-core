@@ -347,17 +347,7 @@ class SprintService extends IceScrumEventPublisher {
             throw new BusinessException(code: 'is.sprint.copyRecurrentTasks.error.no.recurrent.tasks')
         }
         tasks.each { task ->
-            Task clonedTask = new Task(
-                    name: task.name,
-                    responsible: task.responsible,
-                    color: task.color,
-                    type: task.type,
-                    description: task.description,
-                    notes: task.notes,
-                    estimation: task.initial,
-                    backlog: sprint
-            )
-            taskService.save(clonedTask, task.creator)
+            taskService.copy(task, task.creator, Task.STATE_WAIT, sprint)
         }
     }
 

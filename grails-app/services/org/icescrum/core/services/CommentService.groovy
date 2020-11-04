@@ -84,6 +84,16 @@ class CommentService extends IceScrumEventPublisher {
         publishSynchronousEvent(IceScrumEventType.DELETE, comment, dirtyProperties)
     }
 
+    void copyComments(commentableSource, commentableTarget) {
+        commentableSource.comments?.each { Comment comment ->
+            commentableTarget.addComment(comment.poster, comment.body)
+        }
+        if (commentableTarget.hasProperty('comments_count')) {
+            commentableTarget.comments_count = commentableTarget.getTotalComments()
+            commentableTarget.save(flush: true) // For comments_count to be taken into account
+        }
+    }
+
     void importComment(Object commentable, User poster, String body, Date dateCreated) {
         def comment = new Comment(body: body, posterId: poster.id, posterClass: ApplicationSupport.getUnproxiedClassName(poster.class.name))
         comment.save()

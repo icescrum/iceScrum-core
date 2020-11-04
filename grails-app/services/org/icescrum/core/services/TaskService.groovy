@@ -46,6 +46,7 @@ class TaskService extends IceScrumEventPublisher {
     def activityService
     def grailsApplication
     def attachmentableService
+    def attachmentService
     def commentService
 
     @PreAuthorize('(inProject(#task.backlog?.parentProject) or inProject(#task.parentStory?.backlog)) and (!archivedProject(#task.backlog?.parentProject) or !archivedProject(#task.parentStory?.backlog))')
@@ -243,8 +244,8 @@ class TaskService extends IceScrumEventPublisher {
     }
 
     @PreAuthorize('inProject(#task.parentProject) and !archivedProject(#task.parentProject)')
-    def copy(Task task, User user, def clonedState = Task.STATE_WAIT) {
-        def sprint = (Sprint) task.backlog
+    def copy(Task task, User user, def clonedState = Task.STATE_WAIT, Sprint otherSprint = null) {
+        def sprint = otherSprint ?: (task.parentStory ? task.parentStory.parentSprint : (Sprint) task.backlog)
         if (sprint?.state == Sprint.STATE_DONE) {
             throw new BusinessException(code: 'is.task.error.copy.done')
         }
@@ -252,15 +253,18 @@ class TaskService extends IceScrumEventPublisher {
                 name: task.name,
                 state: clonedState,
                 creator: user,
+                responsible: task.responsible,
                 color: task.color,
                 description: task.description,
                 notes: task.notes,
-                dateCreated: new Date(),
-                backlog: task.parentStory ? task.parentStory.parentSprint : sprint,
+                backlog: sprint,
                 parentStory: task.parentStory ?: null,
                 parentProject: task.parentProject,
                 type: task.type
         )
+        if (otherSprint) {
+            clonedTask.estimation = task.initial
+        }
         task.participants?.each {
             clonedTask.participants << it
         }
@@ -269,10 +273,13 @@ class TaskService extends IceScrumEventPublisher {
             throw new ValidationException('Validation Error(s) occurred during save()', clonedTask.errors)
         }
         save(clonedTask, user)
+        attachmentService.copyAttachments(task, clonedTask)
+        commentService.copyComments(task, clonedTask)
+        clonedTask.tags = task.tags
         if (sprint) {
             clicheService.createOrUpdateDailyTasksCliche(sprint)
         }
-        return clonedTask
+        return clonedTask.refresh()
     }
 
     private void state(Task task, Integer newState, User user) {
