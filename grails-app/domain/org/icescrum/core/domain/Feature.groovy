@@ -145,7 +145,7 @@ class Feature extends BacklogElement implements Serializable {
         return features
     }
 
-    static Integer throughput(long portfolioId) {
+    static BigDecimal throughput(long portfolioId) {
         Integer nbMonths = 3
         def featureMinDoneDate = new Date() - nbMonths * 28
         def nbDoneFeatures = executeQuery(""" 
@@ -156,7 +156,7 @@ class Feature extends BacklogElement implements Serializable {
             AND feature.doneDate IS NOT NULL 
             AND feature.doneDate > :featureMinDoneDate""", [portfolioId: portfolioId, featureMinDoneDate: featureMinDoneDate], [cache: true, readOnly: true]
         )[0]
-        return nbDoneFeatures ? Math.round(new BigDecimal(nbDoneFeatures) / nbMonths) : null
+        return nbDoneFeatures ? Math.round(10 * new BigDecimal(nbDoneFeatures) / nbMonths) / 10 : null
     }
 
     static Integer meanCycleTime(long portfolioId, Date featureMinDoneDate) {
