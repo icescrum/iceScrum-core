@@ -34,8 +34,8 @@ grails.project.dependency.resolution = {
         grailsHome()
         grailsCentral()
         mavenCentral()
-        mavenRepo "http://repo.spring.io/milestone"
-        mavenRepo "http://repo.spring.io/libs-release" // for http-builder 0.7.2
+        mavenRepo "https://repo.spring.io/milestone"
+        mavenRepo "https://repo.spring.io/libs-release" // for http-builder 0.7.2
         mavenRepo "https://oss.sonatype.org/content/repositories/snapshots/"
         mavenRepo "https://repo.icescrum.org/artifactory/plugins-release/"
         mavenRepo "https://repo.icescrum.org/artifactory/plugins-snapshot/"
