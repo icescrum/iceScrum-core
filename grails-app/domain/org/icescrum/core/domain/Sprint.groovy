@@ -25,7 +25,6 @@
 
 package org.icescrum.core.domain
 
-import org.apache.commons.lang.time.FastDateFormat
 import org.hibernate.ObjectNotFoundException
 import org.icescrum.core.utils.ServicesUtils
 import org.icescrum.plugins.attachmentable.interfaces.Attachmentable
@@ -405,8 +404,12 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
     }
 
     def afterLoad() {
-        def formater = FastDateFormat.getInstance("yyyy-MM-dd'T'HH:mm:ss'Z'", TimeZone.getTimeZone("GMT"), Locale.US)
-        def text = "TZ " + TimeZone.getDefault().getID() + ' - ' + fullName + ' - ' +  'startDate=' + startDate.class + '-' + startDate + '-' + startDate.timezoneOffset + '-' + formater.format(startDate) +' endDate=' + endDate.class + '-' + endDate + '-' + endDate.timezoneOffset + '-' + formater.format(endDate)
+        def text = parentProject.pkey + ' - afterload ' + fullName + ' - ' +  'startDate=' + startDate.class + '-' + startDate + '-' + startDate.timezoneOffset +' endDate=' + endDate.class + '-' + endDate + '-' + endDate.timezoneOffset
+        log.debug(text)
+    }
+
+    def afterUpdate() {
+        def text = parentProject.pkey + ' - afterupdate ' + fullName + ' - ' +  'startDate=' + startDate.class + '-' + startDate + '-' + startDate.timezoneOffset +' endDate=' + endDate.class + '-' + endDate + '-' + endDate.timezoneOffset
         log.debug(text)
     }
 }
