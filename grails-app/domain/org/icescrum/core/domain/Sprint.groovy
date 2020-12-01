@@ -404,12 +404,12 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
     }
 
     def afterLoad() {
-        def text = parentProject.pkey + ' - afterload ' + fullName + ' - ' +  'startDate=' + startDate.class + '-' + startDate + '-' + startDate.timezoneOffset +' endDate=' + endDate.class + '-' + endDate + '-' + endDate.timezoneOffset
+        def text = parentProject.pkey + ' - afterload ' + fullName + ' - ' + 'startDate=' + startDate + '-' + startDate.timezoneOffset + ' endDate=' + endDate + '-' + endDate.timezoneOffset
         log.debug(text)
     }
 
     def afterUpdate() {
-        def text = parentProject.pkey + ' - afterupdate ' + fullName + ' - ' +  'startDate=' + startDate.class + '-' + startDate + '-' + startDate.timezoneOffset +' endDate=' + endDate.class + '-' + endDate + '-' + endDate.timezoneOffset
+        def text = parentProject.pkey + ' - afterupdate ' + fullName + ' - ' + 'startDate=' + startDate + '-' + startDate.timezoneOffset + ' endDate=' + endDate + '-' + endDate.timezoneOffset
         log.debug(text)
     }
 }
