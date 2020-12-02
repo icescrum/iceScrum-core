@@ -134,7 +134,7 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
     }
 
     static mapping = {
-        cache true
+        cache false
         table 'is_sprint'
         retrospective type: 'text'
         doneDefinition type: 'text'
