@@ -134,7 +134,7 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
     }
 
     static mapping = {
-        cache false
+        cache true
         table 'is_sprint'
         retrospective type: 'text'
         doneDefinition type: 'text'
@@ -401,15 +401,5 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
             }
             exportDomainsPlugins(builder)
         }
-    }
-
-    def afterLoad() {
-        def text = parentProject.pkey + ' - afterload ' + fullName + ' - ' + 'startDate=' + startDate + '-' + startDate.timezoneOffset + ' endDate=' + endDate + '-' + endDate.timezoneOffset
-        log.debug(text)
-    }
-
-    def afterUpdate() {
-        def text = parentProject.pkey + ' - afterupdate ' + fullName + ' - ' + 'startDate=' + startDate + '-' + startDate.timezoneOffset + ' endDate=' + endDate + '-' + endDate.timezoneOffset
-        log.debug(text)
     }
 }
