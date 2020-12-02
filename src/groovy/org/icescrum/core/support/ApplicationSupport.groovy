@@ -135,7 +135,7 @@ class ApplicationSupport {
     static boolean isMySQLUTF8mb4() {
         if (mySQLUTF8mb4 == null) {
             def dataSource = Holders.grailsApplication.config.dataSource
-            if (dataSource.driverClassName == 'com.mysql.jdbc.Driver') {
+            if (dataSource.driverClassName in ['com.mysql.jdbc.Driver', 'com.mysql.cj.jdbc.Driver']) {
                 if (Environment.DEVELOPMENT) {
                     mySQLUTF8mb4 = true
                 } else {
@@ -178,7 +178,7 @@ class ApplicationSupport {
 
     static boolean isUTF8Database() {
         def driverClassName = Holders.grailsApplication.config.dataSource.driverClassName
-        def disabled = driverClassName == 'com.mysql.jdbc.Driver' && !isMySQLUTF8mb4() || driverClassName == 'com.microsoft.sqlserver.jdbc.SQLServerDriver'
+        def disabled = (driverClassName in ['com.mysql.jdbc.Driver', 'com.mysql.cj.jdbc.Driver']) && !isMySQLUTF8mb4() || driverClassName == 'com.microsoft.sqlserver.jdbc.SQLServerDriver'
         return !disabled
     }
 
