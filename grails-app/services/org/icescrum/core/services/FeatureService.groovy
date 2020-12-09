@@ -140,20 +140,23 @@ class FeatureService extends IceScrumEventPublisher {
         }
     }
 
-    def copy(List<Feature> features, Project project) {
+    def copy(List<Feature> features, Project project = null) {
         def copiedFeatures = []
-        def sameProject = features.first().backlog.id == project.id
         features.sort { it.rank }.each { feature ->
             def copiedFeature = new Feature(
                     name: feature.name,
                     description: feature.description,
                     notes: feature.notes,
                     type: feature.type,
-                    backlog: project,
                     value: feature.value,
                     color: feature.color
             )
-            if (sameProject) {
+            if (feature.backlog) {
+                copiedFeature.backlog = project ?: feature.backlog
+            } else {
+                copiedFeature.portfolio = feature.portfolio
+            }
+            if (!project) {
                 copiedFeature.name += '_1'
             }
             copiedFeature.validate()
@@ -170,7 +173,11 @@ class FeatureService extends IceScrumEventPublisher {
                     throw new ValidationException('Validation Error(s) occurred during save()', copiedFeature.errors)
                 }
             }
-            save(copiedFeature, project)
+            if (copiedFeature.portfolio) {
+                save(copiedFeature, copiedFeature.portfolio, WorkspaceType.PORTFOLIO)
+            } else {
+                save(copiedFeature, copiedFeature.backlog)
+            }
             attachmentService.copyAttachments(feature, copiedFeature)
             commentService.copyComments(feature, copiedFeature)
             copiedFeature.tags = feature.tags
