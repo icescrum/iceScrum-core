@@ -25,6 +25,7 @@
 package org.icescrum.core.services
 
 import grails.transaction.Transactional
+import grails.validation.ValidationException
 import org.icescrum.core.domain.*
 import org.icescrum.core.error.BusinessException
 import org.icescrum.core.event.IceScrumEventPublisher
@@ -40,6 +41,7 @@ class FeatureService extends IceScrumEventPublisher {
     def activityService
     def securityService
     def commentService
+    def attachmentService
 
     void save(Feature feature, workspace, String workspaceType = WorkspaceType.PROJECT) {
         ApplicationSupport.validateHexdecimalColor(feature.color)
@@ -136,6 +138,45 @@ class FeatureService extends IceScrumEventPublisher {
             it.rank += delta
             it.save()
         }
+    }
+
+    def copy(List<Feature> features, Project project) {
+        def copiedFeatures = []
+        def sameProject = features.first().backlog.id == project.id
+        features.sort { it.rank }.each { feature ->
+            def copiedFeature = new Feature(
+                    name: feature.name,
+                    description: feature.description,
+                    notes: feature.notes,
+                    type: feature.type,
+                    backlog: project,
+                    value: feature.value,
+                    color: feature.color
+            )
+            if (sameProject) {
+                copiedFeature.name += '_1'
+            }
+            copiedFeature.validate()
+            def i = 1
+            while (copiedFeature.hasErrors()) {
+                if (copiedFeature.errors.getFieldError('name')?.defaultMessage?.contains("unique")) {
+                    i += 1
+                    copiedFeature.name = feature.name + '_' + i
+                    copiedFeature.validate()
+                } else if (copiedFeature.errors.getFieldError('name')?.code?.contains("maxSize.exceeded")) {
+                    copiedFeature.name = copiedFeature.name[0..20]
+                    copiedFeature.validate()
+                } else {
+                    throw new ValidationException('Validation Error(s) occurred during save()', copiedFeature.errors)
+                }
+            }
+            save(copiedFeature, project)
+            attachmentService.copyAttachments(feature, copiedFeature)
+            commentService.copyComments(feature, copiedFeature)
+            copiedFeature.tags = feature.tags
+            copiedFeatures << copiedFeature.refresh()
+        }
+        return copiedFeatures
     }
 
     def projectParkingLotValues(Project project) {
