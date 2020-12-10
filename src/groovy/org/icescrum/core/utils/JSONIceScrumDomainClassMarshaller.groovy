@@ -249,6 +249,6 @@ public class JSONIceScrumDomainClassMarshaller extends DomainClassMarshaller {
 
     private getRequestConfig(configName) {
         def request = RequestContextHolder.requestAttributes?.currentRequest
-        return request?.restAPI ? null : request?.marshaller?."$configName"
+        return request?.restAPI ? request?.restMarshaller?."$configName" : request?.marshaller?."$configName"
     }
 }
