@@ -147,7 +147,7 @@ class SprintService extends IceScrumEventPublisher {
         def newSprints = []
         nbNewSprints.times {
             Date endDate = startDate + sprintDuration - 1
-            def newSprint = new Sprint(goal: 'Generated Sprint', startDate: startDate, endDate: endDate)
+            def newSprint = new Sprint(startDate: startDate, endDate: endDate)
             save(newSprint, release)
             newSprints << newSprint
             startDate = endDate + 1
