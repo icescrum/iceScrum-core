@@ -289,11 +289,7 @@ class Feature extends BacklogElement implements Serializable {
     Date getInProgressDate() {
         if (state > STATE_WAIT) {
             def inProgressDates = stories.collect { it.inProgressDate }.findAll { it != null }.sort()
-            if (inProgressDates) {
-                return inProgressDates.last()
-            } else {
-                log.error("Error when fetching last in progress date on in progress feature $id: " + stories.collect { story -> [id: story.id, class: story.class.name, state: story.state, inProgressDate: story.inProgressDate] }.inspect())
-            }
+            return inProgressDates ? inProgressDates.last() : null // May have no story if it was marked as done while it had stories and then the stories were removed from it
         } else {
             return null
         }
