@@ -289,7 +289,7 @@ class Feature extends BacklogElement implements Serializable {
     Date getInProgressDate() {
         if (state > STATE_WAIT) {
             def inProgressDates = stories.collect { it.inProgressDate }.findAll { it != null }.sort()
-            return inProgressDates ? inProgressDates.last() : null // May have no story if it was marked as done while it had stories and then the stories were removed from it
+            return inProgressDates ? inProgressDates.last() : doneDate // May have no story if it was marked as done while it had stories and then the stories were removed from it
         } else {
             return null
         }

@@ -379,6 +379,9 @@ class Story extends BacklogElement implements Cloneable, Serializable {
                 GROUP BY story.id""", [projectId: projectId, storyStateDone: STATE_DONE, storyMinDoneDate: storyMinDoneDate], [cache: true, readOnly: true]
         )
         if (dates) {
+            dates = dates.findAll { storyDate ->
+                storyDate[0] != null && storyDate[1] != null // Some tasks are Done without an inProgressDate, probably due to a bug, so we need to filter out the corresponding stories
+            }
             BigDecimal mean = dates.collect { storyDate ->
                 Date doneDate = DateUtils.timestampToDate(storyDate[0])
                 Date inProgressDate = DateUtils.timestampToDate(storyDate[1])
