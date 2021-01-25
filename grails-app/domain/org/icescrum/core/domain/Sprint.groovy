@@ -309,6 +309,24 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
         }
     }
 
+    static Sprint findCurrentOrNextOrLast(long projectId) {
+        Sprint sprint = executeQuery("""SELECT sprint
+                            FROM Sprint sprint
+                            WHERE sprint.parentRelease.parentProject.id = :projectId
+                            AND sprint.parentRelease.state IN :releaseStates
+                            AND sprint.state IN :sprintStates
+                            ORDER BY sprint.parentRelease.orderNumber ASC, sprint.orderNumber ASC""", [projectId: projectId, releaseStates: [Release.STATE_INPROGRESS, Release.STATE_WAIT], sprintStates: [Sprint.STATE_INPROGRESS, Sprint.STATE_WAIT]], [max: 1])[0]
+        if (!sprint) {
+            sprint = executeQuery("""SELECT sprint
+                            FROM Sprint sprint
+                            WHERE sprint.parentRelease.parentProject.id = :projectId
+                            AND sprint.parentRelease.state IN :releaseStates
+                            AND sprint.state = :sprintState
+                            ORDER BY sprint.parentRelease.orderNumber DESC, sprint.orderNumber DESC""", [projectId: projectId, releaseStates: [Release.STATE_INPROGRESS, Release.STATE_DONE], sprintState: Sprint.STATE_DONE], [max: 1])[0]
+        }
+        return sprint
+    }
+
     def getActivable() {
         return state == STATE_WAIT &&
                (parentRelease.state == Release.STATE_INPROGRESS || parentRelease.activable) &&
