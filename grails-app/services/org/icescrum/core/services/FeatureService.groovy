@@ -228,12 +228,6 @@ class FeatureService extends IceScrumEventPublisher {
             // References on other objects
             if (project) {
                 project.addToFeatures(feature)
-                featureXml.comments.comment.each { _commentXml ->
-                    def uid = options.userUIDByImportedID?."${_commentXml.posterId.text().toInteger()}" ?: null
-                    User user = project.getUserByUidOrOwner(uid)
-                    commentService.importComment(feature, user, _commentXml.body.text(), DateUtils.parseDateFromExport(_commentXml.dateCreated.text()))
-                }
-                feature.comments_count = featureXml.comments.comment.size() ?: 0
             }
             // Save before some hibernate stuff
             if (options.save) {
@@ -242,12 +236,20 @@ class FeatureService extends IceScrumEventPublisher {
                 if (featureXml.tags.text()) {
                     feature.tags = featureXml.tags.text().replaceAll(' ', '').replace('[', '').replace(']', '').split(',')
                 }
-                featureXml.attachments.attachment.each { _attachmentXml ->
-                    def uid = options.userUIDByImportedID?."${_attachmentXml.posterId.text().toInteger()}" ?: null
-                    User user = project.getUserByUidOrOwner(uid)
-                    ApplicationSupport.importAttachment(feature, user, options.path, _attachmentXml)
+                if (project) {
+                    featureXml.comments.comment.each { _commentXml ->
+                        def uid = options.userUIDByImportedID?."${_commentXml.posterId.text().toInteger()}" ?: null
+                        User user = project.getUserByUidOrOwner(uid)
+                        commentService.importComment(feature, user, _commentXml.body.text(), DateUtils.parseDateFromExport(_commentXml.dateCreated.text()))
+                    }
+                    feature.comments_count = featureXml.comments.comment.size() ?: 0
+                    featureXml.attachments.attachment.each { _attachmentXml ->
+                        def uid = options.userUIDByImportedID?."${_attachmentXml.posterId.text().toInteger()}" ?: null
+                        User user = project.getUserByUidOrOwner(uid)
+                        ApplicationSupport.importAttachment(feature, user, options.path, _attachmentXml)
+                    }
+                    feature.attachments_count = featureXml.attachments.attachment.size() ?: 0
                 }
-                feature.attachments_count = featureXml.attachments.attachment.size() ?: 0
             }
             // Child objects
             options.feature = feature
