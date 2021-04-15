@@ -40,6 +40,7 @@ import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
 import org.icescrum.core.support.ApplicationSupport
 import org.icescrum.plugins.attachmentable.domain.Attachment
+import org.springframework.mail.MailException
 import org.springframework.security.acls.domain.BasePermission
 import org.springframework.security.core.context.SecurityContextHolder
 
@@ -304,7 +305,11 @@ class UserService extends IceScrumEventPublisher {
                     } else {
                         notificationEmailService.sendInvitation(invitation, springSecurityService.currentUser)
                     }
-                } catch (MailException) {
+                } catch (MailException e) {
+                    e.printStackTrace()
+                    if (log.debugEnabled) {
+                        log.debug(e.message)
+                    }
                     throw new BusinessException(code: 'is.mail.error')
                 }
             }
