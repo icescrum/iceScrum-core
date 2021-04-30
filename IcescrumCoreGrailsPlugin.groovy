@@ -486,23 +486,15 @@ ERROR: iceScrum v7 has detected that you attempt to run it on an existing R6 ins
                         'param-value'(config.allow.origin.regex.toString())
                     }
                 }
-                if (config.headers instanceof Map) {
-                    config.headers.each { k, v ->
-                        'init-param' {
-                            'param-name'('header:' + k)
-                            'param-value'(v)
-                        }
-                    }
-                }
-                if (config.expose.headers) {
+                if (config.allowedHeaders && config.allowedHeaders instanceof List) {
                     'init-param' {
-                        'param-name'('expose.headers')
-                        'param-value'(cors.expose.headers.toString())
+                        'param-name'('allowedHeaders')
+                        'param-value'(config.allowedHeaders.join(', '))
                     }
                 }
             }
         }
-        def urlPattern = config.url.pattern ?: '/*'
+        def urlPattern = config.urlPatterns ?: '/*'
         List list = urlPattern instanceof List ? urlPattern : [urlPattern]
         def filter = xml.'filter'
         list.each { pattern ->
