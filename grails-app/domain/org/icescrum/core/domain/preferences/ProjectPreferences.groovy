@@ -42,6 +42,7 @@ class ProjectPreferences implements Serializable {
     boolean autoDoneStory = false
     Boolean autoDoneFeature = false
     Boolean autoInReviewStory = false
+    Boolean displaySprintGoal = false
     boolean displayRecurrentTasks = true
     boolean displayUrgentTasks = true
     boolean assignOnCreateTask = false
@@ -85,6 +86,7 @@ class ProjectPreferences implements Serializable {
             builder.dailyMeetingHour(this.dailyMeetingHour)
             builder.limitUrgentTasks(this.limitUrgentTasks)
             builder.autoInReviewStory(this.autoInReviewStory)
+            builder.displaySprintGoal(this.displaySprintGoal)
             builder.assignOnBeginTask(this.assignOnBeginTask)
             builder.displayUrgentTasks(this.displayUrgentTasks)
             builder.assignOnCreateTask(this.assignOnCreateTask)
