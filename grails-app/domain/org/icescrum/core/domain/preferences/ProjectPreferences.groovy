@@ -63,6 +63,7 @@ class ProjectPreferences implements Serializable {
         stakeHolderRestrictedViews(nullable: true)
         autoDoneFeature(nullable: true)
         autoInReviewStory(nullable: true)
+        displaySprintGoal(nullable: true)
     }
 
     static belongsTo = [
