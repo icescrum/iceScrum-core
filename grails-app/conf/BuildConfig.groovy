@@ -40,7 +40,8 @@ grails.project.dependency.resolution = {
         mavenRepo "https://oss.sonatype.org/content/repositories/snapshots/"
         mavenRepo "https://repo.icescrum.org/artifactory/plugins-release/"
         mavenRepo "https://repo.icescrum.org/artifactory/plugins-snapshot/"
-        mavenRepo "http://jaspersoft.artifactoryonline.com/jaspersoft/third-party-ce-artifacts/" // Because Jasper depends on olap4j which is not available anymore the repositories
+        mavenRepo "http://jaspersoft.artifactoryonline.com/jaspersoft/third-party-ce-artifacts/"
+        // Because Jasper depends on olap4j which is not available anymore the repositories
         mavenRepo "https://repo.eclipse.org/content/repositories/mylyn/" // For wikitext
     }
     dependencies {
@@ -50,17 +51,21 @@ grails.project.dependency.resolution = {
         compile('org.codehaus.groovy.modules.http-builder:http-builder:0.7.2') {
             excludes 'commons-logging', 'xml-apis', 'groovy'
         }
-        compile 'org.eclipse.mylyn.docs:org.eclipse.mylyn.wikitext.core:2.8.0-SNAPSHOT' // Cannot use 2.9 or above because it is compiled with Java 8 so it won't work with Java 7
+        compile 'org.eclipse.mylyn.docs:org.eclipse.mylyn.wikitext.core:2.8.0-SNAPSHOT'
+        // Cannot use 2.9 or above because it is compiled with Java 8 so it won't work with Java 7
         compile 'org.eclipse.mylyn.docs:org.eclipse.mylyn.wikitext.textile.core:2.8.0-SNAPSHOT'
-        compile 'com.google.guava:guava:19.0' // For wikitext (was previously brought by asset-pipeline but they left the dependency: https://github.com/bertramdev/asset-pipeline/pull/117)
+        compile 'com.google.guava:guava:19.0'
+        // For wikitext (was previously brought by asset-pipeline but they left the dependency: https://github.com/bertramdev/asset-pipeline/pull/117)
         compile 'org.liquibase:liquibase-core:2.0.5'
         compile "org.apache.poi:poi:3.17" // 4.0 works only with Java 8
         compile "org.apache.poi:poi-ooxml:3.17"
-        compile "org.apache.poi:ooxml-schemas:1.3" // Recommended by http://poi.apache.org/help/faq.html instead of poi-ooxml-schemas
-        compile 'org.apache.logging.log4j:log4j-api:2.17.2'
-        compile 'org.apache.logging.log4j:log4j-core:2.17.2'
-        compile 'org.apache.logging.log4j:log4j-1.2-api:2.17.2'
-        compile 'org.apache.logging.log4j:log4j-slf4j-impl:2.17.2'
+        compile "org.apache.poi:ooxml-schemas:1.3"
+        // Recommended by http://poi.apache.org/help/faq.html instead of poi-ooxml-schemas
+        def log4jVersion = "2.17.2"
+        compile "org.apache.logging.log4j:log4j-api:$log4jVersion"
+        compile "org.apache.logging.log4j:log4j-core:$log4jVersion"
+        compile "org.apache.logging.log4j:log4j-1.2-api:$log4jVersion"
+        compile "org.apache.logging.log4j:log4j-slf4j-impl:$log4jVersion"
     }
     plugins {
         compile ':atmosphere-meteor:1.0.5'
@@ -70,7 +75,8 @@ grails.project.dependency.resolution = {
         compile ':hd-image-utils:1.1'
         compile 'org.icescrum:taggable:1.1.9'
         compile ':jdbc-pool:7.0.47'
-        compile 'org.icescrum:mail:1.0.9' // Forked because of https://github.com/gpc/grails-mail/issues/32 which prevents config change
+        compile 'org.icescrum:mail:1.0.9'
+        // Forked because of https://github.com/gpc/grails-mail/issues/32 which prevents config change
         compile(':jasper:1.11.0') {
             excludes 'poi', 'poi-ooxml', 'poi-ooxml-schemas' // 3.10 brought by jasper is wayyy outdated
         }
