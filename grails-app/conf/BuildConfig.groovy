@@ -27,7 +27,9 @@ grails.project.test.reports.dir = "target/test-reports"
 grails.project.dependency.resolver = "maven"
 
 grails.project.dependency.resolution = {
-    inherits("global") {}
+    inherits("global") {
+        excludes 'grails-plugin-log4j', 'log4j'
+    }
     log "warn"
     repositories {
         grailsPlugins()
@@ -55,6 +57,10 @@ grails.project.dependency.resolution = {
         compile "org.apache.poi:poi:3.17" // 4.0 works only with Java 8
         compile "org.apache.poi:poi-ooxml:3.17"
         compile "org.apache.poi:ooxml-schemas:1.3" // Recommended by http://poi.apache.org/help/faq.html instead of poi-ooxml-schemas
+        compile 'org.apache.logging.log4j:log4j-api:2.17.2'
+        compile 'org.apache.logging.log4j:log4j-core:2.17.2'
+        compile 'org.apache.logging.log4j:log4j-1.2-api:2.17.2'
+        compile 'org.apache.logging.log4j:log4j-slf4j-impl:2.17.2'
     }
     plugins {
         compile ':atmosphere-meteor:1.0.5'
