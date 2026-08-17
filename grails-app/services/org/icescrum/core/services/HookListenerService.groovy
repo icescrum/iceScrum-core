@@ -27,6 +27,8 @@ import groovyx.net.http.Method
 import org.icescrum.core.domain.Hook
 import org.icescrum.core.event.IceScrumEventType
 import org.icescrum.core.event.IceScrumListener
+import org.icescrum.core.hook.EventMessageRenderer
+import org.icescrum.core.hook.EventMessageRendererFactory
 import org.icescrum.core.support.ApplicationSupport
 
 class HookListenerService {
@@ -69,6 +71,13 @@ class HookListenerService {
                 log.debug("hooks found ids: ${allHooks.collect { it.id }.join(', ')}")
             }
             allHooks.groupBy { it.eventMessageRendererClass }.each { eventMessageRendererClass, hooks ->
+                EventMessageRenderer eventMessageRenderer
+                try {
+                    eventMessageRenderer = EventMessageRendererFactory.create(eventMessageRendererClass)
+                } catch (Exception | LinkageError exception) {
+                    log.error("Ignoring hooks with an invalid event message renderer", exception)
+                    return
+                }
                 def objectToRender
                 // Very special case for comment
                 if (events[0].endsWith("Comment")) {
@@ -79,7 +88,13 @@ class HookListenerService {
                     objectToRender = IceScrumEventType.DELETE == type ? dirtyProperties.findAll { prop -> return !(prop.value instanceof Collection) } : hookableObject
                 }
                 // Find the renderer
-                def payload = Class.forName("${eventMessageRendererClass ?: 'org.icescrum.core.hook.DefaultEventMessageRenderer'}").newInstance().render(objectToRender, events, dirtyProperties)
+                def payload
+                try {
+                    payload = eventMessageRenderer.render(objectToRender, events, dirtyProperties)
+                } catch (Exception | LinkageError exception) {
+                    log.error("Ignoring hooks whose event message renderer failed", exception)
+                    return
+                }
                 hooks.each { hook ->
                     Hook.async.task {
                         def http = new HTTPBuilder(hook.url)
