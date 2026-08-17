@@ -24,12 +24,15 @@ class CorsFilter implements Filter {
             HttpServletRequest req = (HttpServletRequest) request
             HttpServletResponse resp = (HttpServletResponse) response
             String origin = req.getHeader('Origin')
-            if (origin && (allowOriginRegex == null || allowOriginRegex.matcher(origin).matches())) {
+            // Credentialed CORS must be explicitly allowlisted. Missing configuration denies
+            // cross-origin access instead of reflecting every Origin value.
+            if (origin && allowOriginRegex != null && allowOriginRegex.matcher(origin).matches()) {
                 resp.addHeader('Access-Control-Allow-Origin', origin) // required for Access-Control-Allow-Credentials = true
                 resp.addHeader('Access-Control-Allow-Credentials', 'true')
+                resp.addHeader('Vary', 'Origin')
                 if (req.method == 'OPTIONS') {
                     resp.addHeader('Access-Control-Allow-Headers', 'origin, authorization, accept, content-type, x-requested-with' + (allowedHeaders ? (', ' + allowedHeaders) : '') )
-                    resp.addHeader('Access-Control-Allow-Methods', 'GET, HEAD, POST, PUT, DELETE, TRACE, OPTIONS')
+                    resp.addHeader('Access-Control-Allow-Methods', 'GET, HEAD, POST, PUT, DELETE, OPTIONS')
                     resp.addHeader('Access-Control-Max-Age', '3600')
                     response.setStatus(HttpServletResponse.SC_OK)
                     stopProcessing = true
