@@ -41,6 +41,6 @@ class TokenStorageService {
         if (username) {
             return userDetailsService.loadUserByUsername(username)
         }
-        throw new TokenNotFoundException("Token ${tokenValue} not found")
+        throw new TokenNotFoundException('Token not found')
     }
 }

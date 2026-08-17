@@ -22,6 +22,10 @@
 package org.icescrum.core.security.rest
 
 import org.springframework.security.authentication.AuthenticationProvider
+import org.springframework.security.authentication.AccountExpiredException
+import org.springframework.security.authentication.CredentialsExpiredException
+import org.springframework.security.authentication.DisabledException
+import org.springframework.security.authentication.LockedException
 import org.springframework.security.core.Authentication
 import org.springframework.security.core.AuthenticationException
 import org.springframework.security.core.userdetails.UserDetails
@@ -38,9 +42,26 @@ class TokenAuthenticationProvider implements AuthenticationProvider {
         RestAuthenticationToken authToken = (RestAuthenticationToken) authentication
         if (authToken.token) {
             UserDetails userDetails = tokenStorageService.loadUserByToken(authToken.getToken())
-            authToken = new RestAuthenticationToken(userDetails, userDetails.getPassword(), userDetails.getAuthorities(), authToken.getToken())
+            checkAccountStatus(userDetails)
+            // A bearer token is the credential. Do not retain the password hash in the security context.
+            authToken = new RestAuthenticationToken(userDetails, null, userDetails.getAuthorities(), authToken.getToken())
         }
         return authToken
+    }
+
+    private static void checkAccountStatus(UserDetails userDetails) {
+        if (!userDetails.accountNonLocked) {
+            throw new LockedException('User account is locked')
+        }
+        if (!userDetails.enabled) {
+            throw new DisabledException('User account is disabled')
+        }
+        if (!userDetails.accountNonExpired) {
+            throw new AccountExpiredException('User account has expired')
+        }
+        if (!userDetails.credentialsNonExpired) {
+            throw new CredentialsExpiredException('User credentials have expired')
+        }
     }
 
     @Override

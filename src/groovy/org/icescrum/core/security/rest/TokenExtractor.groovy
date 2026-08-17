@@ -31,14 +31,23 @@ class TokenExtractor {
 
     static String getToken(HttpServletRequest request) {
         String token = request.getHeader(TOKEN_HEADER)
-        token = token ?: request.getParameter(TOKEN_PARAMETER) ?: lookForAppsSpecificTokens(request)
+        if (!token && allowTokenParameter()) {
+            token = request.getParameter(TOKEN_PARAMETER)
+        }
+        token = token ?: lookForAppsSpecificTokens(request)
         return token
+    }
+
+    private static boolean allowTokenParameter() {
+        // URL credentials leak through browser history, referrers, and access logs.
+        // Keep legacy support opt-in rather than accepting them by default.
+        return Holders.grailsApplication?.config?.icescrum?.security?.allowTokenParameter == true
     }
 
     static private String lookForAppsSpecificTokens(HttpServletRequest request) {
         String token
-        Holders.grailsApplication.config.icescrum.security.authorizedTokenHeaders.find { String it ->
-             token = request.getHeader(it)
+        Holders.grailsApplication?.config?.icescrum?.security?.authorizedTokenHeaders?.find { String it ->
+            token = request.getHeader(it)
             if (token) {
                 return true
             }

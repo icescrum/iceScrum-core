@@ -47,7 +47,7 @@ class TokenAuthenticationFilter extends GenericFilterBean {
         String token = TokenExtractor.getToken(httpRequest)
         if (token) {
             if (this.logger.isDebugEnabled()) {
-                this.logger.debug("Token Authentication Authorization header found: '" + token + "'")
+                this.logger.debug("Token authentication credential found")
             }
             try {
                 RestAuthenticationToken authToken = new RestAuthenticationToken(token)
@@ -58,8 +58,9 @@ class TokenAuthenticationFilter extends GenericFilterBean {
                     }
                     SecurityContextHolder.getContext().setAuthentication(authResult)
                 } else {
-                    System.out.println("Invalid " + TokenExtractor.TOKEN_HEADER + ' ' + token + " in request sendError ${HttpServletResponse.SC_UNAUTHORIZED}")
+                    SecurityContextHolder.clearContext()
                     ((HttpServletResponse) response).setStatus(HttpServletResponse.SC_UNAUTHORIZED)
+                    return
                 }
                 if (this.logger.isDebugEnabled()) {
                     this.logger.debug("End TokenAuthenticationFilter ****")
@@ -70,8 +71,8 @@ class TokenAuthenticationFilter extends GenericFilterBean {
             catch (AuthenticationException e) {
                 SecurityContextHolder.clearContext()
                 if (this.logger.isDebugEnabled()) {
-                    this.logger.debug("Authentication request for failed: " + e)
-                    this.logger.debug "No authorized " + TokenExtractor.TOKEN_HEADER + ' ' + token + " in request sendError ${HttpServletResponse.SC_FORBIDDEN}"
+                    this.logger.debug("Token authentication failed: " + e.class.simpleName)
+                    this.logger.debug "Token authentication rejected with status ${HttpServletResponse.SC_FORBIDDEN}"
                 }
                 ((HttpServletResponse) response).setStatus(HttpServletResponse.SC_FORBIDDEN)
                 return
