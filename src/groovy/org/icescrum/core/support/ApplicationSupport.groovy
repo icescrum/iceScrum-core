@@ -418,23 +418,29 @@ class ApplicationSupport {
 
     static unzip(File zip, File destination) {
         def result = new ZipInputStream(new FileInputStream(zip))
+        File destinationRoot = destination.canonicalFile
 
         if (log.debugEnabled) {
-            log.debug "Unzip file : ${zip.name} to ${destination.absolutePath}"
+            log.debug "Unzip file : ${zip.name} to ${destinationRoot.absolutePath}"
         }
 
-        if (!destination.exists()) {
-            destination.mkdir()
+        if (!destinationRoot.exists() && !destinationRoot.mkdirs()) {
+            throw new IOException("Unable to create unzip destination")
         }
+        String destinationPrefix = destinationRoot.path + File.separator
         result.withStream {
             def entry
             while (entry = result.nextEntry) {
                 if (log.debugEnabled) {
                     log.debug "Unzipping : ${entry.name}"
                 }
+                File outputFile = new File(destinationRoot, entry.name).canonicalFile
+                if (outputFile != destinationRoot && !outputFile.path.startsWith(destinationPrefix)) {
+                    throw new IOException("ZIP entry resolves outside the destination")
+                }
                 if (!entry.isDirectory()) {
-                    new File(destination.absolutePath + File.separator + entry.name).parentFile?.mkdirs()
-                    def output = new FileOutputStream(destination.absolutePath + File.separator + entry.name)
+                    outputFile.parentFile?.mkdirs()
+                    def output = new FileOutputStream(outputFile)
                     output.withStream {
                         int len = 0
                         byte[] buffer = new byte[4096]
@@ -443,8 +449,9 @@ class ApplicationSupport {
                         }
                     }
                 } else {
-                    new File(destination.absolutePath + File.separator + entry.name).mkdir()
+                    outputFile.mkdirs()
                 }
+                result.closeEntry()
             }
         }
     }
@@ -859,7 +866,6 @@ class ApplicationSupport {
         def error = attrs.errors ? attrs.errors.allErrors.collect { [text: i18nService.message(error: it) + ' - ' + it.field] } :
                     attrs.code ? [text: i18nService.message(code: attrs.code, args: attrs.args)] :
                     attrs.text ? [text: attrs.text] :
-                    attrs.exception?.message ? [text: attrs.exception.message] :
                     [text: 'An unexpected error has occurred']
         return error
     }
