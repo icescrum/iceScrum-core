@@ -44,6 +44,8 @@ import org.springframework.mail.MailException
 import org.springframework.security.acls.domain.BasePermission
 import org.springframework.security.core.context.SecurityContextHolder
 
+import java.security.SecureRandom
+
 @Transactional
 class UserService extends IceScrumEventPublisher {
 
@@ -58,6 +60,8 @@ class UserService extends IceScrumEventPublisher {
     def notificationEmailService
     def aclCache
     def pushService
+
+    private static final SecureRandom PASSWORD_RANDOM = new SecureRandom()
 
     void save(User user, String token = null) {
         if (user.password) {
@@ -238,8 +242,7 @@ class UserService extends IceScrumEventPublisher {
 
     def resetPassword(User user) {
         def pool = ['a'..'z', 'A'..'Z', 0..9, '_'].flatten()
-        Random rand = new Random(System.currentTimeMillis())
-        def passChars = (0..10).collect { pool[rand.nextInt(pool.size())] }
+        def passChars = (0..<20).collect { pool[PASSWORD_RANDOM.nextInt(pool.size())] }
         def password = passChars.join('')
         update(user, [pwd: password])
         notificationEmailService.sendNewPassword(user, password)
