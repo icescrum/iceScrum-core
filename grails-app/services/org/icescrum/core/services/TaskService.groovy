@@ -49,7 +49,7 @@ class TaskService extends IceScrumEventPublisher {
     def attachmentService
     def commentService
 
-    @PreAuthorize('(inProject(#task.backlog?.parentProject) or inProject(#task.parentStory?.backlog)) and (!archivedProject(#task.backlog?.parentProject) or !archivedProject(#task.parentStory?.backlog))')
+    @PreAuthorize('(inProject(#task.backlog?.parentProject) and !archivedProject(#task.backlog?.parentProject)) or (inProject(#task.parentStory?.backlog) and !archivedProject(#task.parentStory?.backlog))')
     void save(Task task, User user) {
         ApplicationSupport.validateHexdecimalColor(task.color)
         if (task.parentStory?.parentSprint && !task.backlog) {

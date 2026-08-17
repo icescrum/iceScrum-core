@@ -31,12 +31,14 @@ import org.atmosphere.cpr.Broadcaster
 import org.icescrum.core.services.PushService
 import org.icescrum.core.support.ApplicationSupport
 import org.springframework.security.core.context.SecurityContext
+import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository
 
 class IceScrumAtmosphereEventListener implements AtmosphereResourceEventListener {
 
     private static final log = LogFactory.getLog(this)
     public static final USER_CONTEXT = 'user_context'
+    public static final AUTHORIZED_CHANNEL = 'authorized_push_channel'
     public static final GLOBAL_CONTEXT = '/stream/app/*'
     public static final GLOBAL_CONTEXT_NO_STAR = '/stream/app/'
 
@@ -50,11 +52,16 @@ class IceScrumAtmosphereEventListener implements AtmosphereResourceEventListener
         def request = event.resource.request
         AtmosphereUser user = createAtmosphereUser(event.resource)
         request.setAttribute(USER_CONTEXT, user)
-        String[] decodedPath = request.pathInfo ? request.pathInfo.split("/") : []
-        if (atmosphereMeteor.broadcasterFactory && decodedPath.length > 0) {
-            def channel = "/stream/app/" + decodedPath[decodedPath.length - 1]
+        String channel = (String) request.getAttribute(AUTHORIZED_CHANNEL)
+        if (atmosphereMeteor.broadcasterFactory && channel) {
             IceScrumBroadcaster broadcaster = atmosphereMeteor.broadcasterFactory.lookup(channel, true)
             broadcaster.addAtmosphereResource(event.resource)
+            // Authenticated clients also receive events addressed to their user on the global
+            // broadcaster. Anonymous public-workspace clients must never join it.
+            if (user.id != null && channel != GLOBAL_CONTEXT) {
+                IceScrumBroadcaster globalBroadcaster = atmosphereMeteor.broadcasterFactory.lookup(GLOBAL_CONTEXT, true)
+                globalBroadcaster.addAtmosphereResource(event.resource)
+            }
         }
         if (ApplicationSupport.betaFeatureEnabled("usersOnline")) {
             event.resource.broadcasters().each {
@@ -126,9 +133,11 @@ class IceScrumAtmosphereEventListener implements AtmosphereResourceEventListener
         def request = resource.request
         AtmosphereUser user = new AtmosphereUser()
         // Cannot use springSecurityService directly here because there is no hibernate session to look into
-        def context = (SecurityContext) request.session?.getAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY)
-        user.id = context?.authentication?.isAuthenticated() ? context.authentication.principal.id : null
-        user.username = context?.authentication?.isAuthenticated() ? context.authentication.principal.username : 'anonymous'
+        def context = (SecurityContext) request.getSession(false)?.getAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY)
+        def principal = context?.authentication?.principal
+        boolean authenticated = context?.authentication?.isAuthenticated() && principal instanceof UserDetails
+        user.id = authenticated ? principal.id : null
+        user.username = authenticated ? principal.username : 'anonymous'
         user.connection = new AtmosphereUserConnection(resource)
         return user
     }

@@ -34,10 +34,12 @@ import org.codehaus.groovy.grails.orm.support.GroovyAwareNamedTransactionAttribu
 import org.codehaus.groovy.grails.plugins.jasper.JasperExportFormat
 import org.codehaus.groovy.grails.plugins.jasper.JasperReportDef
 import org.codehaus.groovy.grails.plugins.jasper.JasperService
+import org.hibernate.ObjectNotFoundException
 import org.icescrum.atmosphere.AtmosphereUser
 import org.icescrum.core.app.AppDefinitionArtefactHandler
 import org.icescrum.core.cache.IsControllerWebKeyGenerator
 import org.icescrum.core.cors.CorsFilter
+import org.icescrum.core.domain.WorkspaceType
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
 import org.icescrum.core.event.IceScrumListener
@@ -48,6 +50,8 @@ import org.icescrum.core.security.rest.TokenAuthenticationFilter
 import org.icescrum.core.security.rest.TokenAuthenticationProvider
 import org.icescrum.core.security.rest.TokenStorageService
 import org.icescrum.core.services.AppDefinitionService
+import org.icescrum.core.services.AttachmentService
+import org.icescrum.core.services.SecurityService
 import org.icescrum.core.services.UiDefinitionService
 import org.icescrum.core.support.ApplicationSupport
 import org.icescrum.core.support.ProgressSupport
@@ -191,6 +195,8 @@ ERROR: iceScrum v7 has detected that you attempt to run it on an existing R6 ins
         SpringSecurityService springSecurityService = ctx.getBean('springSecurityService')
         HdImageService hdImageService = ctx.getBean('hdImageService')
         AttachmentableService attachmentableService = ctx.getBean('attachmentableService')
+        AttachmentService attachmentService = ctx.getBean('attachmentService')
+        SecurityService securityService = ctx.getBean('securityService')
         JasperService jasperService = ctx.getBean('jasperService')
         UiDefinitionService uiDefinitionService = ctx.getBean('uiDefinitionService')
         AppDefinitionService appDefinitionService = ctx.getBean('appDefinitionService')
@@ -200,7 +206,7 @@ ERROR: iceScrum v7 has detected that you attempt to run it on an existing R6 ins
             addCleanBeforeBindData(it)
             addJasperMethod(it, springSecurityService, jasperService)
             if (it.logicalPropertyName in controllersWithDownloadAndPreview) {
-                addDownloadAndPreviewMethods(it, attachmentableService, hdImageService)
+                addDownloadAndPreviewMethods(it, attachmentableService, attachmentService, securityService, springSecurityService, hdImageService)
             }
         }
         application.serviceClasses.each {
@@ -258,13 +264,15 @@ ERROR: iceScrum v7 has detected that you attempt to run it on an existing R6 ins
             def controller = application.getControllerClass(event.source?.name)
             HdImageService hdImageService = event.ctx.getBean('hdImageService')
             AttachmentableService attachmentableService = event.ctx.getBean('attachmentableService')
+            AttachmentService attachmentService = event.ctx.getBean('attachmentService')
+            SecurityService securityService = event.ctx.getBean('securityService')
+            SpringSecurityService springSecurityService = event.ctx.getBean('springSecurityService')
             if (uiDefinitionService.hasWindowDefinition(controller.logicalPropertyName)) {
                 if (controller.logicalPropertyName in controllersWithDownloadAndPreview) {
-                    addDownloadAndPreviewMethods(controller, attachmentableService, hdImageService)
+                    addDownloadAndPreviewMethods(controller, attachmentableService, attachmentService, securityService, springSecurityService, hdImageService)
                 }
             }
             if (application.isControllerClass(event.source)) {
-                SpringSecurityService springSecurityService = event.ctx.getBean('springSecurityService')
                 JasperService jasperService = event.ctx.getBean('jasperService')
                 addCleanBeforeBindData(event.source)
                 addJasperMethod(event.source, springSecurityService, jasperService)
@@ -282,27 +290,55 @@ ERROR: iceScrum v7 has detected that you attempt to run it on an existing R6 ins
         ((AppDefinitionService) event.application.mainContext.appDefinitionService).reloadAppDefinitions()
     }
 
-    private addDownloadAndPreviewMethods(clazz, attachmentableService, hdImageService) {
+    private addDownloadAndPreviewMethods(clazz, attachmentableService, attachmentService, securityService, springSecurityService, hdImageService) {
         def mc = clazz.metaClass
+        def findAttachmentInWorkspace = { params ->
+            if (!securityService.decodeKeys(params)) {
+                return null
+            }
+            String workspaceType = params.workspaceType?.toString()
+            def workspaceValue = params.workspace ?: (workspaceType ? params[workspaceType] : null)
+            if (!(workspaceType in [WorkspaceType.PROJECT, WorkspaceType.PORTFOLIO]) || !workspaceValue || !params.id) {
+                return null
+            }
+            try {
+                Long workspaceId = workspaceValue.toString().toLong()
+                Long attachmentId = params.id.toString().toLong()
+                def authentication = springSecurityService.authentication
+                boolean authorized = workspaceType == WorkspaceType.PROJECT ?
+                        (securityService.inProject(workspaceId, authentication) ||
+                                securityService.stakeHolder(workspaceId, authentication, false, clazz.logicalPropertyName)) :
+                        (securityService.businessOwner(workspaceId, authentication) ||
+                                securityService.portfolioStakeHolder(workspaceId, authentication))
+                return authorized ? attachmentService.withAttachment(workspaceId, workspaceType, attachmentId) : null
+            } catch (ObjectNotFoundException | NumberFormatException ignored) {
+                return null
+            }
+        }
         def dynamicActions = [
                 download: { ->
-                    Attachment attachment = Attachment.get(params.id as Long)
+                    Attachment attachment = findAttachmentInWorkspace(params)
                     if (attachment) {
                         if (attachment.url) {
-                            redirect(url: "${attachment.url}")
-                            return
+                            String redirectUrl = getSafeAttachmentUrl(attachment.url)
+                            if (redirectUrl) {
+                                redirect(url: redirectUrl)
+                                return
+                            }
                         } else {
                             File file = attachmentableService.getFile(attachment)
 
-                            if (file.exists()) {
+                            if (file?.exists()) {
                                 if (!attachment.previewable) {
-                                    String filename = attachment.filename
+                                    String filename = getSafeAttachmentFilename(attachment.filename)
                                     ['Content-disposition': "attachment;filename=\"$filename\"", 'Cache-Control': 'private', 'Pragma': ''].each { k, v ->
                                         response.setHeader(k, v)
                                     }
                                 }
                                 response.contentType = attachment.contentType
-                                response.outputStream << file.newInputStream()
+                                file.withInputStream {
+                                    response.outputStream << it
+                                }
                                 return
                             }
                         }
@@ -310,28 +346,47 @@ ERROR: iceScrum v7 has detected that you attempt to run it on an existing R6 ins
                     response.status = HttpServletResponse.SC_NOT_FOUND
                 },
                 preview : {
-                    Attachment attachment = Attachment.get(params.id as Long)
-                    File file = attachmentableService.getFile(attachment)
-                    def thumbnail = new File(file.parentFile.absolutePath + File.separator + attachment.id + '-thumbnail.' + (attachment.ext?.toLowerCase() != 'gif' ? attachment.ext : 'jpg'))
-                    if (!thumbnail.exists()) {
-                        thumbnail.setBytes(hdImageService.scale(file.absolutePath, 40, 40))
+                    Attachment attachment = findAttachmentInWorkspace(params)
+                    File file = attachment && !attachment.url ? attachmentableService.getFile(attachment) : null
+                    if (file?.exists()) {
+                        def thumbnail = new File(file.parentFile.absolutePath + File.separator + attachment.id + '-thumbnail.' + (attachment.ext?.toLowerCase() != 'gif' ? attachment.ext : 'jpg'))
+                        if (!thumbnail.exists()) {
+                            thumbnail.setBytes(hdImageService.scale(file.absolutePath, 40, 40))
+                        }
+                        if (thumbnail.exists()) {
+                            response.contentType = attachment.contentType
+                            thumbnail.withInputStream {
+                                response.outputStream << it
+                            }
+                            return
+                        }
                     }
-                    if (thumbnail.exists()) {
-                        response.contentType = attachment.contentType
-                        response.outputStream << thumbnail.newInputStream()
-                    } else {
-                        render(status: 404)
-                    }
+                    render(status: 404)
                 }
         ]
         dynamicActions.each { actionName, actionClosure ->
             mc."${GrailsClassUtils.getGetterName(actionName)}" = { ->
-                actionClosure.delegate = delegate
-                actionClosure.resolveStrategy = Closure.DELEGATE_FIRST
-                actionClosure
+                Closure requestAction = (Closure) actionClosure.clone()
+                requestAction.delegate = delegate
+                requestAction.resolveStrategy = Closure.DELEGATE_FIRST
+                requestAction
             }
             clazz.registerMapping(actionName)
         }
+    }
+
+    private static String getSafeAttachmentUrl(String url) {
+        try {
+            URI uri = new URI(url)
+            String scheme = uri.scheme?.toLowerCase(Locale.ENGLISH)
+            return uri.absolute && scheme in ['http', 'https'] && uri.host && !uri.userInfo ? uri.toASCIIString() : null
+        } catch (URISyntaxException ignored) {
+            return null
+        }
+    }
+
+    private static String getSafeAttachmentFilename(String filename) {
+        return (filename ?: 'attachment').replaceAll(/[\r\n"\\]/, '_')
     }
 
     private void addExportDomainsPlugins(source, config) {

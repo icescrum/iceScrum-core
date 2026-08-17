@@ -35,6 +35,7 @@ import org.icescrum.core.domain.Sprint
 import org.icescrum.core.domain.Story
 import org.icescrum.core.domain.Task
 import org.icescrum.core.domain.User
+import org.icescrum.core.domain.WorkspaceType
 import org.icescrum.core.error.BusinessException
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
@@ -113,11 +114,17 @@ class AttachmentService extends IceScrumEventPublisher {
             throw new ObjectNotFoundException(id, 'Attachment')
         }
         AttachmentLink attachmentLink = AttachmentLink.findByAttachment(attachment)
+        if (!attachmentLink) {
+            throw new ObjectNotFoundException(id, 'Attachment')
+        }
         withAttachmentable(workspaceId, workspaceType, attachmentLink.attachmentRef, attachmentLink.type) // Important security check that the attachmenttable exists and in the right project
         return attachment
     }
 
     Object withAttachmentable(long workspaceId, String workspaceType, long attachmentableId, String type) {
+        if (type in ['story', 'task', 'release', 'sprint'] && workspaceType != WorkspaceType.PROJECT) {
+            throw new ObjectNotFoundException(attachmentableId, type.capitalize())
+        }
         if (type == 'story') {
             return Story.withStory(workspaceId, attachmentableId)
         } else if (type == 'task') {
@@ -125,13 +132,27 @@ class AttachmentService extends IceScrumEventPublisher {
         } else if (type == 'feature') {
             return Feature.withFeature(workspaceId, attachmentableId, workspaceType)
         } else if (type == 'release') {
-            return Release.getInProject(workspaceId, attachmentableId).list()
+            return Release.withRelease(workspaceId, attachmentableId)
         } else if (type == 'sprint') {
-            return Sprint.getInProject(workspaceId, attachmentableId).list()
+            return Sprint.withSprint(workspaceId, attachmentableId)
         } else if (type == 'project') {
-            return Project.get(attachmentableId)
+            if (workspaceType != WorkspaceType.PROJECT || workspaceId != attachmentableId) {
+                throw new ObjectNotFoundException(attachmentableId, 'Project')
+            }
+            Project project = Project.get(attachmentableId)
+            if (!project) {
+                throw new ObjectNotFoundException(attachmentableId, 'Project')
+            }
+            return project
         } else if (type == 'portfolio') {
-            return Portfolio.get(attachmentableId)
+            if (workspaceType != WorkspaceType.PORTFOLIO || workspaceId != attachmentableId) {
+                throw new ObjectNotFoundException(attachmentableId, 'Portfolio')
+            }
+            Portfolio portfolio = Portfolio.get(attachmentableId)
+            if (!portfolio) {
+                throw new ObjectNotFoundException(attachmentableId, 'Portfolio')
+            }
+            return portfolio
         } else {
             throw new ObjectNotFoundException(attachmentableId, type)
         }
