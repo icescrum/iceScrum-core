@@ -6,10 +6,12 @@ public class FileUploadInfo {
     long totalSize
     int totalChunks
     String identifier
+    String storageKey
     String filename
     String relativePath
     HashSet<ChunkNumber> uploadedChunks = new HashSet<ChunkNumber>()
     String filePath
+    boolean completed = false
 
     public static class ChunkNumber {
         int number;
@@ -30,19 +32,50 @@ public class FileUploadInfo {
     }
 
     boolean valid() {
-        return !(chunkSize < 0 || totalSize < 0 || identifier.isEmpty() || filename.isEmpty() || relativePath.isEmpty())
+        return chunkSize > 0 &&
+                totalSize > 0 &&
+                totalChunks > 0 &&
+                identifier?.trim() &&
+                storageKey?.trim() &&
+                filename?.trim() &&
+                relativePath?.trim()
     }
 
-    public boolean checkIfUploadFinished() {
+    synchronized boolean hasUploadedChunk(int chunkNumber) {
+        return uploadedChunks.contains(new ChunkNumber(chunkNumber))
+    }
+
+    synchronized boolean storeChunk(int chunkNumber, byte[] bytes) {
+        ChunkNumber number = new ChunkNumber(chunkNumber)
+        if (completed || uploadedChunks.contains(number)) {
+            return false
+        }
+        long offset = (chunkNumber - 1L) * chunkSize
+        RandomAccessFile raf = new RandomAccessFile(filePath, "rw")
+        try {
+            raf.seek(offset)
+            raf.write(bytes)
+        } finally {
+            raf.close()
+        }
+        uploadedChunks.add(number)
+        return checkIfUploadFinished()
+    }
+
+    public synchronized boolean checkIfUploadFinished() {
         //check if upload finished
-        if (totalChunks == uploadedChunks.size()) {
+        if (!completed && totalChunks == uploadedChunks.size()) {
             //Upload finished, change filename.
             File file = new File(filePath)
-            if (file.absolutePath.contains(".temp")) {
+            if (file.absolutePath.endsWith(".temp")) {
                 String new_path = file.absolutePath.substring(0, file.absolutePath.length() - ".temp".length())
-                file.renameTo(new File(new_path))
+                File completedFile = new File(new_path)
+                if (!file.renameTo(completedFile) || !completedFile.exists()) {
+                    throw new IOException('Unable to finalize uploaded file')
+                }
                 filePath = new_path
             }
+            completed = true
             return true
         } else {
             return false

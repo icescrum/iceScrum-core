@@ -146,9 +146,19 @@ public final class UtilsWebComponents {
 
     public static def handleUpload = { def request, def params, def endOfUploadClosure, def deleteFile = true ->
         def chunkNumber = params.int('flowChunkNumber') != null ? params.int('flowChunkNumber') : -1
-        def uploadInfo = getFileUploadInfo(params)
+        FileUploadInfo uploadInfo
+        try {
+            uploadInfo = getFileUploadInfo(request, params)
+        } catch (IllegalArgumentException ignored) {
+            delegate.render(status: 400)
+            return
+        }
+        if (chunkNumber < 1 || chunkNumber > uploadInfo.totalChunks) {
+            delegate.render(status: 400)
+            return
+        }
         if (request.method == 'GET') {
-            if (uploadInfo.uploadedChunks.contains(new FileUploadInfo.ChunkNumber(chunkNumber))) {
+            if (uploadInfo.hasUploadedChunk(chunkNumber)) {
                 if (uploadInfo.checkIfUploadFinished()) {
                     endOfUploadClosure(uploadInfo)
                     if (deleteFile) {
@@ -161,13 +171,14 @@ public final class UtilsWebComponents {
                 delegate.render(status: 204)
             }
         } else if (request.method == 'POST') {
-            RandomAccessFile raf = new RandomAccessFile(uploadInfo.filePath, "rw")
-            raf.seek((chunkNumber - 1) * uploadInfo.chunkSize)
             def file = params.file ?: request.getFile('file')
-            raf.write(file.getBytes())
-            raf.close()
-            uploadInfo.uploadedChunks.add(new FileUploadInfo.ChunkNumber(chunkNumber))
-            if (uploadInfo.checkIfUploadFinished()) {
+            byte[] bytes = file?.getBytes()
+            long offset = (chunkNumber - 1L) * uploadInfo.chunkSize
+            if (!bytes || bytes.length > uploadInfo.chunkSize || offset + bytes.length > uploadInfo.totalSize) {
+                delegate.render(status: 400)
+                return
+            }
+            if (uploadInfo.storeChunk(chunkNumber, bytes)) {
                 endOfUploadClosure(uploadInfo)
                 if (deleteFile) {
                     FileUploadInfoStorage.instance.remove(uploadInfo)
@@ -178,7 +189,7 @@ public final class UtilsWebComponents {
         }
     }
 
-    private static FileUploadInfo getFileUploadInfo(def params) {
+    private static FileUploadInfo getFileUploadInfo(def request, def params) {
 
         def info = ['chunkSize'   : (params.remove('flowChunkSize') ?: -1).toInteger(),
                     'totalSize'   : (params.remove('flowTotalSize') ?: -1).toLong(),
@@ -186,9 +197,14 @@ public final class UtilsWebComponents {
                     'identifier'  : params.remove('flowIdentifier'),
                     'filename'    : params.remove('flowFilename'),
                     'relativePath': params.remove("flowRelativePath")]
+        // Prefer the authenticated principal so stateless token clients can upload chunks.
+        // Anonymous flows are isolated with a server session.
+        String uploadOwner = request.userPrincipal?.name ?: request.getSession(true).id
+        info.storageKey = "${uploadOwner}:${request.requestURI}:${info.identifier}"
 
-        def test = new File(System.getProperty("java.io.tmpdir"), (String) info.filename)
-        info.filePath = test.absolutePath + ".temp"
+        if (!new FileUploadInfo(info).valid()) {
+            throw new IllegalArgumentException('Invalid upload metadata')
+        }
         return FileUploadInfoStorage.instance.get(info)
     }
 }
