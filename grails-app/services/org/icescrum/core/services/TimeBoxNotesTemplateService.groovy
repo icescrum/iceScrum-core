@@ -21,7 +21,7 @@
  */
 package org.icescrum.core.services
 
-import grails.transaction.Transactional
+import grails.gorm.transactions.Transactional
 import groovy.text.SimpleTemplateEngine
 import org.icescrum.core.domain.*
 import org.icescrum.core.support.ApplicationSupport

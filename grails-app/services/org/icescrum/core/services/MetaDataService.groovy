@@ -23,11 +23,13 @@
  */
 package org.icescrum.core.services
 
+import grails.gorm.transactions.Transactional
 import grails.converters.JSON
 import org.icescrum.core.domain.MetaData
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.utils.DateUtils
 
+@Transactional // Grails 7: services are no longer implicitly transactional
 class MetaDataService extends IceScrumEventPublisher {
 
     void addOrUpdateMetadata(def object, String metaKey, String metaValue) {

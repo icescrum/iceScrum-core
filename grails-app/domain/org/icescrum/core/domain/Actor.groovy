@@ -67,7 +67,7 @@ class Actor implements Serializable, Comparable<Actor> {
     }
 
     static Actor withActor(long project, long id) {
-        Actor actor = (Actor) getInProject(project, id).list()
+        Actor actor = (Actor) getInProject(project, id).get() // Grails 7: uniqueResult named query returns single object via get(), not list()
         if (!actor) {
             throw new ObjectNotFoundException(id, 'Actor')
         }
@@ -91,7 +91,7 @@ class Actor implements Serializable, Comparable<Actor> {
         if (obj == null) {
             return false
         }
-        if (getClass() != obj.getClass()) {
+        if (org.hibernate.Hibernate.getClass(this) != org.hibernate.Hibernate.getClass(obj)) { // Grails 7/Hibernate 5.6: proxy-safe (obj may be a lazy proxy)
             return false
         }
         final Actor other = (Actor) obj

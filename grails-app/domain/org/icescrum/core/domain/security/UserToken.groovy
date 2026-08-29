@@ -38,7 +38,7 @@ class UserToken implements Serializable {
     static mapping = {
         cache true
         version false
-        id generator: "assigned", column: "id", unique: "true"
+        id generator: "assigned", column: "id", unique: true
         table 'is_user_tokens'
     }
 

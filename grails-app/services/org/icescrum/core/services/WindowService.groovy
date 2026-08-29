@@ -22,11 +22,13 @@
  */
 package org.icescrum.core.services
 
+import grails.gorm.transactions.Transactional
 import org.icescrum.core.domain.User
 import org.icescrum.core.domain.Window
 import org.icescrum.core.error.BusinessException
 import org.icescrum.core.ui.WindowDefinition
 
+@Transactional // Grails 7: services are no longer implicitly transactional
 class WindowService {
 
     def uiDefinitionService

@@ -24,7 +24,7 @@
 package org.icescrum.core.services
 
 import grails.converters.JSON
-import grails.transaction.Transactional
+import grails.gorm.transactions.Transactional
 import grails.util.GrailsNameUtils
 import org.atmosphere.cpr.AtmosphereResource
 import org.atmosphere.cpr.Broadcaster

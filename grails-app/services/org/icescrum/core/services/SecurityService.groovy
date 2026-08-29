@@ -22,11 +22,12 @@
 
 package org.icescrum.core.services
 
+import grails.gorm.transactions.Transactional
 import grails.plugin.springsecurity.SpringSecurityUtils
 import grails.plugin.springsecurity.acl.AclClass
 import grails.plugin.springsecurity.acl.AclObjectIdentity
 import grails.plugin.springsecurity.acl.AclSid
-import org.codehaus.groovy.grails.orm.hibernate.cfg.GrailsHibernateUtil
+import org.grails.orm.hibernate.cfg.GrailsHibernateUtil
 import org.icescrum.core.domain.*
 import org.icescrum.core.domain.security.Authority
 import org.springframework.http.HttpMethod
@@ -35,12 +36,13 @@ import org.springframework.security.acls.domain.PrincipalSid
 import org.springframework.security.acls.model.*
 import org.springframework.security.core.Authentication
 import org.springframework.security.core.context.SecurityContextHolder as SCH
-import org.springframework.security.oauth2.provider.expression.OAuth2ExpressionUtils
+import org.icescrum.core.security.OAuth2Support
 import org.springframework.util.Assert
 import org.springframework.web.context.request.RequestContextHolder as RCH
 
 import static org.springframework.security.acls.domain.BasePermission.*
 
+@Transactional // Grails 7: services are no longer implicitly transactional
 class SecurityService {
 
     def aclUtilService
@@ -261,7 +263,7 @@ class SecurityService {
     }
 
     boolean stakeHolder(project, auth, onlyPrivate, controllerName = null) {
-        if (OAuth2ExpressionUtils.isOAuth(auth)) {
+        if (OAuth2Support.isOAuth(auth)) {
             return false
         }
         if (!springSecurityService.isLoggedIn() && onlyPrivate) {
@@ -443,7 +445,7 @@ class SecurityService {
     }
 
     boolean portfolioStakeHolder(portfolio, auth) {
-        if (OAuth2ExpressionUtils.isOAuth(auth)) {
+        if (OAuth2Support.isOAuth(auth)) {
             return false
         }
         if (!springSecurityService.isLoggedIn()) {
@@ -491,7 +493,7 @@ class SecurityService {
     MutableAcl createAcl(ObjectIdentity objectIdentity, parent = null) throws AlreadyExistsException {
         Assert.notNull objectIdentity, 'Object Identity required'
         // Check this object identity hasn't already been persisted
-        if (aclService.retrieveObjectIdentity(objectIdentity)) {
+        if (retrieveObjectIdentity(objectIdentity)) {
             throw new AlreadyExistsException("Object identity '$objectIdentity' already exists")
         }
         // Need to retrieve the current principal, in order to know who "owns" this ACL (can be changed later on)
@@ -499,6 +501,15 @@ class SecurityService {
         // Create the acl_object_identity row
         createObjectIdentity objectIdentity, sid, parent
         return aclService.readAclById(objectIdentity)
+    }
+
+    // Was aclService.retrieveObjectIdentity, removed from the Grails 7 acl plugin
+    protected AclObjectIdentity retrieveObjectIdentity(ObjectIdentity objectIdentity) {
+        AclClass aclClass = AclClass.findByClassName(objectIdentity.type)
+        if (!aclClass) {
+            return null
+        }
+        return AclObjectIdentity.findByAclClassAndObjectId(aclClass, objectIdentity.identifier)
     }
 
     protected void createObjectIdentity(ObjectIdentity object, Sid owner, parent = null) {
@@ -510,6 +521,10 @@ class SecurityService {
                 owner: ownerSid,
                 parent: parent,
                 entriesInheriting: true)
+        // Flush the GORM inserts (sid/class/object-identity) so the raw-JDBC readAclById in createAcl() sees
+        // them within the same transaction. Without this, PostgreSQL's lookup misses the un-flushed rows and
+        // throws NotFoundException (H2 happened to flush in time); the whole create then rolls back.
+        AclObjectIdentity.withSession { it.flush() }
     }
 
     public boolean owner(domain, Authentication auth) {
@@ -656,22 +671,33 @@ class SecurityService {
     }
 
     private boolean isAuthorizedOAuth(auth, workspace) {
-        if (!OAuth2ExpressionUtils.isOAuth(auth)) {
+        if (!OAuth2Support.isOAuth(auth)) {
             return true
         }
         def request = RCH.requestAttributes.currentRequest
         if (workspace instanceof Closure) { // Allow dynamic resolution according to request
             workspace = workspace(request)
         }
-        return (request.method == HttpMethod.GET && OAuth2ExpressionUtils.hasAnyScope(auth, [workspace + ':read'] as String[])) || OAuth2ExpressionUtils.hasAnyScope(auth, [workspace] as String[])
+        return (request.method == HttpMethod.GET && OAuth2Support.hasAnyScope(auth, [workspace + ':read'] as String[])) || OAuth2Support.hasAnyScope(auth, [workspace] as String[])
     }
 
     private def getWorkspaceIdFromRequest(request, workspaceType) {
+        // Grails 7: the injected holder is an AOP-proxied wrapper whose match()
+        // eagerly resolves controller names and throws for \$controller-token
+        // mappings; we only need the raw mapping parameters, so unwrap down to
+        // the plain holder
+        def holder = grailsUrlMappingsHolder
+        if (holder instanceof org.springframework.aop.framework.Advised) {
+            holder = holder.targetSource.target
+        }
+        if (holder.hasProperty('urlMappingsHolderDelegate')) {
+            holder = holder.urlMappingsHolderDelegate
+        }
         def extractParam = { paramKey ->
             // Required because security checks can be done before filter execution and param decoding
             def paramValue = request.getParameter(paramKey) // Query parameter
             if (!paramValue) {
-                paramValue = grailsUrlMappingsHolder.match(request.forwardURI.replaceFirst(request.contextPath, ''))?.parameters?.getAt(paramKey) // URL mapping parameter
+                paramValue = holder.match(request.forwardURI.replaceFirst(request.contextPath, ''))?.parameters?.getAt(paramKey) // URL mapping parameter
             }
             return paramValue
         }

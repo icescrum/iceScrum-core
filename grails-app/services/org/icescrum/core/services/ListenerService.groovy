@@ -23,13 +23,15 @@
  */
 package org.icescrum.core.services
 
-import org.codehaus.groovy.grails.orm.hibernate.cfg.GrailsHibernateUtil
+import grails.gorm.transactions.Transactional
+import org.grails.orm.hibernate.cfg.GrailsHibernateUtil
 import org.grails.comments.Comment
 import org.icescrum.core.domain.*
 import org.icescrum.core.event.IceScrumEventType
 import org.icescrum.core.event.IceScrumListener
 import org.icescrum.plugins.attachmentable.domain.Attachment
 
+@Transactional // Grails 7: services are no longer implicitly transactional
 class ListenerService {
 
     def springSecurityService
@@ -239,7 +241,7 @@ class ListenerService {
                     pushService.broadcastToProjectRelatedChannels(IceScrumEventType.UPDATE, [class: 'Task', id: it.id, rank: it.rank, messageId: 'task-' + it.id + '-rank'], project.id)
                 }
             }
-            pushOtherRank(((Sprint) task.backlog)?.tasks)
+            pushOtherRank(task.sprintBacklog?.tasks)
             pushOtherRank(task.parentStory?.tasks)
         }
         if (dirtyProperties.containsKey('parentStory')) {

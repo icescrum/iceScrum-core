@@ -24,9 +24,10 @@
 
 package org.icescrum.core.services
 
+import groovy.xml.XmlSlurper
 import grails.converters.JSON
 import grails.plugin.springsecurity.SpringSecurityUtils
-import grails.transaction.Transactional
+import grails.gorm.transactions.Transactional
 import grails.validation.ValidationException
 import groovy.xml.MarkupBuilder
 import org.icescrum.core.domain.*
@@ -156,7 +157,7 @@ class ProjectService extends IceScrumEventPublisher {
                 }
             }
             cliches?.eachWithIndex { cliche, index ->
-                def xmlRoot = new XmlSlurper().parseText(cliche.data)
+                def xmlRoot = org.icescrum.core.utils.ServicesUtils.secureXmlSlurper().parseText(cliche.data)
                 if (xmlRoot) {
                     values << [
                             (Story.STATE_SUGGESTED) : xmlRoot."${Cliche.SUGGESTED_STORIES}".toInteger(),
@@ -193,7 +194,7 @@ class ProjectService extends IceScrumEventPublisher {
                 }
             }
             cliches?.eachWithIndex { cliche, index ->
-                def xmlRoot = new XmlSlurper().parseText(cliche.data)
+                def xmlRoot = org.icescrum.core.utils.ServicesUtils.secureXmlSlurper().parseText(cliche.data)
                 if (xmlRoot) {
                     def a = xmlRoot."${Cliche.PROJECT_POINTS}".toBigDecimal()
                     def b = xmlRoot."${Cliche.PROJECT_REMAINING_POINTS}".toBigDecimal()
@@ -273,6 +274,7 @@ class ProjectService extends IceScrumEventPublisher {
                     sprintReviewHour: projectXml.preferences.sprintReviewHour.text(),
                     sprintRetrospectiveHour: projectXml.preferences.sprintRetrospectiveHour.text(),
                     timezone: projectXml.preferences.timezone.text() ?: grailsApplication.config.icescrum.timezone.default)
+            project.preferences.project = project // Grails 7: set the inverse side; import validates before the cascade-save would wire it
 
             options.project = project
             options.userUIDByImportedID = [:]
@@ -466,7 +468,7 @@ class ProjectService extends IceScrumEventPublisher {
             String cleanedXmlText = ServicesUtils.cleanXml(xmlText)
             def exportXML
             try {
-                exportXML = new XmlSlurper().parseText(cleanedXmlText)
+                exportXML = org.icescrum.core.utils.ServicesUtils.secureXmlSlurper().parseText(cleanedXmlText)
             } catch (SAXParseException e) {
                 if (log.debugEnabled) {
                     log.debug(e.message)
@@ -808,7 +810,7 @@ class ProjectService extends IceScrumEventPublisher {
     def export(writer, Project project) {
         def builder = new MarkupBuilder(writer)
         builder.mkp.xmlDeclaration(version: "1.0", encoding: "UTF-8")
-        def g = grailsApplication.mainContext.getBean('org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib')
+        def g = grailsApplication.mainContext.getBean('org.grails.plugins.web.taglib.ApplicationTagLib')
         builder.export(version: g.meta(name: "app.version")) {
             project.xml(builder)
         }

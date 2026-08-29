@@ -36,6 +36,7 @@ class AccessToken implements Serializable {
         version false
         scope lazy: false
         table 'is_oauth_a_token'
+        value column: '`value`' // VALUE is a reserved word in H2 2.x; backticks make Hibernate quote it in the dialect-specific way
         if (System.properties['icescrum.oracle']) {
             additionalInformation joinTable: [name: 'is_oauth_a_token_information']
         }

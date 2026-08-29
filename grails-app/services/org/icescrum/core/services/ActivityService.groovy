@@ -23,6 +23,7 @@
  */
 package org.icescrum.core.services
 
+import grails.gorm.transactions.Transactional
 import grails.util.GrailsNameUtils
 import org.hibernate.proxy.HibernateProxyHelper
 import org.icescrum.core.domain.Activity
@@ -32,6 +33,7 @@ import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
 import org.icescrum.core.utils.DateUtils
 
+@Transactional // Grails 7: services are no longer implicitly transactional
 class ActivityService extends IceScrumEventPublisher {
 
     Activity addActivity(Object item, User poster, String code, String label, String field = null, String beforeValue = null, String afterValue = null, String afterLabel = null) {

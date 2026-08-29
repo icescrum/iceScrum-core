@@ -71,11 +71,13 @@ class Activity implements Serializable, Comparable {
 
     @Override
     int compareTo(Object o) {
-        return parentType.compareTo(o.parentType) ?:
-               parentRef.compareTo(o.parentRef) ?:
-               dateCreated.compareTo(o.dateCreated) ?:
-               code.compareTo(o.code) ?:
-               field?.compareTo(o.field) ?:
+        // Null-safe spaceship: dateCreated (GORM autoTimestamp) is null until flush, but a SortedSet compares
+        // on add — .compareTo() on the null NPEs (seen on PostgreSQL); Groovy's <=> handles nulls.
+        return (parentType <=> o.parentType) ?:
+               (parentRef <=> o.parentRef) ?:
+               (dateCreated <=> o.dateCreated) ?:
+               (code <=> o.code) ?:
+               (field <=> o.field) ?:
                0
     }
 

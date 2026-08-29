@@ -96,7 +96,7 @@ class AcceptanceTest implements Serializable {
                    WHERE at.parentStory.backlog.id = :pid 
                    AND (at.name LIKE :term OR at.description LIKE :term)
                    ${states ? "AND at.state in (${states.join(',')})" : ''}
-                   ORDER BY at.parentStory.state""", [pid: projectId, term: '%' + term + '%']
+                   ORDER BY at.parentStory.state""".toString(), [pid: projectId, term: '%' + term + '%']
         )
     }
 
@@ -108,7 +108,7 @@ class AcceptanceTest implements Serializable {
                    AND (at.name LIKE :term OR at.description LIKE :term)
                    AND at.parentStory.id = :sid
                    ${states ? "AND at.state in (${states.join(',')})" : ''}
-                   ORDER BY at.rank, at.uid""", [sid: storyId, pid: projectId, term: '%' + term + '%'])
+                   ORDER BY at.rank, at.uid""".toString(), [sid: storyId, pid: projectId, term: '%' + term + '%'])
     }
 
     static List<AcceptanceTest> getAllInSprint(projectId, sprintId, term = '', states = []) {
@@ -119,7 +119,7 @@ class AcceptanceTest implements Serializable {
                    AND (at.name LIKE :term OR at.description LIKE :term)
                    AND at.parentStory.parentSprint.id = :sid
                    ${states ? "AND at.state in (${states.join(',')})" : ''}
-                   ORDER BY at.parentStory.rank, at.rank, at.uid""", [sid: sprintId, pid: projectId, term: '%' + term + '%'])
+                   ORDER BY at.parentStory.rank, at.rank, at.uid""".toString(), [sid: sprintId, pid: projectId, term: '%' + term + '%'])
     }
 
     static AcceptanceTest withAcceptanceTest(long projectId, long id) {

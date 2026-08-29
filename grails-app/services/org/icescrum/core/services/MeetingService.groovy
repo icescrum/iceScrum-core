@@ -24,11 +24,13 @@
 package org.icescrum.core.services
 
 
+import grails.gorm.transactions.Transactional
 import org.icescrum.core.domain.Meeting
 import org.icescrum.core.domain.User
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.event.IceScrumEventType
 
+@Transactional // Grails 7: services are no longer implicitly transactional
 class MeetingService extends IceScrumEventPublisher {
 
     void save(Meeting meeting, def workspace, User owner) {

@@ -73,7 +73,7 @@ class Backlog {
     }
 
     static Backlog withBacklog(long projectId, long id) {
-        Backlog backlog = (Backlog) getInProject(projectId, id).list()
+        Backlog backlog = (Backlog) getInProject(projectId, id).get() // Grails 7: uniqueResult named query returns single object via get(), not list()
         if (!backlog) {
             throw new ObjectNotFoundException(id, 'Backlog')
         }

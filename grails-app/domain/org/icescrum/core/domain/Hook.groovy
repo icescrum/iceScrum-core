@@ -87,7 +87,7 @@ class Hook implements Cloneable, Serializable {
     }
 
     static Hook withHook(String workspaceType, long workspaceId, long id) {
-        Hook hook = (Hook) getInWorkspace(workspaceType, workspaceId, id).list()
+        Hook hook = (Hook) getInWorkspace(workspaceType, workspaceId, id).get() // Grails 7: uniqueResult named query returns single object via get(), not list()
         if (!hook) {
             throw new ObjectNotFoundException(id, 'Hook')
         }

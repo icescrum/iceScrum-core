@@ -1,0 +1,12 @@
+# Grails 7 migration: these codecs apply to the GSP PRECOMPILATION of this
+# plugin's templates (baked into the jar). Must match the application's
+# grails.views.gsp.codecs settings or plugin-rendered templates (e.g.
+# /components/widget) get HTML-escaped while app templates don't.
+grails:
+    views:
+        gsp:
+            codecs:
+                expression: none
+                scriptlet: none
+                taglib: none
+                staticparts: none

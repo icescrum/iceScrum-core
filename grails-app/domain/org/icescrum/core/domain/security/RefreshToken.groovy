@@ -15,5 +15,6 @@ class RefreshToken {
     static mapping = {
         version false
         table 'is_oauth_r_token'
+        value column: '`value`' // VALUE is a reserved word in H2 2.x; backticks make Hibernate quote it in the dialect-specific way
     }
 }

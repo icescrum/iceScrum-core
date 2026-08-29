@@ -24,6 +24,7 @@
 
 package org.icescrum.core.services
 
+import grails.gorm.transactions.Transactional
 import grails.util.GrailsNameUtils
 import org.apache.commons.io.FileUtils
 import org.hibernate.ObjectNotFoundException
@@ -42,6 +43,7 @@ import org.icescrum.core.support.ApplicationSupport
 import org.icescrum.plugins.attachmentable.domain.Attachment
 import org.icescrum.plugins.attachmentable.domain.AttachmentLink
 
+@Transactional // Grails 7: services are no longer implicitly transactional
 class AttachmentService extends IceScrumEventPublisher {
 
     def grailsApplication
@@ -125,9 +127,9 @@ class AttachmentService extends IceScrumEventPublisher {
         } else if (type == 'feature') {
             return Feature.withFeature(workspaceId, attachmentableId, workspaceType)
         } else if (type == 'release') {
-            return Release.getInProject(workspaceId, attachmentableId).list()
+            return Release.getInProject(workspaceId, attachmentableId).get() // Grails 7: uniqueResult named query -> get()
         } else if (type == 'sprint') {
-            return Sprint.getInProject(workspaceId, attachmentableId).list()
+            return Sprint.getInProject(workspaceId, attachmentableId).get() // Grails 7: uniqueResult named query -> get()
         } else if (type == 'project') {
             return Project.get(attachmentableId)
         } else if (type == 'portfolio') {

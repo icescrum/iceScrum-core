@@ -25,7 +25,7 @@
 package org.icescrum.core.services
 
 import de.svenjacobs.loremipsum.LoremIpsum
-import grails.transaction.Transactional
+import grails.gorm.transactions.Transactional
 import org.icescrum.core.domain.*
 import org.icescrum.core.domain.preferences.ProjectPreferences
 

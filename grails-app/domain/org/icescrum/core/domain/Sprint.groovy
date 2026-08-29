@@ -174,7 +174,7 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
     }
 
     static Sprint withSprint(long projectId, long id) {
-        Sprint sprint = (Sprint) getInProject(projectId, id).list()
+        Sprint sprint = (Sprint) getInProject(projectId, id).get() // Grails 7: uniqueResult named query returns single object via get(), not list()
         if (!sprint) {
             throw new ObjectNotFoundException(id, 'Sprint')
         }
@@ -231,7 +231,7 @@ class Sprint extends TimeBox implements Serializable, Attachmentable {
         if (obj == null) {
             return false
         }
-        if (getClass() != obj.getClass()) {
+        if (org.hibernate.Hibernate.getClass(this) != org.hibernate.Hibernate.getClass(obj)) { // Grails 7/Hibernate 5.6: proxy-safe (obj may be a lazy proxy)
             return false
         }
         final Sprint other = (Sprint) obj

@@ -136,7 +136,7 @@ class Release extends TimeBox implements Cloneable, Attachmentable {
     }
 
     static Release withRelease(long projectId, long id) {
-        Release release = (Release) getInProject(projectId, id).list()
+        Release release = (Release) getInProject(projectId, id).get() // Grails 7: uniqueResult named query returns single object via get(), not list()
         if (!release) {
             throw new ObjectNotFoundException(id, 'Release')
         }
@@ -167,7 +167,7 @@ class Release extends TimeBox implements Cloneable, Attachmentable {
         if (obj == null) {
             return false
         }
-        if (getClass() != obj.getClass()) {
+        if (org.hibernate.Hibernate.getClass(this) != org.hibernate.Hibernate.getClass(obj)) { // Grails 7/Hibernate 5.6: proxy-safe (obj may be a lazy proxy)
             return false
         }
         final Release other = (Release) obj

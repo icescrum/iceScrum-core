@@ -23,11 +23,13 @@
 
 package org.icescrum.core.services
 
+import grails.gorm.transactions.Transactional
 import org.icescrum.core.domain.User
 import org.icescrum.core.domain.preferences.UserPreferences
 import org.icescrum.core.domain.security.Authority
 import org.icescrum.core.domain.security.UserAuthority
 
+@Transactional // Grails 7: services are no longer implicitly transactional
 class AuthorityService {
 
     def securityService
@@ -56,7 +58,9 @@ class AuthorityService {
     }
 
     void initDefaultAdmin() {
-        if (grailsApplication.config.icescrum.createDefaultAdmin) {
+        // Idempotent: skip if the admin already exists, so a restart doesn't crash BootStrap on the unique
+        // constraint (setupCompleted is only an in-memory flag and resets each start).
+        if (grailsApplication.config.icescrum.createDefaultAdmin && !User.findByUsername('admin')) {
             def admin = new User(username: 'admin',
                     email: 'admin@icescrum.com',
                     enabled: true,

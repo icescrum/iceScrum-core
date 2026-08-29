@@ -21,7 +21,7 @@
  */
 package org.icescrum.core.services
 
-import grails.transaction.Transactional
+import grails.gorm.transactions.Transactional
 import org.icescrum.core.domain.User
 import org.icescrum.core.domain.security.UserToken
 import org.icescrum.core.security.rest.TokenGenerator

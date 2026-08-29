@@ -1,0 +1,126 @@
+/*
+ * iceScrum-core — Apache Grails 7 build (migrated from Grails 2.5.6 BuildConfig.groovy)
+ */
+buildscript {
+    repositories {
+        mavenCentral()
+        maven {
+            url = 'https://repo.grails.org/grails/restricted'
+        }
+    }
+    dependencies { // Not published to Gradle Plugin Portal
+        classpath "cloud.wondrify:asset-pipeline-gradle"
+        classpath platform("org.apache.grails:grails-bom:$grailsVersion")
+        classpath "org.apache.grails:grails-data-hibernate5"
+        classpath "org.apache.grails:grails-gradle-plugins"
+    }
+}
+
+plugins {
+    id "war"
+    id "idea"
+    id "eclipse"
+}
+
+apply plugin: "org.apache.grails.gradle.grails-gsp"
+apply plugin: "org.apache.grails.gradle.grails-plugin"
+
+group = "org.icescrum"
+
+repositories {
+    mavenCentral()
+    maven {
+        url = 'https://repo.grails.org/grails/restricted'
+    }
+}
+
+dependencies {
+    profile "org.apache.grails.profiles:web-plugin"
+    implementation platform("org.apache.grails:grails-bom:$grailsVersion")
+    // Groovy 4 moved Date GDK extensions (clearTime etc.) to a separate module
+    implementation "org.apache.groovy:groovy-dateutil"
+    implementation "org.apache.grails:grails-core"
+    implementation "org.apache.grails:grails-data-hibernate5"
+    implementation "org.apache.grails:grails-databinding"
+    implementation "org.apache.grails:grails-events"
+    implementation "org.apache.grails:grails-gsp"
+    implementation "org.apache.grails:grails-interceptors"
+    implementation "org.apache.grails:grails-logging"
+    implementation "org.apache.grails:grails-rest-transforms"
+    implementation "org.apache.grails:grails-services"
+    implementation "org.apache.grails:grails-url-mappings"
+    implementation "org.apache.grails:grails-web-boot"
+    implementation "org.springframework.boot:spring-boot-autoconfigure"
+    implementation "org.springframework.boot:spring-boot-starter"
+    implementation "org.springframework.boot:spring-boot-starter-logging"
+    implementation "org.springframework.boot:spring-boot-starter-tomcat"
+    implementation "org.springframework.boot:spring-boot-starter-validation"
+
+    // Security (was spring-security-core 2.0.0 / spring-security-acl 2.0.1 Grails 2 plugins)
+    api "org.apache.grails:grails-spring-security:7.0.2"
+    api "org.apache.grails:grails-spring-security-acl:7.0.2"
+
+    // Mail: the grails mail plugin has no Grails 7 release; iceScrum's sendMail
+    // usage is reimplemented over Spring's JavaMailSender (see MailService)
+    api "org.springframework.boot:spring-boot-starter-mail"
+
+    // Push (was atmosphere-meteor plugin + atmosphere-runtime 2.5.3)
+    api("org.atmosphere:atmosphere-runtime:3.0.13") {
+        exclude group: "org.slf4j", module: "slf4j-api"
+    }
+
+    // Office documents (was poi 3.17)
+    api "org.apache.poi:poi:5.4.1"
+    api "org.apache.poi:poi-ooxml:5.4.1"
+
+    // Textile rendering (was mylyn wikitext 2.8.0-SNAPSHOT from dead eclipse repo)
+    api "org.eclipse.mylyn.docs:org.eclipse.mylyn.wikitext:3.0.48.202308291007"
+    api "org.eclipse.mylyn.docs:org.eclipse.mylyn.wikitext.textile:3.0.48.202308291007"
+
+    // Reports (was jasper Grails 2 plugin, JasperService vendored into this plugin). Use OpenPDF 1.3.32 — the
+    // com.lowagie.text fork JasperReports 6.21.4 is compiled against — not the EOL com.lowagie:itext:2.1.7
+    // (which lacks Phrase.add(Element):boolean -> NoSuchMethodError on PDF export, and is a known XXE risk).
+    api "net.sf.jasperreports:jasperreports:6.21.4"
+    api "com.github.librepdf:openpdf:1.3.32"
+
+    // Feeds (was feeds 1.6 Grails 2 plugin)
+    api "com.rometools:rome:2.1.0"
+
+    // Liquibase (was liquibase-core 2.0.5); version managed by the Grails BOM
+    api "org.liquibase:liquibase-core"
+
+    // Was lib/loremipsum-1.0.jar
+    api "de.sven-jacobs:loremipsum:1.0"
+
+    // Was transitive via the dead http-builder 0.7.2; ApplicationSupport still
+    // uses the HttpClient 4 API directly (modernization candidate)
+    api "org.apache.httpcomponents:httpclient:4.5.14"
+    api "commons-lang:commons-lang:2.6"
+    api "commons-io:commons-io:2.19.0"
+    // HTML parsing for ApplicationSupport.getMetaFromPage (was http-builder + NekoHTML)
+    api "org.jsoup:jsoup:1.21.1"
+
+    runtimeOnly "cloud.wondrify:asset-pipeline-grails"
+    runtimeOnly "com.h2database:h2"
+    runtimeOnly "com.zaxxer:HikariCP"
+
+    testImplementation "org.apache.grails:grails-testing-support-datamapping"
+    testImplementation "org.apache.grails:grails-testing-support-web"
+    testImplementation "org.spockframework:spock-core"
+}
+
+compileJava.options.release = 17
+
+// Method security expressions (@PreAuthorize('owner(#team)')) resolve argument
+// names reflectively; Groovy/Java must be compiled with parameter names
+tasks.withType(org.gradle.api.tasks.compile.GroovyCompile).configureEach {
+    groovyOptions.parameters = true
+}
+tasks.withType(org.gradle.api.tasks.compile.JavaCompile).configureEach {
+    options.compilerArgs << '-parameters'
+}
+
+
+tasks.withType(Test).configureEach {
+    useJUnitPlatform()
+}

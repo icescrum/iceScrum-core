@@ -71,7 +71,13 @@ class Story extends BacklogElement implements Cloneable, Serializable {
             dependsOn   : Story
     ]
 
+    SortedSet<Activity> activities
+    Set<MetaData> metaDatas
+
+    // activities/metaDatas: redeclared from BacklogElement (GORM 7 ignores hasMany on non-domain superclasses)
     static hasMany = [
+            activities     : Activity,
+            metaDatas      : MetaData,
             tasks          : Task,
             voters         : User,
             followers      : User,
@@ -81,18 +87,23 @@ class Story extends BacklogElement implements Cloneable, Serializable {
     ]
 
     static transients = [
-            'deliveredVersion', 'testState', 'testStateEnum', 'activity', 'sameBacklogStories', 'countDoneTasks', 'project', 'totalRemainingTime'
+            'deliveredVersion', 'testState', 'testStateEnum', 'activity', 'sameBacklogStories', 'countDoneTasks', 'project', 'totalRemainingTime', 'tags'
     ]
 
     static mapping = {
         cache true
         table 'is_story'
-        followers cache: true
-        voters cache: true
+        // Grails 7/Hibernate 5.6: voters and followers can no longer share the
+        // legacy is_story_is_user join table (join FK columns are now NOT NULL).
+        // Fresh schemas use one table per collection; upgrading an existing DB
+        // requires migrating rows out of is_story_is_user (see MIGRATION.md).
+        followers cache: true, joinTable: [name: 'is_story_followers', key: 'story_id', column: 'user_id']
+        voters cache: true, joinTable: [name: 'is_story_voters', key: 'story_id', column: 'user_id']
         tasks cache: true, cascade: 'all', batchSize: 25
         dependences cache: true, sort: "state", order: "asc"
         acceptanceTests sort: 'rank', batchSize: 10, cache: true
         effort precision: 5, scale: 2
+        value column: '`value`' // VALUE is a reserved word in H2 2.x; backticks make Hibernate quote it in the dialect-specific way
         metaDatas cascade: 'delete-orphan', batchSize: 10, cache: true // Doesn't work on BacklogElement
         activities cascade: 'delete-orphan', batchSize: 25, cache: true // Doesn't work on BacklogElement
         actors cache: true
@@ -155,7 +166,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
     }
 
     String getPermalink() {
-        return Holders.grailsApplication.config.icescrum.serverURL + '/p/' + backlog.pkey + '-' + this.uid
+        return org.icescrum.core.support.ApplicationSupport.serverURLForLink() + '/p/' + backlog.pkey + '-' + this.uid
     }
 
     List<Story> getSameBacklogStories() {
@@ -284,7 +295,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
     }
 
     static Story withStory(long projectId, long id) {
-        Story story = (Story) getInProject(projectId, id).list()
+        Story story = (Story) getInProject(projectId, id).get() // Grails 7: uniqueResult named query returns single object via get(), not list()
         if (!story) {
             throw new ObjectNotFoundException(id, 'Story')
         }
@@ -426,7 +437,7 @@ class Story extends BacklogElement implements Cloneable, Serializable {
         if (obj == null) {
             return false
         }
-        if (getClass() != obj.getClass()) {
+        if (org.hibernate.Hibernate.getClass(this) != org.hibernate.Hibernate.getClass(obj)) { // Grails 7/Hibernate 5.6: proxy-safe (obj may be a lazy proxy)
             return false
         }
         Story other = (Story) obj

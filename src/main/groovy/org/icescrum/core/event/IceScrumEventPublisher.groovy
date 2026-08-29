@@ -1,0 +1,119 @@
+/*
+ * Copyright (c) 2014 Kagilum.
+ *
+ * This file is part of iceScrum.
+ *
+ * iceScrum is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License.
+ *
+ * iceScrum is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with iceScrum.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Authors:
+ *
+ * Vincent Barrier (vbarrier@kagilum.com)
+ * Nicolas Noullet (nnoullet@kagilum.com)
+ *
+ */
+package org.icescrum.core.event
+
+import grails.util.GrailsNameUtils
+import grails.util.Holders
+import org.grails.core.DefaultGrailsDomainClass
+import grails.core.GrailsApplication
+import org.hibernate.proxy.HibernateProxyHelper
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+
+abstract class IceScrumEventPublisher {
+
+    // Grails 7 migration: the registry used to live in grailsApplication.config,
+    // but the new config model (NavigableMap) converts stored maps and cannot
+    // hold closures reliably, so listeners are kept in a static map instead
+    private static final Map listenersByDomain = [:].asSynchronized()
+
+    // Called when the application context (re)starts: the static registry would
+    // otherwise accumulate duplicate listeners across devtools restarts
+    static void clearListeners() {
+        listenersByDomain.clear()
+    }
+
+    static void registerListener(String domain, IceScrumEventType eventType, Closure listener) {
+        listener.delegate = this
+        if (listenersByDomain[domain] == null) {
+            listenersByDomain[domain] = [:]
+        }
+        if (listenersByDomain[domain][eventType] == null) {
+            listenersByDomain[domain][eventType] = []
+        }
+        listenersByDomain[domain][eventType] << listener
+    }
+
+    static void registerListener(String domain, Closure listener) {
+        IceScrumEventType.values().each { IceScrumEventType type ->
+            if (type != IceScrumEventType.UGLY_HACK_BECAUSE_ANNOTATION_CANT_BE_NULL && type != IceScrumEventType.PARTIAL_UPDATE) {
+                registerListener(domain, type, listener)
+            }
+        }
+    }
+
+    Map publishSynchronousEvent(IceScrumEventType type, object, Map dirtyProperties = extractDirtyProperties(type, object)) {
+        logEvent(type, object, dirtyProperties)
+        def domain = GrailsNameUtils.getPropertyNameRepresentation(HibernateProxyHelper.getClassWithoutInitializingProxy(object))
+        listenersByDomain.getAt(domain)?.getAt(type)?.each {
+            it(type, object, dirtyProperties)
+        }
+        listenersByDomain.getAt('*')?.getAt(type)?.each {
+            it(type, object, dirtyProperties)
+        }
+        return dirtyProperties
+    }
+
+    private static Map extractDirtyProperties(IceScrumEventType type, object) {
+        def dirtyProperties = [:]
+        if (type == IceScrumEventType.BEFORE_UPDATE) {
+            object.dirtyPropertyNames.each {
+                dirtyProperties[it] = object.getPersistentValue(it)
+            }
+        } else if (type == IceScrumEventType.BEFORE_DELETE) {
+            // Grails 7: DefaultGrailsDomainClass no longer exposes persistentProperties; read them from the GORM mapping context.
+            def entity = Holders.grailsApplication.mappingContext.getPersistentEntity(object.class.name)
+            entity.persistentProperties.each { property ->
+                def name = property.name
+                dirtyProperties[name] = object.properties[name]
+            }
+            dirtyProperties.id = object.id
+        }
+        return dirtyProperties
+    }
+
+    private static void logEvent(IceScrumEventType type, object, Map dirtyProperties) {
+        Logger log = LoggerFactory.getLogger(getClass())
+        if (log.isDebugEnabled()) {
+            def id = object.id ?: dirtyProperties.id
+            log.debug("$type ${GrailsNameUtils.getPropertyNameRepresentation(object.class)} $id")
+            if (type == IceScrumEventType.UPDATE) {
+                dirtyProperties.each { dirtyProperty, oldValue ->
+                    if (object.hasProperty("$dirtyProperty")) {
+                        def newValue = object."$dirtyProperty"
+                        if (newValue != oldValue) {
+                            if (dirtyProperty == 'password') {
+                                oldValue = '*******************'
+                                newValue = oldValue
+                            }
+                            log.debug("-- $dirtyProperty: \t" + oldValue + "\t-> " + newValue)
+                        }
+                    } else {
+                        log.debug("-- $dirtyProperty: \t" + oldValue + "\t-> ")
+                    }
+                }
+            }
+        }
+    }
+}

@@ -24,7 +24,7 @@
 
 package org.icescrum.core.services
 
-import grails.transaction.Transactional
+import grails.gorm.transactions.Transactional
 import org.icescrum.core.domain.Project
 import org.icescrum.core.domain.Team
 import org.icescrum.core.domain.User

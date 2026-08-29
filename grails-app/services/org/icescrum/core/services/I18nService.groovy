@@ -24,11 +24,13 @@
 
 package org.icescrum.core.services
 
-import org.codehaus.groovy.grails.plugins.web.taglib.ValidationTagLib
+import grails.gorm.transactions.Transactional
+import org.grails.plugins.web.taglib.ValidationTagLib
 import org.icescrum.core.domain.User
 import org.springframework.web.context.request.RequestContextHolder
 import org.springframework.web.servlet.i18n.SessionLocaleResolver
 
+@Transactional // Grails 7: services are no longer implicitly transactional
 class I18nService {
 
     boolean transactional = false
@@ -40,9 +42,11 @@ class I18nService {
     def message(Map args) {
         def _request = RequestContextHolder.requestAttributes?.currentRequest
         if (!_request) {
-            args.locale = springSecurityService.isLoggedIn() ? User.getLocale(springSecurityService.principal.id) : localeResolver.defaultLocale
+            // Grails 7: FormatTagLib.resolveLocale NPEs outside a request if locale is null,
+            // and localeResolver.defaultLocale may not be set yet during BootStrap
+            args.locale = springSecurityService.isLoggedIn() ? User.getLocale(springSecurityService.principal.id) : (localeResolver.defaultLocale ?: Locale.default)
         }
-        ValidationTagLib validationTagLib = (ValidationTagLib) grailsApplication.mainContext.getBean('org.codehaus.groovy.grails.plugins.web.taglib.ValidationTagLib')
+        ValidationTagLib validationTagLib = (ValidationTagLib) grailsApplication.mainContext.getBean('org.grails.plugins.web.taglib.ValidationTagLib')
         def messageMethod = validationTagLib.message // Big hack because closure cannot be called directly because taglibs don't work without request
         return messageMethod(args)
     }

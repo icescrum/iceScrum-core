@@ -49,14 +49,18 @@ class Feature extends BacklogElement implements Serializable {
     int type = Feature.TYPE_FUNCTIONAL
     int rank
 
-    static transients = ['countDoneStories', 'state', 'effort', 'inProgressDate', 'project', 'actualReleases']
+    static transients = ['countDoneStories', 'state', 'effort', 'inProgressDate', 'project', 'actualReleases', 'tags']
 
     static belongsTo = [
             portfolio    : Portfolio,
             parentRelease: Release
     ]
 
-    static hasMany = [stories: Story]
+    SortedSet<Activity> activities
+    Set<MetaData> metaDatas
+
+    // activities/metaDatas: redeclared from BacklogElement (GORM 7 ignores hasMany on non-domain superclasses)
+    static hasMany = [stories: Story, activities: Activity, metaDatas: MetaData]
 
     static mappedBy = [stories: "feature"]
 
@@ -64,6 +68,7 @@ class Feature extends BacklogElement implements Serializable {
         cache true
         table 'is_feature'
         stories cascade: "refresh", sort: 'rank', 'name': 'asc', batchSize: 25, cache: true
+        value column: '`value`' // VALUE is a reserved word in H2 2.x; backticks make Hibernate quote it in the dialect-specific way
         sort "id"
         metaDatas cascade: 'delete-orphan', batchSize: 10, cache: true // Doesn't work on BacklogElement
         activities cascade: 'delete-orphan', batchSize: 25, cache: true // Doesn't work on BacklogElement
@@ -124,9 +129,9 @@ class Feature extends BacklogElement implements Serializable {
     static Feature withFeature(long workspaceId, long id, String workspaceType = WorkspaceType.PROJECT) {
         Feature feature
         if (workspaceType == WorkspaceType.PROJECT) {
-            feature = (Feature) getInProject(workspaceId, id).list()
+            feature = (Feature) getInProject(workspaceId, id).get() // Grails 7: uniqueResult named query returns single object via get(), not list()
         } else if (workspaceType == WorkspaceType.PORTFOLIO) {
-            feature = (Feature) getInPortfolio(workspaceId, id).list()
+            feature = (Feature) getInPortfolio(workspaceId, id).get() // Grails 7: uniqueResult named query returns single object via get(), not list()
         }
         if (!feature) {
             throw new ObjectNotFoundException(id, 'Feature')
@@ -229,7 +234,7 @@ class Feature extends BacklogElement implements Serializable {
         if (obj == null) {
             return false
         }
-        if (getClass() != obj.getClass()) {
+        if (org.hibernate.Hibernate.getClass(this) != org.hibernate.Hibernate.getClass(obj)) { // Grails 7/Hibernate 5.6: proxy-safe (obj may be a lazy proxy)
             return false
         }
         final Feature other = (Feature) obj
@@ -323,7 +328,7 @@ class Feature extends BacklogElement implements Serializable {
     }
 
     String getPermalink() {
-        return backlog ? Holders.grailsApplication.config.icescrum.serverURL + '/p/' + backlog.pkey + '-F' + this.uid : ''
+        return backlog ? org.icescrum.core.support.ApplicationSupport.serverURLForLink() + '/p/' + backlog.pkey + '-F' + this.uid : ''
     }
 
     static search(project, options) {

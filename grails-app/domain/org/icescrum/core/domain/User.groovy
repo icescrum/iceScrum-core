@@ -96,7 +96,7 @@ class User implements Serializable, Attachmentable {
                         OR lower(u.lastName) LIKE lower(:term)
                         OR lower(concat(u.firstName,' ', u.lastName)) LIKE lower(:term)
                         OR lower(concat(u.lastName,' ', u.firstName)) LIKE lower(:term))
-                        ORDER BY u.username ASC""", [term: "%$term%"], params ?: [:])
+                        ORDER BY u.username ASC""".toString(), [term: "%$term%"], params ?: [:])
     }
 
     static countUsersLike(excludeCurrentUser, term, params) {
@@ -108,7 +108,7 @@ class User implements Serializable, Attachmentable {
                         OR lower(u.firstName) LIKE lower(:term)
                         OR lower(u.lastName) LIKE lower(:term)
                         OR lower(concat(u.firstName,' ', u.lastName)) LIKE lower(:term)
-                        OR lower(concat(u.lastName,' ', u.firstName)) LIKE lower(:term))""", [term: "%$term%"], params ?: [:])[0]
+                        OR lower(concat(u.lastName,' ', u.firstName)) LIKE lower(:term))""".toString(), [term: "%$term%"], params ?: [:])[0]
     }
 
     static findUsersLikeAndEnabled(excludeCurrentUser, term, enabled, params) {
@@ -122,7 +122,7 @@ class User implements Serializable, Attachmentable {
                         OR lower(concat(u.firstName,' ', u.lastName)) LIKE lower(:term)
                         OR lower(concat(u.lastName,' ', u.firstName)) LIKE lower(:term))
                         AND enabled = :enabled
-                        ORDER BY u.username ASC""", [term: "%$term%", enabled: enabled], params ?: [:])
+                        ORDER BY u.username ASC""".toString(), [term: "%$term%", enabled: enabled], params ?: [:])
     }
 
     static countUsersLikeAndEnabled(excludeCurrentUser, term, enabled, params) {
@@ -135,7 +135,7 @@ class User implements Serializable, Attachmentable {
                         OR lower(u.lastName) LIKE lower(:term)
                         OR lower(concat(u.firstName,' ', u.lastName)) LIKE lower(:term)
                         OR lower(concat(u.lastName,' ', u.firstName)) LIKE lower(:term))
-                        AND enabled = :enabled """, [term: "%$term%", enabled: enabled], params ?: [:])[0]
+                        AND enabled = :enabled """.toString(), [term: "%$term%", enabled: enabled], params ?: [:])[0]
     }
 
     static Locale getLocale(Long userId) {
@@ -199,7 +199,7 @@ class User implements Serializable, Attachmentable {
     }
 
     int hashCode() {
-        return username.hashCode()
+        return username?.hashCode() ?: 0
     }
 
     def beforeValidate() {

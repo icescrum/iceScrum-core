@@ -142,10 +142,14 @@ class Project extends TimeBox implements Serializable, Attachmentable {
         if (obj == null) {
             return false
         }
-        if (getClass() != obj.getClass()) {
+        // Grails 7 / Hibernate 5.6: obj is frequently a lazy proxy (Project$HibernateProxy), whose getClass()
+        // is the proxy subclass, so a plain getClass() comparison wrongly reports a Project != its own proxy.
+        // That broke Task's parentProject/parentStory validators (real Project vs proxied Project), silently
+        // failing task.save() so a planned story's tasks kept a null sprint (invisible on the task board).
+        if (org.hibernate.Hibernate.getClass(this) != org.hibernate.Hibernate.getClass(obj)) {
             return false
         }
-        final Project other = (Project) obj
+        final Project other = (Project) org.hibernate.Hibernate.unproxy(obj)
         if (name == null) {
             if (other.name != null) {
                 return false

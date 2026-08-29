@@ -1,0 +1,78 @@
+/*
+ * Copyright (c) 2018 Kagilum SAS
+ *
+ * This file is part of iceScrum.
+ *
+ * iceScrum is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License.
+ *
+ * iceScrum is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with iceScrum.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Authors:
+ *
+ * Vincent Barrier (vbarrier@kagilum.com)
+ * Nicolas Noullet (nnoullet@kagilum.com)
+ * Colin Bontemps (cbontemps@kagilum.com)
+ */
+
+package org.icescrum.core.utils
+
+import java.sql.Timestamp
+import java.text.ParseException
+import java.text.SimpleDateFormat
+
+class DateUtils {
+
+    static boolean isDateWeekend(Date date) {
+        Calendar calendar = Calendar.getInstance()
+        calendar.setTime(date)
+        return calendar.get(Calendar.DAY_OF_WEEK) in [Calendar.SATURDAY, Calendar.SUNDAY]
+    }
+
+    static Date getMidnightDate(Date date) {
+        return new Date(date.time).clearTime()
+    }
+
+    static parseDateISO8601(String date) {
+        try {
+            return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXX").parse(date) // hhmm - default format sent by our client
+        } catch (ParseException e1) {
+            // Manage other formats that can be sent by external applications
+            try {
+                return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX").parse(date) // hh:mm
+            } catch (ParseException e2) {
+                return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX").parse(date) // hh
+            }
+        }
+    }
+
+    static Date parseDateFromExport(String date) {
+        if (!date) {
+            return null
+        }
+        try {
+            return new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').parse(date)
+        } catch (Exception e) { // Export is toString: java.util.Date (e.g. entities served from the 2nd-level cache) formats as 'EEE MMM d HH:mm:ss zzz yyyy' instead of the java.sql format above
+            try {
+                // Date.toString is always English; the zone abbreviation may be 4 letters (CEST)
+                return new SimpleDateFormat('EEE MMM d HH:mm:ss zzz yyyy', Locale.ENGLISH).parse(date)
+            } catch (Exception e2) {
+                // Legacy hack for exports with an unparseable zone: reinterpret the wall time as UTC.
+                // Only correct for 3-letter zone names — a 4-letter one (CEST) leaves a stray letter.
+                String utcDate = date.take(20) + 'UTC' + date.drop(23)
+                return new SimpleDateFormat('EEE MMM d HH:mm:ss zzz yyyy', Locale.ENGLISH).parse(utcDate)
+            }
+        }
+    }
+
+    static Date timestampToDate(Timestamp timestamp) {
+        return timestamp ? new Date(timestamp.time) : null
+    }
+}

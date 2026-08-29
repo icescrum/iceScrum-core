@@ -21,10 +21,9 @@
 
 package org.icescrum.core.services
 
-import grails.transaction.Transactional
-import groovyx.net.http.HTTPBuilder
-import groovyx.net.http.Method
+import grails.gorm.transactions.Transactional
 import org.icescrum.core.domain.Hook
+import org.icescrum.core.support.SimpleHttp
 import org.icescrum.core.event.IceScrumEventPublisher
 import org.icescrum.core.utils.DateUtils
 
@@ -50,10 +49,7 @@ class HookService extends IceScrumEventPublisher {
 
     def delete(Hook hook, boolean forceDelete = false) {
         if (!forceDelete && hook.url.contains("hooks.zapier.com")) { // https://zapier.com/developer/documentation/v2/rest-hooks/#optional-reverse-unsubscribe-a-call-from-your-app-to-zapier
-            def http = new HTTPBuilder(hook.url)
-            http.getClient().getParams().setParameter("http.connection.timeout", grailsApplication.config.icescrum.hooks.httpTimeout)
-            http.getClient().getParams().setParameter("http.socket.timeout", grailsApplication.config.icescrum.hooks.socketTimeout)
-            http.request(Method.DELETE) {}
+            SimpleHttp.delete(hook.url, [:], grailsApplication.config.icescrum.hooks.httpTimeout as int, grailsApplication.config.icescrum.hooks.socketTimeout as int)
         }
         hook.delete(flush: true)
     }

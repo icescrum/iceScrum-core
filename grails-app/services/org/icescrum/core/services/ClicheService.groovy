@@ -25,7 +25,8 @@
 
 package org.icescrum.core.services
 
-import grails.transaction.Transactional
+import groovy.xml.XmlSlurper
+import grails.gorm.transactions.Transactional
 import groovy.xml.StreamingMarkupBuilder
 import org.icescrum.core.domain.*
 import org.icescrum.core.utils.DateUtils
@@ -44,8 +45,8 @@ class ClicheService {
         int allTotal = 0
         int remainingTotal = 0
         def storyTypes = grailsApplication.config.icescrum.resourceBundles.storyTypes.keySet()
-        def allPointsByType = storyTypes.collectEntries { storyType -> [(storyType): 0] }
-        def remainingPointsByType = storyTypes.collectEntries { storyType -> [(storyType): 0] }
+        def allPointsByType = storyTypes.collectEntries { storyType -> [(storyType as Integer): 0] }
+        def remainingPointsByType = storyTypes.collectEntries { storyType -> [(storyType as Integer): 0] }
         stories.each { Story story ->
             if (story.effort > 0) {
                 allPointsByType[story.type] += story.effort
@@ -118,7 +119,8 @@ class ClicheService {
                 "${Cliche.PROJECT_POINTS}"(projectPoints.allTotal)
                 // Project remaining points
                 storyTypes.each { storyType ->
-                    "${grailsApplication.config.icescrum.resourceBundles.storyTypesCliche[storyType]}"(projectPoints.remaining[storyType])
+                    // storyType comes from the config NavigableMap keySet (String in Grails 7); the points maps are Integer-keyed.
+                    "${grailsApplication.config.icescrum.resourceBundles.storyTypesCliche[storyType]}"(projectPoints.remaining[storyType as Integer])
                 }
                 "${Cliche.PROJECT_REMAINING_POINTS}"(projectPoints.remainingTotal)
                 // Release remaining points
@@ -205,7 +207,7 @@ class ClicheService {
                 // That means that if there is already a cliche to update, we need to merge data instead of replacing thus preserving existing data we don't own
                 // There is no easy way to merge data with XML nodes so we convert them to maps to merge them, then convert them back to XML through the builder
                 def xmlToMap = { String data ->
-                    new XmlSlurper().parseText(data).children().collectEntries {
+                    org.icescrum.core.utils.ServicesUtils.secureXmlSlurper().parseText(data).children().collectEntries {
                         [it.name(), it.text()]
                     }
                 }

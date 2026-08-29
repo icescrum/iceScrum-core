@@ -60,7 +60,7 @@ class TimeBoxNotesTemplate implements Serializable {
     }
 
     static TimeBoxNotesTemplate withTimeBoxNotesTemplate(long projectId, long id) {
-        TimeBoxNotesTemplate template = (TimeBoxNotesTemplate) getInProject(projectId, id).list()
+        TimeBoxNotesTemplate template = (TimeBoxNotesTemplate) getInProject(projectId, id).get() // Grails 7: uniqueResult named query returns single object via get(), not list()
         if (!template) {
             throw new ObjectNotFoundException(id, 'TimeBoxNotesTemplate')
         }

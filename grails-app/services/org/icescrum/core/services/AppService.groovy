@@ -23,7 +23,7 @@
  */
 package org.icescrum.core.services
 
-import grails.transaction.Transactional
+import grails.gorm.transactions.Transactional
 import org.icescrum.core.app.AppDefinition
 import org.icescrum.core.domain.Project
 import org.icescrum.core.domain.SimpleProjectApp

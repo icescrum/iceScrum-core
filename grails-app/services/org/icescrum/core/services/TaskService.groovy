@@ -23,7 +23,7 @@
 
 package org.icescrum.core.services
 
-import grails.transaction.Transactional
+import grails.gorm.transactions.Transactional
 import grails.util.GrailsNameUtils
 import grails.validation.ValidationException
 import org.grails.comments.Comment
@@ -55,7 +55,7 @@ class TaskService extends IceScrumEventPublisher {
         if (task.parentStory?.parentSprint && !task.backlog) {
             task.backlog = task.parentStory.parentSprint
         }
-        Sprint sprint = (Sprint) task.backlog
+        Sprint sprint = task.sprintBacklog
         if (!task.id && sprint?.state == Sprint.STATE_DONE) {
             throw new BusinessException(code: 'is.task.error.not.saved')
         }
@@ -84,6 +84,11 @@ class TaskService extends IceScrumEventPublisher {
     @PreAuthorize('inProject(#task.parentProject) and !archivedProject(#task.parentProject)')
     void update(Task task, User user, boolean force = false, props = [:]) {
         ApplicationSupport.validateHexdecimalColor(task.color)
+        // Self-heal: a task added to a story before it was planned keeps a null backlog; resolve it from the
+        // story's sprint so the task is in the sprint and can be moved on the task board (same rule as save()).
+        if (task.parentStory?.parentSprint && !task.backlog) {
+            task.backlog = task.parentStory.parentSprint
+        }
         if (props.state != null) {
             state(task, props.state, user)
         }
@@ -91,7 +96,7 @@ class TaskService extends IceScrumEventPublisher {
             activityService.addActivity(task, task.responsible ?: user, 'taskUnassign', task.name)
             task.responsible = null
         }
-        def sprint = (Sprint) task.backlog
+        def sprint = task.sprintBacklog
         if (sprint?.state == Sprint.STATE_DONE) {
             throw new BusinessException(code: 'is.sprint.error.state.not.inProgress')
         }
@@ -176,7 +181,7 @@ class TaskService extends IceScrumEventPublisher {
 
     @PreAuthorize('inProject(#task.parentProject) and !archivedProject(#task.parentProject)')
     void delete(Task task, User user) {
-        def sprint = (Sprint) task.backlog
+        def sprint = task.sprintBacklog
         boolean scrumMaster = securityService.scrumMaster(null, springSecurityService.authentication)
         boolean productOwner = securityService.productOwner(task.parentProject, springSecurityService.authentication)
         if (task.state == Task.STATE_DONE && !scrumMaster && !productOwner) {
@@ -245,7 +250,7 @@ class TaskService extends IceScrumEventPublisher {
 
     @PreAuthorize('inProject(#task.parentProject) and !archivedProject(#task.parentProject)')
     def copy(Task task, User user, def clonedState = Task.STATE_WAIT, Sprint otherSprint = null) {
-        def sprint = otherSprint ?: (task.parentStory ? task.parentStory.parentSprint : (Sprint) task.backlog)
+        def sprint = otherSprint ?: (task.parentStory ? task.parentStory.parentSprint : task.sprintBacklog)
         if (sprint?.state == Sprint.STATE_DONE) {
             throw new BusinessException(code: 'is.task.error.copy.done')
         }
@@ -284,7 +289,7 @@ class TaskService extends IceScrumEventPublisher {
 
     private void state(Task task, Integer newState, User user) {
         def project = task.parentProject
-        def sprint = (Sprint) task.backlog
+        def sprint = task.sprintBacklog
         if (sprint?.state != Sprint.STATE_INPROGRESS && newState >= Task.STATE_BUSY) {
             throw new BusinessException(code: 'is.sprint.error.state.not.inProgress')
         }

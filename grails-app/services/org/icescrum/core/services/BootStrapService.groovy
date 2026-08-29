@@ -24,9 +24,11 @@
 
 package org.icescrum.core.services
 
+import grails.gorm.transactions.Transactional
 import grails.util.Environment
 import org.icescrum.core.support.ApplicationSupport
 
+@Transactional // Grails 7: services are no longer implicitly transactional
 class BootStrapService {
 
     def pluginManager
